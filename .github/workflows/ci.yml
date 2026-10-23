@@ -1,0 +1,35 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install numpy
+      # mermaid itself is the oracle for the flowchart parser
+      - run: npm i --no-save mermaid@11.4.1
+      # manim itself is the oracle for test/manim.test.ts (tools/oracle/manim_math.py)
+      - run: git clone --depth 1 https://github.com/3b1b/manim.git /tmp/manim && git -C /tmp/manim fetch --depth 1 origin fafa083a4fb274bba9cabde0b6e2f50ba6da0622 && git -C /tmp/manim checkout -q fafa083a4fb274bba9cabde0b6e2f50ba6da0622
+      - run: npm run check          # tsc -b over every project (emits dist/); compile a TS consumer against it
+      - run: npm run test:full      # every frame, 400 random scenes, cache validation, goldens, oracles, bare runtime, leaks
+        env:
+          MANIM_DIR: /tmp/manim
+          MERMAID_JS: node_modules/mermaid/dist/mermaid.min.js
+      - run: npm run verify:motion  # no teleports, pops or cuts in any scene
+      - run: npm run build
+# The playback gate (npm run verify:playback) measures frame pacing in a real
+# browser. Shared runners are too noisy for a 1% late-frame budget, so it runs
+# locally before merging changes to the renderer or player.

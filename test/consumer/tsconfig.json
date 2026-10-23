@@ -1,0 +1,11 @@
+{
+  // Resolves 'manim-js' by package self-reference (package.json "exports" -> dist/),
+  // the way a dependent package would. skipLibCheck is off so the emitted .d.ts
+  // files are checked too; lib.dom because DomSink's signature names DOM types.
+  "compilerOptions": {
+    "target": "es2022", "module": "nodenext", "moduleResolution": "nodenext", "strict": true, "noEmit": true,
+    "noUncheckedIndexedAccess": true, "noImplicitOverride": true, "verbatimModuleSyntax": true,
+    "skipLibCheck": false, "lib": ["es2023", "dom"], "types": []
+  },
+  "files": ["consumer.ts"]
+}

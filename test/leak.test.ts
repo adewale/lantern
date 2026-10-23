@@ -1,0 +1,28 @@
+// Repeated seeks must not grow the heap: a Worker serves thousands of deep
+// links from one isolate, and the player re-runs the scene on every seek.
+// Memoized shaping and flattened glyph outlines are bounded by the fonts'
+// glyph set, so after warm-up the heap must settle.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { renderAt, SnapshotSink, traceScene, loadFonts, Scene } from '../src/index.ts';
+import { SCENES } from '../scenes/index.ts';
+
+Scene.captionWpm = Infinity;
+
+// --expose-gc puts gc() on the global object
+const gc = (globalThis as { gc?: () => void }).gc;
+
+test('50 seeks and traces leave the heap where 10 did (no per-run growth)', { skip: typeof gc !== 'function' && 'run with node --expose-gc' }, async () => {
+  await loadFonts();
+  const { Scene: S } = SCENES['pyex-limits']!;
+  const tr = await traceScene(S);
+  const times = tr.steps.map((s) => s.t0 + 0.3);
+  const heap = (): number => { gc!(); gc!(); return process.memoryUsage().heapUsed; };
+  const cycle = async () => { for (const t of times) await renderAt(S, t, new SnapshotSink()); await traceScene(S); };
+  for (let i = 0; i < 10; i++) await cycle();
+  const after10 = heap();
+  for (let i = 0; i < 40; i++) await cycle();
+  const after50 = heap();
+  const growth = (after50 - after10) / 1e6;
+  assert.ok(growth < 8, `heap grew ${growth.toFixed(1)} MB over 40 extra cycles (${(after10 / 1e6).toFixed(0)} → ${(after50 / 1e6).toFixed(0)} MB)`);
+});

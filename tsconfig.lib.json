@@ -1,0 +1,15 @@
+{
+  // The library: src/ -> dist/ (ESM .js, .d.ts, declaration maps). Runtime-agnostic,
+  // but DomSink is typed against the DOM, so lib.dom is in scope.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "tsBuildInfoFile": "node_modules/.cache/tsc/lib.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"]
+}

@@ -1,0 +1,14 @@
+{
+  // Node code: tools/ and test/, run as .ts by Node 24 (type stripping). Checked only.
+  // lib.dom too: tools drive Chromium and type what runs in the page.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "types": ["node"],
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "tsBuildInfoFile": "node_modules/.cache/tsc/node.tsbuildinfo"
+  },
+  "include": ["tools/**/*.ts", "test/**/*.ts"],
+  "exclude": ["test/consumer"]
+}

@@ -1,0 +1,10 @@
+{
+  // Solution: `tsc -b` (npm run check) builds every project. Editors resolve each
+  // file to the project that includes it.
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.lib.json" },
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}

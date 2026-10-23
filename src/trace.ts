@@ -1,0 +1,60 @@
+// Trace: the scene as a list of step boundaries with structured state.
+// This is the agent-facing form: no geometry, just what each step is called,
+// when it happens, what the author attached to it (meta) and what the scene
+// says its state is (describe()). Stable across float-formatting churn, so it
+// is also what golden tests hash.
+
+import type { Scene, SceneClass, SceneOptions, SceneState, Sink, Step, StepMeta } from './scene.ts';
+
+/** One step of a trace: what traceScene() returns per step. */
+export interface StepRecord {
+  step: string;
+  t0: number; frame0: number;
+  t1?: number; frame1?: number;
+  meta: StepMeta;
+  before: SceneState;
+  after?: SceneState;
+}
+
+/** A trace: the scene's timing and its state at every step boundary. */
+export interface Trace {
+  fps: number;
+  duration: number;
+  frames: number;
+  steps: StepRecord[];
+}
+
+type TraceEvent =
+  | { step: string; phase: 'begin'; t: number; frame: number; meta: StepMeta; state: SceneState }
+  | { step: string; phase: 'end'; t: number; frame: number; state: SceneState };
+
+export class TraceSink implements Sink {
+  events: TraceEvent[];
+  constructor() { this.events = []; }
+  async frame(): Promise<void> {}
+  async stepBegin(scene: Scene, s: Step): Promise<void> {
+    this.events.push({ step: s.path, phase: 'begin', t: round(scene.time), frame: scene.frameCount, meta: s.meta, state: scene.describe() });
+  }
+  async stepEnd(scene: Scene, s: Step): Promise<void> {
+    this.events.push({ step: s.path, phase: 'end', t: round(scene.time), frame: scene.frameCount, state: scene.describe() });
+  }
+  /** Compact form: one entry per step with begin/end state. */
+  steps(): StepRecord[] {
+    const out: StepRecord[] = [];
+    for (const e of this.events) {
+      if (e.phase === 'begin') out.push({ step: e.step, t0: e.t, frame0: e.frame, meta: e.meta, before: e.state });
+      else { const s = out.findLast((x) => x.step === e.step && x.t1 == null); if (s) { s.t1 = e.t; s.frame1 = e.frame; s.after = e.state; } }
+    }
+    return out;
+  }
+}
+
+const round = (x: number): number => Math.round(x * 1000) / 1000;
+
+/** Run a scene and return its trace: { fps, duration, frames, steps }. */
+export async function traceScene(SceneClass: SceneClass, opts: SceneOptions = {}): Promise<Trace> {
+  const sink = new TraceSink();
+  const scene = new SceneClass(sink, { skipUntil: Infinity, ...opts });
+  await scene.run();
+  return { fps: scene.fps, duration: round(scene.time), frames: scene.frameCount, steps: sink.steps() };
+}

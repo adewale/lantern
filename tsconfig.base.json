@@ -1,0 +1,22 @@
+{
+  // Shared by every project. Sources are .ts with .ts import specifiers: Node 24
+  // runs them as they are (type stripping, hence erasableSyntaxOnly), and tsc
+  // rewrites the specifiers to .js where it emits (the library, dist/).
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["es2023"],
+    "types": [],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "rewriteRelativeImportExtensions": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "name": "manim-js",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node tools/dev.ts",
+    "build": "node tools/build.ts",
+    "build:lib": "rm -rf dist && tsc -p tsconfig.lib.json",
+    "test": "node --expose-gc --test test/*.test.ts",
+    "test:full": "FULL=1 node --expose-gc --test test/*.test.ts",
+    "see": "node tools/see.ts",
+    "shot": "node tools/shot.ts",
+    "render": "node tools/render.ts",
+    "trace": "node tools/trace.ts",
+    "profile": "node tools/profile.ts",
+    "seek": "node tools/seek.ts",
+    "ab": "node tools/ab.ts",
+    "hitch": "npm run build && node tools/hitch.ts",
+    "verify:motion": "node tools/motion.ts",
+    "verify:playback": "npm run build && node tools/playback.ts",
+    "verify": "npm run verify:motion && npm run verify:playback && npm run verify:layout",
+    "deploy": "npm run build && npx wrangler deploy",
+    "fonts": "tools/fonts.sh",
+    "typecheck": "tsc -b",
+    "check": "tsc -b && tsc -p test/consumer/tsconfig.json",
+    "transcript": "node tools/transcript.ts",
+    "bench": "node tools/bench.ts",
+    "types": "npm run build:lib",
+    "prepack": "npm run build:lib",
+    "verify:layout": "npm run build && node tools/layout.ts"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "esbuild": "0.25.12",
+    "playwright-core": "1.56.1",
+    "typescript": "5.9.3"
+  },
+  "description": "Animated, steppable code explainers. Zero-dependency JS engine, SVG output, browser and Cloudflare Workers.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "license": "MIT",
+  "sideEffects": false,
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "vendor/glyph.js",
+    "vendor/glyph.d.ts",
+    "README.md",
+    "docs",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ivarvong/lantern"
+  },
+  "keywords": [
+    "animation",
+    "svg",
+    "manim",
+    "explainer",
+    "cloudflare-workers"
+  ]
+}
