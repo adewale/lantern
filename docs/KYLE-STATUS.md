@@ -26,6 +26,7 @@ The pass also fixed three bugs that the earlier checks missed:
 - **Phones:** the stage zooms and pans, so small labels can be read on a 390 px screen (see Limits for the numbers).
 - **Verifier warnings:** Agentic Mermaid names an edge by its position among all edges (`A->C#1`), while snapshot parts number edges per endpoint pair (`edge:A->C#0`). `findingsOf(snapshot)`, also available as `d.findings()`, resolves each warning to its part through the verifier's own edge order, including parallel edges. The Agentic Mermaid explainer uses it instead of guessing by endpoints. Upstream could still add the part id to each finding.
 - **Smallest labels:** the git explainer's "parent" edge label (14.0 px) became a note on the link, and the KV-cache diagram's shorter node names let its "hit" and "miss" labels grow.
+- **Reading holds:** a step's caption-reading hold is part of its scene time, so after **Next** the player kept "playing" a still frame for up to about 10 s. Each step now records when its hold begins (`hold` in the trace); the player stops there, and video still plays to `t1`. The three inherited golden traces changed only by gaining that field.
 - **Node 26** is the supported runtime in `package.json`, the lockfile, CI and the docs.
 
 ## Evidence from this checkout (25 October 2026, Node 26.12.1, macOS, after the follow-up fixes)
@@ -33,7 +34,7 @@ The pass also fixed three bugs that the earlier checks missed:
 | Gate | Result | Command |
 | --- | --- | --- |
 | TypeScript, declarations, consumer compile | passed | `npm run check` |
-| Full suite with browser, video and FULL flags and both oracles | **113 tests: 113 passed, 0 failed, 0 skipped**; Manim at the CI-pinned commit with numpy, and Mermaid 11.4.1 | `MANIM_DIR=… MERMAID_JS=… EXPLAIN_BROWSER=1 EXPLAIN_VIDEO=1 FULL=1 node --expose-gc --test test/*.test.ts` |
+| Full suite with browser, video and FULL flags and both oracles | **114 tests: 114 passed, 0 failed, 0 skipped**; Manim at the CI-pinned commit with numpy, and Mermaid 11.4.1 | `MANIM_DIR=… MERMAID_JS=… EXPLAIN_BROWSER=1 EXPLAIN_VIDEO=1 FULL=1 node --expose-gc --test test/*.test.ts` |
 | Leak test outside the runner, motion over every inherited scene | passed | `node --expose-gc test/leak.test.ts`, `npm run verify:motion` |
 | Every case of every explainer | **31 cases** passed seek, motion, bare runtime, skipped-trace, step-change, text-collision, 14 px label and footer-fit checks; reports keep full program-state traces | `npm run demos:check`, `out/checks/*/report.json` |
 | Model fidelity | each case's step-boundary state equals its model; RFC 7636/Node crypto, `git hash-object` and scoped-model oracles | `test/explain-fidelity.test.ts`, `test/explain-models.test.ts` |

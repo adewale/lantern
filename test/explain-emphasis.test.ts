@@ -262,3 +262,19 @@ test('helper fixes: near-black accents get a real emphasis hue, notes avoid thei
   }
   await new (bound(Fixes))(new NullSink()).run();
 });
+
+test('a captioned step records where its reading hold begins, so the player can stop when the picture does', async () => {
+  class Held extends Scene {
+    override async construct() {
+      stage(this, { palette: { paper: PAPER, ink: INK, accent: ACCENT, muted: '#999999' } });
+      await this.step('one', { title: 'Short motion, long caption', caption: 'word '.repeat(40) });
+      await this.play(new FadeIn(new Text('moves', { color: INK })), { runTime: 1 });
+      await this.step('two', { title: 'No hold needed' });
+      await this.play(new FadeIn(new Text('more', { color: INK }).moveTo([0, -2])), { runTime: 1 });
+    }
+  }
+  const [one, two] = (await traceScene(Held)).steps;
+  assert.ok(one!.hold! > one!.t0 && one!.hold! < one!.t1!, 'the hold starts after the motion and before t1');
+  assert.ok(Math.abs(one!.t1! - one!.t0 - (40 / 160) * 60) < 1e-6, 'video keeps the full reading time');
+  assert.equal(two!.hold, undefined);
+});

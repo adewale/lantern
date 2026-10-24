@@ -25,6 +25,8 @@ export interface Step {
   frame0: number;
   t1: number | null;
   frame1: number | null;
+  /** When the caption-reading hold began, if the step needed one. Players stop here; video plays on to t1. */
+  hold?: number;
   meta: StepMeta;
 }
 
@@ -149,7 +151,10 @@ export class Scene {
     if (typeof caption === 'string') {
       const need = caption.trim().split(/\s+/).length / Scene.captionWpm * 60;
       const left = need - (this.time - s.t0);
-      if (left > 1e-9) await this.wait(left);
+      if (left > 1e-9) {
+        s.hold = this.time;
+        await this.wait(left);
+      }
     }
     this.current = null;
     s.t1 = this.time; s.frame1 = this.frameCount;

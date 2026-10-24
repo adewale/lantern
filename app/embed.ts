@@ -259,7 +259,8 @@ export async function mountEmbed(
     chrome();
     const step = trace.steps[selected]!,
       start = step.t0,
-      end = step.t1 ?? trace.duration;
+      // Stop when the picture stops: the caption-reading hold is for video, while here the reader sets the pace.
+      end = step.hold ?? step.t1 ?? trace.duration;
     const container = el('div'),
       dom = new DomSink(container),
       seek = new SeekSink(dom, start);
