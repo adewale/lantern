@@ -6,8 +6,8 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-24.04  # playwright-core 1.56 has no build for 26.04
-    timeout-minutes: 10
+    runs-on: ubuntu-24.04  # the pinned image the oracle and embed tests were validated on
+    timeout-minutes: 25  # full suite, browser gates, 31 demo cases and video
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

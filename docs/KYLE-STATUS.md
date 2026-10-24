@@ -27,7 +27,7 @@ The pass also fixed three bugs that the earlier checks missed:
 - **Verifier warnings:** Agentic Mermaid names an edge by its position among all edges (`A->C#1`), while snapshot parts number edges per endpoint pair (`edge:A->C#0`). `findingsOf(snapshot)`, also available as `d.findings()`, resolves each warning to its part through the verifier's own edge order, including parallel edges. The Agentic Mermaid explainer uses it instead of guessing by endpoints. Upstream could still add the part id to each finding.
 - **Smallest labels:** the git explainer's "parent" edge label (14.0 px) became a note on the link, and the KV-cache diagram's shorter node names let its "hit" and "miss" labels grow.
 - **Reading holds:** a step's caption-reading hold is part of its scene time, so after **Next** the player kept "playing" a still frame for up to about 10 s. Each step now records when its hold begins (`hold` in the trace); the player stops there, and video still plays to `t1`. The three inherited golden traces changed only by gaining that field.
-- **Node 26** is the supported runtime in `package.json`, the lockfile, CI and the docs.
+- **Node 26** is the supported runtime in `package.json`, the lockfile, CI and the docs. On Node 26 the installer in `playwright-core` 1.56.1 hangs after downloading Chromium (reproduced locally; it stalled CI until the job timed out), so the pin moved to 1.64.1, which installs in about 15 s. The browser tests pass on both a cached Chromium and 1.64.1's own headless shell.
 
 ## Evidence from this checkout (25 October 2026, Node 26.12.1, macOS, after the follow-up fixes)
 
