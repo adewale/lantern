@@ -201,11 +201,12 @@ export default class GitExplainer extends Scene {
       C2 = `C2["commit<br/>${short(c2)}"]`;
     const objects =
       `${C2}\n${C1}\n${T2}\n${T1}\n${B2}\n${B1}\n` +
-      `C1 --> T1\nT1 --> Hello\nC2 -->|parent| C1\nC2 --> T2\n` +
+      `C1 --> T1\nT1 --> Hello\nC2 --> C1\nC2 --> T2\n` +
       (add ? `T2 --> Hello\nT2 --> New` : `T2 --> New`);
     const CHANGE = `graph LR\nMain([main])\n${objects}\nMain --> C1`;
     await s.clearOverlays();
     await d.morph({ source: CHANGE, style: STYLE });
+    await d.note('edge:C2->C1#0', 'parent', { side: 'below' });
     // Tree one's entries against tree two's, as the model encoded them.
     const before = entryLines(repo, t1, 12),
       after = entryLines(repo, t2, 12);
@@ -274,6 +275,7 @@ export default class GitExplainer extends Scene {
       ],
       { trail: true },
     );
+    await d.note('edge:C2->C1#0', 'parent', { side: 'below' });
     await d.note('C1', 'still reachable', { side: 'above' });
 
     // ── hashes: every id covers the ids beneath it ──────────────────────
@@ -290,6 +292,7 @@ export default class GitExplainer extends Scene {
     await d.clearNotes();
     await d.unmark();
     await d.mark(['C2', 'T2', 'C1', 'edge:C2->T2#0', 'edge:C2->C1#0']);
+    await d.note('edge:C2->C1#0', 'parent', { side: 'below' });
     await body.focus([0, 1]);
     this.state = { hello, t1, c1, nextBlob, t2, c2, shared: add, head: this.state.head };
   }

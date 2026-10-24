@@ -1,5 +1,5 @@
 import { Scene } from '../../../src/index.ts';
-import { stage, settingsOf } from '../../../explain/index.ts';
+import { stage, settingsOf, edgePartOf } from '../../../explain/index.ts';
 import type { DiagramSnapshot } from '../../../integrations/agentic-mermaid/snapshot.ts';
 const STYLE = 'blueprint';
 const BAD = 'graph LR\nA{Cached} --> B[Reply]\nA --> C[Database]';
@@ -19,13 +19,6 @@ interface Findings {
   layout: { edges: { id: string; label?: { text: string } }[] };
 }
 const findingsOf = (snap: DiagramSnapshot) => snap.findings as Findings;
-/** The snapshot part a verifier warning points at ("A->C#1" is the edge's global index). */
-function edgePart(snap: DiagramSnapshot, edge: string): string {
-  const [, from, to] = /^(.+)->(.+)#\d+$/.exec(edge) ?? [];
-  const part = snap.parts.find((p) => p.role === 'edge' && p.from === from && p.to === to);
-  if (!part) throw new Error(`No edge part for warning ${edge}`);
-  return part.id;
-}
 const SIDE_TOP = [2.65, 0.15, 7.55, 3.25] as const,
   SIDE_LOW = [2.65, -4.25, 7.55, -0.15] as const;
 
@@ -77,13 +70,17 @@ export default class MermaidExplainer extends Scene {
     const findings = findingsOf(d.snapshot);
     this.state.warnings = findings.warnings;
     if (findings.warnings.length) {
-      const flagged = findings.warnings.map((w) => edgePart(d.snapshot, w.edge));
+      const flagged = d.findings().map((w) => {
+        if (!w.part) throw new Error(`Warning ${w.edge} names no edge part`);
+        return w.part;
+      });
       await d.mark(['A', ...flagged]);
       for (const [i, id] of flagged.entries())
         await d.note(id, 'unlabeled: yes or no?', { side: i === 0 ? 'above' : 'below' });
     } else {
-      const labelled = findings.layout.edges.filter((e) => e.label);
-      await d.mark(labelled.map((e) => edgePart(d.snapshot, `${e.id}#0`)));
+      await d.mark(
+        findings.layout.edges.flatMap((e, i) => (e.label ? [edgePartOf(d.snapshot, `${e.id}#${i}`)!] : [])),
+      );
     }
     await s.code(
       [
@@ -108,7 +105,7 @@ export default class MermaidExplainer extends Scene {
       await ops.focus([0, OPS.length * 3 - 1]);
       await d.morph({ source: GOOD, style: STYLE }, { ops: OPS });
       const after = findingsOf(d.snapshot);
-      await d.mark(OPS.map((op) => edgePart(d.snapshot, op.target)));
+      await d.mark(OPS.map((op) => `edge:${op.target}`));
       await s.card(
         [
           ...after.layout.edges.map((e) => [`${e.id} label`, e.label?.text ?? '(none)'] as const),

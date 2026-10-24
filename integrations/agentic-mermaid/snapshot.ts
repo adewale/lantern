@@ -169,3 +169,38 @@ export function snapshotResolver(store: SnapshotStore): DiagramResolver {
     },
   };
 }
+
+/** A verifier warning, with the snapshot part it is about when it names an edge. */
+export interface Finding {
+  code: string;
+  node?: string;
+  edge?: string;
+  part?: string;
+  [key: string]: unknown;
+}
+/**
+ * The part id for an edge the verifier names by its position among all edges
+ * ("A->C#1"). Snapshot parts number edges per endpoint pair ("edge:A->C#0").
+ * The verifier's layout lists edges in global order, so the k-th layout edge
+ * and the count of earlier edges with the same endpoints give the part exactly.
+ */
+export function edgePartOf(snapshot: DiagramSnapshot, globalEdge: string): string | undefined {
+  const index = /#(\d+)$/.exec(globalEdge)?.[1];
+  if (index == null) return undefined;
+  const layout = (snapshot.findings as { layout?: { edges?: { from: string; to: string }[] } } | null)?.layout;
+  const order =
+    layout?.edges ?? snapshot.parts.filter((p) => p.from && p.to && !p.owner).map((p) => ({ from: p.from!, to: p.to! }));
+  const edge = order[Number(index)];
+  if (!edge) return undefined;
+  const nth = order.slice(0, Number(index)).filter((e) => e.from === edge.from && e.to === edge.to).length;
+  const part = `edge:${edge.from}->${edge.to}#${nth}`;
+  return snapshot.parts.some((p) => p.id === part) ? part : undefined;
+}
+/** The snapshot's verifier warnings, each with the `part` its edge names (see `edgePartOf`). */
+export function findingsOf(snapshot: DiagramSnapshot): Finding[] {
+  const warnings = (snapshot.findings as { warnings?: Finding[] } | null)?.warnings ?? [];
+  return warnings.map((warning) => {
+    const part = warning.edge ? edgePartOf(snapshot, warning.edge) : undefined;
+    return part ? { ...warning, part } : { ...warning };
+  });
+}

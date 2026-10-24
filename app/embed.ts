@@ -87,7 +87,104 @@ export async function mountEmbed(
   standalone.target = '_blank';
   standalone.rel = 'noopener';
   footer.append(standalone);
-  root.replaceChildren(title, stage, caption, transport, notice, chapters, fields, transcript, footer);
+  // Zoom and pan: a 16:9 stage on a phone shows 14 px labels at about 4 px, so the reader
+  // needs to enlarge the vector drawing itself. The controls sit in a row under the stage
+  // (outside its role=img, so assistive technology reaches them) and cover none of it.
+  const frame = el('div');
+  frame.className = 'stage-frame';
+  const zoomBar = el('div');
+  zoomBar.className = 'zoom';
+  zoomBar.setAttribute('aria-label', 'Zoom the stage');
+  const zoomIn = el('button', '+'),
+    zoomOut = el('button', '−'),
+    zoomFit = el('button', 'Fit');
+  zoomIn.setAttribute('aria-label', 'Zoom in');
+  zoomOut.setAttribute('aria-label', 'Zoom out');
+  zoomFit.setAttribute('aria-label', 'Fit stage');
+  zoomBar.append(zoomOut, zoomIn, zoomFit);
+  frame.append(stage, zoomBar);
+  root.replaceChildren(title, frame, caption, transport, notice, chapters, fields, transcript, footer);
+  let zoom = { k: 1, x: 0, y: 0 };
+  const MAX_ZOOM = 6;
+  function applyZoom() {
+    const w = stage.clientWidth,
+      h = stage.clientHeight;
+    zoom.k = Math.min(MAX_ZOOM, Math.max(1, zoom.k));
+    zoom.x = Math.min(0, Math.max(w - w * zoom.k, zoom.x));
+    zoom.y = Math.min(0, Math.max(h - h * zoom.k, zoom.y));
+    const svg = stage.querySelector('svg');
+    if (svg) {
+      svg.style.transformOrigin = '0 0';
+      svg.style.transform = zoom.k === 1 ? '' : `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.k})`;
+    }
+    stage.classList.toggle('zoomed', zoom.k > 1);
+    zoomOut.disabled = zoom.k <= 1;
+    zoomFit.disabled = zoom.k <= 1;
+    zoomIn.disabled = zoom.k >= MAX_ZOOM;
+  }
+  /** Zoom by `factor` keeping the stage point (px, py) still. */
+  function zoomAt(factor: number, px = stage.clientWidth / 2, py = stage.clientHeight / 2) {
+    const k = Math.min(MAX_ZOOM, Math.max(1, zoom.k * factor)),
+      r = k / zoom.k;
+    zoom = { k, x: px - (px - zoom.x) * r, y: py - (py - zoom.y) * r };
+    applyZoom();
+  }
+  zoomIn.onclick = () => zoomAt(1.6);
+  zoomOut.onclick = () => zoomAt(1 / 1.6);
+  zoomFit.onclick = () => {
+    zoom = { k: 1, x: 0, y: 0 };
+    applyZoom();
+  };
+  const local = (e: { clientX: number; clientY: number }) => {
+    const r = stage.getBoundingClientRect();
+    return [e.clientX - r.left, e.clientY - r.top] as const;
+  };
+  stage.addEventListener(
+    'wheel',
+    (e) => {
+      // Trackpad pinch arrives as ctrl+wheel; a plain wheel keeps scrolling the page.
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      zoomAt(Math.exp(-e.deltaY / 100), ...local(e));
+    },
+    { passive: false },
+  );
+  stage.addEventListener('dblclick', (e) => {
+    if (zoom.k > 1) zoomFit.click();
+    else zoomAt(2.5, ...local(e));
+  });
+  const pointers = new Map<number, { x: number; y: number }>();
+  let pinch = 0;
+  stage.addEventListener('pointerdown', (e) => {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinch = Math.hypot(a!.x - b!.x, a!.y - b!.y);
+    }
+    if (zoom.k > 1 || pointers.size === 2) stage.setPointerCapture(e.pointerId);
+  });
+  stage.addEventListener('pointermove', (e) => {
+    const last = pointers.get(e.pointerId);
+    if (!last) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      const d = Math.hypot(a!.x - b!.x, a!.y - b!.y);
+      if (pinch) zoomAt(d / pinch, ...local({ clientX: (a!.x + b!.x) / 2, clientY: (a!.y + b!.y) / 2 }));
+      pinch = d;
+    } else if (zoom.k > 1) {
+      zoom.x += e.clientX - last.x;
+      zoom.y += e.clientY - last.y;
+      applyZoom();
+    }
+  });
+  const release = (e: PointerEvent) => {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinch = 0;
+  };
+  stage.addEventListener('pointerup', release);
+  stage.addEventListener('pointercancel', release);
+  new ResizeObserver(() => applyZoom()).observe(stage);
   reportHeight(root);
 
   function urlFor(): URL {
@@ -128,6 +225,7 @@ export async function mountEmbed(
     await renderAt(Active, at, sink);
     if (gen === generation) {
       stage.replaceChildren(...container.childNodes);
+      applyZoom();
       root.classList.remove('loading');
       document.dispatchEvent(
         new CustomEvent('lantern:step', { detail: { step: step.step, settings: values } }),
@@ -175,6 +273,7 @@ export async function mountEmbed(
           if (!attached && scene.time + 1e-8 >= start) {
             attached = true;
             stage.replaceChildren(...container.childNodes);
+            applyZoom();
           }
         },
       },
@@ -233,6 +332,7 @@ export async function mountEmbed(
       notice.textContent = `${(error as Error).message}. Showing the default case.`;
     }
     for (const [id, select] of selects) select.value = values[id]!;
+    zoom = { k: 1, x: 0, y: 0 };
     const key = JSON.stringify(values);
     let entry = cache.get(key);
     if (!entry) {
@@ -273,14 +373,14 @@ export async function mountEmbed(
   enlarge.onclick = async () => {
     if (document.fullscreenElement) await document.exitFullscreen();
     else {
-      await stage.requestFullscreen();
+      await frame.requestFullscreen();
       // Phones read a 16:9 stage best sideways; not every browser allows the lock.
       const orientation = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> };
       await orientation.lock?.('landscape').catch(() => {});
     }
   };
   document.addEventListener('fullscreenchange', () => {
-    const on = document.fullscreenElement === stage;
+    const on = document.fullscreenElement === frame;
     enlarge.textContent = on ? 'Exit full screen' : 'Enlarge';
     enlarge.setAttribute('aria-pressed', String(on));
   });
@@ -301,7 +401,16 @@ export async function mountEmbed(
     const tag = (e.target as HTMLElement).tagName;
     if (['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON', 'A', 'SUMMARY'].includes(tag) || e.ctrlKey || e.metaKey)
       return;
-    if (e.key === 'ArrowRight') {
+    if (e.key === '+' || e.key === '=') {
+      e.preventDefault();
+      zoomAt(1.6);
+    } else if (e.key === '-') {
+      e.preventDefault();
+      zoomAt(1 / 1.6);
+    } else if (e.key === '0') {
+      e.preventDefault();
+      zoomFit.click();
+    } else if (e.key === 'ArrowRight') {
       e.preventDefault();
       void advance();
     } else if (e.key === 'ArrowLeft') {

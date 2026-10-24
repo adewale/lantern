@@ -116,7 +116,7 @@ npm run demos:check  # all fourteen authored scenes, all 31 cases
 ## Boundaries worth knowing
 - Diagram text uses embedded **Inter**, not each Agentic Mermaid style's font. Native text also offers JetBrains Mono. Shapes, rough strokes, paint and routes come from the real style backend; unsupported SVG features fail rather than disappear.
 - The SVG lowering pass runs at **build time**. Browser snapshots contain resolved cubic geometry and compact text runs; the runtime shapes those runs from its embedded font. No browser SVG parser, CSS colour resolver or diagram layout engine is shipped.
-- The legibility gate, at a 1280-pixel stage, requires each diagram label to reach 14 px in some step's last frame, inside the diagram viewport, and each native label to reach 14 px while fully visible. On a 390-pixel phone that is about 4 px, so phone readers rely on Enlarge, the captions and the transcript.
+- The legibility gate, at a 1280-pixel stage, requires each diagram label to reach 14 px in some step's last frame, inside the diagram viewport, and each native label to reach 14 px while fully visible. On a 390-pixel phone that is about 4 px until the reader zooms the stage (pinch, double-tap or **+**); at 4× it is about 17 px.
 - Models are scoped and cited. Seasons uses a stated astronomical approximation. The 2password example is a metadata/search/authentication **fixture**, not a verified port of unavailable source or a live vault audit.
 - Preview prints a contact sheet and serves the built page. Rerun after edits; it is not a hot-reloading author IDE.
 

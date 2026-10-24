@@ -1,9 +1,9 @@
 import { Scene, FadeIn, FadeOut } from '../../../src/index.ts';
 import { stage, settingsOf, CodeBlock } from '../../../explain/index.ts';
 const STYLE = 'hand-drawn';
-const BEFORE = 'graph LR\nRequest[Request] --> H[Worker handler]\nH --> D1[D1 database]';
+const BEFORE = 'graph LR\nRequest[Request] --> H[Handler]\nH --> D1[(D1)]';
 const AFTER =
-  'graph LR\nRequest[Request] --> H[Worker handler]\nH --> KV[KV cache]\nKV -->|miss| D1[D1 database]\nKV -->|hit| Reply[Reply]\nD1 --> Reply';
+  'graph LR\nRequest[Request] --> H[Handler]\nH --> KV[KV cache]\nKV -->|miss| D1[(D1)]\nKV -->|hit| Reply[Reply]\nD1 --> Reply';
 const OPS = [
   { kind: 'remove_edge', id: 'H->D1#0' },
   { kind: 'add_node', id: 'KV', label: 'KV cache' },

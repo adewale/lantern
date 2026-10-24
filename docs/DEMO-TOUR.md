@@ -37,7 +37,7 @@ Open **KV-cache merge request** ("Five added lines put a KV cache in front of D1
 
 ### 4. Publish it
 
-Open **Two embeds on one host page** from the gallery. Open one transcript: only that iframe grows, and closing it shrinks the iframe again. Change a case in one embed; the other keeps its state. Each page also opens standalone, and **Enlarge** shows the stage full screen on a phone.
+Open **Two embeds on one host page** from the gallery. Open one transcript: only that iframe grows, and closing it shrinks the iframe again. Change a case in one embed; the other keeps its state. Each page also opens standalone. On a phone, double-tap a part of the stage or use **+** under it to read small labels, and **Enlarge** shows the stage full screen.
 
 Then open a **Captioned MP4**. It has the same steps and captions as the page, with one chapter per step, a subtitle track, a WebVTT file beside it and a build receipt. It has no audio track.
 
@@ -72,6 +72,6 @@ What to say: the HTML file is the product. It needs no runtime network, account 
 - That anything here has been deployed, released or tried by an outside author.
 - That the historical prototype's 49-diagram and 110-test numbers describe this checkout.
 - That all Mermaid families, style-specific fonts or arbitrary SVG are supported.
-- That a 14 px label on a 1280 px stage is readable on a phone without Enlarge.
+- That a 14 px label on a 1280 px stage is readable on a phone before the reader zooms.
 - That the models are complete implementations of the systems they explain, or that a caption is proof of a security or scientific claim.
 - That video bytes are identical across FFmpeg builds. Seeked SVG frames are the deterministic contract.

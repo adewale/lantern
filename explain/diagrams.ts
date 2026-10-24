@@ -15,7 +15,7 @@ import type { Scene, Mobject, Box, Vec, Style } from '../src/index.ts';
 import { Rectangle, Text } from '../src/index.ts';
 import { regionBox, raised, emphasis } from './look.ts';
 import type { Region } from './look.ts';
-import { diagramsOf } from '../integrations/agentic-mermaid/snapshot.ts';
+import { diagramsOf, findingsOf } from '../integrations/agentic-mermaid/snapshot.ts';
 import { outlineText } from '../integrations/agentic-mermaid/text.ts';
 import { recordWalk } from './trace.ts';
 import { lerpColor } from '../src/color.ts';
@@ -221,6 +221,11 @@ export class Diagram {
     } else this.order = all.map((p) => p.info.id);
     if (snapshot.family === 'gitgraph')
       this.order.sort((a, b) => this.get(a).center()[0] - this.get(b).center()[0]);
+  }
+
+  /** The verifier's warnings for this diagram, each with the `part` id it names (see `findingsOf`). */
+  findings() {
+    return findingsOf(this.snapshot);
   }
 
   get(id: string): Group {

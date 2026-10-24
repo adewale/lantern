@@ -48,7 +48,8 @@ const s = stage(this);              // palette from the first diagram; heading f
 // stage(this, { heading: 'Fixed' | false })    a fixed heading, or none
 
 const card = await s.card([['Balance', 3], ['Rate', '2 / second']], { at: 'side', title: 'Bucket' });
-await card.set({ Balance: 2 });     // crossfades changed values
+await card.set({ Balance: 2 });     // crossfades changed values; a card sizes to its first
+                                    // values, so pass `width` if later ones are longer
 await card.mark('Balance');         // a bar that stays on the row
 const code = await s.code(lines, { at: 'bottom', title: 'users.ts', diff: true });
 await code.focus([2, 3]);           // a bar that stays on lines 2–3
@@ -77,6 +78,7 @@ await d.mark(['DB']);                  // persistent emphasis; d.unmark() restor
 await d.dim(['API', 'DB']);            // fade the rest; d.dim(null) restores
 await d.note('DB', '1 read', { side: 'below' });   // follows focus; cleared by hide/morph
 await d.highlight(['DB']);             // a pulse only: nothing remains afterwards
+d.findings();                          // verifier warnings, each with the `part` id it names
 await d.focus(['API', 'DB']);
 await d.focus('all');
 await d.hide();

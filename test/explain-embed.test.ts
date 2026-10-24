@@ -247,6 +247,22 @@ test(
         ],
         references: true,
       });
+      // Zoom: a phone reader can enlarge the vector stage and pan it, without page overflow.
+      const width = () => page.locator('.stage svg').evaluate((svg) => svg.getBoundingClientRect().width);
+      const fit = await width();
+      await page.getByRole('button', { name: 'Zoom in' }).click();
+      await page.getByRole('button', { name: 'Zoom in' }).click();
+      assert.ok(Math.abs((await width()) / fit - 1.6 * 1.6) < 0.01, 'two zoom steps enlarge the drawing 2.56×');
+      const box = (await page.locator('.stage').boundingBox())!;
+      const before = await page.locator('.stage svg').evaluate((svg) => svg.getBoundingClientRect().left);
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width / 2 + 60, box.y + box.height / 2, { steps: 4 });
+      await page.mouse.up();
+      assert.ok((await page.locator('.stage svg').evaluate((svg) => svg.getBoundingClientRect().left)) > before, 'drag pans');
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      await page.getByRole('button', { name: 'Fit stage' }).click();
+      assert.ok(Math.abs((await width()) - fit) < 0.5);
       await page.locator('summary').click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
       await page.locator('#content').focus();

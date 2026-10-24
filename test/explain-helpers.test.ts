@@ -207,3 +207,26 @@ test('inline script escaping neutralises </script without changing what the code
   };
   assert.equal(run(escaped), run(code));
 });
+test('verifier warnings resolve to snapshot parts even when global and per-pair edge numbers differ', async () => {
+  const { findingsOf, edgePartOf } = await import('../explain/index.ts');
+  const part = (id: string, from: string, to: string) => ({ id, role: 'edge', kind: 'connector', svg: '', shapes: [], from, to });
+  // Edges in source order: A->B, A->C, A->B (parallel). Globally the second A->B is #2; per pair it is #1.
+  const snapshot = {
+    ...fixture(),
+    parts: [part('edge:A->B#0', 'A', 'B'), part('edge:A->C#0', 'A', 'C'), part('edge:A->B#1', 'A', 'B')],
+    findings: {
+      ok: true,
+      warnings: [
+        { code: 'DECISION_BRANCH_UNLABELED', node: 'A', edge: 'A->C#1' },
+        { code: 'DECISION_BRANCH_UNLABELED', node: 'A', edge: 'A->B#2' },
+        { code: 'OTHER', node: 'A' },
+      ],
+      layout: { edges: [{ from: 'A', to: 'B' }, { from: 'A', to: 'C' }, { from: 'A', to: 'B' }] },
+    },
+  } as unknown as DiagramSnapshot;
+  assert.deepEqual(
+    findingsOf(snapshot).map((f) => f.part),
+    ['edge:A->C#0', 'edge:A->B#1', undefined],
+  );
+  assert.equal(edgePartOf(snapshot, 'A->B#9'), undefined);
+});

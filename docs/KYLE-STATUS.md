@@ -12,7 +12,7 @@ The first local build passed its mechanical checks while teaching poorly. A read
 
 - **Helpers** (`explain/`): the stage heading follows step titles; content goes into named regions (`main`, `side`, `top`, `bottom`…). Diagrams gain `mark`, `dim`, `note` and walk trails that stay on screen until removed. `s.card()` returns a card whose values `set()` updates and whose rows `mark()` lights. `s.code()` keeps a focus bar on the lines under discussion. In styles whose accent is grey or near-black, emphasis is orange.
 - **Checks** (`explain check`, every case): a step fails if its last frame, ignoring the heading, matches the previous step's. Native text that overlaps other text or is cut off by the frame fails, labels must reach 14 px at a 1280 px stage (up from 9 px; diagram labels in some step's last frame), and every caption must fit three lines of the video footer. The checks sample a step's true last frame; the contact sheets and the player's paused view used to show the frame before it.
-- **Player**: **Next** plays the step's animation and stops on its last frame instead of jumping there. **Replay step** runs it again, and **Enlarge** shows the stage full screen, which is how a phone reader can read the labels.
+- **Player**: **Next** plays the step's animation and stops on its last frame instead of jumping there. **Replay step** runs it again, **Enlarge** shows the stage full screen, and the stage zooms and pans (buttons, pinch, double-tap, Ctrl-scroll) so a phone reader can enlarge any label.
 - **Scenes**: all fourteen were rewritten against those checks, with values on screen taken from each scene's model. Their titles, captions and on-stage text were then edited with [anti-slop-writing](https://github.com/adewale/anti-slop-writing); that pass also corrected the day-length formula (missing its 24/π factor), a seasons title that was wrong for Sydney, and a glyph caption that misdescribed where label widths come from.
 
 The pass also fixed three bugs that the earlier checks missed:
@@ -21,12 +21,20 @@ The pass also fixed three bugs that the earlier checks missed:
 - **Script escaping:** the page builder escaped every `</` in the inlined script, which broke any bundle containing the regex `/</g`; the Lantern page failed to start in the served review. Only `</script` and `<!--` are escaped now, with a regression test.
 - **Chromium lookup:** capture looked for Chromium only in the Linux Playwright cache and could pick an incomplete install. It now checks the macOS cache and requires Playwright's `INSTALLATION_COMPLETE` marker.
 
-## Evidence from this checkout (25 October 2026, Node 26.12.1, macOS)
+## Follow-up fixes
+
+- **Phones:** the stage zooms and pans, so small labels can be read on a 390 px screen (see Limits for the numbers).
+- **Verifier warnings:** Agentic Mermaid names an edge by its position among all edges (`A->C#1`), while snapshot parts number edges per endpoint pair (`edge:A->C#0`). `findingsOf(snapshot)`, also available as `d.findings()`, resolves each warning to its part through the verifier's own edge order, including parallel edges. The Agentic Mermaid explainer uses it instead of guessing by endpoints. Upstream could still add the part id to each finding.
+- **Smallest labels:** the git explainer's "parent" edge label (14.0 px) became a note on the link, and the KV-cache diagram's shorter node names let its "hit" and "miss" labels grow.
+- **Node 26** is the supported runtime in `package.json`, the lockfile, CI and the docs.
+
+## Evidence from this checkout (25 October 2026, Node 26.12.1, macOS, after the follow-up fixes)
 
 | Gate | Result | Command |
 | --- | --- | --- |
 | TypeScript, declarations, consumer compile | passed | `npm run check` |
-| Full suite with browser, video and FULL flags | **112 tests: 108 passed, 0 failed, 4 skipped** (they need an external Manim checkout or Mermaid bundle) | `EXPLAIN_BROWSER=1 EXPLAIN_VIDEO=1 FULL=1 node --expose-gc --test test/*.test.ts` |
+| Full suite with browser, video and FULL flags and both oracles | **113 tests: 113 passed, 0 failed, 0 skipped**; Manim at the CI-pinned commit with numpy, and Mermaid 11.4.1 | `MANIM_DIR=… MERMAID_JS=… EXPLAIN_BROWSER=1 EXPLAIN_VIDEO=1 FULL=1 node --expose-gc --test test/*.test.ts` |
+| Leak test outside the runner, motion over every inherited scene | passed | `node --expose-gc test/leak.test.ts`, `npm run verify:motion` |
 | Every case of every explainer | **31 cases** passed seek, motion, bare runtime, skipped-trace, step-change, text-collision, 14 px label and footer-fit checks; reports keep full program-state traces | `npm run demos:check`, `out/checks/*/report.json` |
 | Model fidelity | each case's step-boundary state equals its model; RFC 7636/Node crypto, `git hash-object` and scoped-model oracles | `test/explain-fidelity.test.ts`, `test/explain-models.test.ts` |
 | Style fidelity | twelve styles' non-text artwork within 1/255 mean channel error of Agentic Mermaid's renderer; typography excluded | `test/explain-capture.test.ts` |
@@ -50,8 +58,7 @@ npm run demos:serve
 
 - Diagram lettering is embedded Inter, stretched to the width Agentic Mermaid writes into each label's `textLength`, so styles with their own fonts (hand-drawn, pen-and-ink) differ in letterforms.
 - The evidence covers eight diagram families and twelve styles. Unsupported SVG features fail the build rather than disappearing.
-- A 14 px label at a 1280 px stage is about 4 px on a 390 px phone; phone readers depend on Enlarge, the captions and the transcript.
-- Agentic Mermaid's verifier names edges by global index (`A->C#1`) while snapshot parts use a per-pair index (`edge:A->C#0`), so the Agentic Mermaid explainer maps warnings to parts by endpoints. Asking upstream to include the part id in each finding would remove that mapping.
+- A 14 px label at a 1280 px stage is about 4 px on a 390 px phone until the reader zooms; at 4× it is about 17 px.
 - The models are scoped and cited, not complete implementations. Seasons is an astronomical approximation. 2password is an offline fixture with made-up items, not a port of its source or an audit of a vault.
 - Owner decisions remain: the public name and package (the inherited npm name is still `manim-js`), an accountable maintainer, acceptance by an outside author on a clean machine, and production hosting with checks on the bytes and headers actually served.
 

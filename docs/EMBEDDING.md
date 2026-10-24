@@ -13,6 +13,8 @@ The generated HTML is the product. Host it anywhere that can serve a static file
 <a href="/explainers/pap.html?step=sign-in&signin=device">Open explanation in a new page</a>
 ```
 
+Under the stage, **+**, **−** and **Fit** zoom the drawing itself, and so do pinch, double-tap and Ctrl-scroll; dragging pans once zoomed. Zoom keeps its place across steps and resets when the case changes. On a 390-pixel phone, a label drawn at 14 px on a 1280-pixel stage shows at about 4 px until the reader zooms, and at about 17 px at 4×.
+
 `allow="fullscreen"` lets the reader's **Enlarge** control show the stage full screen (and sideways on phones that allow it); without it the control is hidden inside the frame (standalone pages always have it). The loader sets it.
 
 The 16:9 stage is not the document's aspect ratio. Captions, chapters and settings change the required height, especially on phones. A raw iframe uses its reserved height and normal scrolling. It does not require messaging. `file:` artifacts also remain readable directly, but opaque-origin auto-sizing is not supported.
