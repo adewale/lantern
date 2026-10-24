@@ -1,21 +1,57 @@
-import { Scene, Code, FadeIn, FadeOut, Transform } from '../../../src/index.ts';
-import { stage, palette, settingsOf } from '../../../explain/index.ts';
-const BEFORE = 'graph LR\nRequest[Request] --> H[Handler]\nH --> D1[Database]';
+import { Scene, FadeIn, FadeOut } from '../../../src/index.ts';
+import { stage, settingsOf, CodeBlock } from '../../../explain/index.ts';
+const STYLE = 'hand-drawn';
+const BEFORE = 'graph LR\nRequest[Request] --> H[Worker handler]\nH --> D1[D1 database]';
 const AFTER =
-  'graph LR\nRequest[Request] --> H[Handler]\nH --> KV[Cache]\nKV -->|miss| D1[Database]\nKV -->|hit| Reply[Reply]\nD1 --> Reply';
+  'graph LR\nRequest[Request] --> H[Worker handler]\nH --> KV[KV cache]\nKV -->|miss| D1[D1 database]\nKV -->|hit| Reply[Reply]\nD1 --> Reply';
 const OPS = [
   { kind: 'remove_edge', id: 'H->D1#0' },
-  { kind: 'add_node', id: 'KV', label: 'Cache' },
+  { kind: 'add_node', id: 'KV', label: 'KV cache' },
   { kind: 'add_node', id: 'Reply', label: 'Reply' },
   { kind: 'add_edge', from: 'H', to: 'KV' },
   { kind: 'add_edge', from: 'KV', to: 'D1', label: 'miss' },
   { kind: 'add_edge', from: 'KV', to: 'Reply', label: 'hit' },
   { kind: 'add_edge', from: 'D1', to: 'Reply' },
 ];
+// The merge request from Lantern's own example (scenes/mr-cache.ts).
+const OLD = ['async function getUser(id, env) {', '  return env.DB.prepare(SQL).bind(id).first();', '}'];
+const DIFF = [
+  '  async function getUser(id, env) {',
+  '-   return env.DB.prepare(SQL).bind(id).first();',
+  '+   const hit = await env.KV.get(`user:${id}`, "json");',
+  '+   if (hit) return hit;',
+  '+   const row = await env.DB.prepare(SQL).bind(id).first();',
+  '+   await env.KV.put(`user:${id}`, JSON.stringify(row), { expirationTtl: 300 });',
+  '+   return row;',
+  '  }',
+];
+const NEW = [
+  'async function getUser(id, env) {',
+  '  const hit = await env.KV.get(`user:${id}`, "json");',
+  '  if (hit) return hit;',
+  '  const row = await env.DB.prepare(SQL).bind(id).first();',
+  '  await env.KV.put(`user:${id}`, JSON.stringify(row), { expirationTtl: 300 });',
+  '  return row;',
+  '}',
+];
+const PATH = {
+  hit: [
+    ['Request', 'H'],
+    ['H', 'KV'],
+    ['KV', 'Reply'],
+  ],
+  miss: [
+    ['Request', 'H'],
+    ['H', 'KV'],
+    ['KV', 'D1'],
+    ['D1', 'Reply'],
+  ],
+} as const;
+
 export default class CacheMRExplainer extends Scene {
   static meta = {
     id: 'mr-cache',
-    title: 'A code change becomes an architecture change',
+    title: 'Five added lines put a KV cache in front of D1',
     sources: ['https://github.com/ivarvong/lantern/blob/2c7bad5/scenes/mr-cache.ts'],
   };
   static settings = [
@@ -30,77 +66,66 @@ export default class CacheMRExplainer extends Scene {
     },
   ];
   override async construct() {
-    const which = settingsOf(this).request!,
-      s = stage(this, { palette: palette('hand-drawn'), title: 'Before: every request reads storage' });
+    const which = settingsOf(this).request as 'hit' | 'miss',
+      s = stage(this);
+
     await this.step('before', {
       title: 'Before: every request reads D1',
       caption:
-        'The handler reads the database on every request. Follow the token: there is no earlier place to answer.',
+        'getUser is a single D1 query, so the walked request goes from the handler straight to D1, and every lookup is a database read.',
     });
-    const d = await s.show({ source: BEFORE, style: 'hand-drawn' }, { box: [-7, -0.5, 7, 2.8] });
-    await d.walk([
-      ['Request', 'H'],
-      ['H', 'D1'],
-    ]);
-    this.state.databaseReads = 'every request';
-    await this.step('diff', {
-      title: 'Read the diff',
-      caption:
-        'Check the cache first. Only a miss reads storage and populates the cache. A time to live bounds how long cached values survive.',
-    });
-    const before = new Code(['return await DB.get(id);'], { fontSize: 0.28 }).moveTo([0, -2.0]);
-    const after = new Code(
+    const flow = await s.show({ source: BEFORE, style: STYLE }, { box: 'top' });
+    const code = await s.code(OLD, { at: 'bottom', title: 'users.ts' });
+    await flow.walk(
       [
-        'const hit = await KV.get(id);',
-        'if (hit) return hit;',
-        'const row = await DB.get(id);',
-        'await KV.put(id, row, { ttl: 300 });',
-        'return row;',
+        ['Request', 'H'],
+        ['H', 'D1'],
       ],
-      { fontSize: 0.25 },
-    ).moveTo([0, -2]);
-    after.setFill(s.palette.ink);
-    before.setFill(s.palette.ink);
-    await this.play(new FadeIn(before));
-    await this.play(new Transform(before, after, { replace: true }));
-    await this.step('after', {
-      title: 'Apply the same edit to the architecture',
+      { trail: true },
+    );
+    await code.focus(1);
+    await flow.note('D1', 'read on every request', { side: 'below' });
+    this.state.databaseReads = 'every request';
+
+    await this.step('diff', {
+      title: 'The merge request reads KV before D1',
       caption:
-        'The code and diagram describe one change. Existing identities stay put through the morph; new cache and reply marks arrive.',
+        'The diff puts a KV lookup, keyed by the user’s id, ahead of the D1 query. Only a miss reads the database, and it then writes the row to KV with expirationTtl: 300, a five-minute time to live.',
     });
-    await s.title('After: cache hits avoid a storage read');
-    await this.play(new FadeOut(after));
-    await d.morph({ source: AFTER, style: 'hand-drawn' }, { ops: OPS });
+    const diff = new CodeBlock(this, s.palette, DIFF, { at: s.regions.bottom, fontSize: 0.22, title: 'users.ts', diff: true });
+    s.keep(diff);
+    await flow.clearNotes();
+    await flow.unmark();
+    await this.play(new FadeOut(code), new FadeIn(diff));
+
+    await this.step('after', {
+      title: 'Replayed on the diagram, the diff adds KV and a hit path',
+      caption:
+        'The same edit, replayed as diagram operations, removes the handler’s edge to D1 and puts a KV cache between them. A hit goes from KV straight to Reply, while a miss falls through to D1 before replying.',
+    });
+    const merged = new CodeBlock(this, s.palette, NEW, { at: s.regions.bottom, fontSize: 0.22, title: 'users.ts' });
+    s.keep(merged);
+    await this.play(new FadeOut(diff), new FadeIn(merged));
+    await flow.morph({ source: AFTER, style: STYLE }, { ops: OPS });
+    await flow.note('KV', 'TTL 300 s', { side: 'above' });
     this.state.databaseReads = 'misses only';
+
     await this.step('request', {
-      title: which === 'hit' ? 'A cache hit' : 'A cache miss',
+      title: which === 'hit' ? 'A cache hit returns from KV with no D1 read' : 'A cache miss reads D1 once, then caches the row',
       caption:
         which === 'hit'
-          ? 'The value is already cached. The request returns without touching the database. Switch cases to follow the longer path.'
-          : 'The cache has no value. Read the database and return the result. Caching reduces repeated reads; it does not eliminate storage.',
+          ? 'The user is already in KV, so getUser returns on line three, the second highlighted line, and the note under D1 shows 0 reads. Choose ‘Cache miss’ under ‘Follow a request’ to see the longer path.'
+          : 'KV has no entry, so getUser runs the highlighted lines: it reads the row from D1, puts it in KV for 300 seconds and returns it. Lookups for the same user in that window are hits; D1 still serves every miss.',
     });
-    await d.walk(
-      which === 'hit'
-        ? [
-            ['Request', 'H'],
-            ['H', 'KV'],
-            ['KV', 'Reply'],
-          ]
-        : [
-            ['Request', 'H'],
-            ['H', 'KV'],
-            ['KV', 'D1'],
-            ['D1', 'Reply'],
-          ],
-    );
+    const path = PATH[which];
+    await flow.clearNotes();
+    await flow.dim([...new Set(path.flat())]);
+    await flow.walk(path, { trail: true });
+    await merged.focus(which === 'hit' ? [1, 2] : [3, 5]);
+    await flow.note('D1', which === 'hit' ? '0 reads' : '1 read, then cached', {
+      side: 'below',
+    });
     this.state.request = which;
     this.state.reads = which === 'hit' ? 0 : 1;
-    await s.card(
-      [
-        ['This request reads D1', this.state.reads],
-        ['TTL', '300 seconds'],
-      ],
-      { at: [0, -2.5] },
-    );
   }
 }

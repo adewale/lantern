@@ -12,11 +12,12 @@ Read [authoring](../../docs/EXPLAINERS.md), [embedding](../../docs/EMBEDDING.md)
 1. Run `explain init <directory>` (or `npm run explain -- init <directory>` in a checkout).
 2. Keep one default-exported `Scene` subclass. Use static `meta` for title/id/sources and optional static `settings` for finite cases.
 3. Give every idea a stable step name, reader-facing title and short caption. Derive answers from a small executable model; state its scope and cite sources.
-4. Call `stage(this)` once. Use `show`, `reveal`, `walk`, `morph`, `focus`, `highlight`, `card` and `chip` only where they help. Native Lantern code, geometry and text remain first-class. Do not invent a second scene format or require a diagram for native geometry.
-5. Run `explain snapshots scene.ts`; inspect the real verifier findings and generated cache. Use `--refresh` after importer changes.
-6. Run `explain preview scene.ts` or `explain shots scene.ts`. Inspect **every** step, including non-default cases; a build success is not a visual review.
-7. Run `explain check scene.ts`. Fix motion, exact seeking, runtime, legibility and construct lint failures at their cause.
-8. Build portable HTML and render video. Inspect the HTML without external network access and the video's footer/subtitles/chapters. Preserve receipts.
+4. Call `stage(this)` once; its heading follows step titles. Lay diagrams, cards (`s.card`) and code (`s.code`) into named regions (`'main'`, `'side'`, `'top'`, `'bottom'`…) so nothing overlaps. Native Lantern code, geometry and text remain first-class. Do not invent a second scene format or require a diagram for native geometry.
+5. Design each step's **resting frame**: the last frame is what the reader looks at while reading the caption. Leave the step's idea on screen with `walk(..., { trail: true })`, `mark`, `dim`, `note`, `card.set`/`card.mark` and `code.focus`. `highlight` is only a pulse. Keep useful context (a card beside its diagram) instead of clearing to a lone card. `check` fails steps that end exactly like the previous one.
+6. Run `explain snapshots scene.ts`; inspect the real verifier findings and generated cache. Use `--refresh` after importer changes.
+7. Run `explain preview scene.ts` or `explain shots scene.ts`. Inspect **every** step, including non-default cases (`--case id=value`); a build success is not a visual review.
+8. Run `explain check scene.ts`. Fix motion, exact seeking, runtime, unchanged-step, text-collision, legibility and construct lint failures at their cause.
+9. Build portable HTML and render video. Inspect the HTML without external network access and the video's footer/subtitles/chapters. Preserve receipts.
 
 ## Invariants
 
@@ -27,7 +28,7 @@ Read [authoring](../../docs/EXPLAINERS.md), [embedding](../../docs/EMBEDDING.md)
 - Never put awaited animations/steps inside a broad catch. Handle known model errors in pure code before animating; let Lantern's internal seeking signal propagate.
 - Do not weaken verifiers, bless corrupt snapshots or skip a failing case to get a green report. Add a focused regression test for an observed bug and run it red before the fix when feasible.
 - Preserve imported style geometry and paint. Unsupported SVG must fail explicitly; lettering uses embedded Inter, a documented limitation.
-- Use readable focus views for large diagrams. The label check is at a 1280-pixel stage, not a promise of phone-scale diagram readability.
+- Use readable focus views for large diagrams. The 14 px label check is at a 1280-pixel stage, not a promise of phone-scale diagram readability; readers on phones use Enlarge.
 
 ## Publishing
 
@@ -35,7 +36,8 @@ Read [authoring](../../docs/EXPLAINERS.md), [embedding](../../docs/EMBEDDING.md)
 - A raw iframe is the baseline. A loader is optional. No runtime network, font service, storage, account or live diagram renderer should be introduced.
 - Resize messages need exact origin **and** source-window checks, finite bounded height validation and lifecycle cleanup. Apply `frame-ancestors` as a response header; CORS is unrelated.
 - `explain render scene.ts --out public/explanation.mp4 --footer` produces a silent 1280 × 880 film. Check with ffprobe and a full FFmpeg decode. Use `--case id=value`, `--all`, `.webm`, or stage-only `--width` deliberately.
-- Captions must fit three real measured footer lines. Shorten the writing instead of truncating it.
+- Captions must fit three real measured footer lines (`check` enforces this for every case). Shorten the writing instead of truncating it.
+- Write titles, captions, notes and card labels with [anti-slop-writing](https://github.com/adewale/anti-slop-writing): name the mechanism or value on screen instead of asserting importance, and replace "X, not Y" closers with the relation (because, although, so) unless both sides are already shown.
 - Do not claim a local build was deployed or publicly released. Report the commands run, artifact paths, exact evidence and remaining limitations.
 
 The underlying engine is Lantern by Ivar Vong (MIT). Keep the MIT and embedded-font notices. Do not imply endorsement by Lantern or Agentic Mermaid.

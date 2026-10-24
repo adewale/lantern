@@ -155,7 +155,7 @@ test(
     try {
       await page.goto(embed + '/oauth-pkce?attacker=yes&step=attack&theme=dark');
       await page.waitForSelector('[data-ready=true]');
-      assert.match(await page.locator('.caption').innerText(), /attacker tries/);
+      assert.match(await page.locator('.caption').innerText(), /has the code but has to guess a verifier/);
       assert.equal(await page.locator('select[name=attacker]').inputValue(), 'yes');
       assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
       assert.equal(
@@ -176,7 +176,7 @@ test(
       assert.equal(new URL(copied).searchParams.get('attacker'), 'yes');
       assert.equal(new URL(copied).searchParams.get('step'), 'attack');
       assert.equal(new URL(copied).searchParams.get('parentOrigin'), null);
-      await page.getByRole('button', { name: 'Animate step', exact: true }).click();
+      await page.getByRole('button', { name: 'Replay step', exact: true }).click();
       assert.match(await page.locator('[role=status]').innerText(), /Reduced motion/);
       await page.goto(embed + '/oauth-pkce?theme=light');
       await page.waitForSelector('[data-ready=true]');
@@ -219,7 +219,7 @@ test(
     try {
       await page.goto(embed + '/mr-cache?request=miss&step=request');
       await page.waitForSelector('[data-ready=true]');
-      assert.match(await page.locator('.caption').innerText(), /cache has no value/);
+      assert.match(await page.locator('.caption').innerText(), /KV has no entry/);
       const viewport = await page.locator('.stage svg').evaluate((svg) => {
         const clips = [...svg.querySelectorAll('clipPath')];
         return {
@@ -241,8 +241,8 @@ test(
           {
             namespace: 'http://www.w3.org/2000/svg',
             units: 'userSpaceOnUse',
-            width: '14000',
-            height: '3300',
+            width: '15100', // the stage's 'top' region, in SVG units
+            height: '3600',
           },
         ],
         references: true,

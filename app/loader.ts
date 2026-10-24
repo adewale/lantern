@@ -14,6 +14,7 @@ export function mountExplainer(
   const frame = document.createElement('iframe');
   frame.title = options.title;
   frame.loading = 'lazy';
+  frame.allow = 'fullscreen';
   frame.src = url.href;
   frame.style.cssText = `width:100%;height:${options.height ?? 640}px;border:0;display:block`;
   const receive = (event: MessageEvent) => {

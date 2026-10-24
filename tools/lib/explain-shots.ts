@@ -5,8 +5,12 @@ import { Scene, Text, NullSink, SnapshotSink, renderAt, toSvgString } from '../.
 import { defaultVariant } from './explain-project.ts';
 import type { Project } from './explain-project.ts';
 
-export async function contactSheet(project: Project, out: string): Promise<string> {
-  const v = defaultVariant(project),
+export async function contactSheet(
+  project: Project,
+  out: string,
+  v: Project['variants'][number] = defaultVariant(project),
+): Promise<string> {
+  const
     steps = v.trace.steps,
     cols = 2,
     w = 640,
@@ -16,7 +20,7 @@ export async function contactSheet(project: Project, out: string): Promise<strin
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i]!,
       sink = new SnapshotSink({ width: w });
-    await renderAt(v.Scene, Math.max(step.t0, (step.t1 ?? step.t0) - 1 / v.trace.fps), sink);
+    await renderAt(v.Scene, Math.max(step.t0, (step.t1 ?? step.t0) - 0.5 / v.trace.fps), sink);
     const png = new Resvg(sink.svg, { font: { loadSystemFonts: false } }).render().asPng();
     const labelScene = new Scene(new NullSink()),
       label = new Text(`${i + 1}. ${String(step.meta.title ?? step.step)}`, {

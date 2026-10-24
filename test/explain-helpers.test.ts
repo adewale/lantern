@@ -192,3 +192,18 @@ test('resize protocol validates both authorities and a finite bounded integer pa
     assert.equal(exactHttpOrigin(input), null);
   assert.equal(exactHttpOrigin(origin), origin);
 });
+test('inline script escaping neutralises </script without changing what the code does', async () => {
+  const { scriptEscape } = await import('../tools/lib/explain-project.ts');
+  const vm = await import('node:vm');
+  // The regex that broke the built Lantern page, plus the cases HTML parsing cares about.
+  const code =
+    'globalThis.out = ["a<b</c".replace(/</g, "&lt;"), "</script>".length, /<\\/SCRIPT>/i.test("</script>"), "x\\u2028y".length];';
+  const escaped = scriptEscape(code);
+  assert.doesNotMatch(escaped, /<\/script/i);
+  const run = (source: string) => {
+    const context = vm.createContext({});
+    vm.runInContext(source, context);
+    return JSON.stringify((context as { out: unknown }).out);
+  };
+  assert.equal(run(escaped), run(code));
+});

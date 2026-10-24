@@ -29,23 +29,19 @@ export function resizeHeight(
 export function reportHeight(root: HTMLElement): () => void {
   const origin = exactHttpOrigin(new URLSearchParams(location.search).get('parentOrigin'));
   if (window.parent === window || !origin) return () => {};
-  let last = 0,
-    scheduled = 0;
+  let last = 0;
   const measure = () => {
-    scheduled = 0;
     const height = Math.ceil(root.getBoundingClientRect().height);
     if (height !== last && height >= 1 && height <= 100000) {
       last = height;
       parent.postMessage({ type: RESIZE_TYPE, version: 1, height }, origin);
     }
   };
-  const observer = new ResizeObserver(() => {
-    if (!scheduled) scheduled = requestAnimationFrame(measure);
-  });
+  // ResizeObserver already delivers at most once per rendering update, so measure
+  // in its callback. Deferring to requestAnimationFrame lost reports: browsers
+  // throttle rAF in offscreen cross-origin frames, the usual place for an embed.
+  const observer = new ResizeObserver(measure);
   observer.observe(root);
   measure();
-  return () => {
-    observer.disconnect();
-    cancelAnimationFrame(scheduled);
-  };
+  return () => observer.disconnect();
 }

@@ -1,10 +1,10 @@
-# A clean demo of Lantern Explainers
+# A three-minute demo of Lantern Explainers
 
-## The one-sentence description
+## What it does, in one sentence
 
-**Lantern turns one native TypeScript explanation into a reader-paced website embed and a silent captioned video—with real diagram styles, meaningful alternative cases and checks that the animation follows the program.**
+**Each explanation is one TypeScript `Scene`: the page steps through it at the reader's pace, and the same scene renders a silent, captioned MP4.**
 
-The pitch is not “an easier diagram editor,” “shorter scene code” or “a hosted AI video generator.” The author controls the lesson; the reader controls the pace. The same source drives the embed and film.
+Two properties make the demo worth watching. Every value on screen is computed by a small model the scene calls, and every case a reader can choose is built and checked before anyone opens the page.
 
 ## Start it
 
@@ -15,65 +15,63 @@ npm run demos:render
 npm run demos:serve
 ```
 
-Open **http://127.0.0.1:5174/explainers/**. Checked-in snapshots make this path independent of Chromium; install Chromium for fresh capture and the separate browser gates. FFmpeg is needed for video. The collection's `evidence.json` and each artifact receipt report the build, rather than relying on marketing numbers in this document. After rendering, `npm run demos:review` opens every served case at desktop/mobile widths, checks captions and artwork, rejects console errors/external connections, checks response headers and video byte ranges, and saves screenshots under `out/review/`.
+Open **http://127.0.0.1:5174/explainers/**. The committed diagram snapshots mean this path needs no Chromium; fresh diagram capture and the browser tests do. Video needs FFmpeg. For numbers, read the collection's `evidence.json` and each page's build receipt rather than this document. `npm run demos:review` then opens every served case at 390 px and 1180 px wide, checks captions, artwork, console errors, external connections, response headers and video byte ranges, and saves screenshots under `out/review/`.
 
-## A three-minute tour
+## The tour
 
-### 1. A different case should change the lesson
+### 1. A setting changes the lesson
 
-Open **Seasons**, chapter “A computed year.” Change London to Tromsø, then Sydney, then Quito. The curve changes because the executable daylight model changes. Tromsø reaches 24/0-hour extremes, Sydney reverses the hemispheric story and Quito stays near twelve hours. The authored style stays fixed.
+Open **Seasons** (the card "Why June brings polar day to Tromsø and winter to Sydney") at "A computed year of daylight in London". Switch the place to Tromsø, Sydney and Quito. The curve, the June and December dots and the card all change, because `daylightYear()` runs again for each latitude: Tromsø reaches 24 and 0 hours, Sydney's longest day falls in December, and Quito stays near twelve hours all year. With Sydney selected, step back to "June: Sydney's noon Sun at 32.7°" to see the same number drawn as the angle of the noon ray in the side view.
 
-Say: “The setting is another complete explanation, not a palette switch or a free input sent to a server.” The caption states the astronomical approximation and its limits.
+What to say: the reader chose another case, and the scene ran the model again for it when the page was built. No server takes free input.
 
-### 2. Explain why a security check exists
+### 2. Show why a security check exists
 
-Open **OAuth with PKCE** with the attacker enabled. Visit “A stolen code fails without the verifier.” The computed RFC 7636 challenge is independently checked against the RFC vector and Node crypto. Turn the attacker off: that chapter disappears, and the player announces its first-step fallback. Use Back to restore the same case and chapter.
+Open **OAuth with PKCE** ("Why stealing an authorization code is not enough") with the attacker on, at "A stolen code fails without the verifier". The card puts S256 of the attacker's guessed verifier next to the challenge bound to the code, and the server's reply is `invalid_grant`. The RFC 7636 vector in the first step is computed with SHA-256 and checked against the RFC and Node's crypto in the tests.
 
-Say: “The case can change the sequence of ideas, not just a number in a picture.” Do not imply PKCE replaces the rest of OAuth security.
+Turn the attacker off. That step disappears, so the player announces that it fell back to the first step; Back restores the attacker case and the step. Do not say PKCE replaces the rest of OAuth; the last step lists what it leaves to TLS and exact redirects.
 
-### 3. Bridge code and architecture
+### 3. Connect a diff to the architecture
 
-Open **KV-cache code review**. Show the diff, then animate the architecture change. Follow a hit, switch to a miss and replay the request. Tokens travel captured real links; invalid hops throw. The cache mutation is replayed through the actual diagram model at build time.
+Open **KV-cache merge request** ("Five added lines put a KV cache in front of D1"). Press Next through the steps: the diff marks the five added lines, the diagram morphs to add the KV cache, and the request step leaves its path lit. Switch between a hit and a miss: on a hit the database is dimmed and its note reads "0 reads"; on a miss the token goes through D1 and the code panel marks the lines that run. The morph is the merge request's edit replayed through Agentic Mermaid's `mutate()` at build time, and a walk on a link the diagram lacks throws.
 
-Say: “This is an ordinary Scene. Native code, a styled diagram and its checks are in one authoring model.”
+### 4. Publish it
 
-### 4. The publishing contract matters
+Open **Two embeds on one host page** from the gallery. Open one transcript: only that iframe grows, and closing it shrinks the iframe again. Change a case in one embed; the other keeps its state. Each page also opens standalone, and **Enlarge** shows the stage full screen on a phone.
 
-Open **Two real embeds** from the gallery. Expand one transcript; only that iframe grows. Collapse it; it shrinks. Switch a case without resetting the other explanation. Open either page standalone.
+Then open a **Captioned MP4**. It has the same steps and captions as the page, with one chapter per step, a subtitle track, a WebVTT file beside it and a build receipt. It has no audio track.
 
-Then follow a **Captioned MP4** link. It has the same stages and captions, not a manually reproduced video. Show its chapters, subtitle track, adjacent VTT and receipt. No audio is expected.
+What to say: the HTML file is the product. It needs no runtime network, account or storage, and the loader script that sizes the iframe is optional. Serve the page over HTTP to show auto-sizing; pages opened from `file:` do not auto-size.
 
-Say: “The file is portable. The loader is optional. The explanation needs no runtime network, account or storage.” Serve through HTTP to demonstrate auto-sizing; file-origin auto-sizing is intentionally unsupported.
+## What else to open
 
-## More evidence-rich examples
-
-| Example | What to notice |
+| Explanation | What to look at |
 | --- | --- |
-| Personal Agent Protocol | Four diagram families; three sign-in cases; explicit trust/secret boundaries |
-| Lantern | A native Scene explaining objects, animations, deterministic time, sinks and its own publishing pipeline |
-| Agentic Mermaid | Real verifier findings, typed repair operations and their replay check |
-| State machine | Both histories use the reducer, not hand-selected “next state” labels |
-| Token bucket | Three rates, the same request schedule, actual responses and computed balance chart |
-| Ring buffer | Native geometry; wrapping is visible; rejected pushes preserve all state |
-| Git | Real typed-object SHA-1 encodings; both cases checked against `git hash-object` |
-| JustBash | An explicitly scoped interpreter model; the old shell really remains unchanged |
-| Cooperative limits | A smaller step budget changes which first-match clause wins; readable focus views |
-| Glyphs | Actual font advances and outlines; Inter and JetBrains Mono differ measurably |
-| 2password | An explicitly labeled offline fixture of metadata search and environment hygiene—not a claim to have ported unavailable code |
+| Personal Agent Protocol | Each sign-in method marks the messages that differ from the others in the sequence diagram |
+| Lantern | The seek step runs a small scene twice, played and seeked, and shows both frames with the same SVG fingerprint |
+| Agentic Mermaid | `verify(flow)` warnings attached to the two unlabelled edges, then the two `set_label` operations that fix them |
+| State machine | Each event moves the marked state and the bar in the reducer's table; OPENED after closed throws `InvalidTransition` |
+| Token bucket | Request chips turn green or red as `allow()` returns; the final chart marks the 429 columns |
+| Ring buffer | Native drawing only: the tail wraps into freed slots, or push 6 and 7 are refused with the ring unchanged |
+| Git | Each node shows its object's real 7-character id; the add case reuses blob ce01362, the edit case creates three new objects |
+| JustBash | The old and returned shells side by side: only the returned shell has `shout.txt` |
+| Cooperative limits | With 9 steps the memory clause fires first, with 3 the step clause; the caller receives `LimitError` |
+| Glyphs | Ruled advances for Inter and JetBrains Mono, and a text diff morphing glyph by glyph |
+| 2password | An offline fixture: per-term search scores, one approval per command or none, and the service token removed from the child environment |
 
-## What we can honestly claim
+## Claims the evidence supports
 
-- Fourteen local explanations, 31 built cases, 43 diagrams, eight families and twelve authored diagram styles.
-- Same-scene HTML and video; prebuilt cases; no runtime diagram renderer or layout service.
-- Real-link walk traces, replayed edits, exact sampled seek comparisons, full-run motion checks and bare-runtime execution for all cases.
-- Twelve-style non-text raster comparisons against the real renderer, within a stated 1/255 mean channel-error tolerance for path quantization. This is not a pixel-identical typography claim.
-- Real cross-origin browser tests, generated CSP, mobile/offline/no-JavaScript checks, and decoded default-case videos.
+- Fourteen explanations, 31 cases, 52 captured diagrams in eight Mermaid families and twelve Agentic Mermaid styles, built from this checkout.
+- The page and the video come from the same scene; cases are built ahead; the browser runs no diagram renderer or layout.
+- For every case, `explain check` compares played and seeked frames, runs the scene in a bare JavaScript context, analyses motion, fails steps that end on the same picture as the step before, fails colliding or cut-off text and labels under 14 px at a 1280 px stage, and checks that captions fit the video footer. Walks are recorded and checked against real diagram links, and morph edits are replayed.
+- Non-text artwork for twelve styles matches Agentic Mermaid's own renderer within a 1/255 mean channel error; lettering is embedded Inter, so typography is excluded from that claim.
+- Browser tests cover two cross-origin embeds, origin and source checks, history and fallback, mobile layout, offline use, storage blocked and reading without JavaScript.
 
-## What not to claim
+## Claims to avoid
 
-- That these local files have been deployed, publicly released or reviewed by an outside author.
-- That the historical prototype's 49-diagram/110-test numbers describe this checkout.
-- That all Mermaid families, style-specific fonts or arbitrary SVG features are supported.
-- That a 9 px label at a 1280-pixel stage is necessarily readable on a phone. Use authored focus views and the transcript.
-- That the models execute every external implementation, or that an attractive caption is proof of a security or scientific claim.
-- That video bytes match across FFmpeg builds. Exact SVG seeking is the stronger deterministic contract.
+- That anything here has been deployed, released or tried by an outside author.
+- That the historical prototype's 49-diagram and 110-test numbers describe this checkout.
+- That all Mermaid families, style-specific fonts or arbitrary SVG are supported.
+- That a 14 px label on a 1280 px stage is readable on a phone without Enlarge.
+- That the models are complete implementations of the systems they explain, or that a caption is proof of a security or scientific claim.
+- That video bytes are identical across FFmpeg builds. Seeked SVG frames are the deterministic contract.

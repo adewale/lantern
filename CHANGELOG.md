@@ -4,6 +4,24 @@
 
 ### Lantern Explainers downstream product layer
 
+#### Second pass: what the reader sees
+
+- Every step's last frame now carries its idea. Diagrams gain `mark`, `dim`, `note` and walk
+  trails that stay until removed; `s.card()` values update with `set()` and rows light with
+  `mark()`; `s.code()` keeps a focus bar on the lines under discussion; content goes into named
+  stage regions; the stage heading follows step titles. Emphasis is orange where a style's
+  accent is grey or near-black.
+- `explain check` fails a step whose last frame matches the previous step's, native text that
+  collides or is cut off, labels under 14 px at a 1280 px stage (was 9 px), and captions that
+  overflow the video footer, for every case. It, the contact sheets and the paused player now
+  sample a step's true last frame instead of the frame before it.
+- Next plays the step's animation before stopping; Replay step and Enlarge (full screen) added.
+- All fourteen explainers rewritten against those checks; titles, captions and on-stage text
+  edited with anti-slop-writing, which also corrected three factual errors in captions.
+- Fixed: embeds below the fold stopped resizing because height reports waited on throttled
+  `requestAnimationFrame`; inline-script escaping broke bundles containing `/</g`; Chromium
+  discovery missed the macOS Playwright cache and incomplete installs.
+
 - Native explanation helpers, finite per-instance reader cases, captured real-link walks,
   replayed typed diagram morphs, focus views, cards and chips.
 - Pinned, optional build-time Agentic Mermaid 0.4.1 capture and loss-detecting SVG lowering;
@@ -15,7 +33,7 @@
   generated CSP recipes, license notices and optional source/origin-checked auto-height loader.
 - Silent H.264/VP9 video, outline caption footer, subtitles, WebVTT, chapters and receipts.
   System-font scanning is disabled; unchanged frame rasters are reused without skipping simulation.
-- Fourteen authored explanations, 31 cases, 43 diagrams, eight families and twelve styles;
+- Fourteen authored explanations, 31 cases, 52 diagrams, eight families and twelve styles;
   model/trace fidelity, motion/seek/runtime/legibility, browser, video and fresh-archive gates.
   Imported labels require readable completed-step views; reports retain full state traces.
   Served-collection review checks every case on desktop/mobile and saves screenshots.
@@ -23,7 +41,7 @@
   SVG paint/cache semantics and exact optional-style interpolation. Fixed rectangular paint
   viewports keep zoomed diagrams inside their own stage region; nested clips intersect.
   Existing runtime export names retained.
-- Package requires Node 24+; public exports now resolve under `dist/src/`, with helpers at
+- Package requires Node 26+; public exports now resolve under `dist/src/`, with helpers at
   `manim-js/explain`. Public naming, production deployment and outside-author release acceptance remain pending.
 
 ### Inherited work

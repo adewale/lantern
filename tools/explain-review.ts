@@ -74,7 +74,11 @@ try {
         variant.trace.steps[Math.floor(variant.trace.steps.length / 2)]!;
       const query = new URLSearchParams({ ...variant.values, step: step.step });
       await page.goto(`${base}/explainers/${entry.id}.html?${query}`);
-      await page.waitForSelector('[data-ready=true]');
+      await page.waitForSelector('[data-ready=true]').catch((error: Error) => {
+        throw new Error(`${entry.id}?${query} never became ready (${errors.join('; ') || 'no page errors'})`, {
+          cause: error,
+        });
+      });
       assert.equal(await page.locator('[aria-current=step]').getAttribute('data-step'), step.step);
       assert.equal(await page.locator('.caption').innerText(), String(step.meta?.caption ?? ''));
       assert.ok((await page.locator('.stage path').count()) > 0, entry.id + ' has no stage artwork');
@@ -147,7 +151,7 @@ try {
   assert.deepEqual(errors, []);
   assert.deepEqual(connections, []);
   console.log(
-    `${cases.length} served cases passed desktop/mobile, caption, artwork, no-error and no-external-connection checks. Headers, byte ranges and two real embeds passed. Screenshots: ${review}`,
+    `${cases.length} served cases passed desktop/mobile, caption, artwork, no-error and no-external-connection checks. Response headers, video byte ranges and the two-embed host page passed. Screenshots: ${review}`,
   );
 } finally {
   await browser?.close();

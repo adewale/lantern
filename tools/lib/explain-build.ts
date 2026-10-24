@@ -22,7 +22,7 @@ export async function buildExplainer(
     first = v.trace.steps[0];
   if (!first) throw new Error('A published explanation must have at least one named step');
   const sink = new SnapshotSink();
-  await renderAt(v.Scene, Math.max(first.t0, (first.t1 ?? first.t0) - 1 / v.trace.fps), sink);
+  await renderAt(v.Scene, Math.max(first.t0, (first.t1 ?? first.t0) - 0.5 / v.trace.fps), sink);
   // Raw per-mark SVG stays in the author cache; the page only needs resolved artwork.
   const runtimeStore = Object.fromEntries(
     Object.entries(project.store).map(([key, s]) => [

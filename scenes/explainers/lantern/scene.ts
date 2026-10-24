@@ -1,97 +1,344 @@
-import { Scene, Code, FadeIn, FadeOut } from '../../../src/index.ts';
+import {
+  Scene,
+  Circle,
+  Square,
+  Rectangle,
+  Dot,
+  Line,
+  Text,
+  Group,
+  FadeIn,
+  FadeOut,
+  Transform,
+  toSvgString,
+  renderAt,
+  StringSink,
+} from '../../../src/index.ts';
+import type { Mobject, Vec } from '../../../src/index.ts';
 import { stage, palette } from '../../../explain/index.ts';
+const STYLE = 'hand-drawn';
+const DEMO = [
+  'class Demo extends Scene {',
+  '  async construct() {',
+  '    const dot = new Circle({ radius: 0.6 });',
+  "    await this.step('before', { caption: 'One idea.' });",
+  '    await this.play(new FadeIn(dot));',
+  "    await this.step('after', { caption: 'The next idea.' });",
+  '    await this.play(new Transform(dot, new Square()));',
+  '  }',
+  '}',
+];
+const CLASSES =
+  'classDiagram\n direction LR\n class Scene {\n construct()\n play()\n step()\n }\n class Mobject {\n points\n style\n }\n class Animation {\n interpolate()\n }\n class Sink {\n frame()\n }\n Scene --> Mobject : owns\n Scene --> Animation : plays\n Scene --> Sink : emits';
+const FLOW =
+  'graph LR\nAuthor[Native Scene] --> Clock[Fixed dt loop]\nClock --> Browser[Browser sink]\nClock --> SVG[SVG frames]\nClock --> Trace[State trace]\nSVG --> Video[Video encoder]';
+const PUBLISH =
+  'graph LR\nAuthor[Native Scene] --> Build[Build snapshots]\nBuild --> Page[Portable HTML]\nBuild --> Video[Captioned video]\nPage --> Reader[Reader-paced steps]';
+/** A tiny native scene, run twice inside this one: once played, once seeked. */
+const SEEK_T = 1;
+function demoScene(ink: string, accent: string) {
+  return class SeekDemo extends Scene {
+    override async construct() {
+      const look = { stroke: ink, strokeWidth: 0.14, fill: accent, fillOpacity: 0.35 };
+      const box = new Rectangle({ width: 3, height: 3, ...look }).moveTo([-4.5, 0]);
+      const dot = new Dot({ radius: 0.5, color: ink }).moveTo([-4.5, -3]);
+      await this.play(new FadeIn(box), new FadeIn(dot), { runTime: 0.5 });
+      await this.play(
+        new Transform(box, new Rectangle({ width: 8, height: 5, ...look }).moveTo([2.5, 0.5])),
+        dot.animate.moveTo([6.5, 3.2]),
+        { runTime: 1 },
+      );
+    }
+  };
+}
+/** FNV-1a, so the reader can compare two frames by a short fingerprint. */
+function fingerprint(text: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
+  return h.toString(16).padStart(8, '0');
+}
+async function playedAndSeeked(ink: string, accent: string) {
+  const Demo = demoScene(ink, accent);
+  let played = '',
+    playedFrame: Mobject[] = [];
+  const sink = {
+    async frame(s: Scene) {
+      if (played || s.time + 1e-9 < SEEK_T) return;
+      played = toSvgString(s);
+      playedFrame = s.mobjects.map((m) => m.copy());
+    },
+  };
+  await new Demo(sink).run();
+  const seekSink = new StringSink();
+  const seeked = await renderAt(Demo, SEEK_T, seekSink);
+  return {
+    played,
+    seeked: seekSink.last() ?? '',
+    playedFrame,
+    seekedFrame: seeked.mobjects.map((m) => m.copy()),
+  };
+}
+
 export default class LanternExplainer extends Scene {
   static meta = {
     id: 'lantern',
-    title: 'One scene. Every output.',
+    title: 'One scene program drives the page, the video and the trace',
     sources: [
       'https://github.com/ivarvong/lantern',
       'https://github.com/ivarvong/lantern/blob/2c7bad5/src/scene.ts',
     ],
   };
   override async construct() {
-    const s = stage(this, { palette: palette('hand-drawn'), title: 'Lantern explains itself, using itself' });
+    const s = stage(this, { palette: palette(STYLE) });
+    const ink = s.palette.ink,
+      accent = s.emphasis;
+
     await this.step('model', {
       title: 'A scene is an ordinary program',
       caption:
-        'The author writes an async construct method. Steps name ideas; play advances animations. There is no lesson interpreter between the author and the engine.',
+        'demo.ts holds one async construct method: each this.step call names an idea and each this.play call runs an animation on the stage beside it. The engine calls that method directly, with no lesson interpreter in between, as the card’s last row records.',
     });
-    const code = new Code(
+    const code = await s.code(DEMO, { at: 'main', title: 'demo.ts', fontSize: 0.26 });
+    // The same program, running on a small stage beside it.
+    const mini = s.keep(
+      new Rectangle({ width: 4.6, height: 2.5875, stroke: s.soft, strokeWidth: 0.02, cornerRadius: 0.06 }),
+    ).moveTo([5.1, 1.55]);
+    const miniLabel = s.keep(new Text('the program, running', { fontSize: 0.22, color: s.soft })).moveTo([5.1, 3.05]);
+    await this.play(new FadeIn(mini), new FadeIn(miniLabel));
+    let stepLabel = s.keep(new Text("step 'before'", { fontSize: 0.22, font: 'mono', color: ink }));
+    stepLabel.moveTo([3.0, 0.5], [-1, 0]);
+    await code.focus(3);
+    await this.play(new FadeIn(stepLabel));
+    const dot = s.keep(new Circle({ radius: 0.6, stroke: ink, strokeWidth: 0.03 })).moveTo([5.1, 1.7]);
+    await code.focus(4);
+    await this.play(new FadeIn(dot));
+    await code.focus(5);
+    const after = new Text("step 'after'", { fontSize: 0.22, font: 'mono', color: ink }).moveTo([3.0, 0.5], [-1, 0]);
+    await this.play(new FadeOut(stepLabel), new FadeIn(after));
+    stepLabel = s.keep(after);
+    await code.focus(6);
+    const square = new Square({ side: 1.1, stroke: ink, strokeWidth: 0.03 }).moveTo([5.1, 1.7]);
+    await this.play(new Transform(dot, square));
+    const count = (needle: string) => DEMO.filter((line) => line.includes(needle)).length;
+    await s.card(
       [
-        "await this.step('before', { caption: 'One idea.' });",
-        'await this.play(new FadeIn(diagram));',
-        "await this.step('after', { caption: 'The next idea.' });",
-        'await this.play(new Transform(before, after));',
+        ['steps', count('this.step(')],
+        ['plays', count('this.play(')],
+        ['lesson interpreter', 'none'],
       ],
-      { fontSize: 0.31 },
-    ).moveTo([0, 0]);
-    code.setFill(s.palette.ink);
-    await this.play(new FadeIn(code));
+      { at: [2.65, -4.25, 7.55, -0.3], title: 'What the engine sees' },
+    );
+
     await this.step('objects', {
-      title: 'Objects hold points; animations move them',
+      title: 'A Scene owns mobjects, plays animations and emits frames to a sink',
       caption:
-        'A scene owns mobjects. Mobjects hold geometry and styles. Animations interpolate endpoints. A sink decides whether those same frames become a browser view, an SVG string or an inspection trace.',
+        'Each walked edge is one relation: a Scene owns mobjects, plays animations between endpoints fixed when they begin, and emits frames to a sink. The card’s three sinks turn the same frames into a browser view, an SVG string or an inspection trace.',
     });
-    await this.play(new FadeOut(code));
-    const classes = await s.show({
-      source:
-        'classDiagram\n direction LR\n class Scene {\n construct()\n play()\n step()\n }\n class Mobject {\n points\n style\n }\n class Animation {\n interpolate()\n }\n class Sink {\n frame()\n }\n Scene --> Mobject : owns\n Scene --> Animation : plays\n Scene --> Sink : emits',
-      style: 'hand-drawn',
-    });
+    await s.clear();
+    const classes = await s.show({ source: CLASSES, style: STYLE }, { box: 'main' });
+    await classes.walk([['Scene', 'Mobject']], { trail: true });
+    await classes.walk([['Scene', 'Animation']], { trail: true });
+    await classes.walk([['Scene', 'Sink']], { trail: true });
+    await classes.note('Animation', 'endpoints fixed at begin()', { side: 'below' });
+    await s.card(
+      [
+        ['DomSink', 'browser view'],
+        ['StringSink', 'SVG string'],
+        ['TraceSink', 'inspection trace'],
+      ],
+      { at: 'side', title: 'One frame, three sinks' },
+    );
+
+    // A real circle's points, drawn and listed.
+    const R = 1.3,
+      centre: Vec = [5.1, 1.75];
+    const circle = new Circle({ radius: R, stroke: ink, strokeWidth: 0.03 });
+    const raw = Array.from(circle.subpaths[0]!);
+    const pts: Vec[] = [];
+    for (let i = 0; i < raw.length; i += 2) pts.push([raw[i]!, raw[i + 1]!]);
     await this.step('points', {
-      title: 'Points are the truth',
+      title: `A circle is ${pts.length} points: ${(pts.length - 1) / 3} cubic Béziers`,
       caption:
-        'Imported diagrams become the same cubic paths as native shapes and text. Camera helpers transform those points. They do not hide an independent SVG renderer inside the player.',
+        'Every shape, glyph and imported diagram is stored as cubic Bézier points, like the anchors and handles drawn on this circle. The engine has no separate camera, so the zoom onto Mobject in this step is the diagram moving those points.',
     });
-    await classes.focus(['Mobject']);
-    await classes.focus('all');
+    await s.clearOverlays();
+    await classes.clearNotes();
+    await classes.unmark();
+    await classes.focus(['Mobject'], { zoom: 0.85 });
+    await classes.note('Mobject', 'points: Float32Array of cubic Béziers', { side: 'below' });
+    circle.moveTo(centre);
+    const at = (p: Vec): Vec => [p[0] + centre[0], p[1] + centre[1]];
+    const handles = new Group(),
+      anchors = new Group();
+    pts.forEach((p, i) => {
+      if (i % 3 === 0) anchors.add(new Dot({ radius: 0.075, color: accent }).moveTo(at(p)));
+      else {
+        const a = pts[i % 3 === 1 ? i - 1 : i + 1]!;
+        handles.add(new Line(at(a), at(p), { stroke: s.soft, strokeWidth: 0.022 }));
+        handles.add(new Dot({ radius: 0.055, color: s.soft }).moveTo(at(p)));
+      }
+    });
+    const figure = s.keep(new Group(circle, handles, anchors));
+    await this.play(new FadeIn(figure));
+    const f = (n: number) => (n >= 0 ? ' ' : '') + n.toFixed(2);
+    const first = pts
+      .slice(0, 4)
+      .map((p, i) => `[${f(p[0])}, ${f(p[1])}]  ${i === 0 || i === 3 ? 'anchor' : 'handle'}`);
+    await s.code(
+      [`new Circle({ radius: ${R} })`, `${pts.length} points, ${(pts.length - 1) / 3} cubics`, ...first, '…'],
+      { at: [2.65, -4.25, 7.55, 0.2], title: 'circle.subpaths[0]', fontSize: 0.22 },
+    );
+
     await this.step('clock', {
-      title: 'The clock advances by fixed steps',
+      title: `Every sink gets the same frames, 1/${this.fps} s apart`,
       caption:
-        'Scene time advances one fixed interval per frame. A real-time sink may wait for the display. An offline sink can run immediately. The scene’s simulation does not change.',
+        'Scene time advances by a fixed dt per frame, whichever sink is attached. The browser sink waits for a display tick before each frame while the trace sink takes them all at once, so both see the same scene times on the ruler.',
     });
-    await classes.hide();
-    const flow = await s.show({
-      source:
-        'graph LR\nAuthor[Native Scene] --> Clock[Fixed dt loop]\nClock --> Browser[Browser sink]\nClock --> SVG[SVG frames]\nClock --> Trace[State trace]\nSVG --> Video[Video encoder]',
-      style: 'hand-drawn',
-    });
+    await s.clear();
+    const flow = await s.show({ source: FLOW, style: STYLE }, { box: [-7.55, -0.55, 7.55, 3.25] });
     await flow.walk(
       [
         ['Clock', 'Browser'],
         ['Clock', 'Trace'],
       ],
-      { parallel: true },
+      { parallel: true, trail: true },
     );
+    await flow.note('Browser', 'waits for display', { side: 'right' });
+    await flow.note('Trace', 'runs at once', { side: 'right' });
+    // Frame times from the scene's own fps; two sinks pace the same frames differently.
+    const dt = 1 / this.fps,
+      frames = 9,
+      x0 = -3.3,
+      pitch = 1.3;
+    const ruler = new Group();
+    const lane = (label: string, y: number) =>
+      new Text(label, { fontSize: 0.22, color: s.soft, anchor: 'start' }).moveTo([-7.3, y], [-1, 0]);
+    ruler.add(
+      new Text(`dt = 1/${this.fps} s, fixed`, { fontSize: 0.24, color: ink, weight: 'bold', anchor: 'start' }).moveTo(
+        [-7.3, -1.0],
+        [-1, 0],
+      ),
+      lane('scene time (ms)', -1.75),
+      lane('browser: one per display tick', -2.75),
+      lane('trace: all at once', -3.6),
+      new Line([x0 - 0.2, -1.5], [x0 + pitch * (frames - 1) + 0.2, -1.5], { stroke: ink, strokeWidth: 0.02 }),
+    );
+    for (let n = 0; n < frames; n++) {
+      const x = x0 + n * pitch;
+      ruler.add(
+        new Line([x, -1.38], [x, -1.62], { stroke: ink, strokeWidth: 0.02 }),
+        new Text((n * dt * 1000).toFixed(0), { fontSize: 0.2, font: 'mono', color: ink }).moveTo([x, -1.85]),
+        new Dot({ radius: 0.09, color: accent }).moveTo([x, -2.75]),
+        new Dot({ radius: 0.09, color: accent }).moveTo([x0 + n * 0.28, -3.6]),
+      );
+    }
+    s.keep(ruler);
+    await this.play(new FadeIn(ruler));
+
     await this.step('seek', {
       title: 'Seeking replays the same program',
       caption:
-        'To seek, run the scene again while skipping frames before the target time. Endpoints are fixed when each animation begins. The sought frame must equal the played frame exactly.',
+        'renderAt seeks by running the scene again and skipping every frame before the target. Because each animation fixes its endpoints when it begins, the frame seeked straight to t has the same SVG fingerprint as the frame played there.',
     });
-    await flow.walk([
-      ['Author', 'Clock'],
-      ['Clock', 'SVG'],
-    ]);
+    await s.clearOverlays();
+    await flow.clearNotes();
+    await flow.unmark();
+    await flow.dim(['Author', 'Clock', 'SVG']);
+    await flow.walk(
+      [
+        ['Author', 'Clock'],
+        ['Clock', 'SVG'],
+      ],
+      { trail: true },
+    );
+    // Run a tiny scene twice, played from zero and seeked straight to t, and compare.
+    const run = await playedAndSeeked(ink, accent);
+    const same = run.played === run.seeked;
+    const thumb = (frame: Mobject[], cx: number, label: string, svg: string) => {
+      const w = 5,
+        k = w / 16;
+      const box = new Rectangle({ width: w, height: (w * 9) / 16, stroke: ink, strokeWidth: 0.02, cornerRadius: 0.04 });
+      const art = new Group(...frame);
+      art.scale(k, { aboutPoint: [0, 0] });
+      for (const m of art.family()) m.style.strokeWidth *= k;
+      const g = new Group(box, art).moveTo([cx, -2.35]);
+      const title = new Text(label, { fontSize: 0.22, color: ink }).moveTo([cx, -0.75]);
+      const print = new Text(`svg ${fingerprint(svg)} · ${svg.length} chars`, {
+        fontSize: 0.2,
+        font: 'mono',
+        color: s.soft,
+      }).moveTo([cx, -4.0]);
+      return s.keep(new Group(g, title, print));
+    };
+    const left = thumb(run.playedFrame, -3.4, `played from 0 to t = ${SEEK_T.toFixed(2)} s`, run.played);
+    const right = thumb(run.seekedFrame, 3.4, `seeked straight to t = ${SEEK_T.toFixed(2)} s`, run.seeked);
+    const verdict = s.keep(
+      new Text(same ? '=' : '≠', { fontSize: 0.7, color: accent, weight: 'bold' }).moveTo([0, -2.35]),
+    );
+    await this.play(new FadeIn(left), new FadeIn(right));
+    const word = s.keep(
+      new Text(same ? 'identical SVG' : 'frames differ', { fontSize: 0.22, color: accent }).moveTo([0, -2.95]),
+    );
+    await this.play(new FadeIn(verdict), new FadeIn(word));
     this.state.seekContract = 'played SVG equals seeked SVG';
+
     await this.step('publish', {
-      title: 'Publish one complete explanation',
+      title: 'The build captures diagrams once and ships one HTML file',
       caption:
-        'Build-time capture supplies the diagrams. The HTML contains one explanation, its cases, poster and transcript. Reader controls change pace; they do not call a layout service.',
+        'explain build captures each diagram once and writes lantern.html with the steps, cases, poster and transcript. Because the layouts are already captured, reader controls change only the pace and the page never calls a layout service.',
     });
-    await flow.morph({
-      source:
-        'graph LR\nAuthor[Native Scene] --> Build[Build snapshots]\nBuild --> Page[Portable HTML]\nBuild --> Video[Captioned video]\nPage --> Reader[Reader-paced steps]',
-      style: 'hand-drawn',
-    });
+    await s.clearOverlays();
+    await flow.morph({ source: PUBLISH, style: STYLE });
+    await flow.walk(
+      [
+        ['Author', 'Build'],
+        ['Build', 'Page'],
+        ['Page', 'Reader'],
+      ],
+      { trail: true },
+    );
+    await flow.note('Build', 'diagrams captured once', { side: 'below' });
+    await flow.note('Reader', 'pace only', { side: 'below' });
+    await s.code(
+      [
+        '$ explain build scenes/explainers/lantern',
+        '  lantern.html               steps, cases, poster, transcript',
+        '  lantern.html.receipt.json  source, engine and snapshot hashes',
+        '$ explain render scenes/explainers/lantern --footer',
+        '  captioned video, chapters from the same steps',
+      ],
+      { at: [-7.55, -4.25, 7.55, -0.85], title: 'explain build and explain render', fontSize: 0.24 },
+    );
+
     await this.step('inspect', {
-      title: 'Make the explanation inspectable',
+      title: 'The trace records every walk, and explain check tests every case',
       caption:
-        'Walks record real edges. State traces expose the program’s answers. Seek, motion and bare-runtime checks validate every built case. A nice-looking animation is not enough evidence on its own.',
+        'Each walk records the edges it travelled, and trace.json lists this scene’s own clock and seek walks. explain check runs the card’s four tests on every case, so a frame that jumps or text under 14 px fails the check.',
     });
-    await flow.walk([
-      ['Author', 'Build'],
-      ['Build', 'Page'],
-      ['Page', 'Reader'],
-    ]);
+    await s.clearOverlays();
+    await flow.clearNotes();
+    await flow.note('Page', 'trace + checks ship with it', { side: 'above' });
+    // The trace this very scene has recorded so far.
+    const walks = (this.state.walks ?? []) as { step: string; from: string; to: string }[];
+    const shown = walks.filter((w) => w.step === 'clock' || w.step === 'seek');
+    await s.code(
+      [
+        `"seekContract": "${String(this.state.seekContract)}",`,
+        `"walks": [  // ${walks.length} recorded`,
+        ...shown.map((w) => `  { "step": "${w.step}", "from": "${w.from}", "to": "${w.to}" },`),
+        '  …',
+        ']',
+      ],
+      { at: [-7.55, -4.25, 1.6, -0.85], title: 'trace.json (this scene)', fontSize: 0.21 },
+    );
+    await s.card(
+      [
+        ['seek', 'played = seeked'],
+        ['motion', 'no jumps'],
+        ['legibility', 'text ≥ 14 px'],
+        ['bare runtime', 'no renderer'],
+      ],
+      { at: [1.9, -4.25, 7.55, -0.85], title: 'explain check, every case' },
+    );
   }
 }

@@ -7,7 +7,7 @@ import { createServer } from 'node:http';
 import { collectProject, defaultVariant, sceneSlug } from './lib/explain-project.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
 
-const HELP = `Lantern Explainers (Node 24+)\n\nUsage: explain <command> <scene.ts | directory> [options]\n\nCommands:\n  init <directory>    Create a native Scene with helpers and a meaningful setting\n  preview <scene>     Build, print step contact sheet, serve on localhost\n  snapshots <scene>   Run every case, capture/verify diagrams and replay morph edits\n  check <scene>       All cases: seek, motion, bare runtime, legibility, catch lint\n  build <scene>       Self-contained stepper-first HTML, transcript, poster, receipts\n  render <scene>      Silent MP4 (or .webm), captions, chapters and receipt\n  shots <scene>       Step contact sheet as SVG and PNG\n\nOptions:\n  --out <path>        Artifact destination\n  --refresh           Re-render snapshots instead of using the pinned cache\n  --footer            1280 × 880 caption-footer video preset\n  --width <even>      Stage-only video width (default 1280)\n  --fps <integer>     Video frame rate (default 30)\n  --all               Export videos for every declared case\n  --case id=value     Export one case; repeat for multiple settings\n  --port <integer>    Preview server port (default 5174)\n\nDiagram capture requires Chromium: npx playwright-core install chromium\nOr set CHROMIUM_EXECUTABLE_PATH. Video requires ffmpeg on PATH.\n`;
+const HELP = `Lantern Explainers (Node 26+)\n\nUsage: explain <command> <scene.ts | directory> [options]\n\nCommands:\n  init <directory>    Create a native Scene with helpers and a meaningful setting\n  preview <scene>     Build, print step contact sheet, serve on localhost\n  snapshots <scene>   Run every case, capture/verify diagrams and replay morph edits\n  check <scene>       All cases: seek, motion, bare runtime, legibility, catch lint\n  build <scene>       Self-contained stepper-first HTML, transcript, poster, receipts\n  render <scene>      Silent MP4 (or .webm), captions, chapters and receipt\n  shots <scene>       Step contact sheet as SVG and PNG\n\nOptions:\n  --out <path>        Artifact destination\n  --refresh           Re-render snapshots instead of using the pinned cache\n  --footer            1280 × 880 caption-footer video preset\n  --width <even>      Stage-only video width (default 1280)\n  --fps <integer>     Video frame rate (default 30)\n  --all               Export videos for every declared case\n  --case id=value     Export (render) or show (shots) one case; repeat for multiple settings\n  --port <integer>    Preview server port (default 5174)\n\nDiagram capture requires Chromium: npx playwright-core install chromium\nOr set CHROMIUM_EXECUTABLE_PATH. Video requires ffmpeg on PATH.\n`;
 export async function main(args = process.argv.slice(2)): Promise<void> {
   if (!args.length || args.includes('--help') || args[0] === 'help') {
     console.log(HELP);
@@ -31,7 +31,7 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     const dir = resolve(input);
     await mkdir(dirname(dir), { recursive: true });
     await mkdir(dir, { recursive: false });
-    const template = `import { Scene } from 'manim-js';\nimport { stage, settingsOf, palette } from 'manim-js/explain';\n\nexport default class MyExplanation extends Scene {\n  static meta = { id: 'my-explanation', title: 'Why a cache changes the request path' };\n  static settings = [{ id: 'request', label: 'Follow a request', default: 'hit', options: [{value:'hit',label:'Cache hit'},{value:'miss',label:'Cache miss'}] }];\n  override async construct() {\n    const s = stage(this, { palette: palette('nord'), title: 'One request, two possible paths' });\n    const which = settingsOf(this).request;\n    await this.step('architecture', { title: 'A cache in front of storage', caption: 'A request checks the cache before it reaches the database. The cache does not replace the source of truth.' });\n    const d = await s.show({source:'graph LR\\nRequest[Request] --> Cache[Cache]\\nCache -->|hit| Reply[Reply]\\nCache -->|miss| Store[Database]\\nStore --> Reply',style:'nord'});\n    await this.step('request', { title: which === 'hit' ? 'A cache hit' : 'A cache miss', caption: which === 'hit' ? 'The value is already cached. The request can return without reading the database.' : 'The value is absent. Read the database, then return the result. This request still pays for a storage read.' });\n    await d.walk(which === 'hit' ? [['Request','Cache'],['Cache','Reply']] : [['Request','Cache'],['Cache','Store'],['Store','Reply']]);\n    this.state.result = which;\n  }\n}\n`;
+    const template = `import { Scene } from 'manim-js';\nimport { stage, settingsOf } from 'manim-js/explain';\n\nconst FLOW = 'graph LR\\nRequest[Request] --> Cache[Cache]\\nCache -->|hit| Reply[Reply]\\nCache -->|miss| Store[Database]\\nStore --> Reply';\nconst PATH = {\n  hit: [['Request', 'Cache'], ['Cache', 'Reply']],\n  miss: [['Request', 'Cache'], ['Cache', 'Store'], ['Store', 'Reply']],\n} as const;\n\nexport default class MyExplanation extends Scene {\n  static meta = { id: 'my-explanation', title: 'Why a cache changes the request path' };\n  static settings = [{ id: 'request', label: 'Follow a request', default: 'hit', options: [{ value: 'hit', label: 'Cache hit' }, { value: 'miss', label: 'Cache miss' }] }];\n  override async construct() {\n    // The stage heading follows each step title; the palette comes from the first diagram.\n    const s = stage(this);\n    const which = settingsOf(this).request as 'hit' | 'miss';\n\n    await this.step('architecture', { title: 'A cache in front of storage', caption: 'A request checks the cache before it reaches the database. The cache does not replace the source of truth.' });\n    const d = await s.show({ source: FLOW, style: 'nord' }, { box: 'top' });\n    await d.note('Store', 'source of truth', { side: 'below' });\n\n    await this.step('request', { title: which === 'hit' ? 'A cache hit' : 'A cache miss', caption: which === 'hit' ? 'The value is already cached. The request returns without reading the database.' : 'The value is absent. Read the database, then return the result. This request still pays for a storage read.' });\n    // Ask the program, then show its answer: here the path and the read count.\n    const reads = which === 'hit' ? 0 : 1;\n    await d.clearNotes();\n    await d.dim([...new Set(PATH[which].flat())]);\n    await d.walk(PATH[which], { trail: true });\n    await s.card([['Database reads', reads], ['Path', which]], { at: 'bottom', title: 'This request' });\n    this.state.reads = reads;\n  }\n}\n`;
     await writeFile(join(dir, 'scene.ts'), template);
     await writeFile(
       join(dir, 'README.md'),
@@ -66,21 +66,24 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     );
     return;
   }
+  /** The default case, or the cases matching every --case id=value. */
+  function selectedVariants() {
+    if (!flags.has('--case')) return [defaultVariant(project)];
+    const values = { ...defaultVariant(project).values };
+    for (const assignment of flags.get('--case')!) {
+      const at = assignment.indexOf('=');
+      if (at < 1) throw new Error('--case requires id=value');
+      values[assignment.slice(0, at)] = assignment.slice(at + 1);
+    }
+    const variants = project.variants.filter((v) =>
+      Object.entries(values).every(([k, value]) => v.values[k] === value),
+    );
+    if (!variants.length) throw new Error('No built variant matches --case');
+    return variants;
+  }
   if (command === 'render') {
     const { renderVideo } = await import('./lib/explain-video.ts');
-    let variants = flags.has('--all') ? project.variants : [defaultVariant(project)];
-    if (flags.has('--case')) {
-      const values = { ...defaultVariant(project).values };
-      for (const assignment of flags.get('--case')!) {
-        const at = assignment.indexOf('=');
-        if (at < 1) throw new Error('--case requires id=value');
-        values[assignment.slice(0, at)] = assignment.slice(at + 1);
-      }
-      variants = project.variants.filter((v) =>
-        Object.entries(values).every(([k, value]) => v.values[k] === value),
-      );
-      if (!variants.length) throw new Error('No built variant matches --case');
-    }
+    const variants = flags.has('--all') ? project.variants : selectedVariants();
     const output = option('--out', resolve('out/videos', slug + '.mp4'));
     for (const v of variants) {
       const suffix = Object.entries(v.values)
@@ -103,7 +106,9 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
   }
   if (command === 'shots') {
     const { contactSheet } = await import('./lib/explain-shots.ts');
-    console.log(await contactSheet(project, option('--out', resolve('out/shots', slug + '.png'))));
+    console.log(
+      await contactSheet(project, option('--out', resolve('out/shots', slug + '.png')), selectedVariants()[0]),
+    );
     return;
   }
   const out = option('--out', resolve('out/explainers', slug + '.html'));

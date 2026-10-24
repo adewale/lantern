@@ -42,12 +42,14 @@ export async function mountEmbed(
   transport.className = 'transport';
   transport.setAttribute('aria-label', 'Step navigation');
   const prev = el('button', '← Previous'),
-    play = el('button', 'Animate step'),
+    play = el('button', 'Replay step'),
     next = el('button', 'Next →'),
     copy = el('button', 'Copy link'),
+    enlarge = el('button', 'Enlarge'),
     position = el('span');
   position.className = 'position';
-  transport.append(prev, play, next, copy, position);
+  enlarge.setAttribute('aria-pressed', 'false');
+  transport.append(prev, next, play, copy, ...(document.fullscreenEnabled ? [enlarge] : []), position);
   const chapters = el('ol');
   chapters.className = 'steps';
   chapters.setAttribute('aria-label', 'Chapters');
@@ -111,7 +113,7 @@ export async function mountEmbed(
     for (const b of chapters.querySelectorAll('button'))
       b.setAttribute('aria-current', b.dataset.step === step.step ? 'step' : 'false');
     stage.setAttribute('aria-label', `${title.textContent}: ${String(step.meta.title ?? step.step)}`);
-    play.textContent = playing ? 'Stop animation' : 'Animate step';
+    play.textContent = playing ? 'Stop animation' : 'Replay step';
   }
   async function show(index: number, push = true) {
     const gen = ++generation;
@@ -120,7 +122,7 @@ export async function mountEmbed(
     chrome();
     link(push);
     const step = trace.steps[selected]!;
-    const at = Math.max(step.t0, (step.t1 ?? step.t0) - 1 / trace.fps);
+    const at = Math.max(step.t0, (step.t1 ?? step.t0) - 0.5 / trace.fps);
     const container = el('div'),
       sink = new DomSink(container, { realtime: false });
     await renderAt(Active, at, sink);
@@ -132,12 +134,24 @@ export async function mountEmbed(
       );
     }
   }
-  async function animate() {
-    if (playing) {
+  const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /** Move forward the way the author wrote it: play the step's animation, then rest on its last frame. */
+  async function advance() {
+    if (selected >= trace.steps.length - 1) return;
+    if (reduced()) {
+      await show(selected + 1);
+      return;
+    }
+    selected += 1;
+    link(true);
+    await animate(true);
+  }
+  async function animate(force = false) {
+    if (playing && !force) {
       await show(selected, false);
       return;
     }
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (reduced()) {
       notice.textContent = 'Reduced motion is enabled; the completed step is shown.';
       await show(selected, false);
       return;
@@ -170,6 +184,10 @@ export async function mountEmbed(
     if (gen === generation) {
       playing = false;
       chrome();
+      root.classList.remove('loading');
+      document.dispatchEvent(
+        new CustomEvent('lantern:step', { detail: { step: step.step, settings: values } }),
+      );
     }
   }
   function updateTranscript() {
@@ -250,8 +268,22 @@ export async function mountEmbed(
     void show(selected - 1);
   };
   next.onclick = () => {
-    void show(selected + 1);
+    void advance();
   };
+  enlarge.onclick = async () => {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else {
+      await stage.requestFullscreen();
+      // Phones read a 16:9 stage best sideways; not every browser allows the lock.
+      const orientation = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> };
+      await orientation.lock?.('landscape').catch(() => {});
+    }
+  };
+  document.addEventListener('fullscreenchange', () => {
+    const on = document.fullscreenElement === stage;
+    enlarge.textContent = on ? 'Exit full screen' : 'Enlarge';
+    enlarge.setAttribute('aria-pressed', String(on));
+  });
   play.onclick = () => {
     void animate();
   };
@@ -271,7 +303,7 @@ export async function mountEmbed(
       return;
     if (e.key === 'ArrowRight') {
       e.preventDefault();
-      void show(selected + 1);
+      void advance();
     } else if (e.key === 'ArrowLeft') {
       e.preventDefault();
       void show(selected - 1);

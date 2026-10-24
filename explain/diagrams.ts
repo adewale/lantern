@@ -11,10 +11,14 @@ import {
   AnimationGroup,
   linear,
 } from '../src/index.ts';
-import type { Scene, Mobject, Box, Vec } from '../src/index.ts';
+import type { Scene, Mobject, Box, Vec, Style } from '../src/index.ts';
+import { Rectangle, Text } from '../src/index.ts';
+import { regionBox, raised, emphasis } from './look.ts';
+import type { Region } from './look.ts';
 import { diagramsOf } from '../integrations/agentic-mermaid/snapshot.ts';
 import { outlineText } from '../integrations/agentic-mermaid/text.ts';
 import { recordWalk } from './trace.ts';
+import { lerpColor } from '../src/color.ts';
 import type {
   DiagramSpec,
   DiagramSnapshot,
@@ -23,7 +27,8 @@ import type {
 } from '../integrations/agentic-mermaid/snapshot.ts';
 
 export interface ShowOptions {
-  box?: Box;
+  /** Where the diagram fits: a stage region name or [minX, minY, maxX, maxY]. */
+  box?: Box | Region;
   build?: 'all' | 'frame';
   runTime?: number;
 }
@@ -31,6 +36,40 @@ interface Part {
   info: SnapshotPart;
   mob: Group;
   route?: VMobject;
+}
+export type NoteSide = 'above' | 'below' | 'left' | 'right';
+interface Note {
+  id: string;
+  side: NoteSide;
+  mob: Group;
+}
+const DIM = 0.2;
+const OPPOSITE: Record<NoteSide, NoteSide> = { above: 'below', below: 'above', left: 'right', right: 'left' };
+/**
+ * Where a note sits beside a box. If the frame would push it back onto the
+ * part it describes, try the opposite side, then above and below.
+ */
+function notePosition(note: Mobject, box: Box, side: NoteSide, frame: Box): Vec {
+  const w = note.width() / 2,
+    h = note.height() / 2;
+  const clear = ([x, y]: Vec) => x + w <= box[0] || x - w >= box[2] || y + h <= box[1] || y - h >= box[3];
+  const tries = [...new Set<NoteSide>([side, OPPOSITE[side], 'above', 'below'])].map((s) =>
+    clampedPosition(note, box, s, frame),
+  );
+  return tries.find(clear) ?? tries[0]!;
+}
+function clampedPosition(note: Mobject, box: Box, side: NoteSide, frame: Box): Vec {
+  const w = note.width(),
+    h = note.height(),
+    gap = 0.14;
+  let [x, y] = [(box[0] + box[2]) / 2, (box[1] + box[3]) / 2];
+  if (side === 'above') y = box[3] + gap + h / 2;
+  else if (side === 'below') y = box[1] - gap - h / 2;
+  else if (side === 'left') x = box[0] - gap - w / 2;
+  else x = box[2] + gap + w / 2;
+  x = Math.min(Math.max(x, frame[0] + w / 2 + 0.05), frame[2] - w / 2 - 0.05);
+  y = Math.min(Math.max(y, frame[1] + h / 2 + 0.05), frame[3] - h / 2 - 0.05);
+  return [x, y];
 }
 class GrowFromEdge extends FadeIn {
   axis: 0 | 1;
@@ -74,19 +113,25 @@ export class Diagram {
   frameBox: Box;
   accent: string;
   private home = new Group();
+  /** Unemphasised styles of each top-level part's family, captured on first restyle. */
+  private base = new Map<string, Style[]>();
+  private marks = new Map<string, string>();
+  private kept: Set<string> | null = null;
+  notes: Note[] = [];
 
   constructor(
     scene: Scene,
     spec: DiagramSpec,
     snapshot: DiagramSnapshot,
-    { box = [-7.3, -3.45, 7.3, 2.95] }: ShowOptions = {},
+    { box: where = 'full' }: ShowOptions = {},
   ) {
+    const box = regionBox(where);
     this.scene = scene;
     this.spec = spec;
     this.snapshot = snapshot;
     this.frameBox = box;
     this.root.clipBox = [...box];
-    this.accent = snapshot.palette.accent;
+    this.accent = emphasis(snapshot.palette);
     for (const info of snapshot.parts) {
       const mob = new Group();
       mob.key = info.id;
@@ -221,6 +266,7 @@ export class Diagram {
       .map((id) => {
         const p = this.parts.get(id)!;
         this.visible.add(id);
+        if (!this.scene.mobjects.includes(this.root)) this.scene.add(this.root);
         for (const child of this.parts.values()) if (child.info.owner === id) this.visible.add(child.info.id);
         this.root.add(p.mob);
         this.root.children.sort((a, b) => {
@@ -256,13 +302,148 @@ export class Diagram {
         edge: p.info.id,
       });
   }
+  /** The top-level part an id belongs to (an owned label resolves to its owner). */
+  private top(id: string): string {
+    let part = this.parts.get(this.get(id).key!)!;
+    while (part.info.owner) part = this.parts.get(part.info.owner)!;
+    return part.info.id;
+  }
+  private isScaffold(p: Part): boolean {
+    return (
+      p.info.id === '__frame' ||
+      /axis|lifeline|lane|grid|participant|actor|section/.test(p.info.role) ||
+      p.info.id.startsWith('branch:')
+    );
+  }
+  /**
+   * Animations that bring each part to its current look: base style, then the
+   * mark colour, then dimming. Parts not on screen change in place.
+   */
+  private looks(ids: Iterable<string>, runTime: number): Transform[] {
+    const anims: Transform[] = [];
+    for (const id of new Set(ids)) {
+      const p = this.parts.get(id)!;
+      const fam = p.mob.family();
+      if (!this.base.has(id)) this.base.set(id, fam.map((m) => ({ ...m.style })));
+      const base = this.base.get(id)!;
+      const color = this.marks.get(id);
+      const dim = this.kept != null && !this.kept.has(id) && !this.isScaffold(p);
+      const connector = !!(p.info.from && p.info.to);
+      const within = (m: Mobject, test: (a: Mobject) => boolean) => {
+        for (let a: Mobject | null = m; a && a !== p.mob; a = a.parent) if (test(a)) return true;
+        return false;
+      };
+      const styles = fam.map((m, i) => {
+        const b = base[i]!,
+          st: Style = { ...b };
+        const text = within(m, (a) => typeof (a as { text?: unknown }).text === 'string');
+        const owned = within(m, (a) => a.key != null && a.key !== id);
+        if (color && !owned && !text) {
+          if (st.stroke && st.stroke !== 'none' && (st.strokeWidth ?? 0) > 0) {
+            st.stroke = color;
+            st.strokeWidth = (st.strokeWidth ?? 0) * 1.8;
+          }
+          if (st.fill && st.fill !== 'none' && (st.fillOpacity ?? 1) > 0)
+            st.fill = connector ? color : lerpColor(st.fill, color, 0.2);
+        }
+        if (dim) st.opacity = (b.opacity ?? 1) * DIM;
+        return st;
+      });
+      if (fam.every((m, i) => JSON.stringify(m.style) === JSON.stringify(styles[i]))) continue;
+      if (this.root.children.includes(p.mob) && this.scene.familyMembers().includes(p.mob)) {
+        const target = p.mob.copy();
+        target.family().forEach((m, i) => (m.style = { ...styles[i]! } as typeof m.style));
+        anims.push(new Transform(p.mob, target, { runTime }));
+      } else fam.forEach((m, i) => (m.style = { ...styles[i]! } as typeof m.style));
+    }
+    return anims;
+  }
+  /** Colour parts (and links' arrowheads) until unmarked. Labels keep their ink. */
+  async mark(ids: readonly string[], { color = this.accent, runTime = 0.45 } = {}): Promise<void> {
+    const tops = ids.map((id) => this.top(id));
+    for (const id of tops) this.marks.set(id, color);
+    const anims = this.looks(tops, runTime);
+    if (anims.length) await this.scene.play(...anims);
+  }
+  async unmark(ids?: readonly string[], { runTime = 0.45 } = {}): Promise<void> {
+    const tops = ids ? ids.map((id) => this.top(id)) : [...this.marks.keys()];
+    for (const id of tops) this.marks.delete(id);
+    const anims = this.looks(tops, runTime);
+    if (anims.length) await this.scene.play(...anims);
+  }
+  /**
+   * Fade everything except these parts (and links between them, and the
+   * family's scaffolding such as lifelines and axes). `null` restores.
+   */
+  async dim(keep: readonly string[] | null, { runTime = 0.5 } = {}): Promise<void> {
+    if (keep == null) this.kept = null;
+    else {
+      const kept = new Set(keep.map((id) => this.top(id)));
+      for (const p of this.parts.values())
+        if (!p.info.owner && p.info.from && p.info.to && !kept.has(p.info.id)) {
+          const ends = [p.info.from, p.info.to].map((n) => {
+            try {
+              return this.top(n);
+            } catch {
+              return n;
+            }
+          });
+          if (ends.every((n) => kept.has(n))) kept.add(p.info.id);
+        }
+      this.kept = kept;
+    }
+    const anims = this.looks(
+      [...this.parts.values()].filter((p) => !p.info.owner).map((p) => p.info.id),
+      runTime,
+    );
+    if (anims.length) await this.scene.play(...anims);
+  }
+  /**
+   * A short label beside a part, at a readable size whatever the diagram's
+   * scale. It follows the part through `focus`, and leaves with `hide`/`morph`.
+   */
+  async note(
+    id: string,
+    text: string,
+    { side = 'above', color = this.accent, size = 0.22 }: { side?: NoteSide; color?: string; size?: number } = {},
+  ): Promise<Group> {
+    const anchor = this.get(id);
+    const label = new Text(text, { fontSize: size, color });
+    const bg = new Rectangle({
+      width: label.width() + size * 1.4,
+      height: size * 1.85,
+      fill: raised(this.snapshot.palette),
+      stroke: color,
+      strokeWidth: 0.014,
+      cornerRadius: 0.08,
+    });
+    label.moveTo(bg.center());
+    const g = new Group(bg, label);
+    g.moveTo(notePosition(g, anchor.box()!, side, this.frameBox));
+    this.root.add(g);
+    if (!this.scene.mobjects.includes(this.root)) this.scene.add(this.root);
+    this.notes.push({ id, side, mob: g });
+    await this.scene.play(new FadeIn(g, { runTime: 0.35, shift: [0, -0.06] }));
+    return g;
+  }
+  async clearNotes({ runTime = 0.3 } = {}): Promise<void> {
+    const notes = this.notes;
+    this.notes = [];
+    if (notes.length) await this.scene.play(...notes.map((n) => new FadeOut(n.mob, { runTime })));
+  }
+  /**
+   * Tokens travel the diagram's own links. Consecutive hops that join up are
+   * one journey with one token. `trail` leaves the travelled links marked, so
+   * the step's resting frame still shows the path.
+   */
   async walk(
     hops: readonly (readonly [string, string])[],
     {
       runTime = 0.8,
       color = this.accent,
       parallel = false,
-    }: { runTime?: number; color?: string; parallel?: boolean } = {},
+      trail = false,
+    }: { runTime?: number; color?: string; parallel?: boolean; trail?: boolean | string } = {},
   ): Promise<void> {
     const path = hops.map(([from, to]) => {
       const edge = [...this.parts.values()].find((p) => p.info.from === from && p.info.to === to);
@@ -271,9 +452,17 @@ export class Diagram {
       if (!this.visible.has(edge.info.id)) throw new Error(`walk(): reveal ${edge.info.id} first`);
       return { edge, from, to };
     });
+    const trailColor = trail === true ? color : trail || null;
+    const lay = (ids: string[]) => {
+      if (!trailColor) return [];
+      for (const id of ids) this.marks.set(id, trailColor);
+      return this.looks(ids, runTime);
+    };
+    const record = ({ edge, from, to }: (typeof path)[number]) =>
+      recordWalk(this.scene, { step: this.scene.currentStep?.name, from, to, edge: edge.info.id });
     if (parallel && path.length) {
       const tokens = path.map(({ edge }) =>
-        new Dot({ radius: 0.075, color }).moveTo(edge.route!.pointFromProportion(0)),
+        new Dot({ radius: 0.08, color }).moveTo(edge.route!.pointFromProportion(0)),
       );
       this.root.add(...tokens);
       await this.scene.play(...tokens.map((token) => new FadeIn(token, { runTime: 0.18 })));
@@ -281,21 +470,32 @@ export class Diagram {
         ...tokens.map(
           (token, i) => new MoveAlongPath(token, path[i]!.edge.route!, { runTime, rateFunc: linear }),
         ),
+        ...lay(path.map((p) => p.edge.info.id)),
       );
-      for (const { edge, from, to } of path)
-        recordWalk(this.scene, { step: this.scene.currentStep?.name, from, to, edge: edge.info.id });
+      path.forEach(record);
       await this.scene.play(...tokens.map((token) => new FadeOut(token, { runTime: 0.18 })));
       return;
     }
-    for (const { edge, from, to } of path) {
-      const token = new Dot({ radius: 0.075, color }).moveTo(edge.route!.pointFromProportion(0));
-      this.root.add(token);
-      await this.scene.play(new FadeIn(token, { runTime: 0.18 }));
-      await this.scene.play(new MoveAlongPath(token, edge.route!, { runTime, rateFunc: linear }));
-      recordWalk(this.scene, { step: this.scene.currentStep?.name, from, to, edge: edge.info.id });
-      await this.scene.play(new FadeOut(token, { runTime: 0.18 }));
+    let token: Dot | null = null;
+    for (let i = 0; i < path.length; i++) {
+      const hop = path[i]!;
+      if (!token) {
+        token = new Dot({ radius: 0.08, color }).moveTo(hop.edge.route!.pointFromProportion(0));
+        this.root.add(token);
+        await this.scene.play(new FadeIn(token, { runTime: 0.18 }));
+      }
+      await this.scene.play(
+        new MoveAlongPath(token, hop.edge.route!, { runTime, rateFunc: linear }),
+        ...lay([hop.edge.info.id]),
+      );
+      record(hop);
+      if (path[i + 1]?.from !== hop.to) {
+        await this.scene.play(new FadeOut(token, { runTime: 0.18 }));
+        token = null;
+      }
     }
   }
+  /** A brief pulse. For emphasis that should stay, use `mark`. */
   async highlight(ids: readonly string[], { color = this.accent, runTime = 0.7 } = {}): Promise<void> {
     await this.scene.play(
       ...ids.map((id) => new Indicate(this.get(id), { color, runTime, scaleFactor: 1.025 })),
@@ -303,16 +503,30 @@ export class Diagram {
   }
   private async moveParts(mobs: Group[], targetFor: (m: Group) => Group, runTime: number): Promise<void> {
     const shown: Transform[] = [];
+    const targets = new Map<Mobject, Group>();
     for (const m of mobs) {
-      const animation = new Transform(m, targetFor(m), { runTime });
+      const target = targetFor(m);
+      targets.set(m, target);
+      const animation = new Transform(m, target, { runTime });
       if (this.visible.has(m.key!)) shown.push(animation);
       else {
         animation.begin();
         animation.finish();
       }
     }
+    for (const n of this.notes) {
+      let top: Mobject = this.get(n.id);
+      while (top.parent && top.parent !== this.root) top = top.parent;
+      const moved = targets.get(top);
+      if (!moved) continue;
+      const box = moved.family()[top.family().indexOf(this.get(n.id))]!.box()!;
+      const target = n.mob.copy();
+      target.moveTo(notePosition(target, box, n.side, this.frameBox));
+      shown.push(new Transform(n.mob, target, { runTime }));
+    }
     if (shown.length) await this.scene.play(...shown);
   }
+  /** Move the camera onto these parts (or back to the whole diagram). Notes follow. */
   async focus(ids: readonly string[] | 'all', { zoom = 1, runTime = 0.9 } = {}): Promise<void> {
     const mobs = [...this.parts.values()].filter((p) => !p.info.owner).map((p) => p.mob);
     const whole = new Group(...mobs.map((m) => m.copy()));
@@ -357,6 +571,10 @@ export class Diagram {
       runTime,
     );
   }
+  /**
+   * Same-id marks glide to their next place; arrivals fade in, departures fade
+   * out. Marks, dimming and notes are reset: the next diagram starts plain.
+   */
   async morph(
     next: DiagramSpec,
     { ops, runTime = 1.1 }: { ops?: readonly MutationOp[]; runTime?: number } = {},
@@ -373,6 +591,8 @@ export class Diagram {
       }
     for (const [id, q] of target.parts)
       if (!q.info.owner && !this.visible.has(id)) animations.push(new FadeIn(q.mob, { runTime }));
+    for (const n of this.notes) animations.push(new FadeOut(n.mob, { runTime: Math.min(runTime, 0.4) }));
+    this.notes = [];
     if (animations.length) await this.scene.play(...animations);
     // Exact handoff to the freshly read tree, retaining semantic route references.
     this.scene.remove(this.root);
@@ -389,12 +609,31 @@ export class Diagram {
     this.visible = new Set(this.parts.keys());
     this.spec = next;
     this.snapshot = snapshot;
+    this.base.clear();
+    this.marks.clear();
+    this.kept = null;
   }
+  /** Fade the whole diagram (and its notes) out. `reveal` can bring parts back. */
   async hide(): Promise<void> {
     const shown = [...this.visible]
       .filter((id) => !this.parts.get(id)!.info.owner)
       .map((id) => this.parts.get(id)!.mob);
-    if (shown.length) await this.scene.play(...shown.map((m) => new FadeOut(m, { runTime: 0.4 })));
+    const notes = this.notes.map((n) => n.mob);
+    if (shown.length || notes.length)
+      await this.scene.play(...[...shown, ...notes].map((m) => new FadeOut(m, { runTime: 0.4 })));
+    this.forget();
+  }
+  /** Reset to unrevealed and unemphasised, without animating (the stage has faded it). */
+  forget(): void {
+    for (const [id, styles] of this.base) this.parts
+        .get(id)!
+        .mob.family()
+        .forEach((m, i) => (m.style = { ...styles[i]! } as typeof m.style));
+    this.base.clear();
+    this.marks.clear();
+    this.kept = null;
+    this.notes = [];
     this.visible.clear();
+    for (const child of [...this.root.children]) this.root.remove(child);
   }
 }

@@ -8,6 +8,8 @@ import type { Trace } from '../../src/trace.ts';
 import type { ExplainerClass, Settings } from '../../explain/index.ts';
 import type { Project } from './explain-project.ts';
 import { hash, sceneSlug } from './explain-project.ts';
+import { wrapCaption, FOOTER_TEXT_WIDTH } from './explain-captions.ts';
+export { wrapCaption, FOOTER_TEXT_WIDTH };
 
 export function vttTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0)
@@ -28,22 +30,6 @@ export function captionsVtt(trace: Trace): string {
       .join('\n')
   );
 }
-export function wrapCaption(text: string, width: number, size = 0.25): string[] {
-  const lines: string[] = [];
-  let line = '';
-  for (const word of text.trim().split(/\s+/)) {
-    if (new Text(word, { fontSize: size }).width() > width)
-      throw new Error(`Caption word exceeds footer width: ${word}`);
-    const next = line ? line + ' ' + word : word;
-    if (line && new Text(next, { fontSize: size }).width() > width) {
-      lines.push(line);
-      line = word;
-    } else line = next;
-  }
-  if (line) lines.push(line);
-  if (lines.length > 3) throw new Error('Caption exceeds three footer lines; shorten the caption');
-  return lines;
-}
 async function footer(trace: Trace, index: number, width: number): Promise<Uint8Array> {
   const scene = new Scene(new NullSink());
   scene.add(new Rectangle({ width: 16, height: 2, fill: '#101820', stroke: 'none' }));
@@ -55,7 +41,7 @@ async function footer(trace: Trace, index: number, width: number): Promise<Uint8
         { fontSize: 0.23, color: '#9ad9d0', weight: 'bold', anchor: 'start' },
       ).moveTo([-7.45, 0.62], [-1, 0]),
     );
-    wrapCaption(String(step.meta.caption ?? ''), 14.9).forEach((line, i) =>
+    wrapCaption(String(step.meta.caption ?? ''), FOOTER_TEXT_WIDTH).forEach((line, i) =>
       scene.add(
         new Text(line, { fontSize: 0.25, color: '#f0f5fa', anchor: 'start' }).moveTo(
           [-7.45, 0.12 - i * 0.36],

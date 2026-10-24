@@ -15,9 +15,15 @@ import { lostLabelWarnings } from './explain-warnings.ts';
 
 export const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 export const hash = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
+/**
+ * Make bundled JavaScript safe inside an inline <script>. The HTML parser only
+ * reacts to `</script` and `<!--`, so only those change. Escaping every `</`
+ * broke code such as the regex `/</g`, which became `/<\/g`.
+ */
 export const scriptEscape = (value: string) =>
   value
-    .replace(/<\//g, '<\\/')
+    .replace(/<\/(script)/gi, '<\\/$1')
+    .replace(/<!--/g, '<\\!--')
     .replace(/\u2028/g, '\\u2028')
     .replace(/\u2029/g, '\\u2029');
 export const htmlEscape = (value: unknown) =>

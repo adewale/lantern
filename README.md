@@ -4,7 +4,7 @@
 A downstream fork of [Lantern](https://github.com/ivarvong/lantern) by Ivar Vong, with a small explanation library, build-time [Agentic Mermaid](https://github.com/adewale/agentic-mermaid) integration, portable embeds and video tooling. No second scene language, hosted service or browser diagram renderer.
 
 ## See it work
-Requires **Node 24+**, Git and npm. Video export also needs **FFmpeg/ffprobe**. Fresh diagram capture needs Chromium; checked-in snapshots let the demo collection build without it.
+Requires **Node 26+**, Git and npm. Video export also needs **FFmpeg/ffprobe**. Fresh diagram capture needs Chromium; checked-in snapshots let the demo collection build without it.
 
 ```sh
 npm ci
@@ -17,12 +17,12 @@ Open **http://127.0.0.1:5174/explainers/**. Four good starting points:
 - **Personal Agent Protocol:** direct, device and mediated sign-in, across four diagram families.
 - **Seasons:** change London to Tromsø, Quito or Sydney; the daylight chart comes from the model.
 - **OAuth with PKCE:** enable the attacker; a computed RFC test vector explains why the stolen code fails.
-- **KV-cache code review:** read the diff, morph the architecture, then follow a cache hit or miss.
+- **KV-cache merge request:** read the diff, watch the diagram gain a KV cache, then follow a cache hit or miss.
 
-The collection contains **14 explanations, 31 complete cases, 43 captured diagrams, eight diagram families and twelve styles**. Each page loads only its own explanation. Contact sheets, HTML receipts and a two-embed integration lab are linked from the gallery.
+The collection contains **14 explanations, 31 cases, 52 captured diagrams, eight diagram families and twelve styles**. Each page loads only its own explanation. Contact sheets, HTML receipts and a two-embed integration lab are linked from the gallery.
 
 ```sh
-npm run demos:check   # every case: exact seeking, motion, bare runtime, label legibility
+npm run demos:check   # every case: seeking, motion, bare runtime, each step changes the picture, 14 px labels, footer fit
 npm run demos:render  # fourteen default-case MP4s; skips unchanged exports
 npm run demos:review  # served desktop/mobile cases, screenshots, headers and video delivery
 ```
@@ -82,6 +82,7 @@ export default class CacheExplanation extends Scene {
   src="/explainers/cache.html?step=request&request=miss"
   title="How a cache changes the request path"
   style="width:100%;height:640px;border:0;display:block"
+  allow="fullscreen"
   loading="lazy"></iframe>
 <a href="/explainers/cache.html">Open explanation in a new page</a>
 ```
@@ -115,7 +116,7 @@ npm run demos:check  # all fourteen authored scenes, all 31 cases
 ## Boundaries worth knowing
 - Diagram text uses embedded **Inter**, not each Agentic Mermaid style's font. Native text also offers JetBrains Mono. Shapes, rough strokes, paint and routes come from the real style backend; unsupported SVG features fail rather than disappear.
 - The SVG lowering pass runs at **build time**. Browser snapshots contain resolved cubic geometry and compact text runs; the runtime shapes those runs from its embedded font. No browser SVG parser, CSS colour resolver or diagram layout engine is shipped.
-- The legibility gate requires imported semantic labels to reach 9 px in a completed-step view, inside the diagram viewport, at a 1280-pixel stage. It does not claim every full diagram is readable on a phone; use authored focus views and the transcript.
+- The legibility gate, at a 1280-pixel stage, requires each diagram label to reach 14 px in some step's last frame, inside the diagram viewport, and each native label to reach 14 px while fully visible. On a 390-pixel phone that is about 4 px, so phone readers rely on Enlarge, the captions and the transcript.
 - Models are scoped and cited. Seasons uses a stated astronomical approximation. The 2password example is a metadata/search/authentication **fixture**, not a verified port of unavailable source or a live vault audit.
 - Preview prints a contact sheet and serves the built page. Rerun after edits; it is not a hot-reloading author IDE.
 

@@ -8,9 +8,12 @@ The generated HTML is the product. Host it anywhere that can serve a static file
 <iframe src="/explainers/pap.html?step=sign-in&signin=device"
         title="Personal Agent Protocol: device sign-in"
         style="width:100%;height:640px;border:0;display:block"
+        allow="fullscreen"
         loading="lazy"></iframe>
 <a href="/explainers/pap.html?step=sign-in&signin=device">Open explanation in a new page</a>
 ```
+
+`allow="fullscreen"` lets the reader's **Enlarge** control show the stage full screen (and sideways on phones that allow it); without it the control is hidden inside the frame (standalone pages always have it). The loader sets it.
 
 The 16:9 stage is not the document's aspect ratio. Captions, chapters and settings change the required height, especially on phones. A raw iframe uses its reserved height and normal scrolling. It does not require messaging. `file:` artifacts also remain readable directly, but opaque-origin auto-sizing is not supported.
 
@@ -58,7 +61,7 @@ The page starts paused, never auto-advances, and offers Previous, Next, chapters
 { type: 'lantern:resize', version: 1, height: 742 }
 ```
 
-- The child observes the natural-height `#content` root, not a viewport-sized element. It measures initially, coalesces changes to one animation frame, rounds up and sends only changed heights. Both growth and shrinkage work without a viewport feedback loop.
+- The child observes the natural-height `#content` root, not a viewport-sized element. It measures initially, then measures in each `ResizeObserver` callback (which browsers deliver at most once per rendering update), rounds up and sends only changed heights. It deliberately does not defer to `requestAnimationFrame`: browsers throttle that in offscreen cross-origin frames, and an embed below the fold would stop resizing. Both growth and shrinkage work without a viewport feedback loop.
 - The child sends only while framed, to an exact `parentOrigin`. Wildcards, URL paths and opaque `null` origins are rejected. With no valid target, resizing is disabled; ordinary reading still works.
 - The parent requires **both** `event.origin === configuredArtifactOrigin` and `event.source === iframe.contentWindow`. An origin check alone lets one sibling embed resize another. A source check alone trusts that frame after it navigates to a different origin.
 - Only the exact type/version and a finite integer height from 1 through 100,000 CSS pixels are accepted. Everything else is ignored. No navigation, secrets, commands or player state are carried by this protocol.

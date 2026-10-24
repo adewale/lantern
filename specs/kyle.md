@@ -25,11 +25,13 @@ A working prototype shows all five across fourteen explainers. Eight of them are
 
 ## Implementation status in this checkout
 
-The native authoring-to-embed/video workflow is now implemented locally, with fourteen explanations, 31 cases, 43 captured diagrams, eight diagram families and twelve styles. This is a new implementation, not an import of the separate prototype cited in *What has been demonstrated*. That prototype's 49-diagram and 110-test counts remain historical claims, not this checkout's results.
+This checkout implements the workflow locally: fourteen explanations, 31 cases, 52 captured diagrams, eight diagram families and twelve styles. It is a new implementation, not an import of the prototype described under *What has been demonstrated*, whose 49-diagram and 110-test counts remain that prototype's.
 
-Implemented: the helper library and finite settings; real-style capture and SVG lowering; cached snapshots and replayed morph edits; external-scene CLI; stepper-first portable pages with posters/transcripts; a source-and-origin-checked loader; contact sheets; H.264/VP9 export with footer, captions, chapters and receipts; and behavioural/model/runtime checks. Read [delivery evidence and remaining gates](../docs/KYLE-STATUS.md) and the [demo tour](../docs/DEMO-TOUR.md) for current commands and artifacts.
+Implemented: the helper library and finite settings; capture through the real style backends with SVG lowering; cached snapshots and replayed morph edits; the external-scene CLI; stepper-first portable pages with posters and transcripts; a loader that checks origin and source window; contact sheets; H.264 and VP9 export with footer, captions, chapters and receipts. [Delivery evidence and remaining gates](../docs/KYLE-STATUS.md) and the [demo tour](../docs/DEMO-TOUR.md) list the commands and artifacts.
 
-Two implementation choices differ from the historical prototype: CSS/SVG lowering happens at build time, so browsers receive resolved geometry and compact text placements rather than a live SVG reader; and the 2password example is an explicitly scoped offline fixture, not a verified port of unavailable source. Style-specific fonts remain unsupported as anticipated below. Public naming, maintainer/release acceptance, an independent outside author and production deployment are not established by local tests.
+A second pass changed what readers see. Every step's last frame is what a reader looks at while reading its caption, and in the first pass nine of the fourteen explainers had steps that ended exactly like the step before. The helpers now keep emphasis on screen (walk trails, `mark`, `dim`, notes attached to diagram parts, updatable cards, code focus bars) and lay content into named stage regions. The stage heading follows step titles, and **Next** plays a step's animation before stopping on its last frame. `explain check` now fails a case when a step ends on the previous step's picture, when text collides or is cut off, when a label stays under 14 px at a 1280 px stage, or when a caption overflows the video footer. All fourteen explainers were rewritten against those checks, and their prose was edited with [anti-slop-writing](https://github.com/adewale/anti-slop-writing).
+
+Two implementation choices differ from the prototype. CSS and SVG lowering happens at build time, so browsers receive resolved geometry and text placements rather than a live SVG reader. The 2password example is an explicitly scoped offline fixture, because its source was unavailable. Style-specific fonts remain unsupported, as anticipated below. Public naming, a maintainer, release acceptance, an outside author and production deployment cannot be established by local tests.
 
 ## What changed from the previous draft
 
@@ -67,7 +69,7 @@ The engine is inherited as it is. Lantern already ships helpers of this kind: `t
 | --- | --- | --- |
 | Scene authoring | `Scene` classes with `step()`, `play()`, captions and state | Templates, examples, documentation; static `meta` and `settings` fields as registration conventions |
 | Animation engine | Mobjects, animations, deterministic frames and seeking | Preserve semantics. One fix from the prototype (nested `AnimationGroup` members) and one documented pitfall (easing compounds in nested groups, so the helpers run groups on linear time) |
-| Explanation helpers | `title`, `CodePanel`, `StateReadout` | `explain/`: `stage`, `show`, `walk`, `morph`, `reveal`, `focus`, `highlight`, `card`, `chip` |
+| Explanation helpers | `title`, `CodePanel`, `StateReadout` | `explain/`: `stage`, `show`, `walk`, `morph`, `reveal`, `focus`, `highlight`, `mark`, `dim`, `note`, `card`, `code`, `chip` |
 | Diagrams | `flowchart()`, Lantern's own Mermaid layout | Keep it. Add the Agentic Mermaid integration, which honours its styles across families |
 | Player | `app/player.ts` | Stepper-first embed preset, settings row, accessibility and mobile behaviour |
 | Builds | Bundled HTML | External scenes, snapshot build, portable artifacts, reproducible releases |
@@ -113,7 +115,10 @@ The helpers are plain functions in `explain/`. A scene calls `stage(this, { pale
 | `d.morph(next, { ops })` | Marks with the same id glide to their new place; new ones arrive; gone ones leave. With `ops`, the build checks Agentic Mermaid's `mutate(ops)` really produces `next` |
 | `d.focus(ids \| 'all', { zoom })` | The camera glides onto those parts |
 | `d.highlight(ids)` | Those parts pulse in a colour |
-| `s.card(rows)`, `s.chip(text)` | Labelled values over the frame; a status line in the corner |
+| `d.mark(ids)`, `d.dim(ids)`, `d.note(id, text)` | Those parts stay coloured, everything else fades, or a short label sits beside a part; all three remain in the step's last frame |
+| `d.walk(hops, { trail: true })` | As `walk`, and the travelled links stay coloured |
+| `s.card(rows)`, `s.chip(text)` | Labelled values in a stage region, which `card.set()` updates and `card.mark()` lights; a status line in the corner |
+| `s.code(lines)` | Code on a panel whose focus bar stays on the lines just discussed |
 | `settingsOf(this)` | The reader's chosen setting values, or the defaults |
 
 This is the KV-cache merge request from Lantern's examples, rebuilt; excerpted, but otherwise as it runs. The diagram helpers and Lantern's native `Code` and `Transform` sit side by side:

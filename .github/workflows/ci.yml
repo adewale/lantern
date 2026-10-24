@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 26
           cache: npm
       - run: npm ci
       - uses: actions/setup-python@v5
@@ -30,7 +30,7 @@ jobs:
         env:
           MANIM_DIR: /tmp/manim
           MERMAID_JS: node_modules/mermaid/dist/mermaid.min.js
-      - run: node --expose-gc test/leak.test.ts # Node 24 test workers may not expose GC
+      - run: node --expose-gc test/leak.test.ts # also run directly, outside the test runner's workers
       # Product gates reuse this job and its Chromium installation; no scheduled lane.
       - run: npm run test:embeds    # real origin/source isolation, offline/no-JS reading and style fidelity
       - run: npm run demos:check    # all 31 author cases: seek, motion, bare runtime and readable labels

@@ -1,42 +1,41 @@
 # Kyle delivery status
 
-**Local implementation and demo collection complete; public release is not claimed.**
+**The local workflow and the fourteen-explainer collection are built and checked. Nothing has been publicly released or deployed.**
 
-Lantern turns one native TypeScript scene into a reader-paced, portable website embed and a silent captioned video. Authors keep native objects and code; readers get named steps and meaningful, finite alternative cases. Agentic Mermaid 0.4.1 supplies styled artwork at build time, not a browser runtime.
+Each explanation is one native TypeScript `Scene`. The page steps through it at the reader's pace, and the same scene renders a silent, captioned MP4. Settings such as a sign-in method or a city are finite cases, each built and checked before anyone reads it. Agentic Mermaid 0.4.1 draws the diagrams at build time; the browser receives resolved geometry and never runs it.
 
-This implements the first-release scope of [the proposal](../specs/kyle.md). Historical prototype numbers in that proposal are not evidence for this checkout.
+This implements the first-release scope of [the proposal](../specs/kyle.md). The proposal's prototype numbers (49 diagrams, 110 tests) describe that prototype, not this checkout.
 
-## Delivered
+## Second pass: what readers see
 
-- [x] Native `Scene` authoring, inherited examples/player and existing runtime export names preserved.
-- [x] Stage/diagram helpers, finite per-instance settings, focus/reveal/highlight, cards/chips and traced real-link walks, including route-following sequence tokens.
-- [x] Pinned build-time capture, loss-detecting SVG lowering, compact geometry/text snapshots, SVG baseline semantics and replay-verified typed morphs.
-- [x] External-scene CLI: `init`, `preview`, `snapshots`, `check`, `build`, `render`, `shots`; installed executable is compiled JavaScript, with one shared compiled engine.
-- [x] Paused, portable stepper pages: URL/history cases, themes, reduced motion, keyboard controls, poster, all-case transcript and no-JavaScript fallback.
-- [x] Optional independent auto-height embeds, checking origin **and** source window; growth/shrinkage, strict payload bounds and generated CSP/header recipes.
-- [x] **14 explanations, 31 cases, 43 captured diagrams, eight families and twelve authored diagram styles.** Eight inherited explanation topics rebuilt with the helpers; the ring buffer remains native geometry.
-- [x] Silent H.264/VP9 export, outline caption footer, subtitles, WebVTT, chapters and provenance receipts. Failed exports preserve previously completed files.
-- [x] Model/step-boundary fidelity, exact sampled seeking, skipped/full traces, motion, bare-runtime and legibility gates for every case. Check reports retain full program-state traces.
-- [x] Imported semantic labels need readable **completed-step** views, inside their inherited viewport—not just a readable instant during a camera sweep. Native rectangular clipping prevents enlarged diagrams painting over the heading.
-- [x] Gallery, contact sheets, served-collection desktop/mobile review, authoring/embed/export documentation, agent skill, fresh-archive smoke and CI browser/portfolio/video gates.
+The first local build passed its mechanical checks while teaching poorly. A reader looks at a step's last frame while reading the caption, and in nine of the fourteen explainers some steps ended exactly like the step before. Tokens walked and vanished, highlights pulsed and faded, cards replaced the diagram they described, and the stage heading never changed. Diagrams often filled a thin strip of the stage. The second pass changed the helpers, the checks, the player and every scene.
 
-## Evidence from this checkout
+- **Helpers** (`explain/`): the stage heading follows step titles; content goes into named regions (`main`, `side`, `top`, `bottom`…). Diagrams gain `mark`, `dim`, `note` and walk trails that stay on screen until removed. `s.card()` returns a card whose values `set()` updates and whose rows `mark()` lights. `s.code()` keeps a focus bar on the lines under discussion. In styles whose accent is grey or near-black, emphasis is orange.
+- **Checks** (`explain check`, every case): a step fails if its last frame, ignoring the heading, matches the previous step's. Native text that overlaps other text or is cut off by the frame fails, labels must reach 14 px at a 1280 px stage (up from 9 px; diagram labels in some step's last frame), and every caption must fit three lines of the video footer. The checks sample a step's true last frame; the contact sheets and the player's paused view used to show the frame before it.
+- **Player**: **Next** plays the step's animation and stops on its last frame instead of jumping there. **Replay step** runs it again, and **Enlarge** shows the stage full screen, which is how a phone reader can read the labels.
+- **Scenes**: all fourteen were rewritten against those checks, with values on screen taken from each scene's model. Their titles, captions and on-stage text were then edited with [anti-slop-writing](https://github.com/adewale/anti-slop-writing); that pass also corrected the day-length formula (missing its 24/π factor), a seasons title that was wrong for Sydney, and a glyph caption that misdescribed where label widths come from.
 
-| Gate | Latest result | Local evidence |
+The pass also fixed three bugs that the earlier checks missed:
+
+- **Resizing:** the embed's height reports went through `requestAnimationFrame`, which browsers throttle in offscreen cross-origin frames, so an embed below the fold could stop resizing. It now measures in the `ResizeObserver` callback. The two-embed browser test, which had passed 1 run in 3, passed 5 of 5.
+- **Script escaping:** the page builder escaped every `</` in the inlined script, which broke any bundle containing the regex `/</g`; the Lantern page failed to start in the served review. Only `</script` and `<!--` are escaped now, with a regression test.
+- **Chromium lookup:** capture looked for Chromium only in the Linux Playwright cache and could pick an incomplete install. It now checks the macOS cache and requires Playwright's `INSTALLATION_COMPLETE` marker.
+
+## Evidence from this checkout (25 October 2026, Node 26.12.1, macOS)
+
+| Gate | Result | Command |
 | --- | --- | --- |
-| TypeScript, declarations and consumer compilation | `npm run check` passed | Command output |
-| Expanded suite, Node 26.12.1 | **104 tests: 100 passed, four inherited external-oracle skips, zero failures**; browser/video/FULL flags enabled | `out/validation/full-tests.log` |
-| Supported Node 24.10.0 | **99 passed, five skips, zero failures**; its test worker did not expose GC. The GC test passed separately with `node --expose-gc test/leak.test.ts` | `out/validation/node24-tests.log`, `node24-leak.log` |
-| Authored portfolio | All **31 cases** passed motion, exact sampled SVG seeking, skipped/full state traces, bare runtime and label checks | `out/checks/*/report.json`, `out/explainers/evidence.json` |
-| Model fidelity | Every case checked at step boundaries; independent RFC/Node-crypto, real-Git and scoped-model oracles | `test/explain-models.test.ts`, `test/explain-fidelity.test.ts` |
-| Styled artwork | Twelve real styles passed non-text raster comparisons below 1/255 mean channel error; typography is explicitly excluded | `test/explain-capture.test.ts` |
-| Browser behaviour | Cross-origin source/origin isolation, independent resizing, shrinking, history/fallback, real theme colours, keyboard focus, reduced motion, offline/storage-disabled and no-JS reading passed | `test/explain-embed.test.ts`, expanded-suite logs |
-| Served collection | All **31 cases** checked on desktop/mobile; no console errors or external connections. Actual CSP headers, video byte ranges and two live embeds passed | `out/validation/browser-review.json`, `out/review/` |
-| Default films | All **14** current-source MP4s rebuilt and decoded; silent H.264, 1280 × 880, footer/captions/chapters/VTT/receipts. VP9 and arbitrary even-width encoding covered by real integration tests | `out/videos/`, `out/validation/demos.log` |
-| Fresh distribution | Node 24 archive installation, executable bin, external authoring/settings/check/build, notices, shared engine, **installed capture and installed video export** passed | `out/validation/package-smoke.log` |
-| Inherited application | `npm run build` passed | `out/validation/inherited-build.log` |
+| TypeScript, declarations, consumer compile | passed | `npm run check` |
+| Full suite with browser, video and FULL flags | **112 tests: 108 passed, 0 failed, 4 skipped** (they need an external Manim checkout or Mermaid bundle) | `EXPLAIN_BROWSER=1 EXPLAIN_VIDEO=1 FULL=1 node --expose-gc --test test/*.test.ts` |
+| Every case of every explainer | **31 cases** passed seek, motion, bare runtime, skipped-trace, step-change, text-collision, 14 px label and footer-fit checks; reports keep full program-state traces | `npm run demos:check`, `out/checks/*/report.json` |
+| Model fidelity | each case's step-boundary state equals its model; RFC 7636/Node crypto, `git hash-object` and scoped-model oracles | `test/explain-fidelity.test.ts`, `test/explain-models.test.ts` |
+| Style fidelity | twelve styles' non-text artwork within 1/255 mean channel error of Agentic Mermaid's renderer; typography excluded | `test/explain-capture.test.ts` |
+| Served collection | all **31 cases** at 390 px and 1180 px: captions, artwork, no console errors, no external connections; response headers, video byte ranges and the two-embed page | `npm run demos:review`, `out/review/` |
+| Films | all **14** default-case MP4s rebuilt and verified: silent H.264, 1280 × 880, footer, subtitle track, chapters, WebVTT, receipts | `npm run demos:render`, `out/videos/` |
+| Installed package | archive install, executable bin, an outside scene with settings, check, build, notices, one compiled engine | `npm run pack:smoke` |
+| Inherited application | built | `npm run build` |
 
-The four unavailable inherited oracles require an external Manim checkout or Mermaid browser bundle. They are not described as passing. Generated artifacts/logs are local outputs, not committed release artifacts.
+The collection has 14 explanations, 31 cases, 52 captured diagrams, eight Mermaid families and twelve styles. Node 26 is the supported runtime, in `package.json` and in CI. Generated artifacts and logs live under `out/` and are not committed.
 
 ### Open the demos
 
@@ -45,27 +44,15 @@ npm run demos:serve
 # http://127.0.0.1:5174/explainers/
 ```
 
-Start with **Seasons**, **OAuth/PKCE**, **KV-cache review** and **Personal Agent Protocol**. Then open **Two real embeds** and a **Captioned MP4**. [The three-minute demo tour](DEMO-TOUR.md) gives a clean narrative without overstating the evidence.
+[The demo tour](DEMO-TOUR.md) is a three-minute path through Seasons, OAuth with PKCE, the KV-cache merge request and the two-embed page. To regenerate everything: `npm run demos:check`, `npm run demos:render`, `npm run demos:review`. Fresh diagram capture and the browser tests need Playwright's Chromium (`npx playwright-core install chromium`) or `CHROMIUM_EXECUTABLE_PATH`; video needs FFmpeg and ffprobe.
 
-To regenerate and review: `npm run demos:check`, `npm run demos:render`, `npm run demos:review`. Fresh captures/browser gates require installed Chromium or `CHROMIUM_EXECUTABLE_PATH`; movies require FFmpeg/ffprobe. Individual portable pages are approximately 0.4–0.7 MiB uncompressed in this build, including engine/fonts and their own cases—not the whole catalogue.
+## Limits and gates still open
 
-## Testing handoff
+- Diagram lettering is embedded Inter, stretched to the width Agentic Mermaid writes into each label's `textLength`, so styles with their own fonts (hand-drawn, pen-and-ink) differ in letterforms.
+- The evidence covers eight diagram families and twelve styles. Unsupported SVG features fail the build rather than disappearing.
+- A 14 px label at a 1280 px stage is about 4 px on a 390 px phone; phone readers depend on Enlarge, the captions and the transcript.
+- Agentic Mermaid's verifier names edges by global index (`A->C#1`) while snapshot parts use a per-pair index (`edge:A->C#0`), so the Agentic Mermaid explainer maps warnings to parts by endpoints. Asking upstream to include the part id in each finding would remove that mapping.
+- The models are scoped and cited, not complete implementations. Seasons is an astronomical approximation. 2password is an offline fixture with made-up items, not a port of its source or an audit of a vault.
+- Owner decisions remain: the public name and package (the inherited npm name is still `manim-js`), an accountable maintainer, acceptance by an outside author on a clean machine, and production hosting with checks on the bytes and headers actually served.
 
-- **Tests changed:** helper/settings/snapshot/model/fidelity/protocol/CLI/browser/video regressions, plus real nested-clip raster and SVG-baseline tests.
-- **Behaviour covered:** native author → capture → checked cases → standalone/embed → silent film → installed-package workflow.
-- **Commands run:** `check`, expanded `test:full`, Node 24 suite and direct GC test, `demos:check`/`demos:render`, `demos:review`, full optional `pack:smoke`, inherited `build`.
-- **Results:** gates above passed; skip prerequisites and font/model scope are explicit.
-- **Gaps/risks:** the limits below and external release acceptance—not an unfinished local pipeline.
-- **Follow-ups:** owner-led release decisions and outside-author/deployment acceptance.
-
-## Honest limits and external gates
-
-- Diagram lettering uses embedded **Inter**, not every style's own font. Native text also supports JetBrains Mono. Non-text fidelity is not a typography/pixel-identity claim.
-- Evidence covers eight diagram families and twelve styles, not arbitrary Mermaid or SVG. Unsupported imported drawing resources fail rather than disappear. Broader-family work remains future scope.
-- A 9 px label at a 1280 px stage is not a promise of phone-scale overview legibility; focus views, captions and the transcript remain important.
-- Models are scoped and cited, not full external products. Seasons is an explicit astronomical approximation. **2password is an offline fixture, not a verified port of private/unavailable source or a live vault audit.** Obtaining that source is required for an exact port.
-- Choose the public product/package name and accountable maintainer. The inherited npm name remains `manim-js`; no new npm release has been made.
-- An independent outside author must accept the documentation/workflow on a clean machine. Automated archive smoke is distribution evidence, not that independent acceptance.
-- Production hosting/deployment and validation of the bytes/headers actually served remain owner gates. No production deployment, upstream acceptance or endorsement is claimed.
-
-Foundation: [ivarvong/lantern](https://github.com/ivarvong/lantern) at `2c7bad533be25fbd56d26a9a2b6c5651743f011e`. Preserve MIT and font notices; see [upstream boundaries](UPSTREAM.md).
+Foundation: [ivarvong/lantern](https://github.com/ivarvong/lantern) at `2c7bad533be25fbd56d26a9a2b6c5651743f011e`. Keep the MIT and font notices; see [upstream boundaries](UPSTREAM.md).

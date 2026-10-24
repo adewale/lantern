@@ -14,6 +14,7 @@ import {
   Text,
 } from '../../src/index.ts';
 import { ROOT, engineAlias, sceneSlug } from './explain-project.ts';
+import { wrapCaption, FOOTER_TEXT_WIDTH } from './explain-captions.ts';
 import type { Box, Mobject } from '../../src/index.ts';
 import type { Project } from './explain-project.ts';
 
@@ -39,6 +40,54 @@ export function lintConstruct(source: string): string[] {
   walk(file);
   return errors;
 }
+/** Smallest label, in CSS pixels at a 1280-pixel stage, a reader must be able to see. */
+export const MIN_PX = 14;
+const FRAME: Box = [-8, -4.5, 8, 4.5];
+
+/**
+ * Text a reader would see colliding: a native Text overlapping any other
+ * visible text, or a native Text cut off by the frame. Diagram-internal label
+ * placement is Agentic Mermaid's; native text placed over it is the author's.
+ */
+export function restingTextProblems(scene: { familyMembers(): Mobject[] }): string[] {
+  const texts: { m: Mobject; box: Box; native: boolean; text: string }[] = [];
+  const visible = (m: Mobject) => {
+    for (let a: Mobject | null = m; a; a = a.parent) if ((a.style.opacity ?? 1) < 0.5) return false;
+    return true;
+  };
+  for (const m of scene.familyMembers()) {
+    const text = (m as unknown as { text?: unknown }).text;
+    if (typeof text !== 'string' || !text.trim() || !visible(m)) continue;
+    if (m.key === '__heading') continue;
+    let nested = false;
+    for (let a = m.parent; a; a = a.parent) if (typeof (a as unknown as { text?: unknown }).text === 'string') nested = true;
+    if (nested) continue;
+    const box = m.box();
+    if (box) texts.push({ m, box, native: m instanceof Text, text });
+  }
+  const problems: string[] = [];
+  for (const t of texts)
+    if (t.native && (t.box[0] < FRAME[0] || t.box[1] < FRAME[1] || t.box[2] > FRAME[2] || t.box[3] > FRAME[3]))
+      problems.push(`"${t.text}" is cut off by the frame`);
+  const area = (b: Box) => Math.max(0, b[2] - b[0]) * Math.max(0, b[3] - b[1]);
+  for (let i = 0; i < texts.length; i++)
+    for (let j = i + 1; j < texts.length; j++) {
+      const a = texts[i]!,
+        b = texts[j]!;
+      if (!a.native && !b.native) continue;
+      const overlap: Box = [
+        Math.max(a.box[0], b.box[0]),
+        Math.max(a.box[1], b.box[1]),
+        Math.min(a.box[2], b.box[2]),
+        Math.min(a.box[3], b.box[3]),
+      ];
+      if (overlap[2] <= overlap[0] || overlap[3] <= overlap[1]) continue;
+      if (area(overlap) > 0.12 * Math.min(area(a.box), area(b.box)))
+        problems.push(`"${a.text}" overlaps "${b.text}"`);
+    }
+  return problems;
+}
+
 export async function checkProject(
   project: Project,
   out = join(ROOT, 'out/checks', sceneSlug(project)),
@@ -57,14 +106,25 @@ export async function checkProject(
       ]),
     );
     const labels = new Map<string, number>();
-    const completedFrames = new Set(
-      v.trace.steps.map((s) => Math.max(s.frame0 + 1, (s.frame1 ?? s.frame0 + 1) - 1)),
-    );
+    // A step's resting frame is its last: frames are numbered as emitted, so
+    // the final frame of a step carries the number recorded as its frame1.
+    const restFrame = (s: (typeof v.trace.steps)[number]) => Math.max(s.frame0 + 1, s.frame1 ?? s.frame0 + 1);
+    const completedFrames = new Set(v.trace.steps.map(restFrame));
     const staticLabels = new Map<string, { text: string; px: number }>();
+    const resting = new Map<number, string>();
+    const collisions: string[] = [];
     await new v.Scene({
       async frame(scene) {
         await motion.frame(scene);
         if (targets.has(scene.frameCount)) frames.set(scene.frameCount, toSvgString(scene));
+        if (completedFrames.has(scene.frameCount)) {
+          // The resting picture of a step, without the heading that names it.
+          const all = scene.mobjects;
+          scene.mobjects = all.filter((m) => m.key !== '__heading');
+          resting.set(scene.frameCount, toSvgString(scene));
+          scene.mobjects = all;
+          collisions.push(...restingTextProblems(scene).map((p) => `${scene.currentStep?.name}: ${p}`));
+        }
         for (const m of scene.familyMembers()) {
           const text = (m as unknown as { text?: string }).text;
           if (!text?.trim()) continue;
@@ -134,14 +194,37 @@ export async function checkProject(
     }
     const skipped = await traceScene(v.Scene, { skipUntil: 0 });
     assert.deepEqual(skipped, v.trace, 'Skipped and played traces differ');
-    const staticSmall = [...staticLabels.values()].filter((label) => label.px < 9);
+    const still = v.trace.steps.filter((step, i) => {
+      if (!i) return false;
+      return resting.get(restFrame(step)) === resting.get(restFrame(v.trace.steps[i - 1]!));
+    });
+    assert.deepEqual(
+      still.map((s) => s.step),
+      [],
+      `Each step must change the picture; these end exactly as the step before ${JSON.stringify(v.values)}`,
+    );
+    assert.deepEqual(
+      [...new Set(collisions)],
+      [],
+      `Resting frames have colliding or cut-off text ${JSON.stringify(v.values)}`,
+    );
+    // Every case's captions must fit the video footer, not just the default case that gets rendered.
+    for (const step of v.trace.steps)
+      if (typeof step.meta.caption === 'string') {
+        try {
+          wrapCaption(step.meta.caption, FOOTER_TEXT_WIDTH);
+        } catch (error) {
+          assert.fail(`${step.step} ${JSON.stringify(v.values)}: ${(error as Error).message}`);
+        }
+      }
+    const staticSmall = [...staticLabels.values()].filter((label) => label.px < MIN_PX);
     assert.deepEqual(
       staticSmall,
       [],
       `Imported labels need a readable completed-step view at 1280px: ${JSON.stringify(staticSmall)}`,
     );
-    const small = [...labels].filter(([, px]) => px < 9);
-    assert.deepEqual(small, [], `Labels never reach 9px at 1280px stage: ${JSON.stringify(small)}`);
+    const small = [...labels].filter(([, px]) => px < MIN_PX);
+    assert.deepEqual(small, [], `Labels never reach ${MIN_PX}px at 1280px stage: ${JSON.stringify(small)}`);
     const contents = `import * as author from ${JSON.stringify(project.file)};import{bindSnapshots,withSettings}from ${JSON.stringify(join(ROOT, 'explain/index.ts'))};import{Scene,NullSink,toSvgString}from ${JSON.stringify(join(ROOT, 'src/index.ts'))};const Source=author.default??Object.values(author).find(v=>typeof v==='function'&&v.prototype instanceof Scene);export async function run(){const C=withSettings(bindSnapshots(Source,${JSON.stringify(project.store)}),${JSON.stringify(v.values)});const s=await new C(new NullSink(),{skipUntil:Infinity}).run();return{steps:s.steps.map(s=>s.name),state:s.describe(),svg:toSvgString(s)}}`;
     const b = await build({
       stdin: { contents, resolveDir: ROOT, loader: 'ts' },
@@ -172,6 +255,8 @@ export async function checkProject(
       motionEvents: events.length,
       labels: labels.size,
       completedStepLabels: staticLabels.size,
+      everyStepChangesPicture: true,
+      restingTextCollisions: 0,
       bareRuntime: true,
     });
   }

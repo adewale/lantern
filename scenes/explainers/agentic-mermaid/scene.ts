@@ -1,11 +1,38 @@
 import { Scene } from '../../../src/index.ts';
-import { stage, palette, settingsOf } from '../../../explain/index.ts';
+import { stage, settingsOf } from '../../../explain/index.ts';
+import type { DiagramSnapshot } from '../../../integrations/agentic-mermaid/snapshot.ts';
+const STYLE = 'blueprint';
 const BAD = 'graph LR\nA{Cached} --> B[Reply]\nA --> C[Database]';
 const GOOD = 'graph LR\nA{Cached} -->|yes| B[Reply]\nA -->|no| C[Database]';
+const OPS = [
+  { kind: 'set_label', target: 'A->B#0', label: 'yes' },
+  { kind: 'set_label', target: 'A->C#0', label: 'no' },
+];
+interface Warning {
+  code: string;
+  node: string;
+  edge: string;
+}
+interface Findings {
+  ok: boolean;
+  warnings: Warning[];
+  layout: { edges: { id: string; label?: { text: string } }[] };
+}
+const findingsOf = (snap: DiagramSnapshot) => snap.findings as Findings;
+/** The snapshot part a verifier warning points at ("A->C#1" is the edge's global index). */
+function edgePart(snap: DiagramSnapshot, edge: string): string {
+  const [, from, to] = /^(.+)->(.+)#\d+$/.exec(edge) ?? [];
+  const part = snap.parts.find((p) => p.role === 'edge' && p.from === from && p.to === to);
+  if (!part) throw new Error(`No edge part for warning ${edge}`);
+  return part.id;
+}
+const SIDE_TOP = [2.65, 0.15, 7.55, 3.25] as const,
+  SIDE_LOW = [2.65, -4.25, 7.55, -0.15] as const;
+
 export default class MermaidExplainer extends Scene {
   static meta = {
     id: 'agentic-mermaid',
-    title: 'Make the diagram an editable, checkable model',
+    title: 'Verify and repair an agent’s Mermaid edit',
     sources: [
       'https://github.com/adewale/agentic-mermaid',
       'https://www.npmjs.com/package/agentic-mermaid/v/0.4.1',
@@ -24,71 +51,159 @@ export default class MermaidExplainer extends Scene {
   ];
   override async construct() {
     const missing = settingsOf(this).edit === 'missing',
-      s = stage(this, {
-        palette: palette('blueprint'),
-        title: 'An agent edits semantics, not SVG coordinates',
-      });
+      s = stage(this);
+    const first = missing ? BAD : GOOD;
+
     await this.step('source', {
-      title: 'Begin with a typed diagram',
+      title: 'The agent’s edit, parsed into a snapshot with ids',
       caption:
-        'Mermaid source gives marks stable identities. Agentic Mermaid parses, lays out, styles and verifies it. Lantern uses a build-time snapshot; none of that renderer ships to the reader.',
+        'The agent’s edit is Mermaid source, and the card lists the id the snapshot gives each node and edge. Agentic Mermaid parses, lays out, styles and verifies it at build time, and none of Agentic Mermaid ships to the reader.',
     });
-    const d = await s.show({ source: missing ? BAD : GOOD, style: 'blueprint' });
+    const d = await s.show({ source: first, style: STYLE }, { box: 'main' });
+    await s.code(first.split('\n'), { at: [...SIDE_TOP], title: 'flow.mmd (the agent’s edit)', fontSize: 0.24 });
+    const ids = d.snapshot.parts.filter((p) => p.role === 'node' || p.role === 'edge');
+    await s.card(
+      ids.map((p) => [p.role, p.id] as const),
+      { at: [...SIDE_LOW], title: 'Ids in the snapshot' },
+    );
+
     await this.step('verify', {
-      title: missing ? 'Verify catches ambiguous branches' : 'Verify passes the first edit',
+      title: missing ? 'The verifier flags both edges out of Cached' : 'The verifier finds no warnings in the first edit',
       caption: missing
-        ? 'The real verifier reports two unlabeled decision branches. The picture renders, but the reader cannot tell which outcome means yes. Rendering success is not semantic clarity.'
-        : 'Both decision branches are labeled. The real verifier has no decision-label warnings. There is no need to invent a failed edit just to make a story.',
+        ? 'verify(flow) returns ok: true with two DECISION_BRANCH_UNLABELED warnings, one per marked edge. The diagram renders, but nothing on it says which edge out of Cached means yes.'
+        : 'Both edges out of Cached carry labels, yes and no, so verify(flow) returns no warnings and this case skips the repair step.',
     });
-    const findings = d.snapshot.findings as { warnings: unknown[] };
+    await s.clearOverlays();
+    const findings = findingsOf(d.snapshot);
     this.state.warnings = findings.warnings;
-    await d.highlight(['A']);
+    if (findings.warnings.length) {
+      const flagged = findings.warnings.map((w) => edgePart(d.snapshot, w.edge));
+      await d.mark(['A', ...flagged]);
+      for (const [i, id] of flagged.entries())
+        await d.note(id, 'unlabeled: yes or no?', { side: i === 0 ? 'above' : 'below' });
+    } else {
+      const labelled = findings.layout.edges.filter((e) => e.label);
+      await d.mark(labelled.map((e) => edgePart(d.snapshot, `${e.id}#0`)));
+    }
+    await s.code(
+      [
+        `verify(flow).ok: ${findings.ok}`,
+        `warnings: ${findings.warnings.length}`,
+        ...findings.warnings.flatMap((w) => [`  ${w.code}`, `    node ${w.node}, edge ${w.edge}`]),
+      ],
+      { at: [2.65, -4.25, 7.55, 3.25], title: 'verifier findings', fontSize: 0.22 },
+    );
+
     if (missing) {
       await this.step('repair', {
-        title: 'Repair by replaying typed operations',
+        title: 'Two set_label operations label the branches',
         caption:
-          'Set the two edge labels with typed mutation operations. The build replays them and requires their result to equal the next diagram. A decorative morph is not evidence that the edit is correct.',
+          'Two set_label operations add yes and no to the edges. The build replays them on the parsed first edit and throws unless the result serializes to the same Mermaid as the next diagram.',
       });
-      await d.morph(
-        { source: GOOD, style: 'blueprint' },
-        {
-          ops: [
-            { kind: 'set_label', target: 'A->B#0', label: 'yes' },
-            { kind: 'set_label', target: 'A->C#0', label: 'no' },
-          ],
-        },
+      await s.clearOverlays();
+      const ops = await s.code(
+        OPS.flatMap((op) => [`{ kind: '${op.kind}',`, `  target: '${op.target}',`, `  label: '${op.label}' }`]),
+        { at: [...SIDE_TOP], title: 'typed ops (replayed by the build)', fontSize: 0.24 },
+      );
+      await ops.focus([0, OPS.length * 3 - 1]);
+      await d.morph({ source: GOOD, style: STYLE }, { ops: OPS });
+      const after = findingsOf(d.snapshot);
+      await d.mark(OPS.map((op) => edgePart(d.snapshot, op.target)));
+      await s.card(
+        [
+          ...after.layout.edges.map((e) => [`${e.id} label`, e.label?.text ?? '(none)'] as const),
+          ['warnings', after.warnings.length],
+        ],
+        { at: [...SIDE_LOW], title: 'Next snapshot' },
       );
     }
+
     await this.step('walk', {
-      title: 'Travel an actual link',
+      title: 'The token travels the yes edge’s own route',
       caption:
-        'The token uses the layout route associated with the yes branch. Requesting a hop to a node without an edge would throw before the animation begins.',
+        'The card lists the route the token follows from Cached to Reply. walk() looks up every hop before animating, so a hop with no edge, such as Reply to Database, throws before anything moves.',
     });
-    await d.walk([['A', 'B']]);
+    await s.clearOverlays();
+    await d.unmark();
+    await d.dim(['A', 'B']);
+    await d.walk([['A', 'B']], { trail: true });
+    await d.note('B', 'the yes branch', { side: 'below' });
+    const route = d.snapshot.parts.find((p) => p.role === 'edge' && p.from === 'A' && p.to === 'B')!.route ?? [];
+    const pt = (p: readonly number[] | undefined) => (p ? `(${p[0]!.toFixed(2)}, ${p[1]!.toFixed(2)})` : '–');
+    const linked = d.snapshot.parts.some((p) => p.role === 'edge' && p.from === 'B' && p.to === 'C');
+    await s.card(
+      [
+        ['edge', 'A -> B'],
+        ['route points', route.length],
+        ['starts', pt(route[0])],
+        ['ends', pt(route.at(-1))],
+      ],
+      { at: [...SIDE_TOP], title: 'Route the token used' },
+    );
+    await s.code(
+      ["d.walk([['A', 'B']])  // real edge", "d.walk([['B', 'C']])", linked ? '// B -> C exists' : '// throws: not a real link'],
+      { at: [...SIDE_LOW], title: 'walk() checks the snapshot', fontSize: 0.22 },
+    );
+
     await this.step('evidence', {
-      title: 'Keep verification findings with the snapshot',
+      title: 'The chart counts stored verifier warnings',
       caption:
-        'The snapshot stores mark artwork, identities, routes and the verifier’s findings. This chart counts the real warnings before and after the edit, not a made-up quality score.',
+        'scene.snapshots.json stores each diagram’s marks, ids, routes and verifier findings. The bars count the warnings stored for the first edit and for the final diagram.',
     });
+    const final = d.snapshot;
+    const count = findings.warnings.length,
+      finalCount = findingsOf(final).warnings.length;
+    await s.clearOverlays();
     await d.hide();
-    const count = findings.warnings.length;
-    const chart = await s.show({
-      source: `xychart-beta\n x-axis [First,Final]\n y-axis "Warnings" 0 --> 3\n bar [${count},0]`,
-      style: 'blueprint',
-    });
-    this.state.finalWarnings = 0;
-    await this.step('history', {
-      title: 'Version the model and its build evidence',
-      caption:
-        'A source change, a replayed operation and a checked snapshot belong in version control together. The renderer is pinned so a future upgrade can be reviewed for geometry, style and semantic drift.',
-    });
-    await chart.hide();
-    await s.show(
+    const chart = await s.show(
       {
-        source: 'gitGraph\n commit id: "source"\n commit id: "typed edit"\n commit id: "checked snapshot"',
-        style: 'blueprint',
+        source: `xychart-beta\n x-axis ["First edit", "Final"]\n y-axis "Warnings" 0 --> 3\n bar [${count},${finalCount}]`,
+        style: STYLE,
       },
-      { box: [-7, -3.3, 7, 2.7] },
+      { box: 'main' },
+    );
+    await chart.note('bar:0:First edit', count ? `${count} unlabeled branches` : '0: labeled from the start', {
+      side: 'above',
+    });
+    await chart.note('bar:0:Final', `${finalCount} after ${missing ? 'repair' : 'the first edit'}`, {
+      side: 'above',
+    });
+    await s.card(
+      [
+        ['renderer', final.renderer],
+        ['marks', final.parts.length],
+        ['edge routes', final.parts.filter((p) => p.route).length],
+        ['first warnings', count],
+        ['final warnings', finalCount],
+      ],
+      { at: 'side', title: 'Stored in scene.snapshots.json' },
+    );
+    this.state.finalWarnings = finalCount;
+
+    await this.step('history', {
+      title: 'Source, edit and snapshot share one history',
+      caption:
+        'The git graph shows the Mermaid source, the typed edit and the checked snapshot as three commits in order. The renderer stays pinned at agentic-mermaid@0.4.1, so an upgrade is a deliberate change whose snapshot diff gets reviewed.',
+    });
+    await s.clearOverlays();
+    await chart.hide();
+    const git = await s.show(
+      {
+        source: 'gitGraph TB:\n commit id: "source"\n commit id: "typed edit"\n commit id: "checked snapshot"',
+        style: STYLE,
+      },
+      { box: 'main' },
+    );
+    await git.note('source', 'flow.mmd', { side: 'right' });
+    await git.note('typed edit', missing ? '2 set_label ops' : 'labels in first edit', { side: 'right' });
+    await git.note('checked snapshot', `${finalCount} warnings, pinned`, { side: 'right' });
+    await s.card(
+      [
+        ['renderer', final.renderer],
+        ['cache', 'scene.snapshots.json'],
+        ['on upgrade', 'review the diff'],
+      ],
+      { at: 'side', title: 'Pinned with the source' },
     );
   }
 }

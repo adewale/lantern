@@ -3,7 +3,7 @@ export const EXPLAINERS = [
     id: 'pap',
     tag: 'Protocol · 4 diagram families',
     step: 'sign-in',
-    description: 'Compare direct, device and mediated sign-in without losing the session story.',
+    description: 'Compare direct, device and mediated sign-in. Each one signs in the session the agent opened before it.',
   },
   {
     id: 'seasons',
@@ -16,7 +16,7 @@ export const EXPLAINERS = [
     tag: 'Security · executable RFC vector',
     step: 'attack',
     query: 'attacker=yes',
-    description: 'Steal the code. Try the wrong verifier. See exactly which check rejects it.',
+    description: 'An attacker with a stolen code still fails, because S256 of its guessed verifier misses the bound challenge.',
   },
   {
     id: 'mr-cache',
@@ -28,7 +28,7 @@ export const EXPLAINERS = [
     id: 'lantern',
     tag: 'Engine · native authoring',
     step: 'objects',
-    description: 'A scene explains its own objects, deterministic clock, sinks and publishing workflow.',
+    description: 'A Lantern scene draws Lantern’s own classes, fixed-step clock, seek check and build.',
   },
   {
     id: 'agentic-mermaid',
@@ -40,13 +40,13 @@ export const EXPLAINERS = [
     id: '2password',
     tag: 'Security · offline fixture',
     step: 'boundary',
-    description: 'Explore metadata-first search, modeled approvals and child-environment hygiene.',
+    description: 'Rank items by metadata alone, count desktop approvals, and strip the service token from the child process.',
   },
   {
     id: 'state-machine',
     tag: 'Program trace · reducer',
     step: 'opened',
-    description: 'One machine, two histories. Every animated transition comes from the reducer.',
+    description: 'Follow CONNECT → OPENED → CLOSE or CONNECT → ERROR; each transition on screen is a value the reducer returned.',
   },
   {
     id: 'token-bucket',
@@ -58,7 +58,7 @@ export const EXPLAINERS = [
     id: 'ring-buffer',
     tag: 'Native geometry · invariants',
     step: 'result',
-    description: 'Watch the tail wrap into freed slots—or reject a write before anything changes.',
+    description: 'Watch the tail wrap into freed slots, or watch push throw Full before any slot changes.',
   },
   {
     id: 'exgit',
@@ -70,13 +70,13 @@ export const EXPLAINERS = [
     id: 'just-bash',
     tag: 'Interpreter model · immutable values',
     step: 'cat',
-    description: 'Run cat on the old or returned shell. The difference is the whole lesson.',
+    description: 'Run cat on the shell exec returned or on the original; only the returned shell has shout.txt.',
   },
   {
     id: 'pyex-limits',
     tag: 'Interpreter model · first-match policy',
     step: 'failure',
-    description: 'Change the budget and follow the resource-check clause that actually wins.',
+    description: 'With 9 steps the memory clause fires first; with 3 the step clause does. Follow check_step to see why.',
   },
   {
     id: 'glyph',
