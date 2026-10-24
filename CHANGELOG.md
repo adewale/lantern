@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+### Lantern Explainers downstream product layer
+
+- Native explanation helpers, finite per-instance reader cases, captured real-link walks,
+  replayed typed diagram morphs, focus views, cards and chips.
+- Pinned, optional build-time Agentic Mermaid 0.4.1 capture and loss-detecting SVG lowering;
+  compact browser-safe geometry/text snapshots, including SVG baseline alignment measured
+  from the embedded font. No runtime diagram renderer or layout service.
+- External scene CLI (`init`, `preview`, `snapshots`, `check`, `build`, `render`, `shots`),
+  including a compiled JavaScript npm executable and one-engine compiled-scene reuse.
+- Portable, paused stepper pages with URL/history cases, poster/transcript/no-JS fallback,
+  generated CSP recipes, license notices and optional source/origin-checked auto-height loader.
+- Silent H.264/VP9 video, outline caption footer, subtitles, WebVTT, chapters and receipts.
+  System-font scanning is disabled; unchanged frame rasters are reused without skipping simulation.
+- Fourteen authored explanations, 31 cases, 43 diagrams, eight families and twelve styles;
+  model/trace fidelity, motion/seek/runtime/legibility, browser, video and fresh-archive gates.
+  Imported labels require readable completed-step views; reports retain full state traces.
+  Served-collection review checks every case on desktop/mobile and saves screenshots.
+- Engine fixes: recursive AnimationGroup membership, FadeOut opacity restoration, optional
+  SVG paint/cache semantics and exact optional-style interpolation. Fixed rectangular paint
+  viewports keep zoomed diagrams inside their own stage region; nested clips intersect.
+  Existing runtime export names retained.
+- Package requires Node 24+; public exports now resolve under `dist/src/`, with helpers at
+  `manim-js/explain`. Public naming, production deployment and outside-author release acceptance remain pending.
+
+### Inherited work
+
 - TypeScript: the library, scenes, player, Worker, tools and tests are strict TypeScript.
   The package ships `dist/` (ESM, `.d.ts`, declaration maps) compiled by `tsc`; option,
   document and trace types (`Doc`, `TextOpts`, `StepRecord`, ...) are exported from the

@@ -1,0 +1,3956 @@
+{
+  "version": 1,
+  "importer": 4,
+  "sourceHash": "0e6ace1f2cd18e038773bb3da7e9e98ab05d7bf0ea8e7e71d0019991f9e2177d",
+  "renderer": "agentic-mermaid@0.4.1",
+  "diagrams": {
+    "[\"graph LR\\nFont[Embedded font] --> Shape[Shape text]\\nShape --> Paths[Cubic paths]\\nPaths --> SVG[SVG player]\\nPaths --> Video[Video frames]\",\"pen-and-ink\",null]": {
+      "version": 1,
+      "renderer": "agentic-mermaid@0.4.1",
+      "spec": {
+        "source": "graph LR\nFont[Embedded font] --> Shape[Shape text]\nShape --> Paths[Cubic paths]\nPaths --> SVG[SVG player]\nPaths --> Video[Video frames]",
+        "style": "pen-and-ink"
+      },
+      "family": "flowchart",
+      "width": 683.754,
+      "height": 181.8,
+      "palette": {
+        "paper": "#faf6ec",
+        "ink": "#241f1a",
+        "accent": "#2b241d",
+        "muted": "#241f1a"
+      },
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"683.754\" height=\"181.8\" viewBox=\"0 0 683.754 181.8\" style=\"--bg:#faf6ec;--fg:#241f1a;--line:#2b241d;--accent:#2b241d;--border:#2b241d;--font:EB Garamond;background:#faf6ec\">\n<style>\n  text { font-family: var(--font, 'EB Garamond'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #241f1a;\n    --_text-sec:      #534e48;\n    --_text-muted:    #6d6861;\n    --_text-faint:    #86827b;\n    --_line:          #2b241d;\n    --_arrow:         #2b241d;\n    --_node-fill:     #f4f0e6;\n    --_node-stroke:   #2b241d;\n    --_group-fill:    #faf6ec;\n    --_group-hdr:     #efebe2;\n    --_inner-stroke:  #e0dcd3;\n    --_key-badge:     #e5e1d7;\n  }\n</style>\n<rect width=\"683.754\" height=\"181.8\" fill=\"#faf6ec\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#2b241d\" stroke=\"#2b241d\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#2b241d\" stroke=\"#2b241d\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Font\" data-to=\"Shape\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"167.16500000000002,90.9 215.16500000000002,90.9\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Font-&gt;Shape#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Font to Shape\" />\n<path d=\"M167.46 91.81 C178.29 91.52, 188.89 90.7, 214.86 90.67\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Shape\" data-to=\"Paths\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"318.61800000000005,88.9 366.618,88.9\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Shape-&gt;Paths#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Shape to Paths\" />\n<path d=\"M318.19 88.22 C334.68 89.05, 349.03 89.07, 367.14 89.54\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Paths\" data-to=\"SVG\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"477.481,82.75 501.481,82.75 501.481,56.45 525.481,56.45\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Paths-&gt;SVG#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Paths to SVG\" />\n<path d=\"M477 83.65 C486.12 82.02, 494.53 82.36, 501.17 83.66 M502.21 83.22 C501.79 73.12, 501.27 65.52, 500.7 57.03 M501.17 57.05 C509.72 56.33, 517.05 57.28, 526.11 55.96\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Paths\" data-to=\"Video\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"477.481,95.05000000000001 501.481,95.05000000000001 501.481,121.35000000000001 525.481,121.35000000000001\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Paths-&gt;Video#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Paths to Video\" />\n<path d=\"M476.51 95.89 C483.6 95.13, 488.4 95.54, 500.9 94.97 M501.05 95.75 C501.25 103, 501.07 112.68, 501.01 120.8 M501.78 121.32 C509.49 122.01, 518.6 120.95, 526.45 121.87\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<g class=\"node\" data-id=\"Font\" data-label=\"Embedded font\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M39.2 72.26 C77.59 72.9, 114.47 72.35, 167.82 72.86 M167.87 71.54 C167.04 85.61, 166.73 96.43, 167.69 109.99 M167.06 110.28 C127.31 109.5, 86.9 108.84, 40.08 108.82 M40.45 108.44 C40.64 95.54, 39.17 80.86, 40.46 71.87\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Font\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#faf6ec\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"103.58250000000001\" y=\"90.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#241f1a\" dy=\"4.55\" textLength=\"87.165\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Embedded font</text>\n</g>\n<g class=\"node\" data-id=\"Shape\" data-label=\"Shape text\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M214.17 72.95 C246.46 72.41, 277.34 72.04, 318.18 72.05 M318.93 71.62 C319.12 87.29, 318.24 99.97, 317.73 108.49 M318.8 110.13 C297.86 109.4, 276.14 109.92, 216.03 109.51 M215.28 109.84 C215.46 96.99, 215.01 84.88, 215.81 72.68\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Shape\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#faf6ec\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"266.8915\" y=\"90.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#241f1a\" dy=\"4.55\" textLength=\"63.453\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Shape text</text>\n</g>\n<g class=\"node\" data-id=\"Paths\" data-label=\"Cubic paths\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M367.58 70.64 C391.12 69.61, 415.83 69.76, 477.99 71.22 M476.56 69.55 C477.84 79.19, 478.28 86.78, 477.68 107.77 M477.29 106.79 C437.06 106.07, 398.52 107.31, 366.38 106.82 M366.34 108.11 C365.87 97.79, 366.9 87.66, 366.95 71.25\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Paths\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#faf6ec\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"422.04949999999997\" y=\"88.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#241f1a\" dy=\"4.55\" textLength=\"70.863\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Cubic paths</text>\n</g>\n<g class=\"node\" data-id=\"SVG\" data-label=\"SVG player\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M525.43 37.84 C557.94 37.66, 593.21 38.09, 644.03 38.44 M642.76 38.09 C644.18 51.92, 643.9 63.3, 643.99 75.06 M644.58 74.61 C608.27 75.52, 573.25 74.57, 525 75.36 M526.07 74.46 C524.8 67.15, 525.97 58.8, 525.56 38.74\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:SVG\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#faf6ec\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"584.6175\" y=\"56.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#241f1a\" dy=\"4.55\" textLength=\"69.381\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">SVG player</text>\n</g>\n<g class=\"node\" data-id=\"Video\" data-label=\"Video frames\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M525.8 102.77 C561.71 101.67, 597.34 102.96, 644.63 103.68 M644.58 103.86 C642.72 111.47, 643.24 119.57, 643.67 140.33 M643.67 139.69 C599.5 139.95, 553.61 139.83, 525.32 140.4 M525.64 139.75 C525.91 130.14, 524.55 123.41, 526.11 103.73\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Video\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#faf6ec\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"584.6175\" y=\"121.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#241f1a\" dy=\"4.55\" textLength=\"78.273\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Video frames</text>\n</g>\n</svg>",
+      "parts": [
+        {
+          "id": "__frame",
+          "role": "frame",
+          "kind": "shape",
+          "svg": "",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  -4.33680859300679e-21,
+                  0,
+                  2.2791800498962402,
+                  0,
+                  4.5583600997924805,
+                  0,
+                  6.837540149688721,
+                  0,
+                  6.837540149688721,
+                  -0.6060000061988831,
+                  6.837540149688721,
+                  -1.2120000123977661,
+                  6.837540149688721,
+                  -1.818000078201294,
+                  4.5583600997924805,
+                  -1.818000078201294,
+                  2.2791800498962402,
+                  -1.818000078201294,
+                  -4.33680859300679e-21,
+                  -1.818000078201294,
+                  -4.33680859300679e-21,
+                  -1.2120000123977661,
+                  -4.33680859300679e-21,
+                  -0.6060000061988831,
+                  -4.33680859300679e-21,
+                  0
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#faf6ec",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "edge:Font->Shape#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Font\" data-to=\"Shape\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"167.16500000000002,90.9 215.16500000000002,90.9\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Font-&gt;Shape#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Font to Shape\" />\n<path d=\"M167.46 91.81 C178.29 91.52, 188.89 90.7, 214.86 90.67\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.6716499328613281,
+                  -0.909000039100647,
+                  1.831649899482727,
+                  -0.909000039100647,
+                  1.9916499853134155,
+                  -0.909000039100647,
+                  2.1516499519348145,
+                  -0.909000039100647
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 0,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  2.0816500186920166,
+                  -0.8840000033378601,
+                  2.108316659927368,
+                  -0.8923333287239075,
+                  2.1349833011627197,
+                  -0.9006666541099548,
+                  2.1616499423980713,
+                  -0.909000039100647,
+                  2.1349833011627197,
+                  -0.9173333644866943,
+                  2.108316659927368,
+                  -0.9256666898727417,
+                  2.0816500186920166,
+                  -0.9340000152587891,
+                  2.0816500186920166,
+                  -0.9173333644866943,
+                  2.0816500186920166,
+                  -0.9006666541099548,
+                  2.0816500186920166,
+                  -0.8840000033378601
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2b241d",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  1.6746001243591309,
+                  -0.9180999994277954,
+                  1.7828999757766724,
+                  -0.9151999950408936,
+                  1.8889000415802002,
+                  -0.906999945640564,
+                  2.1486001014709473,
+                  -0.9066999554634094
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.014999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Font",
+          "to": "Shape",
+          "route": [
+            [
+              1.6716500000000003,
+              -0.909
+            ],
+            [
+              2.15165,
+              -0.909
+            ]
+          ]
+        },
+        {
+          "id": "edge:Shape->Paths#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Shape\" data-to=\"Paths\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"318.61800000000005,88.9 366.618,88.9\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Shape-&gt;Paths#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Shape to Paths\" />\n<path d=\"M318.19 88.22 C334.68 89.05, 349.03 89.07, 367.14 89.54\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.1861801147460938,
+                  -0.8889999985694885,
+                  3.3461802005767822,
+                  -0.8889999985694885,
+                  3.5061800479888916,
+                  -0.8889999985694885,
+                  3.66618013381958,
+                  -0.8889999985694885
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 0,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  3.5961802005767822,
+                  -0.8640000224113464,
+                  3.622846841812134,
+                  -0.8723333477973938,
+                  3.6495134830474854,
+                  -0.8806666731834412,
+                  3.676180124282837,
+                  -0.8889999985694885,
+                  3.6495134830474854,
+                  -0.8973333239555359,
+                  3.622846841812134,
+                  -0.905666708946228,
+                  3.5961802005767822,
+                  -0.9140000343322754,
+                  3.5961802005767822,
+                  -0.8973333239555359,
+                  3.5961802005767822,
+                  -0.8806666731834412,
+                  3.5961802005767822,
+                  -0.8640000224113464
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2b241d",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  3.1819000244140625,
+                  -0.8822000026702881,
+                  3.346799850463867,
+                  -0.890500009059906,
+                  3.490299940109253,
+                  -0.8906999826431274,
+                  3.6714000701904297,
+                  -0.8953999876976013
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.014999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Shape",
+          "to": "Paths",
+          "route": [
+            [
+              3.1861800000000007,
+              -0.889
+            ],
+            [
+              3.6661799999999998,
+              -0.889
+            ]
+          ]
+        },
+        {
+          "id": "edge:Paths->SVG#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Paths\" data-to=\"SVG\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"477.481,82.75 501.481,82.75 501.481,56.45 525.481,56.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Paths-&gt;SVG#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Paths to SVG\" />\n<path d=\"M477 83.65 C486.12 82.02, 494.53 82.36, 501.17 83.66 M502.21 83.22 C501.79 73.12, 501.27 65.52, 500.7 57.03 M501.17 57.05 C509.72 56.33, 517.05 57.28, 526.11 55.96\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.774809837341309,
+                  -0.8274999856948853,
+                  4.854809761047363,
+                  -0.8274999856948853,
+                  4.934809684753418,
+                  -0.8274999856948853,
+                  5.014810085296631,
+                  -0.8274999856948853,
+                  5.014810085296631,
+                  -0.7398332953453064,
+                  5.014810085296631,
+                  -0.6521666646003723,
+                  5.014810085296631,
+                  -0.5645000338554382,
+                  5.0948100090026855,
+                  -0.5645000338554382,
+                  5.174810409545898,
+                  -0.5645000338554382,
+                  5.254810333251953,
+                  -0.5645000338554382
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 0,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  5.184810161590576,
+                  -0.5394999980926514,
+                  5.211476802825928,
+                  -0.5478333234786987,
+                  5.238143444061279,
+                  -0.5561666488647461,
+                  5.264810085296631,
+                  -0.5645000338554382,
+                  5.238143444061279,
+                  -0.5728333592414856,
+                  5.211476802825928,
+                  -0.581166684627533,
+                  5.184810161590576,
+                  -0.5895000100135803,
+                  5.184810161590576,
+                  -0.5728333592414856,
+                  5.184810161590576,
+                  -0.5561666488647461,
+                  5.184810161590576,
+                  -0.5394999980926514
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2b241d",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  4.769999980926514,
+                  -0.8364999890327454,
+                  4.861199855804443,
+                  -0.8201999664306641,
+                  4.945300102233887,
+                  -0.8235999941825867,
+                  5.01170015335083,
+                  -0.8366000652313232
+                ],
+                [
+                  5.02209997177124,
+                  -0.8321999907493591,
+                  5.017899990081787,
+                  -0.7312000393867493,
+                  5.012700080871582,
+                  -0.6551999449729919,
+                  5.006999969482422,
+                  -0.5702999830245972
+                ],
+                [
+                  5.01170015335083,
+                  -0.5705000162124634,
+                  5.0971999168396,
+                  -0.5633000135421753,
+                  5.170499801635742,
+                  -0.5727999806404114,
+                  5.261099815368652,
+                  -0.5595999956130981
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.014999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Paths",
+          "to": "SVG",
+          "route": [
+            [
+              4.7748099999999996,
+              -0.8275
+            ],
+            [
+              5.01481,
+              -0.8275
+            ],
+            [
+              5.01481,
+              -0.5645
+            ],
+            [
+              5.25481,
+              -0.5645
+            ]
+          ]
+        },
+        {
+          "id": "edge:Paths->Video#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Paths\" data-to=\"Video\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"477.481,95.05000000000001 501.481,95.05000000000001 501.481,121.35000000000001 525.481,121.35000000000001\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Paths-&gt;Video#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Paths to Video\" />\n<path d=\"M476.51 95.89 C483.6 95.13, 488.4 95.54, 500.9 94.97 M501.05 95.75 C501.25 103, 501.07 112.68, 501.01 120.8 M501.78 121.32 C509.49 122.01, 518.6 120.95, 526.45 121.87\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.774809837341309,
+                  -0.9505000114440918,
+                  4.854809761047363,
+                  -0.9505000114440918,
+                  4.934809684753418,
+                  -0.9505000114440918,
+                  5.014810085296631,
+                  -0.9505000114440918,
+                  5.014810085296631,
+                  -1.0381666421890259,
+                  5.014810085296631,
+                  -1.1258333921432495,
+                  5.014810085296631,
+                  -1.2135000228881836,
+                  5.0948100090026855,
+                  -1.2135000228881836,
+                  5.174810409545898,
+                  -1.2135000228881836,
+                  5.254810333251953,
+                  -1.2135000228881836
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 0,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  5.184810161590576,
+                  -1.188499927520752,
+                  5.211476802825928,
+                  -1.1968333721160889,
+                  5.238143444061279,
+                  -1.2051666975021362,
+                  5.264810085296631,
+                  -1.2135000228881836,
+                  5.238143444061279,
+                  -1.221833348274231,
+                  5.211476802825928,
+                  -1.2301666736602783,
+                  5.184810161590576,
+                  -1.2384999990463257,
+                  5.184810161590576,
+                  -1.221833348274231,
+                  5.184810161590576,
+                  -1.2051666975021362,
+                  5.184810161590576,
+                  -1.188499927520752
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2b241d",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  4.765100002288818,
+                  -0.958899974822998,
+                  4.835999965667725,
+                  -0.9512999653816223,
+                  4.883999824523926,
+                  -0.9553999900817871,
+                  5.008999824523926,
+                  -0.9496999979019165
+                ],
+                [
+                  5.010499954223633,
+                  -0.9574999809265137,
+                  5.012499809265137,
+                  -1.0299999713897705,
+                  5.010700225830078,
+                  -1.1268000602722168,
+                  5.0100998878479,
+                  -1.2080000638961792
+                ],
+                [
+                  5.0177998542785645,
+                  -1.2131999731063843,
+                  5.094900131225586,
+                  -1.2201000452041626,
+                  5.185999870300293,
+                  -1.2094999551773071,
+                  5.264500141143799,
+                  -1.2187000513076782
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.014999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Paths",
+          "to": "Video",
+          "route": [
+            [
+              4.7748099999999996,
+              -0.9505000000000001
+            ],
+            [
+              5.01481,
+              -0.9505000000000001
+            ],
+            [
+              5.01481,
+              -1.2135
+            ],
+            [
+              5.25481,
+              -1.2135
+            ]
+          ]
+        },
+        {
+          "id": "Font",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Font\" data-label=\"Embedded font\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M39.2 72.26 C77.59 72.9, 114.47 72.35, 167.82 72.86 M167.87 71.54 C167.04 85.61, 166.73 96.43, 167.69 109.99 M167.06 110.28 C127.31 109.5, 86.9 108.84, 40.08 108.82 M40.45 108.44 C40.64 95.54, 39.17 80.86, 40.46 71.87\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Font\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"103.58250000000001\" y=\"90.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Embedded font</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0.3920000195503235,
+                  -0.7226000428199768,
+                  0.7758999466896057,
+                  -0.7290000319480896,
+                  1.144700050354004,
+                  -0.7235000133514404,
+                  1.678200125694275,
+                  -0.728600025177002
+                ],
+                [
+                  1.6786999702453613,
+                  -0.715399980545044,
+                  1.6703999042510986,
+                  -0.8561000227928162,
+                  1.6672999858856201,
+                  -0.9642999768257141,
+                  1.676900029182434,
+                  -1.0999000072479248
+                ],
+                [
+                  1.6705999374389648,
+                  -1.1028000116348267,
+                  1.2731000185012817,
+                  -1.0950000286102295,
+                  0.8690000176429749,
+                  -1.0884000062942505,
+                  0.40080001950263977,
+                  -1.0881999731063843
+                ],
+                [
+                  0.40450000762939453,
+                  -1.0844000577926636,
+                  0.40639999508857727,
+                  -0.9553999900817871,
+                  0.39169996976852417,
+                  -0.8086000084877014,
+                  0.40459999442100525,
+                  -0.7187000513076782
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.011249999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#241f1a",
+                "stroke": "#faf6ec",
+                "strokeWidth": 0.029999999999999995,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "stroke"
+              },
+              "text": "Embedded font",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Embedded font",
+                "x": 103.58250000000001,
+                "y": 95.45,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -4.336808689942018e-19,
+                  0
+                ],
+                "width": 87.165
+              }
+            }
+          ]
+        },
+        {
+          "id": "Shape",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Shape\" data-label=\"Shape text\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M214.17 72.95 C246.46 72.41, 277.34 72.04, 318.18 72.05 M318.93 71.62 C319.12 87.29, 318.24 99.97, 317.73 108.49 M318.8 110.13 C297.86 109.4, 276.14 109.92, 216.03 109.51 M215.28 109.84 C215.46 96.99, 215.01 84.88, 215.81 72.68\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Shape\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"266.8915\" y=\"90.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Shape text</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.141700029373169,
+                  -0.7294999957084656,
+                  2.464600086212158,
+                  -0.7241000533103943,
+                  2.773400068283081,
+                  -0.7204000353813171,
+                  3.18179988861084,
+                  -0.7205000519752502
+                ],
+                [
+                  3.1892998218536377,
+                  -0.716200053691864,
+                  3.191200017929077,
+                  -0.8729000091552734,
+                  3.1823999881744385,
+                  -0.9997000098228455,
+                  3.177300214767456,
+                  -1.0849000215530396
+                ],
+                [
+                  3.187999963760376,
+                  -1.1013000011444092,
+                  2.978599786758423,
+                  -1.093999981880188,
+                  2.7614002227783203,
+                  -1.0992000102996826,
+                  2.1603000164031982,
+                  -1.0951000452041626
+                ],
+                [
+                  2.1528000831604004,
+                  -1.0983999967575073,
+                  2.154600143432617,
+                  -0.9698999524116516,
+                  2.150099992752075,
+                  -0.8487999439239502,
+                  2.158099889755249,
+                  -0.7268000245094299
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.011249999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#241f1a",
+                "stroke": "#faf6ec",
+                "strokeWidth": 0.029999999999999995,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "stroke"
+              },
+              "text": "Shape text",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Shape text",
+                "x": 266.8915,
+                "y": 95.45,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -4.336808689942018e-19,
+                  0
+                ],
+                "width": 63.453
+              }
+            }
+          ]
+        },
+        {
+          "id": "Paths",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Paths\" data-label=\"Cubic paths\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M367.58 70.64 C391.12 69.61, 415.83 69.76, 477.99 71.22 M476.56 69.55 C477.84 79.19, 478.28 86.78, 477.68 107.77 M477.29 106.79 C437.06 106.07, 398.52 107.31, 366.38 106.82 M366.34 108.11 C365.87 97.79, 366.9 87.66, 366.95 71.25\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Paths\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"422.04949999999997\" y=\"88.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Cubic paths</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.67579984664917,
+                  -0.7063999772071838,
+                  3.9112000465393066,
+                  -0.6960999965667725,
+                  4.158299922943115,
+                  -0.6976000070571899,
+                  4.779900074005127,
+                  -0.7121999859809875
+                ],
+                [
+                  4.765600204467773,
+                  -0.6955000162124634,
+                  4.77839994430542,
+                  -0.7919000387191772,
+                  4.782800197601318,
+                  -0.8677999973297119,
+                  4.776800155639648,
+                  -1.0777000188827515
+                ],
+                [
+                  4.772900104522705,
+                  -1.0679000616073608,
+                  4.370599746704102,
+                  -1.0606999397277832,
+                  3.9851999282836914,
+                  -1.073099970817566,
+                  3.663800001144409,
+                  -1.0681999921798706
+                ],
+                [
+                  3.6633999347686768,
+                  -1.0810999870300293,
+                  3.6586999893188477,
+                  -0.9779000282287598,
+                  3.6689999103546143,
+                  -0.8766000270843506,
+                  3.6695001125335693,
+                  -0.7124999761581421
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.011249999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#241f1a",
+                "stroke": "#faf6ec",
+                "strokeWidth": 0.029999999999999995,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "stroke"
+              },
+              "text": "Cubic paths",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Cubic paths",
+                "x": 422.04949999999997,
+                "y": 93.45,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -4.336808689942018e-19,
+                  0
+                ],
+                "width": 70.863
+              }
+            }
+          ]
+        },
+        {
+          "id": "SVG",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"SVG\" data-label=\"SVG player\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M525.43 37.84 C557.94 37.66, 593.21 38.09, 644.03 38.44 M642.76 38.09 C644.18 51.92, 643.9 63.3, 643.99 75.06 M644.58 74.61 C608.27 75.52, 573.25 74.57, 525 75.36 M526.07 74.46 C524.8 67.15, 525.97 58.8, 525.56 38.74\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:SVG\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"584.6175\" y=\"56.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">SVG player</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  5.254300117492676,
+                  -0.3783999979496002,
+                  5.579400062561035,
+                  -0.3765999972820282,
+                  5.932100296020508,
+                  -0.38089999556541443,
+                  6.440300464630127,
+                  -0.38439998030662537
+                ],
+                [
+                  6.427599906921387,
+                  -0.38089999556541443,
+                  6.441800117492676,
+                  -0.5191999673843384,
+                  6.439000129699707,
+                  -0.6330000162124634,
+                  6.439899921417236,
+                  -0.7505999803543091
+                ],
+                [
+                  6.445800304412842,
+                  -0.7461000084877014,
+                  6.082700252532959,
+                  -0.7551999688148499,
+                  5.732500076293945,
+                  -0.7457000017166138,
+                  5.25,
+                  -0.753600001335144
+                ],
+                [
+                  5.260700225830078,
+                  -0.7445999979972839,
+                  5.247999668121338,
+                  -0.671500027179718,
+                  5.259699821472168,
+                  -0.5879999995231628,
+                  5.2555999755859375,
+                  -0.3874000310897827
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.011249999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#241f1a",
+                "stroke": "#faf6ec",
+                "strokeWidth": 0.029999999999999995,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "stroke"
+              },
+              "text": "SVG player",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "SVG player",
+                "x": 584.6175,
+                "y": 61,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -4.336808689942018e-19,
+                  0
+                ],
+                "width": 69.381
+              }
+            }
+          ]
+        },
+        {
+          "id": "Video",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Video\" data-label=\"Video frames\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M525.8 102.77 C561.71 101.67, 597.34 102.96, 644.63 103.68 M644.58 103.86 C642.72 111.47, 643.24 119.57, 643.67 140.33 M643.67 139.69 C599.5 139.95, 553.61 139.83, 525.32 140.4 M525.64 139.75 C525.91 130.14, 524.55 123.41, 526.11 103.73\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Video\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"584.6175\" y=\"121.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Video frames</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  5.257999897003174,
+                  -1.0276999473571777,
+                  5.617100238800049,
+                  -1.016700029373169,
+                  5.973400115966797,
+                  -1.0296000242233276,
+                  6.446300029754639,
+                  -1.0368000268936157
+                ],
+                [
+                  6.445800304412842,
+                  -1.038599967956543,
+                  6.427199840545654,
+                  -1.1146999597549438,
+                  6.432399749755859,
+                  -1.1957000494003296,
+                  6.436699867248535,
+                  -1.4033000469207764
+                ],
+                [
+                  6.436699867248535,
+                  -1.3969000577926636,
+                  5.994999885559082,
+                  -1.3995000123977661,
+                  5.536099910736084,
+                  -1.398300051689148,
+                  5.253200054168701,
+                  -1.403999924659729
+                ],
+                [
+                  5.256400108337402,
+                  -1.3975000381469727,
+                  5.259099960327148,
+                  -1.3013999462127686,
+                  5.245500087738037,
+                  -1.2340999841690063,
+                  5.261099815368652,
+                  -1.0372999906539917
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.011249999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#241f1a",
+                "stroke": "#faf6ec",
+                "strokeWidth": 0.029999999999999995,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "stroke"
+              },
+              "text": "Video frames",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Video frames",
+                "x": 584.6175,
+                "y": 125.9,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -4.336808689942018e-19,
+                  0
+                ],
+                "width": 78.273
+              }
+            }
+          ]
+        }
+      ],
+      "findings": {
+        "ok": true,
+        "warnings": [],
+        "layout": {
+          "version": 1,
+          "kind": "flowchart",
+          "nodes": [
+            {
+              "id": "Font",
+              "x": 40,
+              "y": 72,
+              "w": 127,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Embedded font"
+            },
+            {
+              "id": "Shape",
+              "x": 215,
+              "y": 72,
+              "w": 103,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Shape text"
+            },
+            {
+              "id": "Paths",
+              "x": 367,
+              "y": 70,
+              "w": 111,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Cubic paths"
+            },
+            {
+              "id": "SVG",
+              "x": 525,
+              "y": 38,
+              "w": 118,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "SVG player"
+            },
+            {
+              "id": "Video",
+              "x": 525,
+              "y": 103,
+              "w": 118,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Video frames"
+            }
+          ],
+          "edges": [
+            {
+              "id": "Font->Shape",
+              "from": "Font",
+              "to": "Shape",
+              "path": [
+                [
+                  167,
+                  91
+                ],
+                [
+                  215,
+                  91
+                ]
+              ]
+            },
+            {
+              "id": "Shape->Paths",
+              "from": "Shape",
+              "to": "Paths",
+              "path": [
+                [
+                  319,
+                  89
+                ],
+                [
+                  367,
+                  89
+                ]
+              ]
+            },
+            {
+              "id": "Paths->SVG",
+              "from": "Paths",
+              "to": "SVG",
+              "path": [
+                [
+                  477,
+                  83
+                ],
+                [
+                  501,
+                  83
+                ],
+                [
+                  501,
+                  56
+                ],
+                [
+                  525,
+                  56
+                ]
+              ]
+            },
+            {
+              "id": "Paths->Video",
+              "from": "Paths",
+              "to": "Video",
+              "path": [
+                [
+                  477,
+                  95
+                ],
+                [
+                  501,
+                  95
+                ],
+                [
+                  501,
+                  121
+                ],
+                [
+                  525,
+                  121
+                ]
+              ]
+            }
+          ],
+          "groups": [],
+          "bounds": {
+            "w": 684,
+            "h": 182
+          }
+        }
+      }
+    },
+    "[\"graph LR\\nFont[Inter] --> Shape[Shape text]\\nShape --> Paths[Cubic paths]\\nPaths --> SVG[SVG player]\\nPaths --> Video[Video frames]\",\"pen-and-ink\",null]": {
+      "version": 1,
+      "renderer": "agentic-mermaid@0.4.1",
+      "spec": {
+        "source": "graph LR\nFont[Inter] --> Shape[Shape text]\nShape --> Paths[Cubic paths]\nPaths --> SVG[SVG player]\nPaths --> Video[Video frames]",
+        "style": "pen-and-ink"
+      },
+      "family": "flowchart",
+      "width": 625.215,
+      "height": 181.8,
+      "palette": {
+        "paper": "#faf6ec",
+        "ink": "#241f1a",
+        "accent": "#2b241d",
+        "muted": "#241f1a"
+      },
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"625.215\" height=\"181.8\" viewBox=\"0 0 625.215 181.8\" style=\"--bg:#faf6ec;--fg:#241f1a;--line:#2b241d;--accent:#2b241d;--border:#2b241d;--font:EB Garamond;background:#faf6ec\">\n<style>\n  text { font-family: var(--font, 'EB Garamond'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #241f1a;\n    --_text-sec:      #534e48;\n    --_text-muted:    #6d6861;\n    --_text-faint:    #86827b;\n    --_line:          #2b241d;\n    --_arrow:         #2b241d;\n    --_node-fill:     #f4f0e6;\n    --_node-stroke:   #2b241d;\n    --_group-fill:    #faf6ec;\n    --_group-hdr:     #efebe2;\n    --_inner-stroke:  #e0dcd3;\n    --_key-badge:     #e5e1d7;\n  }\n</style>\n<rect width=\"625.215\" height=\"181.8\" fill=\"#faf6ec\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#2b241d\" stroke=\"#2b241d\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#2b241d\" stroke=\"#2b241d\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Font\" data-to=\"Shape\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"108.62599999999999,90.9 156.62599999999998,90.9\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Font-&gt;Shape#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Font to Shape\" />\n<path d=\"M108.92 91.81 C119.75 91.52, 130.35 90.7, 156.32 90.67\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Shape\" data-to=\"Paths\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"260.07899999999995,88.9 308.079,88.9\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Shape-&gt;Paths#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Shape to Paths\" />\n<path d=\"M259.66 88.22 C276.14 89.05, 290.49 89.07, 308.6 89.54\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Paths\" data-to=\"SVG\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"418.942,82.75 442.942,82.75 442.942,56.45 466.942,56.45\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Paths-&gt;SVG#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Paths to SVG\" />\n<path d=\"M418.46 83.65 C427.59 82.02, 435.99 82.36, 442.63 83.66 M443.67 83.22 C443.25 73.12, 442.73 65.52, 442.16 57.03 M442.63 57.05 C451.19 56.33, 458.51 57.28, 467.57 55.96\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Paths\" data-to=\"Video\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"418.942,95.05000000000001 442.942,95.05000000000001 442.942,121.35000000000001 466.942,121.35000000000001\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Paths-&gt;Video#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Paths to Video\" />\n<path d=\"M417.97 95.89 C425.06 95.13, 429.86 95.54, 442.36 94.97 M442.51 95.75 C442.71 103, 442.53 112.68, 442.47 120.8 M443.24 121.32 C450.95 122.01, 460.06 120.95, 467.91 121.87\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<g class=\"node\" data-id=\"Font\" data-label=\"Inter\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M39.2 72.26 C60.36 72.96, 80 72.41, 109.28 72.86 M109.33 71.54 C108.5 85.61, 108.2 96.43, 109.15 109.99 M108.52 110.28 C87.05 109.54, 64.93 108.87, 40.08 108.82 M40.45 108.44 C40.64 95.54, 39.17 80.86, 40.46 71.87\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Font\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#faf6ec\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"74.31299999999999\" y=\"90.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#241f1a\" dy=\"4.55\" textLength=\"28.626\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Inter</text>\n</g>\n<g class=\"node\" data-id=\"Shape\" data-label=\"Shape text\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M155.63 72.95 C187.92 72.41, 218.8 72.04, 259.64 72.05 M260.39 71.62 C260.58 87.29, 259.7 99.97, 259.2 108.49 M260.26 110.13 C239.32 109.4, 217.6 109.92, 157.49 109.51 M156.74 109.84 C156.92 96.99, 156.47 84.88, 157.27 72.68\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Shape\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#faf6ec\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"208.35249999999996\" y=\"90.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#241f1a\" dy=\"4.55\" textLength=\"63.453\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Shape text</text>\n</g>\n<g class=\"node\" data-id=\"Paths\" data-label=\"Cubic paths\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M309.04 70.64 C332.58 69.61, 357.29 69.76, 419.45 71.22 M418.03 69.55 C419.3 79.19, 419.74 86.78, 419.14 107.77 M418.75 106.79 C378.52 106.07, 339.98 107.31, 307.84 106.82 M307.8 108.11 C307.33 97.79, 308.36 87.66, 308.41 71.25\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Paths\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#faf6ec\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"363.5105\" y=\"88.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#241f1a\" dy=\"4.55\" textLength=\"70.863\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Cubic paths</text>\n</g>\n<g class=\"node\" data-id=\"SVG\" data-label=\"SVG player\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M466.9 37.84 C499.4 37.66, 534.67 38.09, 585.49 38.44 M584.23 38.09 C585.65 51.92, 585.36 63.3, 585.45 75.06 M586.04 74.61 C549.73 75.52, 514.71 74.57, 466.46 75.36 M467.53 74.46 C466.26 67.15, 467.43 58.8, 467.02 38.74\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:SVG\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#faf6ec\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"526.0785\" y=\"56.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#241f1a\" dy=\"4.55\" textLength=\"69.381\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">SVG player</text>\n</g>\n<g class=\"node\" data-id=\"Video\" data-label=\"Video frames\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M467.26 102.77 C503.17 101.67, 538.8 102.96, 586.09 103.68 M586.04 103.86 C584.18 111.47, 584.7 119.57, 585.13 140.33 M585.13 139.69 C540.96 139.95, 495.07 139.83, 466.78 140.4 M467.1 139.75 C467.37 130.14, 466.01 123.41, 467.57 103.73\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Video\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#faf6ec\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"526.0785\" y=\"121.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#241f1a\" dy=\"4.55\" textLength=\"78.273\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Video frames</text>\n</g>\n</svg>",
+      "parts": [
+        {
+          "id": "__frame",
+          "role": "frame",
+          "kind": "shape",
+          "svg": "",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0,
+                  2.7105053706292436e-22,
+                  2.084049940109253,
+                  2.7105053706292436e-22,
+                  4.168099880218506,
+                  2.7105053706292436e-22,
+                  6.252150058746338,
+                  2.7105053706292436e-22,
+                  6.252150058746338,
+                  -0.6060000061988831,
+                  6.252150058746338,
+                  -1.2120000123977661,
+                  6.252150058746338,
+                  -1.818000078201294,
+                  4.168100357055664,
+                  -1.818000078201294,
+                  2.084050178527832,
+                  -1.818000078201294,
+                  0,
+                  -1.818000078201294,
+                  0,
+                  -1.2120000123977661,
+                  0,
+                  -0.6060000061988831,
+                  0,
+                  2.7105053706292436e-22
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#faf6ec",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "edge:Font->Shape#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Font\" data-to=\"Shape\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"108.62599999999999,90.9 156.62599999999998,90.9\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Font-&gt;Shape#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Font to Shape\" />\n<path d=\"M108.92 91.81 C119.75 91.52, 130.35 90.7, 156.32 90.67\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.0862599611282349,
+                  -0.909000039100647,
+                  1.2462600469589233,
+                  -0.909000039100647,
+                  1.4062600135803223,
+                  -0.909000039100647,
+                  1.5662600994110107,
+                  -0.909000039100647
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 0,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  1.4962600469589233,
+                  -0.8840000033378601,
+                  1.522926688194275,
+                  -0.8923333287239075,
+                  1.549593448638916,
+                  -0.9006666541099548,
+                  1.5762600898742676,
+                  -0.909000039100647,
+                  1.549593448638916,
+                  -0.9173333644866943,
+                  1.522926688194275,
+                  -0.9256666898727417,
+                  1.4962600469589233,
+                  -0.9340000152587891,
+                  1.4962600469589233,
+                  -0.9173333644866943,
+                  1.4962600469589233,
+                  -0.9006666541099548,
+                  1.4962600469589233,
+                  -0.8840000033378601
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2b241d",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  1.0892000198364258,
+                  -0.9180999994277954,
+                  1.1974999904632568,
+                  -0.9151999950408936,
+                  1.3035000562667847,
+                  -0.906999945640564,
+                  1.5632001161575317,
+                  -0.9066999554634094
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.015,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Font",
+          "to": "Shape",
+          "route": [
+            [
+              1.08626,
+              -0.909
+            ],
+            [
+              1.5662599999999998,
+              -0.909
+            ]
+          ]
+        },
+        {
+          "id": "edge:Shape->Paths#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Shape\" data-to=\"Paths\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"260.07899999999995,88.9 308.079,88.9\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Shape-&gt;Paths#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Shape to Paths\" />\n<path d=\"M259.66 88.22 C276.14 89.05, 290.49 89.07, 308.6 89.54\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.600790023803711,
+                  -0.8889999985694885,
+                  2.7607901096343994,
+                  -0.8889999985694885,
+                  2.920790195465088,
+                  -0.8889999985694885,
+                  3.0807900428771973,
+                  -0.8889999985694885
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 0,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  3.0107901096343994,
+                  -0.8640000224113464,
+                  3.037456750869751,
+                  -0.8723333477973938,
+                  3.0641233921051025,
+                  -0.8806666731834412,
+                  3.090790033340454,
+                  -0.8889999985694885,
+                  3.0641233921051025,
+                  -0.8973333239555359,
+                  3.037456750869751,
+                  -0.905666708946228,
+                  3.0107901096343994,
+                  -0.9140000343322754,
+                  3.0107901096343994,
+                  -0.8973333239555359,
+                  3.0107901096343994,
+                  -0.8806666731834412,
+                  3.0107901096343994,
+                  -0.8640000224113464
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2b241d",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  2.59660005569458,
+                  -0.8822000026702881,
+                  2.7614002227783203,
+                  -0.890500009059906,
+                  2.904899835586548,
+                  -0.8906999826431274,
+                  3.0859999656677246,
+                  -0.8953999876976013
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.015,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Shape",
+          "to": "Paths",
+          "route": [
+            [
+              2.6007899999999995,
+              -0.889
+            ],
+            [
+              3.08079,
+              -0.889
+            ]
+          ]
+        },
+        {
+          "id": "edge:Paths->SVG#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Paths\" data-to=\"SVG\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"418.942,82.75 442.942,82.75 442.942,56.45 466.942,56.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Paths-&gt;SVG#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Paths to SVG\" />\n<path d=\"M418.46 83.65 C427.59 82.02, 435.99 82.36, 442.63 83.66 M443.67 83.22 C443.25 73.12, 442.73 65.52, 442.16 57.03 M442.63 57.05 C451.19 56.33, 458.51 57.28, 467.57 55.96\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.189419746398926,
+                  -0.8274999856948853,
+                  4.2694196701049805,
+                  -0.8274999856948853,
+                  4.349420070648193,
+                  -0.8274999856948853,
+                  4.429419994354248,
+                  -0.8274999856948853,
+                  4.429419994354248,
+                  -0.7398332953453064,
+                  4.429419994354248,
+                  -0.6521666646003723,
+                  4.429419994354248,
+                  -0.5645000338554382,
+                  4.509419918060303,
+                  -0.5645000338554382,
+                  4.589419841766357,
+                  -0.5645000338554382,
+                  4.669419765472412,
+                  -0.5645000338554382
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 0,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  4.599420070648193,
+                  -0.5394999980926514,
+                  4.626086711883545,
+                  -0.5478333234786987,
+                  4.6527533531188965,
+                  -0.5561666488647461,
+                  4.679419994354248,
+                  -0.5645000338554382,
+                  4.6527533531188965,
+                  -0.5728333592414856,
+                  4.626086711883545,
+                  -0.581166684627533,
+                  4.599420070648193,
+                  -0.5895000100135803,
+                  4.599420070648193,
+                  -0.5728333592414856,
+                  4.599420070648193,
+                  -0.5561666488647461,
+                  4.599420070648193,
+                  -0.5394999980926514
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2b241d",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  4.184599876403809,
+                  -0.8364999890327454,
+                  4.275899887084961,
+                  -0.8201999664306641,
+                  4.359899997711182,
+                  -0.8235999941825867,
+                  4.426300048828125,
+                  -0.8366000652313232
+                ],
+                [
+                  4.436700344085693,
+                  -0.8321999907493591,
+                  4.432499885559082,
+                  -0.7312000393867493,
+                  4.427299976348877,
+                  -0.6551999449729919,
+                  4.421599864959717,
+                  -0.5702999830245972
+                ],
+                [
+                  4.426300048828125,
+                  -0.5705000162124634,
+                  4.511899948120117,
+                  -0.5633000135421753,
+                  4.585100173950195,
+                  -0.5727999806404114,
+                  4.6757001876831055,
+                  -0.5595999956130981
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.015,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Paths",
+          "to": "SVG",
+          "route": [
+            [
+              4.18942,
+              -0.8275
+            ],
+            [
+              4.42942,
+              -0.8275
+            ],
+            [
+              4.42942,
+              -0.5645
+            ],
+            [
+              4.66942,
+              -0.5645
+            ]
+          ]
+        },
+        {
+          "id": "edge:Paths->Video#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Paths\" data-to=\"Video\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"418.942,95.05000000000001 442.942,95.05000000000001 442.942,121.35000000000001 466.942,121.35000000000001\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Paths-&gt;Video#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Paths to Video\" />\n<path d=\"M417.97 95.89 C425.06 95.13, 429.86 95.54, 442.36 94.97 M442.51 95.75 C442.71 103, 442.53 112.68, 442.47 120.8 M443.24 121.32 C450.95 122.01, 460.06 120.95, 467.91 121.87\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.189419746398926,
+                  -0.9505000114440918,
+                  4.2694196701049805,
+                  -0.9505000114440918,
+                  4.349420070648193,
+                  -0.9505000114440918,
+                  4.429419994354248,
+                  -0.9505000114440918,
+                  4.429419994354248,
+                  -1.0381666421890259,
+                  4.429419994354248,
+                  -1.1258333921432495,
+                  4.429419994354248,
+                  -1.2135000228881836,
+                  4.509419918060303,
+                  -1.2135000228881836,
+                  4.589419841766357,
+                  -1.2135000228881836,
+                  4.669419765472412,
+                  -1.2135000228881836
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 0,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  4.599420070648193,
+                  -1.188499927520752,
+                  4.626086711883545,
+                  -1.1968333721160889,
+                  4.6527533531188965,
+                  -1.2051666975021362,
+                  4.679419994354248,
+                  -1.2135000228881836,
+                  4.6527533531188965,
+                  -1.221833348274231,
+                  4.626086711883545,
+                  -1.2301666736602783,
+                  4.599420070648193,
+                  -1.2384999990463257,
+                  4.599420070648193,
+                  -1.221833348274231,
+                  4.599420070648193,
+                  -1.2051666975021362,
+                  4.599420070648193,
+                  -1.188499927520752
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2b241d",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  4.179699897766113,
+                  -0.958899974822998,
+                  4.2505998611450195,
+                  -0.9512999653816223,
+                  4.298599720001221,
+                  -0.9553999900817871,
+                  4.423599720001221,
+                  -0.9496999979019165
+                ],
+                [
+                  4.425100326538086,
+                  -0.9574999809265137,
+                  4.427099704742432,
+                  -1.0299999713897705,
+                  4.425300121307373,
+                  -1.1268000602722168,
+                  4.424699783325195,
+                  -1.2080000638961792
+                ],
+                [
+                  4.432399749755859,
+                  -1.2131999731063843,
+                  4.509500026702881,
+                  -1.2201000452041626,
+                  4.600599765777588,
+                  -1.2094999551773071,
+                  4.679100036621094,
+                  -1.2187000513076782
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.015,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Paths",
+          "to": "Video",
+          "route": [
+            [
+              4.18942,
+              -0.9505000000000001
+            ],
+            [
+              4.42942,
+              -0.9505000000000001
+            ],
+            [
+              4.42942,
+              -1.2135
+            ],
+            [
+              4.66942,
+              -1.2135
+            ]
+          ]
+        },
+        {
+          "id": "Font",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Font\" data-label=\"Inter\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M39.2 72.26 C60.36 72.96, 80 72.41, 109.28 72.86 M109.33 71.54 C108.5 85.61, 108.2 96.43, 109.15 109.99 M108.52 110.28 C87.05 109.54, 64.93 108.87, 40.08 108.82 M40.45 108.44 C40.64 95.54, 39.17 80.86, 40.46 71.87\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Font\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"74.31299999999999\" y=\"90.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Inter</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0.3920000195503235,
+                  -0.7226000428199768,
+                  0.603600025177002,
+                  -0.7296000123023987,
+                  0.800000011920929,
+                  -0.7241000533103943,
+                  1.0928000211715698,
+                  -0.728600025177002
+                ],
+                [
+                  1.0932999849319458,
+                  -0.715399980545044,
+                  1.0850000381469727,
+                  -0.8561000227928162,
+                  1.0820000171661377,
+                  -0.9642999768257141,
+                  1.0915000438690186,
+                  -1.0999000072479248
+                ],
+                [
+                  1.0851999521255493,
+                  -1.1028000116348267,
+                  0.8705000281333923,
+                  -1.0953999757766724,
+                  0.6492999792098999,
+                  -1.0887000560760498,
+                  0.40080001950263977,
+                  -1.0881999731063843
+                ],
+                [
+                  0.40450000762939453,
+                  -1.0844000577926636,
+                  0.40639999508857727,
+                  -0.9553999900817871,
+                  0.39169996976852417,
+                  -0.8086000084877014,
+                  0.40459999442100525,
+                  -0.7187000513076782
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01125,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#241f1a",
+                "stroke": "#faf6ec",
+                "strokeWidth": 0.03,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "stroke"
+              },
+              "text": "Inter",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Inter",
+                "x": 74.31299999999999,
+                "y": 95.45,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  -2.710505431213761e-20
+                ],
+                "width": 28.626
+              }
+            }
+          ]
+        },
+        {
+          "id": "Shape",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Shape\" data-label=\"Shape text\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M155.63 72.95 C187.92 72.41, 218.8 72.04, 259.64 72.05 M260.39 71.62 C260.58 87.29, 259.7 99.97, 259.2 108.49 M260.26 110.13 C239.32 109.4, 217.6 109.92, 157.49 109.51 M156.74 109.84 C156.92 96.99, 156.47 84.88, 157.27 72.68\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Shape\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"208.35249999999996\" y=\"90.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Shape text</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.5563000440597534,
+                  -0.7294999957084656,
+                  1.8791999816894531,
+                  -0.7241000533103943,
+                  2.187999963760376,
+                  -0.7204000353813171,
+                  2.596400260925293,
+                  -0.7205000519752502
+                ],
+                [
+                  2.603900194168091,
+                  -0.716200053691864,
+                  2.605799913406372,
+                  -0.8729000091552734,
+                  2.5970001220703125,
+                  -0.9997000098228455,
+                  2.5920000076293945,
+                  -1.0849000215530396
+                ],
+                [
+                  2.60260009765625,
+                  -1.1013000011444092,
+                  2.393200159072876,
+                  -1.093999981880188,
+                  2.1760001182556152,
+                  -1.0992000102996826,
+                  1.5749000310897827,
+                  -1.0951000452041626
+                ],
+                [
+                  1.5674000978469849,
+                  -1.0983999967575073,
+                  1.569200038909912,
+                  -0.9698999524116516,
+                  1.5647000074386597,
+                  -0.8487999439239502,
+                  1.572700023651123,
+                  -0.7268000245094299
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01125,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#241f1a",
+                "stroke": "#faf6ec",
+                "strokeWidth": 0.03,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "stroke"
+              },
+              "text": "Shape text",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Shape text",
+                "x": 208.35249999999996,
+                "y": 95.45,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  -2.710505431213761e-20
+                ],
+                "width": 63.453
+              }
+            }
+          ]
+        },
+        {
+          "id": "Paths",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Paths\" data-label=\"Cubic paths\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M309.04 70.64 C332.58 69.61, 357.29 69.76, 419.45 71.22 M418.03 69.55 C419.3 79.19, 419.74 86.78, 419.14 107.77 M418.75 106.79 C378.52 106.07, 339.98 107.31, 307.84 106.82 M307.8 108.11 C307.33 97.79, 308.36 87.66, 308.41 71.25\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Paths\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"363.5105\" y=\"88.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Cubic paths</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.090399980545044,
+                  -0.7063999772071838,
+                  3.3257999420166016,
+                  -0.6960999965667725,
+                  3.5729000568389893,
+                  -0.6976000070571899,
+                  4.194499969482422,
+                  -0.7121999859809875
+                ],
+                [
+                  4.180299758911133,
+                  -0.6955000162124634,
+                  4.192999839782715,
+                  -0.7919000387191772,
+                  4.197400093078613,
+                  -0.8677999973297119,
+                  4.191400051116943,
+                  -1.0777000188827515
+                ],
+                [
+                  4.1875,
+                  -1.0679000616073608,
+                  3.7851998805999756,
+                  -1.0606999397277832,
+                  3.3998000621795654,
+                  -1.073099970817566,
+                  3.078399896621704,
+                  -1.0681999921798706
+                ],
+                [
+                  3.0779998302459717,
+                  -1.0810999870300293,
+                  3.0732998847961426,
+                  -0.9779000282287598,
+                  3.083599805831909,
+                  -0.8766000270843506,
+                  3.0841000080108643,
+                  -0.7124999761581421
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01125,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#241f1a",
+                "stroke": "#faf6ec",
+                "strokeWidth": 0.03,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "stroke"
+              },
+              "text": "Cubic paths",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Cubic paths",
+                "x": 363.5105,
+                "y": 93.45,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  -2.710505431213761e-20
+                ],
+                "width": 70.863
+              }
+            }
+          ]
+        },
+        {
+          "id": "SVG",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"SVG\" data-label=\"SVG player\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M466.9 37.84 C499.4 37.66, 534.67 38.09, 585.49 38.44 M584.23 38.09 C585.65 51.92, 585.36 63.3, 585.45 75.06 M586.04 74.61 C549.73 75.52, 514.71 74.57, 466.46 75.36 M467.53 74.46 C466.26 67.15, 467.43 58.8, 467.02 38.74\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:SVG\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"526.0785\" y=\"56.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">SVG player</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.669000148773193,
+                  -0.3783999979496002,
+                  4.99399995803833,
+                  -0.3765999972820282,
+                  5.3466997146606445,
+                  -0.38089999556541443,
+                  5.854899883270264,
+                  -0.38439998030662537
+                ],
+                [
+                  5.842299938201904,
+                  -0.38089999556541443,
+                  5.856500148773193,
+                  -0.5191999673843384,
+                  5.853600025177002,
+                  -0.6330000162124634,
+                  5.8545002937316895,
+                  -0.7505999803543091
+                ],
+                [
+                  5.8603997230529785,
+                  -0.7461000084877014,
+                  5.497299671173096,
+                  -0.7551999688148499,
+                  5.147100448608398,
+                  -0.7457000017166138,
+                  4.664599895477295,
+                  -0.753600001335144
+                ],
+                [
+                  4.675300121307373,
+                  -0.7445999979972839,
+                  4.662600040435791,
+                  -0.671500027179718,
+                  4.674299716949463,
+                  -0.5879999995231628,
+                  4.670199871063232,
+                  -0.3874000310897827
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01125,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#241f1a",
+                "stroke": "#faf6ec",
+                "strokeWidth": 0.03,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "stroke"
+              },
+              "text": "SVG player",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "SVG player",
+                "x": 526.0785,
+                "y": 61,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  -2.710505431213761e-20
+                ],
+                "width": 69.381
+              }
+            }
+          ]
+        },
+        {
+          "id": "Video",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Video\" data-label=\"Video frames\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M467.26 102.77 C503.17 101.67, 538.8 102.96, 586.09 103.68 M586.04 103.86 C584.18 111.47, 584.7 119.57, 585.13 140.33 M585.13 139.69 C540.96 139.95, 495.07 139.83, 466.78 140.4 M467.1 139.75 C467.37 130.14, 466.01 123.41, 467.57 103.73\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Video\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"526.0785\" y=\"121.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Video frames</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.672600269317627,
+                  -1.0276999473571777,
+                  5.031700134277344,
+                  -1.016700029373169,
+                  5.388000011444092,
+                  -1.0296000242233276,
+                  5.860900402069092,
+                  -1.0368000268936157
+                ],
+                [
+                  5.8603997230529785,
+                  -1.038599967956543,
+                  5.841799736022949,
+                  -1.1146999597549438,
+                  5.8470001220703125,
+                  -1.1957000494003296,
+                  5.851300239562988,
+                  -1.4033000469207764
+                ],
+                [
+                  5.851300239562988,
+                  -1.3969000577926636,
+                  5.409600257873535,
+                  -1.3995000123977661,
+                  4.950700283050537,
+                  -1.398300051689148,
+                  4.667799949645996,
+                  -1.403999924659729
+                ],
+                [
+                  4.671000003814697,
+                  -1.3975000381469727,
+                  4.673699855804443,
+                  -1.3013999462127686,
+                  4.660099983215332,
+                  -1.2340999841690063,
+                  4.6757001876831055,
+                  -1.0372999906539917
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01125,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#241f1a",
+                "stroke": "#faf6ec",
+                "strokeWidth": 0.03,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "stroke"
+              },
+              "text": "Video frames",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Video frames",
+                "x": 526.0785,
+                "y": 125.9,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  -2.710505431213761e-20
+                ],
+                "width": 78.273
+              }
+            }
+          ]
+        }
+      ],
+      "findings": {
+        "ok": true,
+        "warnings": [],
+        "layout": {
+          "version": 1,
+          "kind": "flowchart",
+          "nodes": [
+            {
+              "id": "Font",
+              "x": 40,
+              "y": 72,
+              "w": 69,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Inter"
+            },
+            {
+              "id": "Shape",
+              "x": 157,
+              "y": 72,
+              "w": 103,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Shape text"
+            },
+            {
+              "id": "Paths",
+              "x": 308,
+              "y": 70,
+              "w": 111,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Cubic paths"
+            },
+            {
+              "id": "SVG",
+              "x": 467,
+              "y": 38,
+              "w": 118,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "SVG player"
+            },
+            {
+              "id": "Video",
+              "x": 467,
+              "y": 103,
+              "w": 118,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Video frames"
+            }
+          ],
+          "edges": [
+            {
+              "id": "Font->Shape",
+              "from": "Font",
+              "to": "Shape",
+              "path": [
+                [
+                  109,
+                  91
+                ],
+                [
+                  157,
+                  91
+                ]
+              ]
+            },
+            {
+              "id": "Shape->Paths",
+              "from": "Shape",
+              "to": "Paths",
+              "path": [
+                [
+                  260,
+                  89
+                ],
+                [
+                  308,
+                  89
+                ]
+              ]
+            },
+            {
+              "id": "Paths->SVG",
+              "from": "Paths",
+              "to": "SVG",
+              "path": [
+                [
+                  419,
+                  83
+                ],
+                [
+                  443,
+                  83
+                ],
+                [
+                  443,
+                  56
+                ],
+                [
+                  467,
+                  56
+                ]
+              ]
+            },
+            {
+              "id": "Paths->Video",
+              "from": "Paths",
+              "to": "Video",
+              "path": [
+                [
+                  419,
+                  95
+                ],
+                [
+                  443,
+                  95
+                ],
+                [
+                  443,
+                  121
+                ],
+                [
+                  467,
+                  121
+                ]
+              ]
+            }
+          ],
+          "groups": [],
+          "bounds": {
+            "w": 625,
+            "h": 182
+          }
+        }
+      }
+    },
+    "[\"graph LR\\nFont[JetBrains Mono] --> Shape[Shape text]\\nShape --> Paths[Cubic paths]\\nPaths --> SVG[SVG player]\\nPaths --> Video[Video frames]\",\"pen-and-ink\",null]": {
+      "version": 1,
+      "renderer": "agentic-mermaid@0.4.1",
+      "spec": {
+        "source": "graph LR\nFont[JetBrains Mono] --> Shape[Shape text]\nShape --> Paths[Cubic paths]\nPaths --> SVG[SVG player]\nPaths --> Video[Video frames]",
+        "style": "pen-and-ink"
+      },
+      "family": "flowchart",
+      "width": 693.3870000000001,
+      "height": 181.8,
+      "palette": {
+        "paper": "#faf6ec",
+        "ink": "#241f1a",
+        "accent": "#2b241d",
+        "muted": "#241f1a"
+      },
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"693.3870000000001\" height=\"181.8\" viewBox=\"0 0 693.3870000000001 181.8\" style=\"--bg:#faf6ec;--fg:#241f1a;--line:#2b241d;--accent:#2b241d;--border:#2b241d;--font:EB Garamond;background:#faf6ec\">\n<style>\n  text { font-family: var(--font, 'EB Garamond'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #241f1a;\n    --_text-sec:      #534e48;\n    --_text-muted:    #6d6861;\n    --_text-faint:    #86827b;\n    --_line:          #2b241d;\n    --_arrow:         #2b241d;\n    --_node-fill:     #f4f0e6;\n    --_node-stroke:   #2b241d;\n    --_group-fill:    #faf6ec;\n    --_group-hdr:     #efebe2;\n    --_inner-stroke:  #e0dcd3;\n    --_key-badge:     #e5e1d7;\n  }\n</style>\n<rect width=\"693.3870000000001\" height=\"181.8\" fill=\"#faf6ec\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#2b241d\" stroke=\"#2b241d\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#2b241d\" stroke=\"#2b241d\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Font\" data-to=\"Shape\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"176.798,90.9 224.798,90.9\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Font-&gt;Shape#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Font to Shape\" />\n<path d=\"M177.09 91.81 C187.92 91.52, 198.52 90.7, 224.49 90.67\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Shape\" data-to=\"Paths\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"328.251,88.9 376.251,88.9\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Shape-&gt;Paths#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Shape to Paths\" />\n<path d=\"M327.83 88.22 C344.31 89.05, 358.66 89.07, 376.78 89.54\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Paths\" data-to=\"SVG\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"487.114,82.75 511.11400000000003,82.75 511.11400000000003,56.45 535.114,56.45\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Paths-&gt;SVG#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Paths to SVG\" />\n<path d=\"M486.63 83.65 C495.76 82.02, 504.17 82.36, 510.8 83.66 M511.84 83.22 C511.42 73.12, 510.9 65.52, 510.33 57.03 M510.8 57.05 C519.36 56.33, 526.69 57.28, 535.75 55.96\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Paths\" data-to=\"Video\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"487.114,95.05000000000001 511.11400000000003,95.05000000000001 511.11400000000003,121.35000000000001 535.114,121.35000000000001\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Paths-&gt;Video#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Paths to Video\" />\n<path d=\"M486.14 95.89 C493.23 95.13, 498.04 95.54, 510.53 94.97 M510.68 95.75 C510.88 103, 510.71 112.68, 510.65 120.8 M511.42 121.32 C519.12 122.01, 528.23 120.95, 536.09 121.87\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<g class=\"node\" data-id=\"Font\" data-label=\"JetBrains Mono\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M39.2 72.26 C80.43 72.89, 120.14 72.34, 177.45 72.86 M177.5 71.54 C176.67 85.61, 176.37 96.43, 177.32 109.99 M176.69 110.28 C133.93 109.5, 90.52 108.83, 40.08 108.82 M40.45 108.44 C40.64 95.54, 39.17 80.86, 40.46 71.87\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Font\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#faf6ec\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"108.399\" y=\"90.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#241f1a\" dy=\"4.55\" textLength=\"96.798\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">JetBrains Mono</text>\n</g>\n<g class=\"node\" data-id=\"Shape\" data-label=\"Shape text\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M223.81 72.95 C256.09 72.41, 286.97 72.04, 327.81 72.05 M328.56 71.62 C328.75 87.29, 327.87 99.97, 327.37 108.49 M328.43 110.13 C307.49 109.4, 285.77 109.92, 225.67 109.51 M224.92 109.84 C225.09 96.99, 224.64 84.88, 225.45 72.68\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Shape\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#faf6ec\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"276.5245\" y=\"90.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#241f1a\" dy=\"4.55\" textLength=\"63.453\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Shape text</text>\n</g>\n<g class=\"node\" data-id=\"Paths\" data-label=\"Cubic paths\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M377.21 70.64 C400.75 69.61, 425.46 69.76, 487.62 71.22 M486.2 69.55 C487.48 79.19, 487.91 86.78, 487.31 107.77 M486.93 106.79 C446.7 106.07, 408.15 107.31, 376.01 106.82 M375.97 108.11 C375.5 97.79, 376.53 87.66, 376.58 71.25\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Paths\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#faf6ec\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"431.6825\" y=\"88.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#241f1a\" dy=\"4.55\" textLength=\"70.863\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Cubic paths</text>\n</g>\n<g class=\"node\" data-id=\"SVG\" data-label=\"SVG player\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M535.07 37.84 C567.57 37.66, 602.85 38.09, 653.66 38.44 M652.4 38.09 C653.82 51.92, 653.53 63.3, 653.62 75.06 M654.21 74.61 C617.9 75.52, 582.88 74.57, 534.63 75.36 M535.7 74.46 C534.43 67.15, 535.6 58.8, 535.19 38.74\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:SVG\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#faf6ec\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"594.2505\" y=\"56.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#241f1a\" dy=\"4.55\" textLength=\"69.381\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">SVG player</text>\n</g>\n<g class=\"node\" data-id=\"Video\" data-label=\"Video frames\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M535.44 102.77 C571.35 101.67, 606.97 102.96, 654.26 103.68 M654.21 103.86 C652.35 111.47, 652.87 119.57, 653.3 140.33 M653.3 139.69 C609.13 139.95, 563.25 139.83, 534.95 140.4 M535.27 139.75 C535.54 130.14, 534.18 123.41, 535.74 103.73\" fill=\"none\" stroke=\"#2b241d\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Video\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#faf6ec\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"594.2505\" y=\"121.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#241f1a\" dy=\"4.55\" textLength=\"78.273\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Video frames</text>\n</g>\n</svg>",
+      "parts": [
+        {
+          "id": "__frame",
+          "role": "frame",
+          "kind": "shape",
+          "svg": "",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0,
+                  -1.6940658566432772e-23,
+                  2.3112900257110596,
+                  -1.6940658566432772e-23,
+                  4.622580051422119,
+                  -1.6940658566432772e-23,
+                  6.933870315551758,
+                  -1.6940658566432772e-23,
+                  6.933870315551758,
+                  -0.6060000061988831,
+                  6.933870315551758,
+                  -1.2120000123977661,
+                  6.933870315551758,
+                  -1.818000078201294,
+                  4.622580051422119,
+                  -1.818000078201294,
+                  2.3112900257110596,
+                  -1.818000078201294,
+                  0,
+                  -1.818000078201294,
+                  0,
+                  -1.2120000123977661,
+                  0,
+                  -0.6060000061988831,
+                  0,
+                  -1.6940658566432772e-23
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#faf6ec",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "edge:Font->Shape#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Font\" data-to=\"Shape\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"176.798,90.9 224.798,90.9\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Font-&gt;Shape#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Font to Shape\" />\n<path d=\"M177.09 91.81 C187.92 91.52, 198.52 90.7, 224.49 90.67\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.7679800987243652,
+                  -0.909000039100647,
+                  1.9279800653457642,
+                  -0.909000039100647,
+                  2.087980031967163,
+                  -0.909000039100647,
+                  2.2479801177978516,
+                  -0.909000039100647
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 0,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  2.1779799461364746,
+                  -0.8840000033378601,
+                  2.2046468257904053,
+                  -0.8923333287239075,
+                  2.231313467025757,
+                  -0.9006666541099548,
+                  2.2579801082611084,
+                  -0.909000039100647,
+                  2.231313467025757,
+                  -0.9173333644866943,
+                  2.2046468257904053,
+                  -0.9256666898727417,
+                  2.1779799461364746,
+                  -0.9340000152587891,
+                  2.1779799461364746,
+                  -0.9173333644866943,
+                  2.1779799461364746,
+                  -0.9006666541099548,
+                  2.1779799461364746,
+                  -0.8840000033378601
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2b241d",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  1.770900011062622,
+                  -0.9180999994277954,
+                  1.8791999816894531,
+                  -0.9151999950408936,
+                  1.985200047492981,
+                  -0.906999945640564,
+                  2.2448999881744385,
+                  -0.9066999554634094
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.015,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Font",
+          "to": "Shape",
+          "route": [
+            [
+              1.76798,
+              -0.909
+            ],
+            [
+              2.24798,
+              -0.909
+            ]
+          ]
+        },
+        {
+          "id": "edge:Shape->Paths#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Shape\" data-to=\"Paths\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"328.251,88.9 376.251,88.9\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Shape-&gt;Paths#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Shape to Paths\" />\n<path d=\"M327.83 88.22 C344.31 89.05, 358.66 89.07, 376.78 89.54\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.2825100421905518,
+                  -0.8889999985694885,
+                  3.4425101280212402,
+                  -0.8889999985694885,
+                  3.6025099754333496,
+                  -0.8889999985694885,
+                  3.762510061264038,
+                  -0.8889999985694885
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 0,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  3.6925101280212402,
+                  -0.8640000224113464,
+                  3.719176769256592,
+                  -0.8723333477973938,
+                  3.7458434104919434,
+                  -0.8806666731834412,
+                  3.772510051727295,
+                  -0.8889999985694885,
+                  3.7458434104919434,
+                  -0.8973333239555359,
+                  3.719176769256592,
+                  -0.905666708946228,
+                  3.6925101280212402,
+                  -0.9140000343322754,
+                  3.6925101280212402,
+                  -0.8973333239555359,
+                  3.6925101280212402,
+                  -0.8806666731834412,
+                  3.6925101280212402,
+                  -0.8640000224113464
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2b241d",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  3.2782998085021973,
+                  -0.8822000026702881,
+                  3.4430999755859375,
+                  -0.890500009059906,
+                  3.5866000652313232,
+                  -0.8906999826431274,
+                  3.7678000926971436,
+                  -0.8953999876976013
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.015,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Shape",
+          "to": "Paths",
+          "route": [
+            [
+              3.28251,
+              -0.889
+            ],
+            [
+              3.76251,
+              -0.889
+            ]
+          ]
+        },
+        {
+          "id": "edge:Paths->SVG#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Paths\" data-to=\"SVG\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"487.114,82.75 511.11400000000003,82.75 511.11400000000003,56.45 535.114,56.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Paths-&gt;SVG#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Paths to SVG\" />\n<path d=\"M486.63 83.65 C495.76 82.02, 504.17 82.36, 510.8 83.66 M511.84 83.22 C511.42 73.12, 510.9 65.52, 510.33 57.03 M510.8 57.05 C519.36 56.33, 526.69 57.28, 535.75 55.96\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.871140003204346,
+                  -0.8274999856948853,
+                  4.9511399269104,
+                  -0.8274999856948853,
+                  5.031140327453613,
+                  -0.8274999856948853,
+                  5.111140251159668,
+                  -0.8274999856948853,
+                  5.111140251159668,
+                  -0.7398332953453064,
+                  5.111140251159668,
+                  -0.6521666646003723,
+                  5.111140251159668,
+                  -0.5645000338554382,
+                  5.191140174865723,
+                  -0.5645000338554382,
+                  5.271140098571777,
+                  -0.5645000338554382,
+                  5.351140022277832,
+                  -0.5645000338554382
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 0,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  5.281140327453613,
+                  -0.5394999980926514,
+                  5.307806968688965,
+                  -0.5478333234786987,
+                  5.334473609924316,
+                  -0.5561666488647461,
+                  5.361140251159668,
+                  -0.5645000338554382,
+                  5.334473609924316,
+                  -0.5728333592414856,
+                  5.307806968688965,
+                  -0.581166684627533,
+                  5.281140327453613,
+                  -0.5895000100135803,
+                  5.281140327453613,
+                  -0.5728333592414856,
+                  5.281140327453613,
+                  -0.5561666488647461,
+                  5.281140327453613,
+                  -0.5394999980926514
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2b241d",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  4.866300106048584,
+                  -0.8364999890327454,
+                  4.957600116729736,
+                  -0.8201999664306641,
+                  5.04170036315918,
+                  -0.8235999941825867,
+                  5.107999801635742,
+                  -0.8366000652313232
+                ],
+                [
+                  5.1184000968933105,
+                  -0.8321999907493591,
+                  5.114200115203857,
+                  -0.7312000393867493,
+                  5.108999729156494,
+                  -0.6551999449729919,
+                  5.103300094604492,
+                  -0.5702999830245972
+                ],
+                [
+                  5.107999801635742,
+                  -0.5705000162124634,
+                  5.193599700927734,
+                  -0.5633000135421753,
+                  5.266900062561035,
+                  -0.5727999806404114,
+                  5.357500076293945,
+                  -0.5595999956130981
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.015,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Paths",
+          "to": "SVG",
+          "route": [
+            [
+              4.87114,
+              -0.8275
+            ],
+            [
+              5.111140000000001,
+              -0.8275
+            ],
+            [
+              5.111140000000001,
+              -0.5645
+            ],
+            [
+              5.35114,
+              -0.5645
+            ]
+          ]
+        },
+        {
+          "id": "edge:Paths->Video#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Paths\" data-to=\"Video\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"487.114,95.05000000000001 511.11400000000003,95.05000000000001 511.11400000000003,121.35000000000001 535.114,121.35000000000001\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Paths-&gt;Video#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Paths to Video\" />\n<path d=\"M486.14 95.89 C493.23 95.13, 498.04 95.54, 510.53 94.97 M510.68 95.75 C510.88 103, 510.71 112.68, 510.65 120.8 M511.42 121.32 C519.12 122.01, 528.23 120.95, 536.09 121.87\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.5\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.871140003204346,
+                  -0.9505000114440918,
+                  4.9511399269104,
+                  -0.9505000114440918,
+                  5.031140327453613,
+                  -0.9505000114440918,
+                  5.111140251159668,
+                  -0.9505000114440918,
+                  5.111140251159668,
+                  -1.0381666421890259,
+                  5.111140251159668,
+                  -1.1258333921432495,
+                  5.111140251159668,
+                  -1.2135000228881836,
+                  5.191140174865723,
+                  -1.2135000228881836,
+                  5.271140098571777,
+                  -1.2135000228881836,
+                  5.351140022277832,
+                  -1.2135000228881836
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 0,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  5.281140327453613,
+                  -1.188499927520752,
+                  5.307806968688965,
+                  -1.1968333721160889,
+                  5.334473609924316,
+                  -1.2051666975021362,
+                  5.361140251159668,
+                  -1.2135000228881836,
+                  5.334473609924316,
+                  -1.221833348274231,
+                  5.307806968688965,
+                  -1.2301666736602783,
+                  5.281140327453613,
+                  -1.2384999990463257,
+                  5.281140327453613,
+                  -1.221833348274231,
+                  5.281140327453613,
+                  -1.2051666975021362,
+                  5.281140327453613,
+                  -1.188499927520752
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2b241d",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  4.861400127410889,
+                  -0.958899974822998,
+                  4.932300090789795,
+                  -0.9512999653816223,
+                  4.980400085449219,
+                  -0.9553999900817871,
+                  5.105299949645996,
+                  -0.9496999979019165
+                ],
+                [
+                  5.106800079345703,
+                  -0.9574999809265137,
+                  5.108799934387207,
+                  -1.0299999713897705,
+                  5.107100009918213,
+                  -1.1268000602722168,
+                  5.106500148773193,
+                  -1.2080000638961792
+                ],
+                [
+                  5.114200115203857,
+                  -1.2131999731063843,
+                  5.191199779510498,
+                  -1.2201000452041626,
+                  5.282299995422363,
+                  -1.2094999551773071,
+                  5.360900402069092,
+                  -1.2187000513076782
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.015,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Paths",
+          "to": "Video",
+          "route": [
+            [
+              4.87114,
+              -0.9505000000000001
+            ],
+            [
+              5.111140000000001,
+              -0.9505000000000001
+            ],
+            [
+              5.111140000000001,
+              -1.2135
+            ],
+            [
+              5.35114,
+              -1.2135
+            ]
+          ]
+        },
+        {
+          "id": "Font",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Font\" data-label=\"JetBrains Mono\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M39.2 72.26 C80.43 72.89, 120.14 72.34, 177.45 72.86 M177.5 71.54 C176.67 85.61, 176.37 96.43, 177.32 109.99 M176.69 110.28 C133.93 109.5, 90.52 108.83, 40.08 108.82 M40.45 108.44 C40.64 95.54, 39.17 80.86, 40.46 71.87\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Font\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"108.399\" y=\"90.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">JetBrains Mono</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0.3920000195503235,
+                  -0.7226000428199768,
+                  0.8043000102043152,
+                  -0.7289000153541565,
+                  1.2014000415802002,
+                  -0.7233999371528625,
+                  1.7745000123977661,
+                  -0.728600025177002
+                ],
+                [
+                  1.774999976158142,
+                  -0.715399980545044,
+                  1.766700029373169,
+                  -0.8561000227928162,
+                  1.763700008392334,
+                  -0.9642999768257141,
+                  1.7732000350952148,
+                  -1.0999000072479248
+                ],
+                [
+                  1.7669000625610352,
+                  -1.1028000116348267,
+                  1.3392999172210693,
+                  -1.0950000286102295,
+                  0.9051999449729919,
+                  -1.0882999897003174,
+                  0.40080001950263977,
+                  -1.0881999731063843
+                ],
+                [
+                  0.40450000762939453,
+                  -1.0844000577926636,
+                  0.40639999508857727,
+                  -0.9553999900817871,
+                  0.39169996976852417,
+                  -0.8086000084877014,
+                  0.40459999442100525,
+                  -0.7187000513076782
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01125,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#241f1a",
+                "stroke": "#faf6ec",
+                "strokeWidth": 0.03,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "stroke"
+              },
+              "text": "JetBrains Mono",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "JetBrains Mono",
+                "x": 108.399,
+                "y": 95.45,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  1.6940658945086007e-21
+                ],
+                "width": 96.798
+              }
+            }
+          ]
+        },
+        {
+          "id": "Shape",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Shape\" data-label=\"Shape text\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M223.81 72.95 C256.09 72.41, 286.97 72.04, 327.81 72.05 M328.56 71.62 C328.75 87.29, 327.87 99.97, 327.37 108.49 M328.43 110.13 C307.49 109.4, 285.77 109.92, 225.67 109.51 M224.92 109.84 C225.09 96.99, 224.64 84.88, 225.45 72.68\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Shape\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"276.5245\" y=\"90.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Shape text</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.238100051879883,
+                  -0.7294999957084656,
+                  2.5608999729156494,
+                  -0.7241000533103943,
+                  2.8696999549865723,
+                  -0.7204000353813171,
+                  3.27810001373291,
+                  -0.7205000519752502
+                ],
+                [
+                  3.285599946975708,
+                  -0.716200053691864,
+                  3.2874999046325684,
+                  -0.8729000091552734,
+                  3.2786998748779297,
+                  -0.9997000098228455,
+                  3.273699998855591,
+                  -1.0849000215530396
+                ],
+                [
+                  3.284299850463867,
+                  -1.1013000011444092,
+                  3.074899911880493,
+                  -1.093999981880188,
+                  2.8576998710632324,
+                  -1.0992000102996826,
+                  2.256700038909912,
+                  -1.0951000452041626
+                ],
+                [
+                  2.249199867248535,
+                  -1.0983999967575073,
+                  2.2509000301361084,
+                  -0.9698999524116516,
+                  2.2463998794555664,
+                  -0.8487999439239502,
+                  2.254499912261963,
+                  -0.7268000245094299
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01125,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#241f1a",
+                "stroke": "#faf6ec",
+                "strokeWidth": 0.03,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "stroke"
+              },
+              "text": "Shape text",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Shape text",
+                "x": 276.5245,
+                "y": 95.45,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  1.6940658945086007e-21
+                ],
+                "width": 63.453
+              }
+            }
+          ]
+        },
+        {
+          "id": "Paths",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Paths\" data-label=\"Cubic paths\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M377.21 70.64 C400.75 69.61, 425.46 69.76, 487.62 71.22 M486.2 69.55 C487.48 79.19, 487.91 86.78, 487.31 107.77 M486.93 106.79 C446.7 106.07, 408.15 107.31, 376.01 106.82 M375.97 108.11 C375.5 97.79, 376.53 87.66, 376.58 71.25\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Paths\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"431.6825\" y=\"88.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Cubic paths</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.7720999717712402,
+                  -0.7063999772071838,
+                  4.007500171661377,
+                  -0.6960999965667725,
+                  4.2546000480651855,
+                  -0.6976000070571899,
+                  4.876199722290039,
+                  -0.7121999859809875
+                ],
+                [
+                  4.861999988555908,
+                  -0.6955000162124634,
+                  4.874800205230713,
+                  -0.7919000387191772,
+                  4.8790998458862305,
+                  -0.8677999973297119,
+                  4.8730998039245605,
+                  -1.0777000188827515
+                ],
+                [
+                  4.86929988861084,
+                  -1.0679000616073608,
+                  4.4670000076293945,
+                  -1.0606999397277832,
+                  4.081500053405762,
+                  -1.073099970817566,
+                  3.7601001262664795,
+                  -1.0681999921798706
+                ],
+                [
+                  3.759700059890747,
+                  -1.0810999870300293,
+                  3.755000114440918,
+                  -0.9779000282287598,
+                  3.7653000354766846,
+                  -0.8766000270843506,
+                  3.7657997608184814,
+                  -0.7124999761581421
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01125,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#241f1a",
+                "stroke": "#faf6ec",
+                "strokeWidth": 0.03,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "stroke"
+              },
+              "text": "Cubic paths",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Cubic paths",
+                "x": 431.6825,
+                "y": 93.45,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  1.6940658945086007e-21
+                ],
+                "width": 70.863
+              }
+            }
+          ]
+        },
+        {
+          "id": "SVG",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"SVG\" data-label=\"SVG player\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M535.07 37.84 C567.57 37.66, 602.85 38.09, 653.66 38.44 M652.4 38.09 C653.82 51.92, 653.53 63.3, 653.62 75.06 M654.21 74.61 C617.9 75.52, 582.88 74.57, 534.63 75.36 M535.7 74.46 C534.43 67.15, 535.6 58.8, 535.19 38.74\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:SVG\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"594.2505\" y=\"56.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">SVG player</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  5.3506999015808105,
+                  -0.3783999979496002,
+                  5.6757001876831055,
+                  -0.3765999972820282,
+                  6.028499603271484,
+                  -0.38089999556541443,
+                  6.536599636077881,
+                  -0.38439998030662537
+                ],
+                [
+                  6.52400016784668,
+                  -0.38089999556541443,
+                  6.5381999015808105,
+                  -0.5191999673843384,
+                  6.535300254821777,
+                  -0.6330000162124634,
+                  6.536200046539307,
+                  -0.7505999803543091
+                ],
+                [
+                  6.542100429534912,
+                  -0.7461000084877014,
+                  6.179000377655029,
+                  -0.7551999688148499,
+                  5.828800201416016,
+                  -0.7457000017166138,
+                  5.34630012512207,
+                  -0.753600001335144
+                ],
+                [
+                  5.357000350952148,
+                  -0.7445999979972839,
+                  5.344299793243408,
+                  -0.671500027179718,
+                  5.355999946594238,
+                  -0.5879999995231628,
+                  5.351900100708008,
+                  -0.3874000310897827
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01125,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#241f1a",
+                "stroke": "#faf6ec",
+                "strokeWidth": 0.03,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "stroke"
+              },
+              "text": "SVG player",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "SVG player",
+                "x": 594.2505,
+                "y": 61,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  1.6940658945086007e-21
+                ],
+                "width": 69.381
+              }
+            }
+          ]
+        },
+        {
+          "id": "Video",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Video\" data-label=\"Video frames\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M535.44 102.77 C571.35 101.67, 606.97 102.96, 654.26 103.68 M654.21 103.86 C652.35 111.47, 652.87 119.57, 653.3 140.33 M653.3 139.69 C609.13 139.95, 563.25 139.83, 534.95 140.4 M535.27 139.75 C535.54 130.14, 534.18 123.41, 535.74 103.73\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.125\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Video\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"594.2505\" y=\"121.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Video frames</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  5.354400157928467,
+                  -1.0276999473571777,
+                  5.713499546051025,
+                  -1.016700029373169,
+                  6.069699764251709,
+                  -1.0296000242233276,
+                  6.542600154876709,
+                  -1.0368000268936157
+                ],
+                [
+                  6.542100429534912,
+                  -1.038599967956543,
+                  6.523499965667725,
+                  -1.1146999597549438,
+                  6.52869987487793,
+                  -1.1957000494003296,
+                  6.5329999923706055,
+                  -1.4033000469207764
+                ],
+                [
+                  6.5329999923706055,
+                  -1.3969000577926636,
+                  6.091300010681152,
+                  -1.3995000123977661,
+                  5.632500171661377,
+                  -1.398300051689148,
+                  5.3495001792907715,
+                  -1.403999924659729
+                ],
+                [
+                  5.352700233459473,
+                  -1.3975000381469727,
+                  5.3553996086120605,
+                  -1.3013999462127686,
+                  5.341799736022949,
+                  -1.2340999841690063,
+                  5.357399940490723,
+                  -1.0372999906539917
+                ]
+              ],
+              "closed": [
+                false,
+                false,
+                false,
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#2b241d",
+                "strokeWidth": 0.01125,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#241f1a",
+                "stroke": "#faf6ec",
+                "strokeWidth": 0.03,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "round",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "stroke"
+              },
+              "text": "Video frames",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Video frames",
+                "x": 594.2505,
+                "y": 125.9,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  1.6940658945086007e-21
+                ],
+                "width": 78.273
+              }
+            }
+          ]
+        }
+      ],
+      "findings": {
+        "ok": true,
+        "warnings": [],
+        "layout": {
+          "version": 1,
+          "kind": "flowchart",
+          "nodes": [
+            {
+              "id": "Font",
+              "x": 40,
+              "y": 72,
+              "w": 137,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "JetBrains Mono"
+            },
+            {
+              "id": "Shape",
+              "x": 225,
+              "y": 72,
+              "w": 103,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Shape text"
+            },
+            {
+              "id": "Paths",
+              "x": 376,
+              "y": 70,
+              "w": 111,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Cubic paths"
+            },
+            {
+              "id": "SVG",
+              "x": 535,
+              "y": 38,
+              "w": 118,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "SVG player"
+            },
+            {
+              "id": "Video",
+              "x": 535,
+              "y": 103,
+              "w": 118,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Video frames"
+            }
+          ],
+          "edges": [
+            {
+              "id": "Font->Shape",
+              "from": "Font",
+              "to": "Shape",
+              "path": [
+                [
+                  177,
+                  91
+                ],
+                [
+                  225,
+                  91
+                ]
+              ]
+            },
+            {
+              "id": "Shape->Paths",
+              "from": "Shape",
+              "to": "Paths",
+              "path": [
+                [
+                  328,
+                  89
+                ],
+                [
+                  376,
+                  89
+                ]
+              ]
+            },
+            {
+              "id": "Paths->SVG",
+              "from": "Paths",
+              "to": "SVG",
+              "path": [
+                [
+                  487,
+                  83
+                ],
+                [
+                  511,
+                  83
+                ],
+                [
+                  511,
+                  56
+                ],
+                [
+                  535,
+                  56
+                ]
+              ]
+            },
+            {
+              "id": "Paths->Video",
+              "from": "Paths",
+              "to": "Video",
+              "path": [
+                [
+                  487,
+                  95
+                ],
+                [
+                  511,
+                  95
+                ],
+                [
+                  511,
+                  121
+                ],
+                [
+                  535,
+                  121
+                ]
+              ]
+            }
+          ],
+          "groups": [],
+          "bounds": {
+            "w": 693,
+            "h": 182
+          }
+        }
+      }
+    }
+  }
+}

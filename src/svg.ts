@@ -4,7 +4,7 @@
 
 import { VMobject } from './vmobject.ts';
 import type { PathData } from './vmobject.ts';
-import type { Mobject, StyleRecord } from './mobject.ts';
+import type { Box, Mobject, StyleRecord } from './mobject.ts';
 import type { Scene, Sink } from './scene.ts';
 import { perf } from './perf.ts';
 
@@ -29,12 +29,15 @@ export interface ElementRecord {
   tx?: number;
   ty?: number;
   text: string | null;
+  /** Immutable inherited world-coordinate clip used by both renderers. */
+  clipBox?: Box;
   /** The serialized element, filled in by toSvgString. */
   svg?: string;
 }
 
 /** Per-VMobject record memo (VMobject._rec): the style and path it was built from. */
 export interface AttrsCache {
+  paint: string;
   id: number;
   d: string;
   fill: string;
@@ -67,18 +70,49 @@ export function renderElements(scene: Scene, { relative = true }: { relative?: b
 }
 function renderElementsImpl(scene: Scene, relative: boolean): ElementRecord[] {
   const out: ElementRecord[] = [];
-  const walk = (m: Mobject): void => {
-    // DOM output: a group of same-styled leaves (a line of glyphs) becomes one element
-    if (!relative && m.mergeLeaves) {
+  const walk = (m: Mobject, inherited?: Clip): void => {
+    const clip = m.clipBox ? clipFor(m.clipBox, inherited?.box) : inherited;
+    const emit = (rec: ElementRecord): void => { out.push(clip ? clippedRecord(rec, clip) : rec); };
+    // A child-specific viewport cannot be lost by merging its parent.
+    if (!relative && m.mergeLeaves && !m.children.some((c) => c.clipBox)) {
       const merged = mergedRecord(m);
-      if (merged !== undefined) { if (merged) out.push(merged); return; }
+      if (merged !== undefined) { if (merged) emit(merged); return; }
     }
-    const rec = elementFor(m, relative);
-    if (rec) out.push(rec);
-    for (const c of m.children) walk(c);
+    // A translated path would translate its userSpaceOnUse clip as well.
+    const rec = elementFor(m, clip ? false : relative);
+    if (rec) emit(rec);
+    for (const c of m.children) walk(c, clip);
   };
   for (const top of scene.mobjects) walk(top);
   return out;
+}
+
+/** A fixed rectangular viewport, resolved once per clipped group. */
+interface Clip { box: Box; id: string; attrs: Attrs }
+function clipFor(box: Box, parent?: Box): Clip {
+  if (box.length !== 4 || !box.every(Number.isFinite) || box[0] > box[2] || box[1] > box[3])
+    throw new RangeError('clipBox must be a finite ordered world-coordinate box');
+  if (parent) {
+    const x = Math.max(box[0], parent[0]), y = Math.max(box[1], parent[1]);
+    box = [x, y, Math.max(x, Math.min(box[2], parent[2])), Math.max(y, Math.min(box[3], parent[3]))];
+  }
+  const coords = [len(box[0]), len(-box[3]), len(box[2] - box[0]), len(box[3] - box[1])];
+  return {box, id: 'lantern-clip-' + coords.join('_'), attrs: {x:coords[0]!,y:coords[1]!,width:coords[2]!,height:coords[3]!}};
+}
+const clippedRecords = new WeakMap<ElementRecord, {id:string; rec:ElementRecord}>();
+function clippedRecord(rec: ElementRecord, clip: Clip): ElementRecord {
+  const cached = clippedRecords.get(rec);
+  if (cached?.id === clip.id) return cached.rec;
+  // A single last-value cache stays bounded when an updater changes the viewport.
+  const clipped: ElementRecord = {...rec, attrs:{...rec.attrs,'clip-path':`url(#${clip.id})`}, clipBox:[...clip.box]};
+  delete clipped.svg;
+  clippedRecords.set(rec,{id:clip.id,rec:clipped});
+  return clipped;
+}
+function clipsOf(els: readonly ElementRecord[]): Clip[] {
+  const clips = new Map<string,Clip>();
+  for(const el of els) if(el.clipBox){const clip=clipFor(el.clipBox);clips.set(clip.id,clip);}
+  return [...clips.values()];
 }
 
 /**
@@ -97,11 +131,12 @@ function elementFor(m: Mobject, relative: boolean): ElementRecord | null {
   if (m instanceof VMobject) {
     if (!m.hasPoints()) return null;
     const pd = m.pathData(relative);
+    const paint = JSON.stringify([s.lineCap, s.lineJoin, s.fillRule, s.dashArray, s.dashOffset, s.miterLimit, s.paintOrder]);
     let k = m._rec;
-    if (!(k && k.id === m.id && k.d === pd.d && k.fill === s.fill && k.fillOpacity === s.fillOpacity && k.stroke === s.stroke &&
+    if (!(k && k.paint === paint && k.id === m.id && k.d === pd.d && k.fill === s.fill && k.fillOpacity === s.fillOpacity && k.stroke === s.stroke &&
         k.strokeWidth === s.strokeWidth && k.strokeOpacity === s.strokeOpacity && k.opacity === s.opacity && k.drawFraction === s.drawFraction)) {
       perf.count('attrs miss');
-      k = m._rec = { id: m.id, d: pd.d, fill: s.fill, fillOpacity: s.fillOpacity, stroke: s.stroke, strokeWidth: s.strokeWidth, strokeOpacity: s.strokeOpacity, opacity: s.opacity, drawFraction: s.drawFraction, attrs: vmobjectAttrs(m, s, pd), rec: null };
+      k = m._rec = { paint, id: m.id, d: pd.d, fill: s.fill, fillOpacity: s.fillOpacity, stroke: s.stroke, strokeWidth: s.strokeWidth, strokeOpacity: s.strokeOpacity, opacity: s.opacity, drawFraction: s.drawFraction, attrs: vmobjectAttrs(m, s, pd), rec: null };
     }
     if (k.rec && k.rec.tx === pd.tx && k.rec.ty === pd.ty) { perf.count('element hit'); return k.rec; }
     perf.count('element moved');
@@ -126,7 +161,7 @@ function mergedRecord(g: Mobject): ElementRecord | null | undefined {
   for (const c of kids) {
     if (!(c instanceof VMobject) || c.children.length) return undefined;
     const s = c.style;
-    if (s.drawFraction != null) return undefined;
+    if (s.drawFraction != null || s.lineCap || s.lineJoin || s.fillRule || s.dashArray || s.paintOrder) return undefined;
     if (!s0) { s0 = s; continue; }
     if (s.fill !== s0.fill || s.fillOpacity !== s0.fillOpacity || s.stroke !== s0.stroke || s.strokeWidth !== s0.strokeWidth ||
         s.strokeOpacity !== s0.strokeOpacity || s.opacity !== s0.opacity) return undefined;
@@ -156,9 +191,14 @@ function vmobjectAttrs(m: VMobject, s: StyleRecord, pd: { d: string }): Attrs {
       stroke: s.stroke,
       'stroke-width': len(s.strokeWidth),
       'stroke-opacity': fmt(s.strokeOpacity),
-      'stroke-linejoin': 'round',
-      'stroke-linecap': 'round',
+      'stroke-linejoin': s.lineJoin ?? 'round',
+      'stroke-linecap': s.lineCap ?? 'round',
     };
+    if (s.fillRule) attrs['fill-rule'] = s.fillRule;
+    if (s.dashArray) attrs['stroke-dasharray'] = s.dashArray.split(/[ ,]+/).map((v) => len(Number(v))).join(' ');
+    if (s.dashOffset) attrs['stroke-dashoffset'] = len(s.dashOffset);
+    if (s.miterLimit != null) attrs['stroke-miterlimit'] = fmt(s.miterLimit);
+    if (s.paintOrder) attrs['paint-order'] = s.paintOrder;
     if (s.opacity < 1) attrs.opacity = fmt(s.opacity);
     if (s.drawFraction != null && s.drawFraction < 1) {
       const L = perf.span('arcLength', () => m.arcLength()) + 0.001;
@@ -205,6 +245,8 @@ export function toSvgString(scene: Scene, { width = 1280, background = '#1a1a1a'
   const els = renderElements(scene);
   const end = perf.begin('render.serialize');
   const parts = [s];
+  const clips = clipsOf(els);
+  if (clips.length) parts.push('<defs>',...clips.map((c)=>`<clipPath id="${c.id}" clipPathUnits="userSpaceOnUse"><rect${serializeAttrs(c.attrs)}/></clipPath>`),'</defs>');
   for (const el of els) parts.push(el.svg ??= serializeElement(el));
   parts.push('</svg>');
   end();
@@ -258,6 +300,8 @@ export class DomSink implements Sink {
   lastPatch: number;
   dropped: number;
   maxFreezeMs: number;
+  private defs: SVGDefsElement | null = null;
+  private clipSignature = '';
 
   constructor(container: Element, { background = '#1a1a1a', realtime = true }: { background?: string; realtime?: boolean } = {}) {
     const NS = 'http://www.w3.org/2000/svg';
@@ -314,8 +358,22 @@ export class DomSink implements Sink {
     this.lastPatch = performance.now();
     let muts = 0, dMuts = 0;
     const end = perf.begin('dom.patch');
+    const clips = clipsOf(els), signature = clips.map((c)=>c.id).join(' ');
+    if (signature !== this.clipSignature) {
+      this.clipSignature = signature;
+      if (!clips.length) { this.defs?.remove(); this.defs = null; }
+      else {
+        if (!this.defs) { this.defs = this.doc.createElementNS(this.NS,'defs'); this.svg.insertBefore(this.defs,this.svg.firstChild); }
+        this.defs.replaceChildren(...clips.map((c)=>{
+          const path=this.doc.createElementNS(this.NS,'clipPath'), rect=this.doc.createElementNS(this.NS,'rect');
+          path.setAttribute('id',c.id);path.setAttribute('clipPathUnits','userSpaceOnUse');
+          for(const [k,v] of Object.entries(c.attrs))rect.setAttribute(k,v);
+          path.appendChild(rect);return path;
+        }));
+      }
+    }
     const seen = new Set<number>();
-    let cursor = this.svg.firstChild;
+    let cursor = this.defs ? this.defs.nextSibling : this.svg.firstChild;
     for (const rec of els) {
       seen.add(rec.id);
       let node = this.nodes.get(rec.id);

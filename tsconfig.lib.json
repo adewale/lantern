@@ -4,12 +4,13 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "lib": ["es2023", "dom", "dom.iterable"],
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "dist",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "tsBuildInfoFile": "node_modules/.cache/tsc/lib.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "explain/**/*.ts", "integrations/agentic-mermaid/*.ts"],
+  "exclude": ["integrations/agentic-mermaid/build"]
 }

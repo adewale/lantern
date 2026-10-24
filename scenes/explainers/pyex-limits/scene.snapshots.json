@@ -1,0 +1,4318 @@
+{
+  "version": 1,
+  "importer": 4,
+  "sourceHash": "a05f6062d3f86a1e961eee11e7054ade86d49355f7ad29b95cbb7fc93a85d2ba",
+  "renderer": "agentic-mermaid@0.4.1",
+  "diagrams": {
+    "[\"graph TD\\nStatement[Statement] --> Check[check_step]\\nLoop[Loop boundary] --> Check\\nCall[Function call] --> Check\\nCheck --> Result[Result and next context]\",\"one-dark\",null]": {
+      "version": 1,
+      "renderer": "agentic-mermaid@0.4.1",
+      "spec": {
+        "source": "graph TD\nStatement[Statement] --> Check[check_step]\nLoop[Loop boundary] --> Check\nCall[Function call] --> Check\nCheck --> Result[Result and next context]",
+        "style": "one-dark"
+      },
+      "family": "flowchart",
+      "width": 527.279,
+      "height": 286.70000000000005,
+      "palette": {
+        "paper": "#282c34",
+        "ink": "#abb2bf",
+        "accent": "#c678dd",
+        "muted": "#5c6370"
+      },
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"527.279\" height=\"286.70000000000005\" viewBox=\"0 0 527.279 286.70000000000005\" style=\"--bg:#282c34;--fg:#abb2bf;--line:#4b5263;--accent:#c678dd;--muted:#5c6370;--font:Inter;background:#282c34\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #abb2bf;\n    --_text-sec:      #5c6370;\n    --_text-muted:    #5c6370;\n    --_text-faint:    #6f747f;\n    --_line:          #4b5263;\n    --_arrow:         #c678dd;\n    --_node-fill:     #2c3038;\n    --_node-stroke:   #424750;\n    --_group-fill:    #282c34;\n    --_group-hdr:     #2f333b;\n    --_inner-stroke:  #383c45;\n    --_key-badge:     #353942;\n  }\n</style>\n<rect width=\"527.279\" height=\"286.70000000000005\" fill=\"#282c34\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#c678dd\" stroke=\"#c678dd\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#c678dd\" stroke=\"#c678dd\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline class=\"edge\" data-from=\"Statement\" data-to=\"Check\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"106.54650000000001,88.9 106.54650000000001,106.9 263.63950000000006,106.9 263.63950000000006,124.9\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Statement-&gt;Check#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Statement to Check\" />\n<polyline class=\"edge\" data-from=\"Loop\" data-to=\"Check\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"263.6395,88.9 263.6395,124.9\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Loop-&gt;Check#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Loop to Check\" />\n<polyline class=\"edge\" data-from=\"Call\" data-to=\"Check\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"420.7325000000001,88.9 420.7325000000001,106.9 263.63950000000006,106.9 263.63950000000006,124.9\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Call-&gt;Check#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Call to Check\" />\n<polyline class=\"edge\" data-from=\"Check\" data-to=\"Result\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"263.63950000000006,161.8 263.63950000000006,209.8\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Check-&gt;Result#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Check to Result\" />\n<g class=\"node\" data-id=\"Statement\" data-label=\"Statement\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"52\" width=\"133.09300000000002\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Statement\" data-role=\"node\" />\n  <text x=\"106.54650000000001\" y=\"70.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"58.266\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Statement</text>\n</g>\n<g class=\"node\" data-id=\"Loop\" data-label=\"Loop boundary\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"197.09300000000002\" y=\"52\" width=\"133.09300000000002\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Loop\" data-role=\"node\" />\n  <text x=\"263.6395\" y=\"70.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"93.093\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Loop boundary</text>\n</g>\n<g class=\"node\" data-id=\"Call\" data-label=\"Function call\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"354.18600000000004\" y=\"52\" width=\"133.09300000000002\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Call\" data-role=\"node\" />\n  <text x=\"420.7325000000001\" y=\"70.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"76.791\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Function call</text>\n</g>\n<g class=\"node\" data-id=\"Check\" data-label=\"check_step\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"207.83750000000006\" y=\"124.9\" width=\"111.604\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Check\" data-role=\"node\" />\n  <text x=\"263.63950000000006\" y=\"143.35000000000002\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"71.604\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">check_step</text>\n</g>\n<g class=\"node\" data-id=\"Result\" data-label=\"Result and next context\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"175.60400000000007\" y=\"209.8\" width=\"176.07099999999997\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Result\" data-role=\"node\" />\n  <text x=\"263.63950000000006\" y=\"228.25\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"136.071\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Result and next context</text>\n</g>\n</svg>",
+      "parts": [
+        {
+          "id": "__frame",
+          "role": "frame",
+          "kind": "shape",
+          "svg": "",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  -8.67361718601358e-21,
+                  0,
+                  1.757596731185913,
+                  0,
+                  3.515193462371826,
+                  0,
+                  5.27278995513916,
+                  0,
+                  5.27278995513916,
+                  -0.9556666612625122,
+                  5.27278995513916,
+                  -1.9113333225250244,
+                  5.27278995513916,
+                  -2.867000102996826,
+                  3.515193223953247,
+                  -2.867000102996826,
+                  1.7575966119766235,
+                  -2.867000102996826,
+                  -8.67361718601358e-21,
+                  -2.867000102996826,
+                  -8.67361718601358e-21,
+                  -1.911333441734314,
+                  -8.67361718601358e-21,
+                  -0.955666720867157,
+                  -8.67361718601358e-21,
+                  0
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "edge:Statement->Check#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Statement\" data-to=\"Check\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"106.54650000000001,88.9 106.54650000000001,106.9 263.63950000000006,106.9 263.63950000000006,124.9\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Statement-&gt;Check#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Statement to Check\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.065464973449707,
+                  -0.8889999985694885,
+                  1.065464973449707,
+                  -0.9490000009536743,
+                  1.065464973449707,
+                  -1.0090000629425049,
+                  1.065464973449707,
+                  -1.069000005722046,
+                  1.5891082286834717,
+                  -1.069000005722046,
+                  2.1127517223358154,
+                  -1.069000005722046,
+                  2.63639497756958,
+                  -1.069000005722046,
+                  2.63639497756958,
+                  -1.1290000677108765,
+                  2.63639497756958,
+                  -1.1890000104904175,
+                  2.63639497756958,
+                  -1.249000072479248
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#6e7584",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  2.6613950729370117,
+                  -1.1790000200271606,
+                  2.653061628341675,
+                  -1.2056666612625122,
+                  2.644728183746338,
+                  -1.2323333024978638,
+                  2.63639497756958,
+                  -1.2590000629425049,
+                  2.628061532974243,
+                  -1.2323333024978638,
+                  2.6197283267974854,
+                  -1.2056666612625122,
+                  2.6113948822021484,
+                  -1.1790000200271606,
+                  2.628061532974243,
+                  -1.1790000200271606,
+                  2.644728183746338,
+                  -1.1790000200271606,
+                  2.6613950729370117,
+                  -1.1790000200271606
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#c678dd",
+                "stroke": "#c678dd",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Statement",
+          "to": "Check",
+          "route": [
+            [
+              1.065465,
+              -0.889
+            ],
+            [
+              1.065465,
+              -1.069
+            ],
+            [
+              2.6363950000000007,
+              -1.069
+            ],
+            [
+              2.6363950000000007,
+              -1.249
+            ]
+          ]
+        },
+        {
+          "id": "edge:Loop->Check#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Loop\" data-to=\"Check\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"263.6395,88.9 263.6395,124.9\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Loop-&gt;Check#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Loop to Check\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.63639497756958,
+                  -0.8889999985694885,
+                  2.63639497756958,
+                  -1.0090000629425049,
+                  2.63639497756958,
+                  -1.1290000677108765,
+                  2.63639497756958,
+                  -1.249000072479248
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#6e7584",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  2.6613950729370117,
+                  -1.1790000200271606,
+                  2.653061628341675,
+                  -1.2056666612625122,
+                  2.644728183746338,
+                  -1.2323333024978638,
+                  2.63639497756958,
+                  -1.2590000629425049,
+                  2.628061532974243,
+                  -1.2323333024978638,
+                  2.6197283267974854,
+                  -1.2056666612625122,
+                  2.6113948822021484,
+                  -1.1790000200271606,
+                  2.628061532974243,
+                  -1.1790000200271606,
+                  2.644728183746338,
+                  -1.1790000200271606,
+                  2.6613950729370117,
+                  -1.1790000200271606
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#c678dd",
+                "stroke": "#c678dd",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Loop",
+          "to": "Check",
+          "route": [
+            [
+              2.636395,
+              -0.889
+            ],
+            [
+              2.636395,
+              -1.249
+            ]
+          ]
+        },
+        {
+          "id": "edge:Call->Check#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Call\" data-to=\"Check\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"420.7325000000001,88.9 420.7325000000001,106.9 263.63950000000006,106.9 263.63950000000006,124.9\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Call-&gt;Check#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Call to Check\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.207324981689453,
+                  -0.8889999985694885,
+                  4.207324981689453,
+                  -0.9490000009536743,
+                  4.207324981689453,
+                  -1.0090000629425049,
+                  4.207324981689453,
+                  -1.069000005722046,
+                  3.6836817264556885,
+                  -1.069000005722046,
+                  3.160038471221924,
+                  -1.069000005722046,
+                  2.63639497756958,
+                  -1.069000005722046,
+                  2.63639497756958,
+                  -1.1290000677108765,
+                  2.63639497756958,
+                  -1.1890000104904175,
+                  2.63639497756958,
+                  -1.249000072479248
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#6e7584",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  2.6613950729370117,
+                  -1.1790000200271606,
+                  2.653061628341675,
+                  -1.2056666612625122,
+                  2.644728183746338,
+                  -1.2323333024978638,
+                  2.63639497756958,
+                  -1.2590000629425049,
+                  2.628061532974243,
+                  -1.2323333024978638,
+                  2.6197283267974854,
+                  -1.2056666612625122,
+                  2.6113948822021484,
+                  -1.1790000200271606,
+                  2.628061532974243,
+                  -1.1790000200271606,
+                  2.644728183746338,
+                  -1.1790000200271606,
+                  2.6613950729370117,
+                  -1.1790000200271606
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#c678dd",
+                "stroke": "#c678dd",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Call",
+          "to": "Check",
+          "route": [
+            [
+              4.207325000000001,
+              -0.889
+            ],
+            [
+              4.207325000000001,
+              -1.069
+            ],
+            [
+              2.6363950000000007,
+              -1.069
+            ],
+            [
+              2.6363950000000007,
+              -1.249
+            ]
+          ]
+        },
+        {
+          "id": "edge:Check->Result#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Check\" data-to=\"Result\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"263.63950000000006,161.8 263.63950000000006,209.8\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Check-&gt;Result#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Check to Result\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.63639497756958,
+                  -1.6180000305175781,
+                  2.63639497756958,
+                  -1.777999997138977,
+                  2.63639497756958,
+                  -1.9380000829696655,
+                  2.63639497756958,
+                  -2.0980000495910645
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#6e7584",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  2.6613950729370117,
+                  -2.0280001163482666,
+                  2.653061628341675,
+                  -2.054666757583618,
+                  2.644728183746338,
+                  -2.0813333988189697,
+                  2.63639497756958,
+                  -2.1080000400543213,
+                  2.628061532974243,
+                  -2.0813333988189697,
+                  2.6197283267974854,
+                  -2.054666757583618,
+                  2.6113948822021484,
+                  -2.0280001163482666,
+                  2.628061532974243,
+                  -2.0280001163482666,
+                  2.644728183746338,
+                  -2.0280001163482666,
+                  2.6613950729370117,
+                  -2.0280001163482666
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#c678dd",
+                "stroke": "#c678dd",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Check",
+          "to": "Result",
+          "route": [
+            [
+              2.6363950000000007,
+              -1.618
+            ],
+            [
+              2.6363950000000007,
+              -2.0980000000000003
+            ]
+          ]
+        },
+        {
+          "id": "Statement",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Statement\" data-label=\"Statement\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"52\" width=\"133.09300000000002\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Statement\" data-role=\"node\" />\n  <text x=\"106.54650000000001\" y=\"70.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Statement</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0.4000000059604645,
+                  -0.5199999809265137,
+                  0.8436433672904968,
+                  -0.5199999809265137,
+                  1.287286639213562,
+                  -0.5199999809265137,
+                  1.730929970741272,
+                  -0.5199999809265137,
+                  1.730929970741272,
+                  -0.6430000066757202,
+                  1.730929970741272,
+                  -0.765999972820282,
+                  1.730929970741272,
+                  -0.8889999985694885,
+                  1.287286639213562,
+                  -0.8889999985694885,
+                  0.8436433672904968,
+                  -0.8889999985694885,
+                  0.4000000059604645,
+                  -0.8889999985694885,
+                  0.4000000059604645,
+                  -0.765999972820282,
+                  0.4000000059604645,
+                  -0.6430000066757202,
+                  0.4000000059604645,
+                  -0.5199999809265137
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2c3038",
+                "stroke": "#424750",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#abb2bf",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Statement",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Statement",
+                "x": 106.54650000000001,
+                "y": 75,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -8.673617379884035e-19,
+                  0
+                ],
+                "width": 58.266
+              }
+            }
+          ]
+        },
+        {
+          "id": "Loop",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Loop\" data-label=\"Loop boundary\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"197.09300000000002\" y=\"52\" width=\"133.09300000000002\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Loop\" data-role=\"node\" />\n  <text x=\"263.6395\" y=\"70.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Loop boundary</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.9709299802780151,
+                  -0.5199999809265137,
+                  2.4145734310150146,
+                  -0.5199999809265137,
+                  2.8582165241241455,
+                  -0.5199999809265137,
+                  3.3018600940704346,
+                  -0.5199999809265137,
+                  3.3018600940704346,
+                  -0.6430000066757202,
+                  3.3018600940704346,
+                  -0.765999972820282,
+                  3.3018600940704346,
+                  -0.8889999985694885,
+                  2.8582165241241455,
+                  -0.8889999985694885,
+                  2.4145734310150146,
+                  -0.8889999985694885,
+                  1.9709299802780151,
+                  -0.8889999985694885,
+                  1.9709299802780151,
+                  -0.765999972820282,
+                  1.9709299802780151,
+                  -0.6430000066757202,
+                  1.9709299802780151,
+                  -0.5199999809265137
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2c3038",
+                "stroke": "#424750",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#abb2bf",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Loop boundary",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Loop boundary",
+                "x": 263.6395,
+                "y": 75,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -8.673617379884035e-19,
+                  0
+                ],
+                "width": 93.093
+              }
+            }
+          ]
+        },
+        {
+          "id": "Call",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Call\" data-label=\"Function call\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"354.18600000000004\" y=\"52\" width=\"133.09300000000002\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Call\" data-role=\"node\" />\n  <text x=\"420.7325000000001\" y=\"70.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Function call</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.5418601036071777,
+                  -0.5199999809265137,
+                  3.9855031967163086,
+                  -0.5199999809265137,
+                  4.429146766662598,
+                  -0.5199999809265137,
+                  4.8727898597717285,
+                  -0.5199999809265137,
+                  4.8727898597717285,
+                  -0.6430000066757202,
+                  4.8727898597717285,
+                  -0.765999972820282,
+                  4.8727898597717285,
+                  -0.8889999985694885,
+                  4.429146766662598,
+                  -0.8889999985694885,
+                  3.9855031967163086,
+                  -0.8889999985694885,
+                  3.5418601036071777,
+                  -0.8889999985694885,
+                  3.5418601036071777,
+                  -0.765999972820282,
+                  3.5418601036071777,
+                  -0.6430000066757202,
+                  3.5418601036071777,
+                  -0.5199999809265137
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2c3038",
+                "stroke": "#424750",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#abb2bf",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Function call",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Function call",
+                "x": 420.7325000000001,
+                "y": 75,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -8.673617379884035e-19,
+                  0
+                ],
+                "width": 76.791
+              }
+            }
+          ]
+        },
+        {
+          "id": "Check",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Check\" data-label=\"check_step\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"207.83750000000006\" y=\"124.9\" width=\"111.604\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Check\" data-role=\"node\" />\n  <text x=\"263.63950000000006\" y=\"143.35000000000002\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">check_step</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.0783748626708984,
+                  -1.249000072479248,
+                  2.4503884315490723,
+                  -1.249000072479248,
+                  2.822401762008667,
+                  -1.249000072479248,
+                  3.1944150924682617,
+                  -1.249000072479248,
+                  3.1944150924682617,
+                  -1.371999979019165,
+                  3.1944150924682617,
+                  -1.4950000047683716,
+                  3.1944150924682617,
+                  -1.6180000305175781,
+                  2.822401762008667,
+                  -1.6180000305175781,
+                  2.4503884315490723,
+                  -1.6180000305175781,
+                  2.0783748626708984,
+                  -1.6180000305175781,
+                  2.0783748626708984,
+                  -1.4950000047683716,
+                  2.0783748626708984,
+                  -1.371999979019165,
+                  2.0783748626708984,
+                  -1.249000072479248
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2c3038",
+                "stroke": "#424750",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#abb2bf",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "check_step",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "check_step",
+                "x": 263.63950000000006,
+                "y": 147.90000000000003,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -8.673617379884035e-19,
+                  0
+                ],
+                "width": 71.604
+              }
+            }
+          ]
+        },
+        {
+          "id": "Result",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Result\" data-label=\"Result and next context\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"175.60400000000007\" y=\"209.8\" width=\"176.07099999999997\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Result\" data-role=\"node\" />\n  <text x=\"263.63950000000006\" y=\"228.25\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Result and next context</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.756040096282959,
+                  -2.0980000495910645,
+                  2.3429434299468994,
+                  -2.0980000495910645,
+                  2.92984676361084,
+                  -2.0980000495910645,
+                  3.516749858856201,
+                  -2.0980000495910645,
+                  3.516749858856201,
+                  -2.2209999561309814,
+                  3.516749858856201,
+                  -2.3439998626708984,
+                  3.516749858856201,
+                  -2.4670000076293945,
+                  2.9298465251922607,
+                  -2.4670000076293945,
+                  2.3429431915283203,
+                  -2.4670000076293945,
+                  1.756040096282959,
+                  -2.4670000076293945,
+                  1.756040096282959,
+                  -2.3439998626708984,
+                  1.756040096282959,
+                  -2.2209999561309814,
+                  1.756040096282959,
+                  -2.0980000495910645
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2c3038",
+                "stroke": "#424750",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#abb2bf",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Result and next context",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Result and next context",
+                "x": 263.63950000000006,
+                "y": 232.8,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -8.673617379884035e-19,
+                  0
+                ],
+                "width": 136.071
+              }
+            }
+          ]
+        }
+      ],
+      "findings": {
+        "ok": true,
+        "warnings": [],
+        "layout": {
+          "version": 1,
+          "kind": "flowchart",
+          "nodes": [
+            {
+              "id": "Statement",
+              "x": 40,
+              "y": 52,
+              "w": 133,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Statement"
+            },
+            {
+              "id": "Loop",
+              "x": 197,
+              "y": 52,
+              "w": 133,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Loop boundary"
+            },
+            {
+              "id": "Call",
+              "x": 354,
+              "y": 52,
+              "w": 133,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Function call"
+            },
+            {
+              "id": "Check",
+              "x": 208,
+              "y": 125,
+              "w": 112,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "check_step"
+            },
+            {
+              "id": "Result",
+              "x": 176,
+              "y": 210,
+              "w": 176,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Result and next context"
+            }
+          ],
+          "edges": [
+            {
+              "id": "Statement->Check",
+              "from": "Statement",
+              "to": "Check",
+              "path": [
+                [
+                  107,
+                  89
+                ],
+                [
+                  107,
+                  107
+                ],
+                [
+                  264,
+                  107
+                ],
+                [
+                  264,
+                  125
+                ]
+              ]
+            },
+            {
+              "id": "Loop->Check",
+              "from": "Loop",
+              "to": "Check",
+              "path": [
+                [
+                  264,
+                  89
+                ],
+                [
+                  264,
+                  125
+                ]
+              ]
+            },
+            {
+              "id": "Call->Check",
+              "from": "Call",
+              "to": "Check",
+              "path": [
+                [
+                  421,
+                  89
+                ],
+                [
+                  421,
+                  107
+                ],
+                [
+                  264,
+                  107
+                ],
+                [
+                  264,
+                  125
+                ]
+              ]
+            },
+            {
+              "id": "Check->Result",
+              "from": "Check",
+              "to": "Result",
+              "path": [
+                [
+                  264,
+                  162
+                ],
+                [
+                  264,
+                  210
+                ]
+              ]
+            }
+          ],
+          "groups": [],
+          "bounds": {
+            "w": 527,
+            "h": 287
+          }
+        }
+      }
+    },
+    "[\"graph LR\\nSteps{Step budget spent} -->|yes| Error[Return first error]\\nSteps -->|no| Memory{Memory ceiling}\\nMemory -->|yes| Error\\nMemory -->|no| Output{Output ceiling}\\nOutput -->|yes| Error\\nOutput -->|no| Deadline{Past deadline}\\nDeadline -->|yes| Error\\nDeadline -->|no| Next[Increment steps]\",\"one-dark\",null]": {
+      "version": 1,
+      "renderer": "agentic-mermaid@0.4.1",
+      "spec": {
+        "source": "graph LR\nSteps{Step budget spent} -->|yes| Error[Return first error]\nSteps -->|no| Memory{Memory ceiling}\nMemory -->|yes| Error\nMemory -->|no| Output{Output ceiling}\nOutput -->|yes| Error\nOutput -->|no| Deadline{Past deadline}\nDeadline -->|yes| Error\nDeadline -->|no| Next[Increment steps]",
+        "style": "one-dark"
+      },
+      "family": "flowchart",
+      "width": 1298.247,
+      "height": 378.579,
+      "palette": {
+        "paper": "#282c34",
+        "ink": "#abb2bf",
+        "accent": "#c678dd",
+        "muted": "#5c6370"
+      },
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1298.247\" height=\"378.579\" viewBox=\"0 0 1298.247 378.579\" style=\"--bg:#282c34;--fg:#abb2bf;--line:#4b5263;--accent:#c678dd;--muted:#5c6370;--font:Inter;background:#282c34\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #abb2bf;\n    --_text-sec:      #5c6370;\n    --_text-muted:    #5c6370;\n    --_text-faint:    #6f747f;\n    --_line:          #4b5263;\n    --_arrow:         #c678dd;\n    --_node-fill:     #2c3038;\n    --_node-stroke:   #424750;\n    --_group-fill:    #282c34;\n    --_group-hdr:     #2f333b;\n    --_inner-stroke:  #383c45;\n    --_key-badge:     #353942;\n  }\n</style>\n<rect width=\"1298.247\" height=\"378.579\" fill=\"#282c34\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#c678dd\" stroke=\"#c678dd\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#c678dd\" stroke=\"#c678dd\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline class=\"edge\" data-from=\"Steps\" data-to=\"Error\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"yes\" points=\"157.11616666666666,72.27116666666666 1102.642,72.27116666666666 1102.642,218.58124999999995 1114.642,218.58124999999995\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Steps-&gt;Error#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Steps to Error: yes\" />\n<polyline class=\"edge\" data-from=\"Steps\" data-to=\"Memory\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"no\" points=\"165.4725,169.0625 327.22,169.0625\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Steps-&gt;Memory#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Steps to Memory: no\" />\n<polyline class=\"edge\" data-from=\"Memory\" data-to=\"Error\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"yes\" points=\"456.27833333333336,143.25083333333333 587.62,143.25083333333333 587.62,114.58283333333333 1081.612,114.58283333333333 1081.612,225.96124999999998 1114.642,225.96124999999998\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Memory-&gt;Error#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Memory to Error: yes\" />\n<polyline class=\"edge\" data-from=\"Memory\" data-to=\"Output\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"no\" points=\"440.65125,210.50125 599.6199999999999,210.50125\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Memory-&gt;Output#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Memory to Output: no\" />\n<polyline class=\"edge\" data-from=\"Output\" data-to=\"Error\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"yes\" points=\"719.4158333333334,186.54208333333332 1018.142,186.54208333333332 1018.142,155.04199999999997 1081.612,155.04199999999997 1081.612,233.34124999999997 1114.642,233.34124999999997\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Output-&gt;Error#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Output to Error: yes\" />\n<polyline class=\"edge\" data-from=\"Output\" data-to=\"Deadline\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"no\" points=\"707.43625,246.44 880.4254999999999,246.44\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Output-&gt;Deadline#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Output to Deadline: no\" />\n<polyline class=\"edge\" data-from=\"Deadline\" data-to=\"Error\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"yes\" points=\"969.83275,229.65124999999995 1114.642,229.65124999999995\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Deadline-&gt;Error#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Deadline to Error: yes\" />\n<polyline class=\"edge\" data-from=\"Deadline\" data-to=\"Next\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"no\" points=\"969.83275,302.26975 1114.642,302.26975\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Deadline-&gt;Next#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Deadline to Next: no\" />\n<g class=\"edge-label\" data-from=\"Steps\" data-to=\"Error\" data-label=\"yes\">\n  <rect class=\"edge-label-halo\" x=\"608.1440833333334\" y=\"53.12116666666666\" width=\"43.47\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"#282c34\" stroke=\"none\" />\n  <rect x=\"612.1440833333334\" y=\"57.12116666666666\" width=\"35.47\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"#282c34\" stroke=\"#383c45\" stroke-width=\"1\" />\n  <text x=\"629.8790833333334\" y=\"72.27116666666666\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"#949ba8\" dy=\"3.8499999999999996\" textLength=\"19.47\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">yes</text>\n</g>\n<g class=\"edge-label\" data-from=\"Steps\" data-to=\"Memory\" data-label=\"no\">\n  <rect class=\"edge-label-halo\" x=\"227.58125\" y=\"149.9125\" width=\"37.53\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"#282c34\" stroke=\"none\" />\n  <rect x=\"231.58125\" y=\"153.9125\" width=\"29.53\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"#282c34\" stroke=\"#383c45\" stroke-width=\"1\" />\n  <text x=\"246.34625\" y=\"169.0625\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"#949ba8\" dy=\"3.8499999999999996\" textLength=\"13.53\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">no</text>\n</g>\n<g class=\"edge-label\" data-from=\"Memory\" data-to=\"Error\" data-label=\"yes\">\n  <rect class=\"edge-label-halo\" x=\"1022.1419999999999\" y=\"94.58283333333333\" width=\"43.47\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"#282c34\" stroke=\"none\" />\n  <rect x=\"1026.142\" y=\"98.58283333333333\" width=\"35.47\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"#282c34\" stroke=\"#383c45\" stroke-width=\"1\" />\n  <text x=\"1043.877\" y=\"113.73283333333333\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"#949ba8\" dy=\"3.8499999999999996\" textLength=\"19.47\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">yes</text>\n</g>\n<g class=\"edge-label\" data-from=\"Memory\" data-to=\"Output\" data-label=\"no\">\n  <rect class=\"edge-label-halo\" x=\"501.3706249999999\" y=\"191.35125\" width=\"37.53\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"#282c34\" stroke=\"none\" />\n  <rect x=\"505.3706249999999\" y=\"195.35125\" width=\"29.53\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"#282c34\" stroke=\"#383c45\" stroke-width=\"1\" />\n  <text x=\"520.1356249999999\" y=\"210.50125\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"#949ba8\" dy=\"3.8499999999999996\" textLength=\"13.53\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">no</text>\n</g>\n<g class=\"edge-label\" data-from=\"Output\" data-to=\"Error\" data-label=\"yes\">\n  <rect class=\"edge-label-halo\" x=\"794.3926833333334\" y=\"167.39208333333332\" width=\"43.47\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"#282c34\" stroke=\"none\" />\n  <rect x=\"798.3926833333334\" y=\"171.39208333333332\" width=\"35.47\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"#282c34\" stroke=\"#383c45\" stroke-width=\"1\" />\n  <text x=\"816.1276833333334\" y=\"186.54208333333332\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"#949ba8\" dy=\"3.8499999999999996\" textLength=\"19.47\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">yes</text>\n</g>\n<g class=\"edge-label\" data-from=\"Output\" data-to=\"Deadline\" data-label=\"no\">\n  <rect class=\"edge-label-halo\" x=\"775.165875\" y=\"227.29\" width=\"37.53\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"#282c34\" stroke=\"none\" />\n  <rect x=\"779.165875\" y=\"231.29\" width=\"29.53\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"#282c34\" stroke=\"#383c45\" stroke-width=\"1\" />\n  <text x=\"793.930875\" y=\"246.44\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"#949ba8\" dy=\"3.8499999999999996\" textLength=\"13.53\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">no</text>\n</g>\n<g class=\"edge-label\" data-from=\"Deadline\" data-to=\"Error\" data-label=\"yes\">\n  <rect class=\"edge-label-halo\" x=\"1020.5023750000001\" y=\"210.50124999999994\" width=\"43.47\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"#282c34\" stroke=\"none\" />\n  <rect x=\"1024.5023750000003\" y=\"214.50124999999994\" width=\"35.47\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"#282c34\" stroke=\"#383c45\" stroke-width=\"1\" />\n  <text x=\"1042.2373750000002\" y=\"229.65124999999995\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"#949ba8\" dy=\"3.8499999999999996\" textLength=\"19.47\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">yes</text>\n</g>\n<g class=\"edge-label\" data-from=\"Deadline\" data-to=\"Next\" data-label=\"no\">\n  <rect class=\"edge-label-halo\" x=\"1046.142\" y=\"283.11975\" width=\"37.53\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"#282c34\" stroke=\"none\" />\n  <rect x=\"1050.142\" y=\"287.11975\" width=\"29.53\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"#282c34\" stroke=\"#383c45\" stroke-width=\"1\" />\n  <text x=\"1064.9070000000002\" y=\"302.26975\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"#949ba8\" dy=\"3.8499999999999996\" textLength=\"13.53\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">no</text>\n</g>\n<g class=\"node\" data-id=\"Steps\" data-label=\"Step budget spent\" data-shape=\"diamond\" data-role=\"node\">\n  <polygon points=\"124.845,40 209.69,124.845 124.845,209.69 40,124.845\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Steps\" data-role=\"node\" />\n  <text x=\"124.845\" y=\"124.845\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"105.69\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Step budget spent</text>\n</g>\n<g class=\"node\" data-id=\"Memory\" data-label=\"Memory ceiling\" data-shape=\"diamond\" data-role=\"node\">\n  <polygon points=\"404.65500000000003,91.6275 482.09000000000003,169.0625 404.65500000000003,246.4975 327.22,169.0625\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Memory\" data-role=\"node\" />\n  <text x=\"404.65500000000003\" y=\"169.0625\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"90.87\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Memory ceiling</text>\n</g>\n<g class=\"node\" data-id=\"Output\" data-label=\"Output ceiling\" data-shape=\"diamond\" data-role=\"node\">\n  <polygon points=\"671.4975,138.62375 743.375,210.50125 671.4975,282.37874999999997 599.6199999999999,210.50125\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Output\" data-role=\"node\" />\n  <text x=\"671.4975\" y=\"210.50125\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"79.755\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Output ceiling</text>\n</g>\n<g class=\"node\" data-id=\"Deadline\" data-label=\"Past deadline\" data-shape=\"diamond\" data-role=\"node\">\n  <polygon points=\"933.5235,193.34199999999996 1006.142,265.96049999999997 933.5235,338.57899999999995 860.905,265.96049999999997\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Deadline\" data-role=\"node\" />\n  <text x=\"933.5235\" y=\"265.96049999999997\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"81.237\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Past deadline</text>\n</g>\n<g class=\"node\" data-id=\"Error\" data-label=\"Return first error\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"1114.642\" y=\"211.20124999999996\" width=\"141.24400000000003\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Error\" data-role=\"node\" />\n  <text x=\"1185.2640000000001\" y=\"229.65124999999995\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"101.244\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Return first error</text>\n</g>\n<g class=\"node\" data-id=\"Next\" data-label=\"Increment steps\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"1114.642\" y=\"283.81975\" width=\"134.57500000000002\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Next\" data-role=\"node\" />\n  <text x=\"1181.9295\" y=\"302.26975\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"94.575\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Increment steps</text>\n</g>\n</svg>",
+      "parts": [
+        {
+          "id": "__frame",
+          "role": "frame",
+          "kind": "shape",
+          "svg": "",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0,
+                  2.168404296503395e-21,
+                  4.327489852905273,
+                  2.168404296503395e-21,
+                  8.654979705810547,
+                  2.168404296503395e-21,
+                  12.98246955871582,
+                  2.168404296503395e-21,
+                  12.98246955871582,
+                  -1.261929988861084,
+                  12.98246955871582,
+                  -2.523859977722168,
+                  12.98246955871582,
+                  -3.785790205001831,
+                  8.654979705810547,
+                  -3.785790205001831,
+                  4.327489852905273,
+                  -3.785790205001831,
+                  0,
+                  -3.785790205001831,
+                  0,
+                  -2.523859977722168,
+                  0,
+                  -1.261929988861084,
+                  0,
+                  2.168404296503395e-21
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "edge:Steps->Error#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Steps\" data-to=\"Error\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"yes\" points=\"157.11616666666666,72.27116666666666 1102.642,72.27116666666666 1102.642,218.58124999999995 1114.642,218.58124999999995\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Steps-&gt;Error#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Steps to Error: yes\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.5711616277694702,
+                  -0.7227116227149963,
+                  4.722914218902588,
+                  -0.7227116227149963,
+                  7.874667167663574,
+                  -0.7227116227149963,
+                  11.026419639587402,
+                  -0.7227116227149963,
+                  11.026419639587402,
+                  -1.2104119062423706,
+                  11.026419639587402,
+                  -1.6981121301651,
+                  11.026419639587402,
+                  -2.185812473297119,
+                  11.06641960144043,
+                  -2.185812473297119,
+                  11.106419563293457,
+                  -2.185812473297119,
+                  11.146419525146484,
+                  -2.185812473297119
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#6e7584",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  11.076419830322266,
+                  -2.1608126163482666,
+                  11.103086471557617,
+                  -2.1691458225250244,
+                  11.129753112792969,
+                  -2.1774792671203613,
+                  11.15641975402832,
+                  -2.185812473297119,
+                  11.129753112792969,
+                  -2.194145917892456,
+                  11.103086471557617,
+                  -2.202479124069214,
+                  11.076419830322266,
+                  -2.210812568664551,
+                  11.076419830322266,
+                  -2.194145917892456,
+                  11.076419830322266,
+                  -2.1774792671203613,
+                  11.076419830322266,
+                  -2.1608126163482666
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#c678dd",
+                "stroke": "#c678dd",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Steps",
+          "to": "Error",
+          "route": [
+            [
+              1.5711616666666666,
+              -0.7227116666666666
+            ],
+            [
+              11.02642,
+              -0.7227116666666666
+            ],
+            [
+              11.02642,
+              -2.1858124999999995
+            ],
+            [
+              11.14642,
+              -2.1858124999999995
+            ]
+          ]
+        },
+        {
+          "id": "edge:Steps->Memory#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Steps\" data-to=\"Memory\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"no\" points=\"165.4725,169.0625 327.22,169.0625\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Steps-&gt;Memory#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Steps to Memory: no\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.6547250747680664,
+                  -1.6906249523162842,
+                  2.1938834190368652,
+                  -1.6906249523162842,
+                  2.733041763305664,
+                  -1.6906249523162842,
+                  3.272200107574463,
+                  -1.6906249523162842
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#6e7584",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  3.202199935913086,
+                  -1.665624976158142,
+                  3.2288665771484375,
+                  -1.6739583015441895,
+                  3.255533456802368,
+                  -1.6822916269302368,
+                  3.2822000980377197,
+                  -1.6906249523162842,
+                  3.255533456802368,
+                  -1.6989582777023315,
+                  3.2288665771484375,
+                  -1.7072917222976685,
+                  3.202199935913086,
+                  -1.7156250476837158,
+                  3.202199935913086,
+                  -1.6989582777023315,
+                  3.202199935913086,
+                  -1.6822916269302368,
+                  3.202199935913086,
+                  -1.665624976158142
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#c678dd",
+                "stroke": "#c678dd",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Steps",
+          "to": "Memory",
+          "route": [
+            [
+              1.654725,
+              -1.690625
+            ],
+            [
+              3.2722,
+              -1.690625
+            ]
+          ]
+        },
+        {
+          "id": "edge:Memory->Error#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Memory\" data-to=\"Error\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"yes\" points=\"456.27833333333336,143.25083333333333 587.62,143.25083333333333 587.62,114.58283333333333 1081.612,114.58283333333333 1081.612,225.96124999999998 1114.642,225.96124999999998\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Memory-&gt;Error#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Memory to Error: yes\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.562783241271973,
+                  -1.4325083494186401,
+                  5.000588893890381,
+                  -1.4325083494186401,
+                  5.438394069671631,
+                  -1.4325083494186401,
+                  5.876199722290039,
+                  -1.4325083494186401,
+                  5.876199722290039,
+                  -1.3369483947753906,
+                  5.876199722290039,
+                  -1.2413883209228516,
+                  5.876199722290039,
+                  -1.145828366279602,
+                  7.5228400230407715,
+                  -1.145828366279602,
+                  9.169480323791504,
+                  -1.145828366279602,
+                  10.816120147705078,
+                  -1.145828366279602,
+                  10.816120147705078,
+                  -1.5170897245407104,
+                  10.816120147705078,
+                  -1.8883510828018188,
+                  10.816120147705078,
+                  -2.2596123218536377,
+                  10.926220893859863,
+                  -2.2596123218536377,
+                  11.036320686340332,
+                  -2.2596123218536377,
+                  11.146419525146484,
+                  -2.2596123218536377
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#6e7584",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  11.076419830322266,
+                  -2.234612464904785,
+                  11.103086471557617,
+                  -2.242945671081543,
+                  11.129753112792969,
+                  -2.25127911567688,
+                  11.15641975402832,
+                  -2.2596123218536377,
+                  11.129753112792969,
+                  -2.2679457664489746,
+                  11.103086471557617,
+                  -2.2762789726257324,
+                  11.076419830322266,
+                  -2.2846124172210693,
+                  11.076419830322266,
+                  -2.2679457664489746,
+                  11.076419830322266,
+                  -2.25127911567688,
+                  11.076419830322266,
+                  -2.234612464904785
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#c678dd",
+                "stroke": "#c678dd",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Memory",
+          "to": "Error",
+          "route": [
+            [
+              4.562783333333334,
+              -1.4325083333333333
+            ],
+            [
+              5.8762,
+              -1.4325083333333333
+            ],
+            [
+              5.8762,
+              -1.1458283333333332
+            ],
+            [
+              10.816120000000002,
+              -1.1458283333333332
+            ],
+            [
+              10.816120000000002,
+              -2.2596125
+            ],
+            [
+              11.14642,
+              -2.2596125
+            ]
+          ]
+        },
+        {
+          "id": "edge:Memory->Output#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Memory\" data-to=\"Output\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"no\" points=\"440.65125,210.50125 599.6199999999999,210.50125\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Memory-&gt;Output#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Memory to Output: no\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.406512260437012,
+                  -2.1050124168395996,
+                  4.936408519744873,
+                  -2.1050124168395996,
+                  5.466304302215576,
+                  -2.1050124168395996,
+                  5.996200084686279,
+                  -2.1050124168395996
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#6e7584",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  5.926199913024902,
+                  -2.080012559890747,
+                  5.952866554260254,
+                  -2.088345766067505,
+                  5.9795331954956055,
+                  -2.096679210662842,
+                  6.006199836730957,
+                  -2.1050124168395996,
+                  5.9795331954956055,
+                  -2.1133458614349365,
+                  5.952866554260254,
+                  -2.1216790676116943,
+                  5.926199913024902,
+                  -2.1300125122070312,
+                  5.926199913024902,
+                  -2.1133458614349365,
+                  5.926199913024902,
+                  -2.096679210662842,
+                  5.926199913024902,
+                  -2.080012559890747
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#c678dd",
+                "stroke": "#c678dd",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Memory",
+          "to": "Output",
+          "route": [
+            [
+              4.4065125,
+              -2.1050125
+            ],
+            [
+              5.996199999999999,
+              -2.1050125
+            ]
+          ]
+        },
+        {
+          "id": "edge:Output->Error#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Output\" data-to=\"Error\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"yes\" points=\"719.4158333333334,186.54208333333332 1018.142,186.54208333333332 1018.142,155.04199999999997 1081.612,155.04199999999997 1081.612,233.34124999999997 1114.642,233.34124999999997\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Output-&gt;Error#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Output to Error: yes\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  7.194158554077148,
+                  -1.8654208183288574,
+                  8.189911842346191,
+                  -1.8654208183288574,
+                  9.18566608428955,
+                  -1.8654208183288574,
+                  10.18142032623291,
+                  -1.8654208183288574,
+                  10.18142032623291,
+                  -1.760420560836792,
+                  10.18142032623291,
+                  -1.655420184135437,
+                  10.18142032623291,
+                  -1.5504200458526611,
+                  10.392987251281738,
+                  -1.5504200458526611,
+                  10.60455322265625,
+                  -1.5504200458526611,
+                  10.816120147705078,
+                  -1.5504200458526611,
+                  10.816120147705078,
+                  -1.811417579650879,
+                  10.816120147705078,
+                  -2.0724151134490967,
+                  10.816120147705078,
+                  -2.3334124088287354,
+                  10.926220893859863,
+                  -2.3334124088287354,
+                  11.036320686340332,
+                  -2.3334124088287354,
+                  11.146419525146484,
+                  -2.3334124088287354
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#6e7584",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  11.076419830322266,
+                  -2.308412551879883,
+                  11.103086471557617,
+                  -2.3167457580566406,
+                  11.129753112792969,
+                  -2.3250792026519775,
+                  11.15641975402832,
+                  -2.3334124088287354,
+                  11.129753112792969,
+                  -2.3417458534240723,
+                  11.103086471557617,
+                  -2.35007905960083,
+                  11.076419830322266,
+                  -2.358412504196167,
+                  11.076419830322266,
+                  -2.3417458534240723,
+                  11.076419830322266,
+                  -2.3250792026519775,
+                  11.076419830322266,
+                  -2.308412551879883
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#c678dd",
+                "stroke": "#c678dd",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Output",
+          "to": "Error",
+          "route": [
+            [
+              7.194158333333333,
+              -1.8654208333333333
+            ],
+            [
+              10.181420000000001,
+              -1.8654208333333333
+            ],
+            [
+              10.181420000000001,
+              -1.5504199999999997
+            ],
+            [
+              10.816120000000002,
+              -1.5504199999999997
+            ],
+            [
+              10.816120000000002,
+              -2.3334124999999997
+            ],
+            [
+              11.14642,
+              -2.3334124999999997
+            ]
+          ]
+        },
+        {
+          "id": "edge:Output->Deadline#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Output\" data-to=\"Deadline\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"no\" points=\"707.43625,246.44 880.4254999999999,246.44\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Output-&gt;Deadline#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Output to Deadline: no\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  7.074362754821777,
+                  -2.464400053024292,
+                  7.650993824005127,
+                  -2.464400053024292,
+                  8.227624893188477,
+                  -2.464400053024292,
+                  8.804254531860352,
+                  -2.464400053024292
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#6e7584",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  8.734254837036133,
+                  -2.4393999576568604,
+                  8.760921478271484,
+                  -2.4477334022521973,
+                  8.787588119506836,
+                  -2.456066608428955,
+                  8.814254760742188,
+                  -2.464400053024292,
+                  8.787588119506836,
+                  -2.47273325920105,
+                  8.760921478271484,
+                  -2.4810667037963867,
+                  8.734254837036133,
+                  -2.4893999099731445,
+                  8.734254837036133,
+                  -2.47273325920105,
+                  8.734254837036133,
+                  -2.456066608428955,
+                  8.734254837036133,
+                  -2.4393999576568604
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#c678dd",
+                "stroke": "#c678dd",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Output",
+          "to": "Deadline",
+          "route": [
+            [
+              7.074362499999999,
+              -2.4644
+            ],
+            [
+              8.804255,
+              -2.4644
+            ]
+          ]
+        },
+        {
+          "id": "edge:Deadline->Error#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Deadline\" data-to=\"Error\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"yes\" points=\"969.83275,229.65124999999995 1114.642,229.65124999999995\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Deadline-&gt;Error#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Deadline to Error: yes\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  9.698328018188477,
+                  -2.2965123653411865,
+                  10.181025505065918,
+                  -2.2965123653411865,
+                  10.66372299194336,
+                  -2.2965123653411865,
+                  11.146419525146484,
+                  -2.2965123653411865
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#6e7584",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  11.076419830322266,
+                  -2.271512508392334,
+                  11.103086471557617,
+                  -2.279845714569092,
+                  11.129753112792969,
+                  -2.2881791591644287,
+                  11.15641975402832,
+                  -2.2965123653411865,
+                  11.129753112792969,
+                  -2.3048458099365234,
+                  11.103086471557617,
+                  -2.3131790161132812,
+                  11.076419830322266,
+                  -2.321512460708618,
+                  11.076419830322266,
+                  -2.3048458099365234,
+                  11.076419830322266,
+                  -2.2881791591644287,
+                  11.076419830322266,
+                  -2.271512508392334
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#c678dd",
+                "stroke": "#c678dd",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Deadline",
+          "to": "Error",
+          "route": [
+            [
+              9.6983275,
+              -2.2965124999999995
+            ],
+            [
+              11.14642,
+              -2.2965124999999995
+            ]
+          ]
+        },
+        {
+          "id": "edge:Deadline->Next#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Deadline\" data-to=\"Next\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"no\" points=\"969.83275,302.26975 1114.642,302.26975\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Deadline-&gt;Next#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Deadline to Next: no\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  9.698328018188477,
+                  -3.0226974487304688,
+                  10.181025505065918,
+                  -3.0226974487304688,
+                  10.66372299194336,
+                  -3.0226974487304688,
+                  11.146419525146484,
+                  -3.0226974487304688
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#6e7584",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  11.076419830322266,
+                  -2.997697353363037,
+                  11.103086471557617,
+                  -3.006030797958374,
+                  11.129753112792969,
+                  -3.014364004135132,
+                  11.15641975402832,
+                  -3.0226974487304688,
+                  11.129753112792969,
+                  -3.0310308933258057,
+                  11.103086471557617,
+                  -3.0393640995025635,
+                  11.076419830322266,
+                  -3.0476975440979004,
+                  11.076419830322266,
+                  -3.0310308933258057,
+                  11.076419830322266,
+                  -3.014364004135132,
+                  11.076419830322266,
+                  -2.997697353363037
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#c678dd",
+                "stroke": "#c678dd",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Deadline",
+          "to": "Next",
+          "route": [
+            [
+              9.6983275,
+              -3.0226975
+            ],
+            [
+              11.14642,
+              -3.0226975
+            ]
+          ]
+        },
+        {
+          "id": "edge-label:Steps->Error#0",
+          "role": "edge-label",
+          "kind": "group",
+          "svg": "<g class=\"edge-label\" data-from=\"Steps\" data-to=\"Error\" data-label=\"yes\">\n  <rect class=\"edge-label-halo\" x=\"608.1440833333334\" y=\"53.12116666666666\" width=\"43.47\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"var(--bg)\" stroke=\"none\" />\n  <rect x=\"612.1440833333334\" y=\"57.12116666666666\" width=\"35.47\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"var(--bg)\" stroke=\"var(--_inner-stroke)\" stroke-width=\"1\" />\n  <text x=\"629.8790833333334\" y=\"72.27116666666666\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"var(--_text-sec)\" dy=\"3.8499999999999996\">yes</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  6.121440887451172,
+                  -0.5312116742134094,
+                  6.239674091339111,
+                  -0.5312116742134094,
+                  6.357907772064209,
+                  -0.5312116742134094,
+                  6.476140975952148,
+                  -0.5312116742134094,
+                  6.498232364654541,
+                  -0.5312116742134094,
+                  6.516140937805176,
+                  -0.549120306968689,
+                  6.516140937805176,
+                  -0.5712116360664368,
+                  6.516140937805176,
+                  -0.6722117066383362,
+                  6.516140937805176,
+                  -0.773211658000946,
+                  6.516140937805176,
+                  -0.8742116689682007,
+                  6.516140937805176,
+                  -0.8963029980659485,
+                  6.498232364654541,
+                  -0.914211630821228,
+                  6.476140975952148,
+                  -0.914211630821228,
+                  6.357907772064209,
+                  -0.914211630821228,
+                  6.239674091339111,
+                  -0.914211630821228,
+                  6.121440887451172,
+                  -0.914211630821228,
+                  6.099349498748779,
+                  -0.914211630821228,
+                  6.0814409255981445,
+                  -0.8963029980659485,
+                  6.0814409255981445,
+                  -0.8742116689682007,
+                  6.0814409255981445,
+                  -0.773211658000946,
+                  6.0814409255981445,
+                  -0.6722117066383362,
+                  6.0814409255981445,
+                  -0.5712116360664368,
+                  6.0814409255981445,
+                  -0.549120306968689,
+                  6.099349498748779,
+                  -0.5312116742134094,
+                  6.121440887451172,
+                  -0.5312116742134094
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  6.1414408683776855,
+                  -0.5712116360664368,
+                  6.246340751647949,
+                  -0.5712116360664368,
+                  6.351240634918213,
+                  -0.5712116360664368,
+                  6.456140518188477,
+                  -0.5712116360664368,
+                  6.467186450958252,
+                  -0.5712116360664368,
+                  6.476140975952148,
+                  -0.5801659822463989,
+                  6.476140975952148,
+                  -0.5912116765975952,
+                  6.476140975952148,
+                  -0.6788783073425293,
+                  6.476140975952148,
+                  -0.7665450572967529,
+                  6.476140975952148,
+                  -0.8542116284370422,
+                  6.476140975952148,
+                  -0.8652573227882385,
+                  6.467186450958252,
+                  -0.8742116689682007,
+                  6.456140518188477,
+                  -0.8742116689682007,
+                  6.351240634918213,
+                  -0.8742116689682007,
+                  6.246340751647949,
+                  -0.8742116689682007,
+                  6.1414408683776855,
+                  -0.8742116689682007,
+                  6.13039493560791,
+                  -0.8742116689682007,
+                  6.121440887451172,
+                  -0.8652573227882385,
+                  6.121440887451172,
+                  -0.8542116284370422,
+                  6.121440887451172,
+                  -0.7665450572967529,
+                  6.121440887451172,
+                  -0.6788783073425293,
+                  6.121440887451172,
+                  -0.5912116765975952,
+                  6.121440887451172,
+                  -0.5801659822463989,
+                  6.13039493560791,
+                  -0.5712116360664368,
+                  6.1414408683776855,
+                  -0.5712116360664368
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "#383c45",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#949ba8",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "yes",
+              "fontSize": 0.10999999999999999,
+              "textRun": {
+                "text": "yes",
+                "x": 629.8790833333334,
+                "y": 76.12116666666665,
+                "size": 11,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  -2.168404344971009e-19
+                ],
+                "width": 19.47
+              }
+            }
+          ],
+          "owner": "edge:Steps->Error#0"
+        },
+        {
+          "id": "edge-label:Steps->Memory#0",
+          "role": "edge-label",
+          "kind": "group",
+          "svg": "<g class=\"edge-label\" data-from=\"Steps\" data-to=\"Memory\" data-label=\"no\">\n  <rect class=\"edge-label-halo\" x=\"227.58125\" y=\"149.9125\" width=\"37.53\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"var(--bg)\" stroke=\"none\" />\n  <rect x=\"231.58125\" y=\"153.9125\" width=\"29.53\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"var(--bg)\" stroke=\"var(--_inner-stroke)\" stroke-width=\"1\" />\n  <text x=\"246.34625\" y=\"169.0625\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"var(--_text-sec)\" dy=\"3.8499999999999996\">no</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.315812587738037,
+                  -1.4991250038146973,
+                  2.414245843887329,
+                  -1.4991250038146973,
+                  2.512679100036621,
+                  -1.4991250038146973,
+                  2.611112356185913,
+                  -1.4991250038146973,
+                  2.6332039833068848,
+                  -1.4991250038146973,
+                  2.6511123180389404,
+                  -1.517033576965332,
+                  2.6511123180389404,
+                  -1.5391250848770142,
+                  2.6511123180389404,
+                  -1.6401249170303345,
+                  2.6511123180389404,
+                  -1.7411249876022339,
+                  2.6511123180389404,
+                  -1.8421249389648438,
+                  2.6511123180389404,
+                  -1.8642164468765259,
+                  2.6332039833068848,
+                  -1.882124900817871,
+                  2.611112356185913,
+                  -1.882124900817871,
+                  2.512679100036621,
+                  -1.882124900817871,
+                  2.414245843887329,
+                  -1.882124900817871,
+                  2.315812587738037,
+                  -1.882124900817871,
+                  2.2937211990356445,
+                  -1.882124900817871,
+                  2.2758126258850098,
+                  -1.8642164468765259,
+                  2.2758126258850098,
+                  -1.8421249389648438,
+                  2.2758126258850098,
+                  -1.7411249876022339,
+                  2.2758126258850098,
+                  -1.6401249170303345,
+                  2.2758126258850098,
+                  -1.5391250848770142,
+                  2.2758126258850098,
+                  -1.517033576965332,
+                  2.2937211990356445,
+                  -1.4991250038146973,
+                  2.315812587738037,
+                  -1.4991250038146973
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  2.335812568664551,
+                  -1.5391250848770142,
+                  2.420912504196167,
+                  -1.5391250848770142,
+                  2.5060126781463623,
+                  -1.5391250848770142,
+                  2.5911123752593994,
+                  -1.5391250848770142,
+                  2.602158308029175,
+                  -1.5391250848770142,
+                  2.611112356185913,
+                  -1.5480793714523315,
+                  2.611112356185913,
+                  -1.5591250658035278,
+                  2.611112356185913,
+                  -1.646791696548462,
+                  2.611112356185913,
+                  -1.734458327293396,
+                  2.611112356185913,
+                  -1.82212495803833,
+                  2.611112356185913,
+                  -1.8331706523895264,
+                  2.602158308029175,
+                  -1.8421249389648438,
+                  2.5911123752593994,
+                  -1.8421249389648438,
+                  2.506012439727783,
+                  -1.8421249389648438,
+                  2.420912504196167,
+                  -1.8421249389648438,
+                  2.335812568664551,
+                  -1.8421249389648438,
+                  2.3247668743133545,
+                  -1.8421249389648438,
+                  2.315812587738037,
+                  -1.8331706523895264,
+                  2.315812587738037,
+                  -1.82212495803833,
+                  2.315812587738037,
+                  -1.734458327293396,
+                  2.315812587738037,
+                  -1.646791696548462,
+                  2.315812587738037,
+                  -1.5591250658035278,
+                  2.315812587738037,
+                  -1.5480793714523315,
+                  2.3247668743133545,
+                  -1.5391250848770142,
+                  2.335812568664551,
+                  -1.5391250848770142
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "#383c45",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#949ba8",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "no",
+              "fontSize": 0.10999999999999999,
+              "textRun": {
+                "text": "no",
+                "x": 246.34625,
+                "y": 172.9125,
+                "size": 11,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  -2.168404344971009e-19
+                ],
+                "width": 13.53
+              }
+            }
+          ],
+          "owner": "edge:Steps->Memory#0"
+        },
+        {
+          "id": "edge-label:Memory->Error#0",
+          "role": "edge-label",
+          "kind": "group",
+          "svg": "<g class=\"edge-label\" data-from=\"Memory\" data-to=\"Error\" data-label=\"yes\">\n  <rect class=\"edge-label-halo\" x=\"1022.1419999999999\" y=\"94.58283333333333\" width=\"43.47\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"var(--bg)\" stroke=\"none\" />\n  <rect x=\"1026.142\" y=\"98.58283333333333\" width=\"35.47\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"var(--bg)\" stroke=\"var(--_inner-stroke)\" stroke-width=\"1\" />\n  <text x=\"1043.877\" y=\"113.73283333333333\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"var(--_text-sec)\" dy=\"3.8499999999999996\">yes</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  10.261419296264648,
+                  -0.9458283185958862,
+                  10.379652976989746,
+                  -0.9458283185958862,
+                  10.497886657714844,
+                  -0.9458283185958862,
+                  10.616120338439941,
+                  -0.9458283185958862,
+                  10.638211250305176,
+                  -0.9458283185958862,
+                  10.656120300292969,
+                  -0.9637369513511658,
+                  10.656120300292969,
+                  -0.9858283400535583,
+                  10.656120300292969,
+                  -1.086828351020813,
+                  10.656120300292969,
+                  -1.1878283023834229,
+                  10.656120300292969,
+                  -1.2888282537460327,
+                  10.656120300292969,
+                  -1.3109196424484253,
+                  10.638211250305176,
+                  -1.3288283348083496,
+                  10.616120338439941,
+                  -1.3288283348083496,
+                  10.497886657714844,
+                  -1.3288283348083496,
+                  10.379652976989746,
+                  -1.3288283348083496,
+                  10.261419296264648,
+                  -1.3288283348083496,
+                  10.239328384399414,
+                  -1.3288283348083496,
+                  10.221420288085938,
+                  -1.3109196424484253,
+                  10.221420288085938,
+                  -1.2888282537460327,
+                  10.221420288085938,
+                  -1.1878283023834229,
+                  10.221420288085938,
+                  -1.086828351020813,
+                  10.221420288085938,
+                  -0.9858283400535583,
+                  10.221420288085938,
+                  -0.9637369513511658,
+                  10.239328384399414,
+                  -0.9458283185958862,
+                  10.261419296264648,
+                  -0.9458283185958862
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  10.28141975402832,
+                  -0.9858283400535583,
+                  10.386319160461426,
+                  -0.9858283400535583,
+                  10.491219520568848,
+                  -0.9858283400535583,
+                  10.596120834350586,
+                  -0.9858283400535583,
+                  10.607165336608887,
+                  -0.9858283400535583,
+                  10.616120338439941,
+                  -0.9947826266288757,
+                  10.616120338439941,
+                  -1.0058283805847168,
+                  10.616120338439941,
+                  -1.0934950113296509,
+                  10.616120338439941,
+                  -1.181161642074585,
+                  10.616120338439941,
+                  -1.2688283920288086,
+                  10.616120338439941,
+                  -1.2798740863800049,
+                  10.607165336608887,
+                  -1.2888282537460327,
+                  10.596120834350586,
+                  -1.2888282537460327,
+                  10.491220474243164,
+                  -1.2888282537460327,
+                  10.386321067810059,
+                  -1.2888282537460327,
+                  10.28141975402832,
+                  -1.2888282537460327,
+                  10.270374298095703,
+                  -1.2888282537460327,
+                  10.261419296264648,
+                  -1.2798740863800049,
+                  10.261419296264648,
+                  -1.2688283920288086,
+                  10.261419296264648,
+                  -1.181161642074585,
+                  10.261419296264648,
+                  -1.0934950113296509,
+                  10.261419296264648,
+                  -1.0058283805847168,
+                  10.261419296264648,
+                  -0.9947826266288757,
+                  10.270374298095703,
+                  -0.9858283400535583,
+                  10.28141975402832,
+                  -0.9858283400535583
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "#383c45",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#949ba8",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "yes",
+              "fontSize": 0.10999999999999999,
+              "textRun": {
+                "text": "yes",
+                "x": 1043.877,
+                "y": 117.58283333333333,
+                "size": 11,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  -2.168404344971009e-19
+                ],
+                "width": 19.47
+              }
+            }
+          ],
+          "owner": "edge:Memory->Error#0"
+        },
+        {
+          "id": "edge-label:Memory->Output#0",
+          "role": "edge-label",
+          "kind": "group",
+          "svg": "<g class=\"edge-label\" data-from=\"Memory\" data-to=\"Output\" data-label=\"no\">\n  <rect class=\"edge-label-halo\" x=\"501.3706249999999\" y=\"191.35125\" width=\"37.53\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"var(--bg)\" stroke=\"none\" />\n  <rect x=\"505.3706249999999\" y=\"195.35125\" width=\"29.53\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"var(--bg)\" stroke=\"var(--_inner-stroke)\" stroke-width=\"1\" />\n  <text x=\"520.1356249999999\" y=\"210.50125\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"var(--_text-sec)\" dy=\"3.8499999999999996\">no</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  5.053706169128418,
+                  -1.9135125875473022,
+                  5.152139663696289,
+                  -1.9135125875473022,
+                  5.25057315826416,
+                  -1.9135125875473022,
+                  5.349006175994873,
+                  -1.9135125875473022,
+                  5.371097564697266,
+                  -1.9135125875473022,
+                  5.3890061378479,
+                  -1.9314210414886475,
+                  5.3890061378479,
+                  -1.9535125494003296,
+                  5.3890061378479,
+                  -2.0545125007629395,
+                  5.3890061378479,
+                  -2.155512571334839,
+                  5.3890061378479,
+                  -2.256512403488159,
+                  5.3890061378479,
+                  -2.2786037921905518,
+                  5.371097564697266,
+                  -2.2965123653411865,
+                  5.349006175994873,
+                  -2.2965123653411865,
+                  5.25057315826416,
+                  -2.2965123653411865,
+                  5.152139663696289,
+                  -2.2965123653411865,
+                  5.053706169128418,
+                  -2.2965123653411865,
+                  5.031614780426025,
+                  -2.2965123653411865,
+                  5.013706207275391,
+                  -2.2786037921905518,
+                  5.013706207275391,
+                  -2.256512403488159,
+                  5.013706207275391,
+                  -2.155512571334839,
+                  5.013706207275391,
+                  -2.0545125007629395,
+                  5.013706207275391,
+                  -1.9535125494003296,
+                  5.013706207275391,
+                  -1.9314210414886475,
+                  5.031614780426025,
+                  -1.9135125875473022,
+                  5.053706169128418,
+                  -1.9135125875473022
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  5.073706150054932,
+                  -1.9535125494003296,
+                  5.158806324005127,
+                  -1.9535125494003296,
+                  5.243906021118164,
+                  -1.9535125494003296,
+                  5.329006195068359,
+                  -1.9535125494003296,
+                  5.340051651000977,
+                  -1.9535125494003296,
+                  5.349006175994873,
+                  -1.9624667167663574,
+                  5.349006175994873,
+                  -1.9735125303268433,
+                  5.349006175994873,
+                  -2.0611791610717773,
+                  5.349006175994873,
+                  -2.148845911026001,
+                  5.349006175994873,
+                  -2.2365124225616455,
+                  5.349006175994873,
+                  -2.247558116912842,
+                  5.340051651000977,
+                  -2.256512403488159,
+                  5.329006195068359,
+                  -2.256512403488159,
+                  5.243906021118164,
+                  -2.256512403488159,
+                  5.158806324005127,
+                  -2.256512403488159,
+                  5.073706150054932,
+                  -2.256512403488159,
+                  5.0626606941223145,
+                  -2.256512403488159,
+                  5.053706169128418,
+                  -2.247558116912842,
+                  5.053706169128418,
+                  -2.2365124225616455,
+                  5.053706169128418,
+                  -2.148845911026001,
+                  5.053706169128418,
+                  -2.0611791610717773,
+                  5.053706169128418,
+                  -1.9735125303268433,
+                  5.053706169128418,
+                  -1.9624667167663574,
+                  5.0626606941223145,
+                  -1.9535125494003296,
+                  5.073706150054932,
+                  -1.9535125494003296
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "#383c45",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#949ba8",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "no",
+              "fontSize": 0.10999999999999999,
+              "textRun": {
+                "text": "no",
+                "x": 520.1356249999999,
+                "y": 214.35125,
+                "size": 11,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  -2.168404344971009e-19
+                ],
+                "width": 13.53
+              }
+            }
+          ],
+          "owner": "edge:Memory->Output#0"
+        },
+        {
+          "id": "edge-label:Output->Error#0",
+          "role": "edge-label",
+          "kind": "group",
+          "svg": "<g class=\"edge-label\" data-from=\"Output\" data-to=\"Error\" data-label=\"yes\">\n  <rect class=\"edge-label-halo\" x=\"794.3926833333334\" y=\"167.39208333333332\" width=\"43.47\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"var(--bg)\" stroke=\"none\" />\n  <rect x=\"798.3926833333334\" y=\"171.39208333333332\" width=\"35.47\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"var(--bg)\" stroke=\"var(--_inner-stroke)\" stroke-width=\"1\" />\n  <text x=\"816.1276833333334\" y=\"186.54208333333332\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"var(--_text-sec)\" dy=\"3.8499999999999996\">yes</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  7.983926773071289,
+                  -1.6739208698272705,
+                  8.102160453796387,
+                  -1.6739208698272705,
+                  8.220394134521484,
+                  -1.6739208698272705,
+                  8.338626861572266,
+                  -1.6739208698272705,
+                  8.360718727111816,
+                  -1.6739208698272705,
+                  8.378626823425293,
+                  -1.6918293237686157,
+                  8.378626823425293,
+                  -1.7139209508895874,
+                  8.378626823425293,
+                  -1.8149207830429077,
+                  8.378626823425293,
+                  -1.9159208536148071,
+                  8.378626823425293,
+                  -2.016920804977417,
+                  8.378626823425293,
+                  -2.0390121936798096,
+                  8.360718727111816,
+                  -2.0569207668304443,
+                  8.338626861572266,
+                  -2.0569207668304443,
+                  8.220394134521484,
+                  -2.0569207668304443,
+                  8.102160453796387,
+                  -2.0569207668304443,
+                  7.983926773071289,
+                  -2.0569207668304443,
+                  7.9618353843688965,
+                  -2.0569207668304443,
+                  7.943926811218262,
+                  -2.0390121936798096,
+                  7.943926811218262,
+                  -2.016920804977417,
+                  7.943926811218262,
+                  -1.9159208536148071,
+                  7.943926811218262,
+                  -1.8149207830429077,
+                  7.943926811218262,
+                  -1.7139209508895874,
+                  7.943926811218262,
+                  -1.6918293237686157,
+                  7.9618353843688965,
+                  -1.6739208698272705,
+                  7.983926773071289,
+                  -1.6739208698272705
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  8.003927230834961,
+                  -1.7139209508895874,
+                  8.108826637268066,
+                  -1.7139209508895874,
+                  8.213726997375488,
+                  -1.7139209508895874,
+                  8.318626403808594,
+                  -1.7139209508895874,
+                  8.329671859741211,
+                  -1.7139209508895874,
+                  8.338626861572266,
+                  -1.7228752374649048,
+                  8.338626861572266,
+                  -1.733920931816101,
+                  8.338626861572266,
+                  -1.8215875625610352,
+                  8.338626861572266,
+                  -1.9092541933059692,
+                  8.338626861572266,
+                  -1.9969208240509033,
+                  8.338626861572266,
+                  -2.0079665184020996,
+                  8.329671859741211,
+                  -2.016920804977417,
+                  8.318626403808594,
+                  -2.016920804977417,
+                  8.213726997375488,
+                  -2.016920804977417,
+                  8.108826637268066,
+                  -2.016920804977417,
+                  8.003927230834961,
+                  -2.016920804977417,
+                  7.992880821228027,
+                  -2.016920804977417,
+                  7.983926773071289,
+                  -2.0079665184020996,
+                  7.983926773071289,
+                  -1.9969208240509033,
+                  7.983926773071289,
+                  -1.9092541933059692,
+                  7.983926773071289,
+                  -1.8215875625610352,
+                  7.983926773071289,
+                  -1.733920931816101,
+                  7.983926773071289,
+                  -1.7228752374649048,
+                  7.992880821228027,
+                  -1.7139209508895874,
+                  8.003927230834961,
+                  -1.7139209508895874
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "#383c45",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#949ba8",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "yes",
+              "fontSize": 0.10999999999999999,
+              "textRun": {
+                "text": "yes",
+                "x": 816.1276833333334,
+                "y": 190.39208333333332,
+                "size": 11,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  -2.168404344971009e-19
+                ],
+                "width": 19.47
+              }
+            }
+          ],
+          "owner": "edge:Output->Error#0"
+        },
+        {
+          "id": "edge-label:Output->Deadline#0",
+          "role": "edge-label",
+          "kind": "group",
+          "svg": "<g class=\"edge-label\" data-from=\"Output\" data-to=\"Deadline\" data-label=\"no\">\n  <rect class=\"edge-label-halo\" x=\"775.165875\" y=\"227.29\" width=\"37.53\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"var(--bg)\" stroke=\"none\" />\n  <rect x=\"779.165875\" y=\"231.29\" width=\"29.53\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"var(--bg)\" stroke=\"var(--_inner-stroke)\" stroke-width=\"1\" />\n  <text x=\"793.930875\" y=\"246.44\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"var(--_text-sec)\" dy=\"3.8499999999999996\">no</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  7.791658878326416,
+                  -2.272899866104126,
+                  7.890092372894287,
+                  -2.272899866104126,
+                  7.988525390625,
+                  -2.272899866104126,
+                  8.086958885192871,
+                  -2.272899866104126,
+                  8.109050750732422,
+                  -2.272899866104126,
+                  8.126958847045898,
+                  -2.29080867767334,
+                  8.126958847045898,
+                  -2.3128998279571533,
+                  8.126958847045898,
+                  -2.4138998985290527,
+                  8.126958847045898,
+                  -2.514899969100952,
+                  8.126958847045898,
+                  -2.6159000396728516,
+                  8.126958847045898,
+                  -2.637991428375244,
+                  8.109050750732422,
+                  -2.655900001525879,
+                  8.086958885192871,
+                  -2.655900001525879,
+                  7.988525390625,
+                  -2.655900001525879,
+                  7.890092372894287,
+                  -2.655900001525879,
+                  7.791658878326416,
+                  -2.655900001525879,
+                  7.769567489624023,
+                  -2.655900001525879,
+                  7.751658916473389,
+                  -2.637991428375244,
+                  7.751658916473389,
+                  -2.6159000396728516,
+                  7.751658916473389,
+                  -2.514899969100952,
+                  7.751658916473389,
+                  -2.4138998985290527,
+                  7.751658916473389,
+                  -2.3128998279571533,
+                  7.751658916473389,
+                  -2.29080867767334,
+                  7.769567489624023,
+                  -2.272899866104126,
+                  7.791658878326416,
+                  -2.272899866104126
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  7.81165885925293,
+                  -2.3128998279571533,
+                  7.896759033203125,
+                  -2.3128998279571533,
+                  7.981858730316162,
+                  -2.3128998279571533,
+                  8.0669584274292,
+                  -2.3128998279571533,
+                  8.078003883361816,
+                  -2.3128998279571533,
+                  8.086958885192871,
+                  -2.32185435295105,
+                  8.086958885192871,
+                  -2.332900047302246,
+                  8.086958885192871,
+                  -2.4205665588378906,
+                  8.086958885192871,
+                  -2.5082333087921143,
+                  8.086958885192871,
+                  -2.595900058746338,
+                  8.086958885192871,
+                  -2.606945753097534,
+                  8.078003883361816,
+                  -2.6159000396728516,
+                  8.0669584274292,
+                  -2.6159000396728516,
+                  7.981858730316162,
+                  -2.6159000396728516,
+                  7.896758556365967,
+                  -2.6159000396728516,
+                  7.81165885925293,
+                  -2.6159000396728516,
+                  7.800612926483154,
+                  -2.6159000396728516,
+                  7.791658878326416,
+                  -2.606945753097534,
+                  7.791658878326416,
+                  -2.595900058746338,
+                  7.791658878326416,
+                  -2.5082333087921143,
+                  7.791658878326416,
+                  -2.4205667972564697,
+                  7.791658878326416,
+                  -2.332900047302246,
+                  7.791658878326416,
+                  -2.32185435295105,
+                  7.800612926483154,
+                  -2.3128998279571533,
+                  7.81165885925293,
+                  -2.3128998279571533
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "#383c45",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#949ba8",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "no",
+              "fontSize": 0.10999999999999999,
+              "textRun": {
+                "text": "no",
+                "x": 793.930875,
+                "y": 250.29,
+                "size": 11,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  -2.168404344971009e-19
+                ],
+                "width": 13.53
+              }
+            }
+          ],
+          "owner": "edge:Output->Deadline#0"
+        },
+        {
+          "id": "edge-label:Deadline->Error#0",
+          "role": "edge-label",
+          "kind": "group",
+          "svg": "<g class=\"edge-label\" data-from=\"Deadline\" data-to=\"Error\" data-label=\"yes\">\n  <rect class=\"edge-label-halo\" x=\"1020.5023750000001\" y=\"210.50124999999994\" width=\"43.47\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"var(--bg)\" stroke=\"none\" />\n  <rect x=\"1024.5023750000003\" y=\"214.50124999999994\" width=\"35.47\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"var(--bg)\" stroke=\"var(--_inner-stroke)\" stroke-width=\"1\" />\n  <text x=\"1042.2373750000002\" y=\"229.65124999999995\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"var(--_text-sec)\" dy=\"3.8499999999999996\">yes</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  10.245022773742676,
+                  -2.1050124168395996,
+                  10.363256454467773,
+                  -2.1050124168395996,
+                  10.481490135192871,
+                  -2.1050124168395996,
+                  10.599723815917969,
+                  -2.1050124168395996,
+                  10.621814727783203,
+                  -2.1050124168395996,
+                  10.639723777770996,
+                  -2.1229212284088135,
+                  10.639723777770996,
+                  -2.145012617111206,
+                  10.639723777770996,
+                  -2.2460126876831055,
+                  10.639723777770996,
+                  -2.347012519836426,
+                  10.639723777770996,
+                  -2.448012590408325,
+                  10.639723777770996,
+                  -2.4701039791107178,
+                  10.621814727783203,
+                  -2.4880125522613525,
+                  10.599723815917969,
+                  -2.4880125522613525,
+                  10.481490135192871,
+                  -2.4880125522613525,
+                  10.363256454467773,
+                  -2.4880125522613525,
+                  10.245022773742676,
+                  -2.4880125522613525,
+                  10.222931861877441,
+                  -2.4880125522613525,
+                  10.205023765563965,
+                  -2.4701039791107178,
+                  10.205023765563965,
+                  -2.448012590408325,
+                  10.205023765563965,
+                  -2.347012519836426,
+                  10.205023765563965,
+                  -2.2460126876831055,
+                  10.205023765563965,
+                  -2.145012617111206,
+                  10.205023765563965,
+                  -2.1229212284088135,
+                  10.222931861877441,
+                  -2.1050124168395996,
+                  10.245022773742676,
+                  -2.1050124168395996
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  10.265023231506348,
+                  -2.145012617111206,
+                  10.369922637939453,
+                  -2.145012617111206,
+                  10.474822998046875,
+                  -2.145012617111206,
+                  10.579724311828613,
+                  -2.145012617111206,
+                  10.590768814086914,
+                  -2.145012617111206,
+                  10.599723815917969,
+                  -2.1539669036865234,
+                  10.599723815917969,
+                  -2.1650125980377197,
+                  10.599723815917969,
+                  -2.2526791095733643,
+                  10.599723815917969,
+                  -2.340345859527588,
+                  10.599723815917969,
+                  -2.4280126094818115,
+                  10.599723815917969,
+                  -2.439058303833008,
+                  10.590768814086914,
+                  -2.448012590408325,
+                  10.579724311828613,
+                  -2.448012590408325,
+                  10.474823951721191,
+                  -2.448012590408325,
+                  10.369924545288086,
+                  -2.448012590408325,
+                  10.265023231506348,
+                  -2.448012590408325,
+                  10.253978729248047,
+                  -2.448012590408325,
+                  10.245022773742676,
+                  -2.439058303833008,
+                  10.245022773742676,
+                  -2.4280126094818115,
+                  10.245022773742676,
+                  -2.340345859527588,
+                  10.245022773742676,
+                  -2.2526791095733643,
+                  10.245022773742676,
+                  -2.1650125980377197,
+                  10.245022773742676,
+                  -2.1539669036865234,
+                  10.253978729248047,
+                  -2.145012617111206,
+                  10.265023231506348,
+                  -2.145012617111206
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "#383c45",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#949ba8",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "yes",
+              "fontSize": 0.10999999999999999,
+              "textRun": {
+                "text": "yes",
+                "x": 1042.2373750000002,
+                "y": 233.50124999999994,
+                "size": 11,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  -2.168404344971009e-19
+                ],
+                "width": 19.47
+              }
+            }
+          ],
+          "owner": "edge:Deadline->Error#0"
+        },
+        {
+          "id": "edge-label:Deadline->Next#0",
+          "role": "edge-label",
+          "kind": "group",
+          "svg": "<g class=\"edge-label\" data-from=\"Deadline\" data-to=\"Next\" data-label=\"no\">\n  <rect class=\"edge-label-halo\" x=\"1046.142\" y=\"283.11975\" width=\"37.53\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"var(--bg)\" stroke=\"none\" />\n  <rect x=\"1050.142\" y=\"287.11975\" width=\"29.53\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"var(--bg)\" stroke=\"var(--_inner-stroke)\" stroke-width=\"1\" />\n  <text x=\"1064.9070000000002\" y=\"302.26975\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"var(--_text-sec)\" dy=\"3.8499999999999996\">no</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  10.501420021057129,
+                  -2.831197500228882,
+                  10.599853515625,
+                  -2.831197500228882,
+                  10.698286056518555,
+                  -2.831197500228882,
+                  10.796719551086426,
+                  -2.831197500228882,
+                  10.818811416625977,
+                  -2.831197500228882,
+                  10.836719512939453,
+                  -2.8491060733795166,
+                  10.836719512939453,
+                  -2.871197462081909,
+                  10.836719512939453,
+                  -2.9721975326538086,
+                  10.836719512939453,
+                  -3.073197603225708,
+                  10.836719512939453,
+                  -3.1741974353790283,
+                  10.836719512939453,
+                  -3.196288824081421,
+                  10.818811416625977,
+                  -3.2141973972320557,
+                  10.796719551086426,
+                  -3.2141973972320557,
+                  10.698286056518555,
+                  -3.2141973972320557,
+                  10.599853515625,
+                  -3.2141973972320557,
+                  10.501420021057129,
+                  -3.2141973972320557,
+                  10.479328155517578,
+                  -3.2141973972320557,
+                  10.461420059204102,
+                  -3.196288824081421,
+                  10.461420059204102,
+                  -3.1741974353790283,
+                  10.461420059204102,
+                  -3.073197364807129,
+                  10.461420059204102,
+                  -2.9721975326538086,
+                  10.461420059204102,
+                  -2.871197462081909,
+                  10.461420059204102,
+                  -2.8491060733795166,
+                  10.479328155517578,
+                  -2.831197500228882,
+                  10.501420021057129,
+                  -2.831197500228882
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  10.521419525146484,
+                  -2.871197462081909,
+                  10.60651969909668,
+                  -2.871197462081909,
+                  10.691619873046875,
+                  -2.871197462081909,
+                  10.77672004699707,
+                  -2.871197462081909,
+                  10.787766456604004,
+                  -2.871197462081909,
+                  10.796719551086426,
+                  -2.8801517486572266,
+                  10.796719551086426,
+                  -2.891197443008423,
+                  10.796719551086426,
+                  -2.9788641929626465,
+                  10.796719551086426,
+                  -3.066530704498291,
+                  10.796719551086426,
+                  -3.1541974544525146,
+                  10.796719551086426,
+                  -3.165243148803711,
+                  10.787766456604004,
+                  -3.1741974353790283,
+                  10.77672004699707,
+                  -3.1741974353790283,
+                  10.691619873046875,
+                  -3.1741974353790283,
+                  10.60651969909668,
+                  -3.1741974353790283,
+                  10.521419525146484,
+                  -3.1741974353790283,
+                  10.510375022888184,
+                  -3.1741974353790283,
+                  10.501420021057129,
+                  -3.165243148803711,
+                  10.501420021057129,
+                  -3.1541974544525146,
+                  10.501420021057129,
+                  -3.066530704498291,
+                  10.501420021057129,
+                  -2.9788641929626465,
+                  10.501420021057129,
+                  -2.891197443008423,
+                  10.501420021057129,
+                  -2.8801517486572266,
+                  10.510375022888184,
+                  -2.871197462081909,
+                  10.521419525146484,
+                  -2.871197462081909
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#282c34",
+                "stroke": "#383c45",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#949ba8",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "no",
+              "fontSize": 0.10999999999999999,
+              "textRun": {
+                "text": "no",
+                "x": 1064.9070000000002,
+                "y": 306.11975,
+                "size": 11,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  -2.168404344971009e-19
+                ],
+                "width": 13.53
+              }
+            }
+          ],
+          "owner": "edge:Deadline->Next#0"
+        },
+        {
+          "id": "Steps",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Steps\" data-label=\"Step budget spent\" data-shape=\"diamond\" data-role=\"node\">\n  <polygon points=\"124.845,40 209.69,124.845 124.845,209.69 40,124.845\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Steps\" data-role=\"node\" />\n  <text x=\"124.845\" y=\"124.845\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Step budget spent</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.2484500408172607,
+                  -0.4000000059604645,
+                  1.531266689300537,
+                  -0.6828166842460632,
+                  1.814083456993103,
+                  -0.9656333327293396,
+                  2.09689998626709,
+                  -1.2484500408172607,
+                  1.814083456993103,
+                  -1.531266689300537,
+                  1.531266689300537,
+                  -1.814083456993103,
+                  1.2484500408172607,
+                  -2.09689998626709,
+                  0.9656333327293396,
+                  -1.814083456993103,
+                  0.6828166842460632,
+                  -1.531266689300537,
+                  0.4000000059604645,
+                  -1.2484500408172607,
+                  0.6828166842460632,
+                  -0.9656333327293396,
+                  0.9656333327293396,
+                  -0.6828166842460632,
+                  1.2484500408172607,
+                  -0.4000000059604645
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2c3038",
+                "stroke": "#424750",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#abb2bf",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Step budget spent",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Step budget spent",
+                "x": 124.845,
+                "y": 129.395,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  -2.168404344971009e-19
+                ],
+                "width": 105.69
+              }
+            }
+          ]
+        },
+        {
+          "id": "Memory",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Memory\" data-label=\"Memory ceiling\" data-shape=\"diamond\" data-role=\"node\">\n  <polygon points=\"404.65500000000003,91.6275 482.09000000000003,169.0625 404.65500000000003,246.4975 327.22,169.0625\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Memory\" data-role=\"node\" />\n  <text x=\"404.65500000000003\" y=\"169.0625\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Memory ceiling</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.0465497970581055,
+                  -0.9162750244140625,
+                  4.304666519165039,
+                  -1.174391746520996,
+                  4.562783241271973,
+                  -1.4325083494186401,
+                  4.820899963378906,
+                  -1.6906249523162842,
+                  4.562783241271973,
+                  -1.9487415552139282,
+                  4.304666519165039,
+                  -2.2068583965301514,
+                  4.0465497970581055,
+                  -2.464974880218506,
+                  3.788433313369751,
+                  -2.2068583965301514,
+                  3.5303168296813965,
+                  -1.9487415552139282,
+                  3.272200107574463,
+                  -1.6906249523162842,
+                  3.5303168296813965,
+                  -1.4325083494186401,
+                  3.788433313369751,
+                  -1.174391746520996,
+                  4.0465497970581055,
+                  -0.9162750244140625
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2c3038",
+                "stroke": "#424750",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#abb2bf",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Memory ceiling",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Memory ceiling",
+                "x": 404.65500000000003,
+                "y": 173.6125,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  -2.168404344971009e-19
+                ],
+                "width": 90.87
+              }
+            }
+          ]
+        },
+        {
+          "id": "Output",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Output\" data-label=\"Output ceiling\" data-shape=\"diamond\" data-role=\"node\">\n  <polygon points=\"671.4975,138.62375 743.375,210.50125 671.4975,282.37874999999997 599.6199999999999,210.50125\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Output\" data-role=\"node\" />\n  <text x=\"671.4975\" y=\"210.50125\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Output ceiling</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  6.714974880218506,
+                  -1.3862375020980835,
+                  6.954566478729248,
+                  -1.6258292198181152,
+                  7.194158554077148,
+                  -1.8654208183288574,
+                  7.433750152587891,
+                  -2.1050124168395996,
+                  7.194158554077148,
+                  -2.344604253768921,
+                  6.954566478729248,
+                  -2.584195852279663,
+                  6.714974880218506,
+                  -2.8237874507904053,
+                  6.475383281707764,
+                  -2.584195852279663,
+                  6.2357916831970215,
+                  -2.344604253768921,
+                  5.996200084686279,
+                  -2.1050124168395996,
+                  6.2357916831970215,
+                  -1.8654208183288574,
+                  6.475383281707764,
+                  -1.6258292198181152,
+                  6.714974880218506,
+                  -1.3862375020980835
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2c3038",
+                "stroke": "#424750",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#abb2bf",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Output ceiling",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Output ceiling",
+                "x": 671.4975,
+                "y": 215.05125,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  -2.168404344971009e-19
+                ],
+                "width": 79.755
+              }
+            }
+          ]
+        },
+        {
+          "id": "Deadline",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Deadline\" data-label=\"Past deadline\" data-shape=\"diamond\" data-role=\"node\">\n  <polygon points=\"933.5235,193.34199999999996 1006.142,265.96049999999997 933.5235,338.57899999999995 860.905,265.96049999999997\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Deadline\" data-role=\"node\" />\n  <text x=\"933.5235\" y=\"265.96049999999997\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Past deadline</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  9.335234642028809,
+                  -1.933419942855835,
+                  9.57729721069336,
+                  -2.1754815578460693,
+                  9.819358825683594,
+                  -2.417543411254883,
+                  10.061420440673828,
+                  -2.659605026245117,
+                  9.819358825683594,
+                  -2.9016668796539307,
+                  9.57729721069336,
+                  -3.143728256225586,
+                  9.335234642028809,
+                  -3.3857901096343994,
+                  9.093173027038574,
+                  -3.143728256225586,
+                  8.85111141204834,
+                  -2.9016666412353516,
+                  8.609050750732422,
+                  -2.659605026245117,
+                  8.851112365722656,
+                  -2.417543411254883,
+                  9.093173027038574,
+                  -2.1754817962646484,
+                  9.335234642028809,
+                  -1.933419942855835
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2c3038",
+                "stroke": "#424750",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#abb2bf",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Past deadline",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Past deadline",
+                "x": 933.5235,
+                "y": 270.5105,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  -2.168404344971009e-19
+                ],
+                "width": 81.237
+              }
+            }
+          ]
+        },
+        {
+          "id": "Error",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Error\" data-label=\"Return first error\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"1114.642\" y=\"211.20124999999996\" width=\"141.24400000000003\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Error\" data-role=\"node\" />\n  <text x=\"1185.2640000000001\" y=\"229.65124999999995\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Return first error</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  11.146419525146484,
+                  -2.1120123863220215,
+                  11.617232322692871,
+                  -2.1120123863220215,
+                  12.08804702758789,
+                  -2.1120123863220215,
+                  12.558859825134277,
+                  -2.1120123863220215,
+                  12.558859825134277,
+                  -2.2350125312805176,
+                  12.558859825134277,
+                  -2.3580124378204346,
+                  12.558859825134277,
+                  -2.4810125827789307,
+                  12.08804702758789,
+                  -2.4810125827789307,
+                  11.617234230041504,
+                  -2.4810125827789307,
+                  11.146419525146484,
+                  -2.4810125827789307,
+                  11.146419525146484,
+                  -2.3580124378204346,
+                  11.146419525146484,
+                  -2.2350125312805176,
+                  11.146419525146484,
+                  -2.1120123863220215
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2c3038",
+                "stroke": "#424750",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#abb2bf",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Return first error",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Return first error",
+                "x": 1185.2640000000001,
+                "y": 234.20124999999996,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  -2.168404344971009e-19
+                ],
+                "width": 101.244
+              }
+            }
+          ]
+        },
+        {
+          "id": "Next",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Next\" data-label=\"Increment steps\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"1114.642\" y=\"283.81975\" width=\"134.57500000000002\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Next\" data-role=\"node\" />\n  <text x=\"1181.9295\" y=\"302.26975\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Increment steps</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  11.146419525146484,
+                  -2.838197708129883,
+                  11.595004081726074,
+                  -2.838197708129883,
+                  12.043586730957031,
+                  -2.838197708129883,
+                  12.492170333862305,
+                  -2.838197708129883,
+                  12.492170333862305,
+                  -2.9611976146698,
+                  12.492170333862305,
+                  -3.084197759628296,
+                  12.492170333862305,
+                  -3.207197666168213,
+                  12.043586730957031,
+                  -3.207197666168213,
+                  11.595004081726074,
+                  -3.207197666168213,
+                  11.146419525146484,
+                  -3.207197666168213,
+                  11.146419525146484,
+                  -3.084197759628296,
+                  11.146419525146484,
+                  -2.9611976146698,
+                  11.146419525146484,
+                  -2.838197708129883
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#2c3038",
+                "stroke": "#424750",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#abb2bf",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Increment steps",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Increment steps",
+                "x": 1181.9295,
+                "y": 306.81975,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  -2.168404344971009e-19
+                ],
+                "width": 94.575
+              }
+            }
+          ]
+        }
+      ],
+      "findings": {
+        "ok": true,
+        "warnings": [],
+        "layout": {
+          "version": 1,
+          "kind": "flowchart",
+          "nodes": [
+            {
+              "id": "Steps",
+              "x": 40,
+              "y": 40,
+              "w": 170,
+              "h": 170,
+              "shape": "diamond",
+              "label": "Step budget spent"
+            },
+            {
+              "id": "Memory",
+              "x": 327,
+              "y": 92,
+              "w": 155,
+              "h": 155,
+              "shape": "diamond",
+              "label": "Memory ceiling"
+            },
+            {
+              "id": "Output",
+              "x": 600,
+              "y": 139,
+              "w": 144,
+              "h": 144,
+              "shape": "diamond",
+              "label": "Output ceiling"
+            },
+            {
+              "id": "Deadline",
+              "x": 861,
+              "y": 193,
+              "w": 145,
+              "h": 145,
+              "shape": "diamond",
+              "label": "Past deadline"
+            },
+            {
+              "id": "Error",
+              "x": 1115,
+              "y": 211,
+              "w": 141,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Return first error"
+            },
+            {
+              "id": "Next",
+              "x": 1115,
+              "y": 284,
+              "w": 135,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Increment steps"
+            }
+          ],
+          "edges": [
+            {
+              "id": "Steps->Error",
+              "from": "Steps",
+              "to": "Error",
+              "path": [
+                [
+                  157,
+                  72
+                ],
+                [
+                  1103,
+                  72
+                ],
+                [
+                  1103,
+                  219
+                ],
+                [
+                  1115,
+                  219
+                ]
+              ],
+              "label": {
+                "x": 630,
+                "y": 72,
+                "text": "yes"
+              }
+            },
+            {
+              "id": "Steps->Memory",
+              "from": "Steps",
+              "to": "Memory",
+              "path": [
+                [
+                  165,
+                  169
+                ],
+                [
+                  327,
+                  169
+                ]
+              ],
+              "label": {
+                "x": 246,
+                "y": 169,
+                "text": "no"
+              }
+            },
+            {
+              "id": "Memory->Error",
+              "from": "Memory",
+              "to": "Error",
+              "path": [
+                [
+                  456,
+                  143
+                ],
+                [
+                  588,
+                  143
+                ],
+                [
+                  588,
+                  115
+                ],
+                [
+                  1082,
+                  115
+                ],
+                [
+                  1082,
+                  226
+                ],
+                [
+                  1115,
+                  226
+                ]
+              ],
+              "label": {
+                "x": 1044,
+                "y": 114,
+                "text": "yes"
+              }
+            },
+            {
+              "id": "Memory->Output",
+              "from": "Memory",
+              "to": "Output",
+              "path": [
+                [
+                  441,
+                  211
+                ],
+                [
+                  600,
+                  211
+                ]
+              ],
+              "label": {
+                "x": 520,
+                "y": 211,
+                "text": "no"
+              }
+            },
+            {
+              "id": "Output->Error",
+              "from": "Output",
+              "to": "Error",
+              "path": [
+                [
+                  719,
+                  187
+                ],
+                [
+                  1018,
+                  187
+                ],
+                [
+                  1018,
+                  155
+                ],
+                [
+                  1082,
+                  155
+                ],
+                [
+                  1082,
+                  233
+                ],
+                [
+                  1115,
+                  233
+                ]
+              ],
+              "label": {
+                "x": 816,
+                "y": 187,
+                "text": "yes"
+              }
+            },
+            {
+              "id": "Output->Deadline",
+              "from": "Output",
+              "to": "Deadline",
+              "path": [
+                [
+                  707,
+                  246
+                ],
+                [
+                  880,
+                  246
+                ]
+              ],
+              "label": {
+                "x": 794,
+                "y": 246,
+                "text": "no"
+              }
+            },
+            {
+              "id": "Deadline->Error",
+              "from": "Deadline",
+              "to": "Error",
+              "path": [
+                [
+                  970,
+                  230
+                ],
+                [
+                  1115,
+                  230
+                ]
+              ],
+              "label": {
+                "x": 1042,
+                "y": 230,
+                "text": "yes"
+              }
+            },
+            {
+              "id": "Deadline->Next",
+              "from": "Deadline",
+              "to": "Next",
+              "path": [
+                [
+                  970,
+                  302
+                ],
+                [
+                  1115,
+                  302
+                ]
+              ],
+              "label": {
+                "x": 1065,
+                "y": 302,
+                "text": "no"
+              }
+            }
+          ],
+          "groups": [],
+          "bounds": {
+            "w": 1298,
+            "h": 379
+          }
+        }
+      }
+    }
+  }
+}

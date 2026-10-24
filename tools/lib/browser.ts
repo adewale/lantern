@@ -4,6 +4,7 @@ import type { Browser } from 'playwright-core';
 import { existsSync, readdirSync } from 'node:fs';
 
 function executable(): string | undefined {
+  if (process.env.CHROMIUM_EXECUTABLE_PATH) return process.env.CHROMIUM_EXECUTABLE_PATH;
   const base = process.env.PLAYWRIGHT_BROWSERS_PATH ?? `${process.env.HOME}/.cache/ms-playwright`;
   const dir = existsSync(base) && readdirSync(base).find((d) => /^chromium-\d+$/.test(d));
   const path = dir && `${base}/${dir}/chrome-linux/chrome`;

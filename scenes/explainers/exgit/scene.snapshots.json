@@ -1,0 +1,3318 @@
+{
+  "version": 1,
+  "importer": 4,
+  "sourceHash": "6e5578215807a28c288124692318f8333a0ddbcc7505e3e0a8fb5ed131248c15",
+  "renderer": "agentic-mermaid@0.4.1",
+  "diagrams": {
+    "[\"graph LR\\nC1[Commit one] --> T1[Tree one]\\nT1 --> Hello[hello.txt blob]\",\"catppuccin-mocha\",null]": {
+      "version": 1,
+      "renderer": "agentic-mermaid@0.4.1",
+      "spec": {
+        "source": "graph LR\nC1[Commit one] --> T1[Tree one]\nT1 --> Hello[hello.txt blob]",
+        "style": "catppuccin-mocha"
+      },
+      "family": "flowchart",
+      "width": 492.28700000000003,
+      "height": 116.9,
+      "palette": {
+        "paper": "#1e1e2e",
+        "ink": "#cdd6f4",
+        "accent": "#cba6f7",
+        "muted": "#6c7086"
+      },
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"492.28700000000003\" height=\"116.9\" viewBox=\"0 0 492.28700000000003 116.9\" style=\"--bg:#1e1e2e;--fg:#cdd6f4;--line:#585b70;--accent:#cba6f7;--muted:#6c7086;--font:Inter;background:#1e1e2e\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #cdd6f4;\n    --_text-sec:      #6c7086;\n    --_text-muted:    #6c7086;\n    --_text-faint:    #7d8199;\n    --_line:          #585b70;\n    --_arrow:         #cba6f7;\n    --_node-fill:     #232434;\n    --_node-stroke:   #414356;\n    --_group-fill:    #1e1e2e;\n    --_group-hdr:     #272738;\n    --_inner-stroke:  #333446;\n    --_key-badge:     #303042;\n  }\n</style>\n<rect width=\"492.28700000000003\" height=\"116.9\" fill=\"#1e1e2e\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#cba6f7\" stroke=\"#cba6f7\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#cba6f7\" stroke=\"#cba6f7\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline class=\"edge\" data-from=\"C1\" data-to=\"T1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"146.417,58.45 194.417,58.45\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C1-&gt;T1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C1 to T1\" />\n<polyline class=\"edge\" data-from=\"T1\" data-to=\"Hello\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"290.46000000000004,58.45 338.46000000000004,58.45\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T1-&gt;Hello#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T1 to Hello\" />\n<g class=\"node\" data-id=\"C1\" data-label=\"Commit one\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"40\" width=\"106.417\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:C1\" data-role=\"node\" />\n  <text x=\"93.2085\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"66.417\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Commit one</text>\n</g>\n<g class=\"node\" data-id=\"T1\" data-label=\"Tree one\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"194.417\" y=\"40\" width=\"96.04299999999999\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:T1\" data-role=\"node\" />\n  <text x=\"242.4385\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"56.043\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Tree one</text>\n</g>\n<g class=\"node\" data-id=\"Hello\" data-label=\"hello.txt blob\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"338.46000000000004\" y=\"40\" width=\"113.827\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:Hello\" data-role=\"node\" />\n  <text x=\"395.37350000000004\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"73.827\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">hello.txt blob</text>\n</g>\n</svg>",
+      "parts": [
+        {
+          "id": "__frame",
+          "role": "frame",
+          "kind": "shape",
+          "svg": "",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.469446874405432e-20,
+                  0,
+                  1.6409567594528198,
+                  0,
+                  3.2819135189056396,
+                  0,
+                  4.922869682312012,
+                  0,
+                  4.922869682312012,
+                  -0.38966667652130127,
+                  4.922869682312012,
+                  -0.7793333530426025,
+                  4.922869682312012,
+                  -1.1690000295639038,
+                  3.2819130420684814,
+                  -1.1690000295639038,
+                  1.6409565210342407,
+                  -1.1690000295639038,
+                  3.469446874405432e-20,
+                  -1.1690000295639038,
+                  3.469446874405432e-20,
+                  -0.7793333530426025,
+                  3.469446874405432e-20,
+                  -0.38966667652130127,
+                  3.469446874405432e-20,
+                  0
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#1e1e2e",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "edge:C1->T1#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"C1\" data-to=\"T1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"146.417,58.45 194.417,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C1-&gt;T1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C1 to T1\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.4641700983047485,
+                  -0.5845000147819519,
+                  1.6241700649261475,
+                  -0.5845000147819519,
+                  1.7841700315475464,
+                  -0.5845000147819519,
+                  1.9441701173782349,
+                  -0.5845000147819519
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#65697f",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  1.8741700649261475,
+                  -0.559499979019165,
+                  1.900836706161499,
+                  -0.5678333640098572,
+                  1.9275034666061401,
+                  -0.5761666893959045,
+                  1.9541701078414917,
+                  -0.5845000147819519,
+                  1.9275034666061401,
+                  -0.5928333401679993,
+                  1.900836706161499,
+                  -0.6011666655540466,
+                  1.8741700649261475,
+                  -0.609499990940094,
+                  1.8741700649261475,
+                  -0.5928333401679993,
+                  1.8741700649261475,
+                  -0.5761666893959045,
+                  1.8741700649261475,
+                  -0.559499979019165
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#cba6f7",
+                "stroke": "#cba6f7",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "C1",
+          "to": "T1",
+          "route": [
+            [
+              1.46417,
+              -0.5845
+            ],
+            [
+              1.94417,
+              -0.5845
+            ]
+          ]
+        },
+        {
+          "id": "edge:T1->Hello#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"T1\" data-to=\"Hello\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"290.46000000000004,58.45 338.46000000000004,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T1-&gt;Hello#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T1 to Hello\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.904599905014038,
+                  -0.5845000147819519,
+                  3.0645999908447266,
+                  -0.5845000147819519,
+                  3.224599838256836,
+                  -0.5845000147819519,
+                  3.3845999240875244,
+                  -0.5845000147819519
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#65697f",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  3.3145999908447266,
+                  -0.559499979019165,
+                  3.341266632080078,
+                  -0.5678333640098572,
+                  3.3679332733154297,
+                  -0.5761666893959045,
+                  3.3945999145507812,
+                  -0.5845000147819519,
+                  3.3679332733154297,
+                  -0.5928333401679993,
+                  3.341266632080078,
+                  -0.6011666655540466,
+                  3.3145999908447266,
+                  -0.609499990940094,
+                  3.3145999908447266,
+                  -0.5928333401679993,
+                  3.3145999908447266,
+                  -0.5761666893959045,
+                  3.3145999908447266,
+                  -0.559499979019165
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#cba6f7",
+                "stroke": "#cba6f7",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "T1",
+          "to": "Hello",
+          "route": [
+            [
+              2.9046000000000003,
+              -0.5845
+            ],
+            [
+              3.3846000000000003,
+              -0.5845
+            ]
+          ]
+        },
+        {
+          "id": "C1",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"C1\" data-label=\"Commit one\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"40\" width=\"106.417\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:C1\" data-role=\"node\" />\n  <text x=\"93.2085\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Commit one</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0.4000000059604645,
+                  -0.4000000059604645,
+                  0.7547233700752258,
+                  -0.4000000059604645,
+                  1.10944664478302,
+                  -0.4000000059604645,
+                  1.4641700983047485,
+                  -0.4000000059604645,
+                  1.4641700983047485,
+                  -0.5230000019073486,
+                  1.4641700983047485,
+                  -0.6459999680519104,
+                  1.4641700983047485,
+                  -0.7689999938011169,
+                  1.1094467639923096,
+                  -0.7689999938011169,
+                  0.7547233700752258,
+                  -0.7689999938011169,
+                  0.4000000059604645,
+                  -0.7689999938011169,
+                  0.4000000059604645,
+                  -0.6459999680519104,
+                  0.4000000059604645,
+                  -0.5230000019073486,
+                  0.4000000059604645,
+                  -0.4000000059604645
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#232434",
+                "stroke": "#414356",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#cdd6f4",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Commit one",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Commit one",
+                "x": 93.2085,
+                "y": 63,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  3.469446951953614e-18,
+                  0
+                ],
+                "width": 66.417
+              }
+            }
+          ]
+        },
+        {
+          "id": "T1",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"T1\" data-label=\"Tree one\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"194.417\" y=\"40\" width=\"96.04299999999999\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:T1\" data-role=\"node\" />\n  <text x=\"242.4385\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Tree one</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.9441701173782349,
+                  -0.4000000059604645,
+                  2.2643134593963623,
+                  -0.4000000059604645,
+                  2.5844566822052,
+                  -0.4000000059604645,
+                  2.904599905014038,
+                  -0.4000000059604645,
+                  2.904599905014038,
+                  -0.5230000019073486,
+                  2.904599905014038,
+                  -0.6459999680519104,
+                  2.904599905014038,
+                  -0.7689999938011169,
+                  2.584456443786621,
+                  -0.7689999938011169,
+                  2.2643134593963623,
+                  -0.7689999938011169,
+                  1.9441701173782349,
+                  -0.7689999938011169,
+                  1.9441701173782349,
+                  -0.6459999680519104,
+                  1.9441701173782349,
+                  -0.5230000019073486,
+                  1.9441701173782349,
+                  -0.4000000059604645
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#232434",
+                "stroke": "#414356",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#cdd6f4",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Tree one",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Tree one",
+                "x": 242.4385,
+                "y": 63,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  3.469446951953614e-18,
+                  0
+                ],
+                "width": 56.043
+              }
+            }
+          ]
+        },
+        {
+          "id": "Hello",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Hello\" data-label=\"hello.txt blob\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"338.46000000000004\" y=\"40\" width=\"113.827\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Hello\" data-role=\"node\" />\n  <text x=\"395.37350000000004\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">hello.txt blob</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.3845999240875244,
+                  -0.4000000059604645,
+                  3.7640230655670166,
+                  -0.4000000059604645,
+                  4.143446445465088,
+                  -0.4000000059604645,
+                  4.522870063781738,
+                  -0.4000000059604645,
+                  4.522870063781738,
+                  -0.5230000019073486,
+                  4.522870063781738,
+                  -0.6459999680519104,
+                  4.522870063781738,
+                  -0.7689999938011169,
+                  4.143446445465088,
+                  -0.7689999938011169,
+                  3.764023542404175,
+                  -0.7689999938011169,
+                  3.3845999240875244,
+                  -0.7689999938011169,
+                  3.3845999240875244,
+                  -0.6459999680519104,
+                  3.3845999240875244,
+                  -0.5230000019073486,
+                  3.3845999240875244,
+                  -0.4000000059604645
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#232434",
+                "stroke": "#414356",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#cdd6f4",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "hello.txt blob",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "hello.txt blob",
+                "x": 395.37350000000004,
+                "y": 63,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  3.469446951953614e-18,
+                  0
+                ],
+                "width": 73.827
+              }
+            }
+          ]
+        }
+      ],
+      "findings": {
+        "ok": true,
+        "warnings": [],
+        "layout": {
+          "version": 1,
+          "kind": "flowchart",
+          "nodes": [
+            {
+              "id": "C1",
+              "x": 40,
+              "y": 40,
+              "w": 106,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Commit one"
+            },
+            {
+              "id": "T1",
+              "x": 194,
+              "y": 40,
+              "w": 96,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Tree one"
+            },
+            {
+              "id": "Hello",
+              "x": 338,
+              "y": 40,
+              "w": 114,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "hello.txt blob"
+            }
+          ],
+          "edges": [
+            {
+              "id": "C1->T1",
+              "from": "C1",
+              "to": "T1",
+              "path": [
+                [
+                  146,
+                  58
+                ],
+                [
+                  194,
+                  58
+                ]
+              ]
+            },
+            {
+              "id": "T1->Hello",
+              "from": "T1",
+              "to": "Hello",
+              "path": [
+                [
+                  290,
+                  58
+                ],
+                [
+                  338,
+                  58
+                ]
+              ]
+            }
+          ],
+          "groups": [],
+          "bounds": {
+            "w": 492,
+            "h": 117
+          }
+        }
+      }
+    },
+    "[\"graph LR\\nC1[Commit one] --> T1[Tree one]\\nT1 --> Hello[hello.txt blob]\\nC2[Commit two] --> T2[Tree two]\\nC2 --> C1\\nT2 --> New[world.txt blob]\\nT2 --> Hello\",\"catppuccin-mocha\",null]": {
+      "version": 1,
+      "renderer": "agentic-mermaid@0.4.1",
+      "spec": {
+        "source": "graph LR\nC1[Commit one] --> T1[Tree one]\nT1 --> Hello[hello.txt blob]\nC2[Commit two] --> T2[Tree two]\nC2 --> C1\nT2 --> New[world.txt blob]\nT2 --> Hello",
+        "style": "catppuccin-mocha"
+      },
+      "family": "flowchart",
+      "width": 652.6320000000001,
+      "height": 199.8,
+      "palette": {
+        "paper": "#1e1e2e",
+        "ink": "#cdd6f4",
+        "accent": "#cba6f7",
+        "muted": "#6c7086"
+      },
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"652.6320000000001\" height=\"199.8\" viewBox=\"0 0 652.6320000000001 199.8\" style=\"--bg:#1e1e2e;--fg:#cdd6f4;--line:#585b70;--accent:#cba6f7;--muted:#6c7086;--font:Inter;background:#1e1e2e\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #cdd6f4;\n    --_text-sec:      #6c7086;\n    --_text-muted:    #6c7086;\n    --_text-faint:    #7d8199;\n    --_line:          #585b70;\n    --_arrow:         #cba6f7;\n    --_node-fill:     #232434;\n    --_node-stroke:   #414356;\n    --_group-fill:    #1e1e2e;\n    --_group-hdr:     #272738;\n    --_inner-stroke:  #333446;\n    --_key-badge:     #303042;\n  }\n</style>\n<rect width=\"652.6320000000001\" height=\"199.8\" fill=\"#1e1e2e\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#cba6f7\" stroke=\"#cba6f7\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#cba6f7\" stroke=\"#cba6f7\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline class=\"edge\" data-from=\"C1\" data-to=\"T1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"302.31600000000003,58.45 343.64700000000005,58.45\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C1-&gt;T1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C1 to T1\" />\n<polyline class=\"edge\" data-from=\"T1\" data-to=\"Hello\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"439.69000000000005,58.45 498.80500000000006,58.45\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T1-&gt;Hello#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T1 to Hello\" />\n<polyline class=\"edge\" data-from=\"C2\" data-to=\"T2\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"143.453,98.01250000000002 169.676,98.01250000000002 169.676,137.57500000000002 195.899,137.57500000000002\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C2-&gt;T2#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C2 to T2\" />\n<polyline class=\"edge\" data-from=\"C2\" data-to=\"C1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"143.453,98.01250000000002 169.676,98.01250000000002 169.676,58.45 195.899,58.45\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C2-&gt;C1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C2 to C1\" />\n<polyline class=\"edge\" data-from=\"T2\" data-to=\"New\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"288.978,123.35000000000001 343.64700000000005,123.35000000000001\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T2-&gt;New#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T2 to New\" />\n<polyline class=\"edge\" data-from=\"T2\" data-to=\"Hello\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"288.978,151.8 486.80500000000006,151.8 486.80500000000006,58.45 498.80500000000006,58.45\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T2-&gt;Hello#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T2 to Hello\" />\n<g class=\"node\" data-id=\"C2\" data-label=\"Commit two\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"79.56250000000001\" width=\"103.453\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:C2\" data-role=\"node\" />\n  <text x=\"91.7265\" y=\"98.01250000000002\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"63.453\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Commit two</text>\n</g>\n<g class=\"node\" data-id=\"C1\" data-label=\"Commit one\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"195.899\" y=\"40\" width=\"106.417\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:C1\" data-role=\"node\" />\n  <text x=\"249.10750000000002\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"66.417\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Commit one</text>\n</g>\n<g class=\"node\" data-id=\"T1\" data-label=\"Tree one\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"343.64700000000005\" y=\"40\" width=\"96.04299999999999\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:T1\" data-role=\"node\" />\n  <text x=\"391.66850000000005\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"56.043\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Tree one</text>\n</g>\n<g class=\"node\" data-id=\"T2\" data-label=\"Tree two\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"195.899\" y=\"119.12500000000001\" width=\"93.07900000000001\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:T2\" data-role=\"node\" />\n  <text x=\"242.4385\" y=\"137.57500000000002\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"53.079\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Tree two</text>\n</g>\n<g class=\"node\" data-id=\"Hello\" data-label=\"hello.txt blob\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"498.80500000000006\" y=\"40\" width=\"113.827\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:Hello\" data-role=\"node\" />\n  <text x=\"555.7185000000001\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"73.827\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">hello.txt blob</text>\n</g>\n<g class=\"node\" data-id=\"New\" data-label=\"world.txt blob\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"343.64700000000005\" y=\"104.9\" width=\"118.273\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:New\" data-role=\"node\" />\n  <text x=\"402.78350000000006\" y=\"123.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"78.273\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">world.txt blob</text>\n</g>\n</svg>",
+      "parts": [
+        {
+          "id": "__frame",
+          "role": "frame",
+          "kind": "shape",
+          "svg": "",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.168404296503395e-21,
+                  0,
+                  2.1754400730133057,
+                  0,
+                  4.350880146026611,
+                  0,
+                  6.526319980621338,
+                  0,
+                  6.526319980621338,
+                  -0.6660000085830688,
+                  6.526319980621338,
+                  -1.3320000171661377,
+                  6.526319980621338,
+                  -1.9980000257492065,
+                  4.350880146026611,
+                  -1.9980000257492065,
+                  2.1754400730133057,
+                  -1.9980000257492065,
+                  2.168404296503395e-21,
+                  -1.9980000257492065,
+                  2.168404296503395e-21,
+                  -1.3320000171661377,
+                  2.168404296503395e-21,
+                  -0.6660000085830688,
+                  2.168404296503395e-21,
+                  0
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#1e1e2e",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "edge:C1->T1#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"C1\" data-to=\"T1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"302.31600000000003,58.45 343.64700000000005,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C1-&gt;T1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C1 to T1\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.023159980773926,
+                  -0.5845000147819519,
+                  3.1609301567077637,
+                  -0.5845000147819519,
+                  3.2986998558044434,
+                  -0.5845000147819519,
+                  3.4364700317382812,
+                  -0.5845000147819519
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#65697f",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  3.3664700984954834,
+                  -0.559499979019165,
+                  3.393136739730835,
+                  -0.5678333640098572,
+                  3.4198033809661865,
+                  -0.5761666893959045,
+                  3.446470022201538,
+                  -0.5845000147819519,
+                  3.4198033809661865,
+                  -0.5928333401679993,
+                  3.393136739730835,
+                  -0.6011666655540466,
+                  3.3664700984954834,
+                  -0.609499990940094,
+                  3.3664700984954834,
+                  -0.5928333401679993,
+                  3.3664700984954834,
+                  -0.5761666893959045,
+                  3.3664700984954834,
+                  -0.559499979019165
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#cba6f7",
+                "stroke": "#cba6f7",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "C1",
+          "to": "T1",
+          "route": [
+            [
+              3.0231600000000003,
+              -0.5845
+            ],
+            [
+              3.4364700000000004,
+              -0.5845
+            ]
+          ]
+        },
+        {
+          "id": "edge:T1->Hello#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"T1\" data-to=\"Hello\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"439.69000000000005,58.45 498.80500000000006,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T1-&gt;Hello#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T1 to Hello\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.396900177001953,
+                  -0.5845000147819519,
+                  4.593949794769287,
+                  -0.5845000147819519,
+                  4.790999889373779,
+                  -0.5845000147819519,
+                  4.9880499839782715,
+                  -0.5845000147819519
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#65697f",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  4.9180498123168945,
+                  -0.559499979019165,
+                  4.944716453552246,
+                  -0.5678333640098572,
+                  4.971383094787598,
+                  -0.5761666893959045,
+                  4.998049736022949,
+                  -0.5845000147819519,
+                  4.971383094787598,
+                  -0.5928333401679993,
+                  4.944716453552246,
+                  -0.6011666655540466,
+                  4.9180498123168945,
+                  -0.609499990940094,
+                  4.9180498123168945,
+                  -0.5928333401679993,
+                  4.9180498123168945,
+                  -0.5761666893959045,
+                  4.9180498123168945,
+                  -0.559499979019165
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#cba6f7",
+                "stroke": "#cba6f7",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "T1",
+          "to": "Hello",
+          "route": [
+            [
+              4.3969000000000005,
+              -0.5845
+            ],
+            [
+              4.98805,
+              -0.5845
+            ]
+          ]
+        },
+        {
+          "id": "edge:C2->T2#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"C2\" data-to=\"T2\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"143.453,98.01250000000002 169.676,98.01250000000002 169.676,137.57500000000002 195.899,137.57500000000002\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C2-&gt;T2#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C2 to T2\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.4345300197601318,
+                  -0.9801249504089355,
+                  1.521939992904663,
+                  -0.9801249504089355,
+                  1.6093499660491943,
+                  -0.9801249504089355,
+                  1.6967599391937256,
+                  -0.9801249504089355,
+                  1.6967599391937256,
+                  -1.1119999885559082,
+                  1.6967599391937256,
+                  -1.2438750267028809,
+                  1.6967599391937256,
+                  -1.375749945640564,
+                  1.7841699123382568,
+                  -1.375749945640564,
+                  1.8715800046920776,
+                  -1.375749945640564,
+                  1.9589899778366089,
+                  -1.375749945640564
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#65697f",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  1.888990044593811,
+                  -1.3507499694824219,
+                  1.9156566858291626,
+                  -1.3590832948684692,
+                  1.9423233270645142,
+                  -1.3674166202545166,
+                  1.9689899682998657,
+                  -1.375749945640564,
+                  1.9423233270645142,
+                  -1.3840832710266113,
+                  1.9156566858291626,
+                  -1.3924165964126587,
+                  1.888990044593811,
+                  -1.400749921798706,
+                  1.888990044593811,
+                  -1.3840832710266113,
+                  1.888990044593811,
+                  -1.3674166202545166,
+                  1.888990044593811,
+                  -1.3507499694824219
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#cba6f7",
+                "stroke": "#cba6f7",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "C2",
+          "to": "T2",
+          "route": [
+            [
+              1.43453,
+              -0.9801250000000001
+            ],
+            [
+              1.6967599999999998,
+              -0.9801250000000001
+            ],
+            [
+              1.6967599999999998,
+              -1.3757500000000003
+            ],
+            [
+              1.95899,
+              -1.3757500000000003
+            ]
+          ]
+        },
+        {
+          "id": "edge:C2->C1#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"C2\" data-to=\"C1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"143.453,98.01250000000002 169.676,98.01250000000002 169.676,58.45 195.899,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C2-&gt;C1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C2 to C1\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.4345300197601318,
+                  -0.9801249504089355,
+                  1.521939992904663,
+                  -0.9801249504089355,
+                  1.6093499660491943,
+                  -0.9801249504089355,
+                  1.6967599391937256,
+                  -0.9801249504089355,
+                  1.6967599391937256,
+                  -0.8482499718666077,
+                  1.6967599391937256,
+                  -0.7163749933242798,
+                  1.6967599391937256,
+                  -0.5845000147819519,
+                  1.7841699123382568,
+                  -0.5845000147819519,
+                  1.8715800046920776,
+                  -0.5845000147819519,
+                  1.9589899778366089,
+                  -0.5845000147819519
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#65697f",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  1.888990044593811,
+                  -0.559499979019165,
+                  1.9156566858291626,
+                  -0.5678333640098572,
+                  1.9423233270645142,
+                  -0.5761666893959045,
+                  1.9689899682998657,
+                  -0.5845000147819519,
+                  1.9423233270645142,
+                  -0.5928333401679993,
+                  1.9156566858291626,
+                  -0.6011666655540466,
+                  1.888990044593811,
+                  -0.609499990940094,
+                  1.888990044593811,
+                  -0.5928333401679993,
+                  1.888990044593811,
+                  -0.5761666893959045,
+                  1.888990044593811,
+                  -0.559499979019165
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#cba6f7",
+                "stroke": "#cba6f7",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "C2",
+          "to": "C1",
+          "route": [
+            [
+              1.43453,
+              -0.9801250000000001
+            ],
+            [
+              1.6967599999999998,
+              -0.9801250000000001
+            ],
+            [
+              1.6967599999999998,
+              -0.5845
+            ],
+            [
+              1.95899,
+              -0.5845
+            ]
+          ]
+        },
+        {
+          "id": "edge:T2->New#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"T2\" data-to=\"New\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"288.978,123.35000000000001 343.64700000000005,123.35000000000001\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T2-&gt;New#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T2 to New\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.889780044555664,
+                  -1.2335000038146973,
+                  3.072009801864624,
+                  -1.2335000038146973,
+                  3.254240036010742,
+                  -1.2335000038146973,
+                  3.4364700317382812,
+                  -1.2335000038146973
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#65697f",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  3.3664700984954834,
+                  -1.2085000276565552,
+                  3.393136739730835,
+                  -1.2168333530426025,
+                  3.4198033809661865,
+                  -1.22516667842865,
+                  3.446470022201538,
+                  -1.2335000038146973,
+                  3.4198033809661865,
+                  -1.2418333292007446,
+                  3.393136739730835,
+                  -1.250166654586792,
+                  3.3664700984954834,
+                  -1.2584999799728394,
+                  3.3664700984954834,
+                  -1.2418333292007446,
+                  3.3664700984954834,
+                  -1.22516667842865,
+                  3.3664700984954834,
+                  -1.2085000276565552
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#cba6f7",
+                "stroke": "#cba6f7",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "T2",
+          "to": "New",
+          "route": [
+            [
+              2.88978,
+              -1.2335
+            ],
+            [
+              3.4364700000000004,
+              -1.2335
+            ]
+          ]
+        },
+        {
+          "id": "edge:T2->Hello#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"T2\" data-to=\"Hello\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"288.978,151.8 486.80500000000006,151.8 486.80500000000006,58.45 498.80500000000006,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T2-&gt;Hello#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T2 to Hello\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.889780044555664,
+                  -1.5180000066757202,
+                  3.5492031574249268,
+                  -1.5180000066757202,
+                  4.208626747131348,
+                  -1.5180000066757202,
+                  4.8680500984191895,
+                  -1.5180000066757202,
+                  4.8680500984191895,
+                  -1.2068333625793457,
+                  4.8680500984191895,
+                  -0.8956666588783264,
+                  4.8680500984191895,
+                  -0.5845000147819519,
+                  4.908050060272217,
+                  -0.5845000147819519,
+                  4.948050022125244,
+                  -0.5845000147819519,
+                  4.9880499839782715,
+                  -0.5845000147819519
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#65697f",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  4.9180498123168945,
+                  -0.559499979019165,
+                  4.944716453552246,
+                  -0.5678333640098572,
+                  4.971383094787598,
+                  -0.5761666893959045,
+                  4.998049736022949,
+                  -0.5845000147819519,
+                  4.971383094787598,
+                  -0.5928333401679993,
+                  4.944716453552246,
+                  -0.6011666655540466,
+                  4.9180498123168945,
+                  -0.609499990940094,
+                  4.9180498123168945,
+                  -0.5928333401679993,
+                  4.9180498123168945,
+                  -0.5761666893959045,
+                  4.9180498123168945,
+                  -0.559499979019165
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#cba6f7",
+                "stroke": "#cba6f7",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "T2",
+          "to": "Hello",
+          "route": [
+            [
+              2.88978,
+              -1.518
+            ],
+            [
+              4.86805,
+              -1.518
+            ],
+            [
+              4.86805,
+              -0.5845
+            ],
+            [
+              4.98805,
+              -0.5845
+            ]
+          ]
+        },
+        {
+          "id": "C2",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"C2\" data-label=\"Commit two\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"79.56250000000001\" width=\"103.453\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:C2\" data-role=\"node\" />\n  <text x=\"91.7265\" y=\"98.01250000000002\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Commit two</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0.4000000059604645,
+                  -0.7956249713897705,
+                  0.7448433637619019,
+                  -0.7956249713897705,
+                  1.089686632156372,
+                  -0.7956249713897705,
+                  1.4345300197601318,
+                  -0.7956249713897705,
+                  1.4345300197601318,
+                  -0.9186250567436218,
+                  1.4345300197601318,
+                  -1.0416250228881836,
+                  1.4345300197601318,
+                  -1.1646250486373901,
+                  1.089686632156372,
+                  -1.1646250486373901,
+                  0.7448433637619019,
+                  -1.1646250486373901,
+                  0.4000000059604645,
+                  -1.1646250486373901,
+                  0.4000000059604645,
+                  -1.0416250228881836,
+                  0.4000000059604645,
+                  -0.9186250567436218,
+                  0.4000000059604645,
+                  -0.7956249713897705
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#232434",
+                "stroke": "#414356",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#cdd6f4",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Commit two",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Commit two",
+                "x": 91.7265,
+                "y": 102.56250000000001,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  2.168404344971009e-19,
+                  0
+                ],
+                "width": 63.453
+              }
+            }
+          ]
+        },
+        {
+          "id": "C1",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"C1\" data-label=\"Commit one\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"195.899\" y=\"40\" width=\"106.417\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:C1\" data-role=\"node\" />\n  <text x=\"249.10750000000002\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Commit one</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.9589899778366089,
+                  -0.4000000059604645,
+                  2.313713312149048,
+                  -0.4000000059604645,
+                  2.6684365272521973,
+                  -0.4000000059604645,
+                  3.023159980773926,
+                  -0.4000000059604645,
+                  3.023159980773926,
+                  -0.5230000019073486,
+                  3.023159980773926,
+                  -0.6459999680519104,
+                  3.023159980773926,
+                  -0.7689999938011169,
+                  2.6684365272521973,
+                  -0.7689999938011169,
+                  2.313713312149048,
+                  -0.7689999938011169,
+                  1.9589899778366089,
+                  -0.7689999938011169,
+                  1.9589899778366089,
+                  -0.6459999680519104,
+                  1.9589899778366089,
+                  -0.5230000019073486,
+                  1.9589899778366089,
+                  -0.4000000059604645
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#232434",
+                "stroke": "#414356",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#cdd6f4",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Commit one",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Commit one",
+                "x": 249.10750000000002,
+                "y": 63,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  2.168404344971009e-19,
+                  0
+                ],
+                "width": 66.417
+              }
+            }
+          ]
+        },
+        {
+          "id": "T1",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"T1\" data-label=\"Tree one\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"343.64700000000005\" y=\"40\" width=\"96.04299999999999\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:T1\" data-role=\"node\" />\n  <text x=\"391.66850000000005\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Tree one</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.4364700317382812,
+                  -0.4000000059604645,
+                  3.7566134929656982,
+                  -0.4000000059604645,
+                  4.076756477355957,
+                  -0.4000000059604645,
+                  4.396900177001953,
+                  -0.4000000059604645,
+                  4.396900177001953,
+                  -0.5230000019073486,
+                  4.396900177001953,
+                  -0.6459999680519104,
+                  4.396900177001953,
+                  -0.7689999938011169,
+                  4.076756477355957,
+                  -0.7689999938011169,
+                  3.7566134929656982,
+                  -0.7689999938011169,
+                  3.4364700317382812,
+                  -0.7689999938011169,
+                  3.4364700317382812,
+                  -0.6459999680519104,
+                  3.4364700317382812,
+                  -0.5230000019073486,
+                  3.4364700317382812,
+                  -0.4000000059604645
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#232434",
+                "stroke": "#414356",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#cdd6f4",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Tree one",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Tree one",
+                "x": 391.66850000000005,
+                "y": 63,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  2.168404344971009e-19,
+                  0
+                ],
+                "width": 56.043
+              }
+            }
+          ]
+        },
+        {
+          "id": "T2",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"T2\" data-label=\"Tree two\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"195.899\" y=\"119.12500000000001\" width=\"93.07900000000001\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:T2\" data-role=\"node\" />\n  <text x=\"242.4385\" y=\"137.57500000000002\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Tree two</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.9589899778366089,
+                  -1.191249966621399,
+                  2.2692534923553467,
+                  -1.191249966621399,
+                  2.579516649246216,
+                  -1.191249966621399,
+                  2.889780044555664,
+                  -1.191249966621399,
+                  2.889780044555664,
+                  -1.3142499923706055,
+                  2.889780044555664,
+                  -1.437250018119812,
+                  2.889780044555664,
+                  -1.560249924659729,
+                  2.579516649246216,
+                  -1.560249924659729,
+                  2.2692534923553467,
+                  -1.560249924659729,
+                  1.9589899778366089,
+                  -1.560249924659729,
+                  1.9589899778366089,
+                  -1.4372498989105225,
+                  1.9589899778366089,
+                  -1.3142499923706055,
+                  1.9589899778366089,
+                  -1.191249966621399
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#232434",
+                "stroke": "#414356",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#cdd6f4",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Tree two",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Tree two",
+                "x": 242.4385,
+                "y": 142.12500000000003,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  2.168404344971009e-19,
+                  0
+                ],
+                "width": 53.079
+              }
+            }
+          ]
+        },
+        {
+          "id": "Hello",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Hello\" data-label=\"hello.txt blob\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"498.80500000000006\" y=\"40\" width=\"113.827\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Hello\" data-role=\"node\" />\n  <text x=\"555.7185000000001\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">hello.txt blob</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.9880499839782715,
+                  -0.4000000059604645,
+                  5.367473125457764,
+                  -0.4000000059604645,
+                  5.746896266937256,
+                  -0.4000000059604645,
+                  6.1263203620910645,
+                  -0.4000000059604645,
+                  6.1263203620910645,
+                  -0.5230000019073486,
+                  6.1263203620910645,
+                  -0.6459999680519104,
+                  6.1263203620910645,
+                  -0.7689999938011169,
+                  5.746896743774414,
+                  -0.7689999938011169,
+                  5.367473125457764,
+                  -0.7689999938011169,
+                  4.9880499839782715,
+                  -0.7689999938011169,
+                  4.9880499839782715,
+                  -0.6459999680519104,
+                  4.9880499839782715,
+                  -0.5230000019073486,
+                  4.9880499839782715,
+                  -0.4000000059604645
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#232434",
+                "stroke": "#414356",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#cdd6f4",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "hello.txt blob",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "hello.txt blob",
+                "x": 555.7185000000001,
+                "y": 63,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  2.168404344971009e-19,
+                  0
+                ],
+                "width": 73.827
+              }
+            }
+          ]
+        },
+        {
+          "id": "New",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"New\" data-label=\"world.txt blob\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"343.64700000000005\" y=\"104.9\" width=\"118.273\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:New\" data-role=\"node\" />\n  <text x=\"402.78350000000006\" y=\"123.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">world.txt blob</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.4364700317382812,
+                  -1.0490000247955322,
+                  3.8307135105133057,
+                  -1.0490000247955322,
+                  4.224956512451172,
+                  -1.0490000247955322,
+                  4.619200229644775,
+                  -1.0490000247955322,
+                  4.619200229644775,
+                  -1.1720000505447388,
+                  4.619200229644775,
+                  -1.2949999570846558,
+                  4.619200229644775,
+                  -1.4179999828338623,
+                  4.224956512451172,
+                  -1.4179999828338623,
+                  3.8307135105133057,
+                  -1.4179999828338623,
+                  3.4364700317382812,
+                  -1.4179999828338623,
+                  3.4364700317382812,
+                  -1.2949999570846558,
+                  3.4364700317382812,
+                  -1.1720000505447388,
+                  3.4364700317382812,
+                  -1.0490000247955322
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#232434",
+                "stroke": "#414356",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#cdd6f4",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "world.txt blob",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "world.txt blob",
+                "x": 402.78350000000006,
+                "y": 127.9,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  2.168404344971009e-19,
+                  0
+                ],
+                "width": 78.273
+              }
+            }
+          ]
+        }
+      ],
+      "findings": {
+        "ok": true,
+        "warnings": [],
+        "layout": {
+          "version": 1,
+          "kind": "flowchart",
+          "nodes": [
+            {
+              "id": "C2",
+              "x": 40,
+              "y": 80,
+              "w": 103,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Commit two"
+            },
+            {
+              "id": "C1",
+              "x": 196,
+              "y": 40,
+              "w": 106,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Commit one"
+            },
+            {
+              "id": "T1",
+              "x": 344,
+              "y": 40,
+              "w": 96,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Tree one"
+            },
+            {
+              "id": "T2",
+              "x": 196,
+              "y": 119,
+              "w": 93,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Tree two"
+            },
+            {
+              "id": "Hello",
+              "x": 499,
+              "y": 40,
+              "w": 114,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "hello.txt blob"
+            },
+            {
+              "id": "New",
+              "x": 344,
+              "y": 105,
+              "w": 118,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "world.txt blob"
+            }
+          ],
+          "edges": [
+            {
+              "id": "C1->T1",
+              "from": "C1",
+              "to": "T1",
+              "path": [
+                [
+                  302,
+                  58
+                ],
+                [
+                  344,
+                  58
+                ]
+              ]
+            },
+            {
+              "id": "T1->Hello",
+              "from": "T1",
+              "to": "Hello",
+              "path": [
+                [
+                  440,
+                  58
+                ],
+                [
+                  499,
+                  58
+                ]
+              ]
+            },
+            {
+              "id": "C2->T2",
+              "from": "C2",
+              "to": "T2",
+              "path": [
+                [
+                  143,
+                  98
+                ],
+                [
+                  170,
+                  98
+                ],
+                [
+                  170,
+                  138
+                ],
+                [
+                  196,
+                  138
+                ]
+              ]
+            },
+            {
+              "id": "C2->C1",
+              "from": "C2",
+              "to": "C1",
+              "path": [
+                [
+                  143,
+                  98
+                ],
+                [
+                  170,
+                  98
+                ],
+                [
+                  170,
+                  58
+                ],
+                [
+                  196,
+                  58
+                ]
+              ]
+            },
+            {
+              "id": "T2->New",
+              "from": "T2",
+              "to": "New",
+              "path": [
+                [
+                  289,
+                  123
+                ],
+                [
+                  344,
+                  123
+                ]
+              ]
+            },
+            {
+              "id": "T2->Hello",
+              "from": "T2",
+              "to": "Hello",
+              "path": [
+                [
+                  289,
+                  152
+                ],
+                [
+                  487,
+                  152
+                ],
+                [
+                  487,
+                  58
+                ],
+                [
+                  499,
+                  58
+                ]
+              ]
+            }
+          ],
+          "groups": [],
+          "bounds": {
+            "w": 653,
+            "h": 200
+          }
+        }
+      }
+    },
+    "[\"graph LR\\nC1[Commit one] --> T1[Tree one]\\nT1 --> Hello[hello.txt blob]\\nC2[Commit two] --> T2[Tree two]\\nC2 --> C1\\nT2 --> New[edited hello.txt blob]\",\"catppuccin-mocha\",null]": {
+      "version": 1,
+      "renderer": "agentic-mermaid@0.4.1",
+      "spec": {
+        "source": "graph LR\nC1[Commit one] --> T1[Tree one]\nT1 --> Hello[hello.txt blob]\nC2[Commit two] --> T2[Tree two]\nC2 --> C1\nT2 --> New[edited hello.txt blob]",
+        "style": "catppuccin-mocha"
+      },
+      "family": "flowchart",
+      "width": 643.74,
+      "height": 181.8,
+      "palette": {
+        "paper": "#1e1e2e",
+        "ink": "#cdd6f4",
+        "accent": "#cba6f7",
+        "muted": "#6c7086"
+      },
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"643.74\" height=\"181.8\" viewBox=\"0 0 643.74 181.8\" style=\"--bg:#1e1e2e;--fg:#cdd6f4;--line:#585b70;--accent:#cba6f7;--muted:#6c7086;--font:Inter;background:#1e1e2e\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #cdd6f4;\n    --_text-sec:      #6c7086;\n    --_text-muted:    #6c7086;\n    --_text-faint:    #7d8199;\n    --_line:          #585b70;\n    --_arrow:         #cba6f7;\n    --_node-fill:     #232434;\n    --_node-stroke:   #414356;\n    --_group-fill:    #1e1e2e;\n    --_group-hdr:     #272738;\n    --_inner-stroke:  #333446;\n    --_key-badge:     #303042;\n  }\n</style>\n<rect width=\"643.74\" height=\"181.8\" fill=\"#1e1e2e\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#cba6f7\" stroke=\"#cba6f7\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#cba6f7\" stroke=\"#cba6f7\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline class=\"edge\" data-from=\"C1\" data-to=\"T1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"297.87,58.45 339.201,58.45\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C1-&gt;T1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C1 to T1\" />\n<polyline class=\"edge\" data-from=\"T1\" data-to=\"Hello\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"435.244,58.45 489.913,58.45\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T1-&gt;Hello#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T1 to Hello\" />\n<polyline class=\"edge\" data-from=\"C2\" data-to=\"T2\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"143.453,90.9 167.453,90.9 167.453,123.35000000000001 191.45300000000003,123.35000000000001\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C2-&gt;T2#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C2 to T2\" />\n<polyline class=\"edge\" data-from=\"C2\" data-to=\"C1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"143.453,90.9 167.453,90.9 167.453,58.45 191.453,58.45\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C2-&gt;C1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C2 to C1\" />\n<polyline class=\"edge\" data-from=\"T2\" data-to=\"New\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"284.53200000000004,123.35000000000001 339.201,123.35000000000001\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T2-&gt;New#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T2 to New\" />\n<g class=\"node\" data-id=\"C2\" data-label=\"Commit two\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"72.45\" width=\"103.453\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:C2\" data-role=\"node\" />\n  <text x=\"91.7265\" y=\"90.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"63.453\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Commit two</text>\n</g>\n<g class=\"node\" data-id=\"C1\" data-label=\"Commit one\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"191.453\" y=\"40\" width=\"106.417\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:C1\" data-role=\"node\" />\n  <text x=\"244.6615\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"66.417\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Commit one</text>\n</g>\n<g class=\"node\" data-id=\"T1\" data-label=\"Tree one\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"339.201\" y=\"40\" width=\"96.04299999999999\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:T1\" data-role=\"node\" />\n  <text x=\"387.2225\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"56.043\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Tree one</text>\n</g>\n<g class=\"node\" data-id=\"Hello\" data-label=\"hello.txt blob\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"489.913\" y=\"40\" width=\"113.827\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:Hello\" data-role=\"node\" />\n  <text x=\"546.8265\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"73.827\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">hello.txt blob</text>\n</g>\n<g class=\"node\" data-id=\"T2\" data-label=\"Tree two\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"191.45300000000003\" y=\"104.9\" width=\"93.07900000000001\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:T2\" data-role=\"node\" />\n  <text x=\"237.99250000000004\" y=\"123.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"53.079\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Tree two</text>\n</g>\n<g class=\"node\" data-id=\"New\" data-label=\"edited hello.txt blob\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"339.201\" y=\"104.9\" width=\"151.618\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:New\" data-role=\"node\" />\n  <text x=\"415.01\" y=\"123.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"111.618\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">edited hello.txt blob</text>\n</g>\n</svg>",
+      "parts": [
+        {
+          "id": "__frame",
+          "role": "frame",
+          "kind": "shape",
+          "svg": "",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  -4.33680859300679e-21,
+                  0,
+                  2.1458001136779785,
+                  0,
+                  4.291600227355957,
+                  0,
+                  6.437399864196777,
+                  0,
+                  6.437399864196777,
+                  -0.6060000061988831,
+                  6.437399864196777,
+                  -1.2120000123977661,
+                  6.437399864196777,
+                  -1.818000078201294,
+                  4.291600227355957,
+                  -1.818000078201294,
+                  2.1458001136779785,
+                  -1.818000078201294,
+                  -4.33680859300679e-21,
+                  -1.818000078201294,
+                  -4.33680859300679e-21,
+                  -1.2120000123977661,
+                  -4.33680859300679e-21,
+                  -0.6060000061988831,
+                  -4.33680859300679e-21,
+                  0
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#1e1e2e",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "edge:C1->T1#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"C1\" data-to=\"T1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"297.87,58.45 339.201,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C1-&gt;T1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C1 to T1\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.9786999225616455,
+                  -0.5845000147819519,
+                  3.1164700984954834,
+                  -0.5845000147819519,
+                  3.254240036010742,
+                  -0.5845000147819519,
+                  3.392009973526001,
+                  -0.5845000147819519
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#65697f",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  3.322009801864624,
+                  -0.559499979019165,
+                  3.3486764430999756,
+                  -0.5678333640098572,
+                  3.3753433227539062,
+                  -0.5761666893959045,
+                  3.402009963989258,
+                  -0.5845000147819519,
+                  3.3753433227539062,
+                  -0.5928333401679993,
+                  3.3486764430999756,
+                  -0.6011666655540466,
+                  3.322009801864624,
+                  -0.609499990940094,
+                  3.322009801864624,
+                  -0.5928333401679993,
+                  3.322009801864624,
+                  -0.5761666893959045,
+                  3.322009801864624,
+                  -0.559499979019165
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#cba6f7",
+                "stroke": "#cba6f7",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "C1",
+          "to": "T1",
+          "route": [
+            [
+              2.9787,
+              -0.5845
+            ],
+            [
+              3.3920100000000004,
+              -0.5845
+            ]
+          ]
+        },
+        {
+          "id": "edge:T1->Hello#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"T1\" data-to=\"Hello\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"435.244,58.45 489.913,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T1-&gt;Hello#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T1 to Hello\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.352439880371094,
+                  -0.5845000147819519,
+                  4.534669876098633,
+                  -0.5845000147819519,
+                  4.716899871826172,
+                  -0.5845000147819519,
+                  4.899129867553711,
+                  -0.5845000147819519
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#65697f",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  4.829130172729492,
+                  -0.559499979019165,
+                  4.855796813964844,
+                  -0.5678333640098572,
+                  4.882463455200195,
+                  -0.5761666893959045,
+                  4.909130096435547,
+                  -0.5845000147819519,
+                  4.882463455200195,
+                  -0.5928333401679993,
+                  4.855796813964844,
+                  -0.6011666655540466,
+                  4.829130172729492,
+                  -0.609499990940094,
+                  4.829130172729492,
+                  -0.5928333401679993,
+                  4.829130172729492,
+                  -0.5761666893959045,
+                  4.829130172729492,
+                  -0.559499979019165
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#cba6f7",
+                "stroke": "#cba6f7",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "T1",
+          "to": "Hello",
+          "route": [
+            [
+              4.3524400000000005,
+              -0.5845
+            ],
+            [
+              4.89913,
+              -0.5845
+            ]
+          ]
+        },
+        {
+          "id": "edge:C2->T2#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"C2\" data-to=\"T2\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"143.453,90.9 167.453,90.9 167.453,123.35000000000001 191.45300000000003,123.35000000000001\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C2-&gt;T2#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C2 to T2\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.4345300197601318,
+                  -0.909000039100647,
+                  1.514530062675476,
+                  -0.909000039100647,
+                  1.5945299863815308,
+                  -0.909000039100647,
+                  1.674530029296875,
+                  -0.909000039100647,
+                  1.674530029296875,
+                  -1.0171666145324707,
+                  1.674530029296875,
+                  -1.125333309173584,
+                  1.674530029296875,
+                  -1.2335000038146973,
+                  1.7545300722122192,
+                  -1.2335000038146973,
+                  1.834529995918274,
+                  -1.2335000038146973,
+                  1.9145300388336182,
+                  -1.2335000038146973
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#65697f",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  1.8445299863815308,
+                  -1.2085000276565552,
+                  1.8711967468261719,
+                  -1.2168333530426025,
+                  1.8978633880615234,
+                  -1.22516667842865,
+                  1.924530029296875,
+                  -1.2335000038146973,
+                  1.8978633880615234,
+                  -1.2418333292007446,
+                  1.8711967468261719,
+                  -1.250166654586792,
+                  1.8445299863815308,
+                  -1.2584999799728394,
+                  1.8445299863815308,
+                  -1.2418333292007446,
+                  1.8445299863815308,
+                  -1.22516667842865,
+                  1.8445299863815308,
+                  -1.2085000276565552
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#cba6f7",
+                "stroke": "#cba6f7",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "C2",
+          "to": "T2",
+          "route": [
+            [
+              1.43453,
+              -0.909
+            ],
+            [
+              1.67453,
+              -0.909
+            ],
+            [
+              1.67453,
+              -1.2335
+            ],
+            [
+              1.9145300000000003,
+              -1.2335
+            ]
+          ]
+        },
+        {
+          "id": "edge:C2->C1#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"C2\" data-to=\"C1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"143.453,90.9 167.453,90.9 167.453,58.45 191.453,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C2-&gt;C1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C2 to C1\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.4345300197601318,
+                  -0.909000039100647,
+                  1.514530062675476,
+                  -0.909000039100647,
+                  1.5945299863815308,
+                  -0.909000039100647,
+                  1.674530029296875,
+                  -0.909000039100647,
+                  1.674530029296875,
+                  -0.8008333444595337,
+                  1.674530029296875,
+                  -0.6926667094230652,
+                  1.674530029296875,
+                  -0.5845000147819519,
+                  1.7545300722122192,
+                  -0.5845000147819519,
+                  1.834529995918274,
+                  -0.5845000147819519,
+                  1.9145300388336182,
+                  -0.5845000147819519
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#65697f",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  1.8445299863815308,
+                  -0.559499979019165,
+                  1.8711967468261719,
+                  -0.5678333640098572,
+                  1.8978633880615234,
+                  -0.5761666893959045,
+                  1.924530029296875,
+                  -0.5845000147819519,
+                  1.8978633880615234,
+                  -0.5928333401679993,
+                  1.8711967468261719,
+                  -0.6011666655540466,
+                  1.8445299863815308,
+                  -0.609499990940094,
+                  1.8445299863815308,
+                  -0.5928333401679993,
+                  1.8445299863815308,
+                  -0.5761666893959045,
+                  1.8445299863815308,
+                  -0.559499979019165
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#cba6f7",
+                "stroke": "#cba6f7",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "C2",
+          "to": "C1",
+          "route": [
+            [
+              1.43453,
+              -0.909
+            ],
+            [
+              1.67453,
+              -0.909
+            ],
+            [
+              1.67453,
+              -0.5845
+            ],
+            [
+              1.91453,
+              -0.5845
+            ]
+          ]
+        },
+        {
+          "id": "edge:T2->New#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"T2\" data-to=\"New\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"284.53200000000004,123.35000000000001 339.201,123.35000000000001\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T2-&gt;New#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T2 to New\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.845320224761963,
+                  -1.2335000038146973,
+                  3.027549982070923,
+                  -1.2335000038146973,
+                  3.209779977798462,
+                  -1.2335000038146973,
+                  3.392009973526001,
+                  -1.2335000038146973
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#65697f",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  3.322009801864624,
+                  -1.2085000276565552,
+                  3.3486764430999756,
+                  -1.2168333530426025,
+                  3.3753433227539062,
+                  -1.22516667842865,
+                  3.402009963989258,
+                  -1.2335000038146973,
+                  3.3753433227539062,
+                  -1.2418333292007446,
+                  3.3486764430999756,
+                  -1.250166654586792,
+                  3.322009801864624,
+                  -1.2584999799728394,
+                  3.322009801864624,
+                  -1.2418333292007446,
+                  3.322009801864624,
+                  -1.22516667842865,
+                  3.322009801864624,
+                  -1.2085000276565552
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#cba6f7",
+                "stroke": "#cba6f7",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "T2",
+          "to": "New",
+          "route": [
+            [
+              2.8453200000000005,
+              -1.2335
+            ],
+            [
+              3.3920100000000004,
+              -1.2335
+            ]
+          ]
+        },
+        {
+          "id": "C2",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"C2\" data-label=\"Commit two\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"72.45\" width=\"103.453\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:C2\" data-role=\"node\" />\n  <text x=\"91.7265\" y=\"90.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Commit two</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0.4000000059604645,
+                  -0.7244999408721924,
+                  0.7448433637619019,
+                  -0.7244999408721924,
+                  1.089686632156372,
+                  -0.7244999408721924,
+                  1.4345300197601318,
+                  -0.7244999408721924,
+                  1.4345300197601318,
+                  -0.8475000262260437,
+                  1.4345300197601318,
+                  -0.9704999327659607,
+                  1.4345300197601318,
+                  -1.093500018119812,
+                  1.089686632156372,
+                  -1.093500018119812,
+                  0.7448433637619019,
+                  -1.093500018119812,
+                  0.4000000059604645,
+                  -1.093500018119812,
+                  0.4000000059604645,
+                  -0.9704999327659607,
+                  0.4000000059604645,
+                  -0.8475000262260437,
+                  0.4000000059604645,
+                  -0.7244999408721924
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#232434",
+                "stroke": "#414356",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#cdd6f4",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Commit two",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Commit two",
+                "x": 91.7265,
+                "y": 95.45,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -4.336808689942018e-19,
+                  0
+                ],
+                "width": 63.453
+              }
+            }
+          ]
+        },
+        {
+          "id": "C1",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"C1\" data-label=\"Commit one\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"191.453\" y=\"40\" width=\"106.417\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:C1\" data-role=\"node\" />\n  <text x=\"244.6615\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Commit one</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.9145300388336182,
+                  -0.4000000059604645,
+                  2.2692534923553467,
+                  -0.4000000059604645,
+                  2.623976707458496,
+                  -0.4000000059604645,
+                  2.9786999225616455,
+                  -0.4000000059604645,
+                  2.9786999225616455,
+                  -0.5230000019073486,
+                  2.9786999225616455,
+                  -0.6459999680519104,
+                  2.9786999225616455,
+                  -0.7689999938011169,
+                  2.623976707458496,
+                  -0.7689999938011169,
+                  2.2692534923553467,
+                  -0.7689999938011169,
+                  1.9145300388336182,
+                  -0.7689999938011169,
+                  1.9145300388336182,
+                  -0.6459999680519104,
+                  1.9145300388336182,
+                  -0.5230000019073486,
+                  1.9145300388336182,
+                  -0.4000000059604645
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#232434",
+                "stroke": "#414356",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#cdd6f4",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Commit one",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Commit one",
+                "x": 244.6615,
+                "y": 63,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -4.336808689942018e-19,
+                  0
+                ],
+                "width": 66.417
+              }
+            }
+          ]
+        },
+        {
+          "id": "T1",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"T1\" data-label=\"Tree one\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"339.201\" y=\"40\" width=\"96.04299999999999\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:T1\" data-role=\"node\" />\n  <text x=\"387.2225\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Tree one</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.392009973526001,
+                  -0.4000000059604645,
+                  3.712153434753418,
+                  -0.4000000059604645,
+                  4.032296657562256,
+                  -0.4000000059604645,
+                  4.352439880371094,
+                  -0.4000000059604645,
+                  4.352439880371094,
+                  -0.5230000019073486,
+                  4.352439880371094,
+                  -0.6459999680519104,
+                  4.352439880371094,
+                  -0.7689999938011169,
+                  4.032296657562256,
+                  -0.7689999938011169,
+                  3.712153434753418,
+                  -0.7689999938011169,
+                  3.392009973526001,
+                  -0.7689999938011169,
+                  3.392009973526001,
+                  -0.6459999680519104,
+                  3.392009973526001,
+                  -0.5230000019073486,
+                  3.392009973526001,
+                  -0.4000000059604645
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#232434",
+                "stroke": "#414356",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#cdd6f4",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Tree one",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Tree one",
+                "x": 387.2225,
+                "y": 63,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -4.336808689942018e-19,
+                  0
+                ],
+                "width": 56.043
+              }
+            }
+          ]
+        },
+        {
+          "id": "Hello",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Hello\" data-label=\"hello.txt blob\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"489.913\" y=\"40\" width=\"113.827\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Hello\" data-role=\"node\" />\n  <text x=\"546.8265\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">hello.txt blob</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.899129867553711,
+                  -0.4000000059604645,
+                  5.278553485870361,
+                  -0.4000000059604645,
+                  5.6579766273498535,
+                  -0.4000000059604645,
+                  6.037399768829346,
+                  -0.4000000059604645,
+                  6.037399768829346,
+                  -0.5230000019073486,
+                  6.037399768829346,
+                  -0.6459999680519104,
+                  6.037399768829346,
+                  -0.7689999938011169,
+                  5.6579766273498535,
+                  -0.7689999938011169,
+                  5.278553485870361,
+                  -0.7689999938011169,
+                  4.899129867553711,
+                  -0.7689999938011169,
+                  4.899129867553711,
+                  -0.6459999680519104,
+                  4.899129867553711,
+                  -0.5230000019073486,
+                  4.899129867553711,
+                  -0.4000000059604645
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#232434",
+                "stroke": "#414356",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#cdd6f4",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "hello.txt blob",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "hello.txt blob",
+                "x": 546.8265,
+                "y": 63,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -4.336808689942018e-19,
+                  0
+                ],
+                "width": 73.827
+              }
+            }
+          ]
+        },
+        {
+          "id": "T2",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"T2\" data-label=\"Tree two\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"191.45300000000003\" y=\"104.9\" width=\"93.07900000000001\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:T2\" data-role=\"node\" />\n  <text x=\"237.99250000000004\" y=\"123.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Tree two</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.9145300388336182,
+                  -1.0490000247955322,
+                  2.2247934341430664,
+                  -1.0490000247955322,
+                  2.5350565910339355,
+                  -1.0490000247955322,
+                  2.845320224761963,
+                  -1.0490000247955322,
+                  2.845320224761963,
+                  -1.1720000505447388,
+                  2.845320224761963,
+                  -1.2949999570846558,
+                  2.845320224761963,
+                  -1.4179999828338623,
+                  2.5350568294525146,
+                  -1.4179999828338623,
+                  2.2247934341430664,
+                  -1.4179999828338623,
+                  1.9145300388336182,
+                  -1.4179999828338623,
+                  1.9145300388336182,
+                  -1.2949999570846558,
+                  1.9145300388336182,
+                  -1.1720000505447388,
+                  1.9145300388336182,
+                  -1.0490000247955322
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#232434",
+                "stroke": "#414356",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#cdd6f4",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Tree two",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Tree two",
+                "x": 237.99250000000004,
+                "y": 127.9,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -4.336808689942018e-19,
+                  0
+                ],
+                "width": 53.079
+              }
+            }
+          ]
+        },
+        {
+          "id": "New",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"New\" data-label=\"edited hello.txt blob\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"339.201\" y=\"104.9\" width=\"151.618\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:New\" data-role=\"node\" />\n  <text x=\"415.01\" y=\"123.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">edited hello.txt blob</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.392009973526001,
+                  -1.0490000247955322,
+                  3.8974032402038574,
+                  -1.0490000247955322,
+                  4.402796745300293,
+                  -1.0490000247955322,
+                  4.90818977355957,
+                  -1.0490000247955322,
+                  4.90818977355957,
+                  -1.1720000505447388,
+                  4.90818977355957,
+                  -1.2949999570846558,
+                  4.90818977355957,
+                  -1.4179999828338623,
+                  4.402796745300293,
+                  -1.4179999828338623,
+                  3.8974032402038574,
+                  -1.4179999828338623,
+                  3.392009973526001,
+                  -1.4179999828338623,
+                  3.392009973526001,
+                  -1.2949999570846558,
+                  3.392009973526001,
+                  -1.1720000505447388,
+                  3.392009973526001,
+                  -1.0490000247955322
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#232434",
+                "stroke": "#414356",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#cdd6f4",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "edited hello.txt blob",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "edited hello.txt blob",
+                "x": 415.01,
+                "y": 127.9,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  -4.336808689942018e-19,
+                  0
+                ],
+                "width": 111.618
+              }
+            }
+          ]
+        }
+      ],
+      "findings": {
+        "ok": true,
+        "warnings": [],
+        "layout": {
+          "version": 1,
+          "kind": "flowchart",
+          "nodes": [
+            {
+              "id": "C2",
+              "x": 40,
+              "y": 72,
+              "w": 103,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Commit two"
+            },
+            {
+              "id": "C1",
+              "x": 191,
+              "y": 40,
+              "w": 106,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Commit one"
+            },
+            {
+              "id": "T1",
+              "x": 339,
+              "y": 40,
+              "w": 96,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Tree one"
+            },
+            {
+              "id": "Hello",
+              "x": 490,
+              "y": 40,
+              "w": 114,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "hello.txt blob"
+            },
+            {
+              "id": "T2",
+              "x": 191,
+              "y": 105,
+              "w": 93,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Tree two"
+            },
+            {
+              "id": "New",
+              "x": 339,
+              "y": 105,
+              "w": 152,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "edited hello.txt blob"
+            }
+          ],
+          "edges": [
+            {
+              "id": "C1->T1",
+              "from": "C1",
+              "to": "T1",
+              "path": [
+                [
+                  298,
+                  58
+                ],
+                [
+                  339,
+                  58
+                ]
+              ]
+            },
+            {
+              "id": "T1->Hello",
+              "from": "T1",
+              "to": "Hello",
+              "path": [
+                [
+                  435,
+                  58
+                ],
+                [
+                  490,
+                  58
+                ]
+              ]
+            },
+            {
+              "id": "C2->T2",
+              "from": "C2",
+              "to": "T2",
+              "path": [
+                [
+                  143,
+                  91
+                ],
+                [
+                  167,
+                  91
+                ],
+                [
+                  167,
+                  123
+                ],
+                [
+                  191,
+                  123
+                ]
+              ]
+            },
+            {
+              "id": "C2->C1",
+              "from": "C2",
+              "to": "C1",
+              "path": [
+                [
+                  143,
+                  91
+                ],
+                [
+                  167,
+                  91
+                ],
+                [
+                  167,
+                  58
+                ],
+                [
+                  191,
+                  58
+                ]
+              ]
+            },
+            {
+              "id": "T2->New",
+              "from": "T2",
+              "to": "New",
+              "path": [
+                [
+                  285,
+                  123
+                ],
+                [
+                  339,
+                  123
+                ]
+              ]
+            }
+          ],
+          "groups": [],
+          "bounds": {
+            "w": 644,
+            "h": 182
+          }
+        }
+      }
+    }
+  }
+}

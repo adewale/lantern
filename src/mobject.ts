@@ -14,8 +14,19 @@ let nextId = 1;
 
 const COLOR_KEYS = new Set(['fill', 'stroke']);
 
+/** Optional SVG paint semantics used by imported artwork. Lengths are scene units. */
+export interface SvgPaint {
+  lineCap?: 'butt' | 'round' | 'square';
+  lineJoin?: 'miter' | 'round' | 'bevel';
+  fillRule?: 'nonzero' | 'evenodd';
+  dashArray?: string;
+  dashOffset?: number;
+  miterLimit?: number;
+  paintOrder?: string;
+}
+
 /** Paint. Scene units: the frame is 16 × 9, origin at the center, y up. */
-export interface Style {
+export interface Style extends SvgPaint {
   fill?: string;
   fillOpacity?: number;
   stroke?: string;
@@ -27,7 +38,7 @@ export interface Style {
 }
 
 /** A mobject's resolved style: every field set except the transient drawFraction. */
-export type StyleRecord = Required<Omit<Style, 'drawFraction'>> & Pick<Style, 'drawFraction'>;
+export type StyleRecord = Required<Omit<Style, keyof SvgPaint | 'drawFraction'>> & Pick<Style, keyof SvgPaint | 'drawFraction'>;
 
 export const DEFAULT_STYLE: StyleRecord = {
   fill: 'none',
@@ -92,6 +103,8 @@ export class Mobject {
   declare _mrec?: MergedCache;
   /** Render a group of same-styled leaves as one element (Text sets this). */
   declare mergeLeaves?: boolean;
+  /** Fixed world-coordinate paint viewport, inherited by descendants; does not change geometry. */
+  declare clipBox?: Box;
 
   constructor(style: Style = {}) {
     this.id = nextId++;
@@ -142,6 +155,7 @@ export class Mobject {
     c.id = nextId++;
     c.parent = null;
     c.style = { ...this.style };
+    if (this.clipBox) c.clipBox = [...this.clipBox];
     c.updaters = [];
     c._bbox = null;
     c.copyData(this);
@@ -381,11 +395,16 @@ export class Mobject {
     // Field by field over whatever the style holds: numbers lerp, colors blend
     const mine = this.style as Record<string, string | number | undefined>;
     const sa = a.style as Record<string, string | number | undefined>, sb = b.style as Record<string, string | number | undefined>;
-    for (const k in mine) {
+    // Optional paint can enter or leave a Transform. Read fixed endpoints, not
+    // the previous frame's keys (which also matters for there-and-back easing).
+    for (const k in sa) if (!(k in sb)) {
+      if (alpha < 0.5) mine[k] = sa[k]; else delete mine[k];
+    }
+    for (const k in sb) {
       const va = sa[k], vb = sb[k];
-      if (va === vb) { mine[k] = va; continue; }
-      // Exact at the ends: a + (b - a) * 1 is not always b in floating point
-      mine[k] = alpha <= 0 ? va : alpha >= 1 ? vb : COLOR_KEYS.has(k) ? lerpColor(va as string, vb as string, alpha) : (va as number) + ((vb as number) - (va as number)) * alpha;
+      // Exact at the ends: a + (b - a) * 1 is not always b in floating point.
+      const value = va === vb ? va : alpha <= 0 ? va : alpha >= 1 ? vb : COLOR_KEYS.has(k) ? lerpColor(va as string, vb as string, alpha) : typeof va === 'number' && typeof vb === 'number' ? va + (vb - va) * alpha : alpha < 0.5 ? va : vb;
+      if (value === undefined) delete mine[k]; else mine[k] = value;
     }
     this._bbox = null;
     return this;

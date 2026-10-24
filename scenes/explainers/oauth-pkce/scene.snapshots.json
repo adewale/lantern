@@ -1,0 +1,3558 @@
+{
+  "version": 1,
+  "importer": 4,
+  "sourceHash": "fdbcd8269234b9c6fa6f82e444c57d49e437e86dcb640c0029011a51c6c3163a",
+  "renderer": "agentic-mermaid@0.4.1",
+  "diagrams": {
+    "[\"sequenceDiagram\\n participant C as Client\\n participant U as User browser\\n participant S as Authorization server\\n C->>U: Open authorization with challenge\\n U->>S: Sign in and grant consent\\n S-->>U: Redirect with code\\n U-->>C: Deliver authorization code\",\"github-light\",null]": {
+      "version": 1,
+      "renderer": "agentic-mermaid@0.4.1",
+      "spec": {
+        "source": "sequenceDiagram\n participant C as Client\n participant U as User browser\n participant S as Authorization server\n C->>U: Open authorization with challenge\n U->>S: Sign in and grant consent\n S-->>U: Redirect with code\n U-->>C: Deliver authorization code",
+        "style": "github-light"
+      },
+      "family": "sequence",
+      "width": 528.1874999999999,
+      "height": 286,
+      "palette": {
+        "paper": "#ffffff",
+        "ink": "#1f2328",
+        "accent": "#0969da",
+        "muted": "#59636e"
+      },
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"528.1874999999999\" height=\"286\" viewBox=\"0 0 528.1874999999999 286\" style=\"--bg:#ffffff;--fg:#1f2328;--line:#d1d9e0;--accent:#0969da;--muted:#59636e;--font:Inter;background:#ffffff\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #1f2328;\n    --_text-sec:      #59636e;\n    --_text-muted:    #59636e;\n    --_text-faint:    #86888b;\n    --_line:          #d1d9e0;\n    --_arrow:         #0969da;\n    --_node-fill:     #f8f8f9;\n    --_node-stroke:   #d2d3d4;\n    --_group-fill:    #ffffff;\n    --_group-hdr:     #f4f4f4;\n    --_inner-stroke:  #e4e5e5;\n    --_key-badge:     #e9e9ea;\n  }\n</style>\n<rect width=\"528.1874999999999\" height=\"286\" fill=\"#ffffff\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"seq-arrow\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#0969da\" />\n  </marker>\n  <marker id=\"seq-arrow-open\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <polyline points=\"0 0, 8 2.5, 0 5\" fill=\"none\" stroke=\"#0969da\" stroke-width=\"1\" />\n  </marker>\n  <marker id=\"seq-arrow-cross\" markerWidth=\"8\" markerHeight=\"5\" refX=\"4\" refY=\"2.5\" orient=\"auto\">\n    <path d=\"M1 1 L7 4 M1 4 L7 1\" fill=\"none\" stroke=\"#0969da\" stroke-width=\"1.5\" />\n  </marker>\n  <marker id=\"seq-arrow-half-top\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <path d=\"M0 0 L8 2.5\" fill=\"none\" stroke=\"#0969da\" stroke-width=\"1\" />\n  </marker>\n  <marker id=\"seq-arrow-half-bottom\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <path d=\"M0 5 L8 2.5\" fill=\"none\" stroke=\"#0969da\" stroke-width=\"1\" />\n  </marker>\n</defs>\n<line class=\"lifeline\" data-actor=\"C\" x1=\"70\" y1=\"70\" x2=\"70\" y2=\"256\" stroke=\"#8f959c\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />\n<line class=\"lifeline\" data-actor=\"U\" x1=\"243.87199999999999\" y1=\"70\" x2=\"243.87199999999999\" y2=\"256\" stroke=\"#8f959c\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />\n<line class=\"lifeline\" data-actor=\"S\" x1=\"420.0799999999999\" y1=\"70\" x2=\"420.0799999999999\" y2=\"256\" stroke=\"#8f959c\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />\n<g class=\"message\" data-label=\"Open authorization with challenge\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:C-&gt;U#0\" data-role=\"message\">\n  <line x1=\"70\" y1=\"96\" x2=\"243.87199999999999\" y2=\"96\" stroke=\"#8f959c\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:C-&gt;U#0:line\" data-role=\"message\" data-from=\"C\" data-to=\"U\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C to U: Open authorization with challenge\" />\n  <text x=\"156.93599999999998\" y=\"86\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"157.872\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Open authorization with challenge</text>\n</g>\n<g class=\"message\" data-label=\"Sign in and grant consent\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:U-&gt;S#0\" data-role=\"message\">\n  <line x1=\"243.87199999999999\" y1=\"136\" x2=\"420.0799999999999\" y2=\"136\" stroke=\"#8f959c\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:U-&gt;S#0:line\" data-role=\"message\" data-from=\"U\" data-to=\"S\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"U to S: Sign in and grant consent\" />\n  <text x=\"331.97599999999994\" y=\"126\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"119.262\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Sign in and grant consent</text>\n</g>\n<g class=\"message\" data-label=\"Redirect with code\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;U#0\" data-role=\"message\">\n  <line x1=\"420.0799999999999\" y1=\"176\" x2=\"243.87199999999999\" y2=\"176\" stroke=\"#8f959c\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;U#0:line\" data-role=\"message\" data-from=\"S\" data-to=\"U\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to U: Redirect with code\" />\n  <text x=\"331.97599999999994\" y=\"166\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"87.186\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Redirect with code</text>\n</g>\n<g class=\"message\" data-label=\"Deliver authorization code\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:U-&gt;C#0\" data-role=\"message\">\n  <line x1=\"243.87199999999999\" y1=\"216\" x2=\"70\" y2=\"216\" stroke=\"#8f959c\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:U-&gt;C#0:line\" data-role=\"message\" data-from=\"U\" data-to=\"C\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"U to C: Deliver authorization code\" />\n  <text x=\"156.93599999999998\" y=\"206\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"125.202\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Deliver authorization code</text>\n</g>\n<g class=\"actor\" data-id=\"C\" data-label=\"Client\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"30\" y=\"30\" width=\"80\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"1\" data-id=\"actor:C:box\" data-role=\"actor\" />\n  <text x=\"70\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"34.554\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Client</text>\n</g>\n<g class=\"actor\" data-id=\"U\" data-label=\"User browser\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"185.7715\" y=\"30\" width=\"116.20099999999998\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"1\" data-id=\"actor:U:box\" data-role=\"actor\" />\n  <text x=\"243.87199999999999\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"84.201\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">User browser</text>\n</g>\n<g class=\"actor\" data-id=\"S\" data-label=\"Authorization server\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"341.97249999999997\" y=\"30\" width=\"156.21499999999997\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"1\" data-id=\"actor:S:box\" data-role=\"actor\" />\n  <text x=\"420.0799999999999\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"124.215\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Authorization server</text>\n</g>\n</svg>",
+      "parts": [
+        {
+          "id": "__frame",
+          "role": "frame",
+          "kind": "shape",
+          "svg": "",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0,
+                  0,
+                  1.7606250047683716,
+                  0,
+                  3.521250009536743,
+                  0,
+                  5.281875133514404,
+                  0,
+                  5.281875133514404,
+                  -0.9533333778381348,
+                  5.281875133514404,
+                  -1.9066667556762695,
+                  5.281875133514404,
+                  -2.859999895095825,
+                  3.521250009536743,
+                  -2.859999895095825,
+                  1.7606250047683716,
+                  -2.859999895095825,
+                  0,
+                  -2.859999895095825,
+                  0,
+                  -1.9066667556762695,
+                  0,
+                  -0.9533333778381348,
+                  0,
+                  0
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#ffffff",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "lifeline:C",
+          "role": "lifeline",
+          "kind": "connector",
+          "svg": "<line class=\"lifeline\" data-actor=\"C\" x1=\"70\" y1=\"70\" x2=\"70\" y2=\"256\" stroke=\"var(--_line)\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0.699999988079071,
+                  -0.699999988079071,
+                  0.699999988079071,
+                  -1.3200000524520874,
+                  0.699999988079071,
+                  -1.940000057220459,
+                  0.699999988079071,
+                  -2.559999942779541
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "#000000",
+                "stroke": "#8f959c",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal",
+                "dashArray": "0.06 0.04",
+                "dashOffset": 0
+              }
+            }
+          ],
+          "route": [
+            [
+              0.7,
+              -0.7
+            ],
+            [
+              0.7,
+              -2.56
+            ]
+          ]
+        },
+        {
+          "id": "lifeline:U",
+          "role": "lifeline",
+          "kind": "connector",
+          "svg": "<line class=\"lifeline\" data-actor=\"U\" x1=\"243.87199999999999\" y1=\"70\" x2=\"243.87199999999999\" y2=\"256\" stroke=\"var(--_line)\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.4387199878692627,
+                  -0.699999988079071,
+                  2.4387199878692627,
+                  -1.3200000524520874,
+                  2.4387199878692627,
+                  -1.940000057220459,
+                  2.4387199878692627,
+                  -2.559999942779541
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "#000000",
+                "stroke": "#8f959c",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal",
+                "dashArray": "0.06 0.04",
+                "dashOffset": 0
+              }
+            }
+          ],
+          "route": [
+            [
+              2.43872,
+              -0.7
+            ],
+            [
+              2.43872,
+              -2.56
+            ]
+          ]
+        },
+        {
+          "id": "lifeline:S",
+          "role": "lifeline",
+          "kind": "connector",
+          "svg": "<line class=\"lifeline\" data-actor=\"S\" x1=\"420.0799999999999\" y1=\"70\" x2=\"420.0799999999999\" y2=\"256\" stroke=\"var(--_line)\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.200799942016602,
+                  -0.699999988079071,
+                  4.200799942016602,
+                  -1.3200000524520874,
+                  4.200799942016602,
+                  -1.940000057220459,
+                  4.200799942016602,
+                  -2.559999942779541
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "#000000",
+                "stroke": "#8f959c",
+                "strokeWidth": 0.0075,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal",
+                "dashArray": "0.06 0.04",
+                "dashOffset": 0
+              }
+            }
+          ],
+          "route": [
+            [
+              4.200799999999999,
+              -0.7
+            ],
+            [
+              4.200799999999999,
+              -2.56
+            ]
+          ]
+        },
+        {
+          "id": "message:C->U#0",
+          "role": "message",
+          "kind": "group",
+          "svg": "<g class=\"message\" data-label=\"Open authorization with challenge\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:C-&gt;U#0\" data-role=\"message\">\n  <line x1=\"70\" y1=\"96\" x2=\"243.87199999999999\" y2=\"96\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:C-&gt;U#0:line\" data-role=\"message\" data-from=\"C\" data-to=\"U\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C to U: Open authorization with challenge\" />\n  <text x=\"156.93599999999998\" y=\"86\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Open authorization with challenge</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0.699999988079071,
+                  -0.9599999785423279,
+                  1.2795733213424683,
+                  -0.9599999785423279,
+                  1.8591467142105103,
+                  -0.9599999785423279,
+                  2.4387199878692627,
+                  -0.9599999785423279
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "#000000",
+                "stroke": "#8f959c",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  2.358719825744629,
+                  -0.9350000023841858,
+                  2.3853867053985596,
+                  -0.9433333277702332,
+                  2.412053346633911,
+                  -0.9516666531562805,
+                  2.4387199878692627,
+                  -0.9599999785423279,
+                  2.412053346633911,
+                  -0.9683333039283752,
+                  2.3853867053985596,
+                  -0.9766666889190674,
+                  2.358719825744629,
+                  -0.9850000143051147,
+                  2.358719825744629,
+                  -0.9683333039283752,
+                  2.358719825744629,
+                  -0.9516666531562805,
+                  2.358719825744629,
+                  -0.9350000023841858
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#0969da",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#59636e",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Open authorization with challenge",
+              "fontSize": 0.11,
+              "textRun": {
+                "text": "Open authorization with challenge",
+                "x": 156.93599999999998,
+                "y": 89.85,
+                "size": 11,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 157.872
+              }
+            }
+          ],
+          "from": "C",
+          "to": "U",
+          "route": [
+            [
+              0.7,
+              -0.96
+            ],
+            [
+              2.43872,
+              -0.96
+            ]
+          ]
+        },
+        {
+          "id": "message:U->S#0",
+          "role": "message",
+          "kind": "group",
+          "svg": "<g class=\"message\" data-label=\"Sign in and grant consent\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:U-&gt;S#0\" data-role=\"message\">\n  <line x1=\"243.87199999999999\" y1=\"136\" x2=\"420.0799999999999\" y2=\"136\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:U-&gt;S#0:line\" data-role=\"message\" data-from=\"U\" data-to=\"S\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"U to S: Sign in and grant consent\" />\n  <text x=\"331.97599999999994\" y=\"126\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Sign in and grant consent</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.4387199878692627,
+                  -1.3600000143051147,
+                  3.0260801315307617,
+                  -1.3600000143051147,
+                  3.6134400367736816,
+                  -1.3600000143051147,
+                  4.200799942016602,
+                  -1.3600000143051147
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "#000000",
+                "stroke": "#8f959c",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  4.120800018310547,
+                  -1.3350000381469727,
+                  4.147466659545898,
+                  -1.34333336353302,
+                  4.17413330078125,
+                  -1.3516666889190674,
+                  4.200799942016602,
+                  -1.3600000143051147,
+                  4.17413330078125,
+                  -1.368333339691162,
+                  4.147466659545898,
+                  -1.3766666650772095,
+                  4.120800018310547,
+                  -1.3849999904632568,
+                  4.120800018310547,
+                  -1.368333339691162,
+                  4.120800018310547,
+                  -1.3516666889190674,
+                  4.120800018310547,
+                  -1.3350000381469727
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#0969da",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#59636e",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Sign in and grant consent",
+              "fontSize": 0.11,
+              "textRun": {
+                "text": "Sign in and grant consent",
+                "x": 331.97599999999994,
+                "y": 129.85,
+                "size": 11,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 119.262
+              }
+            }
+          ],
+          "from": "U",
+          "to": "S",
+          "route": [
+            [
+              2.43872,
+              -1.36
+            ],
+            [
+              4.200799999999999,
+              -1.36
+            ]
+          ]
+        },
+        {
+          "id": "message:S->U#0",
+          "role": "message",
+          "kind": "group",
+          "svg": "<g class=\"message\" data-label=\"Redirect with code\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;U#0\" data-role=\"message\">\n  <line x1=\"420.0799999999999\" y1=\"176\" x2=\"243.87199999999999\" y2=\"176\" stroke=\"var(--_line)\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;U#0:line\" data-role=\"message\" data-from=\"S\" data-to=\"U\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to U: Redirect with code\" />\n  <text x=\"331.97599999999994\" y=\"166\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Redirect with code</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.200799942016602,
+                  -1.7599999904632568,
+                  3.6134400367736816,
+                  -1.7599999904632568,
+                  3.0260801315307617,
+                  -1.7599999904632568,
+                  2.4387199878692627,
+                  -1.7599999904632568
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "#000000",
+                "stroke": "#8f959c",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal",
+                "dashArray": "0.06 0.04",
+                "dashOffset": 0
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  2.5187199115753174,
+                  -1.784999966621399,
+                  2.492053270339966,
+                  -1.7766666412353516,
+                  2.4653866291046143,
+                  -1.7683333158493042,
+                  2.4387199878692627,
+                  -1.7599999904632568,
+                  2.4653866291046143,
+                  -1.7516666650772095,
+                  2.492053270339966,
+                  -1.743333339691162,
+                  2.5187199115753174,
+                  -1.7350000143051147,
+                  2.5187199115753174,
+                  -1.7516666650772095,
+                  2.5187199115753174,
+                  -1.7683333158493042,
+                  2.5187199115753174,
+                  -1.784999966621399
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#0969da",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#59636e",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Redirect with code",
+              "fontSize": 0.11,
+              "textRun": {
+                "text": "Redirect with code",
+                "x": 331.97599999999994,
+                "y": 169.85,
+                "size": 11,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 87.186
+              }
+            }
+          ],
+          "from": "S",
+          "to": "U",
+          "route": [
+            [
+              4.200799999999999,
+              -1.76
+            ],
+            [
+              2.43872,
+              -1.76
+            ]
+          ]
+        },
+        {
+          "id": "message:U->C#0",
+          "role": "message",
+          "kind": "group",
+          "svg": "<g class=\"message\" data-label=\"Deliver authorization code\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:U-&gt;C#0\" data-role=\"message\">\n  <line x1=\"243.87199999999999\" y1=\"216\" x2=\"70\" y2=\"216\" stroke=\"var(--_line)\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:U-&gt;C#0:line\" data-role=\"message\" data-from=\"U\" data-to=\"C\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"U to C: Deliver authorization code\" />\n  <text x=\"156.93599999999998\" y=\"206\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Deliver authorization code</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.4387199878692627,
+                  -2.1600000858306885,
+                  1.8591465950012207,
+                  -2.1600000858306885,
+                  1.2795733213424683,
+                  -2.1600000858306885,
+                  0.699999988079071,
+                  -2.1600000858306885
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "#000000",
+                "stroke": "#8f959c",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal",
+                "dashArray": "0.06 0.04",
+                "dashOffset": 0
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  0.7799999713897705,
+                  -2.184999942779541,
+                  0.753333330154419,
+                  -2.176666736602783,
+                  0.7266666889190674,
+                  -2.1683332920074463,
+                  0.699999988079071,
+                  -2.1600000858306885,
+                  0.7266666889190674,
+                  -2.1516666412353516,
+                  0.753333330154419,
+                  -2.1433334350585938,
+                  0.7799999713897705,
+                  -2.134999990463257,
+                  0.7799999713897705,
+                  -2.1516666412353516,
+                  0.7799999713897705,
+                  -2.1683332920074463,
+                  0.7799999713897705,
+                  -2.184999942779541
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#0969da",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#59636e",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Deliver authorization code",
+              "fontSize": 0.11,
+              "textRun": {
+                "text": "Deliver authorization code",
+                "x": 156.93599999999998,
+                "y": 209.85,
+                "size": 11,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 125.202
+              }
+            }
+          ],
+          "from": "U",
+          "to": "C",
+          "route": [
+            [
+              2.43872,
+              -2.16
+            ],
+            [
+              0.7,
+              -2.16
+            ]
+          ]
+        },
+        {
+          "id": "actor:C",
+          "role": "actor",
+          "kind": "group",
+          "svg": "<g class=\"actor\" data-id=\"C\" data-label=\"Client\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"30\" y=\"30\" width=\"80\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" data-id=\"actor:C:box\" data-role=\"actor\" />\n  <text x=\"70\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Client</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0.3400000035762787,
+                  -0.30000001192092896,
+                  0.5799999833106995,
+                  -0.30000001192092896,
+                  0.8199999928474426,
+                  -0.30000001192092896,
+                  1.059999942779541,
+                  -0.30000001192092896,
+                  1.0820913314819336,
+                  -0.30000001192092896,
+                  1.100000023841858,
+                  -0.3179086148738861,
+                  1.100000023841858,
+                  -0.3400000035762787,
+                  1.100000023841858,
+                  -0.4466666877269745,
+                  1.100000023841858,
+                  -0.5533333420753479,
+                  1.100000023841858,
+                  -0.6600000262260437,
+                  1.100000023841858,
+                  -0.6820913553237915,
+                  1.0820913314819336,
+                  -0.699999988079071,
+                  1.059999942779541,
+                  -0.699999988079071,
+                  0.8199999928474426,
+                  -0.699999988079071,
+                  0.5799999833106995,
+                  -0.699999988079071,
+                  0.3400000035762787,
+                  -0.699999988079071,
+                  0.3179086148738861,
+                  -0.699999988079071,
+                  0.30000001192092896,
+                  -0.6820913553237915,
+                  0.30000001192092896,
+                  -0.6600000262260437,
+                  0.30000001192092896,
+                  -0.5533333420753479,
+                  0.30000001192092896,
+                  -0.4466666877269745,
+                  0.30000001192092896,
+                  -0.3400000035762787,
+                  0.30000001192092896,
+                  -0.3179086148738861,
+                  0.3179086148738861,
+                  -0.30000001192092896,
+                  0.3400000035762787,
+                  -0.30000001192092896
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#f8f8f9",
+                "stroke": "#d2d3d4",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#1f2328",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Client",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Client",
+                "x": 70,
+                "y": 54.55,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 34.554
+              }
+            }
+          ],
+          "channels": {
+            "category": "C"
+          }
+        },
+        {
+          "id": "actor:U",
+          "role": "actor",
+          "kind": "group",
+          "svg": "<g class=\"actor\" data-id=\"U\" data-label=\"User browser\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"185.7715\" y=\"30\" width=\"116.20099999999998\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" data-id=\"actor:U:box\" data-role=\"actor\" />\n  <text x=\"243.87199999999999\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">User browser</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.8977149724960327,
+                  -0.30000001192092896,
+                  2.258384943008423,
+                  -0.30000001192092896,
+                  2.6190547943115234,
+                  -0.30000001192092896,
+                  2.9797251224517822,
+                  -0.30000001192092896,
+                  3.001816511154175,
+                  -0.30000001192092896,
+                  3.0197250843048096,
+                  -0.3179086148738861,
+                  3.0197250843048096,
+                  -0.3400000035762787,
+                  3.0197250843048096,
+                  -0.4466666877269745,
+                  3.0197250843048096,
+                  -0.5533333420753479,
+                  3.0197250843048096,
+                  -0.6600000262260437,
+                  3.0197250843048096,
+                  -0.6820913553237915,
+                  3.001816511154175,
+                  -0.699999988079071,
+                  2.9797251224517822,
+                  -0.699999988079071,
+                  2.6190552711486816,
+                  -0.699999988079071,
+                  2.258384943008423,
+                  -0.699999988079071,
+                  1.8977149724960327,
+                  -0.699999988079071,
+                  1.8756235837936401,
+                  -0.699999988079071,
+                  1.8577150106430054,
+                  -0.6820913553237915,
+                  1.8577150106430054,
+                  -0.6600000262260437,
+                  1.8577150106430054,
+                  -0.5533333420753479,
+                  1.8577150106430054,
+                  -0.4466666877269745,
+                  1.8577150106430054,
+                  -0.3400000035762787,
+                  1.8577150106430054,
+                  -0.3179086148738861,
+                  1.8756235837936401,
+                  -0.30000001192092896,
+                  1.8977149724960327,
+                  -0.30000001192092896
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#f8f8f9",
+                "stroke": "#d2d3d4",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#1f2328",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "User browser",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "User browser",
+                "x": 243.87199999999999,
+                "y": 54.55,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 84.201
+              }
+            }
+          ],
+          "channels": {
+            "category": "U"
+          }
+        },
+        {
+          "id": "actor:S",
+          "role": "actor",
+          "kind": "group",
+          "svg": "<g class=\"actor\" data-id=\"S\" data-label=\"Authorization server\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"341.97249999999997\" y=\"30\" width=\"156.21499999999997\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" data-id=\"actor:S:box\" data-role=\"actor\" />\n  <text x=\"420.0799999999999\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Authorization server</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.4597251415252686,
+                  -0.30000001192092896,
+                  3.953774929046631,
+                  -0.30000001192092896,
+                  4.447824954986572,
+                  -0.30000001192092896,
+                  4.941874980926514,
+                  -0.30000001192092896,
+                  4.963966369628906,
+                  -0.30000001192092896,
+                  4.981874942779541,
+                  -0.3179086148738861,
+                  4.981874942779541,
+                  -0.3400000035762787,
+                  4.981874942779541,
+                  -0.4466666877269745,
+                  4.981874942779541,
+                  -0.5533333420753479,
+                  4.981874942779541,
+                  -0.6600000262260437,
+                  4.981874942779541,
+                  -0.6820913553237915,
+                  4.963966369628906,
+                  -0.699999988079071,
+                  4.941874980926514,
+                  -0.699999988079071,
+                  4.447824954986572,
+                  -0.699999988079071,
+                  3.953774929046631,
+                  -0.699999988079071,
+                  3.4597251415252686,
+                  -0.699999988079071,
+                  3.437633752822876,
+                  -0.699999988079071,
+                  3.419724941253662,
+                  -0.6820913553237915,
+                  3.419724941253662,
+                  -0.6600000262260437,
+                  3.419724941253662,
+                  -0.5533333420753479,
+                  3.419724941253662,
+                  -0.4466666877269745,
+                  3.419724941253662,
+                  -0.3400000035762787,
+                  3.419724941253662,
+                  -0.3179086148738861,
+                  3.437633752822876,
+                  -0.30000001192092896,
+                  3.4597251415252686,
+                  -0.30000001192092896
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#f8f8f9",
+                "stroke": "#d2d3d4",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#1f2328",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Authorization server",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Authorization server",
+                "x": 420.0799999999999,
+                "y": 54.55,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 124.215
+              }
+            }
+          ],
+          "channels": {
+            "category": "S"
+          }
+        }
+      ],
+      "findings": {
+        "ok": true,
+        "warnings": [],
+        "layout": {
+          "version": 1,
+          "kind": "sequence",
+          "nodes": [
+            {
+              "id": "C",
+              "x": 30,
+              "y": 30,
+              "w": 80,
+              "h": 40,
+              "shape": "rectangle",
+              "label": "Client",
+              "role": "box"
+            },
+            {
+              "id": "U",
+              "x": 186,
+              "y": 30,
+              "w": 116,
+              "h": 40,
+              "shape": "rectangle",
+              "label": "User browser",
+              "role": "box"
+            },
+            {
+              "id": "S",
+              "x": 342,
+              "y": 30,
+              "w": 156,
+              "h": 40,
+              "shape": "rectangle",
+              "label": "Authorization server",
+              "role": "box"
+            }
+          ],
+          "edges": [
+            {
+              "id": "msg#0:C->U",
+              "from": "C",
+              "to": "U",
+              "path": [
+                [
+                  70,
+                  96
+                ],
+                [
+                  244,
+                  96
+                ]
+              ],
+              "label": {
+                "x": 157,
+                "y": 86,
+                "text": "Open authorization with challenge"
+              }
+            },
+            {
+              "id": "msg#1:U->S",
+              "from": "U",
+              "to": "S",
+              "path": [
+                [
+                  244,
+                  136
+                ],
+                [
+                  420,
+                  136
+                ]
+              ],
+              "label": {
+                "x": 332,
+                "y": 126,
+                "text": "Sign in and grant consent"
+              }
+            },
+            {
+              "id": "msg#2:S->U",
+              "from": "S",
+              "to": "U",
+              "path": [
+                [
+                  420,
+                  176
+                ],
+                [
+                  244,
+                  176
+                ]
+              ],
+              "label": {
+                "x": 332,
+                "y": 166,
+                "text": "Redirect with code"
+              }
+            },
+            {
+              "id": "msg#3:U->C",
+              "from": "U",
+              "to": "C",
+              "path": [
+                [
+                  244,
+                  216
+                ],
+                [
+                  70,
+                  216
+                ]
+              ],
+              "label": {
+                "x": 157,
+                "y": 206,
+                "text": "Deliver authorization code"
+              }
+            }
+          ],
+          "groups": [],
+          "bounds": {
+            "w": 528,
+            "h": 286
+          }
+        }
+      }
+    },
+    "[\"graph LR\\nGrant[Authorization grant] --> Code[Short-lived code]\\nCode --> Exchange[Token endpoint]\\nVerifier[Private verifier] --> Exchange\\nExchange --> Token[Access token]\",\"github-light\",null]": {
+      "version": 1,
+      "renderer": "agentic-mermaid@0.4.1",
+      "spec": {
+        "source": "graph LR\nGrant[Authorization grant] --> Code[Short-lived code]\nCode --> Exchange[Token endpoint]\nVerifier[Private verifier] --> Exchange\nExchange --> Token[Access token]",
+        "style": "github-light"
+      },
+      "family": "flowchart",
+      "width": 771.9330000000001,
+      "height": 181.8,
+      "palette": {
+        "paper": "#ffffff",
+        "ink": "#1f2328",
+        "accent": "#0969da",
+        "muted": "#59636e"
+      },
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"771.9330000000001\" height=\"181.8\" viewBox=\"0 0 771.9330000000001 181.8\" style=\"--bg:#ffffff;--fg:#1f2328;--line:#d1d9e0;--accent:#0969da;--muted:#59636e;--font:Inter;background:#ffffff\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #1f2328;\n    --_text-sec:      #59636e;\n    --_text-muted:    #59636e;\n    --_text-faint:    #86888b;\n    --_line:          #d1d9e0;\n    --_arrow:         #0969da;\n    --_node-fill:     #f8f8f9;\n    --_node-stroke:   #d2d3d4;\n    --_group-fill:    #ffffff;\n    --_group-hdr:     #f4f4f4;\n    --_inner-stroke:  #e4e5e5;\n    --_key-badge:     #e9e9ea;\n  }\n</style>\n<rect width=\"771.9330000000001\" height=\"181.8\" fill=\"#ffffff\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#0969da\" stroke=\"#0969da\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#0969da\" stroke=\"#0969da\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline class=\"edge\" data-from=\"Grant\" data-to=\"Code\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"193.841,58.45 245.9165,58.45\" fill=\"none\" stroke=\"#8f959c\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Grant-&gt;Code#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Grant to Code\" />\n<polyline class=\"edge\" data-from=\"Code\" data-to=\"Exchange\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"384.1965,58.45 406.15875000000005,58.45 406.15875000000005,88.9 428.12100000000004,88.9\" fill=\"none\" stroke=\"#8f959c\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Code-&gt;Exchange#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Code to Exchange\" />\n<polyline class=\"edge\" data-from=\"Verifier\" data-to=\"Exchange\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"384.1965,119.35000000000001 406.15875000000005,119.35000000000001 406.15875000000005,88.9 428.12100000000004,88.9\" fill=\"none\" stroke=\"#8f959c\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Verifier-&gt;Exchange#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Verifier to Exchange\" />\n<polyline class=\"edge\" data-from=\"Exchange\" data-to=\"Token\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"561.214,88.9 609.214,88.9\" fill=\"none\" stroke=\"#8f959c\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Exchange-&gt;Token#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Exchange to Token\" />\n<g class=\"node\" data-id=\"Grant\" data-label=\"Authorization grant\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"40\" width=\"153.841\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"0.75\" data-id=\"node-shape:Grant\" data-role=\"node\" />\n  <text x=\"116.9205\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"113.841\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Authorization grant</text>\n</g>\n<g class=\"node\" data-id=\"Code\" data-label=\"Short-lived code\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"245.9165\" y=\"40\" width=\"138.28000000000003\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"0.75\" data-id=\"node-shape:Code\" data-role=\"node\" />\n  <text x=\"315.0565\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"98.28\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Short-lived code</text>\n</g>\n<g class=\"node\" data-id=\"Verifier\" data-label=\"Private verifier\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"245.9165\" y=\"100.9\" width=\"138.28000000000003\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"0.75\" data-id=\"node-shape:Verifier\" data-role=\"node\" />\n  <text x=\"315.0565\" y=\"119.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"90.129\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Private verifier</text>\n</g>\n<g class=\"node\" data-id=\"Exchange\" data-label=\"Token endpoint\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"428.12100000000004\" y=\"70.45\" width=\"133.09300000000002\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"0.75\" data-id=\"node-shape:Exchange\" data-role=\"node\" />\n  <text x=\"494.6675\" y=\"88.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"93.093\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Token endpoint</text>\n</g>\n<g class=\"node\" data-id=\"Token\" data-label=\"Access token\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"609.214\" y=\"70.45\" width=\"122.71900000000001\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"0.75\" data-id=\"node-shape:Token\" data-role=\"node\" />\n  <text x=\"670.5735000000001\" y=\"88.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"82.719\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Access token</text>\n</g>\n</svg>",
+      "parts": [
+        {
+          "id": "__frame",
+          "role": "frame",
+          "kind": "shape",
+          "svg": "",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0,
+                  0,
+                  2.5731101036071777,
+                  0,
+                  5.1462202072143555,
+                  0,
+                  7.719329833984375,
+                  0,
+                  7.719329833984375,
+                  -0.6060000061988831,
+                  7.719329833984375,
+                  -1.2120000123977661,
+                  7.719329833984375,
+                  -1.818000078201294,
+                  5.1462202072143555,
+                  -1.818000078201294,
+                  2.5731101036071777,
+                  -1.818000078201294,
+                  0,
+                  -1.818000078201294,
+                  0,
+                  -1.2120000123977661,
+                  0,
+                  -0.6060000061988831,
+                  0,
+                  0
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#ffffff",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "edge:Grant->Code#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Grant\" data-to=\"Code\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"193.841,58.45 245.9165,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Grant-&gt;Code#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Grant to Code\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.9384100437164307,
+                  -0.5845000147819519,
+                  2.111994981765747,
+                  -0.5845000147819519,
+                  2.2855799198150635,
+                  -0.5845000147819519,
+                  2.459165096282959,
+                  -0.5845000147819519
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#8f959c",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  2.389164924621582,
+                  -0.559499979019165,
+                  2.4158318042755127,
+                  -0.5678333640098572,
+                  2.4424984455108643,
+                  -0.5761666893959045,
+                  2.469165086746216,
+                  -0.5845000147819519,
+                  2.4424984455108643,
+                  -0.5928333401679993,
+                  2.4158318042755127,
+                  -0.6011666655540466,
+                  2.389164924621582,
+                  -0.609499990940094,
+                  2.389164924621582,
+                  -0.5928333401679993,
+                  2.389164924621582,
+                  -0.5761666893959045,
+                  2.389164924621582,
+                  -0.559499979019165
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#0969da",
+                "stroke": "#0969da",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Grant",
+          "to": "Code",
+          "route": [
+            [
+              1.9384100000000002,
+              -0.5845
+            ],
+            [
+              2.459165,
+              -0.5845
+            ]
+          ]
+        },
+        {
+          "id": "edge:Code->Exchange#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Code\" data-to=\"Exchange\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"384.1965,58.45 406.15875000000005,58.45 406.15875000000005,88.9 428.12100000000004,88.9\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Code-&gt;Exchange#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Code to Exchange\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.8419649600982666,
+                  -0.5845000147819519,
+                  3.9151723384857178,
+                  -0.5845000147819519,
+                  3.988380193710327,
+                  -0.5845000147819519,
+                  4.061587333679199,
+                  -0.5845000147819519,
+                  4.061587333679199,
+                  -0.6859999895095825,
+                  4.061587333679199,
+                  -0.7875000238418579,
+                  4.061587333679199,
+                  -0.8889999985694885,
+                  4.13479471206665,
+                  -0.8889999985694885,
+                  4.20800256729126,
+                  -0.8889999985694885,
+                  4.281209945678711,
+                  -0.8889999985694885
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#8f959c",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  4.211210250854492,
+                  -0.8640000224113464,
+                  4.237876892089844,
+                  -0.8723333477973938,
+                  4.264543533325195,
+                  -0.8806666731834412,
+                  4.291210174560547,
+                  -0.8889999985694885,
+                  4.264543533325195,
+                  -0.8973333239555359,
+                  4.237876892089844,
+                  -0.905666708946228,
+                  4.211210250854492,
+                  -0.9140000343322754,
+                  4.211210250854492,
+                  -0.8973333239555359,
+                  4.211210250854492,
+                  -0.8806666731834412,
+                  4.211210250854492,
+                  -0.8640000224113464
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#0969da",
+                "stroke": "#0969da",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Code",
+          "to": "Exchange",
+          "route": [
+            [
+              3.841965,
+              -0.5845
+            ],
+            [
+              4.061587500000001,
+              -0.5845
+            ],
+            [
+              4.061587500000001,
+              -0.889
+            ],
+            [
+              4.281210000000001,
+              -0.889
+            ]
+          ]
+        },
+        {
+          "id": "edge:Verifier->Exchange#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Verifier\" data-to=\"Exchange\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"384.1965,119.35000000000001 406.15875000000005,119.35000000000001 406.15875000000005,88.9 428.12100000000004,88.9\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Verifier-&gt;Exchange#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Verifier to Exchange\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.8419649600982666,
+                  -1.19350004196167,
+                  3.9151723384857178,
+                  -1.19350004196167,
+                  3.988380193710327,
+                  -1.19350004196167,
+                  4.061587333679199,
+                  -1.19350004196167,
+                  4.061587333679199,
+                  -1.0920000076293945,
+                  4.061587333679199,
+                  -0.9905000329017639,
+                  4.061587333679199,
+                  -0.8889999985694885,
+                  4.13479471206665,
+                  -0.8889999985694885,
+                  4.20800256729126,
+                  -0.8889999985694885,
+                  4.281209945678711,
+                  -0.8889999985694885
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#8f959c",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  4.211210250854492,
+                  -0.8640000224113464,
+                  4.237876892089844,
+                  -0.8723333477973938,
+                  4.264543533325195,
+                  -0.8806666731834412,
+                  4.291210174560547,
+                  -0.8889999985694885,
+                  4.264543533325195,
+                  -0.8973333239555359,
+                  4.237876892089844,
+                  -0.905666708946228,
+                  4.211210250854492,
+                  -0.9140000343322754,
+                  4.211210250854492,
+                  -0.8973333239555359,
+                  4.211210250854492,
+                  -0.8806666731834412,
+                  4.211210250854492,
+                  -0.8640000224113464
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#0969da",
+                "stroke": "#0969da",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Verifier",
+          "to": "Exchange",
+          "route": [
+            [
+              3.841965,
+              -1.1935
+            ],
+            [
+              4.061587500000001,
+              -1.1935
+            ],
+            [
+              4.061587500000001,
+              -0.889
+            ],
+            [
+              4.281210000000001,
+              -0.889
+            ]
+          ]
+        },
+        {
+          "id": "edge:Exchange->Token#0",
+          "role": "edge",
+          "kind": "connector",
+          "svg": "<polyline class=\"edge\" data-from=\"Exchange\" data-to=\"Token\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"561.214,88.9 609.214,88.9\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Exchange-&gt;Token#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Exchange to Token\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  5.612139701843262,
+                  -0.8889999985694885,
+                  5.772140026092529,
+                  -0.8889999985694885,
+                  5.932139873504639,
+                  -0.8889999985694885,
+                  6.092139720916748,
+                  -0.8889999985694885
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "none",
+                "stroke": "#8f959c",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [
+                [
+                  6.022140026092529,
+                  -0.8640000224113464,
+                  6.048806667327881,
+                  -0.8723333477973938,
+                  6.075473308563232,
+                  -0.8806666731834412,
+                  6.102139949798584,
+                  -0.8889999985694885,
+                  6.075473308563232,
+                  -0.8973333239555359,
+                  6.048806667327881,
+                  -0.905666708946228,
+                  6.022140026092529,
+                  -0.9140000343322754,
+                  6.022140026092529,
+                  -0.8973333239555359,
+                  6.022140026092529,
+                  -0.8806666731834412,
+                  6.022140026092529,
+                  -0.8640000224113464
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#0969da",
+                "stroke": "#0969da",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "round",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "from": "Exchange",
+          "to": "Token",
+          "route": [
+            [
+              5.61214,
+              -0.889
+            ],
+            [
+              6.0921400000000006,
+              -0.889
+            ]
+          ]
+        },
+        {
+          "id": "Grant",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Grant\" data-label=\"Authorization grant\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"40\" width=\"153.841\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Grant\" data-role=\"node\" />\n  <text x=\"116.9205\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Authorization grant</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0.4000000059604645,
+                  -0.4000000059604645,
+                  0.9128033518791199,
+                  -0.4000000059604645,
+                  1.4256067276000977,
+                  -0.4000000059604645,
+                  1.9384100437164307,
+                  -0.4000000059604645,
+                  1.9384100437164307,
+                  -0.5230000019073486,
+                  1.9384100437164307,
+                  -0.6459999680519104,
+                  1.9384100437164307,
+                  -0.7689999938011169,
+                  1.4256067276000977,
+                  -0.7689999938011169,
+                  0.9128033518791199,
+                  -0.7689999938011169,
+                  0.4000000059604645,
+                  -0.7689999938011169,
+                  0.4000000059604645,
+                  -0.6459999680519104,
+                  0.4000000059604645,
+                  -0.5230000019073486,
+                  0.4000000059604645,
+                  -0.4000000059604645
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#f8f8f9",
+                "stroke": "#d2d3d4",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#1f2328",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Authorization grant",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Authorization grant",
+                "x": 116.9205,
+                "y": 63,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  0
+                ],
+                "width": 113.841
+              }
+            }
+          ]
+        },
+        {
+          "id": "Code",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Code\" data-label=\"Short-lived code\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"245.9165\" y=\"40\" width=\"138.28000000000003\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Code\" data-role=\"node\" />\n  <text x=\"315.0565\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Short-lived code</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.459165096282959,
+                  -0.4000000059604645,
+                  2.920098304748535,
+                  -0.4000000059604645,
+                  3.3810317516326904,
+                  -0.4000000059604645,
+                  3.8419649600982666,
+                  -0.4000000059604645,
+                  3.8419649600982666,
+                  -0.5230000019073486,
+                  3.8419649600982666,
+                  -0.6459999680519104,
+                  3.8419649600982666,
+                  -0.7689999938011169,
+                  3.3810317516326904,
+                  -0.7689999938011169,
+                  2.920098304748535,
+                  -0.7689999938011169,
+                  2.459165096282959,
+                  -0.7689999938011169,
+                  2.459165096282959,
+                  -0.6459999680519104,
+                  2.459165096282959,
+                  -0.5230000019073486,
+                  2.459165096282959,
+                  -0.4000000059604645
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#f8f8f9",
+                "stroke": "#d2d3d4",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#1f2328",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Short-lived code",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Short-lived code",
+                "x": 315.0565,
+                "y": 63,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  0
+                ],
+                "width": 98.28
+              }
+            }
+          ]
+        },
+        {
+          "id": "Verifier",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Verifier\" data-label=\"Private verifier\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"245.9165\" y=\"100.9\" width=\"138.28000000000003\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Verifier\" data-role=\"node\" />\n  <text x=\"315.0565\" y=\"119.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Private verifier</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.459165096282959,
+                  -1.0090000629425049,
+                  2.920098304748535,
+                  -1.0090000629425049,
+                  3.3810317516326904,
+                  -1.0090000629425049,
+                  3.8419649600982666,
+                  -1.0090000629425049,
+                  3.8419649600982666,
+                  -1.1320000886917114,
+                  3.8419649600982666,
+                  -1.2549999952316284,
+                  3.8419649600982666,
+                  -1.378000020980835,
+                  3.3810317516326904,
+                  -1.378000020980835,
+                  2.920098304748535,
+                  -1.378000020980835,
+                  2.459165096282959,
+                  -1.378000020980835,
+                  2.459165096282959,
+                  -1.2549999952316284,
+                  2.459165096282959,
+                  -1.1320000886917114,
+                  2.459165096282959,
+                  -1.0090000629425049
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#f8f8f9",
+                "stroke": "#d2d3d4",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#1f2328",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Private verifier",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Private verifier",
+                "x": 315.0565,
+                "y": 123.9,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  0
+                ],
+                "width": 90.129
+              }
+            }
+          ]
+        },
+        {
+          "id": "Exchange",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Exchange\" data-label=\"Token endpoint\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"428.12100000000004\" y=\"70.45\" width=\"133.09300000000002\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Exchange\" data-role=\"node\" />\n  <text x=\"494.6675\" y=\"88.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Token endpoint</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.281209945678711,
+                  -0.7044999599456787,
+                  4.724853038787842,
+                  -0.7044999599456787,
+                  5.168496608734131,
+                  -0.7044999599456787,
+                  5.612139701843262,
+                  -0.7044999599456787,
+                  5.612139701843262,
+                  -0.8274999856948853,
+                  5.612139701843262,
+                  -0.950499951839447,
+                  5.612139701843262,
+                  -1.0735000371932983,
+                  5.168496608734131,
+                  -1.0735000371932983,
+                  4.724853038787842,
+                  -1.0735000371932983,
+                  4.281209945678711,
+                  -1.0735000371932983,
+                  4.281209945678711,
+                  -0.950499951839447,
+                  4.281209945678711,
+                  -0.8274999856948853,
+                  4.281209945678711,
+                  -0.7044999599456787
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#f8f8f9",
+                "stroke": "#d2d3d4",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#1f2328",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Token endpoint",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Token endpoint",
+                "x": 494.6675,
+                "y": 93.45,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  0
+                ],
+                "width": 93.093
+              }
+            }
+          ]
+        },
+        {
+          "id": "Token",
+          "role": "node",
+          "kind": "group",
+          "svg": "<g class=\"node\" data-id=\"Token\" data-label=\"Access token\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"609.214\" y=\"70.45\" width=\"122.71900000000001\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Token\" data-role=\"node\" />\n  <text x=\"670.5735000000001\" y=\"88.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Access token</text>\n</g>",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  6.092139720916748,
+                  -0.7044999599456787,
+                  6.5012030601501465,
+                  -0.7044999599456787,
+                  6.910266876220703,
+                  -0.7044999599456787,
+                  7.319329738616943,
+                  -0.7044999599456787,
+                  7.319329738616943,
+                  -0.8274999856948853,
+                  7.319329738616943,
+                  -0.950499951839447,
+                  7.319329738616943,
+                  -1.0735000371932983,
+                  6.910266876220703,
+                  -1.0735000371932983,
+                  6.5012030601501465,
+                  -1.0735000371932983,
+                  6.092139720916748,
+                  -1.0735000371932983,
+                  6.092139720916748,
+                  -0.950499951839447,
+                  6.092139720916748,
+                  -0.8274999856948853,
+                  6.092139720916748,
+                  -0.7044999599456787
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#f8f8f9",
+                "stroke": "#d2d3d4",
+                "strokeWidth": 0.007499999999999999,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            },
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#1f2328",
+                "stroke": "none",
+                "strokeWidth": 0.009999999999999998,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Access token",
+              "fontSize": 0.12999999999999998,
+              "textRun": {
+                "text": "Access token",
+                "x": 670.5735000000001,
+                "y": 93.45,
+                "size": 13,
+                "anchor": "middle",
+                "matrix": [
+                  0.9999999999999999,
+                  0,
+                  0,
+                  0.9999999999999999,
+                  0,
+                  0
+                ],
+                "width": 82.719
+              }
+            }
+          ]
+        }
+      ],
+      "findings": {
+        "ok": true,
+        "warnings": [],
+        "layout": {
+          "version": 1,
+          "kind": "flowchart",
+          "nodes": [
+            {
+              "id": "Grant",
+              "x": 40,
+              "y": 40,
+              "w": 154,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Authorization grant"
+            },
+            {
+              "id": "Code",
+              "x": 246,
+              "y": 40,
+              "w": 138,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Short-lived code"
+            },
+            {
+              "id": "Verifier",
+              "x": 246,
+              "y": 101,
+              "w": 138,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Private verifier"
+            },
+            {
+              "id": "Exchange",
+              "x": 428,
+              "y": 70,
+              "w": 133,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Token endpoint"
+            },
+            {
+              "id": "Token",
+              "x": 609,
+              "y": 70,
+              "w": 123,
+              "h": 37,
+              "shape": "rectangle",
+              "label": "Access token"
+            }
+          ],
+          "edges": [
+            {
+              "id": "Grant->Code",
+              "from": "Grant",
+              "to": "Code",
+              "path": [
+                [
+                  194,
+                  58
+                ],
+                [
+                  246,
+                  58
+                ]
+              ]
+            },
+            {
+              "id": "Code->Exchange",
+              "from": "Code",
+              "to": "Exchange",
+              "path": [
+                [
+                  384,
+                  58
+                ],
+                [
+                  406,
+                  58
+                ],
+                [
+                  406,
+                  89
+                ],
+                [
+                  428,
+                  89
+                ]
+              ]
+            },
+            {
+              "id": "Verifier->Exchange",
+              "from": "Verifier",
+              "to": "Exchange",
+              "path": [
+                [
+                  384,
+                  119
+                ],
+                [
+                  406,
+                  119
+                ],
+                [
+                  406,
+                  89
+                ],
+                [
+                  428,
+                  89
+                ]
+              ]
+            },
+            {
+              "id": "Exchange->Token",
+              "from": "Exchange",
+              "to": "Token",
+              "path": [
+                [
+                  561,
+                  89
+                ],
+                [
+                  609,
+                  89
+                ]
+              ]
+            }
+          ],
+          "groups": [],
+          "bounds": {
+            "w": 772,
+            "h": 182
+          }
+        }
+      }
+    },
+    "[\"gantt\\n dateFormat YYYY-MM-DD\\n axisFormat %d\\n section Authorization\\n Verifier retained :v, 2026-01-01, 3d\\n Code issued and exchanged :c, 2026-01-02, 1d\\n section API\\n Access token :t, 2026-01-03, 4d\",\"github-light\",null]": {
+      "version": 1,
+      "renderer": "agentic-mermaid@0.4.1",
+      "spec": {
+        "source": "gantt\n dateFormat YYYY-MM-DD\n axisFormat %d\n section Authorization\n Verifier retained :v, 2026-01-01, 3d\n Code issued and exchanged :c, 2026-01-02, 1d\n section API\n Access token :t, 2026-01-03, 4d",
+        "style": "github-light"
+      },
+      "family": "gantt",
+      "width": 813,
+      "height": 218,
+      "palette": {
+        "paper": "#ffffff",
+        "ink": "#1f2328",
+        "accent": "#0969da",
+        "muted": "#59636e"
+      },
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"813\" height=\"218\" viewBox=\"0 0 813 218\" style=\"--bg:#ffffff;--fg:#1f2328;--line:#d1d9e0;--accent:#0969da;--muted:#59636e;--font:Inter;background:#ffffff\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #1f2328;\n    --_text-sec:      #59636e;\n    --_text-muted:    #59636e;\n    --_text-faint:    #86888b;\n    --_line:          #d1d9e0;\n    --_arrow:         #0969da;\n    --_node-fill:     #f8f8f9;\n    --_node-stroke:   #d2d3d4;\n    --_group-fill:    #ffffff;\n    --_group-hdr:     #f4f4f4;\n    --_inner-stroke:  #e4e5e5;\n    --_key-badge:     #e9e9ea;\n  }\n</style>\n<style>\n  .gantt-section-band { fill: #1f2328; opacity: 0.07; }\n  .gantt-grid-line { stroke: #d1d9e0; stroke-width: 1; opacity: 0.45; }\n  .gantt-bar { fill: #0969da; stroke: none; opacity: 0.92; }\n  .gantt-bar-active { fill: #0969da; stroke: #1f2328; stroke-width: 1.5; opacity: 1; }\n  .gantt-bar-done { fill: #59636e; opacity: 0.55; }\n  .gantt-bar-crit { fill: #1f2328; stroke: #0969da; stroke-width: 1.5; opacity: 0.95; }\n  .gantt-milestone { fill: #0969da; stroke: #1f2328; stroke-width: 1; }\n  .gantt-milestone-crit { fill: #1f2328; stroke: #0969da; stroke-width: 1.5; }\n  .gantt-vert-marker { stroke: #d1d9e0; stroke-width: 2; stroke-dasharray: 6 3; }\n  .gantt-today-marker { stroke: #0969da; stroke-width: 2; stroke-dasharray: 4 3; }\n  .gantt-title { fill: #1f2328; }\n  .gantt-section-label { fill: #1f2328; }\n  .gantt-task-label { fill: #1f2328; }\n  .gantt-axis-label { fill: #59636e; }\n</style>\n<rect width=\"813\" height=\"218\" fill=\"#ffffff\" data-backdrop=\"page\" />\n<rect class=\"gantt-section-band\" x=\"197\" y=\"16\" width=\"600\" height=\"90\" data-id=\"section-band:Authorization#0\" data-role=\"section\" />\n<line class=\"gantt-grid-line\" x1=\"197\" y1=\"16\" x2=\"197\" y2=\"178\" />\n<line class=\"gantt-grid-line\" x1=\"297\" y1=\"16\" x2=\"297\" y2=\"178\" />\n<line class=\"gantt-grid-line\" x1=\"397\" y1=\"16\" x2=\"397\" y2=\"178\" />\n<line class=\"gantt-grid-line\" x1=\"497\" y1=\"16\" x2=\"497\" y2=\"178\" />\n<line class=\"gantt-grid-line\" x1=\"597\" y1=\"16\" x2=\"597\" y2=\"178\" />\n<line class=\"gantt-grid-line\" x1=\"697\" y1=\"16\" x2=\"697\" y2=\"178\" />\n<line class=\"gantt-grid-line\" x1=\"797\" y1=\"16\" x2=\"797\" y2=\"178\" />\n<text class=\"gantt-axis-label\" x=\"197\" y=\"190\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"11\" font-weight=\"500\" textLength=\"10.428\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">01</text>\n<text class=\"gantt-axis-label\" x=\"297\" y=\"190\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"11\" font-weight=\"500\" textLength=\"14.19\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">02</text>\n<text class=\"gantt-axis-label\" x=\"397\" y=\"190\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"11\" font-weight=\"500\" textLength=\"14.19\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">03</text>\n<text class=\"gantt-axis-label\" x=\"497\" y=\"190\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"11\" font-weight=\"500\" textLength=\"14.19\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">04</text>\n<text class=\"gantt-axis-label\" x=\"597\" y=\"190\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"11\" font-weight=\"500\" textLength=\"14.19\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">05</text>\n<text class=\"gantt-axis-label\" x=\"697\" y=\"190\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"11\" font-weight=\"500\" textLength=\"14.19\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">06</text>\n<text class=\"gantt-axis-label\" x=\"797\" y=\"190\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"11\" font-weight=\"500\" textLength=\"14.19\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">07</text>\n<text class=\"gantt-section-label\" x=\"8\" y=\"31\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"13\" font-weight=\"600\" data-id=\"section-label:Authorization#0\" data-role=\"section\" textLength=\"84.63\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Authorization</text>\n<text class=\"gantt-section-label\" x=\"8\" y=\"127\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"13\" font-weight=\"600\" data-id=\"section-label:API#0\" data-role=\"section\" textLength=\"23.79\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">API</text>\n<text class=\"gantt-task-label\" x=\"16\" y=\"57\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"13\" font-weight=\"500\" textLength=\"97.539\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Verifier retained</text>\n<text class=\"gantt-task-label\" x=\"16\" y=\"87\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"13\" font-weight=\"500\" textLength=\"168.675\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Code issued and exchanged</text>\n<text class=\"gantt-task-label\" x=\"16\" y=\"153\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"13\" font-weight=\"500\" textLength=\"82.719\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Access token</text>\n<rect class=\"gantt-bar\" x=\"197\" y=\"46\" width=\"300\" height=\"22\" rx=\"3\" ry=\"3\" data-task=\"v\" data-id=\"task:v\" data-role=\"task\" />\n<rect class=\"gantt-bar\" x=\"297\" y=\"76\" width=\"100\" height=\"22\" rx=\"3\" ry=\"3\" data-task=\"c\" data-id=\"task:c\" data-role=\"task\" />\n<rect class=\"gantt-bar\" x=\"397\" y=\"142\" width=\"400\" height=\"22\" rx=\"3\" ry=\"3\" data-task=\"t\" data-id=\"task:t\" data-role=\"task\" />\n</svg>",
+      "parts": [
+        {
+          "id": "__frame",
+          "role": "frame",
+          "kind": "shape",
+          "svg": "",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  0,
+                  0,
+                  2.7100000381469727,
+                  0,
+                  5.420000076293945,
+                  0,
+                  8.130000114440918,
+                  0,
+                  8.130000114440918,
+                  -0.7266666293144226,
+                  8.130000114440918,
+                  -1.4533332586288452,
+                  8.130000114440918,
+                  -2.180000066757202,
+                  5.420000076293945,
+                  -2.180000066757202,
+                  2.7100000381469727,
+                  -2.180000066757202,
+                  0,
+                  -2.180000066757202,
+                  0,
+                  -1.4533332586288452,
+                  0,
+                  -0.7266666293144226,
+                  0,
+                  0
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#ffffff",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "section-band:Authorization#0",
+          "role": "section",
+          "kind": "shape",
+          "svg": "<rect class=\"gantt-section-band\" x=\"197\" y=\"16\" width=\"600\" height=\"90\" data-id=\"section-band:Authorization#0\" data-role=\"section\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.9700000286102295,
+                  -0.1599999964237213,
+                  3.9700000286102295,
+                  -0.1599999964237213,
+                  5.96999979019165,
+                  -0.1599999964237213,
+                  7.96999979019165,
+                  -0.1599999964237213,
+                  7.96999979019165,
+                  -0.46000000834465027,
+                  7.96999979019165,
+                  -0.7599999904632568,
+                  7.96999979019165,
+                  -1.059999942779541,
+                  5.96999979019165,
+                  -1.059999942779541,
+                  3.9700000286102295,
+                  -1.059999942779541,
+                  1.9700000286102295,
+                  -1.059999942779541,
+                  1.9700000286102295,
+                  -0.7599999904632568,
+                  1.9700000286102295,
+                  -0.46000000834465027,
+                  1.9700000286102295,
+                  -0.1599999964237213
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#1f2328",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 0.07,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "channels": {
+            "category": "Authorization"
+          }
+        },
+        {
+          "id": "grid:1767225600000",
+          "role": "grid",
+          "kind": "shape",
+          "svg": "<line class=\"gantt-grid-line\" x1=\"197\" y1=\"16\" x2=\"197\" y2=\"178\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  1.9700000286102295,
+                  -0.1599999964237213,
+                  1.9700000286102295,
+                  -0.699999988079071,
+                  1.9700000286102295,
+                  -1.2400000095367432,
+                  1.9700000286102295,
+                  -1.7799999713897705
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "#000000",
+                "stroke": "#d1d9e0",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 0.45,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "grid:1767312000000",
+          "role": "grid",
+          "kind": "shape",
+          "svg": "<line class=\"gantt-grid-line\" x1=\"297\" y1=\"16\" x2=\"297\" y2=\"178\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2.9700000286102295,
+                  -0.1599999964237213,
+                  2.9700000286102295,
+                  -0.699999988079071,
+                  2.9700000286102295,
+                  -1.2400000095367432,
+                  2.9700000286102295,
+                  -1.7799999713897705
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "#000000",
+                "stroke": "#d1d9e0",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 0.45,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "grid:1767398400000",
+          "role": "grid",
+          "kind": "shape",
+          "svg": "<line class=\"gantt-grid-line\" x1=\"397\" y1=\"16\" x2=\"397\" y2=\"178\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3.9700000286102295,
+                  -0.1599999964237213,
+                  3.9700000286102295,
+                  -0.699999988079071,
+                  3.9700000286102295,
+                  -1.2400000095367432,
+                  3.9700000286102295,
+                  -1.7799999713897705
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "#000000",
+                "stroke": "#d1d9e0",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 0.45,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "grid:1767484800000",
+          "role": "grid",
+          "kind": "shape",
+          "svg": "<line class=\"gantt-grid-line\" x1=\"497\" y1=\"16\" x2=\"497\" y2=\"178\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4.96999979019165,
+                  -0.1599999964237213,
+                  4.96999979019165,
+                  -0.699999988079071,
+                  4.96999979019165,
+                  -1.2400000095367432,
+                  4.96999979019165,
+                  -1.7799999713897705
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "#000000",
+                "stroke": "#d1d9e0",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 0.45,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "grid:1767571200000",
+          "role": "grid",
+          "kind": "shape",
+          "svg": "<line class=\"gantt-grid-line\" x1=\"597\" y1=\"16\" x2=\"597\" y2=\"178\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  5.96999979019165,
+                  -0.1599999964237213,
+                  5.96999979019165,
+                  -0.699999988079071,
+                  5.96999979019165,
+                  -1.2400000095367432,
+                  5.96999979019165,
+                  -1.7799999713897705
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "#000000",
+                "stroke": "#d1d9e0",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 0.45,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "grid:1767657600000",
+          "role": "grid",
+          "kind": "shape",
+          "svg": "<line class=\"gantt-grid-line\" x1=\"697\" y1=\"16\" x2=\"697\" y2=\"178\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  6.96999979019165,
+                  -0.1599999964237213,
+                  6.96999979019165,
+                  -0.699999988079071,
+                  6.96999979019165,
+                  -1.2400000095367432,
+                  6.96999979019165,
+                  -1.7799999713897705
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "#000000",
+                "stroke": "#d1d9e0",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 0.45,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "grid:1767744000000",
+          "role": "grid",
+          "kind": "shape",
+          "svg": "<line class=\"gantt-grid-line\" x1=\"797\" y1=\"16\" x2=\"797\" y2=\"178\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  7.96999979019165,
+                  -0.1599999964237213,
+                  7.96999979019165,
+                  -0.699999988079071,
+                  7.96999979019165,
+                  -1.2400000095367432,
+                  7.96999979019165,
+                  -1.7799999713897705
+                ]
+              ],
+              "closed": [
+                false
+              ],
+              "style": {
+                "fill": "#000000",
+                "stroke": "#d1d9e0",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 0.45,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "id": "axis:1767225600000:bottom",
+          "role": "axis",
+          "kind": "text",
+          "svg": "<text class=\"gantt-axis-label\" x=\"197\" y=\"190\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"11\" font-weight=\"500\">01</text>",
+          "shapes": [
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#59636e",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "01",
+              "fontSize": 0.11,
+              "textRun": {
+                "text": "01",
+                "x": 197,
+                "y": 190,
+                "size": 11,
+                "anchor": "middle",
+                "baseline": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 10.428
+              }
+            }
+          ]
+        },
+        {
+          "id": "axis:1767312000000:bottom",
+          "role": "axis",
+          "kind": "text",
+          "svg": "<text class=\"gantt-axis-label\" x=\"297\" y=\"190\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"11\" font-weight=\"500\">02</text>",
+          "shapes": [
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#59636e",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "02",
+              "fontSize": 0.11,
+              "textRun": {
+                "text": "02",
+                "x": 297,
+                "y": 190,
+                "size": 11,
+                "anchor": "middle",
+                "baseline": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 14.19
+              }
+            }
+          ]
+        },
+        {
+          "id": "axis:1767398400000:bottom",
+          "role": "axis",
+          "kind": "text",
+          "svg": "<text class=\"gantt-axis-label\" x=\"397\" y=\"190\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"11\" font-weight=\"500\">03</text>",
+          "shapes": [
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#59636e",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "03",
+              "fontSize": 0.11,
+              "textRun": {
+                "text": "03",
+                "x": 397,
+                "y": 190,
+                "size": 11,
+                "anchor": "middle",
+                "baseline": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 14.19
+              }
+            }
+          ]
+        },
+        {
+          "id": "axis:1767484800000:bottom",
+          "role": "axis",
+          "kind": "text",
+          "svg": "<text class=\"gantt-axis-label\" x=\"497\" y=\"190\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"11\" font-weight=\"500\">04</text>",
+          "shapes": [
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#59636e",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "04",
+              "fontSize": 0.11,
+              "textRun": {
+                "text": "04",
+                "x": 497,
+                "y": 190,
+                "size": 11,
+                "anchor": "middle",
+                "baseline": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 14.19
+              }
+            }
+          ]
+        },
+        {
+          "id": "axis:1767571200000:bottom",
+          "role": "axis",
+          "kind": "text",
+          "svg": "<text class=\"gantt-axis-label\" x=\"597\" y=\"190\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"11\" font-weight=\"500\">05</text>",
+          "shapes": [
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#59636e",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "05",
+              "fontSize": 0.11,
+              "textRun": {
+                "text": "05",
+                "x": 597,
+                "y": 190,
+                "size": 11,
+                "anchor": "middle",
+                "baseline": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 14.19
+              }
+            }
+          ]
+        },
+        {
+          "id": "axis:1767657600000:bottom",
+          "role": "axis",
+          "kind": "text",
+          "svg": "<text class=\"gantt-axis-label\" x=\"697\" y=\"190\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"11\" font-weight=\"500\">06</text>",
+          "shapes": [
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#59636e",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "06",
+              "fontSize": 0.11,
+              "textRun": {
+                "text": "06",
+                "x": 697,
+                "y": 190,
+                "size": 11,
+                "anchor": "middle",
+                "baseline": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 14.19
+              }
+            }
+          ]
+        },
+        {
+          "id": "axis:1767744000000:bottom",
+          "role": "axis",
+          "kind": "text",
+          "svg": "<text class=\"gantt-axis-label\" x=\"797\" y=\"190\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"11\" font-weight=\"500\">07</text>",
+          "shapes": [
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#59636e",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "07",
+              "fontSize": 0.11,
+              "textRun": {
+                "text": "07",
+                "x": 797,
+                "y": 190,
+                "size": 11,
+                "anchor": "middle",
+                "baseline": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 14.19
+              }
+            }
+          ]
+        },
+        {
+          "id": "section-label:Authorization#0",
+          "role": "section",
+          "kind": "text",
+          "svg": "<text class=\"gantt-section-label\" x=\"8\" y=\"31\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"13\" font-weight=\"600\" data-id=\"section-label:Authorization#0\" data-role=\"section\">Authorization</text>",
+          "shapes": [
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#1f2328",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Authorization",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Authorization",
+                "x": 8,
+                "y": 31,
+                "size": 13,
+                "anchor": "start",
+                "baseline": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 84.63
+              }
+            }
+          ],
+          "channels": {
+            "category": "Authorization"
+          }
+        },
+        {
+          "id": "section-label:API#0",
+          "role": "section",
+          "kind": "text",
+          "svg": "<text class=\"gantt-section-label\" x=\"8\" y=\"127\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"13\" font-weight=\"600\" data-id=\"section-label:API#0\" data-role=\"section\">API</text>",
+          "shapes": [
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#1f2328",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "API",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "API",
+                "x": 8,
+                "y": 127,
+                "size": 13,
+                "anchor": "start",
+                "baseline": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 23.79
+              }
+            }
+          ],
+          "channels": {
+            "category": "API"
+          }
+        },
+        {
+          "id": "task-label:v",
+          "role": "label",
+          "kind": "text",
+          "svg": "<text class=\"gantt-task-label\" x=\"16\" y=\"57\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"13\" font-weight=\"500\">Verifier retained</text>",
+          "shapes": [
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#1f2328",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Verifier retained",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Verifier retained",
+                "x": 16,
+                "y": 57,
+                "size": 13,
+                "anchor": "start",
+                "baseline": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 97.539
+              }
+            }
+          ],
+          "owner": "task:v"
+        },
+        {
+          "id": "task-label:c",
+          "role": "label",
+          "kind": "text",
+          "svg": "<text class=\"gantt-task-label\" x=\"16\" y=\"87\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"13\" font-weight=\"500\">Code issued and exchanged</text>",
+          "shapes": [
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#1f2328",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Code issued and exchanged",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Code issued and exchanged",
+                "x": 16,
+                "y": 87,
+                "size": 13,
+                "anchor": "start",
+                "baseline": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 168.675
+              }
+            }
+          ],
+          "owner": "task:c"
+        },
+        {
+          "id": "task-label:t",
+          "role": "label",
+          "kind": "text",
+          "svg": "<text class=\"gantt-task-label\" x=\"16\" y=\"153\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"13\" font-weight=\"500\">Access token</text>",
+          "shapes": [
+            {
+              "subpaths": [],
+              "closed": [],
+              "style": {
+                "fill": "#1f2328",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 1,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              },
+              "text": "Access token",
+              "fontSize": 0.13,
+              "textRun": {
+                "text": "Access token",
+                "x": 16,
+                "y": 153,
+                "size": 13,
+                "anchor": "start",
+                "baseline": "middle",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "width": 82.719
+              }
+            }
+          ],
+          "owner": "task:t"
+        },
+        {
+          "id": "task:v",
+          "role": "task",
+          "kind": "shape",
+          "svg": "<rect class=\"gantt-bar\" x=\"197\" y=\"46\" width=\"300\" height=\"22\" rx=\"3\" ry=\"3\" data-task=\"v\" data-id=\"task:v\" data-role=\"task\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  2,
+                  -0.46000000834465027,
+                  2.9800000190734863,
+                  -0.46000000834465027,
+                  3.9600000381469727,
+                  -0.46000000834465027,
+                  4.940000057220459,
+                  -0.46000000834465027,
+                  4.956568717956543,
+                  -0.46000000834465027,
+                  4.96999979019165,
+                  -0.47343146800994873,
+                  4.96999979019165,
+                  -0.49000000953674316,
+                  4.96999979019165,
+                  -0.5433332920074463,
+                  4.96999979019165,
+                  -0.596666693687439,
+                  4.96999979019165,
+                  -0.6499999761581421,
+                  4.96999979019165,
+                  -0.6665685176849365,
+                  4.956568717956543,
+                  -0.6800000071525574,
+                  4.940000057220459,
+                  -0.6800000071525574,
+                  3.9600000381469727,
+                  -0.6800000071525574,
+                  2.9800000190734863,
+                  -0.6800000071525574,
+                  2,
+                  -0.6800000071525574,
+                  1.983431339263916,
+                  -0.6800000071525574,
+                  1.9700000286102295,
+                  -0.6665685176849365,
+                  1.9700000286102295,
+                  -0.6499999761581421,
+                  1.9700000286102295,
+                  -0.596666693687439,
+                  1.9700000286102295,
+                  -0.5433332920074463,
+                  1.9700000286102295,
+                  -0.49000000953674316,
+                  1.9700000286102295,
+                  -0.47343146800994873,
+                  1.983431339263916,
+                  -0.46000000834465027,
+                  2,
+                  -0.46000000834465027
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#0969da",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 0.92,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "channels": {
+            "category": "Authorization"
+          }
+        },
+        {
+          "id": "task:c",
+          "role": "task",
+          "kind": "shape",
+          "svg": "<rect class=\"gantt-bar\" x=\"297\" y=\"76\" width=\"100\" height=\"22\" rx=\"3\" ry=\"3\" data-task=\"c\" data-id=\"task:c\" data-role=\"task\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  3,
+                  -0.7599999904632568,
+                  3.313333511352539,
+                  -0.7599999904632568,
+                  3.62666654586792,
+                  -0.7599999904632568,
+                  3.940000057220459,
+                  -0.7599999904632568,
+                  3.956568717956543,
+                  -0.7599999904632568,
+                  3.9700000286102295,
+                  -0.7734314799308777,
+                  3.9700000286102295,
+                  -0.7900000214576721,
+                  3.9700000286102295,
+                  -0.84333336353302,
+                  3.9700000286102295,
+                  -0.8966666460037231,
+                  3.9700000286102295,
+                  -0.949999988079071,
+                  3.9700000286102295,
+                  -0.9665685296058655,
+                  3.956568717956543,
+                  -0.9800000190734863,
+                  3.940000057220459,
+                  -0.9800000190734863,
+                  3.62666654586792,
+                  -0.9800000190734863,
+                  3.313333511352539,
+                  -0.9800000190734863,
+                  3,
+                  -0.9800000190734863,
+                  2.983431339263916,
+                  -0.9800000190734863,
+                  2.9700000286102295,
+                  -0.9665685296058655,
+                  2.9700000286102295,
+                  -0.949999988079071,
+                  2.9700000286102295,
+                  -0.8966666460037231,
+                  2.9700000286102295,
+                  -0.84333336353302,
+                  2.9700000286102295,
+                  -0.7900000214576721,
+                  2.9700000286102295,
+                  -0.7734314799308777,
+                  2.983431339263916,
+                  -0.7599999904632568,
+                  3,
+                  -0.7599999904632568
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#0969da",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 0.92,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "channels": {
+            "category": "Authorization"
+          }
+        },
+        {
+          "id": "task:t",
+          "role": "task",
+          "kind": "shape",
+          "svg": "<rect class=\"gantt-bar\" x=\"397\" y=\"142\" width=\"400\" height=\"22\" rx=\"3\" ry=\"3\" data-task=\"t\" data-id=\"task:t\" data-role=\"task\" />",
+          "shapes": [
+            {
+              "subpaths": [
+                [
+                  4,
+                  -1.4199999570846558,
+                  5.313333034515381,
+                  -1.4199999570846558,
+                  6.626667022705078,
+                  -1.4199999570846558,
+                  7.940000057220459,
+                  -1.4199999570846558,
+                  7.956568717956543,
+                  -1.4199999570846558,
+                  7.96999979019165,
+                  -1.4334313869476318,
+                  7.96999979019165,
+                  -1.4500000476837158,
+                  7.96999979019165,
+                  -1.503333330154419,
+                  7.96999979019165,
+                  -1.5566667318344116,
+                  7.96999979019165,
+                  -1.6100000143051147,
+                  7.96999979019165,
+                  -1.6265685558319092,
+                  7.956568717956543,
+                  -1.6399999856948853,
+                  7.940000057220459,
+                  -1.6399999856948853,
+                  6.626667022705078,
+                  -1.6399999856948853,
+                  5.313333034515381,
+                  -1.6399999856948853,
+                  4,
+                  -1.6399999856948853,
+                  3.983431339263916,
+                  -1.6399999856948853,
+                  3.9700000286102295,
+                  -1.6265685558319092,
+                  3.9700000286102295,
+                  -1.6100000143051147,
+                  3.9700000286102295,
+                  -1.5566667318344116,
+                  3.9700000286102295,
+                  -1.503333330154419,
+                  3.9700000286102295,
+                  -1.4500000476837158,
+                  3.9700000286102295,
+                  -1.4334313869476318,
+                  3.983431339263916,
+                  -1.4199999570846558,
+                  4,
+                  -1.4199999570846558
+                ]
+              ],
+              "closed": [
+                true
+              ],
+              "style": {
+                "fill": "#0969da",
+                "stroke": "none",
+                "strokeWidth": 0.01,
+                "fillOpacity": 1,
+                "strokeOpacity": 1,
+                "opacity": 0.92,
+                "lineCap": "butt",
+                "lineJoin": "miter",
+                "fillRule": "nonzero",
+                "miterLimit": 4,
+                "paintOrder": "normal"
+              }
+            }
+          ],
+          "channels": {
+            "category": "API"
+          }
+        }
+      ],
+      "findings": {
+        "ok": true,
+        "warnings": [],
+        "layout": {
+          "version": 1,
+          "kind": "gantt",
+          "nodes": [
+            {
+              "id": "v",
+              "x": 197,
+              "y": 46,
+              "w": 300,
+              "h": 22,
+              "shape": "rectangle",
+              "label": "Verifier retained"
+            },
+            {
+              "id": "c",
+              "x": 297,
+              "y": 76,
+              "w": 100,
+              "h": 22,
+              "shape": "rectangle",
+              "label": "Code issued and exchanged"
+            },
+            {
+              "id": "t",
+              "x": 397,
+              "y": 142,
+              "w": 400,
+              "h": 22,
+              "shape": "rectangle",
+              "label": "Access token"
+            }
+          ],
+          "edges": [],
+          "groups": [
+            {
+              "id": "section#0",
+              "x": 197,
+              "y": 16,
+              "w": 600,
+              "h": 90,
+              "members": [
+                "v",
+                "c"
+              ],
+              "label": "Authorization"
+            },
+            {
+              "id": "section#1",
+              "x": 197,
+              "y": 112,
+              "w": 600,
+              "h": 60,
+              "members": [
+                "t"
+              ],
+              "label": "API"
+            }
+          ],
+          "bounds": {
+            "w": 813,
+            "h": 218
+          }
+        }
+      }
+    }
+  }
+}

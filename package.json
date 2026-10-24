@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node tools/dev.ts",
     "build": "node tools/build.ts",
-    "build:lib": "rm -rf dist && tsc -p tsconfig.lib.json",
+    "build:lib": "rm -rf dist && tsc -p tsconfig.lib.json && node tools/copy-vendor.ts && node tools/build-cli.ts",
     "test": "node --expose-gc --test test/*.test.ts",
     "test:full": "FULL=1 node --expose-gc --test test/*.test.ts",
     "see": "node tools/see.ts",
@@ -22,44 +22,64 @@
     "deploy": "npm run build && npx wrangler deploy",
     "fonts": "tools/fonts.sh",
     "typecheck": "tsc -b",
-    "check": "tsc -b && tsc -p test/consumer/tsconfig.json",
+    "check": "tsc -b && node tools/copy-vendor.ts && tsc -p test/consumer/tsconfig.json",
     "transcript": "node tools/transcript.ts",
     "bench": "node tools/bench.ts",
     "types": "npm run build:lib",
     "prepack": "npm run build:lib",
-    "verify:layout": "npm run build && node tools/layout.ts"
+    "verify:layout": "npm run build && node tools/layout.ts",
+    "explain": "node tools/explain.ts",
+    "demos:build": "node tools/explain-demos.ts",
+    "demos:check": "node tools/explain-demos.ts --check",
+    "demos:render": "node tools/explain-demos.ts --render",
+    "demos:serve": "node tools/explain-serve.ts",
+    "demos:review": "node tools/explain-review.ts",
+    "pack:smoke": "node tools/explain-package-smoke.ts",
+    "test:embeds": "EXPLAIN_BROWSER=1 node --test test/explain-capture.test.ts test/explain-embed.test.ts",
+    "test:video": "EXPLAIN_VIDEO=1 node --test test/explain-video.test.ts"
   },
   "devDependencies": {
-    "@types/node": "24.19.2",
-    "esbuild": "0.25.12",
-    "playwright-core": "1.56.1",
-    "typescript": "5.9.3"
+    "@types/node": "24.19.2"
   },
   "description": "Animated, steppable code explainers. Zero-dependency JS engine, SVG output, browser and Cloudflare Workers.",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./explain": {
+      "types": "./dist/explain/index.d.ts",
+      "default": "./dist/explain/index.js"
     }
   },
+  "bin": { "explain": "dist/tools/explain.js" },
   "license": "MIT",
   "sideEffects": false,
-  "types": "./dist/index.d.ts",
+  "types": "./dist/src/index.d.ts",
   "files": [
     "dist",
     "src",
+    "explain",
+    "integrations",
+    "app/embed.ts",
+    "app/embed.css",
+    "app/embed-protocol.ts",
+    "app/loader.ts",
+    "tools",
+    "skills",
     "vendor/glyph.js",
     "vendor/glyph.d.ts",
+    "vendor/licenses",
     "README.md",
     "docs",
     "LICENSE"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ivarvong/lantern"
+    "url": "https://github.com/adewale/lantern"
   },
   "keywords": [
     "animation",
@@ -67,5 +87,15 @@
     "manim",
     "explainer",
     "cloudflare-workers"
-  ]
+  ],
+  "dependencies": {
+    "esbuild": "0.25.12",
+    "playwright-core": "1.56.1",
+    "svgpath": "2.6.0",
+    "typescript": "5.9.3"
+  },
+  "optionalDependencies": {
+    "@resvg/resvg-js": "2.6.2",
+    "agentic-mermaid": "0.4.1"
+  }
 }

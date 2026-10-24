@@ -1,0 +1,87 @@
+export const EXPLAINERS = [
+  {
+    id: 'pap',
+    tag: 'Protocol · 4 diagram families',
+    step: 'sign-in',
+    description: 'Compare direct, device and mediated sign-in without losing the session story.',
+  },
+  {
+    id: 'seasons',
+    tag: 'Geometry · computed chart',
+    step: 'year',
+    description: 'See polar day in Tromsø, a flat year in Quito and winter in Sydney’s June.',
+  },
+  {
+    id: 'oauth-pkce',
+    tag: 'Security · executable RFC vector',
+    step: 'attack',
+    query: 'attacker=yes',
+    description: 'Steal the code. Try the wrong verifier. See exactly which check rejects it.',
+  },
+  {
+    id: 'mr-cache',
+    tag: 'Code review · typed edit replay',
+    step: 'after',
+    description: 'Read a diff, watch the architecture morph, then follow a hit or a miss.',
+  },
+  {
+    id: 'lantern',
+    tag: 'Engine · native authoring',
+    step: 'objects',
+    description: 'A scene explains its own objects, deterministic clock, sinks and publishing workflow.',
+  },
+  {
+    id: 'agentic-mermaid',
+    tag: 'Agent tools · real verification',
+    step: 'repair',
+    description: 'Catch unlabeled decision branches and repair them with replayed typed operations.',
+  },
+  {
+    id: '2password',
+    tag: 'Security · offline fixture',
+    step: 'boundary',
+    description: 'Explore metadata-first search, modeled approvals and child-environment hygiene.',
+  },
+  {
+    id: 'state-machine',
+    tag: 'Program trace · reducer',
+    step: 'opened',
+    description: 'One machine, two histories. Every animated transition comes from the reducer.',
+  },
+  {
+    id: 'token-bucket',
+    tag: 'Program trace · rate limiter',
+    step: 'trace',
+    description: 'Run three refill rates through the same requests and plot the real balances.',
+  },
+  {
+    id: 'ring-buffer',
+    tag: 'Native geometry · invariants',
+    step: 'result',
+    description: 'Watch the tail wrap into freed slots—or reject a write before anything changes.',
+  },
+  {
+    id: 'exgit',
+    tag: 'Content addressing · real hashes',
+    step: 'change',
+    description: 'Compare adding and editing a file. Find which blobs, trees and commits Git can share.',
+  },
+  {
+    id: 'just-bash',
+    tag: 'Interpreter model · immutable values',
+    step: 'cat',
+    description: 'Run cat on the old or returned shell. The difference is the whole lesson.',
+  },
+  {
+    id: 'pyex-limits',
+    tag: 'Interpreter model · first-match policy',
+    step: 'failure',
+    description: 'Change the budget and follow the resource-check clause that actually wins.',
+  },
+  {
+    id: 'glyph',
+    tag: 'Typography · embedded outlines',
+    step: 'measure',
+    description: 'Write and measure real glyph geometry, then change the font and compare.',
+  },
+] as const;

@@ -199,7 +199,7 @@ export class FadeOut extends Transform {
   override finish(): void {
     super.finish();
     // Restore so the mobject can be shown again later
-    for (const m of this.mobject.family()) m.style.opacity = 1;
+    for (const [m, start] of this.families) m!.style.opacity = start!.style.opacity;
   }
 }
 
@@ -303,8 +303,10 @@ export class AnimationGroup extends Animation {
       a.interpolate(a.rateFunc(sub));
     });
   }
-  /** The members' mobjects (a nested group contributes none of its own). */
-  get mobjects(): Mobject[] { return this.animations.map((a) => a.mobject).filter(Boolean); }
+  /** A group has no mobject; nested groups contribute their leaf members. */
+  get mobjects(): Mobject[] {
+    return this.animations.flatMap((a) => a instanceof AnimationGroup ? a.mobjects : [a.mobject]).filter(Boolean);
+  }
 }
 
 export class LaggedStart extends AnimationGroup {
