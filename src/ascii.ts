@@ -10,9 +10,7 @@ import { FRAME } from './svg.ts';
 import type { Scene, Sink, Step } from './scene.ts';
 import type { VecLike } from './vec.ts';
 
-export interface TextGridOptions { cols?: number; rows?: number }
-
-export function renderText(scene: Scene, { cols = 96, rows = 27 }: TextGridOptions = {}): string {
+export function renderText(scene: Scene, { cols = 96, rows = 27 }: { cols?: number; rows?: number } = {}): string {
   const grid = Array.from({ length: rows }, () => new Array<string>(cols).fill(' '));
   const sx = cols / FRAME.w, sy = rows / FRAME.h;
   const X = (x: number) => Math.round((x + FRAME.w / 2) * sx);
@@ -78,14 +76,4 @@ export function renderText(scene: Scene, { cols = 96, rows = 27 }: TextGridOptio
   const order = (m: Mobject) => (m instanceof Text ? 2 : m instanceof Dot ? 3 : 1);
   for (const m of later.sort((a, b) => order(a) - order(b))) draw(m, 1);
   return grid.map((r) => r.join('').replace(/\s+$/, '')).join('\n');
-}
-
-/** Collects a text frame at each step boundary (and the final frame). */
-export class TextSink implements Sink {
-  opts: TextGridOptions;
-  frames: Array<{ step: string; t: number; text: string }>;
-  last?: Scene;
-  constructor(opts: TextGridOptions = {}) { this.opts = opts; this.frames = []; }
-  async frame(scene: Scene): Promise<void> { this.last = scene; }
-  async stepBegin(scene: Scene, s: Step): Promise<void> { this.frames.push({ step: s.path, t: scene.time, text: renderText(scene, this.opts) }); }
 }

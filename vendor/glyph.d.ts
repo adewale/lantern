@@ -7,6 +7,10 @@ export type Segment =
   | { tag: 'Close' };
 export type ShapedGlyph = { gid: number; cluster: number; x: number; dx: number; dy: number; ax: number; s?: number; path: Segment[] };
 export type Run = { glyphs: ShapedGlyph[]; width: number; ascent: number; descent: number; s?: number };
-export type Font = { readonly __font: unique symbol };
+export type Font = {
+  readonly __font: unique symbol;
+  /** The glyph id for a code point from the font's cmap, 0 when the font has none. */
+  glyphOf(codePoint: number): number;
+};
 export function loadFont(bytes: Uint8Array): Promise<Result<Font>>;
 export function run(font: Font, key: string, text: string, size: number, opts?: object): Result<Run>;

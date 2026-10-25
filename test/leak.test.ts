@@ -1,11 +1,11 @@
-// Repeated seeks must not grow the heap: a Worker serves thousands of deep
-// links from one isolate, and the player re-runs the scene on every seek.
+// Repeated seeks must not grow the heap: the embed re-runs the scene on every
+// seek, and a reader may step back and forth for a long time.
 // Memoized shaping and flattened glyph outlines are bounded by the fonts'
 // glyph set, so after warm-up the heap must settle.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { renderAt, SnapshotSink, traceScene, loadFonts, Scene } from '../src/index.ts';
-import { SCENES } from '../scenes/index.ts';
+import { explainer } from './lib/scenes.ts';
 
 Scene.captionWpm = Infinity;
 
@@ -14,7 +14,7 @@ const gc = (globalThis as { gc?: () => void }).gc;
 
 test('50 seeks and traces leave the heap where 10 did (no per-run growth)', { skip: typeof gc !== 'function' && 'run with node --expose-gc' }, async () => {
   await loadFonts();
-  const { Scene: S } = SCENES['pyex-limits']!;
+  const S = await explainer('token-bucket');
   const tr = await traceScene(S);
   const times = tr.steps.map((s) => s.t0 + 0.3);
   const heap = (): number => { gc!(); gc!(); return process.memoryUsage().heapUsed; };

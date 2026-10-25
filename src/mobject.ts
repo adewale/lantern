@@ -14,8 +14,19 @@ let nextId = 1;
 
 const COLOR_KEYS = new Set(['fill', 'stroke']);
 
+/** Optional SVG paint semantics used by imported artwork. Lengths are scene units. */
+export interface SvgPaint {
+  lineCap?: 'butt' | 'round' | 'square';
+  lineJoin?: 'miter' | 'round' | 'bevel';
+  fillRule?: 'nonzero' | 'evenodd';
+  dashArray?: string;
+  dashOffset?: number;
+  miterLimit?: number;
+  paintOrder?: string;
+}
+
 /** Paint. Scene units: the frame is 16 × 9, origin at the center, y up. */
-export interface Style {
+export interface Style extends SvgPaint {
   fill?: string;
   fillOpacity?: number;
   stroke?: string;
@@ -27,9 +38,9 @@ export interface Style {
 }
 
 /** A mobject's resolved style: every field set except the transient drawFraction. */
-export type StyleRecord = Required<Omit<Style, 'drawFraction'>> & Pick<Style, 'drawFraction'>;
+export type StyleRecord = Required<Omit<Style, keyof SvgPaint | 'drawFraction'>> & Pick<Style, keyof SvgPaint | 'drawFraction'>;
 
-export const DEFAULT_STYLE: StyleRecord = {
+const DEFAULT_STYLE: StyleRecord = {
   fill: 'none',
   fillOpacity: 1,
   stroke: '#ffffff',
@@ -92,6 +103,8 @@ export class Mobject {
   declare _mrec?: MergedCache;
   /** Render a group of same-styled leaves as one element (Text sets this). */
   declare mergeLeaves?: boolean;
+  /** Fixed world-coordinate paint viewport, inherited by descendants; does not change geometry. */
+  declare clipBox?: Box;
 
   constructor(style: Style = {}) {
     this.id = nextId++;
@@ -107,6 +120,12 @@ export class Mobject {
 
   /** The Float32Arrays (stride 2) a transform maps over. Subclasses override. */
   pointArrays(): Float32Array[] { return []; }
+  /**
+   * What this mobject's point arrays are: 'path' (curves) or 'box' (a Text's
+   * advance box). Arrays only blend with arrays of the same kind; equal
+   * lengths alone (an 8-float one-curve path, an 8-float box) are no match.
+   */
+  pointKind(): string { return 'none'; }
 
   hasPoints(): boolean { return this.pointArrays().some((a) => a.length > 0); }
 
@@ -142,6 +161,7 @@ export class Mobject {
     c.id = nextId++;
     c.parent = null;
     c.style = { ...this.style };
+    if (this.clipBox) c.clipBox = [...this.clipBox];
     c.updaters = [];
     c._bbox = null;
     c.copyData(this);
@@ -226,8 +246,7 @@ export class Mobject {
   /**
    * Every in-place write to point arrays must end here. It bumps the points
    * version that render caches key on (array replacement is caught by array
-   * identity instead). VMobject.validateCaches = true re-checks every cache
-   * hit against the actual points; the test suite runs all scenes that way.
+   * identity instead).
    */
   touchPoints(): void {
     this._pv = (this._pv ?? 0) + 1;
@@ -381,11 +400,16 @@ export class Mobject {
     // Field by field over whatever the style holds: numbers lerp, colors blend
     const mine = this.style as Record<string, string | number | undefined>;
     const sa = a.style as Record<string, string | number | undefined>, sb = b.style as Record<string, string | number | undefined>;
-    for (const k in mine) {
+    // Optional paint can enter or leave a Transform. Read fixed endpoints, not
+    // the previous frame's keys (which also matters for there-and-back easing).
+    for (const k in sa) if (!(k in sb)) {
+      if (alpha < 0.5) mine[k] = sa[k]; else delete mine[k];
+    }
+    for (const k in sb) {
       const va = sa[k], vb = sb[k];
-      if (va === vb) { mine[k] = va; continue; }
-      // Exact at the ends: a + (b - a) * 1 is not always b in floating point
-      mine[k] = alpha <= 0 ? va : alpha >= 1 ? vb : COLOR_KEYS.has(k) ? lerpColor(va as string, vb as string, alpha) : (va as number) + ((vb as number) - (va as number)) * alpha;
+      // Exact at the ends: a + (b - a) * 1 is not always b in floating point.
+      const value = va === vb ? va : alpha <= 0 ? va : alpha >= 1 ? vb : COLOR_KEYS.has(k) ? lerpColor(va as string, vb as string, alpha) : typeof va === 'number' && typeof vb === 'number' ? va + (vb - va) * alpha : alpha < 0.5 ? va : vb;
+      if (value === undefined) delete mine[k]; else mine[k] = value;
     }
     this._bbox = null;
     return this;
@@ -404,7 +428,7 @@ export class Mobject {
     for (let i = 0; i < mine.length; i++) {
       // Alignment gave `a` the same arrays as this one; `b` may lack one
       const m = mine[i]!, x = pa[i]!, y = pb[i];
-      if (!y || y.length !== m.length) {
+      if (!y || y.length !== m.length || a.pointKind() !== b.pointKind()) {
         center ??= b.box() ? b.center() : a.box() ? a.center() : [0, 0];
         for (let j = 0; j < m.length; j += 2) { m[j] = x[j]! + (center[0] - x[j]!) * alpha; m[j + 1] = x[j + 1]! + (center[1] - x[j + 1]!) * alpha; }
         continue;
@@ -414,9 +438,11 @@ export class Mobject {
           const p = pathFunc([x[j]!, x[j + 1]!], [y[j]!, y[j + 1]!], alpha);
           m[j] = p[0]; m[j + 1] = p[1];
         }
-      } else if (alpha >= 1) {
+      } else if (alpha === 1) {
+        // Exact at the ends. Only at the ends: a rate function may overshoot
+        // (easeOutBack) or undershoot, and the points must follow it past them.
         m.set(y);
-      } else if (alpha <= 0) {
+      } else if (alpha === 0) {
         m.set(x);
       } else {
         for (let j = 0; j < m.length; j++) m[j] = x[j]! + (y[j]! - x[j]!) * alpha;
@@ -425,19 +451,11 @@ export class Mobject {
     this.touchPoints();
   }
 
-  /**
-   * Make this and `other` structurally identical (same family shape, same
-   * point counts) so interpolate() is well-defined. Mutates both.
-   */
-  alignWith(other: Mobject): this {
-    perf.count('alignWith()');
-    this.alignFamily(other);
-    const fa = this.family(), fb = other.family();
-    for (let i = 0; i < fa.length; i++) fa[i]!.alignData(fb[i]!);
-    return this;
-  }
-
   alignFamily(other: Mobject): void {
+    // A container opposite a path that draws: the path moves into a first child of its own,
+    // so the container's children morph into it (manim's null_point_align). Left where it
+    // was, it would sit opposite something that draws nothing and end up not drawn at all.
+    if (this.pointKind() !== 'path' && other.pointKind() === 'path' && other.hasPoints()) other.pushIntoChildren();
     const n = Math.max(this.children.length, other.children.length);
     for (const [m, o] of [[this, other], [other, this]] as const) {
       while (m.children.length < n) {
@@ -449,6 +467,21 @@ export class Mobject {
       }
     }
     for (let i = 0; i < n; i++) this.children[i]!.alignFamily(other.children[i]!);
+  }
+
+  /** Move this path's own curves into a new first child, leaving it a container (manim's push_self_into_submobjects). */
+  pushIntoChildren(): void {
+    const kids = this.children;
+    this.children = [];
+    const self = this.copy();
+    this.children = kids;
+    // Only paths are pushed (see alignFamily), and a path's points are its subpaths
+    const path = this as unknown as { subpaths: Float32Array[]; closed: boolean[] };
+    path.subpaths = []; path.closed = [];
+    this.touchPoints();
+    self.parent = this;
+    this.children.unshift(self);
+    this.invalidateBox();
   }
 
   /** Align own point data with `other`. Subclasses override. */
@@ -488,8 +521,10 @@ export class Mobject {
   get animate(): AnimateBuilder<this> {
     const calls: Array<[name: string, args: unknown[]]> = [];
     const mob = this;
-    const builder: AnimateBuilderBase<this> = {
-      _isAnimateBuilder: true,
+    // Not a plain object: play() takes a trailing plain object as its options, so a
+    // builder with Object.prototype (which the Proxy reports) was dropped when last.
+    const builder: AnimateBuilderBase<this> = Object.assign(Object.create(AnimateBuilderTarget.prototype) as object, {
+      _isAnimateBuilder: true as const,
       mobject: mob,
       buildTarget() {
         const t = mob.copy();
@@ -497,7 +532,7 @@ export class Mobject {
         for (const [name, args] of calls) (t as unknown as Record<string, (...a: unknown[]) => unknown>)[name]!(...args);
         return t;
       },
-    };
+    });
     const proxy: AnimateBuilder<this> = new Proxy(builder, {
       get(target, prop) {
         if (prop in target) return target[prop as keyof typeof target];
@@ -519,6 +554,9 @@ for (const name of ['box', 'center', 'width', 'height', 'left', 'right', 'top', 
     set() { throw new TypeError(`Mobject.${name} is a method; store your reference under another name (e.g. .rect, .label)`); },
   });
 }
+
+/** The prototype of `.animate` builders: anything but Object.prototype (see Mobject.animate). */
+class AnimateBuilderTarget {}
 
 /** A mobject with no points of its own; a container. */
 export class Group extends Mobject {

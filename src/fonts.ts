@@ -1,13 +1,28 @@
 // Shapers for the embedded fonts, built on the vendored glyph shaper.
-// The fonts (Inter, JetBrains Mono; OFL) are subset by tools/fonts.sh into
-// src/font-data.ts: Latin-1, punctuation, arrows, math, shapes. The mono face
-// carries no ligature lookups, so code reads as literal source, like a diff.
+// The fonts (Inter, JetBrains Mono, and Noto fallbacks; all OFL) are subset by
+// tools/fonts.sh into src/font-data.ts: Latin-1, punctuation, super- and
+// subscripts, number forms, arrows, math, shapes, and digits and numerals from
+// Arabic, Devanagari and Chinese. The mono face carries no ligature lookups, so
+// code reads as literal source, like a diff.
+//
+// Each face is a chain, tried in order per character, as a browser falls back
+// across a font-family list: mono, then sans, then the fallbacks. A run the
+// first face draws whole is shaped once, as before; otherwise it is split into
+// pieces by the first face in the chain that has each character, and each piece
+// is shaped in its own face. The fallbacks hold only characters that need no
+// shaping, so splitting loses nothing but kerning across a piece boundary.
 import { loadFont, run } from '../vendor/glyph.js';
-import type { Run } from '../vendor/glyph.js';
-import { SANS, MONO } from './font-data.ts';
+import type { Font, Run, ShapedGlyph } from '../vendor/glyph.js';
+import { SANS, MONO, FALLBACK } from './font-data.ts';
 import { perf } from './perf.ts';
 
 const FONTS = { sans: SANS, mono: MONO };
+/** The faces each name draws with, in fallback order, by their names in FACES. */
+const CHAINS: Record<keyof typeof FONTS, readonly string[]> = {
+  sans: ['sans', ...FALLBACK.map(([name]) => name)],
+  mono: ['mono', 'sans', ...FALLBACK.map(([name]) => name)],
+};
+const FACES: ReadonlyMap<string, string> = new Map([...Object.entries(FONTS), ...FALLBACK]);
 
 /** The embedded faces. */
 export type FontName = keyof typeof FONTS;
@@ -21,7 +36,29 @@ function bytesOf(b64: string): Uint8Array {
 }
 
 let loading: Promise<Record<FontName, Shaper>> | null = null;
+
+/** Shaped runs kept per face: far more than one scene uses, so seeks never reshape. */
+const SHAPE_MEMO_MAX = 8192;
 let shapers: Record<FontName, Shaper> | null = null;
+
+/** Characters no face in the chain can draw (glyph 0), by the string that held them. */
+const missing = new Map<string, string>();
+/** What was shaped since the last call that the fonts could not draw; clears the record. */
+export function takeMissingGlyphs(): Map<string, string> {
+  const out = new Map(missing);
+  missing.clear();
+  return out;
+}
+/** A run's undrawable clusters. Control characters have no glyph in any face, so they are not missing. */
+function undrawable(text: string, r: Run): string {
+  const chars = [...text],
+    starts = [...new Set(r.glyphs.map((g) => g.cluster))].sort((a, b) => a - b);
+  return r.glyphs
+    .filter((g) => g.gid === 0)
+    .map((g) => chars.slice(g.cluster, starts.find((s) => s > g.cluster) ?? chars.length).join(''))
+    .join('')
+    .replace(/\p{Cc}/gu, '');
+}
 
 /**
  * Decode the embedded fonts (once; concurrent callers share one decode).
@@ -40,24 +77,76 @@ export function shaperFor(font: FontName): Shaper {
   return s;
 }
 
+/** Characters that draw with the character before them, whatever face it took: marks, joiners, variation selectors. */
+const ATTACHED = /^[\p{M}\u200C\u200D\uFE00-\uFE0F\u{E0100}-\u{E01EF}]$/u;
+
+/**
+ * Shape `text` in the first face of `chain`, falling back per character to the
+ * first face that has it. The result reads as one run in the first face's
+ * metrics: clusters index `text`, pens continue across pieces, and a glyph from
+ * another face carries its own scale `s`.
+ */
+export function shapeChain(chain: readonly Font[], key: string, text: string, size: number): Run {
+  const shape = (font: Font, t: string): Run => {
+    const r = run(font, key, t, size);
+    if (r.tag !== 'Ok') throw new Error('shape: ' + JSON.stringify(r.error));
+    return r.value;
+  };
+  const first = shape(chain[0]!, text);
+  if (chain.length === 1 || !first.glyphs.some((g) => g.gid === 0)) return first;
+  const chars = [...text];
+  const owner: number[] = [];
+  chars.forEach((ch, i) => {
+    const found = chain.findIndex((f) => f.glyphOf(ch.codePointAt(0)!) !== 0);
+    // Nothing draws it: leave it to the first face, which reports it missing
+    owner.push(i > 0 && ATTACHED.test(ch) ? owner[i - 1]! : Math.max(found, 0));
+  });
+  if (owner.every((o) => o === 0)) return first;
+  const glyphs: ShapedGlyph[] = [];
+  let pen = 0;
+  for (let start = 0; start < chars.length; ) {
+    let end = start + 1;
+    while (end < chars.length && owner[end] === owner[start]) end++;
+    const piece = shape(chain[owner[start]!]!, chars.slice(start, end).join(''));
+    for (const g of piece.glyphs)
+      glyphs.push({ ...g, cluster: g.cluster + start, x: g.x + pen, s: g.s ?? piece.s ?? size / 1000 });
+    pen += piece.width;
+    start = end;
+  }
+  return { glyphs, width: pen, ascent: first.ascent, descent: first.descent, s: first.s };
+}
+
 async function buildShapers(): Promise<Record<FontName, Shaper>> {
   const end = perf.begin('fonts.decode');
   const out: Partial<Record<FontName, Shaper>> = {};
-  for (const [key, b64] of Object.entries(FONTS) as Array<[FontName, string]>) {
+  const faces = new Map<string, Font>();
+  for (const [name, b64] of FACES) {
     const r = await loadFont(bytesOf(b64));
-    if (r.tag !== 'Ok') throw new Error(key + ': ' + JSON.stringify(r.error));
-    const font = r.value;
+    if (r.tag === 'Ok') faces.set(name, r.value);
+    // A fallback face that cannot load leaves its characters missing, which every command reports;
+    // it must not stop text that never needs it.
+    else if (name in FONTS) throw new Error(name + ': ' + JSON.stringify(r.error));
+  }
+  for (const key of Object.keys(FONTS) as FontName[]) {
+    const chain = CHAINS[key].flatMap((name) => faces.get(name) ?? []);
     // Shaping is a pure function of (font, text, size): memoize it. Re-running a
     // scene (every seek does) then costs no shaping at all, and identical
     // segment arrays let Text reuse its flattened outlines.
-    const memo = new Map<string, Run>();
+    // The memo is bounded, least recently used out first: a DecimalNumber shapes a new
+    // string every frame, so a long count (or a Worker serving many scenes) would
+    // otherwise keep every one of them.
+    const memo = new Map<string, Run & { missing?: string }>();
     out[key] = (text, size) => {
       const k = size + '\u0000' + text;
       let r = memo.get(k);
-      if (r) return r;
-      const ru = run(font, key, text, size);
-      if (ru.tag !== 'Ok') throw new Error('shape: ' + JSON.stringify(ru.error));
-      memo.set(k, (r = ru.value));
+      if (r) { memo.delete(k); memo.set(k, r); }
+      else {
+        memo.set(k, (r = shapeChain(chain, key, text, size)));
+        r.missing = undrawable(text, r);
+        if (memo.size > SHAPE_MEMO_MAX) memo.delete(memo.keys().next().value!);
+      }
+      // Recorded on every call, memoized or not: a check needs to see each string it draws.
+      if (r.missing) missing.set(text, r.missing);
       return r;
     };
   }

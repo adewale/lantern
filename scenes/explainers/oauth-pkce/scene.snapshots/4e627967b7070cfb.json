@@ -1,0 +1,1031 @@
+{
+  "version": 1,
+  "renderer": "agentic-mermaid@0.4.1",
+  "spec": {
+    "source": "sequenceDiagram\n participant C as Client\n participant S as Auth server\n C->>S: Authorize request + code_challenge\n S-->>C: Redirect with code\n C->>S: Token request: code + code_verifier\n S-->>C: Access token",
+    "style": "github-light"
+  },
+  "family": "sequence",
+  "width": 340.89450000000005,
+  "height": 286,
+  "palette": {
+    "paper": "#ffffff",
+    "ink": "#1f2328",
+    "accent": "#0969da",
+    "muted": "#59636e"
+  },
+  "parts": [
+    {
+      "id": "__frame",
+      "role": "frame",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0,
+              0,
+              1.1363149881362915,
+              0,
+              2.272629976272583,
+              0,
+              3.408945083618164,
+              0,
+              3.408945083618164,
+              -0.9533333778381348,
+              3.408945083618164,
+              -1.9066667556762695,
+              3.408945083618164,
+              -2.859999895095825,
+              2.272629976272583,
+              -2.859999895095825,
+              1.1363149881362915,
+              -2.859999895095825,
+              0,
+              -2.859999895095825,
+              0,
+              -1.9066667556762695,
+              0,
+              -0.9533333778381348,
+              0,
+              0
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lifeline:C",
+      "role": "lifeline",
+      "kind": "connector",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.699999988079071,
+              -0.699999988079071,
+              0.699999988079071,
+              -1.3200000524520874,
+              0.699999988079071,
+              -1.940000057220459,
+              0.699999988079071,
+              -2.559999942779541
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.007499999999999999,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.05999999999999999 0.039999999999999994",
+            "dashOffset": 0
+          }
+        }
+      ],
+      "route": [
+        [
+          0.7,
+          -0.7
+        ],
+        [
+          0.7,
+          -2.56
+        ]
+      ]
+    },
+    {
+      "id": "lifeline:S",
+      "role": "lifeline",
+      "kind": "connector",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.5872199535369873,
+              -0.699999988079071,
+              2.5872199535369873,
+              -1.3200000524520874,
+              2.5872199535369873,
+              -1.940000057220459,
+              2.5872199535369873,
+              -2.559999942779541
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.007499999999999999,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.05999999999999999 0.039999999999999994",
+            "dashOffset": 0
+          }
+        }
+      ],
+      "route": [
+        [
+          2.5872200000000003,
+          -0.7
+        ],
+        [
+          2.5872200000000003,
+          -2.56
+        ]
+      ]
+    },
+    {
+      "id": "message:C->S#0",
+      "role": "message",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.699999988079071,
+              -0.9599999785423279,
+              1.3290733098983765,
+              -0.9599999785423279,
+              1.9581466913223267,
+              -0.9599999785423279,
+              2.5872199535369873,
+              -0.9599999785423279
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.5072197914123535,
+              -0.9350000023841858,
+              2.533886432647705,
+              -0.9433333277702332,
+              2.5605530738830566,
+              -0.9516666531562805,
+              2.5872199535369873,
+              -0.9599999785423279,
+              2.5605530738830566,
+              -0.9683333039283752,
+              2.533886432647705,
+              -0.9766666889190674,
+              2.5072197914123535,
+              -0.9850000143051147,
+              2.5072197914123535,
+              -0.9683333039283752,
+              2.5072197914123535,
+              -0.9516666531562805,
+              2.5072197914123535,
+              -0.9350000023841858
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Authorize request + code_challenge",
+          "fontSize": 0.10999999999999999,
+          "textRun": {
+            "text": "Authorize request + code_challenge",
+            "x": 164.36100000000002,
+            "y": 89.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              0
+            ],
+            "width": 172.128
+          }
+        }
+      ],
+      "from": "C",
+      "to": "S",
+      "route": [
+        [
+          0.7,
+          -0.96
+        ],
+        [
+          2.5872200000000003,
+          -0.96
+        ]
+      ]
+    },
+    {
+      "id": "message:S->C#0",
+      "role": "message",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.5872199535369873,
+              -1.3600000143051147,
+              1.958146572113037,
+              -1.3600000143051147,
+              1.3290733098983765,
+              -1.3600000143051147,
+              0.699999988079071,
+              -1.3600000143051147
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.05999999999999999 0.039999999999999994",
+            "dashOffset": 0
+          }
+        },
+        {
+          "subpaths": [
+            [
+              0.7799999713897705,
+              -1.3849999904632568,
+              0.753333330154419,
+              -1.3766666650772095,
+              0.7266666889190674,
+              -1.368333339691162,
+              0.699999988079071,
+              -1.3600000143051147,
+              0.7266666889190674,
+              -1.3516666889190674,
+              0.753333330154419,
+              -1.34333336353302,
+              0.7799999713897705,
+              -1.3350000381469727,
+              0.7799999713897705,
+              -1.3516666889190674,
+              0.7799999713897705,
+              -1.368333339691162,
+              0.7799999713897705,
+              -1.3849999904632568
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Redirect with code",
+          "fontSize": 0.10999999999999999,
+          "textRun": {
+            "text": "Redirect with code",
+            "x": 164.36100000000002,
+            "y": 129.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              0
+            ],
+            "width": 87.186
+          }
+        }
+      ],
+      "from": "S",
+      "to": "C",
+      "route": [
+        [
+          2.5872200000000003,
+          -1.36
+        ],
+        [
+          0.7,
+          -1.36
+        ]
+      ]
+    },
+    {
+      "id": "message:C->S#1",
+      "role": "message",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.699999988079071,
+              -1.7599999904632568,
+              1.3290733098983765,
+              -1.7599999904632568,
+              1.9581466913223267,
+              -1.7599999904632568,
+              2.5872199535369873,
+              -1.7599999904632568
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.5072197914123535,
+              -1.7350000143051147,
+              2.533886432647705,
+              -1.743333339691162,
+              2.5605530738830566,
+              -1.7516666650772095,
+              2.5872199535369873,
+              -1.7599999904632568,
+              2.5605530738830566,
+              -1.7683333158493042,
+              2.533886432647705,
+              -1.7766666412353516,
+              2.5072197914123535,
+              -1.784999966621399,
+              2.5072197914123535,
+              -1.7683333158493042,
+              2.5072197914123535,
+              -1.7516666650772095,
+              2.5072197914123535,
+              -1.7350000143051147
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Token request: code + code_verifier",
+          "fontSize": 0.10999999999999999,
+          "textRun": {
+            "text": "Token request: code + code_verifier",
+            "x": 164.36100000000002,
+            "y": 169.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              0
+            ],
+            "width": 172.722
+          }
+        }
+      ],
+      "from": "C",
+      "to": "S",
+      "route": [
+        [
+          0.7,
+          -1.76
+        ],
+        [
+          2.5872200000000003,
+          -1.76
+        ]
+      ]
+    },
+    {
+      "id": "message:S->C#1",
+      "role": "message",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.5872199535369873,
+              -2.1600000858306885,
+              1.958146572113037,
+              -2.1600000858306885,
+              1.3290733098983765,
+              -2.1600000858306885,
+              0.699999988079071,
+              -2.1600000858306885
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.05999999999999999 0.039999999999999994",
+            "dashOffset": 0
+          }
+        },
+        {
+          "subpaths": [
+            [
+              0.7799999713897705,
+              -2.184999942779541,
+              0.753333330154419,
+              -2.176666736602783,
+              0.7266666889190674,
+              -2.1683332920074463,
+              0.699999988079071,
+              -2.1600000858306885,
+              0.7266666889190674,
+              -2.1516666412353516,
+              0.753333330154419,
+              -2.1433334350585938,
+              0.7799999713897705,
+              -2.134999990463257,
+              0.7799999713897705,
+              -2.1516666412353516,
+              0.7799999713897705,
+              -2.1683332920074463,
+              0.7799999713897705,
+              -2.184999942779541
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Access token",
+          "fontSize": 0.10999999999999999,
+          "textRun": {
+            "text": "Access token",
+            "x": 164.36100000000002,
+            "y": 209.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              0
+            ],
+            "width": 66.396
+          }
+        }
+      ],
+      "from": "S",
+      "to": "C",
+      "route": [
+        [
+          2.5872200000000003,
+          -2.16
+        ],
+        [
+          0.7,
+          -2.16
+        ]
+      ]
+    },
+    {
+      "id": "actor:C",
+      "role": "actor",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.3400000035762787,
+              -0.30000001192092896,
+              0.5799999833106995,
+              -0.30000001192092896,
+              0.8199999928474426,
+              -0.30000001192092896,
+              1.059999942779541,
+              -0.30000001192092896,
+              1.0820913314819336,
+              -0.30000001192092896,
+              1.100000023841858,
+              -0.3179086148738861,
+              1.100000023841858,
+              -0.3400000035762787,
+              1.100000023841858,
+              -0.4466666877269745,
+              1.100000023841858,
+              -0.5533333420753479,
+              1.100000023841858,
+              -0.6600000262260437,
+              1.100000023841858,
+              -0.6820913553237915,
+              1.0820913314819336,
+              -0.699999988079071,
+              1.059999942779541,
+              -0.699999988079071,
+              0.8199999928474426,
+              -0.699999988079071,
+              0.5799999833106995,
+              -0.699999988079071,
+              0.3400000035762787,
+              -0.699999988079071,
+              0.3179086148738861,
+              -0.699999988079071,
+              0.30000001192092896,
+              -0.6820913553237915,
+              0.30000001192092896,
+              -0.6600000262260437,
+              0.30000001192092896,
+              -0.5533333420753479,
+              0.30000001192092896,
+              -0.4466666877269745,
+              0.30000001192092896,
+              -0.3400000035762787,
+              0.30000001192092896,
+              -0.3179086148738861,
+              0.3179086148738861,
+              -0.30000001192092896,
+              0.3400000035762787,
+              -0.30000001192092896
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f8f8f9",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Client",
+          "fontSize": 0.12999999999999998,
+          "textRun": {
+            "text": "Client",
+            "x": 70,
+            "y": 54.55,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              0
+            ],
+            "width": 34.554
+          }
+        }
+      ],
+      "channels": {
+        "category": "C"
+      }
+    },
+    {
+      "id": "actor:S",
+      "role": "actor",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.105494976043701,
+              -0.30000001192092896,
+              2.426645040512085,
+              -0.30000001192092896,
+              2.7477951049804688,
+              -0.30000001192092896,
+              3.0689449310302734,
+              -0.30000001192092896,
+              3.091036319732666,
+              -0.30000001192092896,
+              3.108944892883301,
+              -0.3179086148738861,
+              3.108944892883301,
+              -0.3400000035762787,
+              3.108944892883301,
+              -0.4466666877269745,
+              3.108944892883301,
+              -0.5533333420753479,
+              3.108944892883301,
+              -0.6600000262260437,
+              3.108944892883301,
+              -0.6820913553237915,
+              3.091036319732666,
+              -0.699999988079071,
+              3.0689449310302734,
+              -0.699999988079071,
+              2.7477951049804688,
+              -0.699999988079071,
+              2.426645040512085,
+              -0.699999988079071,
+              2.105494976043701,
+              -0.699999988079071,
+              2.0834035873413086,
+              -0.699999988079071,
+              2.065495014190674,
+              -0.6820913553237915,
+              2.065495014190674,
+              -0.6600000262260437,
+              2.065495014190674,
+              -0.5533333420753479,
+              2.065495014190674,
+              -0.4466666877269745,
+              2.065495014190674,
+              -0.3400000035762787,
+              2.065495014190674,
+              -0.3179086148738861,
+              2.0834035873413086,
+              -0.30000001192092896,
+              2.105494976043701,
+              -0.30000001192092896
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f8f8f9",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Auth server",
+          "fontSize": 0.12999999999999998,
+          "textRun": {
+            "text": "Auth server",
+            "x": 258.72200000000004,
+            "y": 54.55,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              0
+            ],
+            "width": 72.345
+          }
+        }
+      ],
+      "channels": {
+        "category": "S"
+      }
+    }
+  ],
+  "findings": {
+    "ok": true,
+    "warnings": [],
+    "layout": {
+      "version": 1,
+      "kind": "sequence",
+      "nodes": [
+        {
+          "id": "C",
+          "x": 30,
+          "y": 30,
+          "w": 80,
+          "h": 40,
+          "shape": "rectangle",
+          "label": "Client",
+          "role": "box"
+        },
+        {
+          "id": "S",
+          "x": 207,
+          "y": 30,
+          "w": 104,
+          "h": 40,
+          "shape": "rectangle",
+          "label": "Auth server",
+          "role": "box"
+        }
+      ],
+      "edges": [
+        {
+          "id": "msg#0:C->S",
+          "from": "C",
+          "to": "S",
+          "path": [
+            [
+              70,
+              96
+            ],
+            [
+              259,
+              96
+            ]
+          ],
+          "label": {
+            "x": 164,
+            "y": 86,
+            "text": "Authorize request + code_challenge"
+          }
+        },
+        {
+          "id": "msg#1:S->C",
+          "from": "S",
+          "to": "C",
+          "path": [
+            [
+              259,
+              136
+            ],
+            [
+              70,
+              136
+            ]
+          ],
+          "label": {
+            "x": 164,
+            "y": 126,
+            "text": "Redirect with code"
+          }
+        },
+        {
+          "id": "msg#2:C->S",
+          "from": "C",
+          "to": "S",
+          "path": [
+            [
+              70,
+              176
+            ],
+            [
+              259,
+              176
+            ]
+          ],
+          "label": {
+            "x": 164,
+            "y": 166,
+            "text": "Token request: code + code_verifier"
+          }
+        },
+        {
+          "id": "msg#3:S->C",
+          "from": "S",
+          "to": "C",
+          "path": [
+            [
+              259,
+              216
+            ],
+            [
+              70,
+              216
+            ]
+          ],
+          "label": {
+            "x": 164,
+            "y": 206,
+            "text": "Access token"
+          }
+        }
+      ],
+      "groups": [],
+      "bounds": {
+        "w": 341,
+        "h": 286
+      }
+    }
+  }
+}

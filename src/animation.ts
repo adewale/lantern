@@ -28,6 +28,22 @@ export type PlayOpts = Pick<AnimOpts, 'runTime' | 'rateFunc' | 'lagRatio'>;
  */
 export type FamilyRow = Mobject[];
 
+/** A family member that draws something: a path with points. Containers (groups, Text) draw nothing themselves. */
+const draws = (m: Mobject | undefined): boolean => !!m && 'subpaths' in m && m.hasPoints();
+
+/**
+ * Where each row sits in a lagRatio stagger. Only rows that draw take a place
+ * (manim staggers family_members_with_points), so wrapping shapes in another
+ * Group, or a Text in a Group, does not delay them. Rows that draw nothing get
+ * -1 and follow the animation's overall alpha.
+ */
+function lagSlots(rows: readonly FamilyRow[]): { index: Int32Array; count: number } {
+  const index = new Int32Array(rows.length);
+  let count = 0;
+  for (let i = 0; i < rows.length; i++) index[i] = draws(rows[i]![0]) ? count++ : -1;
+  return { index, count };
+}
+
 export class Animation {
   mobject: Mobject;
   runTime: number;
@@ -37,6 +53,8 @@ export class Animation {
   // Set by begin()
   starting!: Mobject;
   families!: FamilyRow[];
+  /** Each row's place in the lagRatio stagger, and how many places there are: see lagSlots(). */
+  slots!: { index: Int32Array; count: number };
 
   constructor(mobject: Mobject, { runTime = 1, rateFunc = smooth, lagRatio = 0, remover = false }: AnimOpts = {}) {
     this.mobject = mobject;
@@ -57,6 +75,7 @@ export class Animation {
   begin(): void {
     this.starting = this.createStartingMobject();
     this.families = this.zipFamilies();
+    this.slots = lagSlots(this.families);
     this.interpolate(0);
   }
 
@@ -71,16 +90,20 @@ export class Animation {
     return fams[0]!.map((_, i) => fams.map((f) => f[i]!));
   }
 
-  /** Lands on rateFunc(1): for a there-and-back rate function that is the start. */
-  finish(): void { this.interpolate(this.rateFunc(1)); }
+  /**
+   * Lands on rateFunc(1): for a there-and-back rate function that is the start.
+   * A group passes the alpha its own timeline lands each member on instead.
+   */
+  finish(alpha: number = this.rateFunc(1)): void { this.interpolate(alpha); }
 
   cleanUpFromScene(scene: Scene): void { if (this.remover) scene.remove(this.mobject); }
 
   /** alpha already passed through rateFunc by the scene. */
   interpolate(alpha: number): void {
-    const n = this.families.length;
+    const n = this.families.length, { index, count } = this.slots;
     for (let i = 0; i < n; i++) {
-      this.interpolateSubmobject(...this.families[i]!, this.subAlpha(alpha, i, n));
+      const slot = index[i]!;
+      this.interpolateSubmobject(...this.families[i]!, slot < 0 ? alpha : this.subAlpha(alpha, slot, count));
     }
     this.mobject.invalidateBox();
   }
@@ -89,6 +112,8 @@ export class Animation {
   subAlpha(alpha: number, index: number, count: number): number {
     const lag = this.lagRatio;
     if (lag === 0) return alpha;
+    // Every member is done at the end: (count - 1) * lag + 1 - index * lag is not always 1 in floating point
+    if (alpha >= 1) return 1;
     const fullLength = (count - 1) * lag + 1;
     const value = alpha * fullLength;
     const lower = index * lag;
@@ -101,6 +126,9 @@ export class Animation {
    */
   interpolateSubmobject(..._row: [...FamilyRow, number]): void {}
 }
+
+/** A path's structure: its subpaths and their closed flags. */
+interface PathShape { subpaths: Float32Array[]; closed: boolean[] }
 
 export interface TransformOpts extends AnimOpts {
   pathFunc?: PathFunc | null;
@@ -118,6 +146,8 @@ export class Transform extends Animation {
   sameStructure: boolean;
   /** Set by begin(). */
   targetCopy!: Mobject;
+  /** Path structure of the mobject and target families before alignment, restored on landing. */
+  private shapes: WeakMap<Mobject, PathShape> | null = null;
 
   constructor(mobject: Mobject, target: Mobject, { pathFunc = null, replace = false, ...opts }: TransformOpts = {}) {
     super(mobject, opts);
@@ -133,8 +163,62 @@ export class Transform extends Animation {
     // over as is: nothing else holds it, so copying it again is pure cost. And a
     // target that is a copy of the mobject needs no alignment: same structure.
     this.targetCopy = this.ownsTarget ? this.target : this.target.copy();
-    if (!this.sameStructure) this.mobject.alignWith(this.targetCopy);
+    this.shapes = null;
+    if (!this.sameStructure) {
+      // Families first, so the shapes recorded include any path alignFamily moved into a child of its own
+      this.mobject.alignFamily(this.targetCopy);
+      this.shapes = new WeakMap();
+      const from = this.mobject.family(), to = this.targetCopy.family();
+      for (const m of [...from, ...to]) {
+        const p = m as Partial<VMobject>;
+        if (p.subpaths && p.closed) this.shapes.set(m, { subpaths: p.subpaths.map((a) => a.slice()), closed: p.closed.slice() });
+      }
+      for (let i = 0; i < from.length; i++) from[i]!.alignData(to[i]!);
+    }
     super.begin();
+  }
+
+  /**
+   * Alignment pads paths with point-sized subpaths and extra curves so both ends
+   * interpolate. Landing exactly on an end gives each path that end's own
+   * structure back: the same geometry, with no zero-length subpaths left over
+   * (a stroked one draws a dot with round caps).
+   */
+  override finish(alpha?: number): void {
+    const a = alpha ?? this.rateFunc(1);
+    super.finish(a);
+    const shapes = this.shapes;
+    if (!shapes || (a !== 1 && a !== 0)) return;
+    const unrestored: FamilyRow[] = [];
+    for (const row of this.families) {
+      const [sub, , target] = row;
+      const shape = shapes.get(a === 1 ? target! : sub!);
+      // Alignment pairs members by index, so a path may sit opposite a non-path: leave those
+      if (!shape || !('subpaths' in sub!) || !('subpaths' in target!)) { unrestored.push(row); continue; }
+      for (const m of a === 1 ? [sub!, target!] : [sub!]) {
+        const v = m as VMobject;
+        v.subpaths = shape.subpaths.map((p) => p.slice());
+        v.closed = shape.closed.slice();
+        v.touchPoints();
+        v.invalidateBox();
+      }
+    }
+    if (a === 1) for (const [sub, start, target] of unrestored) {
+      if (!sub!.hasPoints()) continue;
+      if ('subpaths' in sub! && !('subpaths' in target!)) {
+        // A path opposite something that draws nothing (a group, a Text's advance box) has
+        // collapsed to a point; left in place, a stroked one draws a round-capped dot
+        const v = sub as VMobject;
+        v.subpaths = []; v.closed = [];
+        v.touchPoints(); v.invalidateBox();
+        continue;
+      }
+      // Collapsed onto the target's centre as measured over its aligned control points.
+      // Restoring the target's own curves can move its box (subdivided handles hug the
+      // curve tighter), so land the row again on the restored target.
+      this.interpolateSubmobject(sub!, start!, target!, 1);
+    }
+    this.mobject.invalidateBox();
   }
 
   override allMobjects(): Mobject[] { return [this.mobject, this.starting, this.targetCopy]; }
@@ -150,7 +234,7 @@ export class Transform extends Animation {
 }
 
 /** A Transform whose target is the result of recorded .animate calls. */
-export function fromAnimateBuilder(builder: AnimateBuilderBase, opts: TransformOpts = {}): Transform {
+function fromAnimateBuilder(builder: AnimateBuilderBase, opts: TransformOpts = {}): Transform {
   const t = new Transform(builder.mobject, builder.buildTarget(), opts);
   t.ownsTarget = true; // the built target is this animation's alone; its structure may differ (setText), so it still aligns
   return t;
@@ -196,10 +280,13 @@ export class FadeOut extends Transform {
     this.target = end; this.ownsTarget = true; this.sameStructure = true;
     super.begin();
   }
-  override finish(): void {
-    super.finish();
-    // Restore so the mobject can be shown again later
-    for (const m of this.mobject.family()) m.style.opacity = 1;
+  override finish(alpha?: number): void {
+    // Removed: restore so the mobject can be shown again later, where it was, at its size
+    // and opacity (manim's FadeOut also interpolates back to 0 once removed). Kept on
+    // screen (remover: false): land, and give back only the opacity, as before.
+    if (this.remover) { super.finish(0); return; }
+    super.finish(alpha);
+    for (const [m, start] of this.families) m!.style.opacity = start!.style.opacity;
   }
 }
 
@@ -212,27 +299,50 @@ export class FadeOut extends Transform {
  */
 export class Create extends Animation {
   borderWidth: number;
+  /** The border was left to the default, so it follows the size of the text it outlines. */
+  private autoBorder: boolean;
 
-  constructor(mobject: Mobject, { borderWidth = 0.012, ...opts }: AnimOpts & { borderWidth?: number } = {}) {
+  constructor(mobject: Mobject, { borderWidth, ...opts }: AnimOpts & { borderWidth?: number } = {}) {
     super(mobject, { lagRatio: 0.2, ...opts });
-    this.borderWidth = borderWidth;
+    this.borderWidth = borderWidth ?? Create.BORDER;
+    this.autoBorder = borderWidth == null;
+  }
+  /** The default border, sized for text at the default font size (0.4). */
+  static BORDER = 0.012;
+  /** Per-row border widths, fixed at begin(): a glyph's border scales with its text's current size. */
+  private borders = new Map<Mobject, number>();
+  override begin(): void {
+    this.borders.clear();
+    super.begin();
+  }
+  private border(sub: Mobject): number {
+    if (!this.autoBorder) return this.borderWidth;
+    let w = this.borders.get(sub);
+    if (w == null) {
+      const size = (sub.parent as { textSize?: () => number } | null)?.textSize?.();
+      // abs: a mirrored text reads back a negative size
+      w = size != null && Number.isFinite(size) && size !== 0 ? this.borderWidth * Math.abs(size) / 0.4 : this.borderWidth;
+      this.borders.set(sub, w);
+    }
+    return w;
   }
   override interpolateSubmobject(sub: Mobject, start: Mobject, alpha: number): void {
     const s0 = start.style, s = sub.style;
-    const fill = clip((alpha - 0.66) / 0.34, 0, 1);
+    // Exactly 1 once drawn: (1 - 0.66) / 0.34 is 0.9999999999999999, which would leave the fill a hair short
+    const fill = alpha >= 1 ? 1 : clip((alpha - 0.66) / 0.34, 0, 1);
     s.drawFraction = alpha;
     s.fillOpacity = s0.fillOpacity * fill;
     s.opacity = s0.opacity * (alpha > 0 ? 1 : 0);
     if (s0.stroke === 'none' && s0.fill !== 'none') {
       s.stroke = s0.fill;
-      s.strokeWidth = this.borderWidth;
+      s.strokeWidth = this.border(sub);
       // Full strength until the end: fading it while the fill fades in leaves both near 50%
       // mid-crossover, a visible dip the motion verifier flags as a pop
       s.strokeOpacity = s0.fillOpacity;
     }
   }
-  override finish(): void {
-    super.finish();
+  override finish(alpha?: number): void {
+    super.finish(alpha);
     for (const [sub, start] of this.families as Array<[Mobject, Mobject]>) {
       delete sub.style.drawFraction;
       // Restore the temporary border to what the shape had
@@ -273,38 +383,64 @@ export class Indicate extends Transform {
 /** Run several animations together; lagRatio staggers their start times. */
 export class AnimationGroup extends Animation {
   animations: Animation[];
-  timings: Array<[start: number, end: number]>;
-  maxEnd: number;
+  timings!: Array<[start: number, end: number]>;
+  maxEnd!: number;
 
-  constructor(animations: Animation[], { lagRatio = 0, ...opts }: AnimOpts = {}) {
+  constructor(animations: Animation[], { lagRatio = 0, rateFunc = linear, ...opts }: AnimOpts = {}) {
     // A group drives no mobject of its own, its members do: `mobject` stays null at
     // runtime, and every base method that would read it is overridden below.
-    super(null as unknown as Mobject, { lagRatio, ...opts });
+    // Its rate function maps the group's own timeline, on top of each member's; it is
+    // linear by default (as in manim), so a group of one plays exactly like its member.
+    super(null as unknown as Mobject, { lagRatio, rateFunc, ...opts });
     this.animations = animations;
-    // Timings: each starts lagRatio * (previous run time) after the previous
+    this.layOut();
+    this.ownRunTime = opts.runTime != null;
+    if (!this.ownRunTime) this.runTime = this.maxEnd;
+  }
+  /** A run time was given (to the constructor or play()): re-staggering keeps it. */
+  private ownRunTime!: boolean;
+  /** Timings: each starts lagRatio * (previous run time) after the previous. */
+  private layOut(): void {
+    const animations = this.animations, lagRatio = this.lagRatio;
     let start = 0, end = 0;
     this.timings = animations.map((a, i) => {
       if (i > 0) start += lagRatio * animations[i - 1]!.runTime;
       end = Math.max(end, start + a.runTime);
       return [start, start + a.runTime];
     });
-    if (opts.runTime == null) this.runTime = end;
     this.maxEnd = end;
   }
+  /** A lagRatio given to play() re-staggers the members, as one given to the constructor does. */
+  override setOptions(opts: PlayOpts = {}): this {
+    super.setOptions(opts);
+    if (opts.runTime != null) this.ownRunTime = true;
+    if (opts.lagRatio != null) {
+      this.layOut();
+      if (!this.ownRunTime) this.runTime = this.maxEnd;
+    }
+    return this;
+  }
   override begin(): void { for (const a of this.animations) a.begin(); }
-  override finish(): void { for (const a of this.animations) a.finish(); }
+  /** Each member lands where the group's own timeline puts it at rateFunc(1) (a there-and-back group ends at the start). */
+  override finish(alpha: number = this.rateFunc(1)): void {
+    this.animations.forEach((a, i) => a.finish(a.rateFunc(this.memberTime(alpha, i))));
+  }
   override cleanUpFromScene(scene: Scene): void { for (const a of this.animations) a.cleanUpFromScene(scene); }
+  /** Member i's own time fraction at group alpha. */
+  private memberTime(alpha: number, i: number): number {
+    const [s, e] = this.timings[i]!, t = alpha * this.maxEnd;
+    // A member with no run time happens all at once when the group reaches its start
+    if (e - s <= 0) return t >= s ? 1 : 0;
+    return clip((t - s) / (e - s), 0, 1);
+  }
   /** Receives raw time fraction (scene applies this.rateFunc first). */
   override interpolate(alpha: number): void {
-    const t = alpha * this.maxEnd;
-    this.animations.forEach((a, i) => {
-      const [s, e] = this.timings[i]!;
-      const sub = clip((t - s) / (e - s || 1), 0, 1);
-      a.interpolate(a.rateFunc(sub));
-    });
+    this.animations.forEach((a, i) => a.interpolate(a.rateFunc(this.memberTime(alpha, i))));
   }
-  /** The members' mobjects (a nested group contributes none of its own). */
-  get mobjects(): Mobject[] { return this.animations.map((a) => a.mobject).filter(Boolean); }
+  /** A group has no mobject; nested groups contribute their leaf members. */
+  get mobjects(): Mobject[] {
+    return this.animations.flatMap((a) => a instanceof AnimationGroup ? a.mobjects : [a.mobject]).filter(Boolean);
+  }
 }
 
 export class LaggedStart extends AnimationGroup {

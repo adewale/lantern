@@ -1,26 +1,40 @@
 # Changelog
 
-## Unreleased
+## Unreleased: 0.2.0-explainers.0
 
-- TypeScript: the library, scenes, player, Worker, tools and tests are strict TypeScript.
-  The package ships `dist/` (ESM, `.d.ts`, declaration maps) compiled by `tsc`; option,
-  document and trace types (`Doc`, `TextOpts`, `StepRecord`, ...) are exported from the
-  package root. Rendered output (SVG, text, traces) is byte-identical.
+Newest first; all on 24–25 October 2026.
 
-## 0.1.0
+- **Videos apart from CI**: `npm run videos` makes and tests everything video (`demos:render`, which first checks that every case's captions fit the footer; `test:video`; the package's installed render) and needs FFmpeg. CI no longer installs FFmpeg or renders; `demos:check` no longer runs the footer check, and `demos:review` checks video byte ranges only when videos have been built.
 
-First release. A zero-dependency port of manim's core model to JavaScript, rendering
-to SVG: a live DOM in the browser, strings in Cloudflare Workers or Node.
+- **Ten explainers, every diagram family, phone close-ups, French descriptions**: new explainers from real projects, each checked against its source by running it or by its own test vectors:
+  - With video: `gtfs` (GTFS service days; ER and gantt; gtfs-kit), `pg-page` (a Postgres heap page; pie; Postgres 18.6), `traffic-policy` (Kubernetes externalTrafficPolicy; architecture; kube-proxy's tests and Go), `isdigit` (CPython's numeric predicates against int(); the first non-Latin numerals; CPython 3.15.1).
+  - Page only (`video: false` in the catalog): `ical-recurrence` (ER; sabre/vobject and Baïkal), `ext4-space` (pie; mkfs.ext4 1.47.3 and real mounts), `trust-proxy` (architecture; Express 5.3.0), `tailwind-gamut` (radar; color.js), `gnome-files` (journey; GNOME's 2024 Files usability test), `wcag-map` (mindmap; W3C's pinned sources).
+  - All 15 Agentic Mermaid families are now used and described in words: ER cardinalities, pie slices, architecture services and junctions, radar curves (read from the source), journey task scores and mind maps in outline order. ER relationship labels were hidden under their own background; fixed.
+  - On a stage under 600 px wide each step opens on a close-up of what it changed, with a corner map for the step's other close-ups and a button to return to close-ups after Fit; `check` measures phone labels in those close-ups on a 358 px stage.
+  - Picture descriptions follow `meta.lang` where `explain/words.ts` has the language (English, French); the invalid-settings notice is French on French pages, and the loader's link follows `data-lang` or the host page's `lang`.
+  - Fonts fall back from face to face; Noto Sans Arabic, Devanagari and SC subsets add numerals only (+12.9 KB). A fallback face that fails to load is skipped.
+  - Certbot: Boulder's GCRA limiter (33.6 h per token), the production backdate measured on live certificates, and ARI windows checked against Let's Encrypt's live answers. send-sync: a live rustc check runs when rustc is on PATH, as it is in CI.
+  - Removed: `pyex-limits`.
+  - Fixed after review: a picture's summary says how many emphasised parts it leaves out once, at the end; a link is described by the labels at its ends ("Attacker → Load balancer"), and a class or ER entity by its name; a close-up zooms whenever a label near the change is under 12 px, where it used to need a 1.1× gain; a part exactly one view wide no longer gives a NaN view; a close-up worked out after the reader moved on no longer replaces the current one; `chromeFor` and family names ignore inherited keys such as `constructor`; send-sync, isdigit and glyph labels reach 12 px on a phone, so every demo case now reports none under 12 px (most had 21 to 148 before close-ups). The browser launcher (`tools/lib/browser.ts`) did not recognise current Playwright builds and fell back to an old Chromium 140 whose renderer crashed in the player test; it now prefers Playwright's pinned build, as CI does, and the player test asserts no browser context outlives a case.
 
-- Model: Mobject trees of typed point buffers; VMobject cubic Bézier paths; Text as
-  glyph outlines (Inter, JetBrains Mono embedded); Transform with manim's alignment
-  and curve distribution; FadeIn/Out, Create, Write, Indicate, Flash, MoveAlongPath,
-  LaggedStart; `.animate` builder. Coordinates are manim's (y up).
-- Scenes: async `construct()`, named steps with meta and captions, `this.state` traced
-  at step boundaries, seeking by re-running with frames skipped (byte-identical to a
-  full run), a JSON document format (`sceneFromDoc`).
-- Output: SVG strings, a DOM sink paced on rAF timestamps, a text renderer for agents,
-  structured traces.
-- Verified: determinism, seek equality, cache validation, 400-seed property tests,
-  fidelity oracles (reference programs, the real git CLI, manim's own functions),
-  motion and playback gates, bare-runtime and leak tests, a pinned API surface.
+- **Three explainers from real projects**: `cert-renewal` (Certbot's renewal rule against shrinking certificate lifetimes; timeline and gantt; lifetime × rule, 8 cases), `quotient-familial` (OpenFisca France's income tax, in French; children × income, 12 cases, matching OpenFisca to the cent) and `send-sync` (Rust's Send and Sync on a quadrant chart; wrapper × inner type, 9 cases, matching rustc; every label at least 12 px on a 390 px phone). Each has tests against its source's own numbers and a fidelity check. Timeline, gantt and quadrant diagrams are described in words; `stage` takes `headingSize`; the player, page and video transcript have French words, and English picture descriptions on a French page are marked `lang="en"`; `fr` videos are tagged `fra`. Fixed: `d.hide()` left the diagram described; a titled code panel's title stayed put when `morph` moved the panel; `check` reported text the camera had clipped out of sight as colliding.
+
+- **Fork explainer**: `scenes/explainers/fork` shows, in eight steps, what this fork keeps from Lantern, what it deleted, what it added and what it gave up. Its video step draws the scene's own timing of an earlier step. `test/explain-fidelity.test.ts` holds its claims to Lantern's code at `2c7bad5` and to this tree; CI now fetches full history so that test runs. Fixed: a snapshot label width too large for float32 passed validation and drew Infinity points; the validator now refuses it.
+- **Test audit** (`916b0a9`): each `check` gate has one seeded defect in `test/explain-gates.test.ts`. `check` now also fails a picture that moves during the caption hold, and `demos:check` runs the footer check on every case. Manim parity runs from the frozen answers in `test/manim-oracle.json`; the golden trace is the full JSON and fails when missing. Fixed: a `Transform` from a container into a single path drew nothing; secondary text fell below 4.5:1 on two palettes. Removed unused engine code ([upstream](docs/UPSTREAM.md#engine-changes) lists it).
+- **Descriptions, video order, optional packages** (`ec6e348`): descriptions come from what is drawn, and native drawings get words through `s.keep(...mobs, { describe })` and `s.enter(...mobs, { describe })`; `d.mark`, `card.mark` and `code.focus` take an `as` word; `check` fails a drawing with no words. The stage's accessible description is a short summary; dimmed parts keep 3:1 contrast. Video plays each step under its title, then holds the caption over that step's own resting picture at 160 words a minute, the scene's reading speed; still time rose. Each render writes a transcript; the page's transcript holds every case, with links to each step. Capture and video packages are optional peers, so a default install leaves them out and the CLI prints the install line. `regionBox` moves any edge; `clearOverlays` also clears notes; `t` is no longer a reserved setting id; `evidence.json` is version 2. Removed: the Personal Agent Protocol explainer; the `node:` and `state:` id prefixes; `emphasis`, `soft`, `good`, `bad`, `PALETTES`, `useDiagrams`, `snapshotResolver` and `diagramKey` from `manim-js/explain`.
+- **Gallery and focus** (`12a81a2`): `focus('all')` no longer writes non-finite points for a diagram shrunk to a point; the gallery tile shows the default case it links to.
+- **Documents** (`bbf907a`): one document per purpose (tutorial, reference, publishing, upstream, design record), each fact in one place; Lantern's own documents are linked at the fork base from [upstream](docs/UPSTREAM.md).
+- **Cleanup** (`79eec41`): deleted Lantern's development player, Worker site, nine original scenes (the explainers rebuild them), `DocScene` and the JSON format, Lantern's Mermaid parser and layout, and the tools that served them, with their exports, and the helpers `d.highlight`, `s.chip`, `s.title`, `Card.fade` and `CodeBlock.fade`. 2password became a port of [kitlangton/2password](https://github.com/kitlangton/2password) at `e011177`; OAuth with PKCE says PKCE is for public clients; seasons use mid-month declination. New: `stage(this, { style })` for palette and diagram style, `s.enter`, `s.good`, `s.bad`, a description of each resting picture, focus-only zoom keys, reduced-motion crossfade, `meta.lang`, `StopScene`, `shaperFor`, `takeMissingGlyphs`. Text the fonts cannot draw fails every command. `demos:serve` moved to port 5175.
+- **Lineage and properties** (`55c1d95`): fast-check property tests with seed replay; engine fixes from Manim's and manim-web's issue history in `test/lineage.test.ts`; a capture-code hash invalidates stale snapshots; `site:export`.
+- **Review and redesign** (`b172c2a`): `Scene.onStep` and `addDescriber` replace per-instance wrapping; one snapshot file per diagram; `CodeBlock.morph` pairs lines by text; `check` reports resting pictures as text and phone label sizes; `preview --watch`. The player got one primary action, icon buttons and cases under the title. Fixed: the packed archive lacked the zoom module; an offscreen embed kept a stale height.
+- **Holds and Node 26** (`36c782f`, `0a0c0dd`): steps record `hold`, so the player stops when the picture stops; `playwright-core` 1.64.1, because 1.56.1's Chromium install hung on Node 26.
+- **Resting pictures** (`8c46754`, `6676f4e`): `mark`, `dim`, `note`, walk trails, card values and code focus that stay on screen; named regions; `findingsOf` ties verifier warnings to diagram parts; `check` fails unchanged steps, colliding text and labels under 14 px; Next plays the step; the stage zooms. Fixed: height reports waited on throttled `requestAnimationFrame`; script escaping broke bundles containing `/</g`; Chromium discovery missed the macOS cache.
+- **First build** (`72362c5`): the helpers, Agentic Mermaid capture, the CLI, portable pages with a loader and header recipes, and captioned video.
+
+## Before the fork
+
+A prototype on the `agentic-mermaid` branch of a Lantern checkout at `2c7bad5` (commit `4904cfa`, not in this repository) rebuilt Lantern's examples with Agentic Mermaid capture; what it taught is in [the design record](specs/kyle.md#what-building-the-examples-taught-us). The proposal's first draft (24 October 2026) used four examples from a separate prototype (Cache, PDA, Keyboardia, Vaders) and flowcharts only, without Agentic Mermaid's styles, the helper library or reader settings.
+
+## Lantern
+
+Lantern's history up to the fork base, including its 0.1.0 release and the TypeScript conversion, is in [its changelog at `2c7bad5`](https://github.com/ivarvong/lantern/blob/2c7bad533be25fbd56d26a9a2b6c5651743f011e/CHANGELOG.md).

@@ -1,0 +1,821 @@
+{
+  "version": 1,
+  "renderer": "agentic-mermaid@0.4.1",
+  "spec": {
+    "source": "---\nconfig:\n  pie:\n    legendPosition: right\n    textPosition: 0.68\n  themeVariables:\n    pie1: '#8250df'\n    pie2: '#bf8700'\n    pie3: '#1b7c83'\n    pieLegendTextSize: 17px\n    pieSectionTextSize: 15px\n    pieTitleTextSize: 18px\n---\npie\n  title The 13,019 metadata blocks\n  \"Inode tables\" : 4096\n  \"Journal\" : 8192\n  \"Other metadata\" : 731\n",
+    "style": "github-light"
+  },
+  "family": "pie",
+  "width": 455.4,
+  "height": 276,
+  "palette": {
+    "paper": "#ffffff",
+    "ink": "#1f2328",
+    "accent": "#0969da",
+    "muted": "#59636e"
+  },
+  "parts": [
+    {
+      "id": "__frame",
+      "role": "frame",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0,
+              0,
+              1.5180000066757202,
+              0,
+              3.0360000133514404,
+              0,
+              4.553999900817871,
+              0,
+              4.553999900817871,
+              -0.9200000166893005,
+              4.553999900817871,
+              -1.840000033378601,
+              4.553999900817871,
+              -2.759999990463257,
+              3.0360000133514404,
+              -2.759999990463257,
+              1.5180000066757202,
+              -2.759999990463257,
+              0,
+              -2.759999990463257,
+              0,
+              -1.840000033378601,
+              0,
+              -0.9200000166893005,
+              0,
+              0
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "slice:Inode tables",
+      "role": "pie-slice",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.190000057220459,
+              -1.5700000524520874,
+              1.190000057220459,
+              -1.253333330154419,
+              1.190000057220459,
+              -0.9366666674613953,
+              1.190000057220459,
+              -0.6200000047683716,
+              1.5095298290252686,
+              -0.6199894547462463,
+              1.8076608180999756,
+              -0.780612051486969,
+              1.9834142923355103,
+              -1.04746413230896,
+              2.159167766571045,
+              -1.3143162727355957,
+              2.188997507095337,
+              -1.6516467332839966,
+              2.0627999305725098,
+              -1.9452000856399536,
+              1.7718665599822998,
+              -1.8201333284378052,
+              1.480933427810669,
+              -1.6950666904449463,
+              1.190000057220459,
+              -1.5700000524520874
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#8250df",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.015,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Inode tables",
+        "value": 0.31461709808741073
+      }
+    },
+    {
+      "id": "slice:Journal",
+      "role": "pie-slice",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.190000057220459,
+              -1.5700000524520874,
+              1.480933427810669,
+              -1.6950666904449463,
+              1.7718665599822998,
+              -1.8201333284378052,
+              2.0627999305725098,
+              -1.9452000856399536,
+              1.89174222946167,
+              -2.3430979251861572,
+              1.4732153415679932,
+              -2.5749282836914062,
+              1.0451712608337402,
+              -2.5088846683502197,
+              0.6171271800994873,
+              -2.4428412914276123,
+              0.28793901205062866,
+              -2.0956451892852783,
+              0.2447654753923416,
+              -1.6646933555603027,
+              0.20159192383289337,
+              -1.2337414026260376,
+              0.45536381006240845,
+              -0.8281431794166565,
+              0.8618000149726868,
+              -0.6784999966621399,
+              0.9712000489234924,
+              -0.9756666421890259,
+              1.0806000232696533,
+              -1.2728333473205566,
+              1.190000057220459,
+              -1.5700000524520874
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#bf8700",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.015,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Journal",
+        "value": 0.6292341961748215
+      }
+    },
+    {
+      "id": "slice:Other metadata",
+      "role": "pie-slice",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.190000057220459,
+              -1.5700000524520874,
+              1.0806000232696533,
+              -1.2728333473205566,
+              0.9712000489234924,
+              -0.9756666421890259,
+              0.8618000149726868,
+              -0.6784999966621399,
+              0.9668965935707092,
+              -0.6398071050643921,
+              1.0780069828033447,
+              -0.620002269744873,
+              1.190000057220459,
+              -0.6200000047683716,
+              1.190000057220459,
+              -0.9366666674613953,
+              1.190000057220459,
+              -1.253333330154419,
+              1.190000057220459,
+              -1.5700000524520874
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#1b7c83",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.015,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Other metadata",
+        "value": 0.056148705737767875
+      }
+    },
+    {
+      "id": "slice-label:Inode tables",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "31%",
+          "fontSize": 0.15,
+          "textRun": {
+            "text": "31%",
+            "x": 172.95,
+            "y": 126.72,
+            "size": 15,
+            "anchor": "middle",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 24.48
+          }
+        }
+      ],
+      "channels": {
+        "category": "Inode tables",
+        "value": 0.31461709808741073
+      }
+    },
+    {
+      "id": "slice-label:Journal",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "63%",
+          "fontSize": 0.15,
+          "textRun": {
+            "text": "63%",
+            "x": 72.12,
+            "y": 206.7,
+            "size": 15,
+            "anchor": "middle",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 29.61
+          }
+        }
+      ],
+      "channels": {
+        "category": "Journal",
+        "value": 0.6292341961748215
+      }
+    },
+    {
+      "id": "legend:Inode tables",
+      "role": "legend",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.4800000190734863,
+              -1.2350000143051147,
+              2.513333320617676,
+              -1.2350000143051147,
+              2.5466666221618652,
+              -1.2350000143051147,
+              2.5799999237060547,
+              -1.2350000143051147,
+              2.59104585647583,
+              -1.2350000143051147,
+              2.5999999046325684,
+              -1.2439543008804321,
+              2.5999999046325684,
+              -1.2549999952316284,
+              2.5999999046325684,
+              -1.2883332967758179,
+              2.5999999046325684,
+              -1.3216667175292969,
+              2.5999999046325684,
+              -1.3550000190734863,
+              2.5999999046325684,
+              -1.3660457134246826,
+              2.59104585647583,
+              -1.375,
+              2.5799999237060547,
+              -1.375,
+              2.5466666221618652,
+              -1.375,
+              2.513333320617676,
+              -1.375,
+              2.4800000190734863,
+              -1.375,
+              2.46895432472229,
+              -1.375,
+              2.4600000381469727,
+              -1.3660457134246826,
+              2.4600000381469727,
+              -1.3550000190734863,
+              2.4600000381469727,
+              -1.3216667175292969,
+              2.4600000381469727,
+              -1.2883332967758179,
+              2.4600000381469727,
+              -1.2549999952316284,
+              2.4600000381469727,
+              -1.2439543008804321,
+              2.46895432472229,
+              -1.2350000143051147,
+              2.4800000190734863,
+              -1.2350000143051147
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#8250df",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Inode tables",
+        "value": 0.31461709808741073
+      }
+    },
+    {
+      "id": "legend-label:Inode tables",
+      "role": "legend",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Inode tables (31.5%)",
+          "fontSize": 0.17,
+          "textRun": {
+            "text": "Inode tables (31.5%)",
+            "x": 268,
+            "y": 137.95,
+            "size": 17,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 145.962
+          }
+        }
+      ],
+      "channels": {
+        "category": "Inode tables",
+        "value": 0.31461709808741073
+      }
+    },
+    {
+      "id": "legend:Journal",
+      "role": "legend",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.4800000190734863,
+              -1.4850000143051147,
+              2.513333320617676,
+              -1.4850000143051147,
+              2.5466666221618652,
+              -1.4850000143051147,
+              2.5799999237060547,
+              -1.4850000143051147,
+              2.59104585647583,
+              -1.4850000143051147,
+              2.5999999046325684,
+              -1.4939543008804321,
+              2.5999999046325684,
+              -1.5049999952316284,
+              2.5999999046325684,
+              -1.5383332967758179,
+              2.5999999046325684,
+              -1.5716667175292969,
+              2.5999999046325684,
+              -1.6050000190734863,
+              2.5999999046325684,
+              -1.6160457134246826,
+              2.59104585647583,
+              -1.625,
+              2.5799999237060547,
+              -1.625,
+              2.5466666221618652,
+              -1.625,
+              2.513333320617676,
+              -1.625,
+              2.4800000190734863,
+              -1.625,
+              2.46895432472229,
+              -1.625,
+              2.4600000381469727,
+              -1.6160457134246826,
+              2.4600000381469727,
+              -1.6050000190734863,
+              2.4600000381469727,
+              -1.5716667175292969,
+              2.4600000381469727,
+              -1.5383332967758179,
+              2.4600000381469727,
+              -1.5049999952316284,
+              2.4600000381469727,
+              -1.4939543008804321,
+              2.46895432472229,
+              -1.4850000143051147,
+              2.4800000190734863,
+              -1.4850000143051147
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#bf8700",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Journal",
+        "value": 0.6292341961748215
+      }
+    },
+    {
+      "id": "legend-label:Journal",
+      "role": "legend",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Journal (62.9%)",
+          "fontSize": 0.17,
+          "textRun": {
+            "text": "Journal (62.9%)",
+            "x": 268,
+            "y": 162.95,
+            "size": 17,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 121.737
+          }
+        }
+      ],
+      "channels": {
+        "category": "Journal",
+        "value": 0.6292341961748215
+      }
+    },
+    {
+      "id": "legend:Other metadata",
+      "role": "legend",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.4800000190734863,
+              -1.7350000143051147,
+              2.513333320617676,
+              -1.7350000143051147,
+              2.5466666221618652,
+              -1.7350000143051147,
+              2.5799999237060547,
+              -1.7350000143051147,
+              2.59104585647583,
+              -1.7350000143051147,
+              2.5999999046325684,
+              -1.7439543008804321,
+              2.5999999046325684,
+              -1.7549999952316284,
+              2.5999999046325684,
+              -1.7883332967758179,
+              2.5999999046325684,
+              -1.8216667175292969,
+              2.5999999046325684,
+              -1.8550000190734863,
+              2.5999999046325684,
+              -1.8660457134246826,
+              2.59104585647583,
+              -1.875,
+              2.5799999237060547,
+              -1.875,
+              2.5466666221618652,
+              -1.875,
+              2.513333320617676,
+              -1.875,
+              2.4800000190734863,
+              -1.875,
+              2.46895432472229,
+              -1.875,
+              2.4600000381469727,
+              -1.8660457134246826,
+              2.4600000381469727,
+              -1.8550000190734863,
+              2.4600000381469727,
+              -1.8216667175292969,
+              2.4600000381469727,
+              -1.7883332967758179,
+              2.4600000381469727,
+              -1.7549999952316284,
+              2.4600000381469727,
+              -1.7439543008804321,
+              2.46895432472229,
+              -1.7350000143051147,
+              2.4800000190734863,
+              -1.7350000143051147
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#1b7c83",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Other metadata",
+        "value": 0.056148705737767875
+      }
+    },
+    {
+      "id": "legend-label:Other metadata",
+      "role": "legend",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Other metadata (5.6%)",
+          "fontSize": 0.17,
+          "textRun": {
+            "text": "Other metadata (5.6%)",
+            "x": 268,
+            "y": 187.95,
+            "size": 17,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 163.404
+          }
+        }
+      ],
+      "channels": {
+        "category": "Other metadata",
+        "value": 0.056148705737767875
+      }
+    },
+    {
+      "id": "title",
+      "role": "title",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "The 13,019 metadata blocks",
+          "fontSize": 0.18,
+          "textRun": {
+            "text": "The 13,019 metadata blocks",
+            "x": 227.7,
+            "y": 39.3,
+            "size": 18,
+            "anchor": "middle",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 226.26
+          }
+        }
+      ]
+    }
+  ],
+  "findings": {
+    "ok": true,
+    "warnings": [],
+    "layout": {
+      "version": 1,
+      "kind": "pie",
+      "nodes": [
+        {
+          "id": "slice#0:Inode tables",
+          "x": 246,
+          "y": 124,
+          "w": 154,
+          "h": 14,
+          "shape": "rectangle",
+          "label": "Inode tables (31.5%)"
+        },
+        {
+          "id": "slice#1:Journal",
+          "x": 246,
+          "y": 149,
+          "w": 119,
+          "h": 14,
+          "shape": "rectangle",
+          "label": "Journal (62.9%)"
+        },
+        {
+          "id": "slice#2:Other metadata",
+          "x": 246,
+          "y": 174,
+          "w": 161,
+          "h": 14,
+          "shape": "rectangle",
+          "label": "Other metadata (5.6%)"
+        }
+      ],
+      "edges": [],
+      "groups": [],
+      "bounds": {
+        "w": 455,
+        "h": 276
+      }
+    }
+  }
+}

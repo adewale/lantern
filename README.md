@@ -1,134 +1,60 @@
-# lantern
+# Lantern Explainers
 
-Animated, steppable explainers for code changes. A zero-dependency JS port of
-manim's core model that renders to SVG: a live DOM in the browser, strings in
-Cloudflare Workers or Node. Every step is addressable (`?scene=&step=`), and
-every scene has a text form and a structured trace for agents.
+Each explainer is one TypeScript `Scene`. A web page steps through it at the reader's pace, and the same scene can render a silent, captioned video. Diagrams come from [Agentic Mermaid](https://github.com/adewale/agentic-mermaid) at build time and are stored beside the scene, so the page runs no diagram renderer and makes no network requests.
 
-## Quickstart
+This is a fork of [Lantern](https://github.com/ivarvong/lantern) by Ivar Vong. Nothing here is released or deployed: there is no npm release, and the pages exist only as local build output. The package keeps Lantern's npm name, `manim-js`, until a name is chosen.
 
-```
-git clone https://github.com/ivarvong/lantern && cd lantern   # not on npm yet; zero runtime dependencies
-```
+## Requirements
 
-Then:
+Node 26 or later. In a checkout, `npm ci` installs everything except Chromium and FFmpeg. A package install leaves out the capture and picture packages; `explain --help` prints these lines:
 
-The repo is TypeScript throughout. Node 24 runs the tools and tests as `.ts` directly
-(type stripping, so only erasable syntax); `tsc` compiles the library to `dist/`.
+| Needed for | Install |
+| --- | --- |
+| Capturing a new or changed diagram | `npm i agentic-mermaid@0.4.1 playwright-core@^1.64.1 svgpath@^2.6.0`, then `npx playwright-core install chromium` or set `CHROMIUM_EXECUTABLE_PATH` |
+| PNGs and video: `preview`, `shots`, `render`, `demos:build` | `npm i @resvg/resvg-js@^2.6.2` |
+| Video: `render` | FFmpeg on `PATH` |
 
-```
-npm install
-npm run dev        # http://localhost:5173/?scene=pyex-limits, reloads on save, keeps your step
-npm test           # ~8 s; FULL=1 (npm run test:full) checks every frame
-npm run check      # tsc over every project, emits dist/
-```
+`check` and `build` from committed snapshots need none of them.
 
-A scene is a class with an async `construct()`. Steps are markers; `this.state` is
-what the explanation is about, and it is what traces record:
+## See the demos
 
-```ts
-import { Scene, Rectangle, Text, Labeled, Arrow, FadeIn, Create, RIGHT, TEAL, GOLD } from '../src/index.ts';
-
-export class CacheScene extends Scene {
-  override async construct() {
-    const st = (this.state = { cache: false });
-
-    await this.step('before');
-    const handler = new Labeled(new Rectangle({ width: 3, height: 1, stroke: TEAL }), new Text('handler'));
-    const db = new Labeled(new Rectangle({ width: 2, height: 1, stroke: GOLD }), new Text('D1'));
-    db.nextTo(handler, RIGHT, 2);
-    await this.play(new FadeIn(handler), new FadeIn(db));
-    await this.play(new Create(new Arrow(handler.shape.right(), db.shape.left(), { buff: 0.1 })));
-
-    await this.step('after', { pr: 482 });
-    st.cache = true;
-    // ...
-  }
-}
+```sh
+npm ci
+npm run demos:build
+npm run demos:serve
 ```
 
-Register it in `scenes/index.ts`, then:
+Open http://127.0.0.1:5175/explainers/. Three to start with:
 
-```
-npm run see -- my-scene after      # the frame as text, plus the step's state diff
-npm run shot -- my-scene           # contact sheet: the end of every step, as a PNG
-npm run verify:motion -- my-scene  # teleports, pops, cuts, flicker
-```
+- **Why stealing an authorization code is not enough** (OAuth with PKCE): another app intercepts the redirect, then fails to exchange the code because it cannot produce the verifier. Setting "Show an attacker" to No leaves that step out.
+- **Why June brings polar day to Tromsø and winter to Sydney**: switch the place, and the daylight chart is recomputed from the model.
+- **Five added lines put a KV cache in front of D1**: the diff, then the same edit replayed on the architecture diagram, then a cache hit or miss.
 
-Diagrams can be text: `flowchart(mermaidSource)` parses a Mermaid flowchart, lays it out
-and returns shapes you can animate ([docs/FLOWCHART.md](docs/FLOWCHART.md)). Scenes can also be
-data: `sceneFromDoc(doc)` plays a JSON document of nodes, edges,
-code and ops ([docs/DOC-FORMAT.md](docs/DOC-FORMAT.md)).
+The collection has 26 explainers with 140 cases between them, and uses all 15 Agentic Mermaid diagram families in 10 of its styles; `out/explainers/evidence.json` lists them per explainer. Twenty have a video; six are pages only (`video: false` in `scenes/explainers/catalog.ts`).
 
-## Model
+## Write one
 
-- A **Mobject** is a tree of `Float32Array` point buffers (stride 2) plus a style record.
-  Every geometric operation maps a function over the family's points: points are the truth.
-- A **VMobject** is a list of cubic Bézier subpaths `[anchor, (h1, h2, anchor)*]`, so curve
-  *n* starts at point *3n*. The serializer and the alignment code share that one contract.
-- **Text** is glyph outlines (Inter, JetBrains Mono, embedded), one VMobject per glyph: exact
-  advances, letter-by-letter `Write`, and `Transform` between strings morphs glyph to glyph.
-  Nothing depends on installed fonts, so every rasterizer draws the same thing.
-- An **Animation** is a pure function of alpha over two endpoints fixed in `begin()`.
-  `Transform` first aligns structure (null copies, de Casteljau subdivision) so both ends
-  have equal shape; each frame is then a lerp, field by field, style included.
-- A **Scene** advances a fixed `dt = 1/fps` and hands itself to a **sink**, which decides
-  what a frame is: `StringSink` collects SVG, `DomSink` patches a live `<svg>` on rAF time,
-  `MotionSink` samples boxes for the verifier, `TraceSink` records state at step boundaries.
-  Output is deterministic.
-- **Seeking** re-runs the scene to `t` with frames skipped (manim's `skip_animations`): the
-  loop is fixed-dt and the endpoints are fixed at `begin()`, so a seek is byte-identical to a
-  full run. Tests assert this for every scene.
-
-Coordinates are manim's: the frame is 16 × 9 units, origin at the center, **y up**
-(`UP = [0, 1]`, angles counterclockwise). The flip to SVG's y-down happens in one place,
-where path data is written (`VMobject.roundedRelative`).
-
-## Layout
-
-```
-src/        the library: no dependencies, no runtime assumptions (browser, Workers, Node)
-  index.ts    the public API, curated, types included; anything not exported here is internal
-dist/       src/ compiled by tsc: ESM .js, .d.ts, maps. What the package exports (npm run build:lib)
-scenes/     example scenes and the registry (index.ts)
-app/        the player (player.ts, DomSink) and the Worker (worker.ts): the only runtime-specific code
-tools/      dev server, build, inspection, verifiers, perf tools (Node; Chromium via playwright-core)
-test/       node --test; golden-traces.json hashes each scene's trace (UPDATE_GOLDEN=1 to bless)
-vendor/     the glyph shaper bundle (tools/vendor-glyph.ts) and its types
-docs/       PERF.md, VERIFY.md, DOC-FORMAT.md
+```sh
+npm run explain -- init my-explainer
+npm run explain -- preview my-explainer/scene.ts --watch
+npm run explain -- check my-explainer/scene.ts
+npm run explain -- build my-explainer/scene.ts --out public/my-explainer.html
 ```
 
-## Outputs
+`init` writes a working scene with one setting. `preview` serves the page and rebuilds it on save. `check` runs every case through [the checks](docs/REFERENCE.md#checks). `build` writes the page and the response headers it needs; [publishing](docs/PUBLISHING.md) shows how to embed it.
 
-| | how |
-|---|---|
-| live, in a page | `app/player.ts`: `?scene=&step=` deep links, step mode, copy link |
-| one frame as SVG | `renderAt(Scene, t, new SnapshotSink())`, or Worker `GET /frame.svg?scene=&step=` |
-| one frame as text | `renderText(scene)`, `npm run see`, or Worker `GET /text?scene=&step=` |
-| state at every step | `traceScene(Scene)`, or Worker `GET /trace.json?scene=` |
-| every frame | `npm run render -- <scene>` writes `out/frames/<scene>/*.svg` |
+Limits: lettering is the embedded Inter or JetBrains Mono, so styles lose their own fonts; beyond Latin, only numerals draw (Arabic-Indic, Devanagari and Chinese, from small Noto subsets), and other scripts fail the build; descriptions of the pictures are generated in English or French only; on a phone each step opens on a close-up of what it changed, so a reader pans for the rest; the models are small and cited, and no subject expert has reviewed the explainers.
 
-Deploy: `npm run deploy` (builds `out/site/`, then `wrangler deploy`).
+## Documents
 
-## Commands
+- [Tutorial](docs/TUTORIAL.md): a first explainer, from `init` to a built page
+- [Reference](docs/REFERENCE.md): helpers, checks, command line, URL and resize contract, accessibility, video files, scripts
+- [Publishing](docs/PUBLISHING.md): hosting a page and exporting a video
+- [Upstream](docs/UPSTREAM.md): the fork base, engine changes and Agentic Mermaid
+- [Design record](specs/kyle.md): why the project is shaped this way, and the open decisions
+- [Changelog](CHANGELOG.md)
+- [Agent skill](skills/lantern-explainers/SKILL.md)
 
-| | |
-|---|---|
-| `npm run dev` | source tree as native ES modules, live reload |
-| `npm run build` | single-file player pages in `out/` (esbuild, ~80 ms) |
-| `npm test` / `test:full` | sampled frames / every frame |
-| `npm run check` | `tsc -b` over every project (library, app, tools and tests), emit `dist/`, compile a TypeScript consumer against it |
-| `npm run build:lib` | `dist/` from scratch; `prepack` runs it |
-| `npm run verify` | motion verifier, then the playback gate in Chromium ([docs/VERIFY.md](docs/VERIFY.md)) |
-| `npm run bench` | every scene timed against `bench/baseline.json`; fails on a reproduced regression |
-| `MANIM_DIR=… npm test` | also diffs rate functions and curve subdivision against manim's own code |
-| `npm run see`, `shot`, `render` | look at a scene: text, contact sheet, SVG frames |
-| `npm run trace`, `profile`, `seek`, `ab`, `hitch` | performance ([docs/PERF.md](docs/PERF.md)) |
-| `npm run fonts` | re-subset the embedded fonts (needs `pip install fonttools brotli`) |
+## Attribution
 
-## Out of scope, for now
-
-- Matching morphs (`TransformMatchingShapes`): glyphs pair by index, not by shape.
-- 3D, boolean path ops, LaTeX.
-- Rigid moves as SVG `transform` attributes: every move rewrites points.
-- Collaboration: the trace and doc formats are diffable, but nothing syncs them yet.
+Lantern is MIT, copyright 2026 Ivar Vong; its notice is in `LICENSE`. Inter 4.1, JetBrains Mono 2.242 and the Noto Sans Arabic, Devanagari and SC subsets are under the SIL Open Font License, with notices in `vendor/licenses/`. Agentic Mermaid 0.4.1 is an optional, build-only dependency. Neither project endorses this fork.

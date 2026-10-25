@@ -11,6 +11,8 @@ export interface StepRecord {
   step: string;
   t0: number; frame0: number;
   t1?: number; frame1?: number;
+  /** When the caption-reading hold began, if there was one. */
+  hold?: number;
   meta: StepMeta;
   before: SceneState;
   after?: SceneState;
@@ -26,7 +28,7 @@ export interface Trace {
 
 type TraceEvent =
   | { step: string; phase: 'begin'; t: number; frame: number; meta: StepMeta; state: SceneState }
-  | { step: string; phase: 'end'; t: number; frame: number; state: SceneState };
+  | { step: string; phase: 'end'; t: number; frame: number; state: SceneState; hold?: number };
 
 export class TraceSink implements Sink {
   events: TraceEvent[];
@@ -36,14 +38,14 @@ export class TraceSink implements Sink {
     this.events.push({ step: s.path, phase: 'begin', t: round(scene.time), frame: scene.frameCount, meta: s.meta, state: scene.describe() });
   }
   async stepEnd(scene: Scene, s: Step): Promise<void> {
-    this.events.push({ step: s.path, phase: 'end', t: round(scene.time), frame: scene.frameCount, state: scene.describe() });
+    this.events.push({ step: s.path, phase: 'end', t: round(scene.time), frame: scene.frameCount, state: scene.describe(), ...(s.hold != null ? { hold: round(s.hold) } : {}) });
   }
   /** Compact form: one entry per step with begin/end state. */
   steps(): StepRecord[] {
     const out: StepRecord[] = [];
     for (const e of this.events) {
       if (e.phase === 'begin') out.push({ step: e.step, t0: e.t, frame0: e.frame, meta: e.meta, before: e.state });
-      else { const s = out.findLast((x) => x.step === e.step && x.t1 == null); if (s) { s.t1 = e.t; s.frame1 = e.frame; s.after = e.state; } }
+      else { const s = out.findLast((x) => x.step === e.step && x.t1 == null); if (s) { s.t1 = e.t; s.frame1 = e.frame; if (e.hold != null) s.hold = e.hold; s.after = e.state; } }
     }
     return out;
   }

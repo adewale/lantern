@@ -1,10 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Scene, Rectangle, Circle, Text, FadeIn, FadeOut, Transform, Create, MoveAlongPath, Line, MotionSink, analyzeMotion, linear, RIGHT } from '../src/index.ts';
+import { Scene, Rectangle, Circle, FadeIn, FadeOut, Transform, Create, MoveAlongPath, Line, MotionSink, analyzeMotion, linear, thereAndBack, RIGHT } from '../src/index.ts';
 import type { MoveAlongPathOpts } from '../src/index.ts';
-
-// Caption holds are thousands of identical frames; the hold rule has its own test
-Scene.captionWpm = Infinity;
 
 const run = async (body: (s: Scene) => Promise<void>): Promise<string[]> => {
   const sink = new MotionSink();
@@ -44,7 +41,7 @@ test('MoveAlongPath from off the path: snapping is a teleport, the default blend
   assert.deepEqual(await ride({}), [], 'default starts where the mobject is');
 });
 
-test('flags hard cuts and pops, not fades', async () => {
+test('flags hard cuts: a mobject added or removed while opaque', async () => {
   const kinds = await run(async (s) => {
     const r = new Rectangle(); await s.play(new FadeIn(r));
     s.add(new Circle()); await s.wait(0.2);            // cut-in
@@ -80,12 +77,16 @@ test('a left-anchored counter changing digit count is not a resize', async () =>
   assert.deepEqual(kinds, []);
 });
 
-test('every example scene is free of motion discontinuities', async () => {
-  const { SCENES } = await import('../scenes/index.ts');
-  for (const [name, { Scene }] of Object.entries(SCENES)) {
-    const sink = new MotionSink();
-    await new Scene(sink).run();
-    const events = analyzeMotion(sink);
-    assert.deepEqual(events.map((e) => `${e.t}s ${e.kind} [${e.step}] ${e.what}`), [], name);
-  }
-});
+// Each kind the verifier reports, seeded once into an otherwise smooth scene: the explain
+// check's motion gate fails a case on any of them, so each must actually be reported.
+const seeded: Array<[string, (s: Scene) => Promise<void>, string[]]> = [
+  ['an opacity jump with no fade is a pop', async (s) => { const r = new Rectangle(); await s.play(new FadeIn(r)); r.setOpacity(0.3); await s.wait(0.2); }, ['pop']],
+  ['a size jump between plays is a resize', async (s) => { const r = new Rectangle(); await s.play(new FadeIn(r)); r.scale(2); await s.wait(0.3); }, ['resize']],
+  ['gone for one frame and back is a flicker', async (s) => { const r = new Rectangle(); await s.play(new FadeIn(r)); s.remove(r); await s.wait(1 / 30); s.add(r); await s.wait(0.2); }, ['flicker', 'cut-in']],
+  ['a replacement that lands somewhere else is a handoff', async (s) => {
+    const a = new Rectangle({ width: 2, height: 2 }); await s.play(new FadeIn(a));
+    await s.play(new Transform(a, new Rectangle({ width: 2, height: 2 }).shift([1, 0]), { replace: true, rateFunc: thereAndBack }));
+    await s.wait(0.2);
+  }, ['handoff']],
+];
+for (const [name, body, kinds] of seeded) test(`flags it: ${name}`, async () => assert.deepEqual(await run(body), kinds));

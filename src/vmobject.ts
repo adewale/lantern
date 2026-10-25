@@ -28,15 +28,11 @@ interface PathCache {
   ints?: Int32Array;
   lens?: Int32Array;
   pd: PathData;
-  snapshot: Float32Array[] | null;
 }
 
 type Cubic = [Vec, Vec, Vec, Vec];
 
 export class VMobject extends Mobject {
-  /** Debug: verify every path-cache hit against the real points (tests turn this on). */
-  static validateCaches = false;
-
   subpaths: Float32Array[];
   closed: boolean[];
   /** Render record cache, owned by svg.ts. */
@@ -56,6 +52,7 @@ export class VMobject extends Mobject {
   initPoints(): void {}
 
   override pointArrays(): Float32Array[] { return this.subpaths; }
+  override pointKind(): string { return 'path'; }
 
   /** `src` is the mobject this one was copied from: same class. */
   override copyData(src: Mobject): void {
@@ -155,19 +152,60 @@ export class VMobject extends Mobject {
     return total;
   }
 
-  /** Point at fraction `t` of the whole path, walking curves evenly. */
+  /** Approximate length of curve `c` of subpath `i` (polyline, 8 samples, as arcLength()). */
+  curveLength(i: number, c: number): number {
+    let len = 0, prev = this.pointOnCurve(i, c, 0);
+    for (let s = 1; s <= 8; s++) {
+      const p = this.pointOnCurve(i, c, s / 8);
+      len += Math.hypot(p[0] - prev[0], p[1] - prev[1]);
+      prev = p;
+    }
+    return len;
+  }
+
+  /** The Bézier parameter `s` along curve `c` of subpath `i` is from its start, on the same 8-sample polyline as curveLength(). */
+  curveParamAt(i: number, c: number, s: number): number {
+    let prev = this.pointOnCurve(i, c, 0), acc = 0;
+    for (let k = 1; k <= 8; k++) {
+      const p = this.pointOnCurve(i, c, k / 8), d = Math.hypot(p[0] - prev[0], p[1] - prev[1]);
+      if (acc + d >= s && d > 0) return (k - 1 + (s - acc) / d) / 8;
+      acc += d; prev = p;
+    }
+    return 1;
+  }
+
+  /**
+   * Point at fraction `t` of the whole path's length (manim's point_from_proportion):
+   * a short curve takes a short share, so a token moves at an even speed and stays
+   * on the tip of a stroke that Create draws by length. Within a curve the length is
+   * inverted on the same 8-sample polyline that arcLength() measures. A path of zero
+   * length answers its first point.
+   */
   pointFromProportion(t: number): Vec {
     const n = this.numCurves();
-    if (n === 0) return [0, 0];
-    const f = Math.min(Math.max(t, 0), 1) * n;
-    let c = Math.min(Math.floor(f), n - 1);
-    const local = f - c;
+    if (n === 0) {
+      const a = this.subpaths.find((p) => p.length >= 2);
+      return a ? [a[0]!, a[1]!] : [0, 0];
+    }
+    const lengths: Array<[i: number, c: number, len: number]> = [];
+    let total = 0;
     for (let i = 0; i < this.subpaths.length; i++) {
       const k = this.numCurves(i);
-      if (c < k) return this.pointOnCurve(i, c, local);
-      c -= k;
+      for (let c = 0; c < k; c++) { const len = this.curveLength(i, c); lengths.push([i, c, len]); total += len; }
     }
-    return [0, 0];
+    const u = Math.min(Math.max(Number.isNaN(t) ? 0 : t, 0), 1);
+    // The ends are the path's own first and last points, exactly
+    if (u === 1) { const [i, c] = lengths[lengths.length - 1]!; return this.pointOnCurve(i, c, 1); }
+    if (u === 0 || !(total > 0)) { const [i, c] = lengths[0]!; return this.pointOnCurve(i, c, 0); }
+    const goal = u * total;
+    let acc = 0;
+    for (const [i, c, len] of lengths) {
+      if (len > 0 && goal <= acc + len) return this.pointOnCurve(i, c, this.curveParamAt(i, c, goal - acc));
+      acc += len;
+    }
+    // Rounding left the goal past the last curve with length: that is the end
+    for (let j = lengths.length - 1; j >= 0; j--) if (lengths[j]![2] > 0) return this.pointOnCurve(lengths[j]![0], lengths[j]![1], 1);
+    return this.pointOnCurve(lengths[0]![0], lengths[0]![1], 0);
   }
 
   // ---- alignment (the core of Transform) ---------------------------------
@@ -266,17 +304,13 @@ export class VMobject extends Mobject {
   pathData(relative = true): PathData {
     const c = this._dCache;
     if (c && c.owner === this && c.relative === relative && c.v === this._pv && sameRefs(c.arrays, this.subpaths) && sameFlags(c.closed, this.closed)) {
-      if (VMobject.validateCaches && !samePoints(c.snapshot!, this.subpaths)) {
-        throw new Error(`stale path cache on ${this.constructor.name}#${this.id}: points were written in place without touchPoints()`);
-      }
       perf.count('path hit');
       return c.pd;
     }
     if (!relative) {
       perf.count('path reshaped');
       const pd = { d: this.toPathD(), tx: 0, ty: 0 };
-      this._dCache = { owner: this, relative, v: this._pv, arrays: this.subpaths.slice(), closed: this.closed.slice(), pd,
-        snapshot: VMobject.validateCaches ? this.subpaths.map((a) => a.slice()) : null };
+      this._dCache = { owner: this, relative, v: this._pv, arrays: this.subpaths.slice(), closed: this.closed.slice(), pd };
       return pd;
     }
     const { ints, lens, tx, ty } = this.roundedRelative();
@@ -291,7 +325,7 @@ export class VMobject extends Mobject {
     const pd = c && c.pd.d === d && c.pd.tx === tx && c.pd.ty === ty ? c.pd : { d, tx, ty };
     this._dCache = {
       owner: this, relative, v: this._pv, arrays: this.subpaths.slice(), closed: this.closed.slice(), closedAtFormat: this.closed.slice(),
-      ints, lens, pd, snapshot: VMobject.validateCaches ? this.subpaths.map((a) => a.slice()) : null,
+      ints, lens, pd,
     };
     return pd;
   }
@@ -336,7 +370,7 @@ export class VMobject extends Mobject {
  * be and anchors stay evenly spread. Zero-length curves (subpath end markers)
  * are never cut unless every curve is zero.
  */
-export function distributeCurves(lengths: readonly number[], n: number): number[] {
+function distributeCurves(lengths: readonly number[], n: number): number[] {
   const k = lengths.length, counts = new Array<number>(k).fill(1);
   if (n <= 0) return counts;
   let total = 0;
@@ -382,15 +416,6 @@ function sameInts(a: Int32Array | undefined, b: Int32Array): boolean {
 function sameRefs(a: readonly Float32Array[], b: readonly Float32Array[]): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
-  return true;
-}
-function samePoints(a: readonly Float32Array[], b: readonly Float32Array[]): boolean {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    const x = a[i]!, y = b[i]!;
-    if (x.length !== y.length) return false;
-    for (let j = 0; j < x.length; j++) if (x[j] !== y[j]) return false;
-  }
   return true;
 }
 function sameFlags(a: readonly boolean[], b: readonly boolean[]): boolean {

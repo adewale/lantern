@@ -1,0 +1,34 @@
+export { stage } from './stage.ts';
+export type { StageOptions, Stage, Describe } from './stage.ts';
+export { Diagram } from './diagrams.ts';
+export type { ShowOptions, NoteSide } from './diagrams.ts';
+export type { Card, CodeBlock, CardRow, CardOptions, CodeOptions } from './panels.ts';
+export { REGIONS, regionBox } from './look.ts';
+export type { Region } from './look.ts';
+export { palette } from './palettes.ts';
+export { settingsOf, withSettings, resolveSettings, variantsOf, caseName } from './settings.ts';
+export type { Setting, Settings, ExplainerClass } from './settings.ts';
+export { findingsOf, edgePartOf } from '../integrations/agentic-mermaid/snapshot.ts';
+export type {
+  DiagramSpec,
+  DiagramSnapshot,
+  SnapshotStore,
+  Palette,
+  Finding,
+  Findings,
+} from '../integrations/agentic-mermaid/snapshot.ts';
+import type { ExplainerClass } from './settings.ts';
+import type { SceneClass } from '../src/index.ts';
+import type { SnapshotStore, DiagramResolver } from '../integrations/agentic-mermaid/snapshot.ts';
+import { useDiagrams, snapshotResolver } from '../integrations/agentic-mermaid/snapshot.ts';
+
+/** A subclass whose diagrams come from `source`: pinned snapshots, or a resolver that captures them. */
+export function bindSnapshots(Source: ExplainerClass, source: SnapshotStore | DiagramResolver): ExplainerClass {
+  const resolver = typeof source.diagram === 'function' ? (source as DiagramResolver) : snapshotResolver(source as SnapshotStore);
+  return class extends Source {
+    constructor(...args: ConstructorParameters<SceneClass>) {
+      super(...args);
+      useDiagrams(this, resolver);
+    }
+  };
+}

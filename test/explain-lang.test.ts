@@ -1,0 +1,465 @@
+import { test, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
+import type { Project } from '../tools/lib/explain-project.ts';
+import { buildExplainer } from '../tools/lib/explain-build.ts';
+import { trackLanguage, videoTranscript } from '../tools/lib/explain-video.ts';
+import { chromeFor, caseNameIn, CHROME, descriptionLang, descriptionsLang, settingsProblem } from '../app/embed-strings.ts';
+import type { SettingsProblem } from '../app/embed-strings.ts';
+import { caseName, resolveSettings } from '../explain/index.ts';
+import { pictureSummary, pictureHtml, picture } from '../explain/trace.ts';
+import { VOCABULARY, wordsFor, describedIn, familyNames, markHeading } from '../explain/words.ts';
+import type { Words } from '../explain/words.ts';
+
+const FAMILIES = wordsFor('en').families;
+import { launch } from '../tools/lib/browser.ts';
+
+const NB = ' ';
+// One scene per language: a setting, a card (so each step has a generated description) and a caption.
+const scene = (lang: string, label: string, caption: string) =>
+  `import{Scene}from'manim-js';import{stage,settingsOf}from'manim-js/explain';export default class L extends Scene{static meta={id:'lang-${lang}',title:'${label}',lang:'${lang}',sources:['https://example.com/source']};static settings=[{id:'n',label:'${label}',default:'1',options:[{value:'1',label:'1'},{value:'2',label:'2'}]}];async construct(){const s=stage(this);await this.step('one',{title:'${label}',caption:'${caption}'});await s.card([['${label}',settingsOf(this).n]]);}}`;
+// A French scene that uses every kind of generated words: a flowchart marked, noted, walked with
+// and without a trail and dimmed; a titled card with a lit row; code with a diff and a focus; a
+// chart with two bar series and two lines; kept text with no describe.
+const rich = `import{Scene,Text}from'manim-js';import{stage}from'manim-js/explain';export default class R extends Scene{static meta={id:'riche',title:'Riche',lang:'fr'};async construct(){const s=stage(this);
+await this.step('flux',{title:'Flux',caption:'Le revenu passe par le barème.'});
+const d=await s.show({source:'graph LR\\nA["Revenu"] --> B["Barème"]\\nB --> C["Impôt"]'},{box:[-8,0,8,3.4]});
+await d.mark(['A']);await d.note('C','plafond');
+const c=await s.card([['Parts','2'],['Quotient','15 000 €']],{title:'Foyer',at:[-4,-2]});await c.mark('Parts');
+await this.step('trajet',{title:'Trajet',caption:'Le revenu va au barème.'});
+await d.walk([['A','B']],{trail:true});await d.dim(['A','B']);
+const k=await s.code(['+ seuil: 11600','+ plafond: 1807','- seuil: 11497','taux: 11 %'],{diff:true,title:'barème',at:[4,-2]});await k.focus(3);
+await this.step('chemin',{title:'Chemin',caption:'Puis à l’impôt.'});
+await d.walk([['B','C']]);
+await this.step('graphique',{title:'Graphique',caption:'Les montants par mois.'});
+await s.clear();
+await s.show({source:'xychart-beta\\n x-axis "Mois" ["janvier","février","mars","avril","mai"]\\n y-axis "Montant" 0 --> 2000\\n bar [10, 20.5, 1500, 3, 4]\\n bar [30, 40, 50, 60, 70]\\n line [5, 5, 5, 5, 5]\\n line [1, 90, 90, 90, 90]'},{box:[-8,-2,8,3.4]});
+await s.enter(new Text('Seuil libre').moveTo([-3,-3]),new Text('Autre texte').moveTo([3,-3]));
+}}`;
+let folder: string;
+const built: Record<'fr' | 'en' | 'de', { project: Project; html: string; file: string }> = {} as never;
+let riche: Project;
+before(async () => {
+  folder = await mkdtemp(join(tmpdir(), 'lantern-lang-'));
+  for (const [lang, label, caption] of [
+    ['fr', 'Enfants à charge', 'Un couple déclare son revenu.'],
+    ['en', 'Children', 'A couple files a return.'],
+    // A language with page words in neither table: English chrome, English descriptions marked so.
+    ['de', 'Kinder', 'Ein Paar reicht seine Erklärung ein.'],
+  ] as const) {
+    const source = join(folder, `${lang}.ts`),
+      file = join(folder, `${lang}.html`);
+    await writeFile(source, scene(lang, label, caption));
+    const project = await collectProject(source);
+    built[lang] = { project, html: (await buildExplainer(project, file)).html, file };
+  }
+  await writeFile(join(folder, 'riche.ts'), rich);
+  riche = await collectProject(join(folder, 'riche.ts'));
+});
+after(() => rm(folder, { recursive: true, force: true }));
+
+/** Every step's summary and full list, as a reader hears them (tags dropped, entities decoded). */
+const described = (project: Project) =>
+  project.variants.flatMap(({ trace }) =>
+    trace.steps.map((s, i) => ({
+      step: s.step,
+      summary: pictureSummary(s.after),
+      html: pictureHtml(s.after, trace.steps[i - 1]?.after),
+    })),
+  );
+const text = (html: string) =>
+  html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+/** The words a text is made of, lower case. */
+const wordsIn = (t: string) => t.toLowerCase().match(/\p{L}{2,}/gu) ?? [];
+/**
+ * Every English word the generated descriptions can say: each English entry, each pattern
+ * applied to a placeholder, each noun's plural, and the English family names.
+ * Words French spells the same way (code, note, message, point…) are left out.
+ */
+const ENGLISH = (() => {
+  const en = VOCABULARY.en as Words;
+  const said: string[] = [];
+  for (const value of Object.values(en)) {
+    if (typeof value === 'string') said.push(value);
+    else if (typeof value === 'function') said.push((value as (...a: unknown[]) => string)('Q', 'Q', 'Q', 'Q', 'Q'));
+    else if (Array.isArray(value)) said.push(...value);
+    else said.push(...Object.values(value as Record<string, string>));
+  }
+  for (const noun of [en.label, en.labelledValue, en.line, en.category, en.part, en.link]) said.push(en.count(2, noun));
+  for (const [name, thing, link] of Object.values(FAMILIES)) said.push(name, ...[thing, link].filter((n): n is string => !!n).map((n) => en.count(2, n) + ' ' + n));
+  const same = new Set(['code', 'note', 'notes', 'part', 'parts', 'participant', 'participants', 'message', 'messages', 'transition', 'transitions', 'commit', 'commits', 'point', 'points', 'service', 'services', 'classes', 'architecture', 'git', 'xy', 'gantt', 'qs']);
+  return new Set(wordsIn(said.join(' ')).filter((w) => !same.has(w)));
+})();
+const englishIn = (t: string) => [...new Set(wordsIn(t).filter((w) => ENGLISH.has(w)))];
+
+test('an MP4 subtitle stream for meta.lang fr is tagged fra; WebM keeps the BCP 47 tag', () => {
+  assert.equal(trackLanguage('fr'), 'fra');
+  assert.equal(trackLanguage('fr-CA'), 'fra');
+  assert.equal(trackLanguage('en'), 'eng');
+  assert.equal(trackLanguage('en-GB'), 'eng');
+  assert.equal(trackLanguage('fra'), 'fra');
+  assert.equal(trackLanguage('fr', true), 'fr');
+  assert.throws(() => trackLanguage('de'), /No ISO 639-2 code for language de/);
+});
+
+test('page words come from a table by primary language, English when there is none', () => {
+  assert.equal(chromeFor('fr').transcript, 'Transcription');
+  assert.equal(chromeFor('fr-BE').next, 'Suivant');
+  assert.equal(chromeFor('de'), CHROME.en);
+  assert.equal(chromeFor(), CHROME.en);
+  // A tag that names an Object property is a language with no table, not that property.
+  for (const tag of ['constructor', '__proto__']) assert.equal(chromeFor(tag), CHROME.en, tag);
+  // Every language names every piece of chrome.
+  for (const [lang, words] of Object.entries(CHROME)) assert.deepEqual(Object.keys(words).sort(), Object.keys(CHROME.en!).sort(), lang);
+});
+
+const PROBLEMS: SettingsProblem[] = [
+  { kind: 'option', id: 'n', label: 'Enfants à charge', value: '9' },
+  { kind: 'setting', id: 'x' },
+  { kind: 'other', message: 'Invalid options/default for setting: n' },
+];
+test('French chrome follows French typography: a narrow no-break space before : ; ! ? and inside « »', () => {
+  const fr = chromeFor('fr');
+  const texts = Object.entries(fr).flatMap(([key, v]) =>
+    typeof v !== 'function'
+      ? [v]
+      : key === 'fallback'
+        ? PROBLEMS.map((p) => fr.fallback(p))
+        : [(v as (a: string, b: string) => string)('Titre', 'étape')],
+  );
+  for (const text of texts) {
+    assert.doesNotMatch(text, /[^\u202f][:;!?»]/, text);
+    assert.doesNotMatch(text, /«[^\u202f]/, text);
+  }
+});
+
+test('the invalid-settings notice names the problem in the page’s language; English says what the validator says', () => {
+  const { Scene } = built.fr.project;
+  const problem = (values: Record<string, string>) => {
+    try {
+      resolveSettings(Scene, values);
+    } catch (error) {
+      return { error: (error as Error).message, problem: settingsProblem(Scene, values, error) };
+    }
+    throw new Error('accepted');
+  };
+  const option = problem({ n: '9' }),
+    unknown = problem({ x: '1' }),
+    both = problem({ x: '1', n: '9' });
+  assert.deepEqual(option.problem, { kind: 'option', id: 'n', label: 'Enfants à charge', value: '9' });
+  assert.deepEqual(unknown.problem, { kind: 'setting', id: 'x' });
+  // The validator checks declared settings first; so does the notice.
+  assert.equal(both.problem.kind, 'option');
+  for (const p of [option, unknown, both]) assert.equal(chromeFor('en').fallback(p.problem), `${p.error}. Showing the default case.`);
+  assert.equal(
+    chromeFor('fr').fallback(option.problem),
+    `Le réglage «${NB}Enfants à charge${NB}» n’a pas d’option «${NB}9${NB}». Le cas par défaut est affiché.`,
+  );
+  assert.equal(chromeFor('fr').fallback(unknown.problem), `Cette explication n’a pas de réglage «${NB}x${NB}». Le cas par défaut est affiché.`);
+  // The French notice never quotes the validator's English.
+  assert.doesNotMatch(chromeFor('fr').fallback(PROBLEMS[2]!), /Invalid/);
+});
+
+test('a case name keeps English punctuation in English and takes French punctuation in French', () => {
+  const { Scene } = built.en.project;
+  assert.equal(caseNameIn('en', Scene, { n: '2' }), caseName(Scene, { n: '2' }));
+  assert.equal(caseNameIn('fr', built.fr.project.Scene, { n: '2' }), `Enfants à charge${NB}: 2`);
+});
+
+test('every vocabulary key has a French entry; a language with none describes in English', () => {
+  assert.deepEqual(Object.keys(VOCABULARY.fr!).sort(), Object.keys(VOCABULARY.en!).sort());
+  for (const [key, value] of Object.entries(VOCABULARY.en!))
+    if (value && typeof value === 'object' && key !== 'plurals' && key !== 'families')
+      assert.deepEqual(Object.keys((VOCABULARY.fr as Record<string, object>)[key]!).sort(), Object.keys(value).sort(), key);
+  assert.equal(describedIn('fr-CA'), 'fr');
+  assert.equal(describedIn('de'), 'en');
+  assert.equal(describedIn(), 'en');
+  assert.equal(wordsFor('de'), wordsFor('en'));
+  assert.equal(wordsFor('de').marked, 'marked');
+  assert.equal(wordsFor('fr-BE').marked, 'en évidence');
+  // A page marks descriptions lang="en" only where they are not in its language.
+  assert.equal(descriptionLang('fr'), '');
+  assert.equal(descriptionLang('fr-CA'), '');
+  assert.equal(descriptionLang('en-GB'), '');
+  assert.equal(descriptionLang('de'), ' lang="en"');
+  assert.equal(descriptionsLang('de'), 'en');
+  assert.equal(descriptionsLang('fr'), undefined);
+});
+
+test('every family has French words: its own, or the generic ones, never English', (t) => {
+  const fr = wordsFor('fr'),
+    en = wordsFor('en');
+  const missing = Object.keys(FAMILIES).filter((f) => !Object.hasOwn(fr.families, f));
+  // Families with English names but no French entry in explain/words.ts.
+  t.diagnostic(`families without French names: ${missing.join(', ') || 'none'}`);
+  for (const family of Object.keys(FAMILIES)) {
+    const names = familyNames(fr, family);
+    assert.deepEqual(englishIn(names.join(' ')), [], `${family}: ${names.join(', ')}`);
+    if (missing.includes(family)) assert.deepEqual(names, [`Diagramme ${family}`, 'élément', 'lien']);
+  }
+  // A family neither table knows.
+  assert.deepEqual(familyNames(fr, 'sankey'), ['Diagramme sankey', 'élément', 'lien']);
+  assert.deepEqual(familyNames(en, 'sankey'), ['sankey diagram', 'part', 'link']);
+  assert.deepEqual(familyNames(en, 'flowchart'), ['Flowchart', 'node', 'link']);
+  assert.deepEqual(familyNames(fr, 'flowchart'), ['Logigramme', 'nœud', 'lien']);
+  assert.deepEqual(familyNames(en, 'xychart'), ['XY chart', 'part', 'link']);
+  assert.deepEqual(familyNames(en, 'constructor'), ['constructor diagram', 'part', 'link']);
+});
+
+test('French counts, plurals and agreement: 0 and 1 singular, regular and irregular plurals, elision', () => {
+  const fr = wordsFor('fr'),
+    en = wordsFor('en');
+  assert.equal(fr.count(0, 'nœud'), '0 nœud');
+  assert.equal(fr.count(1, 'nœud'), '1 nœud');
+  assert.equal(fr.count(2, 'nœud'), '2 nœuds');
+  assert.equal(fr.count(1, fr.labelledValue), '1 valeur étiquetée');
+  assert.equal(fr.count(4, fr.labelledValue), '4 valeurs étiquetées');
+  assert.equal(fr.count(2, 'canal'), '2 canaux');
+  assert.equal(fr.count(3, 'tableau'), '3 tableaux');
+  assert.equal(fr.count(2, 'prix'), '2 prix');
+  assert.equal(fr.count(1500, fr.line), `1${NB}500 lignes`);
+  assert.equal(fr.more(1), 'et 1 autre');
+  assert.equal(fr.more(5), 'et 5 autres');
+  assert.equal(fr.number(385.33), '385,33');
+  assert.equal(fr.number(10000), `10${NB}000`);
+  // Emphasis words over several parts: the helper's agree, an author's stay as written.
+  assert.equal(markHeading(fr, fr.added, 1), 'ajoutée');
+  assert.equal(markHeading(fr, fr.added, 3), 'ajoutées');
+  assert.equal(markHeading(fr, `${fr.focused}, ${fr.removed}`, 2), 'en surbrillance, supprimées');
+  assert.equal(markHeading(fr, fr.marked, 5), 'en évidence');
+  assert.equal(markHeading(fr, 'ce foyer', 3), 'ce foyer');
+  // …and so does a summary, which lists the parts under their word.
+  const lines = (mark: string, n: number) => ({ what: 'Code', parts: Array.from({ length: n }, (_, i) => ({ name: `${i + 1}${NB}: x`, mark })) });
+  assert.equal(pictureSummary({ picture: picture([lines(fr.added, 2)], new Set(), 'fr') }), `Code. Ajoutées${NB}: 1${NB}: x${NB}; 2${NB}: x.`);
+  assert.equal(pictureSummary({ picture: picture([lines(fr.added, 1)], new Set(), 'fr') }), `Code. Ajoutée${NB}: 1${NB}: x.`);
+  assert.equal(pictureSummary({ picture: picture([lines('ce foyer', 2)], new Set(), 'fr') }), `Code. Ce foyer${NB}: 1${NB}: x${NB}; 2${NB}: x.`);
+  assert.equal(fr.beside('plafond', 'Impôt'), `«${NB}plafond${NB}» à côté d’Impôt`);
+  assert.equal(fr.beside('plafond', 'Barème'), `«${NB}plafond${NB}» à côté de Barème`);
+  assert.equal(fr.span('le début', 'les fins'), 'du début aux fins');
+  assert.equal(fr.span('0', 'avril'), 'de 0 à avril');
+  assert.equal(fr.span('avril', 'mai'), 'd’avril à mai');
+  // English keeps its rules exactly.
+  assert.equal(en.count(1, en.category), '1 category');
+  assert.equal(en.count(12, en.category), '12 categories');
+  assert.equal(en.count(2, 'branch'), '2 branches');
+  assert.equal(en.count(3, en.labelledValue), '3 labelled values');
+  assert.equal(markHeading(en, 'note', 2), 'note');
+});
+
+test('a French scene’s resting pictures are described in French, with French typography', () => {
+  const steps = described(riche);
+  for (const s of steps) {
+    assert.deepEqual(englishIn(s.summary), [], `${s.step} summary: ${s.summary}`);
+    assert.deepEqual(englishIn(text(s.html)), [], `${s.step} list: ${s.html}`);
+  }
+  const at = (step: string) => steps.find((s) => s.step === step)!;
+  // NB is U+202F, the narrow no-break space French sets before : and ; and inside « ».
+  const flow = `Logigramme${NB}: 3 nœuds, 2 liens`,
+    card = `«${NB}Foyer${NB}», 2 valeurs étiquetées`,
+    code = `Code «${NB}barème${NB}», 4 lignes`,
+    note = `«${NB}plafond${NB}» à côté d’Impôt`;
+  assert.equal(at('flux').summary, `${flow}${NB}; ${card}. Note${NB}: ${note}${NB}; en évidence${NB}: Revenu${NB}; Parts${NB}: 2.`);
+  assert.equal(
+    at('trajet').summary,
+    `${flow}${NB}; ${card}${NB}; ${code}. Note${NB}: ${note}${NB}; en évidence${NB}: Revenu${NB}; Parts${NB}: 2${NB}; ` +
+      `sur le trajet${NB}: Revenu → Barème${NB}; et 4 autres. Nouveau à cette étape${NB}: ${code}.`,
+  );
+  assert.equal(
+    at('trajet').html,
+    `<ul><li>${flow}${NB}:<ul><li>${note} (note)${NB};</li><li>Revenu (en évidence)${NB};</li><li>Revenu → Barème (sur le trajet)${NB};</li>` +
+      `<li>Barème${NB};</li><li>Barème → Impôt (en retrait)${NB};</li><li>Impôt (en retrait).</li></ul></li>` +
+      `<li>${card}${NB}:<ul><li>Parts${NB}: 2 (en évidence)${NB};</li><li>le reste comme à l’étape précédente.</li></ul></li>` +
+      `<li>${code}${NB}:<ul><li>1${NB}: + seuil: 11600 (ajoutée)${NB};</li><li>2${NB}: + plafond: 1807 (ajoutée)${NB};</li>` +
+      `<li>3${NB}: - seuil: 11497 (supprimée)${NB};</li><li>4${NB}: taux: 11 % (en surbrillance).</li></ul></li></ul>`,
+  );
+  // A walk without a trail names its path.
+  assert.ok(at('chemin').summary.includes(`. Trajet${NB}: Barème → Impôt${NB}; note`), at('chemin').summary);
+  assert.equal(
+    at('graphique').summary,
+    `Graphique XY${NB}: Montant de 0 à 2${NB}000 selon Mois, 5 catégories de janvier à mai${NB}; 2 étiquettes.`,
+  );
+  const chart = text(at('graphique').html);
+  for (const said of [
+    `février (barres 1)${NB}: 20,5${NB};`,
+    `mars (barres 1)${NB}: 1${NB}500${NB};`,
+    `Courbe 1${NB}: constante à 5${NB};`,
+    `Courbe 2${NB}: minimum 1 (janvier), maximum 90 (février, mars, avril et 1 autre).`,
+    `2 étiquettes${NB}:`,
+  ])
+    assert.ok(chart.includes(said), said);
+});
+
+test('quotient-familial: every English word in its descriptions is one its author wrote', async () => {
+  const project = await collectProject(join(ROOT, 'scenes/explainers/quotient-familial/scene.ts'));
+  // Words the scene's own source holds (labels, code, mark words passed as `as`) are the author's.
+  const authored = new Set(wordsIn(await readFile(project.file, 'utf8')));
+  for (const s of described(project)) {
+    const generated = englishIn(`${s.summary} ${text(s.html)}`).filter((w) => !authored.has(w));
+    assert.deepEqual(generated, [], `${s.step}: ${s.summary}`);
+  }
+  assert.ok(described(project)[0]!.summary.startsWith(`Logigramme${NB}: 8 nœuds, 8 liens${NB}; «${NB}Ce foyer${NB}», 4 valeurs étiquetées`));
+});
+
+// Descriptions of shipped English explainers, as they were before descriptions had a vocabulary.
+const ENGLISH_PINNED = [
+  {
+    id: 'seasons',
+    step: 'compare',
+    summary:
+      'XY chart: Daylight hours from 0 to 24, 12 categories from Jan to Dec; 4 labels. Tromsø: Line 1: lowest 0 (Jan, Dec), highest 24 (Jun, Jul).',
+    html: '<ul><li>XY chart: Daylight hours from 0 to 24, 12 categories from Jan to Dec:<ul><li>Line 1: lowest 0 (Jan, Dec), highest 24 (Jun, Jul) (Tromsø);</li><li>Line 2: lowest 7.6 (Dec), highest 16.4 (Jun) (dimmed);</li><li>Line 3: 12 throughout (dimmed);</li><li>Line 4: lowest 9.8 (Jun), highest 14.2 (Dec) (dimmed).</li></ul></li><li>4 labels:<ul><li>Tromsø;</li><li>London;</li><li>Quito;</li><li>Sydney.</li></ul></li></ul>',
+  },
+  {
+    id: 'mr-cache',
+    step: 'request',
+    summary:
+      'Flowchart: 5 nodes, 5 links; Code, 7 lines. Note: “0 reads” beside D1; travelled: Request → Handler; Handler → KV cache; KV cache → Reply: hit; and 2 more.',
+    html: '<ul><li>Flowchart: 5 nodes, 5 links:<ul><li>“0 reads” beside D1 (note);</li><li>Request → Handler (travelled);</li><li>Handler → KV cache (travelled);</li><li>KV cache → Reply: hit (travelled);</li><li>Request;</li><li>Handler;</li><li>KV cache;</li><li>Reply;</li><li>KV cache → D1: miss (dimmed);</li><li>D1 (dimmed);</li><li>D1 → Reply (dimmed).</li></ul></li><li>Code, 7 lines:<ul><li>2:   const hit = await env.KV.get(`user:${id}`, &quot;json&quot;); (focused);</li><li>3:   if (hit) return hit; (focused);</li><li>1: async function getUser(id, env) {;</li><li>4:   const row = await env.DB.prepare(SQL).bind(id).first();</li><li>5:   await env.KV.put(`user:${id}`, JSON.stringify(row), { expirationTtl: 300 });</li><li>6:   return row;</li><li>7: }.</li></ul></li></ul>',
+  },
+  {
+    id: 'glyph',
+    step: 'morph',
+    summary:
+      'Code, 2 lines; Lines pair each letter of “cache miss” with the letter it becomes, the reshaped pairs highlighted and the last s dashed; 2 labels. Removed: 1: - cache miss; added: 2: + cache hit.',
+    html: '<ul><li>Code, 2 lines:<ul><li>1: - cache miss (removed);</li><li>2: + cache hit (added).</li></ul></li><li>Lines pair each letter of “cache miss” with the letter it becomes, the reshaped pairs highlighted and the last s dashed;</li><li>2 labels:<ul><li>cache miss;</li><li>cache hit.</li></ul></li></ul>',
+  },
+  {
+    id: 'exgit',
+    step: 'change',
+    summary:
+      'Flowchart: 7 nodes, 7 links; Code, 4 lines. Note: “parent” beside commit 7edf38a → commit 161f392; “one blob, two trees” beside blob ce01362; marked: tree 88e3870 hello.txt, world.txt → blob ce01362; tree aaa96ce hello.txt → blob ce01362; and 4 more. New in this step: commit 7edf38a; commit 7edf38a → commit 161f392; commit 7edf38a → tree 88e3870 hello.txt, world.txt; and 4 more.',
+  },
+];
+test('English descriptions are byte for byte what they were before the vocabulary', async () => {
+  for (const pinned of ENGLISH_PINNED) {
+    const project = await collectProject(join(ROOT, `scenes/explainers/${pinned.id}/scene.ts`));
+    const s = described(project).find((d) => d.step === pinned.step)!;
+    assert.equal(s.summary, pinned.summary, pinned.id);
+    if (pinned.html) assert.equal(s.html, pinned.html, pinned.id);
+  }
+});
+
+test('a French page has French chrome and French descriptions, with no lang="en"', () => {
+  const { html } = built.fr;
+  assert.match(html, /^<!doctype html>\n<html lang="fr">/);
+  assert.match(html, /<summary>Transcription<\/summary>/);
+  assert.match(html, /<h2>Sources<\/h2>/);
+  assert.match(html, /<h2>Enfants à charge\u202f: 1<\/h2>/);
+  // The bundle is minified to ASCII, so only the unaccented start of the message is matched.
+  assert.ok(html.includes('Le lecteur interactif n'));
+  assert.doesNotMatch(html, /<summary>Transcript<\/summary>/);
+  // Each step's description in the transcript is French, in the page's language.
+  const descriptions = [...html.matchAll(/<\/p><div( lang="en")?><ul><li>([^<]*)/g)];
+  assert.equal(descriptions.length, 2); // one step in each of two cases
+  assert.ok(descriptions.every((m) => m[1] === undefined));
+  assert.deepEqual(
+    descriptions.map((m) => m[2]),
+    [`1 valeur étiquetée${NB}:`, `1 valeur étiquetée${NB}:`],
+  );
+});
+
+test('a page in a language with no vocabulary marks its English descriptions lang="en"', () => {
+  const { html } = built.de;
+  assert.match(html, /^<!doctype html>\n<html lang="de">/);
+  const descriptions = [...html.matchAll(/<\/p><div( lang="en")?><ul><li>([^<]*)/g)];
+  assert.equal(descriptions.length, 2);
+  assert.ok(descriptions.every((m) => m[1] === ' lang="en"' && m[2] === '1 labelled value:'));
+});
+
+test('an English page is unchanged: English chrome and no lang attribute on its descriptions', () => {
+  const { html } = built.en;
+  assert.match(html, /^<!doctype html>\n<html lang="en">/);
+  assert.match(html, /<summary>Transcript<\/summary><section data-case="n=1"><h2>Children: 1<\/h2>/);
+  assert.match(html, /<h2>Sources<\/h2>/);
+  assert.ok(html.includes('The interactive player could not start. The transcript is available below.'));
+  assert.equal([...html.matchAll(/<\/p><div><ul>/g)].length, 2);
+  assert.doesNotMatch(html, /<div lang="en">/);
+});
+
+test('the video transcript marks descriptions lang="en" only on a page in a language they lack', () => {
+  const fr = videoTranscript('Titre', 'fr', built.fr.project.variants[0]!.trace.steps);
+  assert.match(fr, /^<!doctype html><html lang="fr">.*<\/p><ul><li>1 valeur étiquetée/s);
+  assert.doesNotMatch(fr, /lang="en"/);
+  const de = videoTranscript('Titel', 'de', built.de.project.variants[0]!.trace.steps);
+  assert.match(de, /<\/p><div lang="en"><ul><li>1 labelled value/);
+  const en = videoTranscript('Title', 'en', built.en.project.variants[0]!.trace.steps);
+  assert.match(en, /<\/p><ul>/);
+  assert.doesNotMatch(en, /lang="en"><ul>|<div/);
+});
+
+test(
+  'in Chromium, the French player speaks French, its descriptions take the page’s language, and its notices are French',
+  { skip: process.env.EXPLAIN_BROWSER ? false : 'set EXPLAIN_BROWSER=1 for the browser check' },
+  async () => {
+    const browser = await launch();
+    try {
+      const page = await browser.newPage();
+      const read = async (lang: 'fr' | 'en' | 'de', query = '') => {
+        await page.goto(pathToFileURL(built[lang].file).href + query);
+        await page.waitForSelector('[data-ready=true]');
+        return page.evaluate(() => ({
+          next: document.querySelector('.controls .primary span')?.textContent,
+          previous: document.querySelector('.controls button')?.getAttribute('aria-label'),
+          disclosure: document.querySelector('.described > summary')?.textContent,
+          summaryLang: document.getElementById('picture-summary')?.getAttribute('lang'),
+          pictureLang: document.querySelector('.described > div')?.getAttribute('lang'),
+          summary: document.getElementById('picture-summary')?.textContent,
+          picture: document.querySelector('.described > div')?.textContent,
+          transcript: document.querySelector('.transcript > summary')?.textContent,
+          notice: document.querySelector('.notice')?.textContent,
+        }));
+      };
+      const fr = await read('fr');
+      assert.deepEqual(
+        { ...fr, picture: undefined },
+        {
+          next: 'Suivant',
+          previous: 'Étape précédente',
+          disclosure: 'Ce que montre l’image',
+          summaryLang: null,
+          pictureLang: null,
+          summary: '1 valeur étiquetée.',
+          picture: undefined,
+          transcript: 'Transcription',
+          notice: '',
+        },
+      );
+      assert.equal(fr.picture, `1 valeur étiquetée${NB}:Enfants à charge${NB}: 1.`);
+      const invalid = await read('fr', '?n=9');
+      assert.equal(
+        invalid.notice,
+        `Le réglage «${NB}Enfants à charge${NB}» n’a pas d’option «${NB}9${NB}». Le cas par défaut est affiché.`,
+      );
+      const de = await read('de');
+      assert.deepEqual([de.summaryLang, de.pictureLang, de.summary], ['en', 'en', '1 labelled value.']);
+      const en = await read('en');
+      assert.deepEqual(
+        { ...en, summary: undefined, picture: undefined, notice: undefined },
+        {
+          next: 'Next',
+          previous: 'Previous step',
+          disclosure: 'What the picture shows',
+          summaryLang: null,
+          pictureLang: null,
+          summary: undefined,
+          picture: undefined,
+          transcript: 'Transcript',
+          notice: undefined,
+        },
+      );
+      assert.equal((await read('en', '?n=9')).notice, 'Unknown n option: 9. Showing the default case.');
+    } finally {
+      await browser.close();
+    }
+  },
+);

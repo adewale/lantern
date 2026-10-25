@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "importer": "725da4d8fc61bf77",
+  "renderer": "agentic-mermaid@0.4.1",
+  "sourceHash": "08f21620b8b800377ba337559142f47d433509a0cf21f87014e92ffec8da6c72",
+  "diagrams": {
+    "[\"classDiagram\\n direction LR\\n class Scene {\\n construct()\\n play()\\n step()\\n }\\n class Mobject {\\n points\\n style\\n }\\n class Animation {\\n interpolate()\\n }\\n class Sink {\\n frame()\\n }\\n Scene --> Mobject : owns\\n Scene --> Animation : plays\\n Scene --> Sink : emits\",\"hand-drawn\"]": "29736f122149eed1.json",
+    "[\"graph LR\\nAuthor[Native Scene] --> Build[Build snapshots]\\nBuild --> Page[Portable HTML]\\nBuild --> Video[Captioned video]\\nPage --> Reader[Reader-paced steps]\",\"hand-drawn\"]": "9a14b9d338276619.json",
+    "[\"graph LR\\nAuthor[Native Scene] --> Clock[Fixed dt loop]\\nClock --> Browser[Browser sink]\\nClock --> SVG[SVG frames]\\nClock --> Trace[State trace]\\nSVG --> Video[Video encoder]\",\"hand-drawn\"]": "30179d8e698418b2.json"
+  }
+}

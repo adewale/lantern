@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import type { Trace } from '../../../src/trace.ts';
+import { assertStepState } from '../explainer-state.ts';
+import { INVITED, MOVED_FROM, SERIES, SERVER_CASES, copyOf, counts, expand, guestCopy, organiserCopy, schema, validate } from '../../../scenes/explainers/lib/ical-recurrence.ts';
+import type { Change, Copy } from '../../../scenes/explainers/lib/ical-recurrence.ts';
+
+/** Every case's step state equals the model's stored copies, meetings and refusals for that change and copy. */
+export function check(trace: Trace, values: Record<string, string>): void {
+  const change = values.change as Change,
+    copy = values.copy as Copy;
+  assert.ok(['none', 'move', 'skip'].includes(change), `unknown change ${change}`);
+  assert.ok(['organiser', 'guest'].includes(copy), `unknown copy ${copy}`);
+  const starts = (cs: Parameters<typeof expand>[0]) => expand(cs).map((m) => m.start);
+
+  assertStepState(trace, 'series', { series: { vevents: SERIES.length, meetings: starts(SERIES) } });
+  assertStepState(trace, 'invite', { invite: { stored: counts(INVITED), meetings: starts(INVITED) } });
+  const after = organiserCopy(change),
+    moved = expand(after).find((m) => m.slot === MOVED_FROM)!;
+  assertStepState(trace, 'change', {
+    change: { change, stored: counts(after), meetings: starts(after), ...(change === 'move' ? { moved: { from: moved.slot, to: moved.start } } : {}) },
+  });
+  assertStepState(trace, 'schema', { schema: { relations: schema('rfc') } });
+  const mine = copyOf(change, copy);
+  assertStepState(trace, 'copy', { copy: { copy, stored: counts(mine), meetings: expand(mine).map((m) => [m.start, m.cancelled]) } });
+  if (copy === 'guest') assertStepState(trace, 'copy', { messages: guestCopy(change).messages.map((m) => m.method) });
+  assertStepState(trace, 'server', {
+    server: {
+      relations: schema('sabre'),
+      refused: Object.fromEntries((['two masters', 'two RRULEs', 'override only'] as const).map((k) => [k, validate(SERVER_CASES[k]).map((r) => r.message)])),
+    },
+  });
+
+  // The headings say the model's counts.
+  const title = (step: string) => String(trace.steps.find((s) => s.step === step)!.meta.title);
+  if (copy === 'organiser') assert.match(title('copy'), new RegExp(`^Alice’s copy: ${['', 'one', 'two', 'three'][counts(mine).vevents]} VEVENT`), title('copy'));
+  if (change === 'skip') assert.match(title('change'), new RegExp(`${['', '', '', '', '', 'five', 'six'][expand(after).length]} meetings remain`), title('change'));
+}

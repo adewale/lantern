@@ -1,5 +1,5 @@
 {
-  // Shared by every project. Sources are .ts with .ts import specifiers: Node 24
+  // Shared by every project. Sources are .ts with .ts import specifiers: Node 26
   // runs them as they are (type stripping, hence erasableSyntaxOnly), and tsc
   // rewrites the specifiers to .js where it emits (the library, dist/).
   "compilerOptions": {
