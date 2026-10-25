@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "importer": 4,
+  "importer": "acfe610e690150ef",
   "renderer": "agentic-mermaid@0.4.1",
   "sourceHash": "f18dcddca3dc4030ea184e161e0c9282a351a9378876080f21100e1ecdfeb1d5",
   "diagrams": {

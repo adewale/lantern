@@ -228,63 +228,7 @@ export async function readSvg(page: Page, svg: string): Promise<Map<number, Snap
       out.set(r.owner, list);
       continue;
     } else {
-      mob = new VMobject(r.style);
-      const p = svgpath(r.d!).abs().unarc().unshort();
-      if ('err' in p && typeof p.err === 'string' && p.err) throw new Error(p.err);
-      let x = 0,
-        y = 0;
-      p.iterate((seg) => {
-        const a = seg as [string, ...number[]];
-        switch (a[0]) {
-          case 'M':
-            x = a[1]!;
-            y = a[2]!;
-            mob.startNewPath([x, y]);
-            break;
-          case 'L':
-            x = a[1]!;
-            y = a[2]!;
-            mob.addLineTo([x, y]);
-            break;
-          case 'H':
-            x = a[1]!;
-            mob.addLineTo([x, y]);
-            break;
-          case 'V':
-            y = a[1]!;
-            mob.addLineTo([x, y]);
-            break;
-          case 'C':
-            mob.addCubic([a[1]!, a[2]!], [a[3]!, a[4]!], [a[5]!, a[6]!]);
-            x = a[5]!;
-            y = a[6]!;
-            break;
-          case 'Q': {
-            const cx = a[1]!,
-              cy = a[2]!,
-              nx = a[3]!,
-              ny = a[4]!;
-            mob.addCubic(
-              [x + ((cx - x) * 2) / 3, y + ((cy - y) * 2) / 3],
-              [nx + ((cx - nx) * 2) / 3, ny + ((cy - ny) * 2) / 3],
-              [nx, ny],
-            );
-            x = nx;
-            y = ny;
-            break;
-          }
-          case 'Z':
-            mob.closePath();
-            {
-              const first = mob.subpaths.at(-1)!;
-              x = first[0]!;
-              y = first[1]!;
-            }
-            break;
-          default:
-            throw new Error(`Unread SVG command ${a[0]}`);
-        }
-      });
+      mob = pathFromSvgD(r.d!, r.style);
       paths = [mob];
     }
     const [a, b, c, d, e, f] = r.matrix as [number, number, number, number, number, number];
@@ -306,4 +250,85 @@ export async function readSvg(page: Page, svg: string): Promise<Map<number, Snap
     }
   }
   return out;
+}
+
+/**
+ * SVG path data as a Lantern path, in the path's own coordinates. svgpath makes
+ * every command absolute and turns arcs and shorthand curves into cubics and
+ * quadratics. After a close (Z), a drawing command that is not a move starts a
+ * new subpath at the closed one's start point, as SVG specifies.
+ */
+export function pathFromSvgD(d: string, style: Style = {}): VMobject {
+  const mob = new VMobject(style);
+  const p = svgpath(d).abs().unarc().unshort();
+  if ('err' in p && typeof p.err === 'string' && p.err) throw new Error(p.err);
+  let x = 0,
+    y = 0,
+    closed = false;
+  // A drawing command right after Z begins a fresh subpath where the closed one began
+  const open = () => {
+    if (closed || !mob.subpaths.length) mob.startNewPath([x, y]);
+    closed = false;
+  };
+  p.iterate((seg) => {
+    const a = seg as [string, ...number[]];
+    switch (a[0]) {
+      case 'M':
+        x = a[1]!;
+        y = a[2]!;
+        mob.startNewPath([x, y]);
+        closed = false;
+        break;
+      case 'L':
+        open();
+        x = a[1]!;
+        y = a[2]!;
+        mob.addLineTo([x, y]);
+        break;
+      case 'H':
+        open();
+        x = a[1]!;
+        mob.addLineTo([x, y]);
+        break;
+      case 'V':
+        open();
+        y = a[1]!;
+        mob.addLineTo([x, y]);
+        break;
+      case 'C':
+        open();
+        mob.addCubic([a[1]!, a[2]!], [a[3]!, a[4]!], [a[5]!, a[6]!]);
+        x = a[5]!;
+        y = a[6]!;
+        break;
+      case 'Q': {
+        open();
+        const cx = a[1]!,
+          cy = a[2]!,
+          nx = a[3]!,
+          ny = a[4]!;
+        mob.addCubic(
+          [x + ((cx - x) * 2) / 3, y + ((cy - y) * 2) / 3],
+          [nx + ((cx - nx) * 2) / 3, ny + ((cy - ny) * 2) / 3],
+          [nx, ny],
+        );
+        x = nx;
+        y = ny;
+        break;
+      }
+      case 'Z':
+        if (!mob.subpaths.length || closed) break;
+        mob.closePath();
+        {
+          const first = mob.subpaths.at(-1)!;
+          x = first[0]!;
+          y = first[1]!;
+        }
+        closed = true;
+        break;
+      default:
+        throw new Error(`Unread SVG command ${a[0]}`);
+    }
+  });
+  return mob;
 }

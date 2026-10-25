@@ -62,6 +62,9 @@ export interface DiagramResolver {
 }
 const resolvers = new WeakMap<Scene, DiagramResolver>();
 export function diagramKey(spec: DiagramSpec): string {
+  // JSON would write NaN and Infinity as null, the key of the default spacing.
+  if (spec.spacing != null && !Number.isFinite(spec.spacing))
+    throw new Error(`Diagram spacing must be a finite number, not ${spec.spacing}`);
   return JSON.stringify([
     spec.source.replace(/\r\n/g, '\n').trim(),
     spec.style ?? 'default',
@@ -82,6 +85,8 @@ function validateSnapshot(value: DiagramSnapshot): void {
     throw new Error('Invalid diagram snapshot. Rebuild with explain snapshots --refresh.');
   };
   const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
+  // Points are stored as float32: a coordinate must stay finite there too.
+  const point = (n: unknown): n is number => finite(n) && Number.isFinite(Math.fround(n));
   const color = (v: unknown) =>
     typeof v === 'string' &&
     (v === 'none' || /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(v));
@@ -104,8 +109,15 @@ function validateSnapshot(value: DiagramSnapshot): void {
   if (ids.size !== value.parts.length) invalid();
   for (const part of value.parts) {
     if (!part || typeof part.id !== 'string' || !Array.isArray(part.shapes)) invalid();
-    if (part.route && !part.route.every((p) => Array.isArray(p) && p.length === 2 && p.every(finite)))
+    if (
+      part.route != null &&
+      (!Array.isArray(part.route) || !part.route.every((p) => Array.isArray(p) && p.length === 2 && p.every(point)))
+    )
       invalid();
+    for (const key of ['owner', 'from', 'to', 'role', 'kind'] as const)
+      if (part[key] != null && typeof part[key] !== 'string') invalid();
+    // An owner names a part: '' would read as "no owner" in some places and as an id in others.
+    if (part.owner === '') invalid();
     const ancestors = new Set([part.id]);
     let owner = part.owner;
     while (owner) {
@@ -126,25 +138,30 @@ function validateSnapshot(value: DiagramSnapshot): void {
       )
         invalid();
       for (const path of shape.subpaths)
-        if (!Array.isArray(path) || path.length < 2 || path.length % 6 !== 2 || !path.every(finite))
+        if (!Array.isArray(path) || path.length < 2 || path.length % 6 !== 2 || !path.every(point))
           invalid();
       for (const key of ['fillOpacity', 'strokeOpacity', 'opacity', 'strokeWidth'] as const)
         if (!finite(shape.style[key]) || shape.style[key]! < 0) invalid();
       for (const n of Object.values(shape.style)) if (typeof n === 'number' && !finite(n)) invalid();
+      const dash = shape.style.dashArray;
       if (
-        shape.style.dashArray &&
-        !shape.style.dashArray.split(/[ ,]+/).every((v) => finite(Number(v)) && Number(v) >= 0)
+        dash != null &&
+        (typeof dash !== 'string' ||
+          !dash
+            .split(/[ ,]+/)
+            .filter((v) => v !== '')
+            .every((v) => finite(Number(v)) && Number(v) >= 0))
       )
         invalid();
       if (shape.textRun) {
         const r = shape.textRun;
         if (
           typeof r.text !== 'string' ||
-          ![r.x, r.y, r.size].every(finite) ||
+          ![r.x, r.y, r.size].every(point) ||
           r.size <= 0 ||
           !Array.isArray(r.matrix) ||
           r.matrix.length !== 6 ||
-          !r.matrix.every(finite) ||
+          !r.matrix.every(point) ||
           (r.width != null && (!finite(r.width) || r.width < 0)) ||
           (r.baseline != null &&
             !['auto', 'alphabetic', 'middle', 'central', 'text-before-edge', 'text-after-edge'].includes(
@@ -185,22 +202,31 @@ export interface Finding {
  * and the count of earlier edges with the same endpoints give the part exactly.
  */
 export function edgePartOf(snapshot: DiagramSnapshot, globalEdge: string): string | undefined {
-  const index = /#(\d+)$/.exec(globalEdge)?.[1];
-  if (index == null) return undefined;
-  const layout = (snapshot.findings as { layout?: { edges?: { from: string; to: string }[] } } | null)?.layout;
-  const order =
-    layout?.edges ?? snapshot.parts.filter((p) => p.from && p.to && !p.owner).map((p) => ({ from: p.from!, to: p.to! }));
-  const edge = order[Number(index)];
-  if (!edge) return undefined;
-  const nth = order.slice(0, Number(index)).filter((e) => e.from === edge.from && e.to === edge.to).length;
+  const named = /^(.*)#(\d+)$/s.exec(globalEdge);
+  if (!named) return undefined;
+  const index = Number(named[2]);
+  const findings = snapshot.findings as { layout?: { edges?: unknown } } | null;
+  const edges = typeof findings === 'object' ? findings?.layout?.edges : undefined;
+  const order: unknown[] = Array.isArray(edges)
+    ? edges
+    : snapshot.parts.filter((p) => p.from && p.to && !p.owner).map((p) => ({ from: p.from!, to: p.to! }));
+  const isEdge = (e: unknown): e is { from: string; to: string } =>
+    !!e && typeof (e as { from?: unknown }).from === 'string' && typeof (e as { to?: unknown }).to === 'string';
+  const edge = order[index];
+  // The name carries the edge's endpoints: an index that points at a different edge is not this one.
+  if (!isEdge(edge) || named[1] !== `${edge.from}->${edge.to}`) return undefined;
+  const nth = order.slice(0, index).filter((e) => isEdge(e) && e.from === edge.from && e.to === edge.to).length;
   const part = `edge:${edge.from}->${edge.to}#${nth}`;
   return snapshot.parts.some((p) => p.id === part) ? part : undefined;
 }
 /** The snapshot's verifier warnings, each with the `part` its edge names (see `edgePartOf`). */
 export function findingsOf(snapshot: DiagramSnapshot): Finding[] {
-  const warnings = (snapshot.findings as { warnings?: Finding[] } | null)?.warnings ?? [];
-  return warnings.map((warning) => {
-    const part = warning.edge ? edgePartOf(snapshot, warning.edge) : undefined;
-    return part ? { ...warning, part } : { ...warning };
+  const findings = snapshot.findings as { warnings?: unknown } | null;
+  const warnings = typeof findings === 'object' && Array.isArray(findings?.warnings) ? findings.warnings : [];
+  // Malformed entries are not warnings; `part` is always derived here, never carried over.
+  return (warnings.filter((w) => !!w && typeof w === 'object' && !Array.isArray(w)) as Finding[]).map((warning) => {
+    const { part: _stale, ...rest } = warning;
+    const part = typeof warning.edge === 'string' ? edgePartOf(snapshot, warning.edge) : undefined;
+    return part ? { ...rest, part } : rest;
   });
 }

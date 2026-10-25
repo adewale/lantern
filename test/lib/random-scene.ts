@@ -1,5 +1,10 @@
-// Random scenes from a seed, for the property tests and for reproducing
-// their failures (SEED=n). Everything here is deterministic in the seed.
+// Random scenes, for the property tests. A scene is drawn either from a seed
+// (SEED=n reruns one) or from a tape of draws that fast-check generates: a
+// failing tape shrinks, value by value toward 0, and a draw of 0 is always the
+// simplest choice (fewest shapes, the first kind, the shortest play), so the
+// counterexample shrinks to a smaller scene. Everything is deterministic in
+// its seed or tape.
+import { fc } from './pbt.ts';
 import {
   Scene, Group, Rectangle, Circle, Square, Line, Polygon, Arc, Dot, Text, Labeled,
   Transform, FadeIn, FadeOut, Create, Write, Indicate, MoveAlongPath, LaggedStart, AnimationGroup,
@@ -26,6 +31,31 @@ export function rng(seed: number): Rng {
   r.bool = (p = 0.5): boolean => next() < p;
   return r;
 }
+
+/** An Rng that reads its draws, each in [0, 1), from a tape; past the end every draw is 0. */
+export function tapeRng(tape: readonly number[]): Rng {
+  let i = 0;
+  const next = () => tape[i++] ?? 0;
+  const r = (lo = 0, hi = 1): number => lo + next() * (hi - lo);
+  r.int = (lo: number, hi: number): number => Math.min(hi, Math.floor(r(lo, hi + 1)));
+  r.pick = <T>(xs: readonly T[]): T => xs[r.int(0, xs.length - 1)]!;
+  // 1 - draw, so a shrunk draw of 0 says no: the optional extra is left out.
+  r.bool = (p = 0.5): boolean => 1 - next() < p;
+  return r;
+}
+
+/** Draws a scene needs: a random scene uses under 300, so 512 never runs short. */
+export const TAPE = 512;
+/**
+ * A tape of uniform draws (noBias keeps the distribution of the seeded
+ * generator: no extra weight on small values), the same length every time so
+ * shrinking changes values rather than dropping the scene's later choices.
+ */
+export const tape = (length = TAPE): fc.Arbitrary<number[]> =>
+  fc.array(fc.noBias(fc.integer({ min: 0, max: 2 ** 32 - 1 })).map((n) => n / 2 ** 32), { minLength: length, maxLength: length });
+/** A seed or a tape: what every generator here draws from. */
+export type Draws = number | readonly number[];
+export const drawsFrom = (d: Draws): Rng => (typeof d === 'number' ? rng(d) : tapeRng(d));
 
 const COLORS = ['#ffffff', '#58c4dd', '#5cd0b3', '#83c167', '#f0ac5f', '#fc6255', '#888888', '#ffff00', '#9a72ac'];
 const WORDS = ['a', 'hello', 'Worker handler', 'x = 1', '→ 42', 'Ω', 'pyex #29'];
@@ -72,11 +102,12 @@ function randomAnimation(r: Rng, _scene: Scene, pool: Mobject[]): Animation | An
   }
 }
 
-/** A scene from a seed. `log` collects things the invariants check after plays. */
-export function makeScene(seed: number, log: Array<[Mobject, Mobject]> | null = null): SceneClass {
+/** A scene from a seed or a tape. `log` collects things the invariants check after plays. */
+export function makeScene(draws: Draws, log: Array<[Mobject, Mobject]> | null = null): SceneClass {
+  const seed = typeof draws === 'number' ? draws : null;
   return class extends Scene {
     override async construct(): Promise<void> {
-      const r = rng(seed);
+      const r = drawsFrom(draws);
       const pool = Array.from({ length: r.int(1, 5) }, () => place(r, randomShape(r)));
       this.add(...pool);
       const state = (this.state = { seed, plays: 0 });

@@ -8,7 +8,12 @@ import { join } from 'node:path';
 import type { Browser, Page, Frame } from 'playwright-core';
 import { launch } from '../tools/lib/browser.ts';
 import { collectProject } from '../tools/lib/explain-project.ts';
+import type { Project } from '../tools/lib/explain-project.ts';
 import { buildExplainer, buildLoader } from '../tools/lib/explain-build.ts';
+import fc from 'fast-check';
+import { resolveSettings } from '../explain/index.ts';
+import type { Settings } from '../explain/index.ts';
+import { zoomAt, ZOOM_MAX } from '../app/embed-zoom.ts';
 
 const enabled = !!process.env.EXPLAIN_BROWSER,
   options = { skip: enabled ? false : 'set EXPLAIN_BROWSER=1 for real cross-origin browser checks' };
@@ -16,6 +21,7 @@ let browser: Browser, folder: string, host: string, embed: string;
 const servers: Server[] = [],
   assets = new Map<string, { body: string; headers?: Record<string, string> }>();
 let hostBody = '';
+const projects = new Map<string, Project>();
 async function serve(isHost: boolean): Promise<string> {
   const server = createServer((req, res) => {
     if (isHost) {
@@ -43,8 +49,9 @@ before(async () => {
   browser = await launch();
   host = await serve(true);
   embed = await serve(false);
-  for (const name of ['mr-cache', 'oauth-pkce']) {
+  for (const name of ['mr-cache', 'oauth-pkce', 'pap']) {
     const project = await collectProject(`scenes/explainers/${name}`);
+    projects.set(name, project);
     const built = await buildExplainer(project, join(folder, name + '.html'));
     assets.set('/' + name, {
       body: built.html,
@@ -315,5 +322,1027 @@ test(
     } finally {
       await context.close();
     }
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Property tests. The player is a state machine: fast-check generates command
+// sequences (fc.commands), runs them against a real page, and after every
+// command compares the page with a model built in Node from each case's trace.
+// Browser runs are expensive, so counts are modest: FC_RUNS overrides the run
+// count, FULL=1 multiplies it by 10. A failure prints seed, path and the
+// commands' replayPath; replay with FC_SEED=<seed> FC_PATH=<path>
+// FC_REPLAY_PATH=<replayPath>.
+//
+// Reduced motion: the model runs under prefers-reduced-motion: reduce, where
+// Next and Replay show the finished step at once. With motion on, Next plays an
+// animation in wall-clock time for an unpredictable number of frames, so the
+// model's per-command assertions would race it; the motion-on path has its own
+// property further down (Next ends on the step's resting picture), which waits
+// for each animation to settle. Commands that land while a case is still loading
+// are covered by the racing property, which checks consistency, not a model.
+const fcRuns = (n: number) => ({
+  numRuns: Number(process.env.FC_RUNS ?? n) * (process.env.FULL ? 10 : 1),
+  ...(process.env.FC_SEED ? { seed: Number(process.env.FC_SEED) } : {}),
+  ...(process.env.FC_PATH ? { path: process.env.FC_PATH } : {}),
+});
+// size 'max' spreads sequence lengths up to maxCommands (the default size keeps them under ~10).
+const commandOptions = (maxCommands: number) => ({
+  maxCommands,
+  size: 'max' as const,
+  ...(process.env.FC_REPLAY_PATH ? { replayPath: process.env.FC_REPLAY_PATH } : {}),
+});
+
+interface StepSpec {
+  step: string;
+  caption: string;
+  title: string;
+}
+interface Entry {
+  values: Settings;
+  step: string;
+}
+interface PlayerModel {
+  project: Project;
+  entries: Entry[];
+  index: number;
+  notice: string;
+  k: number;
+  transcript: boolean;
+  settles: number;
+}
+interface PlayerReal {
+  page: Page;
+  errors: string[];
+  /** history.length before the player's first entry. */
+  base: number;
+  /** Stage insertions made by the HTML parser (the poster), before the player ran. */
+  parsed: number;
+}
+const settingsOfProject = (p: Project) => p.Scene.settings ?? [];
+const sameCase = (p: Project, a: Settings, b: Settings) => settingsOfProject(p).every((s) => a[s.id] === b[s.id]);
+function stepsOf(p: Project, values: Settings): StepSpec[] {
+  const v = p.variants.find((v) => sameCase(p, v.values, values));
+  assert.ok(v, `no prebuilt case ${JSON.stringify(values)}`);
+  return v.trace.steps.map((s) => ({
+    step: s.step,
+    caption: String(s.meta.caption ?? ''),
+    title: String(s.meta.title ?? s.step),
+  }));
+}
+const current = (m: PlayerModel) => m.entries[m.index]!;
+const steps = (m: PlayerModel) => stepsOf(m.project, current(m).values);
+const selected = (m: PlayerModel) => steps(m).findIndex((s) => s.step === current(m).step);
+const kAfter = (k: number, factor: number) => zoomAt({ k, x: 0, y: 0 }, factor, 0, 0, 1000, 1000, ZOOM_MAX).k;
+function push(m: PlayerModel, entry: Entry) {
+  m.entries = [...m.entries.slice(0, m.index + 1), entry];
+  m.index = m.entries.length - 1;
+}
+/** What the documented load does: resolve the case, keep the step by name or fall back to the first with a notice. */
+function resolveLoad(p: Project, request: Record<string, string>, step: string | undefined) {
+  let values: Settings;
+  const notices: string[] = [];
+  try {
+    values = resolveSettings(p.Scene, request);
+  } catch (error) {
+    values = resolveSettings(p.Scene);
+    notices.push(`${(error as Error).message}. Showing the default case.`);
+  }
+  const list = stepsOf(p, values);
+  let found = step ? list.findIndex((s) => s.step === step) : 0;
+  // Both fallbacks are announced when both apply.
+  if (found < 0) {
+    found = 0;
+    notices.push(`This case has no “${step}” step, so it opens at the first step.`);
+  }
+  return { entry: { values, step: list[found]!.step }, notice: notices.join(' ') };
+}
+
+/** Everything the reader can see or the host can read, in one snapshot. */
+function observe(ids: string[]) {
+  const q = new URL(location.href).searchParams;
+  const w = window as unknown as {
+    __settles: number;
+    __attaches: number;
+    __last: { step: string; settings: Record<string, string> } | null;
+  };
+  const button = (name: string) => document.querySelector<HTMLButtonElement>(`button[aria-label="${name}"]`);
+  const stage = document.querySelector<HTMLElement>('.stage')!;
+  return {
+    settles: w.__settles,
+    attaches: w.__attaches,
+    last: w.__last,
+    loading: document.getElementById('content')!.classList.contains('loading'),
+    url: location.href,
+    urlStep: q.get('step'),
+    urlCase: Object.fromEntries(ids.map((id) => [id, q.get(id)])),
+    current: [...document.querySelectorAll<HTMLElement>('.steps [aria-current=step]')].map((b) => b.dataset.step),
+    list: [...document.querySelectorAll<HTMLElement>('.steps button')].map((b) => b.dataset.step),
+    caption: document.querySelector('.caption')!.textContent,
+    stageLabel: stage.getAttribute('aria-label'),
+    title: document.querySelector('h1')!.textContent,
+    prevDisabled: button('Previous step')!.disabled,
+    nextDisabled: button('Next step')!.disabled,
+    notice: document.querySelector('.notice')!.textContent,
+    checked: Object.fromEntries(
+      ids.map((id) => [id, document.querySelector<HTMLInputElement>(`input[name="${id}"]:checked`)?.value ?? null]),
+    ),
+    history: history.length,
+    overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    transform: stage.querySelector('svg')?.style.transform ?? null,
+    stageW: stage.clientWidth,
+    stageH: stage.clientHeight,
+    zoomOutDisabled: button('Zoom out')!.disabled,
+    zoomInDisabled: button('Zoom in')!.disabled,
+    fitHidden: button('Fit stage')!.hidden,
+    transcriptOpen: (document.querySelector('details.transcript') as HTMLDetailsElement).open,
+    transcriptLinks: [...document.querySelectorAll<HTMLAnchorElement>('.transcript ol a')].map((a) => a.href),
+  };
+}
+const twoFrames = (page: Page) =>
+  page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
+/** Parse `translate(Xpx, Ypx) scale(K)`; null for the identity (no transform). */
+function parseTransform(t: string | null) {
+  if (!t) return null;
+  const m = t.match(/^translate\((-?[\d.e+-]+)px(?:, (-?[\d.e+-]+)px)?\) scale\(([\d.e+-]+)\)$/);
+  return m ? { x: Number(m[1]), y: Number(m[2] ?? 0), k: Number(m[3]) } : { x: NaN, y: NaN, k: NaN };
+}
+
+async function verify(m: PlayerModel, r: PlayerReal, what: string) {
+  const ids = settingsOfProject(m.project).map((s) => s.id);
+  await r.page
+    .waitForFunction(
+      (n) =>
+        (window as unknown as { __settles: number }).__settles >= n &&
+        !document.getElementById('content')!.classList.contains('loading'),
+      m.settles,
+      { timeout: 10_000 },
+    )
+    .catch(() => {});
+  await twoFrames(r.page);
+  const seen = await r.page.evaluate(observe, ids);
+  const entry = current(m),
+    list = steps(m),
+    i = selected(m),
+    spec = list[i]!;
+  const problems: string[] = [];
+  const expect = (ok: boolean, label: string, actual: unknown, expected: unknown) => {
+    if (!ok) problems.push(`${label}: got ${JSON.stringify(actual)}, model says ${JSON.stringify(expected)}`);
+  };
+  const eq = (label: string, actual: unknown, expected: unknown) =>
+    expect(JSON.stringify(actual) === JSON.stringify(expected), label, actual, expected);
+  eq('page errors', r.errors, []);
+  eq('settled steps (lantern:step events)', seen.settles, m.settles);
+  // Reduced motion: the only pictures ever attached are the resting frames shown on settling.
+  eq('pictures attached to the stage', seen.attaches - r.parsed, m.settles);
+  eq('URL step', seen.urlStep, entry.step);
+  eq('URL case', seen.urlCase, Object.fromEntries(ids.map((id) => [id, entry.values[id]])));
+  eq('checked case', seen.checked, Object.fromEntries(ids.map((id) => [id, entry.values[id]])));
+  eq('last settled step', seen.last && { step: seen.last.step, settings: seen.last.settings }, {
+    step: entry.step,
+    settings: Object.fromEntries(ids.map((id) => [id, entry.values[id]])),
+  });
+  eq('step list', seen.list, list.map((s) => s.step));
+  eq('aria-current', seen.current, [entry.step]);
+  eq('caption', seen.caption, spec.caption);
+  eq('stage label', seen.stageLabel, `${seen.title}: ${spec.title}`);
+  eq('Previous disabled', seen.prevDisabled, i === 0);
+  eq('Next disabled', seen.nextDisabled, i === list.length - 1);
+  eq('notice', seen.notice, m.notice);
+  eq('history length', seen.history, r.base + m.entries.length);
+  eq('horizontal overflow', seen.overflow, false);
+  eq('transcript open', seen.transcriptOpen, m.transcript);
+  eq(
+    'transcript links',
+    seen.transcriptLinks.map((h) => {
+      const q = new URL(h).searchParams;
+      return [q.get('step'), ...ids.map((id) => q.get(id))];
+    }),
+    list.map((s) => [s.step, ...ids.map((id) => entry.values[id])]),
+  );
+  // Zoom: the scale the model predicts, painted so the drawing covers the stage.
+  eq('Zoom out disabled', seen.zoomOutDisabled, m.k <= 1);
+  eq('Zoom in disabled', seen.zoomInDisabled, m.k >= ZOOM_MAX);
+  eq('Fit hidden', seen.fitHidden, m.k <= 1);
+  const t = parseTransform(seen.transform);
+  if (m.k === 1) eq('transform at k=1', seen.transform, '');
+  else if (!t) problems.push(`transform: none painted, model k=${m.k}`);
+  else {
+    // style.transform reads back through CSS serialization, which keeps 6 significant
+    // digits; so each number is the painted one to within half a unit in the 6th digit.
+    const css = (v: number) => 5e-6 * Math.abs(v);
+    expect(Math.abs(t.k - m.k) <= css(m.k), 'painted scale', seen.transform, m.k);
+    expect(
+      t.x <= css(t.x) &&
+        t.y <= css(t.y) &&
+        t.x + seen.stageW * t.k >= seen.stageW - css(t.x) - css(seen.stageW * t.k) &&
+        t.y + seen.stageH * t.k >= seen.stageH - css(t.y) - css(seen.stageH * t.k),
+      'drawing covers stage',
+      { transform: seen.transform, w: seen.stageW, h: seen.stageH },
+      'covered',
+    );
+  }
+  if (problems.length) throw new Error(`after ${what}:\n  ${problems.join('\n  ')}\n  at ${seen.url}`);
+}
+
+type Cmd = fc.AsyncCommand<PlayerModel, PlayerReal>;
+/** A command: `act` drives the page and updates the model; every command then verifies the whole page. */
+const command = (
+  name: string,
+  check: (m: PlayerModel) => boolean,
+  act: (m: PlayerModel, r: PlayerReal) => Promise<void>,
+): Cmd => ({
+  check: (m) => check(m as PlayerModel),
+  async run(m, r) {
+    await act(m, r);
+    await verify(m, r, name);
+  },
+  toString: () => name,
+});
+const button = (r: PlayerReal, name: string) => r.page.locator(`button[aria-label="${name}"]`);
+/** Show a step of this case: a history entry when the step changes, a fresh resting picture always. */
+function goTo(m: PlayerModel, index: number) {
+  const step = steps(m)[index]!.step;
+  if (step !== current(m).step) push(m, { values: current(m).values, step });
+  m.settles++;
+}
+const always = () => true;
+const Next = command(
+  'Next',
+  (m) => selected(m) < steps(m).length - 1,
+  async (m, r) => {
+    await button(r, 'Next step').click();
+    goTo(m, selected(m) + 1);
+  },
+);
+const Previous = command(
+  'Previous',
+  (m) => selected(m) > 0,
+  async (m, r) => {
+    await button(r, 'Previous step').click();
+    goTo(m, selected(m) - 1);
+  },
+);
+const ClickStep = (i: number) =>
+  command(
+    `ClickStep(${i})`,
+    (m) => i < steps(m).length,
+    async (m, r) => {
+      await r.page.locator('.steps button').nth(i).click();
+      goTo(m, i);
+    },
+  );
+const TranscriptLink = (i: number) =>
+  command(
+    `TranscriptLink(${i})`,
+    (m) => m.transcript && i < steps(m).length,
+    async (m, r) => {
+      await r.page.locator('.transcript ol a').nth(i).click();
+      goTo(m, i);
+    },
+  );
+const ChooseCase = (setting: number, option: number) =>
+  command(
+    `ChooseCase(${setting}, ${option})`,
+    (m) => {
+      const s = settingsOfProject(m.project)[setting];
+      return !!s && option < s.options.length;
+    },
+    async (m, r) => {
+      const s = settingsOfProject(m.project)[setting]!,
+        value = s.options[option]!.value;
+      await r.page.locator(`input[name="${s.id}"][value="${value}"]`).locator('xpath=..').click();
+      // Choosing the case already shown changes nothing.
+      if (current(m).values[s.id] === value) return;
+      // A new case keeps the step by name, or falls back to the first with a notice; zoom resets.
+      const { entry, notice } = resolveLoad(m.project, { ...current(m).values, [s.id]: value }, current(m).step);
+      push(m, entry);
+      m.notice = notice;
+      m.k = 1;
+      m.settles++;
+    },
+  );
+/** Back/Forward restore case and step; zoom keeps its place across steps and resets when the case changes (docs/EMBEDDING.md). */
+function traverse(m: PlayerModel, by: number) {
+  const was = current(m).values;
+  m.index += by;
+  m.notice = '';
+  if (!sameCase(m.project, was, current(m).values)) m.k = 1;
+  m.settles++;
+}
+const Back = command(
+  'Back',
+  (m) => m.index > 0,
+  async (m, r) => {
+    await r.page.goBack({ waitUntil: 'commit' });
+    traverse(m, -1);
+  },
+);
+const Forward = command(
+  'Forward',
+  (m) => m.index < m.entries.length - 1,
+  async (m, r) => {
+    await r.page.goForward({ waitUntil: 'commit' });
+    traverse(m, 1);
+  },
+);
+const ZoomButton = (which: 'Zoom in' | 'Zoom out' | 'Fit stage') =>
+  command(
+    `ZoomButton(${which})`,
+    (m) => (which === 'Zoom in' ? m.k < ZOOM_MAX : m.k > 1),
+    async (m, r) => {
+      await button(r, which).click();
+      m.k = which === 'Fit stage' ? 1 : kAfter(m.k, which === 'Zoom in' ? 1.6 : 1 / 1.6);
+    },
+  );
+const Replay = command('Replay', always, async (m, r) => {
+  await button(r, 'Replay step').click();
+  m.notice = 'Reduced motion is on, so the finished step is shown.';
+  m.settles++;
+});
+const CopyLink: Cmd = {
+  check: always,
+  async run(m, r) {
+    await r.page.evaluate(() => navigator.clipboard.writeText(''));
+    await button(r, 'Copy link').click();
+    m.notice = 'Link copied.';
+    await verify(m, r, 'CopyLink');
+    const copied = new URL(await r.page.evaluate(() => navigator.clipboard.readText()));
+    const here = new URL(r.page.url());
+    here.searchParams.delete('parentOrigin');
+    assert.equal(copied.href, here.href, 'the copied link is this page without parentOrigin');
+    assert.equal(copied.searchParams.get('step'), current(m).step);
+    for (const s of settingsOfProject(m.project)) assert.equal(copied.searchParams.get(s.id), current(m).values[s.id]);
+  },
+  toString: () => 'CopyLink',
+};
+const Key = (key: string) =>
+  command(`Key(${JSON.stringify(key)})`, always, async (m, r) => {
+    await r.page.locator('#content').focus();
+    await r.page.keyboard.press(key);
+    const i = selected(m);
+    if (key === 'ArrowRight' && i < steps(m).length - 1) goTo(m, i + 1);
+    // ArrowLeft mirrors Previous, which is disabled on the first step.
+    if (key === 'ArrowLeft' && i > 0) goTo(m, i - 1);
+    if (key === '+' || key === '=') m.k = kAfter(m.k, 1.6);
+    if (key === '-') m.k = kAfter(m.k, 1 / 1.6);
+    if (key === '0') m.k = 1;
+  });
+/** A point on the stage. The stage has 12 px rounded corners, outside which a pointer is not on it. */
+async function stagePoint(r: PlayerReal, u: number, v: number) {
+  // Earlier clicks scroll the page; a pointer off the viewport reaches nothing.
+  await r.page.locator('.stage').evaluate((e) => e.scrollIntoView({ block: 'center', inline: 'center' }));
+  const box = (await r.page.locator('.stage').boundingBox())!,
+    view = r.page.viewportSize()!,
+    inset = 12;
+  // The part of the stage on screen (a short viewport shows only part of it), inside the corners.
+  const left = Math.max(box.x, 0) + inset,
+    top = Math.max(box.y, 0) + inset,
+    right = Math.min(box.x + box.width, view.width) - inset,
+    bottom = Math.min(box.y + box.height, view.height) - inset;
+  return { x: left + u * (right - left), y: top + v * (bottom - top) };
+}
+const DoubleClick = (u: number, v: number) =>
+  command(`DoubleClick(${u}, ${v})`, always, async (m, r) => {
+    const p = await stagePoint(r, u, v);
+    await r.page.mouse.dblclick(p.x, p.y);
+    m.k = m.k > 1 ? 1 : kAfter(m.k, 2.5);
+  });
+const CtrlWheel = (dy: number) =>
+  command(`CtrlWheel(${dy})`, always, async (m, r) => {
+    const p = await stagePoint(r, 0.5, 0.5);
+    await r.page.mouse.move(p.x, p.y);
+    await r.page.keyboard.down('Control');
+    await r.page.mouse.wheel(0, dy);
+    await r.page.keyboard.up('Control');
+    m.k = kAfter(m.k, Math.exp(-dy / 100));
+  });
+const Drag = (dx: number, dy: number) =>
+  command(`Drag(${dx}, ${dy})`, always, async (_m, r) => {
+    const p = await stagePoint(r, 0.5, 0.5);
+    await r.page.mouse.move(p.x, p.y);
+    await r.page.mouse.down();
+    await r.page.mouse.move(p.x + dx, p.y + dy, { steps: 3 });
+    await r.page.mouse.up();
+  });
+const ToggleTranscript = command('ToggleTranscript', always, async (m, r) => {
+  await r.page.locator('.transcript > summary').click();
+  m.transcript = !m.transcript;
+});
+const Resize = (width: number, height: number) =>
+  command(`Resize(${width}, ${height})`, always, async (_m, r) => {
+    await r.page.setViewportSize({ width, height });
+  });
+
+// Narrower than 200 CSS px a single unbreakable word (a step title) is wider than the column.
+const viewportArb = fc.record({ width: fc.integer({ min: 200, max: 1600 }), height: fc.integer({ min: 400, max: 1200 }) });
+/** URL text: any code point, plus lone surrogates and the characters URLs treat specially. */
+const urlText = fc.string({
+  unit: fc.oneof(
+    fc.string({ unit: 'binary', minLength: 1, maxLength: 1 }),
+    fc.constantFrom('\uD800', '\uDC00', '\0', '&', '=', '#', '%', '+', ' ', '?', '“', '”'),
+  ),
+});
+function initialArb(p: Project) {
+  const names = [...new Set(p.variants.flatMap((v) => v.trace.steps.map((s) => s.step)))];
+  return fc.record({
+    values: fc.tuple(
+      ...settingsOfProject(p).map((s) =>
+        fc.option(fc.oneof(fc.constantFrom(...s.options.map((o) => o.value)), urlText), { nil: undefined }),
+      ),
+    ),
+    step: fc.option(fc.oneof(fc.constantFrom(...names), urlText), { nil: undefined }),
+    viewport: viewportArb,
+  });
+}
+function commandArbs(p: Project): fc.Arbitrary<Cmd>[] {
+  const settings = settingsOfProject(p);
+  return [
+    fc.constant(Next),
+    fc.constant(Previous),
+    fc.nat({ max: 7 }).map(ClickStep),
+    fc.nat({ max: 7 }).map(TranscriptLink),
+    ...(settings.length
+      ? [fc.tuple(fc.nat({ max: settings.length - 1 }), fc.nat({ max: 2 })).map(([s, o]) => ChooseCase(s, o))]
+      : []),
+    fc.constant(Back),
+    fc.constant(Forward),
+    fc.constantFrom('Zoom in', 'Zoom out', 'Fit stage').map((w) => ZoomButton(w as 'Zoom in')),
+    fc.constant(Replay),
+    fc.constant(CopyLink),
+    fc.constantFrom('ArrowRight', 'ArrowLeft', '+', '=', '-', '0').map(Key),
+    fc.tuple(fc.double({ min: 0, max: 1, noNaN: true }), fc.double({ min: 0, max: 1, noNaN: true })).map(
+      ([u, v]) => DoubleClick(u, v),
+    ),
+    fc.integer({ min: -5000, max: 5000 }).map(CtrlWheel),
+    fc.tuple(fc.integer({ min: -400, max: 400 }), fc.integer({ min: -400, max: 400 })).map(([x, y]) => Drag(x, y)),
+    fc.constant(ToggleTranscript),
+    viewportArb.map((v) => Resize(v.width, v.height)),
+  ];
+}
+async function openPlayer(name: string, initial: { values: (string | undefined)[]; step?: string; viewport: { width: number; height: number } }) {
+  const p = projects.get(name)!;
+  const query = new URLSearchParams();
+  settingsOfProject(p).forEach((s, i) => {
+    if (initial.values[i] !== undefined) query.set(s.id, initial.values[i]!);
+  });
+  if (initial.step !== undefined) query.set('step', initial.step);
+  // The model reads the URL the way the page does: WHATWG decoding of the same query.
+  const q = new URLSearchParams(query.toString()),
+    request: Record<string, string> = {};
+  for (const s of settingsOfProject(p)) if (q.has(s.id)) request[s.id] = q.get(s.id)!;
+  const { entry, notice } = resolveLoad(p, request, q.get('step') ?? undefined);
+  const context = await browser.newContext({
+    permissions: ['clipboard-read', 'clipboard-write'],
+    reducedMotion: 'reduce',
+    viewport: initial.viewport,
+  });
+  context.setDefaultTimeout(5000);
+  await context.addInitScript(() => {
+    const w = window as unknown as { __settles: number; __attaches: number; __last: unknown };
+    w.__settles = 0;
+    w.__attaches = 0;
+    w.__last = null;
+    document.addEventListener('lantern:step', (e) => {
+      w.__settles++;
+      w.__last = (e as CustomEvent).detail;
+    });
+    new MutationObserver((records) => {
+      for (const r of records)
+        if ((r.target as Element).classList?.contains('stage') && r.addedNodes.length) w.__attaches++;
+    }).observe(document, { childList: true, subtree: true });
+  });
+  const page = await context.newPage();
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto(`${embed}/${name}${query.size ? '?' + query : ''}`);
+  await page.waitForSelector('[data-ready=true]');
+  const base = (await page.evaluate(() => history.length)) - 1;
+  const parsed = (await page.evaluate(() => (window as unknown as { __attaches: number }).__attaches)) - 1;
+  const model: PlayerModel = { project: p, entries: [entry], index: 0, notice, k: 1, transcript: false, settles: 1 };
+  const real: PlayerReal = { page, errors, base, parsed };
+  await verify(model, real, `opening ${page.url()}`);
+  return { context, model, real };
+}
+for (const [name, runs, maxCommands] of [
+  ['oauth-pkce', 10, 40],
+  ['pap', 6, 40],
+] as const)
+  test(
+    `player (${name}): any sequence of reader actions keeps the URL, step list, caption, controls, zoom and history in step with the model`,
+    options,
+    async () => {
+      const p = projects.get(name)!;
+      await fc.assert(
+        fc.asyncProperty(initialArb(p), fc.commands(commandArbs(p), commandOptions(maxCommands)), async (initial, cmds) => {
+          const { context, model, real } = await openPlayer(name, initial);
+          try {
+            await fc.asyncModelRun(() => ({ model, real }), cmds);
+          } finally {
+            await context.close();
+          }
+        }),
+        fcRuns(runs),
+      );
+    },
+  );
+
+/** Open a player page with the settle and attach counters installed. */
+async function counted(context: import('playwright-core').BrowserContext, url: string) {
+  await context.addInitScript(() => {
+    const w = window as unknown as { __settles: number; __attaches: number; __last: unknown };
+    w.__settles = 0;
+    w.__attaches = 0;
+    w.__last = null;
+    document.addEventListener('lantern:step', (e) => {
+      w.__settles++;
+      w.__last = (e as CustomEvent).detail;
+    });
+  });
+  const page = await context.newPage();
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto(url);
+  await page.waitForSelector('[data-ready=true]');
+  return { page, errors };
+}
+/** Quiet: nothing loading, no animation playing, and no step settled for `ms`. */
+async function quiet(page: Page, ms = 300) {
+  for (;;) {
+    const n = await page.evaluate(() => (window as unknown as { __settles: number }).__settles);
+    await page.waitForFunction(
+      () =>
+        !document.getElementById('content')!.classList.contains('loading') &&
+        !!document.querySelector('button[aria-label="Replay step"]'),
+      undefined,
+      { timeout: 20_000 },
+    );
+    await page.waitForTimeout(ms);
+    if ((await page.evaluate(() => (window as unknown as { __settles: number }).__settles)) === n) return;
+  }
+}
+const stagePicture = (page: Page) => page.locator('.stage').evaluate((s) => s.innerHTML);
+const caseQuery = (p: Project, values: Settings, step: string) => {
+  const q = new URLSearchParams();
+  for (const s of settingsOfProject(p)) q.set(s.id, values[s.id]!);
+  q.set('step', step);
+  return q.toString();
+};
+
+// Regression (ledger P5): Next used to stop the animation where the caption hold
+// begins, before anything a step adds after its last play(), so the picture the
+// reader rested on differed from the one a link to that step shows.
+test(
+  'player, motion on: after Next settles, the stage shows exactly the picture a link to that step shows',
+  options,
+  async () => {
+    const all = ['oauth-pkce', 'pap', 'mr-cache'].flatMap((name) =>
+      projects.get(name)!.variants.flatMap((v) =>
+        v.trace.steps.slice(0, -1).map((_, i) => ({ name, values: v.values, i })),
+      ),
+    );
+    await fc.assert(
+      fc.asyncProperty(fc.constantFrom(...all), async ({ name, values, i }) => {
+        const p = projects.get(name)!,
+          list = stepsOf(p, values);
+        const context = await browser.newContext({ reducedMotion: 'no-preference' });
+        try {
+          const a = await counted(context, `${embed}/${name}?${caseQuery(p, values, list[i]!.step)}`);
+          await a.page.locator('button[aria-label="Next step"]').click();
+          await a.page.waitForFunction(() => (window as unknown as { __settles: number }).__settles >= 2, undefined, {
+            timeout: 30_000,
+          });
+          await quiet(a.page);
+          const b = await counted(context, `${embed}/${name}?${caseQuery(p, values, list[i + 1]!.step)}`);
+          assert.equal(new URL(a.page.url()).searchParams.get('step'), list[i + 1]!.step);
+          assert.equal(await stagePicture(a.page), await stagePicture(b.page), `${name} ${JSON.stringify(values)} ${list[i]!.step} → Next`);
+          assert.deepEqual([...a.errors, ...b.errors], []);
+        } finally {
+          await context.close();
+        }
+      }),
+      fcRuns(5),
+    );
+  },
+);
+
+// Commands fired in a burst, without waiting for the player: case changes race
+// navigation while a new case's trace is still being computed.
+type Burst = { kind: 'case'; setting: number; option: number } | { kind: 'next' | 'prev' | 'back' | 'forward' | 'left' | 'right' } | { kind: 'step'; i: number };
+const burstArb = (p: Project) =>
+  fc.array(
+    fc.record({
+      action: fc.oneof(
+        fc.record({ kind: fc.constant('case' as const), setting: fc.nat({ max: Math.max(0, settingsOfProject(p).length - 1) }), option: fc.nat({ max: 2 }) }),
+        fc.record({ kind: fc.constantFrom('next' as const, 'prev' as const, 'back' as const, 'forward' as const, 'left' as const, 'right' as const) }),
+        fc.record({ kind: fc.constant('step' as const), i: fc.nat({ max: 7 }) }),
+      ),
+      // Same task, next microtask-free turn, or a short pause.
+      gap: fc.constantFrom(0, 1, 5, 20, 60),
+    }),
+    { minLength: 1, maxLength: 12 },
+  );
+for (const name of ['oauth-pkce', 'pap'] as const)
+  test(
+    `player (${name}): any burst of case changes and navigation, unawaited, ends with the URL, choice, list, caption and picture all on one case and step`,
+    options,
+    async () => {
+      const p = projects.get(name)!,
+        ids = settingsOfProject(p).map((s) => s.id);
+      await fc.assert(
+        fc.asyncProperty(burstArb(p), async (burst) => {
+          const context = await browser.newContext({ reducedMotion: 'reduce' });
+          try {
+            const { page, errors } = await counted(context, `${embed}/${name}`);
+            await page.evaluate(
+              async ({ burst, settings }) => {
+                const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+                const button = (n: string) => document.querySelector<HTMLButtonElement>(`button[aria-label="${n}"]`)!;
+                const key = (k: string) =>
+                  document.getElementById('content')!.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
+                // Back must not leave the player's document: count Backs not yet committed.
+                const nav = (window as unknown as { navigation: { currentEntry: { index: number } } }).navigation;
+                let queued = 0,
+                  seenIndex = nav.currentEntry.index;
+                for (const { action: a, gap } of burst) {
+                  if (nav.currentEntry.index !== seenIndex) [queued, seenIndex] = [0, nav.currentEntry.index];
+                  if (a.kind === 'case') {
+                    const s = settings[a.setting];
+                    const input = s && document.querySelector<HTMLInputElement>(`input[name="${s.id}"][value="${s.options[a.option % s.options.length]}"]`);
+                    input?.click();
+                  } else if (a.kind === 'next') button('Next step').click();
+                  else if (a.kind === 'prev') button('Previous step').click();
+                  else if (a.kind === 'back') {
+                    if (nav.currentEntry.index - queued > 0) {
+                      queued++;
+                      history.back();
+                    }
+                  }
+                  else if (a.kind === 'forward') history.forward();
+                  else if (a.kind === 'left') key('ArrowLeft');
+                  else if (a.kind === 'right') key('ArrowRight');
+                  else if (a.kind === 'step') document.querySelectorAll<HTMLButtonElement>('.steps button')[a.i]?.click();
+                  if (gap) await pause(gap);
+                }
+              },
+              {
+                burst: burst as { action: Burst; gap: number }[],
+                settings: settingsOfProject(p).map((s) => ({ id: s.id, options: s.options.map((o) => o.value) })),
+              },
+            );
+            await quiet(page);
+            const seen = await page.evaluate(observe, ids);
+            const values = Object.fromEntries(ids.map((id) => [id, seen.urlCase[id]!])) as Settings;
+            const list = stepsOf(p, values),
+              at = list.findIndex((s) => s.step === seen.urlStep);
+            assert.ok(at >= 0, `URL step ${seen.urlStep} is not a step of ${JSON.stringify(values)}`);
+            assert.deepEqual(
+              {
+                checked: seen.checked,
+                list: seen.list,
+                current: seen.current,
+                caption: seen.caption,
+                last: seen.last,
+                errors,
+              },
+              {
+                checked: seen.urlCase,
+                list: list.map((s) => s.step),
+                current: [seen.urlStep],
+                caption: list[at]!.caption,
+                last: { step: seen.urlStep, settings: seen.urlCase },
+                errors: [],
+              },
+            );
+            // The picture is that step's resting frame: what a fresh link to it shows.
+            const fresh = await counted(context, `${embed}/${name}?${caseQuery(p, values, seen.urlStep!)}`);
+            assert.equal(await stagePicture(page), await stagePicture(fresh.page), 'stage picture');
+          } finally {
+            await context.close();
+          }
+        }),
+        fcRuns(12),
+      );
+    },
+  );
+
+test(
+  'player: a copied link, opened fresh, shows the same case, step and caption with no notice',
+  options,
+  async () => {
+    const name = 'oauth-pkce',
+      p = projects.get(name)!;
+    const navigation = commandArbs(p).slice(0, 5); // Next, Previous, ClickStep, TranscriptLink, ChooseCase
+    await fc.assert(
+      fc.asyncProperty(initialArb(p), fc.commands(navigation, commandOptions(8)), async (initial, cmds) => {
+        const { context, model, real } = await openPlayer(name, initial);
+        try {
+          await fc.asyncModelRun(() => ({ model, real }), cmds);
+          await CopyLink.run(model, real);
+          const copied = await real.page.evaluate(() => navigator.clipboard.readText());
+          const fresh = await counted(context, copied);
+          const seen = await fresh.page.evaluate(observe, settingsOfProject(p).map((s) => s.id));
+          const entry = current(model);
+          assert.deepEqual(
+            { step: seen.current, case: seen.checked, caption: seen.caption, notice: seen.notice, url: fresh.page.url() },
+            {
+              step: [entry.step],
+              case: Object.fromEntries(settingsOfProject(p).map((s) => [s.id, entry.values[s.id]])),
+              caption: steps(model)[selected(model)]!.caption,
+              notice: '',
+              url: copied,
+            },
+          );
+        } finally {
+          await context.close();
+        }
+      }),
+      fcRuns(6),
+    );
+  },
+);
+
+test(
+  'player: controls and keys used before the first case has loaded raise no errors and leave the requested step showing',
+  options,
+  async () => {
+    const name = 'oauth-pkce',
+      p = projects.get(name)!;
+    const early = fc.array(fc.constantFrom('Next step', 'Previous step', 'Replay step', 'Copy link', 'Zoom in', 'Zoom out', 'ArrowRight', 'ArrowLeft', '+', '0'), {
+      minLength: 1,
+      maxLength: 8,
+    });
+    await fc.assert(
+      fc.asyncProperty(early, fc.constantFrom(...stepsOf(p, resolveSettings(p.Scene)).map((s) => s.step)), async (actions, step) => {
+        const context = await browser.newContext({ reducedMotion: 'reduce', permissions: ['clipboard-read', 'clipboard-write'] });
+        try {
+          // As soon as the controls exist, before the first trace is ready, use them.
+          await context.addInitScript((actions: string[]) => {
+            const w = window as unknown as { __early: number };
+            w.__early = 0;
+            const observer = new MutationObserver(() => {
+              if (!document.querySelector('button[aria-label="Next step"]')) return;
+              observer.disconnect();
+              for (const a of actions) {
+                const b = document.querySelector<HTMLButtonElement>(`button[aria-label="${a}"]`);
+                if (b) b.click();
+                else document.getElementById('content')!.dispatchEvent(new KeyboardEvent('keydown', { key: a, bubbles: true }));
+                w.__early++;
+              }
+            });
+            observer.observe(document, { childList: true, subtree: true });
+          }, actions);
+          const { page, errors } = await counted(context, `${embed}/${name}?step=${step}`);
+          await quiet(page);
+          assert.equal(await page.evaluate(() => (window as unknown as { __early: number }).__early), actions.length);
+          assert.deepEqual(errors, []);
+          // Nothing could move before the trace existed, so the deep link's step is showing.
+          assert.equal(new URL(page.url()).searchParams.get('step'), step);
+        } finally {
+          await context.close();
+        }
+      }),
+      fcRuns(10),
+    );
+  },
+);
+
+// ---------------------------------------------------------------------------
+// reportHeight, in real cross-origin frames. Each frame's `parent` is wrapped
+// (it is a [Replaceable] window attribute) so every postMessage the child makes
+// is recorded with its target origin, including any the browser would drop.
+interface Post {
+  msg: { type?: unknown; version?: unknown; height?: unknown };
+  origin: string;
+}
+async function recordPosts(context: import('playwright-core').BrowserContext) {
+  await context.addInitScript(() => {
+    if (window.parent === window) return;
+    const real = window.parent,
+      posts: { msg: unknown; origin: string }[] = [];
+    (window as unknown as { __posts: typeof posts }).__posts = posts;
+    (window as unknown as { parent: unknown }).parent = {
+      postMessage(msg: unknown, origin: string) {
+        posts.push({ msg: JSON.parse(JSON.stringify(msg)), origin });
+        real.postMessage(msg, origin);
+      },
+    };
+  });
+}
+const postsOf = (frame: Frame) => frame.evaluate(() => (window as unknown as { __posts: Post[] }).__posts);
+type HeightAction =
+  | { kind: 'transcript' | 'next' | 'prev' | 'away' | 'back' }
+  | { kind: 'case'; option: number }
+  | { kind: 'resize'; width: number; height: number };
+const heightActions = fc.array(
+  fc.oneof(
+    fc.record({ kind: fc.constantFrom('transcript' as const, 'next' as const, 'prev' as const, 'away' as const, 'back' as const) }),
+    fc.record({ kind: fc.constant('case' as const), option: fc.nat({ max: 2 }) }),
+    fc.record({ kind: fc.constant('resize' as const), width: fc.integer({ min: 200, max: 1600 }), height: fc.integer({ min: 300, max: 1200 }) }),
+  ),
+  { minLength: 1, maxLength: 10 },
+);
+/** Act inside the frame through the DOM, so nothing scrolls the host as a Playwright click would. */
+async function heightAct(page: Page, frame: Frame, a: HeightAction) {
+  if (a.kind === 'resize') return page.setViewportSize({ width: a.width, height: a.height });
+  if (a.kind === 'away') return page.evaluate(() => scrollTo(0, document.body.scrollHeight));
+  if (a.kind === 'back') return page.evaluate(() => scrollTo(0, 0));
+  await frame.evaluate((a) => {
+    if (a.kind === 'transcript') document.querySelector<HTMLElement>('.transcript > summary')!.click();
+    else if (a.kind === 'next') document.querySelector<HTMLButtonElement>('button[aria-label="Next step"]')!.click();
+    else if (a.kind === 'prev') document.querySelector<HTMLButtonElement>('button[aria-label="Previous step"]')!.click();
+    else if (a.kind === 'case') {
+      const inputs = document.querySelectorAll<HTMLInputElement>('.case input');
+      inputs[a.option % inputs.length]?.click();
+    }
+  }, a);
+}
+/** The frame's last posted height, its content root's height and the host's iframe height, once they agree (or after 5 s). */
+async function heightsSettle(page: Page, frame: Frame) {
+  let last: { posted: unknown; content: number; iframe: string } | undefined;
+  for (const until = Date.now() + 5000; Date.now() < until; await page.waitForTimeout(50)) {
+    const { posted, content } = await frame.evaluate(() => ({
+      posted: (window as unknown as { __posts: Post[] }).__posts.at(-1)?.msg.height,
+      content: Math.ceil(document.getElementById('content')!.getBoundingClientRect().height),
+    }));
+    const iframe = await page.locator('iframe').evaluate((f) => (f as HTMLIFrameElement).style.height);
+    last = { posted, content, iframe };
+    if (posted === content && iframe === content + 'px') return last;
+  }
+  return last!;
+}
+test(
+  'reportHeight: after any mix of transcript, case, step, viewport and scroll changes, the last posted height equals the content root\'s height',
+  options,
+  async () => {
+    await fc.assert(
+      fc.asyncProperty(heightActions, async (actions) => {
+        hostBody = `<!doctype html><style>body{margin:0}</style>${loader('a', 'oauth-pkce')}<div style="height:4000px"></div>`;
+        const context = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 700, height: 800 } });
+        try {
+          await recordPosts(context);
+          const page = await context.newPage();
+          await page.goto(host);
+          const frame = await readyFrame(page, 'oauth-pkce');
+          for (const a of actions) {
+            await heightAct(page, frame, a);
+            // An offscreen cross-origin frame may not render, so it can only be held to this once visible.
+            const visible = await page.locator('iframe').evaluate((f) => {
+              const r = f.getBoundingClientRect();
+              return r.bottom > 0 && r.top < innerHeight;
+            });
+            if (visible) {
+              const h = await heightsSettle(page, frame);
+              assert.deepEqual(h, { posted: h.content, content: h.content, iframe: h.content + 'px' }, `after ${JSON.stringify(a)}`);
+            }
+          }
+          await heightAct(page, frame, { kind: 'back' });
+          const h = await heightsSettle(page, frame);
+          assert.deepEqual(h, { posted: h.content, content: h.content, iframe: h.content + 'px' }, 'back in view');
+        } finally {
+          await context.close();
+        }
+      }),
+      fcRuns(10),
+    );
+  },
+);
+
+/** parentOrigin values: exact origins (the host's and others), near misses the docs reject, and arbitrary text. */
+const parentOriginArb = (hostOrigin: string) =>
+  fc.oneof(
+    fc.constant(hostOrigin),
+    fc.webUrl().map((u) => new URL(u).origin),
+    fc.constantFrom(
+      '*',
+      'null',
+      '',
+      ' ',
+      hostOrigin + '/',
+      hostOrigin + '/path',
+      hostOrigin + '?q',
+      hostOrigin + '#h',
+      ' ' + hostOrigin,
+      hostOrigin + ' ',
+      hostOrigin.toUpperCase(),
+      hostOrigin.replace('http:', 'HTTP:'),
+      hostOrigin.replace('http://', 'http://user:pw@'),
+      'http://127.0.0.1:80',
+      'https://example.com:443',
+      'file://',
+      'data:text/html,x',
+      'javascript:alert(1)',
+      'ws://127.0.0.1',
+      'http://[::1]',
+    ),
+    fc.string({ unit: 'binary' }),
+  );
+test(
+  'reportHeight: every message goes to exactly the configured parentOrigin, and none is sent when that value is not an exact HTTP(S) origin',
+  options,
+  async () => {
+    const { exactHttpOrigin } = await import('../app/embed-protocol.ts');
+    await fc.assert(
+      fc.asyncProperty(parentOriginArb(host), fc.boolean(), async (parentOrigin, toggle) => {
+        const src = `${embed}/oauth-pkce?${new URLSearchParams({ parentOrigin })}`;
+        hostBody = `<!doctype html><iframe title="t" src="${src.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" style="width:600px;height:640px;border:0"></iframe>`;
+        const context = await browser.newContext({ reducedMotion: 'reduce' });
+        try {
+          await recordPosts(context);
+          const page = await context.newPage();
+          await page.goto(host);
+          const frame = await readyFrame(page, 'oauth-pkce');
+          if (toggle) await frame.evaluate(() => document.querySelector<HTMLElement>('.transcript > summary')!.click());
+          await page.waitForTimeout(100);
+          const posts = await postsOf(frame);
+          // The page decodes the same query the same way, so this is the value it was given.
+          const configured = exactHttpOrigin(new URL(src).searchParams.get('parentOrigin'));
+          assert.deepEqual(
+            [...new Set(posts.map((p) => p.origin))],
+            configured ? [configured] : [],
+            `parentOrigin ${JSON.stringify(parentOrigin)}`,
+          );
+        } finally {
+          await context.close();
+        }
+      }),
+      fcRuns(16),
+    );
+  },
+);
+test(
+  'reportHeight: every message is one the host accepts (type, version, integer height 1..100000)',
+  options,
+  async () => {
+    const { resizeHeight } = await import('../app/embed-protocol.ts');
+    await fc.assert(
+      fc.asyncProperty(heightActions, async (actions) => {
+        hostBody = `<!doctype html><style>body{margin:0}</style>${loader('a', 'oauth-pkce')}`;
+        const context = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 700, height: 800 } });
+        try {
+          await recordPosts(context);
+          const page = await context.newPage();
+          await page.goto(host);
+          const frame = await readyFrame(page, 'oauth-pkce');
+          for (const a of actions) await heightAct(page, frame, a);
+          await heightsSettle(page, frame);
+          const posts = await postsOf(frame);
+          const source = {} as MessageEventSource;
+          for (const p of posts)
+            assert.equal(resizeHeight({ origin: host, source, data: p.msg }, host, source), p.msg.height, JSON.stringify(p));
+        } finally {
+          await context.close();
+        }
+      }),
+      fcRuns(10),
+    );
+  },
+);
+test(
+  'reportHeight: no message repeats the height sent just before it',
+  options,
+  async () => {
+    await fc.assert(
+      fc.asyncProperty(heightActions, async (actions) => {
+        hostBody = `<!doctype html><style>body{margin:0}</style>${loader('a', 'oauth-pkce')}`;
+        const context = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 700, height: 800 } });
+        try {
+          await recordPosts(context);
+          const page = await context.newPage();
+          await page.goto(host);
+          const frame = await readyFrame(page, 'oauth-pkce');
+          for (const a of actions) await heightAct(page, frame, a);
+          await heightsSettle(page, frame);
+          const posts = await postsOf(frame);
+          for (let i = 1; i < posts.length; i++)
+            assert.notEqual(posts[i]!.msg.height, posts[i - 1]!.msg.height, `posts ${i - 1} and ${i}`);
+        } finally {
+          await context.close();
+        }
+      }),
+      fcRuns(10),
+    );
+  },
+);
+test(
+  'inside a frame, the player shows its own "Open in a new tab" link exactly when no parentOrigin is set (the loader adds one beside the frame)',
+  options,
+  async () => {
+    await fc.assert(
+      fc.asyncProperty(fc.option(parentOriginArb(host), { nil: undefined }), async (parentOrigin) => {
+        const src = `${embed}/mr-cache${parentOrigin === undefined ? '' : '?' + new URLSearchParams({ parentOrigin })}`;
+        hostBody = `<!doctype html><iframe title="t" src="${src.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" style="width:600px;height:640px;border:0"></iframe>`;
+        const page = await browser.newPage();
+        try {
+          await page.goto(host);
+          const frame = await readyFrame(page, 'mr-cache');
+          const links = await frame.locator('a.standalone').count();
+          assert.equal(links, parentOrigin === undefined ? 1 : 0, `parentOrigin ${JSON.stringify(parentOrigin)}`);
+        } finally {
+          await page.close();
+        }
+      }),
+      fcRuns(12),
+    );
   },
 );

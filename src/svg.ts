@@ -195,20 +195,80 @@ function vmobjectAttrs(m: VMobject, s: StyleRecord, pd: { d: string }): Attrs {
       'stroke-linecap': s.lineCap ?? 'round',
     };
     if (s.fillRule) attrs['fill-rule'] = s.fillRule;
-    if (s.dashArray) attrs['stroke-dasharray'] = s.dashArray.split(/[ ,]+/).map((v) => len(Number(v))).join(' ');
-    if (s.dashOffset) attrs['stroke-dashoffset'] = len(s.dashOffset);
+    const dashes = dashPattern(s.dashArray);
+    if (dashes) {
+      attrs['stroke-dasharray'] = dashes.map(len).join(' ');
+      if (s.dashOffset) attrs['stroke-dashoffset'] = len(s.dashOffset);
+    }
     if (s.miterLimit != null) attrs['stroke-miterlimit'] = fmt(s.miterLimit);
     if (s.paintOrder) attrs['paint-order'] = s.paintOrder;
     if (s.opacity < 1) attrs.opacity = fmt(s.opacity);
     if (s.drawFraction != null && s.drawFraction < 1) {
       const L = perf.span('arcLength', () => m.arcLength()) + 0.001;
-      attrs['stroke-dasharray'] = len(L);
-      attrs['stroke-dashoffset'] = len(L * (1 - s.drawFraction));
+      const revealed = dashes ? dashedReveal(dashes, s.dashOffset ?? 0, L, s.drawFraction) : null;
+      if (revealed) {
+        // A dashed stroke stays dashed while it is drawn: its own pattern up to the
+        // drawn length, then one gap past the end
+        attrs['stroke-dasharray'] = revealed;
+        delete attrs['stroke-dashoffset'];
+      } else {
+        attrs['stroke-dasharray'] = len(L);
+        attrs['stroke-dashoffset'] = len(L * (1 - s.drawFraction));
+      }
     }
     return attrs;
   }
 }
 
+/**
+ * A dash list as numbers (scene units), or null when it draws a solid line: SVG lists
+ * are numbers split by spaces and/or commas, and a list that is empty, 'none',
+ * negative, non-finite or sums to zero is solid. (An odd list repeats to an even one.)
+ */
+function dashPattern(list: string | undefined): number[] | null {
+  if (!list) return null;
+  const parts = list.trim().split(/[\s,]+/).filter((v) => v !== '');
+  if (!parts.length || parts[0] === 'none') return null;
+  const nums = parts.map(Number);
+  if (nums.some((v) => !Number.isFinite(v) || v < 0) || !(nums.reduce((a, b) => a + b, 0) > 0)) return null;
+  return nums;
+}
+
+/** Most dash entries a partly drawn dashed stroke may emit before it is drawn solid instead. */
+const MAX_REVEAL_DASHES = 4096;
+
+/**
+ * The dash list that shows `pattern` (phase `offset`) along the first `fraction`
+ * of a path `total` long, and nothing after: on/off lengths in integer units,
+ * from boundaries rounded once each so many short dashes do not drift.
+ */
+function dashedReveal(list: readonly number[], offset: number, total: number, fraction: number): string | null {
+  const pattern = list.length % 2 ? [...list, ...list] : list;
+  const drawn = total * Math.max(0, fraction);
+  const period = pattern.reduce((a, b) => a + b, 0);
+  let phase = ((offset % period) + period) % period, j = 0;
+  while (phase >= pattern[j]!) { phase -= pattern[j]!; j = (j + 1) % pattern.length; }
+  // Boundaries along the path where the stroke turns on or off, starting "on"
+  const marks: number[] = [];
+  let at = 0, on = j % 2 === 0;
+  if (!on) marks.push(0); // starts in a gap: a zero-length dash first
+  let left = pattern[j]! - phase;
+  while (at + left < drawn) {
+    at += left;
+    marks.push(at);
+    if (marks.length > MAX_REVEAL_DASHES) return null;
+    j = (j + 1) % pattern.length; on = !on; left = pattern[j]!;
+  }
+  if (on) marks.push(drawn);
+  // marks alternate end-of-dash, end-of-gap, ...; the last gap runs past the path's end
+  const ints = marks.map((x) => Math.round(x * UNITS));
+  const out: number[] = [];
+  let prev = 0;
+  for (const x of ints) { out.push(x - prev); prev = x; }
+  if (out.length % 2) out.push(Math.round(total * UNITS) + UNITS);
+  else out[out.length - 1]! += Math.round(total * UNITS) + UNITS;
+  return out.join(' ');
+}
 
 const ESC = /[&<>"]/;
 const esc = (v: unknown): string => {

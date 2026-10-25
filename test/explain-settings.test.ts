@@ -68,3 +68,145 @@ test('declarations reject ambiguous defaults, duplicate options and reserved tra
     assert.throws(() => resolveSettings(Bad));
   }
 });
+
+// ---- properties ------------------------------------------------------------------
+import { fc, params } from './lib/pbt.ts';
+import type { Setting } from '../explain/index.ts';
+
+const RESERVED = ['scene', 'step', 't', 'perf', 'embed', 'parentOrigin', 'theme'];
+/** Ids from the documented pattern, including every inherited Object.prototype name that matches it. */
+const settingId = fc.oneof(
+  fc.stringMatching(/^[a-zA-Z][a-zA-Z0-9_-]{0,8}$/),
+  fc.constantFrom('constructor', 'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', 'Step', 'THEME', 'a-', 'a_'),
+).filter((id) => !RESERVED.includes(id));
+const optionValue = fc.oneof(fc.string({ maxLength: 6 }), fc.constantFrom('', ' ', '__proto__', 'constructor', 'é'));
+const setting: fc.Arbitrary<Setting> = fc
+  .tuple(settingId, fc.uniqueArray(optionValue, { minLength: 1, maxLength: 4 }), fc.nat())
+  .map(([id, values, d]) => ({ id, label: id, default: values[d % values.length]!, options: values.map((value) => ({ value, label: value })) }));
+const declarations = fc.uniqueArray(setting, { maxLength: 4, selector: (s) => s.id });
+const classOf = (settings: readonly Setting[]) =>
+  class extends Scene {
+    static settings = settings;
+  };
+/** A selection: a declared option for some of the settings, as an own-keyed object (as URL parsing builds). */
+const selection = (settings: readonly Setting[]) =>
+  fc.tuple(...settings.map((s) => fc.option(fc.constantFrom(...s.options.map((o) => o.value)), { nil: undefined }))).map((picks) =>
+    Object.fromEntries(settings.flatMap((s, i) => (picks[i] === undefined ? [] : [[s.id, picks[i]!]]))),
+  );
+const none = fc.constant({} as Record<string, string>);
+const declared = declarations.chain((settings) => fc.tuple(fc.constant(settings), settings.length ? selection(settings) : none));
+
+test('resolveSettings gives every declared setting its selected value, or its default', () => {
+  fc.assert(
+    fc.property(declared, ([settings, values]) => {
+      const result = resolveSettings(classOf(settings), values);
+      assert.deepEqual({ ...result }, Object.fromEntries(settings.map((s) => [s.id, Object.hasOwn(values, s.id) ? values[s.id] : s.default])));
+      assert.ok(Object.isFrozen(result));
+    }),
+    params(),
+  );
+});
+
+test('resolveSettings refuses an unknown setting id', () => {
+  fc.assert(
+    fc.property(declared, fc.string(), fc.string(), ([settings, values], id, value) => {
+      fc.pre(!settings.some((s) => s.id === id));
+      assert.throws(() => resolveSettings(classOf(settings), { ...values, ...Object.fromEntries([[id, value]]) }), /Unknown setting/);
+    }),
+    params(),
+  );
+});
+
+test('resolveSettings refuses a value that is not one of the options', () => {
+  fc.assert(
+    fc.property(declarations.filter((d) => d.length > 0), fc.nat(), fc.string(), (settings, k, value) => {
+      const s = settings[k % settings.length]!;
+      fc.pre(!s.options.some((o) => o.value === value));
+      assert.throws(() => resolveSettings(classOf(settings), Object.fromEntries([[s.id, value]])), /Unknown .* option/);
+    }),
+    params(),
+  );
+});
+
+test('declarations with an invalid, reserved or duplicate id, or bad options, are refused', () => {
+  const broken = fc.oneof(
+    setting.chain((s) => fc.oneof(fc.string(), fc.constantFrom(...RESERVED, '1a', '-a', '_a', 'a b', '')).filter((id) => !/^[a-z][a-z0-9_-]*$/i.test(id) || RESERVED.includes(id)).map((id) => [{ ...s, id }])),
+    setting.map((s) => [s, { ...s, label: 'again' }]),
+    setting.map((s) => [{ ...s, options: [] }]),
+    setting.map((s) => [{ ...s, options: [...s.options, s.options[0]!] }]),
+    setting.chain((s) => fc.string().filter((d) => !s.options.some((o) => o.value === d)).map((d) => [{ ...s, default: d }])),
+  );
+  fc.assert(
+    fc.property(declarations, broken, fc.nat(), (good, bad, at) => {
+      const all = [...good.filter((g) => !bad.some((b) => b.id === g.id))];
+      all.splice(at % (all.length + 1), 0, ...bad);
+      assert.throws(() => resolveSettings(classOf(all)), /Invalid/);
+    }),
+    params(),
+  );
+});
+
+const product = (settings: readonly Setting[]) => settings.reduce((n, s) => n * s.options.length, 1);
+
+test('variantsOf is the cartesian product in declaration order, each a valid selection', () => {
+  fc.assert(
+    fc.property(declarations, (settings) => {
+      const S = classOf(settings);
+      const variants = variantsOf(S, Infinity);
+      let expected: Record<string, string>[] = [{}];
+      for (const s of settings) expected = expected.flatMap((v) => s.options.map((o) => ({ ...v, [s.id]: o.value })));
+      assert.deepEqual(variants.map((v) => ({ ...v })), expected);
+      for (const v of variants) assert.deepEqual({ ...resolveSettings(S, v) }, { ...v });
+    }),
+    params(),
+  );
+});
+
+test('variantsOf refuses exactly when the product exceeds the limit', () => {
+  fc.assert(
+    fc.property(declarations, fc.oneof(fc.nat({ max: 300 }), fc.constantFrom(NaN, Infinity, -1, 0)), (settings, limit) => {
+      const S = classOf(settings);
+      if (product(settings) <= limit) assert.equal(variantsOf(S, limit).length, product(settings));
+      else assert.throws(() => variantsOf(S, limit), /exceed/);
+    }),
+    params(),
+  );
+});
+
+test('withSettings binds per class, visible from any constructor, without touching the source', async () => {
+  await fc.assert(
+    fc.asyncProperty(declared, async ([settings, values]) => {
+      let early: unknown = null;
+      const Source = classOf(settings);
+      const before = JSON.stringify(Source.settings);
+      const Bound = withSettings(Source, values);
+      class Reader extends Bound {
+        seen = settingsOf(this);
+        constructor(...args: ConstructorParameters<typeof Scene>) {
+          super(...args);
+          early = settingsOf(this);
+        }
+      }
+      const r = new Reader(new NullSink());
+      const expected = { ...resolveSettings(Source, values) };
+      assert.deepEqual({ ...(early as object) }, expected);
+      assert.deepEqual({ ...r.seen }, expected);
+      assert.deepEqual({ ...settingsOf(new Source(new NullSink())) }, { ...resolveSettings(Source) });
+      assert.equal(JSON.stringify(Source.settings), before);
+    }),
+    params(),
+  );
+});
+
+test('the innermost withSettings binding wins, and two bindings never share state', () => {
+  fc.assert(
+    fc.property(declarations.chain((s) => fc.tuple(fc.constant(s), s.length ? selection(s) : none, s.length ? selection(s) : none)), ([settings, a, b]) => {
+      const S = classOf(settings);
+      const A = withSettings(S, a),
+        AB = withSettings(A, b);
+      assert.deepEqual({ ...settingsOf(new AB(new NullSink())) }, { ...resolveSettings(S, b) });
+      assert.deepEqual({ ...settingsOf(new A(new NullSink())) }, { ...resolveSettings(S, a) });
+    }),
+    params(),
+  );
+});

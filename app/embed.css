@@ -31,8 +31,8 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .stage.zoomed{touch-action:none;cursor:grab}
 .stage.zoomed:active{cursor:grabbing}
 .caption{margin:16px 0 0;max-width:68ch;min-height:3.2em;font-size:1.125rem;line-height:1.6;text-wrap:pretty}
-.controls{display:flex;align-items:center;gap:8px;margin-top:16px}
-.tools{display:flex;align-items:center;gap:2px;margin-left:auto}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:16px}
+.tools{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:2px;margin-left:auto}
 .notice{margin:8px 0 0;font-size:.875rem;color:var(--muted)}
 .notice:empty{display:none}
 

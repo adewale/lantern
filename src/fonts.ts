@@ -21,6 +21,12 @@ function bytesOf(b64: string): Uint8Array {
 }
 
 let loading: Promise<Record<FontName, Shaper>> | null = null;
+
+/** Shaped runs kept per face: far more than one scene uses, so seeks never reshape. */
+export const SHAPE_MEMO_MAX = 8192;
+const memos: Array<Map<string, Run>> = [];
+/** How many shaped runs are memoized now, over both faces (for tests). */
+export function shapeMemoSize(): number { return memos.reduce((n, m) => n + m.size, 0); }
 let shapers: Record<FontName, Shaper> | null = null;
 
 /**
@@ -50,14 +56,19 @@ async function buildShapers(): Promise<Record<FontName, Shaper>> {
     // Shaping is a pure function of (font, text, size): memoize it. Re-running a
     // scene (every seek does) then costs no shaping at all, and identical
     // segment arrays let Text reuse its flattened outlines.
+    // The memo is bounded, least recently used out first: a DecimalNumber shapes a new
+    // string every frame, so a long count (or a Worker serving many scenes) would
+    // otherwise keep every one of them.
     const memo = new Map<string, Run>();
+    memos.push(memo);
     out[key] = (text, size) => {
       const k = size + '\u0000' + text;
       let r = memo.get(k);
-      if (r) return r;
+      if (r) { memo.delete(k); memo.set(k, r); return r; }
       const ru = run(font, key, text, size);
       if (ru.tag !== 'Ok') throw new Error('shape: ' + JSON.stringify(ru.error));
       memo.set(k, (r = ru.value));
+      if (memo.size > SHAPE_MEMO_MAX) memo.delete(memo.keys().next().value!);
       return r;
     };
   }

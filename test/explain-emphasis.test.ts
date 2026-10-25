@@ -308,9 +308,9 @@ test('code morphs by line identity: surviving lines move, others fade, added lin
   await new Morph(new NullSink()).run();
 });
 
-test('snapshots are stored one file per diagram, pruned, and read from the older single file', async () => {
+test('snapshots are stored one file per diagram and pruned', async () => {
   const { readSnapshots, writeSnapshots, snapshotFileName } = await import('../tools/lib/explain-project.ts');
-  const { readdir, readFile: read, writeFile: write } = await import('node:fs/promises');
+  const { readdir, readFile: read } = await import('node:fs/promises');
   const folder = await mkdtemp(join(tmpdir(), 'lantern-snapshots-'));
   try {
     const base = join(folder, 'scene');
@@ -318,12 +318,8 @@ test('snapshots are stored one file per diagram, pruned, and read from the older
       b = { ...fixture(), spec: { source: 'graph LR\nX --> Y', style: 'nord' } };
     const keyA = diagramKey(a.spec),
       keyB = diagramKey(b.spec);
-    // An older single-file cache is still read.
-    await write(base + '.snapshots.json', JSON.stringify({ version: 1, importer: 4, diagrams: { [keyA]: a } }));
-    assert.deepEqual(Object.keys(await readSnapshots(base)), [keyA]);
     await writeSnapshots(base, { [keyA]: a, [keyB]: b }, 'source');
     assert.deepEqual((await readdir(base + '.snapshots')).sort(), [snapshotFileName(keyA), snapshotFileName(keyB), 'index.json'].sort());
-    await assert.rejects(read(base + '.snapshots.json'), /ENOENT/);
     const before = await read(join(base + '.snapshots', snapshotFileName(keyA)), 'utf8');
     await writeSnapshots(base, { [keyA]: a }, 'source');
     assert.deepEqual((await readdir(base + '.snapshots')).sort(), [snapshotFileName(keyA), 'index.json'].sort());

@@ -25,7 +25,7 @@ export function captionsVtt(trace: Trace): string {
       .filter((s) => s.meta.caption)
       .map(
         (s, i) =>
-          `${i + 1}\n${vttTime(s.t0)} --> ${vttTime(s.t1 ?? trace.duration)}\n${String(s.meta.caption).replace(/-->/g, '→').replace(/[<>]/g, '')}\n`,
+          `${i + 1}\n${vttTime(s.t0)} --> ${vttTime(s.t1 ?? trace.duration)}\n${String(s.meta.caption).replace(/-->/g, '→').replace(/[<>]/g, '').replace(/\n\s*\n/g, '\n').trim()}\n`,
       )
       .join('\n')
   );

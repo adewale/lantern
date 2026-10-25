@@ -120,6 +120,12 @@ export class Mobject {
 
   /** The Float32Arrays (stride 2) a transform maps over. Subclasses override. */
   pointArrays(): Float32Array[] { return []; }
+  /**
+   * What this mobject's point arrays are: 'path' (curves) or 'box' (a Text's
+   * advance box). Arrays only blend with arrays of the same kind; equal
+   * lengths alone (an 8-float one-curve path, an 8-float box) are no match.
+   */
+  pointKind(): string { return 'none'; }
 
   hasPoints(): boolean { return this.pointArrays().some((a) => a.length > 0); }
 
@@ -423,7 +429,7 @@ export class Mobject {
     for (let i = 0; i < mine.length; i++) {
       // Alignment gave `a` the same arrays as this one; `b` may lack one
       const m = mine[i]!, x = pa[i]!, y = pb[i];
-      if (!y || y.length !== m.length) {
+      if (!y || y.length !== m.length || a.pointKind() !== b.pointKind()) {
         center ??= b.box() ? b.center() : a.box() ? a.center() : [0, 0];
         for (let j = 0; j < m.length; j += 2) { m[j] = x[j]! + (center[0] - x[j]!) * alpha; m[j + 1] = x[j + 1]! + (center[1] - x[j + 1]!) * alpha; }
         continue;
@@ -433,9 +439,11 @@ export class Mobject {
           const p = pathFunc([x[j]!, x[j + 1]!], [y[j]!, y[j + 1]!], alpha);
           m[j] = p[0]; m[j + 1] = p[1];
         }
-      } else if (alpha >= 1) {
+      } else if (alpha === 1) {
+        // Exact at the ends. Only at the ends: a rate function may overshoot
+        // (easeOutBack) or undershoot, and the points must follow it past them.
         m.set(y);
-      } else if (alpha <= 0) {
+      } else if (alpha === 0) {
         m.set(x);
       } else {
         for (let j = 0; j < m.length; j++) m[j] = x[j]! + (y[j]! - x[j]!) * alpha;
@@ -507,8 +515,10 @@ export class Mobject {
   get animate(): AnimateBuilder<this> {
     const calls: Array<[name: string, args: unknown[]]> = [];
     const mob = this;
-    const builder: AnimateBuilderBase<this> = {
-      _isAnimateBuilder: true,
+    // Not a plain object: play() takes a trailing plain object as its options, so a
+    // builder with Object.prototype (which the Proxy reports) was dropped when last.
+    const builder: AnimateBuilderBase<this> = Object.assign(Object.create(AnimateBuilderTarget.prototype) as object, {
+      _isAnimateBuilder: true as const,
       mobject: mob,
       buildTarget() {
         const t = mob.copy();
@@ -516,7 +526,7 @@ export class Mobject {
         for (const [name, args] of calls) (t as unknown as Record<string, (...a: unknown[]) => unknown>)[name]!(...args);
         return t;
       },
-    };
+    });
     const proxy: AnimateBuilder<this> = new Proxy(builder, {
       get(target, prop) {
         if (prop in target) return target[prop as keyof typeof target];
@@ -538,6 +548,9 @@ for (const name of ['box', 'center', 'width', 'height', 'left', 'right', 'top', 
     set() { throw new TypeError(`Mobject.${name} is a method; store your reference under another name (e.g. .rect, .label)`); },
   });
 }
+
+/** The prototype of `.animate` builders: anything but Object.prototype (see Mobject.animate). */
+class AnimateBuilderTarget {}
 
 /** A mobject with no points of its own; a container. */
 export class Group extends Mobject {

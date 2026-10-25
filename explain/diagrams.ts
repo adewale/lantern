@@ -89,17 +89,21 @@ class MessageToken extends MoveAlongPath {
     this.mobject.setOpacity(Math.sin(Math.PI * alpha));
   }
 }
+/** Scale a style's lengths (stroke width, dashes) by k, as artwork scaled by k needs. */
+function scaleStyle(style: Style, k: number): void {
+  if (style.strokeWidth != null) style.strokeWidth *= k;
+  // Dash patterns are SVG lists: numbers split by spaces and/or commas.
+  if (style.dashArray)
+    style.dashArray = style.dashArray
+      .split(/[ ,]+/)
+      .filter((v) => v !== '')
+      .map((v) => Number(v) * k)
+      .join(' ');
+  if (style.dashOffset) style.dashOffset *= k;
+}
 export function scaleArtwork(mob: Mobject, k: number, at: Vec = [0, 0]): void {
   mob.scale(k, { aboutPoint: at });
-  for (const m of mob.family()) {
-    m.style.strokeWidth *= k;
-    if (m.style.dashArray)
-      m.style.dashArray = m.style.dashArray
-        .split(' ')
-        .map((v) => Number(v) * k)
-        .join(' ');
-    if (m.style.dashOffset) m.style.dashOffset *= k;
-  }
+  for (const m of mob.family()) scaleStyle(m.style, k);
 }
 
 export class Diagram {
@@ -113,8 +117,10 @@ export class Diagram {
   frameBox: Box;
   accent: string;
   private home = new Group();
-  /** Unemphasised styles of each top-level part's family, captured on first restyle. */
+  /** Unemphasised styles of each top-level part's family, at the home frame (captured when built). */
   private base = new Map<string, Style[]>();
+  /** How far the camera has scaled the artwork from home; stroke widths and dashes follow it. */
+  private zoom = 1;
   private marks = new Map<string, string>();
   private kept: Set<string> | null = null;
   notes: Note[] = [];
@@ -221,6 +227,7 @@ export class Diagram {
     } else this.order = all.map((p) => p.info.id);
     if (snapshot.family === 'gitgraph')
       this.order.sort((a, b) => this.get(a).center()[0] - this.get(b).center()[0]);
+    for (const p of all) this.base.set(p.info.id, p.mob.family().map((m) => ({ ...m.style })));
   }
 
   /** The verifier's warnings for this diagram, each with the `part` id it names (see `findingsOf`). */
@@ -266,6 +273,9 @@ export class Diagram {
       ),
     ];
     const messages: Part[] = [];
+    // Arrive in the current look (dimmed if dimming is on, marked if marked, at the camera's zoom).
+    const arriving = ids.filter((id) => !this.visible.has(id));
+    this.looks(arriving, 0, false);
     const anims = ids
       .filter((id) => !this.visible.has(id))
       .map((id) => {
@@ -274,12 +284,6 @@ export class Diagram {
         if (!this.scene.mobjects.includes(this.root)) this.scene.add(this.root);
         for (const child of this.parts.values()) if (child.info.owner === id) this.visible.add(child.info.id);
         this.root.add(p.mob);
-        this.root.children.sort((a, b) => {
-          const ai = this.snapshot.parts.findIndex((p) => p.id === a.key),
-            bi = this.snapshot.parts.findIndex((p) => p.id === b.key);
-          // Transient route tokens stay above artwork when later messages appear.
-          return (ai < 0 ? this.snapshot.parts.length : ai) - (bi < 0 ? this.snapshot.parts.length : bi);
-        });
         if (p.info.role === 'message' && p.info.from && p.info.to && p.route) {
           const token = new Dot({ radius: 0.075, color: this.accent }).moveTo(p.route.pointFromProportion(0));
           this.root.add(token);
@@ -298,7 +302,16 @@ export class Diagram {
           ? new Create(p.mob, { runTime, lagRatio: 0 })
           : new FadeIn(p.mob, { runTime, shift: [0, 0.08] });
       });
-    if (anims.length) await this.scene.play(new AnimationGroup(anims, { lagRatio: 0.12, rateFunc: linear }));
+    if (anims.length) {
+      // Draw in snapshot order, sorted once (by rank, not a search per comparison). Transient
+      // route tokens (and notes) stay above artwork; the sort is stable among them.
+      const rank = new Map(this.snapshot.parts.map((p, i) => [p.id, i]));
+      const at = (m: Mobject) => rank.get(m.key!) ?? this.snapshot.parts.length;
+      this.root.children.sort((a, b) => at(a) - at(b));
+      await this.scene.play(new AnimationGroup(anims, { lagRatio: 0.12, rateFunc: linear }));
+    }
+    // Land exactly on that look: drawing animations can end a rounding away from it.
+    this.looks(arriving, 0, false);
     for (const p of messages)
       recordWalk(this.scene, {
         step: this.scene.currentStep?.name,
@@ -324,12 +337,11 @@ export class Diagram {
    * Animations that bring each part to its current look: base style, then the
    * mark colour, then dimming. Parts not on screen change in place.
    */
-  private looks(ids: Iterable<string>, runTime: number): Transform[] {
+  private looks(ids: Iterable<string>, runTime: number, animate = true): Transform[] {
     const anims: Transform[] = [];
     for (const id of new Set(ids)) {
       const p = this.parts.get(id)!;
       const fam = p.mob.family();
-      if (!this.base.has(id)) this.base.set(id, fam.map((m) => ({ ...m.style })));
       const base = this.base.get(id)!;
       const color = this.marks.get(id);
       const dim = this.kept != null && !this.kept.has(id) && !this.isScaffold(p);
@@ -341,6 +353,7 @@ export class Diagram {
       const styles = fam.map((m, i) => {
         const b = base[i]!,
           st: Style = { ...b };
+        if (this.zoom !== 1) scaleStyle(st, this.zoom);
         const text = within(m, (a) => typeof (a as { text?: unknown }).text === 'string');
         const owned = within(m, (a) => a.key != null && a.key !== id);
         if (color && !owned && !text) {
@@ -355,7 +368,7 @@ export class Diagram {
         return st;
       });
       if (fam.every((m, i) => JSON.stringify(m.style) === JSON.stringify(styles[i]))) continue;
-      if (this.root.children.includes(p.mob) && this.scene.familyMembers().includes(p.mob)) {
+      if (animate && this.root.children.includes(p.mob) && this.scene.familyMembers().includes(p.mob)) {
         const target = p.mob.copy();
         target.family().forEach((m, i) => (m.style = { ...styles[i]! } as typeof m.style));
         anims.push(new Transform(p.mob, target, { runTime }));
@@ -450,12 +463,23 @@ export class Diagram {
       trail = false,
     }: { runTime?: number; color?: string; parallel?: boolean; trail?: boolean | string } = {},
   ): Promise<void> {
+    // Endpoints resolve as `get` resolves ids (so 'node:A' names node A).
+    const resolve = (id: string) => {
+      try {
+        return this.top(id);
+      } catch {
+        return id;
+      }
+    };
     const path = hops.map(([from, to]) => {
-      const edge = [...this.parts.values()].find((p) => p.info.from === from && p.info.to === to);
+      const [a, b] = [resolve(from), resolve(to)];
+      const edge = [...this.parts.values()].find(
+        (p) => p.info.from != null && p.info.to != null && resolve(p.info.from) === a && resolve(p.info.to) === b,
+      );
       if (!edge?.route || !edge.route.numCurves())
         throw new Error(`walk(): ${from} -> ${to} is not a real link`);
       if (!this.visible.has(edge.info.id)) throw new Error(`walk(): reveal ${edge.info.id} first`);
-      return { edge, from, to };
+      return { edge, from, to, a, b };
     });
     const trailColor = trail === true ? color : trail || null;
     const lay = (ids: string[]) => {
@@ -494,7 +518,7 @@ export class Diagram {
         ...lay([hop.edge.info.id]),
       );
       record(hop);
-      if (path[i + 1]?.from !== hop.to) {
+      if (path[i + 1]?.a !== hop.b) {
         await this.scene.play(new FadeOut(token, { runTime: 0.18 }));
         token = null;
       }
@@ -533,13 +557,18 @@ export class Diagram {
   }
   /** Move the camera onto these parts (or back to the whole diagram). Notes follow. */
   async focus(ids: readonly string[] | 'all', { zoom = 1, runTime = 0.9 } = {}): Promise<void> {
+    if (!(zoom > 0 && Number.isFinite(zoom))) throw new Error(`focus() zoom must be a positive number, not ${zoom}`);
     const mobs = [...this.parts.values()].filter((p) => !p.info.owner).map((p) => p.mob);
     const whole = new Group(...mobs.map((m) => m.copy()));
     if (ids === 'all') {
       // Apply one global affine map from current full diagram bounds to its authored frame.
-      const home = this.home.box()!,
-        now = whole.box()!;
-      const k = Math.min((home[2] - home[0]) / (now[2] - now[0]), (home[3] - home[1]) / (now[3] - now[1]));
+      const home = this.home.box(),
+        now = whole.box();
+      if (!home || !now) return; // Nothing drawn: the camera has nothing to frame.
+      // The map is uniform, so either extent gives k; the longer one is measured more precisely
+      // (a thin diagram's short side is mostly float32 rounding once zoomed).
+      const wide = home[2] - home[0] >= home[3] - home[1];
+      const k = wide ? (home[2] - home[0]) / (now[2] - now[0]) : (home[3] - home[1]) / (now[3] - now[1]);
       const a: Vec = [(now[0] + now[2]) / 2, (now[1] + now[3]) / 2],
         b: Vec = [(home[0] + home[2]) / 2, (home[1] + home[3]) / 2];
       await this.moveParts(
@@ -552,8 +581,10 @@ export class Diagram {
         },
         runTime,
       );
+      this.rezoom(1);
       return;
     }
+    if (!ids.length) throw new Error("focus() needs at least one part, or 'all'");
     const chosen = new Group(...ids.map((id) => this.get(id).copy()));
     const center = chosen.center(),
       box = this.frameBox;
@@ -575,6 +606,16 @@ export class Diagram {
       },
       runTime,
     );
+    this.rezoom(this.zoom * k);
+  }
+  /**
+   * The camera has moved: re-derive every look from the home styles at the new zoom (the move
+   * already animated it), so a look depends only on zoom, marks and dimming, never on the order
+   * of calls, and returning to 'all' restores the home styles exactly.
+   */
+  private rezoom(zoom: number): void {
+    this.zoom = zoom;
+    this.looks(this.base.keys(), 0, false);
   }
   /**
    * Same-id marks glide to their next place; arrivals fade in, departures fade
@@ -614,7 +655,10 @@ export class Diagram {
     this.visible = new Set(this.parts.keys());
     this.spec = next;
     this.snapshot = snapshot;
-    this.base.clear();
+    // A new style brings its own emphasis colour.
+    this.accent = target.accent;
+    this.base = target.base;
+    this.zoom = 1;
     this.marks.clear();
     this.kept = null;
   }
@@ -630,13 +674,9 @@ export class Diagram {
   }
   /** Reset to unrevealed and unemphasised, without animating (the stage has faded it). */
   forget(): void {
-    for (const [id, styles] of this.base) this.parts
-        .get(id)!
-        .mob.family()
-        .forEach((m, i) => (m.style = { ...styles[i]! } as typeof m.style));
-    this.base.clear();
     this.marks.clear();
     this.kept = null;
+    this.looks(this.base.keys(), 0, false);
     this.notes = [];
     this.visible.clear();
     for (const child of [...this.root.children]) this.root.remove(child);

@@ -19,23 +19,40 @@ import { wrapCaption, FOOTER_TEXT_WIDTH } from './explain-captions.ts';
 import type { Box, Mobject } from '../../src/index.ts';
 import type { Project } from './explain-project.ts';
 
+const SWALLOW =
+  'Do not catch around awaited animation/step calls in construct(): a broad catch can swallow StopScene. Catch model errors before animation.';
 export function lintConstruct(source: string): string[] {
   const file = ts.createSourceFile('scene.ts', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const errors: string[] = [];
+  const named = (name: ts.PropertyName | ts.BindingName | undefined) =>
+    !!name &&
+    ((ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNoSubstitutionTemplateLiteral(name)
+      ? name.text
+      : ts.isComputedPropertyName(name) && ts.isStringLiteralLike(name.expression)
+        ? name.expression.text
+        : '') === 'construct');
+  // `async construct() {}`, `'construct'() {}`, `['construct']() {}` and `construct = async () => {}`.
+  const isConstruct = (node: ts.Node) =>
+    (ts.isMethodDeclaration(node) && named(node.name)) ||
+    (ts.isPropertyDeclaration(node) && named(node.name) && !!node.initializer && ts.isFunctionLike(node.initializer));
+  /** Awaited in this function body: `await`, `for await`; nested functions are not awaited by the try. */
+  function awaits(n: ts.Node): boolean {
+    if (ts.isAwaitExpression(n) || (ts.isForOfStatement(n) && n.awaitModifier)) return true;
+    if (ts.isFunctionLike(n)) return false;
+    return !!ts.forEachChild(n, (c) => awaits(c) || undefined);
+  }
   function walk(node: ts.Node, inConstruct = false) {
-    if (ts.isMethodDeclaration(node) && node.name.getText(file) === 'construct') inConstruct = true;
-    if (inConstruct && ts.isTryStatement(node) && node.catchClause) {
-      let asynchronous = false;
-      function find(n: ts.Node) {
-        if (ts.isAwaitExpression(n)) asynchronous = true;
-        ts.forEachChild(n, find);
-      }
-      find(node.tryBlock);
-      if (asynchronous)
-        errors.push(
-          'Do not catch around awaited animation/step calls in construct(): a broad catch can swallow StopScene. Catch model errors before animation.',
-        );
-    }
+    if (isConstruct(node)) inConstruct = true;
+    if (inConstruct && ts.isTryStatement(node) && node.catchClause && awaits(node.tryBlock)) errors.push(SWALLOW);
+    // A promise's own `.catch()` on awaited work swallows StopScene the same way.
+    if (
+      inConstruct &&
+      ts.isAwaitExpression(node) &&
+      ts.isCallExpression(node.expression) &&
+      ts.isPropertyAccessExpression(node.expression.expression) &&
+      node.expression.expression.name.text === 'catch'
+    )
+      errors.push(SWALLOW);
     ts.forEachChild(node, (n) => walk(n, inConstruct));
   }
   walk(file);
@@ -54,9 +71,19 @@ export function restingTextProblems(scene: { familyMembers(): Mobject[] }): stri
   const texts: { m: Mobject; box: Box; native: boolean; text: string }[] = [];
   const visible = (m: Mobject) => {
     for (let a: Mobject | null = m; a; a = a.parent) if ((a.style.opacity ?? 1) < 0.5) return false;
-    return true;
+    // Text is drawn by the fill (and any stroke) of its paths: with neither it shows nothing.
+    // A group's own paint is never drawn, so look at the paths it holds.
+    const painted = (x: Mobject) =>
+      (x.style.opacity ?? 1) >= 0.5 &&
+      ((!!x.style.fill && x.style.fill !== 'none' && (x.style.fillOpacity ?? 1) >= 0.5) ||
+        (!!x.style.stroke && x.style.stroke !== 'none' && (x.style.strokeOpacity ?? 1) >= 0.5 && (x.style.strokeWidth ?? 0) > 0));
+    return m.family().some((x) => !x.children.length && painted(x));
   };
+  const seen = new Set<Mobject>();
   for (const m of scene.familyMembers()) {
+    // A mobject listed twice (added on its own and inside a group) is still one text.
+    if (seen.has(m)) continue;
+    seen.add(m);
     const text = (m as unknown as { text?: unknown }).text;
     if (typeof text !== 'string' || !text.trim() || !visible(m)) continue;
     if (m.key === '__heading') continue;
@@ -124,6 +151,12 @@ export async function checkProject(
     // the final frame of a step carries the number recorded as its frame1.
     const restFrame = (s: (typeof v.trace.steps)[number]) => Math.max(s.frame0 + 1, s.frame1 ?? s.frame0 + 1);
     const completedFrames = new Set(v.trace.steps.map(restFrame));
+    // The first frame of a step's caption hold: the player stops where the hold begins, so from
+    // there to the resting frame the picture must not change.
+    const holdFrame = (s: (typeof v.trace.steps)[number]) =>
+      s.hold == null ? null : Math.round(s.hold * v.trace.fps) + 1;
+    const holdFrames = new Set(v.trace.steps.map(holdFrame).filter((f): f is number => f != null));
+    const holding = new Map<number, string>();
     const staticLabels = new Map<string, { text: string; px: number }>();
     const resting = new Map<number, string>();
     const restingText = new Map<number, string>();
@@ -132,6 +165,12 @@ export async function checkProject(
       async frame(scene) {
         await motion.frame(scene);
         if (targets.has(scene.frameCount)) frames.set(scene.frameCount, toSvgString(scene));
+        if (holdFrames.has(scene.frameCount)) {
+          const all = scene.mobjects;
+          scene.mobjects = all.filter((m) => m.key !== '__heading');
+          holding.set(scene.frameCount, toSvgString(scene));
+          scene.mobjects = all;
+        }
         if (completedFrames.has(scene.frameCount)) {
           // The resting picture of a step, without the heading that names it.
           const all = scene.mobjects;
@@ -219,6 +258,15 @@ export async function checkProject(
       [],
       `Each step must change the picture; these end exactly as the step before ${JSON.stringify(v.values)}`,
     );
+    const moving = v.trace.steps.filter((step) => {
+      const f = holdFrame(step);
+      return f != null && holding.get(f) !== resting.get(restFrame(step));
+    });
+    assert.deepEqual(
+      moving.map((s) => s.step),
+      [],
+      `A step's picture must stop changing once its caption hold begins (the player stops there) ${JSON.stringify(v.values)}`,
+    );
     assert.deepEqual(
       [...new Set(collisions)],
       [],
@@ -241,7 +289,7 @@ export async function checkProject(
     );
     const small = [...labels].filter(([, px]) => px < MIN_PX);
     assert.deepEqual(small, [], `Labels never reach ${MIN_PX}px at 1280px stage: ${JSON.stringify(small)}`);
-    const contents = `import * as author from ${JSON.stringify(project.file)};import{bindSnapshots,withSettings}from ${JSON.stringify(join(ROOT, 'explain/index.ts'))};import{Scene,NullSink,toSvgString}from ${JSON.stringify(join(ROOT, 'src/index.ts'))};const Source=author.default??Object.values(author).find(v=>typeof v==='function'&&v.prototype instanceof Scene);export async function run(){const C=withSettings(bindSnapshots(Source,${JSON.stringify(project.store)}),${JSON.stringify(v.values)});const s=await new C(new NullSink(),{skipUntil:Infinity}).run();return{steps:s.steps.map(s=>s.name),state:s.describe(),svg:toSvgString(s)}}`;
+    const contents = `import * as author from ${JSON.stringify(project.file)};import{bindSnapshots,withSettings}from ${JSON.stringify(join(ROOT, 'explain/index.ts'))};import{Scene,NullSink,toSvgString}from ${JSON.stringify(join(ROOT, 'src/index.ts'))};const Source=author[${JSON.stringify(project.exportName)}];export async function run(){const C=withSettings(bindSnapshots(Source,${JSON.stringify(project.store)}),${JSON.stringify(v.values)});const s=await new C(new NullSink(),{skipUntil:Infinity}).run();return{steps:s.steps.map(s=>s.name),state:s.describe(),svg:toSvgString(s)}}`;
     const b = await build({
       stdin: { contents, resolveDir: ROOT, loader: 'ts' },
       bundle: true,
@@ -272,6 +320,7 @@ export async function checkProject(
       labels: labels.size,
       completedStepLabels: staticLabels.size,
       everyStepChangesPicture: true,
+      stillDuringCaptionHolds: true,
       restingTextCollisions: 0,
       // What a reader sees before zooming: the same labels on a 390 px phone.
       legibility: legibilityReport([...labels.values(), ...[...staticLabels.values()].map((l) => l.px)]),

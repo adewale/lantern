@@ -35,11 +35,13 @@
     "demos:serve": "node tools/explain-serve.ts",
     "demos:review": "node tools/explain-review.ts",
     "pack:smoke": "node tools/explain-package-smoke.ts",
+    "site:export": "node tools/explain-site.ts",
     "test:embeds": "EXPLAIN_BROWSER=1 node --test test/explain-capture.test.ts test/explain-embed.test.ts",
     "test:video": "EXPLAIN_VIDEO=1 node --test test/explain-video.test.ts"
   },
   "devDependencies": {
-    "@types/node": "24.19.2"
+    "@types/node": "24.19.2",
+    "fast-check": "4.10.2"
   },
   "description": "Animated, steppable code explainers. Zero-dependency JS engine, SVG output, browser and Cloudflare Workers.",
   "exports": {

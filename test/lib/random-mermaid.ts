@@ -1,14 +1,17 @@
-// Random mermaid flowcharts from a seed, for fuzzing src/mermaid.ts against
-// mermaid's own parser. Generates only syntax both are meant to accept.
-import { rng } from './random-scene.ts';
+// Random mermaid flowcharts from a seed or a fast-check tape (see
+// random-scene.ts), for fuzzing src/mermaid.ts against mermaid's own parser
+// and the layout. Generates only syntax both are meant to accept.
+import { drawsFrom } from './random-scene.ts';
+import type { Draws } from './random-scene.ts';
 
 const SHAPES: Array<[open: string, close: string]> = [['[', ']'], ['(', ')'], ['([', '])'], ['((', '))'], ['{', '}'], ['[[', ']]'], ['[(', ')]'], ['{{', '}}'], ['>', ']'], ['[/', '/]'], ['[\\', '\\]']];
 const WORDS = ['alpha', 'beta', 'gamma', 'Request', 'D1', 'KV cache', 'step 2', 'x', 'eval_stmt', 'read file'];
 const LINKS = ['-->', '---', '-.->', '-.-', '==>', '===', '--x', '--o', '<-->', '--->', '-..->', '====>'];
 const LABELED: Array<[open: string, close: string]> = [['--', '-->'], ['--', '---'], ['-.', '.->'], ['==', '==>']];
 
-export function randomFlowchart(seed: number): string {
-  const r = rng(seed);
+export function randomFlowchart(draws: Draws): string {
+  const r = drawsFrom(draws);
+  const seed = typeof draws === 'number' ? draws : 't';
   const dir = r.pick(['TB', 'TD', 'BT', 'LR', 'RL']);
   const n = r.int(2, 9);
   const ids = Array.from({ length: n }, (_, i) => r.pick(['n', 'node', 'A', 'B', 'x']) + i);

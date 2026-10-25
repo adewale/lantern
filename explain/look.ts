@@ -15,9 +15,17 @@ export function emphasis(p: Palette): string {
     min = Math.min(r, g, b);
   // A hue needs both relative and absolute chroma: near-black inks (pen-and-ink) are not one.
   if (max > 0 && (max - min) / max > 0.3 && max - min > 48) return p.accent;
-  const [pr, pg, pb] = parseColor(p.paper) ?? [255, 255, 255];
-  const dark = 0.2126 * pr + 0.7152 * pg + 0.0722 * pb < 110;
-  return dark ? '#ffb454' : '#d9480f';
+  // Of the two oranges, the one that contrasts more with the paper (WCAG relative luminance).
+  const paper = parseColor(p.paper) ?? [255, 255, 255];
+  const lum = ([r, g, b]: readonly number[]) => {
+    const lin = (v: number) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * lin(r!) + 0.7152 * lin(g!) + 0.0722 * lin(b!);
+  };
+  const contrast = (c: readonly number[]) => {
+    const [a, z] = [lum(c), lum(paper)].sort((x, y) => y - x);
+    return (a! + 0.05) / (z! + 0.05);
+  };
+  return contrast([0xff, 0xb4, 0x54]) >= contrast([0xd9, 0x48, 0x0f]) ? '#ffb454' : '#d9480f';
 }
 /** A panel surface one shade off the paper. */
 export const raised = (p: Palette) => lerpColor(p.paper, p.ink, 0.07);

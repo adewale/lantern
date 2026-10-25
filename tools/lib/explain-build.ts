@@ -46,7 +46,7 @@ export async function buildExplainer(
         setup(b) {
           b.onResolve({ filter: /^virtual:author$/ }, () => ({ path: 'author', namespace: 'author' }));
           b.onLoad({ filter: /.*/, namespace: 'author' }, () => ({
-            contents: `import * as exports from ${JSON.stringify(project.file)};const Source=exports.default??Object.values(exports).find(v=>typeof v==='function'&&v.prototype&&'construct'in v.prototype);export default Source;`,
+            contents: `export { ${project.exportName === 'default' ? 'default' : project.exportName + ' as default'} } from ${JSON.stringify(project.file)};`,
             resolveDir: dirname(project.file),
             loader: 'ts',
           }));

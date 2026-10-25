@@ -83,8 +83,9 @@ export class Scene {
   steps: Step[];
   current: Step | null;
   state: SceneState;
-  private stepListeners: Array<(step: Step) => unknown>;
-  private describers: Array<() => SceneState>;
+  // One entry per registration, so each remover removes exactly its own.
+  private stepListeners: Array<{ listener: (step: Step) => unknown; on: boolean }>;
+  private describers: Array<{ describer: () => SceneState }>;
 
   /**
    * skipUntil: frames that end before this time are not rendered or
@@ -115,8 +116,9 @@ export class Scene {
    * step(). Returns a function that removes the listener.
    */
   onStep(listener: (step: Step) => unknown): () => void {
-    this.stepListeners.push(listener);
-    return () => { this.stepListeners = this.stepListeners.filter((l) => l !== listener); };
+    const entry = { listener, on: true };
+    this.stepListeners.push(entry);
+    return () => { entry.on = false; this.stepListeners = this.stepListeners.filter((e) => e !== entry); };
   }
 
   /**
@@ -124,8 +126,9 @@ export class Scene {
    * recorded walks) survives an author replacing `this.state`. Returns a remover.
    */
   addDescriber(describer: () => SceneState): () => void {
-    this.describers.push(describer);
-    return () => { this.describers = this.describers.filter((d) => d !== describer); };
+    const entry = { describer };
+    this.describers.push(entry);
+    return () => { this.describers = this.describers.filter((e) => e !== entry); };
   }
 
   /** Subclasses define the animation here. */
@@ -159,7 +162,9 @@ export class Scene {
     this.steps.push(s);
     this.current = s;
     await this.sink.stepBegin?.(this, s);
-    for (const listener of this.stepListeners) await listener(s);
+    // The listeners registered when the step began, minus any removed meanwhile; one added
+    // during this dispatch first hears the next step.
+    for (const entry of this.stepListeners.slice()) if (entry.on) await entry.listener(s);
     return s;
   }
 
@@ -173,11 +178,13 @@ export class Scene {
     // so narration (or a reader) never runs past the picture it describes.
     const caption = s.meta?.caption;
     if (typeof caption === 'string') {
-      const need = caption.trim().split(/\s+/).length / Scene.captionWpm * 60;
+      const words = caption.trim() ? caption.trim().split(/\s+/).length : 0;
+      const need = words / Scene.captionWpm * 60;
       const left = need - (this.time - s.t0);
       if (left > 1e-9) {
         s.hold = this.time;
-        await this.wait(left);
+        // Whole frames, rounded up: the step lasts at least the reading time, never half a frame less.
+        await this.wait(Math.ceil(left * this.fps - 1e-6) / this.fps);
       }
     }
     this.current = null;
@@ -201,7 +208,14 @@ export class Scene {
    */
   describe(): SceneState {
     const state = JSON.parse(JSON.stringify(this.state)) as SceneState;
-    for (const describer of this.describers) Object.assign(state, JSON.parse(JSON.stringify(describer())));
+    for (const { describer } of this.describers) {
+      const extra: unknown = describer();
+      if (!extra || typeof extra !== 'object' || Array.isArray(extra))
+        throw new TypeError('A describer must return a JSON object');
+      // Define own keys, so a key such as "__proto__" is copied, not used as a prototype.
+      for (const [k, value] of Object.entries(JSON.parse(JSON.stringify(extra)) as SceneState))
+        Object.defineProperty(state, k, { value, enumerable: true, writable: true, configurable: true });
+    }
     return state;
   }
 
@@ -231,6 +245,18 @@ export class Scene {
   }
 
   replace(old: Mobject, ...replacements: Mobject[]): this {
+    // A replacement already on screen moves to old's place rather than being listed twice.
+    this.mobjects = this.mobjects.filter((m) => m === old || !replacements.includes(m));
+    const parent = old.parent;
+    if (parent && !this.mobjects.includes(old)) {
+      // old lives inside a group: swap the replacements into the group at old's index.
+      const at = parent.children.indexOf(old);
+      for (const r of replacements) { r.parent?.remove(r); r.parent = parent; }
+      parent.children.splice(at, 1, ...replacements);
+      old.parent = null;
+      parent.invalidateBox();
+      return this;
+    }
     const i = this.mobjects.indexOf(old);
     if (i < 0) { this.add(...replacements); return this; }
     this.mobjects.splice(i, 1, ...replacements);
@@ -246,10 +272,15 @@ export class Scene {
 
   // ---- frame loop --------------------------------------------------------
 
-  async emitFrame(dt: number): Promise<void> {
-    this.time += dt;
-    perf.span('updaters', () => { for (const m of this.mobjects) m.update(dt); });
+  /** Count a frame. The clock is derived from the count, so it never drifts the way a running sum of dt does. */
+  private tick(): void {
     this.frameCount++;
+    this.time = this.frameCount / this.fps;
+  }
+
+  async emitFrame(dt: number): Promise<void> {
+    this.tick();
+    perf.span('updaters', () => { for (const m of this.mobjects) m.update(dt); });
     const end = perf.begin('sink');
     await this.sink.frame(this, dt);
     end();
@@ -271,11 +302,12 @@ export class Scene {
     let skipped = 0;
     for (let f = 1; f <= n; f++) {
       // Same comparison SeekSink uses to drop a frame, so the first frame shown is identical
-      if (canSkip && this.time + dt + 1e-9 < this.skipUntil) { this.time += dt; this.frameCount++; skipped++; continue; }
-      const t = Math.min(f * dt, runTime);
+      if (canSkip && this.time + dt + 1e-9 < this.skipUntil) { this.tick(); skipped++; continue; }
+      // The last frame draws the finished animation even when runTime·fps rounded down.
+      const t = f === n ? runTime : Math.min(f * dt, runTime);
       perf.span('interpolate', () => {
         for (const a of anims) {
-          const alpha = Math.min(t / a.runTime, 1);
+          const alpha = a.runTime > 0 ? Math.min(t / a.runTime, 1) : 1;
           a.interpolate(a.rateFunc(alpha));
         }
       });
@@ -291,7 +323,13 @@ export class Scene {
       a.begin();
       const mobs = a instanceof AnimationGroup ? a.mobjects : [a.mobject];
       for (const m of mobs) {
-        if (m && !present.has(m)) { this.add(m); for (const f of m.family()) present.add(f); }
+        if (!m || present.has(m)) continue;
+        // A new wrapper around things already on screen (Indicate(new Group(a, b))) must not
+        // draw them a second time on top: add it only if some drawable member is new.
+        const drawn = m.family().filter((f) => f.pointArrays().some((a) => a.length > 0));
+        if (drawn.length && drawn.every((f) => present.has(f))) continue;
+        this.add(m);
+        for (const f of m.family()) present.add(f);
       }
     }
   }
@@ -301,7 +339,7 @@ export class Scene {
     const n = Math.round(seconds * this.fps);
     const canSkip = this.skipUntil > this.time && !this.hasUpdaters();
     for (let f = 0; f < n; f++) {
-      if (canSkip && this.time + dt + 1e-9 < this.skipUntil) { this.time += dt; this.frameCount++; continue; }
+      if (canSkip && this.time + dt + 1e-9 < this.skipUntil) { this.tick(); continue; }
       await this.emitFrame(dt);
     }
   }

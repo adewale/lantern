@@ -3,3 +3,4 @@ out/
 .wrangler/
 *.cpuprofile
 dist/
+.claude/scheduled_tasks.lock

@@ -9,7 +9,8 @@ import { flowchart, loadFonts, Scene, StringSink, LaggedStart, MotionSink, analy
 import type { FlowEdge, FlowSubgraph } from '../src/index.ts';
 import type { MermaidResult } from '../tools/oracle/mermaid.ts';
 import { randomFlowchart } from './lib/random-mermaid.ts';
-import { rng } from './lib/random-scene.ts';
+import { rng, tape } from './lib/random-scene.ts';
+import { fc, params } from './lib/pbt.ts';
 import { mermaidPath, mermaidParse } from '../tools/oracle/mermaid.ts';
 
 await loadFonts();
@@ -90,9 +91,9 @@ interface Rect { x0: number; x1: number; y0: number; y1: number }
 const inter = (a: Rect, b: Rect, eps = 1e-6): boolean => a.x0 < b.x1 - eps && b.x0 < a.x1 - eps && a.y0 < b.y1 - eps && b.y0 < a.y1 - eps;
 const boxOf = (n: { x: number; y: number; w: number; h: number }): Rect => ({ x0: n.x - n.w / 2, x1: n.x + n.w / 2, y0: n.y - n.h / 2, y1: n.y + n.h / 2 });
 
-test('layout invariants on random flowcharts: no overlaps, edges flow, clusters contain and exclude', () => {
-  for (let seed = 1; seed <= N; seed++) {
-    const src = randomFlowchart(seed), ctx = `seed ${seed}`;
+/** The layout's geometric invariants for one chart. */
+function layoutInvariants(src: string, ctx: string): void {
+  {
     const { g, L, ancestors, parent } = geometry(src);
     const ids = [...L.nodes.keys()];
     for (const v of L.nodes.values()) for (const k of ['x', 'y', 'w', 'h'] as const) assert.ok(Number.isFinite(v[k]), `${ctx}: ${k} not finite`);
@@ -122,7 +123,27 @@ test('layout invariants on random flowcharts: no overlaps, edges flow, clusters 
       assert.ok(!inter(L.clusters.get(cs[i]!)!, L.clusters.get(cs[j]!)!), `${ctx}: clusters ${cs[i]} and ${cs[j]} overlap`);
     }
   }
+}
+
+test('layout invariants on random flowcharts: no overlaps, edges flow, clusters contain and exclude', () => {
+  // fast-check draws each chart from a tape (test/lib/random-scene.ts), so a failing chart shrinks;
+  // rerun one with FC_SEED/FC_PATH, or the seeded chart n with SEED=n.
+  if (process.env.SEED) return layoutInvariants(randomFlowchart(Number(process.env.SEED)), `seed ${process.env.SEED}`);
+  fc.assert(fc.property(tape(), (t) => { const src = randomFlowchart(t); layoutInvariants(src, src); }), params(N));
 });
+
+test('clusters spanning several ranks keep non-members out (charts the random property found)', () => {
+  // Before: a cluster's block sat on different sides of a node on different ranks, and the push-out
+  // chased it for 400 passes, leaving nodes ~1800 units away inside a box they are not members of.
+  for (const src of [
+    'flowchart TB\n n4[alpha alpha alpha] --> n2[alpha alpha alpha]\n n8 & n4 -- "alpha<br/>eval_stmt" --> n1[alpha alpha alpha] & n1 -->|alpha| n1\n n0[alpha alpha alpha] & n0 -- alpha --> n8[alpha alpha]\n subgraph sgt_0["alpha"]\n n0 & n5 --> n0\n n2 -->|"alpha<br/>alpha"| n3[alpha alpha] & n2 -- alpha --> n6\n end\n n0 -->|alpha| n1 -->|"alpha<br/>alpha"| n4',
+    'flowchart TB\n subgraph sgt_0["alpha"]\n n0[alpha] --> n1[alpha alpha] --> n5[alpha]\n n4[alpha] --> n4\n end\n n5 & n3[alpha alpha alpha] --- n2[alpha] -- alpha --> n0 --- n6[alpha alpha]',
+    'flowchart TB\n subgraph sgt_0["alpha"]\n direction LR\n n3[alpha alpha] --> n2 --> n3 & n2\n end\n subgraph sgt_1["alpha"]\n n1[alpha alpha] -->|alpha| n2[alpha alpha alpha] -->|"alpha"| n1 --> n1\n n1 & n0[alpha alpha] --->|alpha| n1 -- alpha --> n1\n end\n n1 & n1 -- alpha --> n3',
+    "flowchart BT\n  n0[alpha alpha] --> n0 -- alpha --> n1[alpha]\n  n0 --> n0\n  n0 -- \"alpha\" --> n3[alpha] -- alpha --> n0\n  subgraph sgt_2[\"alpha\"]\n  n0 & n0 === n2 --> n0\n  end\n  subgraph sgt_1[\"alpha\"]\n  direction LR\n  subgraph sgt_0[\"alpha\"]\n  n3 -- alpha --> n0 & n0 --> n2[alpha alpha] & n0 --> n0\n  end\n  end\n  n0 -- alpha --> n3 -- alpha --> n0 & n2\n  n0 -->|alpha| n0 --> n0 -- \"alpha\" --> n0",
+  ])
+    layoutInvariants(src, src);
+});
+
 
 test('layout is deterministic and orientation-consistent', () => {
   const src = (dir: string): string => `flowchart ${dir}\n A --> B & C\n B --> D\n C --> D`;

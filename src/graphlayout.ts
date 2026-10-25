@@ -7,10 +7,13 @@
 //      each edge has a midpoint to bend through and a place for its label
 //   3. dummy nodes on the ranks a long edge crosses
 //   4. order each rank: barycenter sweeps, clusters kept as contiguous blocks,
-//      the ordering with fewest crossings kept
+//      the ordering with fewest crossings kept, then one left-to-right order of
+//      each scope's blocks on every rank (so a cluster never swaps sides with a node)
 //   5. positions along each rank: weighted least squares toward neighbors under
 //      minimum-separation constraints, solved exactly by isotonic regression (PAVA)
-//   6. cluster boxes; non-members pushed out of boxes they would sit inside
+//   6. cluster boxes; each scope's blocks shifted clear of one another in that
+//      order, then any non-member still inside a box pushed out (an error if
+//      that does not settle, rather than a layout with nodes drifted away)
 //   7. edges as point lists through their dummies, clipped to node borders by the renderer
 
 export interface Size { w: number; h: number }
@@ -195,6 +198,10 @@ export function layoutGraph(graph: LGraph, options: LayoutOptions = {}): Layout 
     }
     return n;
   };
+  // Start from an order that already keeps each cluster contiguous: the sweeps below may stop at
+  // once (no crossings) or never beat the start, and the insertion order can interleave clusters.
+  const own = new Map(V.map((v) => [v, [] as Vert[]]));
+  for (const L of layers) sortLayer(L, own);
   let best = crossings(), bestOrder = V.map((v) => v.order);
   for (let it = 0; it < o.iterations && best > 0; it++) {
     if (it % 2 === 0) for (let r = 1; r <= maxRank; r++) sortLayer(layers[r]!, up);
@@ -204,6 +211,54 @@ export function layoutGraph(graph: LGraph, options: LayoutOptions = {}): Layout 
   }
   V.forEach((v, i) => { v.order = bestOrder[i]!; });
   for (const L of layers) L.sort((a, b) => a.order - b.order);
+  // Each rank was ordered on its own, so a cluster can sit left of a node (or of another
+  // cluster) on one rank and right of it on the next. Then no positions keep non-members out of
+  // the cluster's box. Where that happens, put the blocks of each scope (the top level, or one
+  // cluster's children) in one left-to-right order on every rank, by their mean place.
+  {
+    type Key = string | Vert;
+    const keyAt = (v: Vert, depth: number): Key => { const p = clusterPath(v.cluster); return depth < p.length ? p[depth]! : v; };
+    const before = new Map<string, Map<Key, Set<Key>>>(); // scope -> key -> keys it precedes
+    const place = new Map<Key, number[]>(); // normalised places of the vertices under a key
+    const scan = (items: Vert[], depth: number, scope: string, len: number): void => {
+      const seq: Key[] = [], groups = new Map<Key, Vert[]>();
+      for (const v of items) {
+        const k = keyAt(v, depth);
+        if (!groups.has(k)) { groups.set(k, []); seq.push(k); }
+        groups.get(k)!.push(v);
+        if (!place.has(k)) place.set(k, []);
+        place.get(k)!.push((v.order + 0.5) / len);
+      }
+      let after = before.get(scope);
+      if (!after) before.set(scope, (after = new Map()));
+      for (let i = 0; i < seq.length; i++) {
+        if (!after.has(seq[i]!)) after.set(seq[i]!, new Set());
+        for (let j = i + 1; j < seq.length; j++) after.get(seq[i]!)!.add(seq[j]!);
+      }
+      for (const [k, vs] of groups) if (typeof k === 'string') scan(vs, depth + 1, k, len);
+    };
+    for (const L of layers) scan(L, 0, '', L.length);
+    // Consistent iff every scope's precedences are acyclic (then the ranks already agree)
+    const acyclic = (after: Map<Key, Set<Key>>): boolean => {
+      const indeg = new Map<Key, number>([...after.keys()].map((k) => [k, 0]));
+      for (const s of after.values()) for (const k of s) indeg.set(k, (indeg.get(k) ?? 0) + 1);
+      const queue = [...indeg].filter(([, d]) => d === 0).map(([k]) => k);
+      let seen = 0;
+      while (queue.length) { const k = queue.pop()!; seen++; for (const n of after.get(k) ?? []) { indeg.set(n, indeg.get(n)! - 1); if (indeg.get(n) === 0) queue.push(n); } }
+      return seen === indeg.size;
+    };
+    if (![...before.values()].every(acyclic)) {
+      const mean = (k: Key) => { const ps = place.get(k)!; return ps.reduce((a, b) => a + b, 0) / ps.length; };
+      const arrange = (items: Vert[], depth: number): Vert[] => {
+        const groups = new Map<Key, Vert[]>();
+        for (const v of items) { const k = keyAt(v, depth); if (!groups.has(k)) groups.set(k, []); groups.get(k)!.push(v); }
+        return [...groups].sort(([a, va], [b, vb]) => mean(a) - mean(b) || va[0]!.order - vb[0]!.order)
+          .flatMap(([k, vs]) => (typeof k === 'string' ? arrange(vs, depth + 1) : vs));
+      };
+      for (const L of layers) { arrange(L, 0).forEach((v, i) => { v.order = i; }); L.sort((a, b) => a.order - b.order); }
+      best = crossings();
+    }
+  }
 
   // ---- 5. positions along each rank -------------------------------------------------------
   const titleBand = (c: string): number => clusters.get(c)!.title.h + 0.1;
@@ -302,6 +357,67 @@ export function layoutGraph(graph: LGraph, options: LayoutOptions = {}): Layout 
     if (dir > 0) for (let j = Math.max(...idx) + 1; j < L.length; j++) L[j]!.pos = Math.max(L[j]!.pos, L[j - 1]!.pos + sep(L[j - 1]!, L[j]!));
     else for (let j = Math.min(...idx) - 1; j >= 0; j--) L[j]!.pos = Math.min(L[j]!.pos, L[j + 1]!.pos - sep(L[j]!, L[j + 1]!));
   };
+  // Separate the blocks of each scope (the top level, or one cluster's children): a cluster is
+  // one rigid block, a node another. The ordering gives each scope one left-to-right order on every
+  // rank, so walking the blocks in that order and shifting each clear of the earlier ones it shares
+  // ranks with (only where they overlap) keeps every non-member out of every box, in one pass and
+  // without disturbing a layout that was already clear. Inner scopes go first.
+  {
+    type Key = string | Vert;
+    const keyAt = (v: Vert, depth: number): Key => { const p = clusterPath(v.cluster); return depth < p.length ? p[depth]! : v; };
+    const shown = (v: Vert): boolean => v.real || !!v.isLabel;
+    const half = (v: Vert): number => v.thick / 2;
+    const separate = (scope: string | null, depth: number): void => {
+      const inScope = (u: Vert): boolean => scope == null || clusterPath(u.cluster).includes(scope);
+      const members = new Map<Key, Vert[]>();
+      for (const u of V) if (inScope(u)) { const k = keyAt(u, depth); if (!members.has(k)) members.set(k, []); members.get(k)!.push(u); }
+      for (const k of members.keys()) if (typeof k === 'string') separate(k, depth + 1);
+      const after = new Map<Key, Set<Key>>([...members.keys()].map((k) => [k, new Set<Key>()]));
+      const indeg = new Map<Key, number>([...members.keys()].map((k) => [k, 0]));
+      for (const L of layers) {
+        const seq: Key[] = [];
+        for (const u of L) if (inScope(u)) { const k = keyAt(u, depth); if (!seq.includes(k)) seq.push(k); }
+        for (let i = 0; i < seq.length; i++) for (let j = i + 1; j < seq.length; j++)
+          if (!after.get(seq[i]!)!.has(seq[j]!)) { after.get(seq[i]!)!.add(seq[j]!); indeg.set(seq[j]!, indeg.get(seq[j]!)! + 1); }
+      }
+      const meanPos = (k: Key): number => { const vs = members.get(k)!; return vs.reduce((t, u) => t + u.pos, 0) / vs.length; };
+      const order: Key[] = [];
+      const ready = [...indeg].filter(([, d]) => d === 0).map(([k]) => k);
+      while (ready.length) {
+        ready.sort((x, y) => meanPos(y) - meanPos(x));
+        const k = ready.pop()!;
+        order.push(k);
+        for (const n of after.get(k)!) { indeg.set(n, indeg.get(n)! - 1); if (indeg.get(n) === 0) ready.push(n); }
+      }
+      if (order.length !== members.size) return; // inconsistent orders: leave it to the push-out below
+      const placed: { lo: number; hi: number; m0: number; m1: number; box: boolean }[] = [];
+      for (const k of order) {
+        const vs = members.get(k)!.filter(shown);
+        if (!vs.length) continue;
+        let lo = Infinity, hi = -Infinity, m0 = Infinity, m1 = -Infinity;
+        const box = typeof k === 'string' ? boxes().get(k) : undefined;
+        if (box) { [lo, hi] = ivBox(box); [m0, m1] = ivMajorBox(box); } // screen coordinates already
+        else {
+          for (const u of vs) {
+            lo = Math.min(lo, u.pos - u.breadth / 2); hi = Math.max(hi, u.pos + u.breadth / 2);
+            const mj = major[u.rank]!; m0 = Math.min(m0, mj - half(u)); m1 = Math.max(m1, mj + half(u));
+          }
+          if (flip) [m0, m1] = [-m1, -m0]; // into screen coordinates, as boxes are
+        }
+        let need = 0;
+        for (const p of placed) {
+          if (!(p.m0 < m1 - 1e-9 && m0 < p.m1 - 1e-9)) continue;
+          // A box is cleared where it overlaps; two nodes keep the separation positioning gave them
+          // (at least nodeSep, so a layout that was already clear does not move)
+          if (p.box || box) { if (p.hi > lo + 1e-9) need = Math.max(need, p.hi + o.nodeSep * 0.6 - lo); }
+          else if (p.hi + o.nodeSep > lo + 1e-9) need = Math.max(need, p.hi + o.nodeSep - lo);
+        }
+        if (need > 0) { for (const u of members.get(k)!) u.pos += need; lo += need; hi += need; }
+        placed.push({ lo, hi, m0, m1, box: !!box });
+      }
+    };
+    separate(null, 0);
+  }
   for (let pass = 0; pass < 400; pass++) {
     const B = boxes();
     let moved: { set: Set<Vert>; dir: number } | null = null;
@@ -320,7 +436,10 @@ export function layoutGraph(graph: LGraph, options: LayoutOptions = {}): Layout 
         const outer = clusterPath(v.cluster).find((x) => !anc.has(x));
         const block = outer ? V.filter((u) => clusterPath(u.cluster).includes(outer)) : [v];
         const lo = Math.min(...block.map((u) => u.pos - u.breadth / 2)), hi = Math.max(...block.map((u) => u.pos + u.breadth / 2));
-        const right = (lo + hi) / 2 >= cx;
+        // Out on the side the ordering put it: on a rank with members of c it lies wholly before or
+        // after them, and pushing it across them would drag them along (the push never ends).
+        const peers = layers[v.rank]!.filter((u) => clusterPath(u.cluster).includes(c));
+        const right = peers.length ? v.order > peers[0]!.order : (lo + hi) / 2 >= cx;
         const delta = right ? hi0 + o.nodeSep * 0.6 - lo : lo0 - o.nodeSep * 0.6 - hi;
         for (const u of block) u.pos += delta;
         moved = { set: new Set(block), dir: Math.sign(delta) };
@@ -341,7 +460,11 @@ export function layoutGraph(graph: LGraph, options: LayoutOptions = {}): Layout 
         const top = pb.find((x) => !pa.includes(x))!;
         const block = V.filter((u) => clusterPath(u.cluster).includes(top));
         const [alo, ahi] = ivBox(a), [blo, bhi] = ivBox(bb);
-        const right = (blo + bhi) / 2 >= (alo + ahi) / 2;
+        // As above: the side the ordering gives them on a rank they share, if any
+        const shared = layers.find((L) => L.some((u) => clusterPath(u.cluster).includes(ids[i]!)) && L.some((u) => clusterPath(u.cluster).includes(top)));
+        const right = shared
+          ? shared.findIndex((u) => clusterPath(u.cluster).includes(top)) > shared.findIndex((u) => clusterPath(u.cluster).includes(ids[i]!))
+          : (blo + bhi) / 2 >= (alo + ahi) / 2;
         const delta = right ? ahi + o.nodeSep * 0.4 - blo : alo - o.nodeSep * 0.4 - bhi;
         for (const u of block) u.pos += delta;
         moved = { set: new Set(block), dir: Math.sign(delta) };
@@ -349,6 +472,7 @@ export function layoutGraph(graph: LGraph, options: LayoutOptions = {}): Layout 
       }
     }
     if (!moved) break;
+    if (pass === 399) throw new Error('layoutGraph: could not keep non-members out of cluster boxes (400 passes); please report this graph');
     for (const L of layers) cascade(L, moved.set, moved.dir);
   }
 

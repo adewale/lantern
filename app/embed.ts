@@ -39,8 +39,10 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   let values: Settings,
     trace: Trace,
     Active: ExplainerClass,
+    wanted: Settings | undefined,
     selected = 0,
     generation = 0,
+    loads = 0,
     playing = false;
   const cache = new Map<string, { Scene: ExplainerClass; trace: Trace }>();
 
@@ -60,7 +62,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       input.name = s.id;
       input.value = o.value;
       input.addEventListener('change', () => {
-        if (input.checked) void load({ ...values, [s.id]: o.value }, trace.steps[selected]?.step, true);
+        // Keep the step the reader is on when the new case arrives, even if they moved while it loaded.
+        if (input.checked) void load({ ...(wanted ?? values), [s.id]: o.value }, () => trace?.steps[selected]?.step, true);
       });
       label.append(input, el('span', o.label));
       segments.append(label);
@@ -104,11 +107,12 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   steps.setAttribute('aria-label', 'Steps in this explanation');
   const transcript = root.querySelector<HTMLElement>('.transcript') ?? el('details', undefined, 'transcript');
   if (transcript instanceof HTMLDetailsElement) transcript.open = false;
-  // Inside a frame, a way out to the full page; a standalone page needs none.
+  // Inside a frame, a way out to the full page; a standalone page needs none, and the
+  // loader (which sets parentOrigin) already puts this link beside the frame.
   const standalone = el('a', 'Open in a new tab', 'standalone');
   standalone.target = '_blank';
   standalone.rel = 'noopener';
-  const framed = window.parent !== window;
+  const framed = window.parent !== window && !params.has('parentOrigin');
   root.replaceChildren(head, player, steps, transcript, ...(framed ? [standalone] : []));
 
   const zoom = new StageZoom(stage, () => {
@@ -130,7 +134,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   }
   function link(push: boolean) {
     const url = urlFor();
-    (push ? history.pushState : history.replaceState).call(history, null, '', url);
+    // Re-showing the step already in the address bar adds no history entry Back would have to skip.
+    (push && url.href !== location.href ? history.pushState : history.replaceState).call(history, null, '', url);
     const out = new URL(url);
     out.searchParams.delete('parentOrigin');
     standalone.href = out.href;
@@ -151,6 +156,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     document.dispatchEvent(new CustomEvent('lantern:step', { detail: { step: step.step, settings: values } }));
   }
   async function show(index: number, push = true) {
+    if (!trace) return; // Controls exist before the first case has loaded.
     const gen = ++generation;
     playing = false;
     selected = Math.max(0, Math.min(trace.steps.length - 1, index));
@@ -169,13 +175,14 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
   /** Forward the way the author wrote it: play the step, then rest on its last frame. */
   async function advance() {
-    if (selected >= trace.steps.length - 1) return;
+    if (!trace || selected >= trace.steps.length - 1) return;
     if (reduced()) return show(selected + 1);
     selected += 1;
     link(true);
     await animate(true);
   }
   async function animate(force = false) {
+    if (!trace) return;
     if (playing && !force) return show(selected, false);
     if (reduced()) {
       notice.textContent = 'Reduced motion is on, so the finished step is shown.';
@@ -197,6 +204,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
           if (gen !== generation || scene.time > end + 1e-8) throw new StopScene();
           if (dt === 0 && scene.mobjects.length === 0) return; // Keep the poster until a meaningful first frame.
           await seek.frame(scene, dt);
+          if (gen !== generation) throw new StopScene(); // superseded while that frame was drawn
           if (!attached && scene.time + 1e-8 >= start) {
             attached = true;
             stage.replaceChildren(...container.childNodes);
@@ -207,9 +215,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       { skipUntil: start },
     ).run();
     if (gen !== generation) return;
-    playing = false;
-    chrome();
-    settle(step);
+    // End on the step's resting picture, the one a link to it shows. The animation stops
+    // where the caption hold begins, before anything the step adds after its last play().
+    await show(selected, false);
   }
   function caseName(values: Settings): string {
     return (Source.settings ?? [])
@@ -249,34 +257,49 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       ...(sources.children.length ? [el('h2', 'Sources'), sources] : []),
     );
   }
-  async function load(request: Settings, step?: string, push = false) {
-    const loadGen = ++generation;
-    notice.textContent = ''; // A previous case's fallback must not describe the restored case.
+  /**
+   * Show a case. Until its trace is ready the player keeps showing (and linking to) the
+   * case it has, so navigation meanwhile stays consistent; a newer load supersedes this one.
+   * `step` may be a function, read when the case arrives.
+   */
+  async function load(request: Settings, step?: string | (() => string | undefined), push = false) {
+    const token = ++loads;
     root.classList.add('loading');
+    let next: Settings,
+      fallback = '';
     try {
-      values = resolveSettings(Source, request);
+      next = resolveSettings(Source, request);
     } catch (error) {
-      values = resolveSettings(Source);
-      notice.textContent = `${(error as Error).message}. Showing the default case.`;
+      next = resolveSettings(Source);
+      fallback = `${(error as Error).message}. Showing the default case.`;
     }
-    for (const [id, inputs] of choices) for (const input of inputs) input.checked = input.value === values[id];
-    zoom.reset();
-    const key = JSON.stringify(values);
+    wanted = next;
+    for (const [id, inputs] of choices) for (const input of inputs) input.checked = input.value === next[id];
+    const key = JSON.stringify(next);
     let entry = cache.get(key);
     if (!entry) {
-      const Scene = withSettings(Bound, values);
+      const Scene = withSettings(Bound, next);
       entry = { Scene, trace: await traceScene(Scene) };
       cache.set(key, entry);
     }
-    if (loadGen !== generation) return;
+    if (token !== loads) return;
+    if (!entry.trace.steps.length) throw new Error('Explainer has no named steps');
+    const name = typeof step === 'function' ? step() : step;
+    // Zoom keeps its place across steps, including Back and Forward within a case.
+    const changed = !values || JSON.stringify(values) !== key;
+    values = next;
+    wanted = undefined;
     Active = entry.Scene;
     trace = entry.trace;
-    if (!trace.steps.length) throw new Error('Explainer has no named steps');
-    selected = step ? trace.steps.findIndex((s) => s.step === step) : 0;
+    if (changed) zoom.reset();
+    selected = name ? trace.steps.findIndex((s) => s.step === name) : 0;
+    // A previous case's fallback must not describe the restored case; both of this one's show.
+    const notices = fallback ? [fallback] : [];
     if (selected < 0) {
       selected = 0;
-      notice.textContent = `This case has no “${step}” step, so it opens at the first step.`;
+      notices.push(`This case has no “${name}” step, so it opens at the first step.`);
     }
+    notice.textContent = notices.join(' ');
     steps.replaceChildren(
       ...trace.steps.map((s, i) => {
         const li = el('li'),
@@ -310,6 +333,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     zoom.apply();
   });
   copy.onclick = async () => {
+    if (!trace) return;
     const url = urlFor();
     url.searchParams.delete('parentOrigin');
     try {
@@ -324,7 +348,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     if (['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON', 'A', 'SUMMARY'].includes(tag) || e.ctrlKey || e.metaKey) return;
     const keys: Record<string, () => void> = {
       ArrowRight: () => void advance(),
-      ArrowLeft: () => void show(selected - 1),
+      // Like the Previous button, which is disabled on the first step.
+      ArrowLeft: () => void (selected > 0 && show(selected - 1)),
       '+': () => zoom.zoomAt(1.6),
       '=': () => zoom.zoomAt(1.6),
       '-': () => zoom.zoomAt(1 / 1.6),

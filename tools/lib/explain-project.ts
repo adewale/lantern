@@ -18,12 +18,14 @@ export const hash = (value: string | Uint8Array) => createHash('sha256').update(
 /**
  * Make bundled JavaScript safe inside an inline <script>. The HTML parser only
  * reacts to `</script` and `<!--`, so only those change. Escaping every `</`
- * broke code such as the regex `/</g`, which became `/<\/g`.
+ * broke code such as the regex `/</g`, which became `/<\/g`. `<!--` becomes
+ * `<\x21--`, an escape that strings, templates and regexes (with or without
+ * the `u` and `v` flags) all read as `!`; `<\!--` is a SyntaxError in `/…/u`.
  */
 export const scriptEscape = (value: string) =>
   value
     .replace(/<\/(script)/gi, '<\\/$1')
-    .replace(/<!--/g, '<\\!--')
+    .replace(/<!--/g, '<\\x21--')
     .replace(/\u2028/g, '\\u2028')
     .replace(/\u2029/g, '\\u2029');
 export const htmlEscape = (value: unknown) =>
@@ -80,7 +82,7 @@ async function engineHash(): Promise<string> {
 }
 export async function loadScene(
   file: string,
-): Promise<{ Scene: ExplainerClass; file: string; sourceHash: string; engineHash: string }> {
+): Promise<{ Scene: ExplainerClass; exportName: string; file: string; sourceHash: string; engineHash: string }> {
   file = await scenePath(file);
   const result = await build({
     entryPoints: [file],
@@ -105,17 +107,20 @@ export async function loadScene(
   const choices = Object.values(module).filter(
     (value): value is ExplainerClass => typeof value === 'function' && value.prototype instanceof Scene,
   );
-  const Source =
+  // The one rule for which export is the scene; check and build import exactly this name.
+  const exportName =
     typeof module.default === 'function' && module.default.prototype instanceof Scene
-      ? module.default
+      ? 'default'
       : choices.length === 1
-        ? choices[0]
+        ? Object.keys(module).find((k) => module[k] === choices[0])!
         : null;
-  if (!Source) throw new Error('Export one Scene subclass (or a default Scene export)');
-  return { Scene: Source, file, sourceHash, engineHash: await engineHash() };
+  if (!exportName) throw new Error('Export one Scene subclass (or a default Scene export)');
+  return { Scene: module[exportName] as ExplainerClass, exportName, file, sourceHash, engineHash: await engineHash() };
 }
 export interface Project {
   Scene: ExplainerClass;
+  /** The module export that is the scene ('default' or a name). */
+  exportName: string;
   file: string;
   sourceHash: string;
   engineHash: string;
@@ -124,7 +129,16 @@ export interface Project {
   edits: number;
 }
 
-const IMPORTER = 4;
+/**
+ * The capture code's fingerprint. Snapshots record it, so changing how diagrams
+ * are captured or lowered (integrations/agentic-mermaid/build/) invalidates
+ * every cached snapshot instead of silently serving old ones.
+ */
+export const IMPORTER = await (async () => {
+  const dir = join(ROOT, 'integrations/agentic-mermaid/build');
+  const files = (await readdir(dir)).filter((n) => n.endsWith('.ts')).sort();
+  return hash((await Promise.all(files.map(async (n) => n + '\n' + (await readFile(join(dir, n), 'utf8'))))).join('\n')).slice(0, 16);
+})();
 /** File name for one diagram's snapshot: a short hash of its cache key. */
 export const snapshotFileName = (key: string) => hash(key).slice(0, 16) + '.json';
 const json = (value: unknown) => JSON.stringify(value, null, 2) + '\n';
@@ -139,22 +153,26 @@ async function readJson(path: string): Promise<Record<string, unknown> | null> {
 /**
  * Snapshots live in `scene.snapshots/`: `index.json` maps each diagram key to
  * a file, and each diagram has its own file, so changing one diagram changes
- * one file. The older single `scene.snapshots.json` is still read.
+ * one file.
  */
 export async function readSnapshots(base: string): Promise<SnapshotStore> {
   const index = await readJson(join(base + '.snapshots', 'index.json'));
+  const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+  const store: SnapshotStore = {};
+  // Own data properties, so a key such as `__proto__` is a key like any other.
+  const put = (key: string, value: unknown) =>
+    Object.defineProperty(store, key, { value, enumerable: true, writable: true, configurable: true });
   if (index?.version === 2 && index.importer === IMPORTER) {
-    const store: SnapshotStore = {};
-    for (const [key, name] of Object.entries(index.diagrams as Record<string, string>)) {
+    for (const [key, name] of Object.entries(isObject(index.diagrams) ? index.diagrams : {})) {
+      // Only the file this key's name hashes to: an index entry cannot point outside the folder.
+      if (name !== snapshotFileName(key)) continue;
       const snapshot = await readJson(join(base + '.snapshots', name));
-      if (snapshot) store[key] = snapshot as unknown as SnapshotStore[string];
+      if (snapshot) put(key, snapshot);
     }
-    return store;
   }
-  const legacy = await readJson(base + '.snapshots.json');
-  return legacy?.version === 1 && legacy.importer === IMPORTER ? (legacy.diagrams as SnapshotStore) : {};
+  return store;
 }
-/** Write the store, delete files no diagram uses, and retire the single-file cache. */
+/** Write the store and delete files no diagram uses. */
 export async function writeSnapshots(base: string, store: SnapshotStore, sourceHash: string): Promise<void> {
   const folder = base + '.snapshots';
   await mkdir(folder, { recursive: true });
@@ -166,7 +184,9 @@ export async function writeSnapshots(base: string, store: SnapshotStore, sourceH
     if ((await readFile(path, 'utf8').catch(() => null)) !== body) await writeFile(path, body);
   }
   const keep = new Set([...Object.values(names), 'index.json']);
-  for (const name of await readdir(folder)) if (!keep.has(name)) await rm(join(folder, name));
+  // Files only: a folder someone put here is theirs, not a stale snapshot.
+  for (const entry of await readdir(folder, { withFileTypes: true }))
+    if (entry.isFile() && !keep.has(entry.name)) await rm(join(folder, entry.name));
   const index = json({
     version: 2,
     importer: IMPORTER,
@@ -176,7 +196,6 @@ export async function writeSnapshots(base: string, store: SnapshotStore, sourceH
   });
   if ((await readFile(join(folder, 'index.json'), 'utf8').catch(() => null)) !== index)
     await writeFile(join(folder, 'index.json'), index);
-  await rm(base + '.snapshots.json', { force: true });
 }
 export async function collectProject(
   input: string,
