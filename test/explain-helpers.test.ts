@@ -229,6 +229,19 @@ test('whatever the validator accepts, a Diagram can draw without a NaN', async (
   );
 });
 
+test('a hidden diagram leaves the stage, so nothing describes it, and reveal brings it back', async () => {
+  const s = fixture();
+  const ok = await snapshotResolver({ [diagramKey(s.spec)]: s }).diagram(s.spec);
+  const scene = new Scene(new NullSink(), { skipUntil: Infinity });
+  const d = new Diagram(scene, ok.spec, ok, { box: 'side' });
+  await d.build();
+  assert.ok(scene.mobjects.includes(d.root));
+  await d.hide();
+  assert.ok(!scene.mobjects.includes(d.root));
+  await d.reveal(['A']);
+  assert.ok(scene.mobjects.includes(d.root));
+});
+
 test('a canvas so large the diagram fits to a point still draws finite points (CI counterexample)', async () => {
   const s = { ...fixture(), width: 129312739843.01703 };
   const ok = await snapshotResolver({ [diagramKey(s.spec)]: s }).diagram(s.spec);

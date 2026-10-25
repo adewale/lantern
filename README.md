@@ -43,7 +43,7 @@ npm run explain -- build my-explainer/scene.ts --out public/my-explainer.html
 
 `init` writes a working scene with one setting. `preview` serves the page and rebuilds it on save. `check` runs every case through [the checks](docs/REFERENCE.md#checks). `build` writes the page and the response headers it needs; [publishing](docs/PUBLISHING.md) shows how to embed it.
 
-Limits: lettering is always the embedded Inter or JetBrains Mono, so styles lose their own fonts and other scripts fail the build; labels are small on a phone until the reader zooms; only the Mermaid families in `evidence.json` are tested; the models are small and cited, and no subject expert has reviewed the explainers.
+Limits: lettering is always the embedded Inter or JetBrains Mono, so styles lose their own fonts and other scripts fail the build; labels are small on a phone until the reader zooms, unless the scene is laid out for a phone as `send-sync` is; only the Mermaid families in `evidence.json` are tested; the models are small and cited, and no subject expert has reviewed the explainers.
 
 ## Documents
 

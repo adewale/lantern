@@ -44,7 +44,7 @@ const labelLeaves = (d: Diagram) =>
   );
 
 test('the corpus holds every family the explainers use', () => {
-  assert.deepEqual([...new Set(corpus.map((c) => c.s.family))].sort(), ['class', 'flowchart', 'gitgraph', 'sequence', 'state', 'xychart']);
+  assert.deepEqual([...new Set(corpus.map((c) => c.s.family))].sort(), ['class', 'flowchart', 'gantt', 'gitgraph', 'quadrant', 'sequence', 'state', 'timeline', 'xychart']);
 });
 
 test('on every pinned snapshot, marking every part keeps each label its ink', async () => {
@@ -58,9 +58,11 @@ test('on every pinned snapshot, marking every part keeps each label its ink', as
   }
 });
 
-test('on every pinned snapshot, dimming everything spares the frame, participants, lifelines, axes, grid lines and branches', async () => {
+test('on every pinned snapshot, dimming everything spares the frame, participants, lifelines, axes, grid lines, branches, sections, rails and plates', async () => {
   // The scaffolding a reader keeps their bearings by, as each family's ids name it.
-  const scaffold = (id: string) => id === '__frame' || /^(actor|lifeline|axis|grid|branch):/.test(id);
+  const scaffold = (id: string) =>
+    ['__frame', 'rail', 'border'].includes(id) ||
+    /^(actor|lifeline|axis|grid|branch|section|section-band|section-label|plate|divider|quadrant-label):/.test(id);
   for (const c of corpus) {
     const d = await shown(c.s);
     const opacity = (id: string) => d.get(id).family().map((m) => m.style.opacity ?? 1);
@@ -80,6 +82,8 @@ test('a diagram is described by the counts its source declares, and bare names n
     [pinned('2password', 'participant O as op CLI'), 'Sequence diagram: 3 participants, 6 messages'],
     [pinned('agentic-mermaid', 'gitGraph'), 'Git graph: 3 commits, 2 links'],
     [pinned('2password', 'graph LR'), 'Flowchart: 4 nodes, 3 links'],
+    [pinned('cert-renewal', 'Longest a public TLS'), 'Timeline “Longest a public TLS certificate may last”: 4 periods'],
+    [pinned('send-sync', 'Rc<i32>'), 'Quadrant chart: 1 point'],
   ];
   for (const [s, what] of cases) assert.equal((await shown(s)).describe().what, what);
   const classes = await shown(pinned('lantern', 'classDiagram'));

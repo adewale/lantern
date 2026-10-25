@@ -15,7 +15,7 @@ await this.step('stable-name', { title: 'A claim the picture can prove', caption
 this.state.reads = reads;   // program state, recorded at each step boundary
 ```
 
-- `meta.id` names the output files; `meta.title` is the page title; `meta.lang` (BCP 47, default `en`) is the language of the page, the transcripts and the subtitles; `meta.sources` are listed under the transcript.
+- `meta.id` names the output files; `meta.title` is the page title; `meta.lang` (BCP 47, default `en`) is the language of the page, the transcripts and the subtitles; the player's and page's own words are in English or French (`app/embed-strings.ts`), and on a page in another language the generated picture descriptions, which are English, are marked `lang="en"`; `meta.sources` are listed under the transcript.
 - Step names are URL identifiers. They must be unique and non-empty in every case.
 - `this.state` is recorded before and after each step. Compute values with a model, show its result, and test that each step's state equals the model's (`assertStepState` in `test/lib/explainer-state.ts`).
 - A captioned step holds until its caption could be read at 160 words a minute (`Scene.captionWpm`), counting the step's motion as reading time. The page ignores the hold and stops when the picture stops; the video holds each caption for its full reading time (see [Video files](#video-files)). The picture must not change once the hold begins.
@@ -36,6 +36,7 @@ const s = stage(this, { style: 'nord' });
 | `style` | An Agentic Mermaid style: the stage's palette, and the style of every diagram that names none |
 | `palette` | Colours for the stage, for example `palette('dusk')` in a scene with no diagrams |
 | `heading` | `'step'` (default), a fixed string, or `false` for no heading |
+| `headingSize` | The heading's font size, 0.36 by default; at 0.5 it reads at about 12 px on a 390 px phone |
 
 With neither `style` nor `palette`, the stage adopts the first diagram's palette.
 
@@ -246,7 +247,7 @@ Each step plays its motion with the step's title in the footer, then holds its r
 | Caption footer (`--footer`) | 1280 × 960: a 1280 × 720 stage over a 240 px footer that shows the title, then the caption, each up to four lines at 27 px, in the page's light or dark colours |
 | Stage only | 16:9 at any even width; height rounds to an even number; no title or caption on screen |
 
-With `--footer`, `render` fails before FFmpeg starts on a title or caption that needs more than four lines or has a character the fonts cannot draw; `demos:check` runs this footer check on every case. Like `check`, `render` fails if the picture changes during a caption hold. An MP4 needs an ISO 639-2 code for `meta.lang`: three-letter tags pass, `en` and its regional tags become `eng`, and other tags fail. Video bytes may differ between FFmpeg and resvg builds.
+With `--footer`, `render` fails before FFmpeg starts on a title or caption that needs more than four lines or has a character the fonts cannot draw; `demos:check` runs this footer check on every case. Like `check`, `render` fails if the picture changes during a caption hold. An MP4 needs an ISO 639-2 code for `meta.lang`: three-letter tags pass, `en` and `fr` and their regional tags become `eng` and `fra`, and other tags fail. Video bytes may differ between FFmpeg and resvg builds.
 
 ## Repository scripts
 

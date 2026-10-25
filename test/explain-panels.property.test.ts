@@ -244,6 +244,21 @@ test('a morphed block stays within its region\'s width and on stage, whatever th
   );
 });
 
+test('a titled block keeps its title inside the panel and above the code after morph', async () => {
+  await fc.assert(
+    fc.asyncProperty(morphCase.filter((c) => !!c.knobs.title?.trim()), async (c) => {
+      const { block } = await morphed(c);
+      const head = block.children.find((m): m is Text => m instanceof Text && m.text === c.knobs.title)!;
+      const h = head.box()!,
+        p = block.panel.box()!,
+        code = block.code.box();
+      assert.ok(h[0] >= p[0] - EPS && h[2] <= p[2] + EPS && h[3] <= p[3] + EPS, `title ${h} outside panel ${p}`);
+      if (code) assert.ok(h[1] >= code[3] - 0.05, `title ${h} over code ${code}`);
+    }),
+    params(300),
+  );
+});
+
 test('a morphed block keeps its top and centre unless its region made it move', async () => {
   await fc.assert(
     fc.asyncProperty(morphCase, async (c) => {

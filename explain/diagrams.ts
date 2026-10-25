@@ -51,7 +51,8 @@ const TOKEN = { radius: 0.08, fade: 0.18 };
 const isScaffold = (info: SnapshotPart) =>
   info.id === '__frame' ||
   /axis|lifeline|lane|grid|participant|actor|section|rail|plate|chrome/.test(info.role) ||
-  info.id.startsWith('branch:');
+  info.id.startsWith('branch:') ||
+  info.id.startsWith('quadrant-label:');
 /** A reader's name for each family, and for its things and its links. */
 const FAMILIES: Record<string, [string, string?, string?]> = {
   flowchart: ['Flowchart', 'node', 'link'],
@@ -792,5 +793,7 @@ export class Diagram {
     this.notes = [];
     this.visible.clear();
     for (const child of [...this.root.children]) this.root.remove(child);
+    // Off stage, so the description stops naming it; `reveal` attaches it again.
+    this.scene.remove(this.root);
   }
 }

@@ -8,6 +8,7 @@ import { reportHeight } from './embed-protocol.ts';
 import { icon } from './embed-icons.ts';
 import type { IconName } from './embed-icons.ts';
 import { StageZoom } from './embed-zoom.ts';
+import { chromeFor, isEnglish } from './embed-strings.ts';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, className?: string): HTMLElementTagNameMap[K] => {
   const node = document.createElement(tag);
@@ -37,6 +38,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     ? params.get('theme')!
     : 'auto';
   const Bound = bindSnapshots(Source, snapshots);
+  // The page's own words in the scene's language; the generated descriptions stay English.
+  const lang = Source.meta?.lang ?? 'en',
+    t = chromeFor(lang);
   let values: Settings,
     trace: Trace,
     Active: ExplainerClass,
@@ -78,7 +82,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
 
   // The player: the picture, what it says, and how to move on. Enlarge shows all three.
   const player = el('section', undefined, 'player');
-  player.setAttribute('aria-label', 'Explainer');
+  player.setAttribute('aria-label', t.player);
   const stage = el('div', undefined, 'stage');
   stage.setAttribute('role', 'img');
   stage.setAttribute('aria-label', title.textContent!);
@@ -95,20 +99,21 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     picture = el('div');
   summary.id = 'picture-summary';
   summary.hidden = true;
-  described.append(el('summary', 'What the picture shows'), picture);
+  if (!isEnglish(lang)) summary.lang = picture.lang = 'en';
+  described.append(el('summary', t.picture), picture);
   stage.setAttribute('aria-describedby', summary.id);
   const controls = el('nav', undefined, 'controls');
-  controls.setAttribute('aria-label', 'Steps');
-  const prev = button('Previous step', 'previous'),
-    next = button('Next step', 'next', { text: 'Next', className: 'button primary' });
+  controls.setAttribute('aria-label', t.controls);
+  const prev = button(t.previous, 'previous'),
+    next = button(t.nextLabel, 'next', { text: t.next, className: 'button primary' });
   next.append(next.querySelector('svg')!); // the arrow follows the word
   const tools = el('div', undefined, 'tools');
-  const zoomOut = button('Zoom out', 'zoomOut'),
-    zoomIn = button('Zoom in', 'zoomIn'),
-    zoomFit = button('Fit stage', 'fit'),
-    replay = button('Replay step', 'replay'),
-    copy = button('Copy link', 'link'),
-    enlarge = button('Enlarge', 'enlarge');
+  const zoomOut = button(t.zoomOut, 'zoomOut'),
+    zoomIn = button(t.zoomIn, 'zoomIn'),
+    zoomFit = button(t.fit, 'fit'),
+    replay = button(t.replay, 'replay'),
+    copy = button(t.copy, 'link'),
+    enlarge = button(t.enlarge, 'enlarge');
   enlarge.setAttribute('aria-pressed', 'false');
   tools.append(zoomOut, zoomIn, zoomFit, replay, copy, ...(document.fullscreenEnabled ? [enlarge] : []));
   controls.append(prev, next, tools);
@@ -117,7 +122,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   player.append(stage, summary, caption, described, controls, notice);
 
   const steps = el('ol', undefined, 'steps');
-  steps.setAttribute('aria-label', 'Steps in this explainer');
+  steps.setAttribute('aria-label', t.stepList);
   // The page's transcript holds every case; the player shows the current one, and its links move the player.
   const transcript = root.querySelector<HTMLDetailsElement>('.transcript')!;
   transcript.open = false;
@@ -130,7 +135,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   });
   // Inside a frame, a way out to the full page; a standalone page needs none, and the
   // loader (which sets parentOrigin) already puts this link beside the frame.
-  const standalone = el('a', 'Open in a new tab', 'standalone');
+  const standalone = el('a', t.newTab, 'standalone');
   standalone.target = '_blank';
   standalone.rel = 'noopener';
   const framed = window.parent !== window && !params.has('parentOrigin');
@@ -167,11 +172,11 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     next.disabled = selected === trace.steps.length - 1;
     for (const b of steps.querySelectorAll('button'))
       b.setAttribute('aria-current', b.dataset.step === step.step ? 'step' : 'false');
-    stage.setAttribute('aria-label', `${title.textContent}: ${String(step.meta.title ?? step.step)}`);
+    stage.setAttribute('aria-label', t.stageLabel(title.textContent!, String(step.meta.title ?? step.step)));
     summary.textContent = pictureSummary(step.after);
     picture.innerHTML = pictureHtml(step.after);
     described.hidden = !picture.innerHTML;
-    setIcon(replay, playing ? 'Stop animation' : 'Replay step', playing ? 'stop' : 'replay');
+    setIcon(replay, playing ? t.stop : t.replay, playing ? 'stop' : 'replay');
   }
   function settle(step: Trace['steps'][number]) {
     zoom.apply();
@@ -210,7 +215,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     if (!trace) return;
     if (playing && !force) return show(selected, false);
     if (reduced()) {
-      notice.textContent = 'Reduced motion is on, so the finished step is shown.';
+      notice.textContent = t.reducedMotion;
       return show(selected, false);
     }
     const gen = ++generation;
@@ -258,7 +263,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       next = resolveSettings(Source, request);
     } catch (error) {
       next = resolveSettings(Source);
-      fallback = `${(error as Error).message}. Showing the default case.`;
+      fallback = t.fallback((error as Error).message);
     }
     wanted = next;
     for (const [id, inputs] of choices) for (const input of inputs) input.checked = input.value === next[id];
@@ -283,7 +288,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     const notices = fallback ? [fallback] : [];
     if (selected < 0) {
       selected = 0;
-      notices.push(`This case has no “${name}” step, so it opens at the first step.`);
+      notices.push(t.noStep(name!));
     }
     notice.textContent = notices.join(' ');
     steps.replaceChildren(
@@ -315,7 +320,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   };
   document.addEventListener('fullscreenchange', () => {
     const on = document.fullscreenElement === player;
-    setIcon(enlarge, on ? 'Exit full screen' : 'Enlarge', on ? 'fit' : 'enlarge');
+    setIcon(enlarge, on ? t.exitFullScreen : t.enlarge, on ? 'fit' : 'enlarge');
     enlarge.setAttribute('aria-pressed', String(on));
     zoom.apply();
   });
@@ -325,7 +330,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     url.searchParams.delete('parentOrigin');
     try {
       await navigator.clipboard.writeText(url.href);
-      notice.textContent = 'Link copied.';
+      notice.textContent = t.copied;
     } catch {
       notice.textContent = url.href;
     }

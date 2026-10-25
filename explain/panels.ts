@@ -243,6 +243,8 @@ export class CodeBlock extends Group {
   /** The box the block was placed in; `morph` grows only within it (the stage, if placed at a point). */
   private region: Box;
   private readonly title: string | undefined;
+  /** The title's text, which `morph` moves with the panel's top-left corner. */
+  private head: Text | null;
 
   constructor(scene: Scene, colors: Palette, lines: readonly string[], options: CodeOptions = {}) {
     super();
@@ -275,6 +277,7 @@ export class CodeBlock extends Group {
     // A title wider than the panel shrinks to fit it, as a card's does.
     if (head && head.width() > width - 2 * pad) head.scale((width - 2 * pad) / head.width());
     if (head) head.moveTo([-width / 2 + pad, height / 2 - 0.3], [-1, 0]);
+    this.head = head;
     this.bar = tint(emphasis(colors), width - 0.14, 0.1).setOpacity(0);
     this.add(this.panel);
     if (options.diff)
@@ -401,6 +404,13 @@ export class CodeBlock extends Group {
       (top + lift + bottom) / 2,
     ]);
     const anims = [new Transform(this.panel, panel, { runTime })];
+    if (this.head) {
+      // The title keeps its place at the panel's top-left, shrinking if the panel narrowed.
+      const head = this.head.copy();
+      const room = right - left - 0.6;
+      if (head.width() > room) head.scale(room / head.width());
+      anims.push(new Transform(this.head, head.moveTo([left + 0.3, top + lift - 0.3], [-1, 0]), { runTime }));
+    }
     const lines: Text[] = [];
     next.forEach((_, j) => {
       const i = keep.get(j);

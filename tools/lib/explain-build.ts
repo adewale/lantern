@@ -3,7 +3,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { SnapshotSink, renderAt } from '../../src/index.ts';
-import { caseName } from '../../explain/index.ts';
+import { chromeFor, caseNameIn, descriptionLang } from '../../app/embed-strings.ts';
 import { restingTime, pictureHtml, htmlEscape } from '../../explain/trace.ts';
 import { ROOT, engineAlias, defaultVariant, hash, scriptEscape, sceneSlug, baseReceipt } from './explain-project.ts';
 import type { Project } from './explain-project.ts';
@@ -14,9 +14,13 @@ export async function buildExplainer(
 ): Promise<{ html: string; receipt: Record<string, unknown> }> {
   const v = defaultVariant(project),
     first = v.trace.steps[0]!;
+  // The page's own words follow the scene's language; the picture descriptions are English in all.
+  const title = project.Scene.meta?.title ?? sceneSlug(project),
+    lang = project.Scene.meta?.lang ?? 'en',
+    t = chromeFor(lang);
   const sink = new SnapshotSink();
   await renderAt(v.Scene, restingTime(first, v.trace.fps), sink);
-  const entry = `import Source from 'virtual:author';import{mountEmbed}from ${JSON.stringify(join(ROOT, 'app/embed.ts'))};const root=document.getElementById('content');mountEmbed(root,Source,${JSON.stringify(project.store)}).then(()=>{root.dataset.ready='true'}).catch(error=>{console.error(error);const p=document.createElement('p');p.setAttribute('role','alert');p.textContent='The interactive player could not start. The transcript is available below.';root.append(p)});`;
+  const entry = `import Source from 'virtual:author';import{mountEmbed}from ${JSON.stringify(join(ROOT, 'app/embed.ts'))};const root=document.getElementById('content');mountEmbed(root,Source,${JSON.stringify(project.store)}).then(()=>{root.dataset.ready='true'}).catch(error=>{console.error(error);const p=document.createElement('p');p.setAttribute('role','alert');p.textContent=${JSON.stringify(t.failed)};root.append(p)});`;
   const bundled = await build({
     stdin: { contents: entry, resolveDir: ROOT, sourcefile: 'explainer-entry.ts', loader: 'ts' },
     bundle: true,
@@ -50,18 +54,16 @@ export async function buildExplainer(
     throw new Error('Build-time diagram renderer leaked into browser artifact');
   const js = scriptEscape(bundled.outputFiles[0]!.text),
     css = await readFile(join(ROOT, 'app/embed.css'), 'utf8');
-  const title = project.Scene.meta?.title ?? sceneSlug(project),
-    lang = project.Scene.meta?.lang ?? 'en';
   // Every case, every step: a link to it, its caption and what its resting picture shows.
   // The player shows the current case's section; without JavaScript every case shows.
   const transcript = project.variants
     .map(({ values, trace }) => {
       const key = new URLSearchParams(values).toString(),
-        name = caseName(project.Scene, values);
+        name = caseNameIn(lang, project.Scene, values);
       const steps = trace.steps.map((s, i) => {
         const href = `?${key ? key + '&' : ''}${new URLSearchParams({ step: s.step })}`,
           shows = pictureHtml(s.after, trace.steps[i - 1]?.after);
-        return `<li><a href="${htmlEscape(href)}">${htmlEscape(s.meta.title ?? s.step)}</a><p>${htmlEscape(s.meta.caption ?? '')}</p>${shows ? `<div>${shows}</div>` : ''}</li>`;
+        return `<li><a href="${htmlEscape(href)}">${htmlEscape(s.meta.title ?? s.step)}</a><p>${htmlEscape(s.meta.caption ?? '')}</p>${shows ? `<div${descriptionLang(lang)}>${shows}</div>` : ''}</li>`;
       });
       return `<section data-case="${htmlEscape(key)}">${name ? `<h2>${htmlEscape(name)}</h2>` : ''}<ol>${steps.join('')}</ol></section>`;
     })
@@ -76,7 +78,7 @@ export async function buildExplainer(
       ),
     )
   ).join('\n\n');
-  const html = `<!doctype html>\n<html lang="${htmlEscape(lang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${htmlEscape(title)}</title><meta name="generator" content="Lantern Explainers"><style>${css}</style></head><body><main id="content"><h1>${htmlEscape(title)}</h1><div class="stage poster">${sink.svg}</div><p class="caption">${htmlEscape(first.meta.caption ?? '')}</p><details class="transcript" open><summary>Transcript</summary>${transcript}${sources ? `<h2>Sources</h2><ul>${sources}</ul>` : ''}</details></main><template id="licenses"><pre>${htmlEscape(licenses)}</pre></template><script>${js}</script></body></html>\n`;
+  const html = `<!doctype html>\n<html lang="${htmlEscape(lang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${htmlEscape(title)}</title><meta name="generator" content="Lantern Explainers"><style>${css}</style></head><body><main id="content"><h1>${htmlEscape(title)}</h1><div class="stage poster">${sink.svg}</div><p class="caption">${htmlEscape(first.meta.caption ?? '')}</p><details class="transcript" open><summary>${htmlEscape(t.transcript)}</summary>${transcript}${sources ? `<h2>${htmlEscape(t.sources)}</h2><ul>${sources}</ul>` : ''}</details></main><template id="licenses"><pre>${htmlEscape(licenses)}</pre></template><script>${js}</script></body></html>\n`;
   const sri = (value: string) => "'sha256-" + createHash('sha256').update(value).digest('base64') + "'";
   const policy = `default-src 'none'; script-src ${sri(js)}; style-src ${sri(css)}; img-src data:; connect-src 'none'; font-src 'none'; base-uri 'none'; object-src 'none'; frame-ancestors *`;
   const receipt = {

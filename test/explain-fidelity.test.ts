@@ -15,6 +15,9 @@ import {
 import { find, run } from '../scenes/explainers/lib/2password.ts';
 import { Scene, Text, loadFonts } from '../src/index.ts';
 import { Repo, AUTHOR } from '../scenes/explainers/lib/git.ts';
+import { check as certRenewal } from './lib/fidelity/cert-renewal.ts';
+import { check as quotientFamilial } from './lib/fidelity/quotient-familial.ts';
+import { check as sendSync } from './lib/fidelity/send-sync.ts';
 
 for (const entry of EXPLAINERS)
   test(`${entry.id}: every authored case exposes the program's answers at step boundaries`, async () => {
@@ -185,6 +188,15 @@ for (const entry of EXPLAINERS)
           assert.ok(Math.abs(fork.t1 - fork.t0 - (words / Scene.captionWpm) * 60) <= 1 / trace.fps + 1e-9);
           break;
         }
+        case 'cert-renewal':
+          certRenewal(trace, values);
+          break;
+        case 'quotient-familial':
+          quotientFamilial(trace, values);
+          break;
+        case 'send-sync':
+          sendSync(trace, values);
+          break;
         default:
           assert.fail(`${entry.id} has no fidelity oracle: compare its step state with the program it explains`);
       }

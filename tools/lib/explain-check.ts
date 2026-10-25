@@ -103,8 +103,18 @@ export function restingTextProblems(scene: { familyMembers(): Mobject[] }): stri
     let nested = false;
     for (let a = m.parent; a; a = a.parent) if (typeof (a as unknown as { text?: unknown }).text === 'string') nested = true;
     if (nested) continue;
-    const box = m.box();
-    if (box) texts.push({ m, box, native: m instanceof Text, text });
+    const drawn = m.box();
+    if (!drawn) continue;
+    const box: Box = [...drawn];
+    // Only the part inside every clip around it is drawn (a diagram's camera clips to its frame).
+    for (let a: Mobject | null = m; a; a = a.parent)
+      if (a.clipBox) {
+        box[0] = Math.max(box[0], a.clipBox[0]);
+        box[1] = Math.max(box[1], a.clipBox[1]);
+        box[2] = Math.min(box[2], a.clipBox[2]);
+        box[3] = Math.min(box[3], a.clipBox[3]);
+      }
+    if (box[2] > box[0] && box[3] > box[1]) texts.push({ m, box, native: m instanceof Text, text });
   }
   const problems: string[] = [];
   for (const t of texts)

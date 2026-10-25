@@ -6,7 +6,7 @@ import { dirname, resolve, join, basename } from 'node:path';
 import { Scene, Text, Rectangle, NullSink, toSvgString, loadFonts, traceScene, takeMissingGlyphs } from '../../src/index.ts';
 import type { Trace } from '../../src/index.ts';
 import { FRAME } from '../../src/svg.ts';
-import { caseName } from '../../explain/index.ts';
+import { caseNameIn, descriptionLang } from '../../app/embed-strings.ts';
 import type { ExplainerClass, Settings } from '../../explain/index.ts';
 import { pictureHtml, htmlEscape } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
@@ -17,8 +17,27 @@ const CAPTION = { size: 0.34, leading: 0.5, lines: 4 };
 export const FOOTER_TEXT_WIDTH = 13.6;
 /** Footer height in scene units: a 1280 × 720 stage over a 240 px footer is 1280 × 960. */
 const FOOTER_HEIGHT = 3;
-/** MP4 tags a stream with an ISO 639-2 code; WebM and WebVTT take the scene's BCP 47 tag as is. */
-const ISO_639_2: Record<string, string> = { en: 'eng' };
+/** MP4 tags a stream with an ISO 639-2 code (the terminology code, as MP4 uses); WebM and WebVTT take the scene's BCP 47 tag as is. */
+const ISO_639_2: Record<string, string> = { en: 'eng', fr: 'fra' };
+/** The subtitle stream's language tag: the BCP 47 tag for WebM, an ISO 639-2 code for MP4. */
+export function trackLanguage(lang: string, webm = false): string {
+  if (webm) return lang;
+  const code = /^[a-z]{3}$/.test(lang) ? lang : ISO_639_2[lang.split('-')[0]!.toLowerCase()];
+  if (!code) throw new Error(`No ISO 639-2 code for language ${lang}; add it to ISO_639_2 in ${import.meta.filename}`);
+  return code;
+}
+/**
+ * The video's text alternative (WCAG 1.2.1): title, then each step's title, caption and what its
+ * picture shows. The descriptions are generated in English, so another language's page marks them.
+ */
+export function videoTranscript(title: string, lang: string, steps: Trace['steps']): string {
+  return `<!doctype html><html lang="${htmlEscape(lang)}"><meta charset="utf-8"><title>${htmlEscape(title)}</title><h1>${htmlEscape(title)}</h1><ol>${steps
+    .map((s) => {
+      const shows = pictureHtml(s.after);
+      return `<li><h2>${htmlEscape(s.meta.title ?? s.step)}</h2><p>${htmlEscape(s.meta.caption ?? '')}</p>${shows && descriptionLang(lang) ? `<div${descriptionLang(lang)}>${shows}</div>` : shows}</li>`;
+    })
+    .join('')}</ol></html>\n`;
+}
 
 /** Breakable white space: every \s except the no-break spaces, which hold their words together. */
 const BREAK = /[^\S\u00a0\u2007\u202f]+/;
@@ -185,8 +204,7 @@ export async function renderVideo(
   const webm = out.endsWith('.webm');
   if (!webm && !out.endsWith('.mp4')) throw new Error('Use an .mp4 or .webm output');
   const lang = project.Scene.meta?.lang ?? 'en',
-    trackLang = webm ? lang : (/^[a-z]{3}$/.test(lang) ? lang : ISO_639_2[lang.split('-')[0]!]);
-  if (!trackLang) throw new Error(`No ISO 639-2 code for language ${lang}; add it to ISO_639_2 in ${import.meta.filename}`);
+    trackLang = trackLanguage(lang, webm);
   let ffmpeg: string;
   try {
     ffmpeg = execFileSync('ffmpeg', ['-version'], { encoding: 'utf8' }).split('\n')[0]!;
@@ -325,7 +343,7 @@ export async function renderVideo(
     throw error;
   }
   // The text alternative to the video (WCAG 1.2.1): each step's title, caption and what its picture shows.
-  const title = [project.Scene.meta?.title ?? basename(out), caseName(project.Scene, variant.values)].filter(Boolean).join(' · '),
+  const title = [project.Scene.meta?.title ?? basename(out), caseNameIn(lang, project.Scene, variant.values)].filter(Boolean).join(' · '),
     transcript = out.replace(/\.[^.]+$/, '.transcript.html');
   const receipt = {
     ...baseReceipt(project),
@@ -350,12 +368,7 @@ export async function renderVideo(
   // Commit the receipt last; interrupted renders never replace a complete video with a partial file.
   await rename(temporaryVideo, out);
   await rename(vtt, out.replace(/\.[^.]+$/, '.vtt'));
-  await writeFile(
-    transcript,
-    `<!doctype html><html lang="${htmlEscape(lang)}"><meta charset="utf-8"><title>${htmlEscape(title)}</title><h1>${htmlEscape(title)}</h1><ol>${trace.steps
-      .map((s) => `<li><h2>${htmlEscape(s.meta.title ?? s.step)}</h2><p>${htmlEscape(s.meta.caption ?? '')}</p>${pictureHtml(s.after)}</li>`)
-      .join('')}</ol></html>\n`,
-  );
+  await writeFile(transcript, videoTranscript(title, lang, trace.steps));
   await rename(metadata, out + '.chapters.ffmeta');
   await writeFile(out + '.receipt.json', JSON.stringify(receipt, null, 2) + '\n');
   await rm(temp, { recursive: true, force: true });

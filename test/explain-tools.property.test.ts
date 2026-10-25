@@ -236,6 +236,27 @@ test('texts with disjoint boxes never collide, and a text over a copy of itself 
   );
 });
 
+test('a label clipped out of sight collides with nothing; a clipped label still in sight does', () => {
+  // A diagram framed on one part clips its other labels to the frame: a reader sees none of them,
+  // so a card beside the frame cannot collide with them.
+  fc.assert(
+    fc.property(placedText.map((p) => ({ ...p, native: true, hide: 'none' as const, x: Math.max(-6, Math.min(6, p.x)), y: Math.max(-3, Math.min(3, p.y)) })), fc.double({ min: 0, max: 1, noNaN: true }), (p, cut) => {
+      const [card] = build([p]),
+        [label] = build([{ ...p, native: false }]);
+      const b = label!.box()!;
+      fc.pre(p.text.trim() !== '' && b[2] - b[0] > 0.01 && b[3] - b[1] > 0.01);
+      const frame = new Group(label!);
+      // A clip that ends before the label starts hides it.
+      frame.clipBox = [b[0] - 5, b[1] - 5, b[0] - 0.01, b[3] + 5];
+      assert.deepEqual(restingTextProblems(sceneOf([card!, frame])).filter((x) => x.includes('overlaps')), []);
+      // A clip that leaves most of the label in sight keeps the collision.
+      frame.clipBox = [b[0] + (b[2] - b[0]) * cut * 0.5, b[1] - 5, b[2] + 5, b[3] + 5];
+      assert.equal(restingTextProblems(sceneOf([card!, frame])).filter((x) => x.includes('overlaps')).length, 1);
+    }),
+    params(),
+  );
+});
+
 // ---- readSnapshots / writeSnapshots ----------------------------------------------
 
 const snapshotValue = fc.jsonValue({ maxDepth: 2 }).map((v) => ({ version: 1, body: v }));
