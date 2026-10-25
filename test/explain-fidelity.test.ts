@@ -13,7 +13,7 @@ import {
   daylightYear,
 } from '../scenes/explainers/lib/models.ts';
 import { find, run } from '../scenes/explainers/lib/2password.ts';
-import { Text, loadFonts } from '../src/index.ts';
+import { Scene, Text, loadFonts } from '../src/index.ts';
 import { Repo, AUTHOR } from '../scenes/explainers/lib/git.ts';
 
 for (const entry of EXPLAINERS)
@@ -173,8 +173,47 @@ for (const entry of EXPLAINERS)
             }).advance(),
           });
           break;
+        case 'fork': {
+          // The timeline drawn in 'video' is the trace's own timing of the 'fork' step,
+          // and that step lasts its caption's reading time at Scene.captionWpm, to the frame.
+          const fork = trace.steps.find((s) => s.step === 'fork')!;
+          const words = String(fork.meta.caption).trim().split(/\s+/).length;
+          assert.ok(fork.hold != null && fork.t1 != null, 'the fork step holds for its caption');
+          assertStepState(trace, 'video', {
+            video: { motion: +(fork.hold - fork.t0).toFixed(2), held: +(fork.t1 - fork.hold).toFixed(2), words },
+          });
+          assert.ok(Math.abs(fork.t1 - fork.t0 - (words / Scene.captionWpm) * 60) <= 1 / trace.fps + 1e-9);
+          break;
+        }
         default:
           assert.fail(`${entry.id} has no fidelity oracle: compare its step state with the program it explains`);
       }
     }
   });
+
+// The fork explainer's claims about Lantern, held to Lantern's code at the fork base and to this tree.
+test('fork: what it says Lantern had and the fork deleted matches both trees', async (t) => {
+  const { execFileSync } = await import('node:child_process');
+  const { existsSync, readFileSync } = await import('node:fs');
+  const BASE = '2c7bad533be25fbd56d26a9a2b6c5651743f011e';
+  for (const gone of ['app/worker.ts', 'app/player.ts', 'src/doc.ts', 'src/mermaid.ts', 'wrangler.toml'])
+    assert.ok(!existsSync(gone), `${gone} is still here`);
+  assert.match(readFileSync('docs/UPSTREAM.md', 'utf8'), /None has been offered upstream/);
+  const git = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  try {
+    git('cat-file', '-e', `${BASE}^{commit}`);
+  } catch {
+    return t.skip('the fork base is not in this clone (shallow checkout)');
+  }
+  const show = (path: string) => git('show', `${BASE}:${path}`);
+  const worker = show('app/worker.ts');
+  for (const route of ['/frame.svg', '/text', '/trace.json', '/llms.txt']) assert.ok(worker.includes(`'${route}'`), route);
+  assert.match(show('src/mermaid.ts'), /expected "flowchart <dir>" or "graph <dir>"/);
+  const scenes = git('ls-tree', '--name-only', `${BASE}:scenes`)
+    .split('\n')
+    .filter((f) => /\.ts$/.test(f) && f !== 'index.ts');
+  assert.equal(scenes.length, 9, scenes.join(', '));
+  const tools = git('ls-tree', '-r', '--name-only', BASE, 'tools', 'app', 'src').split('\n').filter(Boolean);
+  assert.ok(!tools.some((f) => /ffmpeg|\.mp4|webm/i.test(show(f))), 'Lantern encodes no video');
+  assert.equal(JSON.parse(show('package.json')).dependencies, undefined, 'Lantern has no runtime dependencies');
+});

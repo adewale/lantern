@@ -16,6 +16,7 @@ export const EXPLAINERS: readonly { id: string; step: string; group: 'topic' | '
   { id: 'just-bash', step: 'cat', group: 'topic' },
   { id: 'pyex-limits', step: 'failure', group: 'topic' },
   { id: 'lantern', step: 'objects', group: 'toolchain' },
+  { id: 'fork', step: 'fork', group: 'toolchain' },
   { id: 'agentic-mermaid', step: 'repair', group: 'toolchain' },
   { id: 'glyph', step: 'measure', group: 'toolchain' },
 ];

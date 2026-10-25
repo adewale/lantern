@@ -196,7 +196,7 @@ function validateSnapshot(value: DiagramSnapshot): void {
           !Array.isArray(r.matrix) ||
           r.matrix.length !== 6 ||
           !r.matrix.every(point) ||
-          (r.width != null && (!finite(r.width) || r.width < 0)) ||
+          (r.width != null && (!point(r.width) || r.width < 0)) ||
           (r.baseline != null &&
             !['auto', 'alphabetic', 'middle', 'central', 'text-before-edge', 'text-after-edge'].includes(
               r.baseline,

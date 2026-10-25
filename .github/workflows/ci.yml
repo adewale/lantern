@@ -10,6 +10,8 @@ jobs:
     timeout-minutes: 25  # full suite, browser gates, every demo case and video
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the fork explainer's test reads Lantern's code at the fork base
       - uses: actions/setup-node@v4
         with:
           node-version: 26

@@ -238,6 +238,18 @@ test('a canvas so large the diagram fits to a point still draws finite points (C
   for (const p of d.parts.values()) for (const m of p.mob.family()) for (const a of m.pointArrays()) assert.ok(a.every(Number.isFinite));
 });
 
+test('a label width beyond float32 is refused, not drawn as Infinity (property counterexample)', async () => {
+  const style = { fill: '#000', stroke: 'none', fillOpacity: 1, strokeOpacity: 1, opacity: 1, strokeWidth: 0 };
+  const run = { text: 'A', x: 0, y: 0, size: 11, anchor: 'start', matrix: [1, 0, 0, 1, 0, 0] };
+  const withLabel = (width: number) => {
+    const s = fixture();
+    s.parts[1]!.shapes.push({ subpaths: [], closed: [], style, text: 'A', fontSize: 0.11, textRun: { ...run, width } } as never);
+    return snapshotResolver({ [diagramKey(s.spec)]: s }).diagram(s.spec);
+  };
+  await withLabel(24);
+  await assert.rejects(withLabel(3.4028235677973366e38), /Invalid diagram snapshot/);
+});
+
 test('resolving a snapshot never changes it', async () => {
   await fc.assert(
     fc.asyncProperty(randomSnapshot(), async (s) => {
