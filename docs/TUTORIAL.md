@@ -87,3 +87,53 @@ This writes:
 - `public/loader.js`: an optional script that sizes the iframe to its content.
 
 [Publishing](PUBLISHING.md) covers hosting these files, embedding the page with an iframe or the loader, and a video of the same scene.
+
+## 6. Draw with the engine
+
+The helpers cover diagrams, cards and code panels. For anything else a scene uses Lantern itself, imported from `manim-js`, and the engine has features made for explainers. Each excerpt below is shortened from one of the demo scenes in `scenes/explainers/`; [the reference](REFERENCE.md#engine-features) lists them all with their guides.
+
+Zoom onto what the step is about, then come back. The camera moves no point, so `check` measures labels as the reader sees them (`seasons`):
+
+```ts
+await this.play(this.frame.animate.fit(view, { margin: 0 }), { runTime: 1.2 });
+// next step
+await this.play(this.frame.animate.reset());
+```
+
+Morph code along its own diff, then read what each line did from the transform rather than typing it into the caption (`mr-cache`):
+
+```ts
+const diff = new TransformDiff(before, after, { runTime: 1.6 });
+await this.play(diff);
+const { same, changed, removed, added } = diff.plan;
+```
+
+Leave the emphasis on screen for the resting picture. A kept outline has no text, so it needs words (`mr-cache`):
+
+```ts
+const lookup = new Circumscribe(linesBox(after, 1, 2), { keep: true, color: hot });
+s.keep(lookup.outline, { describe: 'The KV lookup is circled.' });
+await this.play(lookup);
+```
+
+Chart the model's own function, and make a readout a picture of `scene.state` that follows it (`seasons`, `token-bucket`):
+
+```ts
+const curve = axes.plot(daylightAt(place.lat), { samples: 145, color: CURVE });
+await this.play(new Create(curve), { runTime: 2 });
+
+const readout = stateView(this, ['tokens', 'lastRefill', 'allowed', 'rejected']);
+this.state = record(calls);
+await this.play(readout.sync());
+```
+
+Run a step's operations in order in one play, with a copy of a value travelling into its slot while the source stays (`ring-buffer`):
+
+```ts
+await this.play(new Succession([
+  new Create(outline, { runTime: 0.35 }),
+  new TransformFromCopy(incoming, values[i], { runTime: 0.6 }),
+]));
+```
+
+`check` treats all of these like the helpers: motion, seeking, words and legibility apply to every frame they draw.

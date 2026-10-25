@@ -115,6 +115,8 @@ Three principles from Lantern carry through every example:
 - **Walks travel real links.** `walk()` throws on a hop the diagram does not have.
 - **Native drawing where it helps.** Code panels, readouts, a gauge and an orbit are Lantern objects drawn beside the diagrams, because no diagram family fits them.
 
+**Status, 25 October 2026.** The engine now has a camera, matching and diff-driven transforms, emphasis that stays, native charts, views of `scene.state`, code spans, and `Restore`, `TransformFromCopy` and `Succession` ([engine map](../docs/ENGINE.md)). Following the rule that a helper earns its place in two examples, seven explainers use them: glyph, the KV-cache merge request, the state machine, the ring buffer, the seasons, the token bucket and Git. `d.focus()` moves the camera instead of rescaling the artwork.
+
 ## What building the examples taught us
 
 Rebuilding Lantern's examples in a prototype (the `agentic-mermaid` branch of a Lantern checkout, commit `4904cfa`, not in this repository) changed the spec in nine places. The first is the most important: a test caught a bug that review would have missed.

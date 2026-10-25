@@ -20,7 +20,9 @@ this.state.reads = reads;   // program state, recorded at each step boundary
 - Step names are URL identifiers. They must be unique and non-empty in every case.
 - `this.state` is recorded before and after each step. Compute values with a model, show its result, and test that each step's state equals the model's (`assertStepState` in `test/lib/explainer-state.ts`).
 - A captioned step holds until its caption could be read at 160 words a minute (`Scene.captionWpm`), counting the step's motion as reading time. The page stops when the picture stops; the [video](#video-files) holds the caption. The picture must not change once the hold begins.
-- Do not put awaited animations inside `try`/`catch` or `.catch()` in `construct()`. Seeking stops a scene by throwing `StopScene`, and a broad catch swallows it, so a jump to a step would show a different picture from playing to it. Handle a known model error in plain code before animating.
+- Do not put awaited animations inside `try`/`catch` or `.catch()` in `construct()`. Seeking stops a scene by throwing `StopScene`, and a broad catch swallows it, so a jump to a step would show a different picture from playing to it. Handle a known model error in plain code before animating. The engine limits the damage: a `StopScene` from a sink sets `this.stopped`, and from then on `play()`, `wait()`, `step()` and every frame rethrow it before doing anything, so a swallowed stop emits no further frame. Plain code between the catch and the next scene call (a `shift()`, a write to `this.state`) still runs, which is why `check` keeps the lint.
+- `this.frame` is the camera: the box of the stage on screen. `this.play(this.frame.animate.fit(target, { margin }))` zooms onto a mobject or a box, `this.frame.animate.reset()` returns to the whole stage, and `this.frame.zoom` is the magnification. Moving it moves no point; [the camera guide](CAMERA.md) has the rest, and [`d.focus`](#diagrams) moves the same camera with `camera: true`.
+- `this.record(kind, data)` adds `{ kind, ...data }` (copied as JSON) to the step's evidence: what an animation did, where `state` is what the program is. Steps in the trace carry it as `evidence`, only when they recorded something; seeks record the same evidence as full runs; `this.evidence` holds every record so far. Matching transforms and `TransformDiff` record themselves ([evidence](MATCHING.md#evidence)), so counts on screen can be read from what the transform did.
 - All lettering is the embedded fonts, drawn as outlines. JetBrains Mono falls back to Inter, and both fall back to Noto Sans Arabic, Devanagari and SC subsets that hold numerals only (Arabic-Indic and Devanagari digits, Chinese numerals, fullwidth digits). Diagram labels are Inter stretched to each label's width, so styles with their own fonts differ in letterforms. Every command fails on a character these fonts cannot draw and names the case, the step and the code point.
 
 ## Stage
@@ -50,7 +52,7 @@ With neither `style` nor `palette`, the stage adopts the first diagram's palette
 | `s.enter(...mobs, { describe, ...fadeOptions })` | Keep native objects and fade them in together, in one play |
 | `s.keep(...mobs, { describe })` | Keep native objects without animating them; returns the first |
 | `s.clearOverlays()` | Fade out cards, code, notes (the stage's and the diagrams') and kept objects |
-| `s.clear({ runTime })` | Fade out everything except paper and heading, in one play |
+| `s.clear({ runTime })` | Fade out everything except paper and heading, and bring the camera home, in one play |
 | `s.emphasis`, `s.soft`, `s.good`, `s.bad` | Colours that read on this paper: emphasis, secondary text, accepted, rejected |
 | `s.palette`, `s.paper`, `s.heading` | The current palette, paper rectangle and heading text |
 
@@ -102,7 +104,7 @@ const d = await s.show({ source: 'graph LR\nA --> B', style: 'nord' }, { box: 'm
 | `d.dim(keep \| null)` | Fade everything but `keep`, links between kept parts and scaffolding; `null` restores. Dimmed parts keep 3:1 contrast with the paper |
 | `d.note(id, text, { side })` | A short label beside a part at a fixed readable size; `side` is `above`, `below`, `left` or `right` |
 | `d.clearNotes()` | Remove notes |
-| `d.focus(ids \| 'all', { zoom })` | Move the camera onto parts; notes follow; `'all'` restores the authored view |
+| `d.focus(ids \| 'all', { zoom, camera, margin, also })` | Enlarge parts and their notes inside the diagram's own box (`zoom` above 1 goes closer). With `camera: true`, move the camera (`this.frame`) onto them and the native objects in `also` instead, with `margin` units around them (default 0.5); `also` needs `camera`. `'all'` puts the artwork back and brings the camera home. Parts in focus are described as focused |
 | `d.morph(next, { ops })` | Same-id parts move, arrivals fade in, departures fade out; marks, dimming and notes reset |
 | `d.hide()` | Fade the diagram out; `reveal` can bring parts back |
 | `d.get(id)` | A part as a native `Group` |
@@ -112,9 +114,27 @@ const d = await s.show({ source: 'graph LR\nA --> B', style: 'nord' }, { box: 'm
 - Reading order: graphs read nodes with their outgoing links, sequence messages keep source order and carry a token, git commits read left to right, bars grow from the baseline. Scaffolding builds first. Labels travel with their owners.
 - `walk` throws on a hop the diagram does not have, requires the link to be revealed, follows its captured route, and records `{ step, from, to, edge }` in `state.walks`.
 - With `ops`, `morph` replays the edits through Agentic Mermaid's `mutate` at build time and fails unless the result serializes to `next`. Without `ops` it is a visual transition only.
+- A camera focus moves no point, so marks, dimming, notes and walks work the same while zoomed, and a label keeps its world size while the camera enlarges it on screen. The view stays 16:9 and inside the stage. The camera shows less of the stage, not only less of the diagram: the heading, cards and code are world objects too, so a focus that leaves them out of its box takes them out of view. Put what the resting picture needs inside the box (`also`), or end the step with `focus('all')`. The default, artwork focus, is for a diagram that shares the stage with text beside it (send-sync, gtfs, fork).
 - One scene owns one clock: never call `Scene.play()` concurrently. Use `{ parallel: true }` or one native `play` for simultaneous tokens.
 - Descriptions name a link by the labels at its ends ("Attacker → Load balancer"), and a class or ER entity by its name.
-- The collection uses all 15 families and the 10 styles listed in `out/explainers/evidence.json`; other styles are untested.
+- The collection uses all 15 families and the 8 styles listed in `out/explainers/evidence.json`; other styles are untested.
+
+## Engine features
+
+These are plain Lantern, imported from `manim-js` and used beside the helpers. Each guide explains one feature and ends with "In the explainers", what the scenes named here do with it; [the engine map](ENGINE.md) lists the guides by module. What you draw with them is a native drawing: keep it with `s.keep` or `s.enter`, with `describe` when it has no text of its own ([stage](#stage)).
+
+| Feature | What a scene uses | Guide | Used in |
+| --- | --- | --- | --- |
+| Matching transforms | `TransformMatchingText`, `TransformMatchingShapes` (`shapeKey()`), `TransformMatching` with your own key; `summary()`, `pairs`, `removed`, `added` | [Matching](MATCHING.md) | `glyph`, `exgit` |
+| Diff-driven code morph | `new TransformDiff(before, after, { hunks })` and its `plan`; `diffLines`, `parseUnifiedDiff` for hunks | [Diff-driven](MATCHING.md#diff-driven) | `mr-cache` |
+| Camera | `this.frame.animate.fit(...)`, `.reset()`; `d.focus(…, { camera: true })` | [Camera](CAMERA.md) | `seasons`; `lantern`'s diagram focus with `also` |
+| Emphasis that stays | `SurroundingRectangle`, `Underline`, `Cross`, `Brace`, `BraceLabel`, `Circumscribe({ keep: true })` | [Emphasis](EMPHASIS.md) | `glyph`, `mr-cache`, `state-machine`, `ring-buffer`, `exgit` |
+| Charts of the model's numbers | `NumberLine`, `Axes` with `plot`, `lineGraph`, `bar`, `dot`, guide lines, `areaUnder` | [Graphing](GRAPHING.md) | `seasons`, `token-bucket` |
+| Pictures rebuilt from state | `view`, `stateView`, `view.sync()`; `viewMismatch`, and `assertViewFollowsState` in `test/lib/view-fidelity.ts` | [Views](VIEWS.md) | `state-machine`, `ring-buffer`, `token-bucket` |
+| Parts of a line of code | `code.span`, `code.token`, `code.lineSpan`; `new Code(lines, { spans })` with spans from `tools/tokens.ts` | [Code](CODE.md) | `mr-cache`, `state-machine` |
+| Restore, copies, sequencing | `saveState()` and `Restore`, `TransformFromCopy`, `Succession` | [Animations](ANIMATIONS.md) | `state-machine`, `ring-buffer`, `token-bucket`, `exgit` |
+
+Patterns these scenes write by hand, candidates for `explain/` once two explainers use one and its shape settles: a `Succession` member that writes `scene.state` when its turn comes, so the syncs after it show that operation; card and code-focus changes returned as animations rather than played, so they can join a `Succession`; a `Card` whose values are a view; a `stateView` in the stage's palette; a camera box that keeps the heading out; reading recorded evidence for counts on screen; lines between a matching transform's pairs; a code panel that leaves its `Code` loose for `TransformDiff`, which replaces it.
 
 ## Settings
 
@@ -147,9 +167,9 @@ Capture asserts that its output equals Agentic Mermaid's `renderMermaidSVG` byte
 | Hold | The picture changes after a step's caption hold begins, where the player stops |
 | Seek | A seeked frame differs from the played frame, at two frames per step |
 | Trace | The trace with frames skipped differs from the played trace |
-| Step change | A step's resting picture, ignoring the heading, equals the previous step's |
-| Text | Native text in a resting picture overlaps other text or crosses the stage edge |
-| Legibility | A native label never reaches 14 px at a 1280 px stage while substantially visible; an imported label never reaches 14 px in a resting picture inside its diagram's viewport |
+| Step change | A step's resting picture, ignoring the heading, equals the previous step's. The camera's view is part of the picture, so a camera move alone is a change |
+| Text | Native text in a resting picture overlaps other text, or is cut by the stage edge or the edge of the camera's view; text wholly outside the view is off screen and not judged |
+| Legibility | A native label never reaches 14 px at a 1280 px stage while substantially visible; an imported label never reaches 14 px in a resting picture inside its diagram's viewport. Sizes are on screen: world size × camera zoom, inside the camera's view |
 | Words | A kept drawing with no text and no `describe` |
 | Bare runtime | The scene, bundled, gives different steps or state in a context with no DOM, Node, timers or console |
 | Glyphs | Any text the embedded fonts cannot draw (every command checks this) |
@@ -163,7 +183,9 @@ The report goes to `out/checks/<id>/report.json`. For each case it holds the ful
 | `labelsOutsideCloseUpsAt390` | Labels no close-up shows whole, which a reader reaches by panning |
 | `minLabelPx390WholeStage` | Smallest label on that phone without close-ups |
 
-The phone sizes are reported, not gated; every demo case reports no label under 12 px.
+The phone sizes are reported, not gated; every demo case reports no label under 12 px. A close-up zooms on top of the author's camera, so its sizes multiply the camera zoom by the close-up's.
+
+Motion is measured on screen, after the camera: a smooth camera move reports nothing, and moving `this.frame` without `.animate` (a cut) reports a teleport for everything in view. A shape that appears over a matching shape that stays and is no less opaque, as a `TransformFromCopy` copy leaving its source does, is not a cut-in; a brighter shape over a faint one, or one appearing elsewhere, is.
 
 These checks establish deterministic behaviour and readable pictures. They do not establish that a caption is true: test each model against its source.
 
@@ -195,6 +217,8 @@ These checks establish deterministic behaviour and readable pictures. They do no
 
 `CHROMIUM_EXECUTABLE_PATH` selects a Chromium for capture; otherwise it is looked up in `PLAYWRIGHT_BROWSERS_PATH` and Playwright's cache. If an optional package is missing, the command prints the line that installs it.
 
+`node tools/tokens.ts <file | -> [--lang ts|js|python|bash|elixir] [--theme dark|light] [--engine auto|shiki|fallback]` prints syntax colours as `ColorSpan`s for `new Code(lines, { spans })`, to check in beside the scene. It runs from a checkout and is not part of the package; [the code guide](CODE.md#the-tool) describes its engines.
+
 ## Page
 
 `build` writes one self-contained HTML file: one explainer, all its cases, a poster, a transcript, sources and licence notices. It makes no network requests and uses no storage.
@@ -218,7 +242,7 @@ An unknown setting or value resets every setting to its default, and a notice na
 
 The stage's accessible description is a one-sentence summary of the picture. "What the picture shows", under the caption, opens the full description: each diagram, card, code panel and described drawing, with what is marked, dimmed or changed in this step.
 
-The stage takes focus from Tab or a click. With the stage focused, `+`, `-` and `0` zoom and reset, and arrow keys pan when zoomed. Otherwise left and right arrows change step, except on a button, link or field. Pinch, Ctrl-scroll and double-click zoom; when zoomed, drag pans and a click recentres on the point clicked. Zoom goes up to 6×, keeps its place across steps, and resets when the case changes. On a stage under 600 px wide, each step opens on a close-up of what it changed, zoomed whenever a label near the change is under 12 px so that it reads at 12 px; a small map in the corner shows the whole frame and steps through the step's other close-ups, Fit keeps the whole picture for later steps, and the crosshair button brings close-ups back. A vertical swipe scrolls the page; a sideways drag or a pinch moves the view. With reduced motion, the previous picture crossfades into the step's resting picture instead of playing.
+The stage takes focus from Tab or a click. With the stage focused, `+`, `-` and `0` zoom and reset, and arrow keys pan when zoomed. Otherwise left and right arrows change step, except on a button, link or field. Pinch, Ctrl-scroll and double-click zoom; when zoomed, drag pans and a click recentres on the point clicked. Zoom goes up to 6×, keeps its place across steps, and resets when the case changes. It narrows the stage's SVG `viewBox` inside the author's camera (`ReaderSink` in `app/embed-zoom.ts`) rather than scaling the element, so the drawing stays sharp, the page does not move, an author's camera move keeps playing under it, and Fit shows the author's frame. On a stage under 600 px wide, each step opens on a close-up of what it changed, zoomed whenever a label near the change is under 12 px so that it reads at 12 px; a small map in the corner shows the whole frame and steps through the step's other close-ups, Fit keeps the whole picture for later steps, and the crosshair button brings close-ups back. A vertical swipe scrolls the page; a sideways drag or a pinch moves the view. With reduced motion, the previous picture crossfades into the step's resting picture instead of playing.
 
 Inside an iframe without `parentOrigin` (a raw iframe), the page adds its own "Open in a new tab" link.
 
@@ -238,7 +262,7 @@ Inside an iframe without `parentOrigin` (a raw iframe), the page adds its own "O
 
 ## Video files
 
-`explain render` runs the scene at a fixed frame rate, rasterises each frame with resvg and the embedded fonts, and pipes it to FFmpeg.
+`explain render` runs the scene at a fixed frame rate, rasterises each frame with resvg and the embedded fonts, and pipes it to FFmpeg. Each frame is written with `toSvgString(scene, { cull: true })`, which leaves out what the camera cannot show, because resvg 2.6.2 aborts on an element with `opacity` whose visible box is empty, such as a fading label outside a zoomed view ([camera](CAMERA.md#rendering-off-screen-content)).
 
 Each step plays its motion with the step's title in the footer, then holds its resting picture under the full caption for the caption's reading time at 160 words a minute. Chapters start at each step's motion; subtitle cues cover the caption holds. Reading time sets the length, so most of a video is a still picture: over the 20 demo videos, 82% of frames repeat the stage picture before them (1 − `rasterizedFrames` / `frames` in the receipts); on the earlier collection, the order that put each caption before its motion gave 69%.
 
