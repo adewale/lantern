@@ -118,12 +118,11 @@ const specArb = fc.record(
   {
     source: fc.oneof(fc.string({ maxLength: 12 }), fc.constantFrom('graph LR\nA-->B', 'a', ' a ', 'a\r\nb', 'a\nb', 'a\rb')),
     style: fc.constantFrom('default', 'nord', ''),
-    spacing: fc.oneof(fc.constant(null), fc.integer({ min: -5, max: 5 }), fc.double({ noNaN: true, noDefaultInfinity: true })),
   },
   { requiredKeys: ['source'] },
 );
 
-test('diagramKey ignores CRLF, surrounding space, and the default style and spacing however they are written', () => {
+test('diagramKey ignores CRLF, surrounding space, and the default style however it is written', () => {
   fc.assert(
     fc.property(specArb, fc.constantFrom('', ' ', '\n', '\r\n', '\t '), fc.constantFrom('default', '', undefined), (spec, pad, unstyled) => {
       const variant = { ...spec, source: pad + spec.source.replace(/\r?\n/g, '\r\n') + pad };
@@ -132,15 +131,14 @@ test('diagramKey ignores CRLF, surrounding space, and the default style and spac
         if (unstyled === undefined) delete (variant as { style?: string }).style;
         else variant.style = unstyled;
       }
-      if (spec.spacing == null) delete (variant as { spacing?: number | null }).spacing;
       assert.equal(diagramKey(variant as never), diagramKey(spec as never));
     }),
     params(),
   );
 });
 
-type Written = { source: string; style?: string; spacing?: number | null };
-test('diagramKey tells apart specs that differ in source, style or spacing', () => {
+type Written = { source: string; style?: string };
+test('diagramKey tells apart specs that differ in source or style', () => {
   const styles = ['nord', 'dusk', 'blueprint'];
   fc.assert(
     fc.property(
@@ -149,21 +147,11 @@ test('diagramKey tells apart specs that differ in source, style or spacing', () 
         // Another word on the source survives trimming and line-ending changes.
         fc.stringMatching(/^[A-Za-z0-9>-]{1,4}$/).map((w) => (s: Written) => ({ ...s, source: s.source + '\n' + w })),
         fc.constantFrom(...styles).map((style) => (s: Written) => ({ ...s, style: styles.includes(s.style ?? '') ? styles[(styles.indexOf(s.style!) + 1) % 3] : style })),
-        fc.integer({ min: 1, max: 9 }).map((d) => (s: Written) => ({ ...s, spacing: s.spacing ? -s.spacing : d })),
       ),
       (spec, change) => {
         assert.notEqual(diagramKey(change(spec as never) as never), diagramKey(spec as never));
       },
     ),
-    params(),
-  );
-});
-
-test('diagramKey refuses a spacing that is not a finite number', () => {
-  fc.assert(
-    fc.property(fc.string(), fc.constantFrom(NaN, Infinity, -Infinity), (source, spacing) => {
-      assert.throws(() => diagramKey({ source, spacing }), /finite/);
-    }),
     params(),
   );
 });

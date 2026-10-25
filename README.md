@@ -6,7 +6,15 @@ This is a fork of [Lantern](https://github.com/ivarvong/lantern) by Ivar Vong. N
 
 ## Requirements
 
-Node 26 or later, and npm. Capturing a new or changed diagram needs Chromium (`npx playwright-core install chromium`, or set `CHROMIUM_EXECUTABLE_PATH`). Video needs FFmpeg. Building from committed snapshots needs neither.
+Node 26 or later. In a checkout, `npm ci` installs everything except Chromium and FFmpeg. A package install leaves out the capture and picture packages; `explain --help` prints these lines:
+
+| Needed for | Install |
+| --- | --- |
+| Capturing a new or changed diagram | `npm i agentic-mermaid@0.4.1 playwright-core@^1.64.1 svgpath@^2.6.0`, then `npx playwright-core install chromium` or set `CHROMIUM_EXECUTABLE_PATH` |
+| PNGs and video: `preview`, `shots`, `render`, `demos:build` | `npm i @resvg/resvg-js@^2.6.2` |
+| Video: `render` | FFmpeg on `PATH` |
+
+`check` and `build` from committed snapshots need none of them.
 
 ## See the demos
 
@@ -18,11 +26,11 @@ npm run demos:serve
 
 Open http://127.0.0.1:5175/explainers/. Three to start with:
 
-- **Why stealing an authorization code is not enough** (OAuth with PKCE): turn on the attacker and another app intercepts the redirect, then fails to exchange the code because it cannot produce the verifier.
+- **Why stealing an authorization code is not enough** (OAuth with PKCE): another app intercepts the redirect, then fails to exchange the code because it cannot produce the verifier. Setting "Show an attacker" to No leaves that step out.
 - **Why June brings polar day to Tromsø and winter to Sydney**: switch the place, and the daylight chart is recomputed from the model.
 - **Five added lines put a KV cache in front of D1**: the diff, then the same edit replayed on the architecture diagram, then a cache hit or miss.
 
-`out/explainers/evidence.json` lists every explainer with its cases, diagrams, styles and Mermaid families.
+`out/explainers/evidence.json` lists each explainer's cases, diagrams, styles and Mermaid families, with totals.
 
 ## Write one
 
@@ -30,24 +38,17 @@ Open http://127.0.0.1:5175/explainers/. Three to start with:
 npm run explain -- init my-explainer
 npm run explain -- preview my-explainer/scene.ts --watch
 npm run explain -- check my-explainer/scene.ts
+npm run explain -- build my-explainer/scene.ts --out public/my-explainer.html
 ```
 
-`init` writes a working scene with one setting. `preview` serves the page and rebuilds it on save. `check` runs every case and fails a step whose last frame matches the one before, labels under 14 px at a 1280 px stage, a seek that differs from playing, and motion that jumps or pops. Then `build --out` writes the page to publish:
+`init` writes a working scene with one setting. `preview` serves the page and rebuilds it on save. `check` runs every case through [the checks](docs/REFERENCE.md#checks). `build` writes the page and the response headers it needs; [publishing](docs/PUBLISHING.md) shows how to embed it.
 
-```html
-<iframe src="/explainers/my-explainer.html?step=request"
-        title="Why a cache changes the request path"
-        style="width:100%;height:640px;border:0;display:block"
-        allow="fullscreen"
-        loading="lazy"></iframe>
-```
-
-Limits: lettering is always the embedded Inter or JetBrains Mono, so styles lose their own fonts and other scripts fail the build; 14 px on a 1280 px stage is about 4 px on a phone until the reader zooms; only the Mermaid families in `evidence.json` are tested; the models are small and cited, and no subject expert has reviewed the explainers.
+Limits: lettering is always the embedded Inter or JetBrains Mono, so styles lose their own fonts and other scripts fail the build; labels are small on a phone until the reader zooms; only the Mermaid families in `evidence.json` are tested; the models are small and cited, and no subject expert has reviewed the explainers.
 
 ## Documents
 
-- [Tutorial](docs/TUTORIAL.md): a first explainer, from `init` to an embed
-- [Reference](docs/REFERENCE.md): helpers, checks, command line, URL and resize contract, video files, scripts
+- [Tutorial](docs/TUTORIAL.md): a first explainer, from `init` to a built page
+- [Reference](docs/REFERENCE.md): helpers, checks, command line, URL and resize contract, accessibility, video files, scripts
 - [Publishing](docs/PUBLISHING.md): hosting a page and exporting a video
 - [Upstream](docs/UPSTREAM.md): the fork base, engine changes and Agentic Mermaid
 - [Design record](specs/kyle.md): why the project is shaped this way, and the open decisions

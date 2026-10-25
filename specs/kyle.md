@@ -1,11 +1,8 @@
-# Proposal: an explainer project forked from Lantern
+# Design: an explainer project forked from Lantern
 
 Oct 24, 2026 · @Ade Oshineye
 
-**Status:** Proposal, accepted and built through milestone 3. This file is the design record: why the project has the shape it has, and the decisions still open (under *Decisions*). Contracts live in [the reference](../docs/REFERENCE.md); history lives in [the changelog](../CHANGELOG.md).\
-**Working name:** Lantern Explainers; final repository, package and product names to be chosen\
-**Foundation:** [ivarvong/lantern](https://github.com/ivarvong/lantern) at commit `2c7bad5`; see [upstream](../docs/UPSTREAM.md)\
-**Diagram integration:** [Agentic Mermaid](https://github.com/adewale/agentic-mermaid) 0.4.1, optional, build time only
+Why the project has the shape it has, and the decisions still open. Contracts are in [the reference](../docs/REFERENCE.md), history in [the changelog](../CHANGELOG.md), and the fork base and engine changes in [upstream](../docs/UPSTREAM.md).
 
 ## Decision and purpose
 
@@ -17,22 +14,9 @@ Five commitments define the project:
 
 1. **Native scenes stay the authoring model.** An explainer is a Lantern `Scene` with named steps and captions. There is no JSON format, scene language or second runtime.
 2. **A helper library does the repetitive work.** Small functions for common explanation techniques: show a diagram and build it in, send a token along its links, move it to its next version, focus on a part, show a card. Scenes call them like any other Lantern code and mix them freely with native drawing.
-3. **Agentic Mermaid's styles are honoured.** A diagram looks the way Agentic Mermaid draws it in the chosen style, mark for mark except its lettering, which is Lantern's embedded Inter stretched to each label's width. Every mark is addressable by its Mermaid id.
+3. **Agentic Mermaid's styles are honoured.** A diagram looks the way Agentic Mermaid draws it in the chosen style, mark for mark except its lettering, which is Lantern's embedded Inter stretched to each label's width; the hand-drawn style shows the difference most, and embedding style fonts is a later option. Every mark is addressable by its Mermaid id.
 4. **The stepper comes first.** A reader moves through the explanation one step at a time, at their own pace, and can go back or link to any step.
-5. **Reader settings offer another case to step through.** A scene may declare a few named options, such as a sign-in method or a city. Each choice is a complete, stepped case, built and tested ahead of time.
-
-## What changed from the previous draft
-
-The fork, native authoring, the embed-first release and the video contract carried over from the previous draft. Four things changed.
-
-| Area | Previous draft | This revision |
-| --- | --- | --- |
-| Agentic Mermaid styles | The importer transferred geometry and selected shapes; styles were not preserved | The importer captures each mark as the style draws it. Styles are preserved and are a release requirement |
-| Diagram families | Flowcharts, through Lantern's `flowchart()` or the importer | Every family the examples use (eight in the prototype); other families are unscheduled |
-| Explanation techniques | "Small helpers" allowed but not specified | A specified helper library (`explain/`), used by every example |
-| Reader choices | Step navigation only | Step navigation first, plus optional reader settings declared by the scene |
-
-The four examples in the previous draft (Cache, PDA, Keyboardia, Vaders) came from a separate prototype that this revision has not seen. This revision uses examples built and tested here, including every scene Lantern shipped with.
+5. **Reader settings offer another case to step through.** A scene may declare a few named options, such as whether an attacker is present, or a city. Each choice is a complete, stepped case, built and tested ahead of time.
 
 ## The problem, and why a fork
 
@@ -76,7 +60,7 @@ flowchart LR
   end
   subgraph run["Lantern only"]
     page["Page: one HTML file"]
-    video["Video: MP4, WebVTT, chapters"]
+    video["Video: MP4, WebVTT, chapters, transcript"]
   end
   scene --> page
   scene --> video
@@ -99,13 +83,12 @@ A diagram therefore looks as it does in Agentic Mermaid's own renderer, and is m
 
 **Known limits.**
 
-- Text is drawn in Lantern's embedded Inter and JetBrains Mono outlines, not the style's font. The hand-drawn style's lettering is the visible difference. Embedding style fonts as outlines is a later option.
-- Some families come out narrow or tall in a 16:9 stage, and their text gets small. Authors choose a direction (`LR` or `TB`) per diagram and use `focus()` to move the camera; `check` fails labels that never reach 14 px at a 1280 px stage.
+- Some families come out narrow or tall in a 16:9 stage, and their text gets small. Authors choose a direction (`LR` or `TB`) per diagram and use `focus()` to move the camera; `check` fails labels too small to read at a 1280 px stage.
 - The capture relies on `drawNode`, which is reachable but undocumented. [Upstream](../docs/UPSTREAM.md#agentic-mermaid) lists the Agentic Mermaid release that would replace it.
 
 ## The helper library
 
-The helpers are plain functions in `explain/`; [the reference](../docs/REFERENCE.md#stage) lists them. A scene calls `stage(this, { style })` once, then uses what it needs, and everything else stays native Lantern: the merge-request explainer puts a native `Code` diff beside a captured diagram.
+The helpers are plain functions in `explain/`; [the reference](../docs/REFERENCE.md#stage) lists them. A scene calls `stage(this, { style })` once, then uses what it needs, and everything else stays native Lantern: the ring buffer has no diagram at all, and the seasons draw an orbit beside a chart.
 
 Diagrams are plain Mermaid strings. At build time every scene runs once per case, and each diagram it asks for is rendered and stored as a snapshot. A scene therefore never declares its diagrams in advance, and a case that fails to run fails the build.
 
@@ -124,33 +107,33 @@ A good setting changes what the reader learns. In OAuth with PKCE, "Show an atta
 
 ## The examples
 
-The explainers rebuild every scene Lantern shipped with, including its self-explainer, and add five topics: Personal Agent Protocol, OAuth with PKCE, the seasons, Agentic Mermaid and 2password. Each exercises a different teaching technique. Their cases, diagrams, styles and families are listed in `out/explainers/evidence.json`, written by `npm run demos:build`.
+The explainers rebuild every scene Lantern shipped with, including its self-explainer, and add topics of their own, among them OAuth with PKCE, the seasons, how Git names objects, and 2password. Each exercises a different teaching technique. Their cases, diagrams, styles and families are listed in `out/explainers/evidence.json`, written by `npm run demos:build`.
 
 Three principles from Lantern carry through every example:
 
-- **The animation shows what the program does.** The state machine asks `reduce()`, the token bucket runs `allow()`, the seasons compute the Sun's height, 2password runs a port of its own search, and the Agentic Mermaid morphs replay real `mutate()` ops. The scene never states an answer it did not get from the source.
+- **The animation shows what the program does.** The state machine asks `reduceSession()`, the token bucket runs `allow()`, the seasons compute the Sun's height, 2password runs a port of its own search, and the Agentic Mermaid morphs replay real `mutate()` ops. The scene never states an answer it did not get from the source.
 - **Walks travel real links.** `walk()` throws on a hop the diagram does not have.
 - **Native drawing where it helps.** Code panels, readouts, a gauge and an orbit are Lantern objects drawn beside the diagrams, because no diagram family fits them.
 
 ## What building the examples taught us
 
-Rebuilding Lantern's examples in the prototype changed the spec in nine places. The first is the most important: a test caught a bug that review would have missed.
+Rebuilding Lantern's examples in a prototype (the `agentic-mermaid` branch of a Lantern checkout, commit `4904cfa`, not in this repository) changed the spec in nine places. The first is the most important: a test caught a bug that review would have missed.
 
 | What happened | Change to the spec |
 | --- | --- |
-| The ring buffer wrapped its animations in a `try`/`catch` for `Full`. The catch also swallowed the player's internal stop signal, so jumping to a step showed a different frame from playing to it. Lantern's seek test caught it | `check` runs the seek, motion and bare-runtime tests on every case of every scene, and fails a broad `catch` in `construct()` |
+| The ring buffer wrapped its animations in a `try`/`catch` for `Full`. The catch also swallowed the player's internal stop signal, so jumping to a step showed a different picture from playing to it. Lantern's seek test caught it | `check` runs the seek, motion and bare-runtime tests on every case of every scene, and fails a broad `catch` in `construct()` |
 | Three scenes flashed black before their first diagram, because the stage's default paper was not the style's | The stage takes paper, ink and accent from the Agentic Mermaid style itself; hand-written palettes are optional |
 | Decision chains laid out left to right became tall staircases; top to bottom became too narrow to read | Choose direction by shape, and check legibility: `check` now fails labels under 14 px at a 1280 px stage, and `preview` prints a contact sheet of every step |
 | A node used in an edge before its labelled definition lost its label in Agentic Mermaid | Report upstream; until fixed, the build warns |
-| Ten of fourteen explainers needed native drawing; the ring buffer has no diagram at all | The helpers are two layers: the stage (paper, cards, code, settings), useful in any scene, and diagrams on top of it |
+| Ten of the prototype's fourteen explainers needed native drawing; the ring buffer has no diagram at all | The helpers are two layers: the stage (paper, cards, code, settings), useful in any scene, and diagrams on top of it |
 | Every Lantern example works by asking the program | A named pattern with a test helper: a scene's state at each step must equal the program's |
 | In the prototype, rebuilt scenes were 87 to 176 lines, against 57 to 267 for the originals | Do not sell the helpers as shorter code. They buy real styles, settings and checks |
-| In the prototype, caption reading holds were most of each explainer's length, and video export took 2 to 11 minutes per explainer | The player waits for the reader; only video uses the holds. Demo exports skip videos whose inputs did not change |
+| In the prototype, caption reading holds were most of each explainer's length, and video export took 2 to 11 minutes per explainer | The player stops when the picture stops and waits for the reader; the video holds each caption over its resting picture. Demo exports skip videos whose inputs did not change |
 | In the prototype, one page held all fourteen explainers in 1.27 MB, 830 KB of it snapshots | A page holds one explainer and its own snapshots |
 
 ## Authoring and embedding
 
-The command line is the contract: `init`, `preview`, `snapshots`, `check`, `build` and `render`, the same on a laptop and in CI ([tutorial](../docs/TUTORIAL.md), [reference](../docs/REFERENCE.md#command-line)).
+The command line is the contract: `init`, `preview`, `snapshots`, `check`, `build`, `render` and `shots`, the same on a laptop and in CI ([tutorial](../docs/TUTORIAL.md), [reference](../docs/REFERENCE.md#command-line)).
 
 The lessons from [embed.oshineye.dev](https://embed.oshineye.dev/) and its [implementation notes](https://github.com/adewale/embed.oshineye.dev/blob/main/docs/LESSONS_LEARNED.md) are release requirements. An embed is a portable artifact with a stable interface:
 
@@ -160,7 +143,7 @@ The lessons from [embed.oshineye.dev](https://embed.oshineye.dev/) and its [impl
 - The resize message carries only a height, and the parent accepts it only from the expected origin **and** window, so two embeds on one page cannot resize each other.
 - Hosting headers are generated beside the page, because `frame-ancestors` works only as a response header.
 
-The contracts are in [the reference](../docs/REFERENCE.md#page); the steps to publish, including checking what the host actually serves, are in [publishing](../docs/PUBLISHING.md). `npm run test:embeds` exercises them in Chromium against real cross-origin pages.
+`npm run test:embeds` exercises these in Chromium against real cross-origin pages; the contracts are in [the reference](../docs/REFERENCE.md#page).
 
 ## How people will use it
 
@@ -181,32 +164,9 @@ MCP suits live access to a system, like a vault or a ticket queue. An explainer 
 
 The stepper is the primary artefact and the video is its derivative, for places that cannot embed a page. A silent video with captions makes the viewer alternate between reading and watching, which is the split-attention problem the stepper avoids by letting the reader choose when to look. The video is a build target of the same scene, so it needs no second implementation: the exporter runs the scene at a fixed frame rate through Lantern's deterministic loop and rasterises each frame with resvg.
 
-To reduce the split, each step in the video shows its caption over the previous picture first, then plays the motion. That changed the order, not the amount: reading time sets the length, and about two thirds of a demo video is a still picture. Shorter captions or narration would shorten it; narration is out of scope for the first release. The files and presets are in [the reference](../docs/REFERENCE.md#video-files).
-
-## Delivery plan
-
-The plan had four milestones, each with a gate. The first three gates run in CI, and those milestones are built; [the changelog](../CHANGELOG.md) records how. The fourth needs a clean machine, an outside author and a host, so the plan continues as decisions.
-
-## What the prototype demonstrated
-
-The prototype was the `agentic-mermaid` branch of a Lantern checkout based on `2c7bad5`, at commit `4904cfa`. These are its results as reported then; they do not describe this checkout.
-
-| Check | Prototype result |
-| --- | --- |
-| Explainers | 14 explainers and 31 cases: 6 topics and 8 of Lantern's examples |
-| Diagrams | 49, in 8 families and 12 styles; every one passed `verifyMermaid` at build time |
-| Style fidelity | Every capture equalled `renderMermaidSVG`; no SVG left unread |
-| Edits replayed | Every morph that named ops reproduced its next diagram through `mutate` |
-| Tests | 110 run, 106 passed, 4 skipped, 0 failed |
-| Motion and seek | No pops, cuts, jumps or flicker; seeked frames equalled played frames in every case |
-| Page | One 1.3 MB page, ready in about 3 s in headless Chromium |
-| Video | Fourteen silent H.264 MP4s with caption footer, subtitle track, WebVTT and chapters |
-
-These checks establish that the integration behaves and renders consistently. They do not prove that any caption is correct.
+To reduce the split, each step in the video plays its motion under the step's title, then holds the resting picture under the full caption for its reading time, so the caption always describes the picture beside it. Reading time sets the length, and most of a video is a still picture; this order made the still share larger, which is the cost of pairing each caption with its own picture. Shorter captions or narration would shorten it; narration is out of scope for the first release. The files, presets and the measured share are in [the reference](../docs/REFERENCE.md#video-files).
 
 ## Decisions
-
-Each of these blocks a public release. The owner decides.
 
 | Decision | What it unblocks | Prepared so far |
 | --- | --- | --- |
@@ -215,9 +175,9 @@ Each of these blocks a public release. The owner decides.
 | Upstream relationship: write to Ivar Vong, then offer the engine fixes or declare a hard fork | Merging future upstream work without guesswork | [Upstream](../docs/UPSTREAM.md) lists the fixes with their tests |
 | Which explainer to publish first, where, and after which subject-matter review | Checking the bytes and headers actually served; a first reader | Header recipes and `npm run site:export`; no explainer has been reviewed by an expert in its subject |
 | First outside author, and their topic | Evidence that the docs and skill work for someone other than the owner | A clean-machine trial can run once the topic is chosen |
-| Agentic Mermaid 0.5 | Deleting the undocumented `drawNode` coupling and the label workaround | The four changes are listed in [upstream](../docs/UPSTREAM.md#agentic-mermaid) |
+| The next Agentic Mermaid release with the four changes | Deleting the undocumented `drawNode` coupling and the label workaround | The four changes are listed in [upstream](../docs/UPSTREAM.md#agentic-mermaid) |
 
-## Risks, out of scope, and the recommendation
+## Risks and scope
 
 | Risk | Response |
 | --- | --- |
@@ -225,7 +185,7 @@ Each of these blocks a public release. The owner decides.
 | The helpers grow into a second language | Helpers stay functions a scene calls. No interpreter, no config-driven steps. A helper earns its place by being used in two examples |
 | Agentic Mermaid's output changes | It changes when its owner releases it: pin versions, keep one snapshot file per diagram so a release's effect is a reviewable diff |
 | Styles drift from the real renderer | Capture asserts byte equality with `renderMermaidSVG` and fails on unread SVG |
-| Small text in tall or wide diagrams | Direction per diagram, `focus()`, the 14 px check, and zoom on phones |
+| Small text in tall or wide diagrams | Direction per diagram, `focus()`, the legibility check, and zoom on phones |
 | Settings multiply cases | Keep settings few and meaningful; the build runs every combination, so cost shows in CI time; 64 is the limit |
 | An explainer that looks right but is wrong | Walks travel real links; morph ops are replayed; scenes ask the real program; cite sources; have an expert read it |
 | Duplicate engine copies | Resolve scenes, helpers and player to one engine instance; the package smoke test checks it |
@@ -233,14 +193,10 @@ Each of these blocks a public release. The owner decides.
 
 **Out of scope for the first release:** a JSON format or scene language; a new engine; pasted or typed diagrams, which would need Agentic Mermaid in the browser; continuous numeric inputs (typing a latitude) for scenes that draw only native geometry from a model, a later candidate once sampled checks exist; a visual editor; a hosted service that runs other people's scenes; narration; Mermaid families the examples do not use; framework components.
 
-**Recommendation.** Proceed if someone will own it. Keep Lantern's native scenes as the foundation and the stepper as the primary reading experience. The fork's differentiators are the helper library, the style-honouring Agentic Mermaid capture, and portable embed and video output. Offer reader settings where a second case teaches something. Send general fixes upstream as part of maintenance; the fork does not wait for them.
-
 ## Sources
 
 - [Lantern repository](https://github.com/ivarvong/lantern), and the pinned [self-explainer](https://github.com/ivarvong/lantern/blob/2c7bad533be25fbd56d26a9a2b6c5651743f011e/scenes/lantern.ts), [player](https://github.com/ivarvong/lantern/blob/2c7bad533be25fbd56d26a9a2b6c5651743f011e/app/player.ts), [state machine](https://github.com/ivarvong/lantern/blob/2c7bad533be25fbd56d26a9a2b6c5651743f011e/scenes/state-machine.ts), [token bucket](https://github.com/ivarvong/lantern/blob/2c7bad533be25fbd56d26a9a2b6c5651743f011e/scenes/token-bucket.ts) and [merge request](https://github.com/ivarvong/lantern/blob/2c7bad533be25fbd56d26a9a2b6c5651743f011e/scenes/mr-cache.ts) examples
 - [Agentic Mermaid repository](https://github.com/adewale/agentic-mermaid), version 0.4.1 on npm
-- [Personal Agent Protocol, draft 0.3](https://personalagentprotocol.org/docs/0.3/spec)
 - [RFC 6749: OAuth 2.0](https://www.rfc-editor.org/rfc/rfc6749) and [RFC 7636: PKCE](https://www.rfc-editor.org/rfc/rfc7636)
 - [NASA Space Place: What causes the seasons?](https://spaceplace.nasa.gov/seasons/en/)
 - [kitlangton/2password](https://github.com/kitlangton/2password/tree/e011177d3e35f97a580b8903df6fff7e02593d16) at `e011177`
-- The previous draft of this proposal, *Proposal: a standalone explainer project forked from Lantern*, 24 October 2026

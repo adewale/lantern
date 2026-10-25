@@ -32,7 +32,7 @@ How to put a built page on a website, and how to export the same scene as a vide
            loading="lazy"></iframe>
    ```
 
-   The iframe keeps its height and scrolls when the content is taller; captions and the steps list make the page taller on phones. `allow="fullscreen"` lets the reader's Enlarge button work; without it the button is hidden. The page adds an "Open in a new tab" link inside the frame.
+   The iframe keeps its height and scrolls when the content is taller; captions and the steps list make the page taller on phones. `allow="fullscreen"` lets the reader's Enlarge button work; without it the button is hidden. The page adds an "Open in a new tab" link inside the iframe.
 
    Or let the loader size the iframe to its content:
 
@@ -44,16 +44,16 @@ How to put a built page on a website, and how to export the same scene as a vide
            data-title="Why a cache changes the request path"></script>
    ```
 
-   The loader starts the iframe at 640 px, then follows the page's height messages, accepting them only from that iframe's window and the page's origin, so several embeds on one page size independently. It adds the "Open in a new tab" link beside the frame. `data-theme="light"` or `"dark"` fixes the player's colours. An application can mount and remove embeds itself:
+   The loader starts the iframe at 640 px, then follows the page's height messages, accepting them only from that iframe's window and the page's origin, so several embeds on one page size independently. It adds the "Open in a new tab" link beside the iframe. `data-theme="light"` or `"dark"` fixes the player's colours. An application can mount and remove embeds itself:
 
    ```js
    const dispose = LanternEmbed.mountExplainer(target, '/explainers/cache.html', { title: 'Cache', height: 640, theme: 'auto' });
-   dispose(); // removes the frame, the link and the message listener
+   dispose(); // removes the iframe, the link and the message listener
    ```
 
-   Auto-sizing needs the page on HTTP(S); a page opened from `file:` still reads, at its initial height.
+   The loader needs the page on HTTP(S): for a `file:` URL it throws and mounts nothing.
 
-5. Check what the host actually serves. The repository's tests run against local files, so they cannot show which bytes or headers reached production.
+5. Check what the host actually serves; the repository's tests run against local files.
    - `curl -sI https://your.site/explainers/cache.html` shows the CSP and `Cache-Control` from the recipe.
    - The page opens at the step and case in its URL, Next plays, and the transcript opens.
    - With two embeds on one page, opening one transcript resizes only that iframe.
@@ -61,20 +61,22 @@ How to put a built page on a website, and how to export the same scene as a vide
 
 ## Export a video
 
-Video is optional; the page is the main output. A video of a scene has the same steps and captions as the page, with a chapter per step and subtitles. It is silent.
+Video is optional; the page is the main output. A video of a scene has the same steps and captions as the page, with a chapter per step, subtitles and a transcript. It is silent.
 
-You need FFmpeg on `PATH` and the optional package `@resvg/resvg-js` (installed by `npm ci`; `npm i @resvg/resvg-js` if your install omitted optional packages). `check` and `build` need neither.
+You need FFmpeg on `PATH` and `@resvg/resvg-js` (`npm i @resvg/resvg-js@^2.6.2`; a checkout's `npm ci` already has it). `check` and `build` need neither.
 
 ```sh
-explain render scene.ts --out cache.mp4 --footer                      # 1280 × 960, captions drawn under the stage
+explain render scene.ts --out cache.mp4 --footer                      # 1280 × 960, title and caption under the stage
 explain render scene.ts --out cache-miss.mp4 --footer --case request=miss
 explain render scene.ts --out cache.mp4 --footer --all                # one file per case
 explain render scene.ts --out cache.webm --width 1920                 # stage only, VP9
 ```
 
-Each step shows its caption over the previous picture for as long as it takes to read, then plays its motion, then holds briefly on the result. Reading time sets the length, so most of a video is a still picture under a caption: across the demo collection, still frames are about two thirds of the running time, the same share as before captions moved ahead of the motion. Shorter captions make a shorter video.
+Each step plays its motion under its title, then holds its resting picture under the caption for as long as the caption takes to read. Reading time sets the length, so most of a video is a still picture ([the reference](REFERENCE.md#video-files) has the measure); shorter captions make a shorter video.
 
-`render` stops with an error, naming the step and case, when a caption needs more than four footer lines, when a caption has a character the fonts cannot draw, or when the picture changes after a step's caption hold begins. Shorten the caption, or finish every change before the step's last `play()` ends.
+Publish `cache.transcript.html` beside the video: it is the text alternative, with each step's title, caption and what its picture shows.
+
+`render` stops with an error, naming the step and case, when a footer title or caption needs more than four lines, when it has a character the fonts cannot draw, or when the picture changes after a step's caption hold begins. Shorten the caption, or finish every change before the step's last `play()` ends.
 
 Check a file before publishing it:
 
@@ -83,4 +85,4 @@ ffprobe -v error -show_streams -show_chapters -of json cache.mp4
 ffmpeg -v error -i cache.mp4 -f null -
 ```
 
-Expect one H.264 video stream at the preset's size, one `mov_text` subtitle stream, no audio, one chapter per step, a frame count equal to `frames` in `cache.mp4.receipt.json`, and a decode with no errors. `npm run demos:render` does these checks for the demo collection and needs `ffprobe` as well. Video bytes can differ between FFmpeg and resvg builds; the receipt records both versions.
+Expect one H.264 video stream at the preset's size, one `mov_text` subtitle stream, a data stream that carries the chapters, no audio, one chapter per step, a frame count equal to `frames` in `cache.mp4.receipt.json`, and a decode with no errors. `npm run demos:render` runs these checks for the demo collection. Video bytes can differ between FFmpeg and resvg builds; the receipt records both versions.

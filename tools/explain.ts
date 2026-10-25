@@ -22,7 +22,8 @@ Commands:
   preview <scene>     Build, print step contact sheet, serve on localhost
   snapshots <scene>   Run every case, capture/verify diagrams and replay morph edits
   check <scene>       Every case: seek, motion, skipped trace, bare runtime, step
-                      change, text collision, legibility, catch lint
+                      change, still after the caption hold, text collision,
+                      legibility, words for every drawing, catch lint
   build <scene>       HTML, receipt, header recipe, loader.js
   render <scene>      Silent MP4 (or .webm), captions, chapters and receipt
   shots <scene>       Step contact sheet as SVG and PNG

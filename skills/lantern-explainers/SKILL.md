@@ -9,16 +9,16 @@ An explainer is one Lantern `Scene`. The CLI builds it into a step-through HTML 
 
 ## Loop
 
-Commands are `explain <command>`, or `npm run explain -- <command>` in a checkout.
+Commands are `explain <command>`, or `npm run explain -- <command>` in a checkout; `explain --help` prints the install lines for capture and video.
 
-1. `explain init <directory>` writes a working scene. Keep one default-exported `Scene` subclass with static `meta` (id, title, sources) and, if a second case teaches something, static `settings`.
-2. Derive every value on screen from a small model of the system. Test the model against its cited source; the checks below cannot tell whether a caption is true.
-3. Give each idea a step with a stable name, a title the frame can prove and a short caption naming what is on screen.
-4. Call `stage(this, { style })` once. Put diagrams (`s.show`), cards (`s.card`) and code (`s.code`) in named regions (`main`, `side`, `top`, `bottom`) so nothing overlaps. Native Lantern objects mix freely; bring several in together with `s.enter(...)`.
-5. Design each step's resting frame, the last frame it draws, because the reader looks at it while reading the caption. Leave the idea on screen with `walk(..., { trail: true })`, `mark`, `dim`, `note`, `card.set`, `card.mark` and `code.focus`. A token that walks and vanishes leaves nothing.
+1. `explain init <directory>` writes a working `scene.ts`. Keep one default-exported `Scene` subclass with static `meta` (id, title, sources) and, if a second case teaches something, static `settings`.
+2. Derive every value on screen from a small model of the system. Test the model against its cited source; the checks cannot tell whether a caption is true.
+3. Give each idea a step with a stable name, a title the picture can prove and a short caption naming what is on screen.
+4. Call `stage(this, { style })` once. Put diagrams (`s.show`), cards (`s.card`) and code (`s.code`) in named regions (`main`, `side`, `top`, `bottom`) so nothing overlaps. Native Lantern objects mix freely; bring several in together with `s.enter(...)`, and pass `{ describe: '…' }` to `s.enter` or `s.keep` so readers who cannot see the drawing get it in words.
+5. Design each step's resting picture, what the step leaves on screen, because the reader looks at it while reading the caption. Leave the idea there with `walk(..., { trail: true })`, `mark`, `dim`, `note`, `card.set`, `card.mark` and `code.focus`; give marks an `as` word ("rejected") when they mean something. A token that walks and vanishes leaves nothing.
 6. `explain preview scene.ts --watch` and `explain shots scene.ts --case id=value`: look at every step of every case. A passing build is not a visual review.
-7. `explain check scene.ts`. Fix failures at their cause; `out/checks/<id>/report.json` has each resting frame as text.
-8. `explain build scene.ts --out public/<id>.html`; optionally `explain render scene.ts --out public/<id>.mp4 --footer`.
+7. `explain check scene.ts`. Fix failures at their cause; `out/checks/<id>/report.json` draws each resting picture roughly in text.
+8. `explain build scene.ts --out public/<id>.html`; optionally `explain render scene.ts --out public/<id>.mp4 --footer`, which also writes `<id>.transcript.html`.
 
 ## Rules
 
@@ -26,9 +26,10 @@ Commands are `explain <command>`, or `npm run explain -- <command>` in a checkou
 - Morphs with `ops` must reproduce the next diagram through Agentic Mermaid's mutation replay. Without `ops`, call it a visual transition.
 - One scene, one clock: never call `Scene.play()` concurrently. Use `{ parallel: true }` or one `play`.
 - No awaited animation inside `try`/`catch` or `.catch()` in `construct()`; handle model errors in plain code first.
+- Finish every change before a step's last `play()` ends: the picture must not move during the caption hold.
 - A setting may change diagrams, captions, numbers and which steps exist; keep the palette fixed. Keep cases few; the limit is 64.
 - Do not weaken a check, bless a corrupt snapshot or skip a case to get a pass. Add a regression test that fails before the fix.
-- Lettering is embedded Inter or JetBrains Mono; other scripts fail every command. Labels must reach 14 px at a 1280 px stage; phone readers zoom the stage.
+- Lettering is embedded Inter or JetBrains Mono; other scripts fail every command.
 - Leave out panel titles and asides that repeat the heading, caption or values. Write titles and captions with [anti-slop-writing](https://github.com/adewale/anti-slop-writing): name the value or mechanism on screen, and state contrasts with because, although or so.
 
 ## Reporting

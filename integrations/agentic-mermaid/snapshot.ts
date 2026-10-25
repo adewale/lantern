@@ -4,7 +4,6 @@ import type { Scene } from '../../src/scene.ts';
 export interface DiagramSpec {
   source: string;
   style?: string;
-  spacing?: number;
 }
 export interface Palette {
   paper: string;
@@ -79,14 +78,10 @@ export interface DiagramResolver {
 }
 const resolvers = new WeakMap<Scene, DiagramResolver>();
 export function diagramKey(spec: DiagramSpec): string {
-  // JSON would write NaN and Infinity as null, the key of the default spacing.
-  if (spec.spacing != null && !Number.isFinite(spec.spacing))
-    throw new Error(`Diagram spacing must be a finite number, not ${spec.spacing}`);
   return JSON.stringify([
     spec.source.replace(/\r\n/g, '\n').trim(),
     // An empty style renders as the default (capture passes no style), so it is the default's key.
     spec.style || 'default',
-    spec.spacing ?? null,
   ]);
 }
 export function useDiagrams(scene: Scene, resolver: DiagramResolver): void {

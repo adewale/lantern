@@ -1,13 +1,13 @@
 {
   "version": 2,
-  "importer": "8ac25d9f9eb41b38",
+  "importer": "725da4d8fc61bf77",
   "renderer": "agentic-mermaid@0.4.1",
   "sourceHash": "bc3366b2c19e9aaef46b4dc949e20b70d4e98c21478f6749786fdc2a72dcd217",
   "diagrams": {
-    "[\"graph LR\\nInput[empty stdin] --> Echo[echo hello]\\nEcho --> Tr[tr a-z A-Z]\\nTr --> File[shout.txt]\",\"chalkboard\",null]": "e7f87d3a5df71e2b.json",
-    "[\"graph LR\\nInput[empty stdin] --> Echo[echo hello]\\nEcho --> Tr[tr a-z A-Z]\\nTr --> Output[stdout]\",\"chalkboard\",null]": "43f5aa38660d65fd.json",
-    "[\"graph LR\\nName[command name] --> Builtin[look up the builtin]\\nBuiltin --> Run[found: run on values]\\nBuiltin --> Error[missing: refuse]\",\"chalkboard\",null]": "beb36c6b695bb831.json",
-    "[\"graph LR\\nS0[\\\"original shell<br/>files: none\\\"]\\nS1[\\\"returned shell<br/>files: shout.txt\\\"]\\nOut1[\\\"prints HELLO\\\"]\\nOut0[\\\"prints nothing\\\"]\\nS0 -->|echo, tr, redirect| S1\\nS1 -->|cat| Out1\\nS0 -->|cat| Out0\",\"chalkboard\",null]": "564e2a2ef5789492.json",
-    "[\"graph TD\\nScript[Script] --> Pipeline[Pipeline]\\nPipeline --> Echo[echo hello]\\nPipeline --> Tr[tr a-z A-Z]\\nScript --> Redirect[redirect to shout.txt]\",\"chalkboard\",null]": "99fda8a7d5e14e16.json"
+    "[\"graph LR\\nInput[empty stdin] --> Echo[echo hello]\\nEcho --> Tr[tr a-z A-Z]\\nTr --> File[shout.txt]\",\"chalkboard\"]": "7b26439faa13fe2a.json",
+    "[\"graph LR\\nInput[empty stdin] --> Echo[echo hello]\\nEcho --> Tr[tr a-z A-Z]\\nTr --> Output[stdout]\",\"chalkboard\"]": "697b6b21dacec626.json",
+    "[\"graph LR\\nName[command name] --> Builtin[look up the builtin]\\nBuiltin --> Run[found: run on values]\\nBuiltin --> Error[missing: refuse]\",\"chalkboard\"]": "9c759f7f07a6bc5f.json",
+    "[\"graph LR\\nS0[\\\"original shell<br/>files: none\\\"]\\nS1[\\\"returned shell<br/>files: shout.txt\\\"]\\nOut1[\\\"prints HELLO\\\"]\\nOut0[\\\"prints nothing\\\"]\\nS0 -->|echo, tr, redirect| S1\\nS1 -->|cat| Out1\\nS0 -->|cat| Out0\",\"chalkboard\"]": "13af3eb6dbdc4c0b.json",
+    "[\"graph TD\\nScript[Script] --> Pipeline[Pipeline]\\nPipeline --> Echo[echo hello]\\nPipeline --> Tr[tr a-z A-Z]\\nScript --> Redirect[redirect to shout.txt]\",\"chalkboard\"]": "9db0b10193a6edb6.json"
   }
 }

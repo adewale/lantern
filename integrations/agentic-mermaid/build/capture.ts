@@ -56,10 +56,7 @@ export function capture(spec: DiagramSpec): {
         },
       },
     });
-    const options = {
-      ...(spec.style && spec.style !== 'default' ? { style: spec.style } : {}),
-      ...(spec.spacing != null ? { spacing: spec.spacing } : {}),
-    };
+    const options = spec.style && spec.style !== 'default' ? { style: spec.style } : {};
     const svg = renderer.renderMermaidSVG(spec.source, options);
     if (svg !== renderMermaidSVG(spec.source, options))
       throw new Error('Capture changed Agentic Mermaid output');

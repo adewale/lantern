@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "importer": "8ac25d9f9eb41b38",
+  "importer": "725da4d8fc61bf77",
   "renderer": "agentic-mermaid@0.4.1",
   "sourceHash": "7986cd702f1760ca4e5930c8b8754b9e3cf8c5e4163d63c85b8d0bc3ba81569e",
   "diagrams": {
-    "[\"stateDiagram-v2\\n direction LR\\n idle --> connecting: CONNECT\\n connecting --> open: OPENED\\n connecting --> closed: ERROR\\n open --> closed: CLOSE\",\"dracula\",null]": "f573b3b02afe887d.json"
+    "[\"stateDiagram-v2\\n direction LR\\n idle --> connecting: CONNECT\\n connecting --> open: OPENED\\n connecting --> closed: ERROR\\n open --> closed: CLOSE\",\"dracula\"]": "960a8dc2017bb001.json"
   }
 }

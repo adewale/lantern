@@ -297,7 +297,7 @@ export class CodeBlock extends Group {
     return {
       what: `Code${this.title ? ` “${this.title}”` : ''}, ${n} line${n === 1 ? '' : 's'}`,
       parts: this.code.lines.map((l, i) => {
-        const words = [...(f && i >= f.lines[0] && i <= f.lines[1] ? [f.as] : []), ...(kinds.has(i) ? [kinds.get(i)!] : [])];
+        const words = [...new Set([...(f && i >= f.lines[0] && i <= f.lines[1] ? [f.as] : []), ...(kinds.has(i) ? [kinds.get(i)!] : [])])];
         return { name: `${i + 1}: ${l.text}`, ...(words.length ? { mark: words.join(', ') } : {}) };
       }),
     };

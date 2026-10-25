@@ -64,11 +64,13 @@ export async function footerLines(trace: Trace, values: Settings): Promise<strin
   });
 }
 
+/** Peer ranges, so a missing package's error gives the install line the help gives. */
+const PEERS: Record<string, string> = createRequire(import.meta.url)('../../package.json').peerDependencies;
 let resvg: typeof import('@resvg/resvg-js') | undefined;
 /** Rasterise an SVG with the embedded fonts only. resvg loads on first use: only PNG and video output need it. */
 export async function rasterize(svg: string) {
   resvg ??= await import('@resvg/resvg-js').catch(() => {
-    throw new Error('PNG and video output need @resvg/resvg-js: npm install @resvg/resvg-js');
+    throw new Error('PNG and video output need @resvg/resvg-js: npm i @resvg/resvg-js@' + PEERS['@resvg/resvg-js']);
   });
   return new resvg.Resvg(svg, { font: { loadSystemFonts: false } }).render();
 }

@@ -1,8 +1,8 @@
 # Reference
 
-The helper API, the checks, the command line, the page's URL and resize contract, and the video files. [The tutorial](TUTORIAL.md) walks through a first explainer; [publishing](PUBLISHING.md) covers hosting a page and exporting a video.
+[The tutorial](TUTORIAL.md) walks through a first explainer; [publishing](PUBLISHING.md) covers hosting a page and exporting a video.
 
-Words used throughout: a **setting** is a choice a scene declares (an id, a label and options); a **case** is one value for every setting. A **step** is a named section of the scene, and its **resting frame** is the last frame it draws: the picture a reader looks at while reading the caption. The **stage** is the 16 × 9 drawing area. A *frame* is a moment in time. Code and JSON spell case as `variant` (`variantsOf`, `variants` in reports).
+Words used throughout: a **setting** is a choice a scene declares (an id, a label and options); a **case** is one value for every setting. A **step** is a named section of the scene, and its **resting picture** is what the step leaves on screen: the picture a reader looks at while reading the caption. The **stage** is the 16 × 9 drawing area. Code and JSON spell case as `variant` (`variantsOf`, `variants` in reports) and resting picture as `restingFrame`.
 
 ## Scene
 
@@ -11,16 +11,16 @@ An explainer is a Lantern `Scene` exported from a TypeScript or ESM file, prefer
 ```ts
 static meta = { id: 'cache', title: 'Why a cache changes the request path', lang: 'en', sources: ['https://example.com/spec'] };
 
-await this.step('stable-name', { title: 'A claim the frame can prove', caption: 'The value, part or mechanism on screen.' });
+await this.step('stable-name', { title: 'A claim the picture can prove', caption: 'The value, part or mechanism on screen.' });
 this.state.reads = reads;   // program state, recorded at each step boundary
 ```
 
-- `meta.id` names the output files; `meta.title` is the page title; `meta.lang` (BCP 47, default `en`) sets the page language and the subtitle language; `meta.sources` are listed under the transcript.
+- `meta.id` names the output files; `meta.title` is the page title; `meta.lang` (BCP 47, default `en`) is the language of the page, the transcripts and the subtitles; `meta.sources` are listed under the transcript.
 - Step names are URL identifiers. They must be unique and non-empty in every case.
-- `this.state` is recorded before and after each step. Compute values with a model, show the model's result, and test that each step's state equals the model's: `assertStepState` in `test/lib/explainer-state.ts` does this for the collection in `test/explain-fidelity.test.ts`.
-- A captioned step holds until its caption could be read at 160 words a minute. The page ignores the hold and stops when the picture stops; video replaces it (see [Video files](#video-files)).
-- Do not put awaited animations inside `try`/`catch` or `.catch()` in `construct()`. Seeking stops a scene by throwing `StopScene`, and a broad catch swallows it, so a jump to a step would show a different picture from playing to it. Handle a known model error in plain code before animating. `check` fails both forms.
-- Text must be drawable by the embedded fonts (Inter and JetBrains Mono). Every command fails on any other character and names the case, the step and the code point.
+- `this.state` is recorded before and after each step. Compute values with a model, show its result, and test that each step's state equals the model's (`assertStepState` in `test/lib/explainer-state.ts`).
+- A captioned step holds until its caption could be read at 160 words a minute (`Scene.captionWpm`), counting the step's motion as reading time. The page ignores the hold and stops when the picture stops; the video holds each caption for its full reading time (see [Video files](#video-files)). The picture must not change once the hold begins.
+- Do not put awaited animations inside `try`/`catch` or `.catch()` in `construct()`. Seeking stops a scene by throwing `StopScene`, and a broad catch swallows it, so a jump to a step would show a different picture from playing to it. Handle a known model error in plain code before animating.
+- All lettering is the embedded Inter and JetBrains Mono, drawn as outlines; diagram labels are Inter stretched to each label's width, so styles with their own fonts differ in letterforms. Every command fails on a character these fonts cannot draw and names the case, the step and the code point.
 
 ## Stage
 
@@ -45,28 +45,30 @@ With neither `style` nor `palette`, the stage adopts the first diagram's palette
 | `s.card(rows, { at, align, width, title, fontSize, enter })` | Labelled values; returns a `Card` |
 | `s.code(lines, { at, align, fontSize, title, diff, enter })` | Code on a panel; returns a `CodeBlock`. With `diff`, lines starting `+ ` or `- ` are marked added or removed |
 | `s.note(text, { at, size })` | One line of secondary text, default at `[0, -3.9]` |
-| `s.enter(...mobs, fadeOptions?)` | Fade native objects in together, in one play, and track them |
-| `s.keep(mob)` | Track a native object without animating it |
-| `s.clearOverlays()` | Fade out cards, code, notes and tracked objects |
+| `s.enter(...mobs, { describe, ...fadeOptions })` | Keep native objects and fade them in together, in one play |
+| `s.keep(...mobs, { describe })` | Keep native objects without animating them; returns the first |
+| `s.clearOverlays()` | Fade out cards, code, notes (the stage's and the diagrams') and kept objects |
 | `s.clear({ runTime })` | Fade out everything except paper and heading, in one play |
 | `s.emphasis`, `s.soft`, `s.good`, `s.bad` | Colours that read on this paper: emphasis, secondary text, accepted, rejected |
 | `s.palette`, `s.paper`, `s.heading` | The current palette, paper rectangle and heading text |
 
 `{ enter: false }` creates a card or code panel without playing it, so `s.enter(card, code)` can bring several in together.
 
-Emphasis is the style's accent when it has a hue. Styles whose accent is grey or near-black (hand-drawn, pen-and-ink, blueprint) get orange.
+`describe` says in words what kept objects show together: a sentence, or a function for a drawing that changes. Without it, the description lists their visible text, and `check` fails a kept drawing that has no text.
+
+Emphasis is the style's accent, or orange for styles whose accent is grey or near-black (hand-drawn, pen-and-ink, blueprint). `s.soft` keeps at least 4.5:1 contrast with the paper.
 
 ### Card and CodeBlock
 
 | Method | What it does |
 | --- | --- |
 | `card.set({ Label: value })` | Crossfade changed values; unchanged rows stay still. A card sizes to its first values, so pass `width` if later ones are longer |
-| `card.mark(label \| null)` | A bar on one row that stays until moved |
-| `code.focus(i \| [a, b] \| null)` | A bar on zero-based line `i`, or lines `a` to `b` inclusive |
+| `card.mark(label \| null, { as })` | A bar on one row that stays until moved |
+| `code.focus(i \| [a, b] \| null, { as })` | A bar on zero-based line `i`, or lines `a` to `b` inclusive |
 | `code.morph(next, { markAdded })` | Pair lines by text: survivors move, removed lines fade, added lines arrive, marked if `markAdded` |
 | `code.clearMarks()` | Fade out the added and removed bars |
 
-Both are native `Group`s; move or transform them with Lantern.
+`as` is the word the description gives the mark, such as `'rejected'`. Both are native `Group`s.
 
 ### Regions
 
@@ -80,12 +82,12 @@ Stage coordinates are 16 × 9 with the origin at the centre and y up. The headin
 | `top` | `[-7.55, -0.35, 7.55, 3.25]` |
 | `bottom` | `[-7.55, -4.25, 7.55, -0.65]` |
 
-`regionBox('top', { bottom: 1 })` returns a copy with a moved lower (or, with `top`, upper) edge. `REGIONS` holds the boxes.
+`regionBox(region, { left, right, top, bottom })` returns a copy with those edges moved: `regionBox('top', { bottom: 1 })` is a shorter top, `regionBox('full', { left: -2.75 })` a column on the right. `REGIONS` holds the boxes.
 
 ## Diagrams
 
 ```ts
-const d = await s.show({ source: 'graph LR\nA --> B', style: 'nord', spacing: 48 }, { box: 'main', build: 'frame' });
+const d = await s.show({ source: 'graph LR\nA --> B', style: 'nord' }, { box: 'main', build: 'frame' });
 ```
 
 `build: 'frame'` draws only the scaffolding (axes, lanes, lifelines) so the story can arrive with `reveal`.
@@ -94,8 +96,8 @@ const d = await s.show({ source: 'graph LR\nA --> B', style: 'nord', spacing: 48
 | --- | --- |
 | `d.reveal(n \| ids \| 'rest')` | Bring in the next `n` parts in reading order, named parts, or the rest |
 | `d.walk(hops, { trail, parallel, color })` | A token travels real links; `trail` leaves them marked; `parallel` runs several journeys in one play |
-| `d.mark(ids, { color })`, `d.unmark(ids?)` | Colour parts and thicken their outlines until unmarked; labels keep their ink |
-| `d.dim(keep \| null)` | Fade everything but `keep`, links between kept parts and scaffolding; `null` restores |
+| `d.mark(ids, { color, as })`, `d.unmark(ids?)` | Colour parts and thicken their outlines until unmarked; labels keep their ink; `as` names the mark in the description |
+| `d.dim(keep \| null)` | Fade everything but `keep`, links between kept parts and scaffolding; `null` restores. Dimmed parts keep 3:1 contrast with the paper |
 | `d.note(id, text, { side })` | A short label beside a part at a fixed readable size; `side` is `above`, `below`, `left` or `right` |
 | `d.clearNotes()` | Remove notes |
 | `d.focus(ids \| 'all', { zoom })` | Move the camera onto parts; notes follow; `'all'` restores the authored view |
@@ -104,12 +106,11 @@ const d = await s.show({ source: 'graph LR\nA --> B', style: 'nord', spacing: 48
 | `d.get(id)` | A part as a native `Group` |
 | `d.findings()` | The verifier's warnings, each with the `part` it names |
 
-- Parts have semantic ids. Graph nodes use their Mermaid id; class nodes also accept `class:Name`. Other ids look like `edge:A->B#0`, `bar:0:Jan` or `message:A->B#0`; read `d.parts` or the snapshot to find them.
+- Parts have semantic ids. Graph nodes use their Mermaid id. A bare name also finds a sequence participant (`actor:A`) or a class (`class:Name`). Other ids look like `edge:A->B#0`, `bar:0:Jan` or `message:A->B#0`; read `d.parts` or the snapshot to find them.
 - Reading order: graphs read nodes with their outgoing links, sequence messages keep source order and carry a token, git commits read left to right, bars grow from the baseline. Scaffolding builds first. Labels travel with their owners.
 - `walk` throws on a hop the diagram does not have, requires the link to be revealed, follows its captured route, and records `{ step, from, to, edge }` in `state.walks`.
 - With `ops`, `morph` replays the edits through Agentic Mermaid's `mutate` at build time and fails unless the result serializes to `next`. Without `ops` it is a visual transition only.
 - One scene owns one clock: never call `Scene.play()` concurrently. Use `{ parallel: true }` or one native `play` for simultaneous tokens.
-- Capture fails on SVG features the reader cannot convert (unsupported paint, masks, filters) rather than dropping them. Lettering is embedded Inter stretched to each label's width, so styles with their own fonts differ in letterforms.
 - The collection exercises the families and styles listed in `out/explainers/evidence.json`; other families are untested.
 
 ## Settings
@@ -122,15 +123,15 @@ static settings = [{
 const which = settingsOf(this).request;
 ```
 
-Every case is built and checked ahead of time; a scene may have at most 64. Ids are URL-safe (`[a-z][a-z0-9_-]*`) and distinct; `step`, `t`, `theme` and `parentOrigin` are reserved. Option values are unique and include the default. A setting may change diagrams, captions, numbers and which steps exist; keep the palette fixed.
+Every case is built and checked ahead of time; a scene may have at most 64. Ids are URL-safe (`[A-Za-z][A-Za-z0-9_-]*`) and distinct; `step`, `theme` and `parentOrigin` are reserved. Option values are unique and include the default. A setting may change diagrams, captions, numbers and which steps exist; keep the palette fixed.
 
 Other exports: `withSettings(Scene, values)` binds a case without mutating the class; `resolveSettings` validates; `variantsOf(Scene)` lists every case; `caseName(Scene, values)` gives "Label: option · Label: option"; `bindSnapshots(Scene, store)` binds a snapshot store.
 
 ## Snapshots
 
-`explain snapshots` runs every case, captures each diagram the scene asks for, and writes `scene.snapshots/` beside the scene: `index.json` maps each diagram's key to its own file. Commit the folder. Missing diagrams are captured and unused ones are deleted. A change to the capture code invalidates the whole cache; `--refresh` recaptures everything. Capture needs Chromium and the optional packages `agentic-mermaid`, `playwright-core` and `svgpath`; building from committed snapshots needs none of them.
+Every command except `init` runs every case, captures any diagram missing from `scene.snapshots/` beside the scene, and deletes unused ones; `explain snapshots` stops there. Commit the folder; `index.json` maps each diagram's key to its own file. A change to the capture code invalidates the whole cache; `--refresh` recaptures everything. Capture needs Chromium and the optional packages `agentic-mermaid`, `playwright-core` and `svgpath`; building from committed snapshots needs none of them.
 
-Capture asserts that its output equals Agentic Mermaid's `renderMermaidSVG` byte for byte. Chromium resolves CSS, transforms and markers at build time with network requests blocked. The page receives resolved geometry and text runs; it never runs Agentic Mermaid.
+Capture asserts that its output equals Agentic Mermaid's `renderMermaidSVG` byte for byte, and fails on SVG it cannot convert (unsupported paint, masks, filters). Chromium resolves CSS, transforms and markers at build time with network requests blocked. The page receives resolved geometry and text runs; it never runs Agentic Mermaid.
 
 ## Checks
 
@@ -140,37 +141,39 @@ Capture asserts that its output equals Agentic Mermaid's `renderMermaidSVG` byte
 | --- | --- |
 | Catch lint | A `try`/`catch` or `.catch()` around awaited code in `construct()` |
 | Motion | Any pop (opacity changes by 0.5 or more in a frame), cut-in or cut-out, teleport or resize spike, flicker, or misplaced handoff |
+| Hold | The picture changes after a step's caption hold begins, where the player stops |
 | Seek | A seeked frame differs from the played frame, at two frames per step |
 | Trace | The trace with frames skipped differs from the played trace |
+| Step change | A step's resting picture, ignoring the heading, equals the previous step's |
+| Text | Native text in a resting picture overlaps other text or crosses the stage edge |
+| Legibility | A native label never reaches 14 px at a 1280 px stage while substantially visible; an imported label never reaches 14 px in a resting picture inside its diagram's viewport |
+| Words | A kept drawing with no text and no `describe` |
 | Bare runtime | The scene, bundled, gives different steps or state in a context with no DOM, Node, timers or console |
-| Step change | A step's resting frame, ignoring the heading, equals the previous step's |
-| Text | Native text in a resting frame overlaps other text or crosses the stage edge |
-| Legibility | A native label never reaches 14 px at a 1280 px stage while substantially visible; an imported label never reaches 14 px in a resting frame inside its diagram's viewport |
 | Glyphs | Any text the embedded fonts cannot draw (every command checks this) |
 
 14 px at a 1280 px stage is about 4 px on a 390 px phone; readers there zoom the stage.
 
-The report goes to `out/checks/<id>/report.json`. For each case it holds the full step trace, each step's resting frame as text (`restingFrames`), and the smallest label size at 1280 px and at 390 px before zooming (`legibility`).
+The report goes to `out/checks/<id>/report.json`. For each case it holds the full step trace, each step's resting picture as a rough text drawing (`restingFrames`: boxes and lines, with diagram labels as bars), and the smallest label size at 1280 px and at 390 px before zooming (`legibility`).
 
-These checks establish deterministic behaviour and readable frames. They do not establish that a caption is true: test each model against its source.
+These checks establish deterministic behaviour and readable pictures. They do not establish that a caption is true: test each model against its source.
 
 ## Command line
 
-`explain <command> <scene.ts | directory> [options]`. In a checkout, run `npm run explain -- <command> ...`. `explain --help` prints the same list.
+`explain <command> <scene.ts | directory> [options]`. In a checkout, run `npm run explain -- <command> ...`. `explain --help` prints the commands and the install lines for the optional packages.
 
 | Command | What it does |
 | --- | --- |
-| `init <directory>` | Write a working scene with one setting |
+| `init <directory>` | Write `scene.ts`, a working scene with one setting |
 | `preview <scene>` | Build, write a contact sheet of every step, serve the page |
 | `snapshots <scene>` | Capture and verify diagrams; replay morph edits |
 | `check <scene>` | The checks above |
 | `build <scene>` | The page, its receipt, its header recipe and `loader.js` |
-| `render <scene>` | A video with subtitles, chapters and receipt |
+| `render <scene>` | A video with subtitles, chapters, transcript and receipt |
 | `shots <scene>` | A contact sheet of every step, as SVG and PNG |
 
 | Option | Applies to | Effect |
 | --- | --- | --- |
-| `--out <path>` | all but `init` | Where to write; defaults under `out/` in the current directory |
+| `--out <path>` | all but `init` and `snapshots` | The output file; for `check`, the report's directory. Defaults under `out/` in the current directory |
 | `--refresh` | all but `init` | Recapture every diagram |
 | `--case id=value` | `render`, `shots` | One case; repeat for several settings |
 | `--all` | `render` | Every case, each file suffixed `-id=value` |
@@ -180,30 +183,34 @@ These checks establish deterministic behaviour and readable frames. They do not 
 | `--port <n>` | `preview` | Default 5174 |
 | `--watch` | `preview` | Rebuild the page and contact sheet when a source file changes; reload the browser to see it |
 
-`CHROMIUM_EXECUTABLE_PATH` selects a Chromium for capture. If an optional package is missing, the command names it.
+`CHROMIUM_EXECUTABLE_PATH` selects a Chromium for capture; otherwise it is looked up in `PLAYWRIGHT_BROWSERS_PATH` and Playwright's cache. If an optional package is missing, the command prints the line that installs it.
 
 ## Page
 
-`build` writes one self-contained HTML file: one explainer, all its cases, a poster, a transcript of every case (titles, captions and a description of each resting frame), sources and licence notices. It makes no network requests and uses no storage.
+`build` writes one self-contained HTML file: one explainer, all its cases, a poster, a transcript, sources and licence notices. It makes no network requests and uses no storage.
+
+The transcript lists, for every case, each step as a link to it, its caption, and what its resting picture shows. Without JavaScript every case shows. The player shows the current case's section, and its links move the player.
 
 ### URL parameters
 
 | Parameter | Effect |
 | --- | --- |
-| `step=<name>` | Open at that step's resting frame |
+| `step=<name>` | Open at that step's resting picture |
 | `<setting id>=<value>` | Choose a case; missing settings use defaults |
 | `theme=light\|dark\|auto` | Player chrome only; default `auto` |
 | `parentOrigin=<origin>` | Set by the loader; the exact HTTP(S) origin that receives resize messages |
 
-An unknown value or a step the case lacks falls back with a visible notice. Switching cases keeps the step by name. Back and forward restore case and step. Copy link keeps case and step and drops `parentOrigin`.
+An unknown setting or value resets every setting to its default, and a notice names what was wrong. A step the case lacks opens the first step, with a notice. Switching cases keeps the step by name. Back and forward restore case and step. Copy link keeps case and step and drops `parentOrigin`.
 
-### Controls
+### Controls and accessibility
 
-**Next** plays the step and stops on its resting frame. Icon buttons: previous, zoom out, zoom in, fit (only while zoomed), replay, copy link, and enlarge (full screen, when the frame allows it). Cases are a segmented choice under the title; steps are a list under the controls. "What the picture shows" under the caption describes the resting frame in words.
+**Next** plays the step and stops on its resting picture. Icon buttons: previous, zoom out, zoom in, fit (only while zoomed), replay, copy link, and enlarge (full screen, when the iframe allows it). Cases are a segmented choice under the title; steps are a list under the controls.
 
-With the stage focused: `+`, `-` and `0` zoom and reset, and arrow keys pan when zoomed. Elsewhere in the player, left and right arrows change step. Pinch, Ctrl-scroll and double-click zoom; drag or click pans when zoomed. Zoom goes up to 6×, keeps its place across steps, and resets when the case changes. With reduced motion, steps crossfade instead of playing.
+The stage's accessible description is a one-sentence summary of the picture. "What the picture shows", under the caption, opens the full description: each diagram, card, code panel and described drawing, with what is marked, dimmed or changed in this step.
 
-Inside a frame without `parentOrigin` (a raw iframe), the page adds its own "Open in a new tab" link.
+The stage takes focus from Tab or a click. With the stage focused, `+`, `-` and `0` zoom and reset, and arrow keys pan when zoomed. Otherwise left and right arrows change step, except on a button, link or field. Pinch, Ctrl-scroll and double-click zoom; when zoomed, drag pans and a click recentres on the point clicked. Zoom goes up to 6×, keeps its place across steps, and resets when the case changes. With reduced motion, the previous picture crossfades into the step's resting picture instead of playing.
+
+Inside an iframe without `parentOrigin` (a raw iframe), the page adds its own "Open in a new tab" link.
 
 ### Resize protocol v1
 
@@ -211,7 +218,7 @@ Inside a frame without `parentOrigin` (a raw iframe), the page adds its own "Ope
 { type: 'lantern:resize', version: 1, height: 742 }
 ```
 
-- The page measures its content root, rounds up, and posts only changed heights, only while framed, and only to the exact `parentOrigin`. It measures on load, on each `ResizeObserver` callback, and whenever the player settles on a step, because browsers can stop rendering an offscreen cross-origin frame.
+- The page measures its content root, rounds up, and posts only changed heights, only while framed, and only to the exact `parentOrigin`. It measures on load, on each `ResizeObserver` callback, and whenever the player settles on a step, because browsers can stop rendering an offscreen cross-origin iframe.
 - The parent accepts a message only when `event.origin` equals the artifact's origin and `event.source` is that iframe's window. Origin alone cannot tell two embeds from the same host apart.
 - Only that type and version, with an integer height from 1 to 100,000, is accepted. The message carries nothing else.
 
@@ -221,42 +228,43 @@ Inside a frame without `parentOrigin` (a raw iframe), the page adds its own "Ope
 
 ## Video files
 
-`explain render` runs the same scene at a fixed frame rate, rasterises each frame's SVG with resvg using only the embedded fonts, and pipes it to FFmpeg.
+`explain render` runs the scene at a fixed frame rate, rasterises each frame with resvg and the embedded fonts, and pipes it to FFmpeg.
+
+Each step plays its motion with the step's title in the footer, then holds its resting picture under the full caption for the caption's reading time at 160 words a minute. Chapters start at each step's motion; subtitle cues cover the caption holds. Reading time sets the length, so most of a video is a still picture: over the demo collection's default cases, 76% of frames repeat the stage picture before them (1 − `rasterizedFrames` / `frames` in the receipts), up from 69% when each caption came before its motion.
 
 | File | Contents |
 | --- | --- |
-| `.mp4` | Silent H.264, `yuv420p`; one `mov_text` subtitle stream tagged with the ISO 639-2 code for `meta.lang` |
+| `.mp4` | Silent H.264, `yuv420p`; one `mov_text` subtitle stream tagged with the ISO 639-2 code for `meta.lang`; chapters |
 | `.webm` | Silent VP9; WebVTT subtitle stream tagged with `meta.lang` |
 | `.vtt` | One cue per captioned step, with a `Language:` header |
+| `.transcript.html` | The video's text alternative: title and case, then each step's title, caption and what its picture shows |
 | `.chapters.ffmeta` | One chapter per step, titled by the step title |
-| `.receipt.json` | Hashes, settings, versions of resvg and FFmpeg, size, fps, `frames`, `rasterizedFrames`, preset, chapter ids |
-
-Each step in the video shows its caption over the previous resting frame for the reading time at 238 words a minute, then plays its motion, then holds 0.4 s. The first step plays first and holds afterwards.
+| `.receipt.json` | Hashes, settings, versions of resvg and FFmpeg, size, fps, `frames`, `rasterizedFrames`, preset, `chapters` (each step with its `captionHold` in seconds), `transcript` |
 
 | Preset | Size |
 | --- | --- |
-| Caption footer (`--footer`) | 1280 × 960: a 1280 × 720 stage over a 240 px footer with up to four caption lines at 27 px, in the page's light or dark colours |
-| Stage only | 16:9 at any even width; height rounds to an even number |
+| Caption footer (`--footer`) | 1280 × 960: a 1280 × 720 stage over a 240 px footer that shows the title, then the caption, each up to four lines at 27 px, in the page's light or dark colours |
+| Stage only | 16:9 at any even width; height rounds to an even number; no title or caption on screen |
 
-`render` fails, before FFmpeg starts, on a caption that needs more than four footer lines or has a character the fonts cannot draw, and fails if the picture changes after a step's caption hold begins. Seeked SVG is deterministic; video bytes may differ between FFmpeg and resvg builds.
+With `--footer`, `render` fails before FFmpeg starts on a title or caption that needs more than four lines or has a character the fonts cannot draw; `demos:check` runs this footer check on every case. Like `check`, `render` fails if the picture changes during a caption hold. An MP4 needs an ISO 639-2 code for `meta.lang`: three-letter tags pass, `en` and its regional tags become `eng`, and other tags fail. Video bytes may differ between FFmpeg and resvg builds.
 
 ## Repository scripts
 
 | Script | What it does |
 | --- | --- |
 | `npm run check` | TypeScript over every project, then a consumer compile against `dist/` |
-| `npm test` | The test suite; browser, video and Manim tests skip unless enabled |
+| `npm test` | The test suite; browser, video and live Manim tests skip unless enabled |
 | `npm run test:full` | `FULL=1`: every frame and ten times as many property cases |
 | `npm run test:embeds` | Real Chromium: capture fidelity, cross-origin embeds, history, phone layout, offline, no JavaScript |
 | `npm run test:video` | Real FFmpeg: H.264 and VP9 exports, subtitles, chapters, decode, receipts |
 | `npm run demos:build` | Build every explainer, the gallery, `evidence.json` and a two-embed page into `out/explainers/` |
-| `npm run demos:check` | `demos:build` plus `check` on every case |
+| `npm run demos:check` | `demos:build` plus `check` and the footer check on every case |
 | `npm run demos:render` | `demos:build` plus a caption-footer video of each default case in `out/videos/`, verified with ffprobe; unchanged videos are skipped unless `-- --force` |
 | `npm run demos:serve` | Serve `out/` on port 5175 with each page's headers and byte ranges; `-- --port n` |
-| `npm run demos:review` | Open every case at 390 px and 1180 px in Chromium; screenshots and header checks in `out/review/` |
+| `npm run demos:review` | Open every served case at 390 px and 1180 px in Chromium and check captions, artwork, errors, outside requests, headers and video byte ranges (needs `out/videos/exgit.mp4`); screenshots in `out/review/` |
 | `npm run site:export -- <site-root>` | Copy the built pages, posters, videos and loader under `<site-root>/projects/lantern-explainers` (`--path` changes it) and write their `_headers` block to `out/site-headers.txt` |
-| `npm run pack:smoke` | Pack, install into a fresh project, build an outside scene with the installed CLI |
+| `npm run pack:smoke` | Pack, install into a fresh project without the optional packages, build an outside scene; `EXPLAIN_BROWSER=1` adds capture, `EXPLAIN_VIDEO=1` a render |
 | `npm run build:lib` | Compile `dist/` (runs on `npm pack`) |
 | `npm run fonts` | Regenerate `src/font-data.ts` from Inter and JetBrains Mono (needs `fonttools` and `brotli`) |
 
-Test environment: `FULL=1` for the long runs; `FC_SEED` and `FC_PATH` replay a fast-check failure; `MANIM_DIR` points at a Manim checkout for the oracle tests; `UPDATE_GOLDEN=1` rewrites the golden trace after a deliberate change; `EXPLAIN_BROWSER=1` and `EXPLAIN_VIDEO=1` enable the browser and video tests.
+Test environment: `FC_RUNS=n` sets the property cases, and `FC_SEED` with `FC_PATH` replays a fast-check failure. `UPDATE_GOLDEN=1` rewrites `test/golden-traces.json` after a deliberate change. Manim parity runs from the frozen answers in `test/manim-oracle.json`; `MANIM_DIR=<checkout of 3b1b/manim>` (with `python3` and numpy) also checks them against live Manim, and `UPDATE_ORACLE=1` rewrites them. `EXPLAIN_BROWSER=1` and `EXPLAIN_VIDEO=1` enable the browser and video tests. `test/explain-gates.test.ts` gives each check one seeded defect.
