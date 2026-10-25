@@ -2,8 +2,16 @@ import { lerpColor, parseColor } from '../src/color.ts';
 import type { Box } from '../src/index.ts';
 import type { Palette } from '../integrations/agentic-mermaid/snapshot.ts';
 
-/** Secondary text that still reads on the paper: ink pulled toward paper, never the style's faint `muted`. */
-export const soft = (p: Palette) => lerpColor(p.ink, p.paper, 0.32);
+/**
+ * Secondary text that still reads on the paper: ink pulled up to a third of the way
+ * toward the paper, never so far that it drops below 4.5:1 (WCAG 1.4.3), and never
+ * the style's faint `muted`. On a paper even the ink cannot reach 4.5:1 on, the ink.
+ */
+export function soft(p: Palette): string {
+  let t = 0.32;
+  while (t > 0 && contrast(p, lerpColor(p.ink, p.paper, t)) < 4.5) t = Math.round((t - 0.01) * 100) / 100;
+  return lerpColor(p.ink, p.paper, t);
+}
 /** WCAG contrast of a colour against the paper. */
 function contrast(p: Palette, color: string): number {
   const lum = (c: string) => {

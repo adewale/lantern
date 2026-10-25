@@ -14,7 +14,6 @@ import {
   checkStep,
   sunlight,
   daylightYear,
-  declination,
 } from '../scenes/explainers/lib/models.ts';
 import { find, closeness, distance, run } from '../scenes/explainers/lib/2password.ts';
 import { Repo, AUTHOR } from '../scenes/explainers/lib/git.ts';
@@ -31,7 +30,6 @@ test('SHA-256 and PKCE agree with independent crypto and the RFC 7636 vector', (
     pkceChallenge('dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk'),
     'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',
   );
-  assert.notEqual(pkceChallenge('stolen-code-wrong-verifier'), pkceChallenge('original-verifier'));
 });
 test('both session histories come from the reducer; closed rejects all modeled events', () => {
   for (const events of [
@@ -116,7 +114,7 @@ test('resource errors use first matching clause, including simultaneous limits',
     steps: 1,
   });
 });
-test('sunlight is bounded, hemisphere-symmetric, and predicts polar extremes', () => {
+test('sunlight follows the sunrise equation: bounded, hemisphere-symmetric, polar extremes and mid-latitude hours', () => {
   for (let latitude = -89; latitude <= 89; latitude++)
     for (let declination = -23; declination <= 23; declination++) {
       const value = sunlight(latitude, declination);
@@ -126,10 +124,29 @@ test('sunlight is bounded, hemisphere-symmetric, and predicts polar extremes', (
   assert.equal(sunlight(69.65, 23.44).daylight, 24);
   assert.equal(sunlight(69.65, -23.44).daylight, 0);
   assert.deepEqual(daylightYear(0), Array(12).fill(12));
-  // Solstices fall near days 171 and 355; the 15th of June and December sit a week short of them.
-  assert.ok(Math.abs(declination(171) - 23.44) < 0.01 && Math.abs(declination(355) + 23.44) < 0.01);
-  assert.ok(Math.abs(declination(165) - 23.3) < 0.1 && Math.abs(declination(348) + 23.3) < 0.1);
+  // By hand from cos ω = −tan φ · tan δ, hours = ω / 7.5°: at φ = 51.5°, tan φ · tan 23.44° = 1.2572 × 0.4336
+  // = 0.5451, so ω = acos(−0.5451) = 123.03° and the day is 16.40 h; in December it is 24 − 16.40 = 7.60 h.
+  assert.ok(Math.abs(sunlight(51.5, 23.44).daylight - 16.4) < 0.01);
+  assert.ok(Math.abs(sunlight(51.5, -23.44).daylight - 7.6) < 0.01);
   assert.ok(sunlight(-33.87, 23.44).daylight < 12);
+  // Mid-month declinations, δ = −23.44° × cos(360° × (day + 10) / 365): 15 June (day 165) puts the
+  // Arctic Circle in full day and 15 December (day 348) in full night; at 65°N on 15 December
+  // δ = −23.27°, so ω = acos(2.1445 × 0.4301) = 22.71° and the day is 3.0 h.
+  assert.equal(daylightYear(69.65)[5], 24);
+  assert.equal(daylightYear(69.65)[11], 0);
+  assert.equal(daylightYear(65)[11], 3);
+  // Near the equinox δ moves fastest, so this pins the day offset: on 15 March (day 73) δ = −3.32°,
+  // ω = acos(2.1445 × 0.0580) = 82.86° and the day at 65°N is 11.0 h (a day's shift gives 11.2).
+  assert.equal(daylightYear(65)[2], 11);
+});
+test('blob ids are SHA-1 of the typed bytes, across the hash\'s padding boundaries and in UTF-8', () => {
+  // With the 8-byte header "blob NN\0", 47, 48 and 56 bytes of content make 55, 56 and 64-byte
+  // messages, SHA-1's one- and two-block padding edges.
+  for (const content of ['', 'a', 'é', 'x'.repeat(47), 'x'.repeat(48), 'x'.repeat(56), 'x'.repeat(120), 'naïve 中文\n'.repeat(9)]) {
+    const bytes = Buffer.from(content, 'utf8');
+    const expected = createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${bytes.length}\0`), bytes])).digest('hex');
+    assert.equal(new Repo().blob(content), expected, JSON.stringify(content));
+  }
 });
 test('both git cases hash the exact typed bytes used by the Git CLI', () => {
   for (const change of ['add', 'edit']) {

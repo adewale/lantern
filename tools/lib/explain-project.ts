@@ -75,7 +75,7 @@ async function engineHash(): Promise<string> {
   inputs.push(await readFile(join(ROOT, 'vendor/glyph.js'), 'utf8'));
   return hash(inputs.join('\n'));
 }
-export async function loadScene(
+async function loadScene(
   file: string,
 ): Promise<{ Scene: ExplainerClass; exportName: string; file: string; sourceHash: string; engineHash: string }> {
   file = await scenePath(file);

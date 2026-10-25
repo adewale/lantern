@@ -165,12 +165,15 @@ export class Transform extends Animation {
     this.targetCopy = this.ownsTarget ? this.target : this.target.copy();
     this.shapes = null;
     if (!this.sameStructure) {
+      // Families first, so the shapes recorded include any path alignFamily moved into a child of its own
+      this.mobject.alignFamily(this.targetCopy);
       this.shapes = new WeakMap();
-      for (const m of [...this.mobject.family(), ...this.targetCopy.family()]) {
+      const from = this.mobject.family(), to = this.targetCopy.family();
+      for (const m of [...from, ...to]) {
         const p = m as Partial<VMobject>;
         if (p.subpaths && p.closed) this.shapes.set(m, { subpaths: p.subpaths.map((a) => a.slice()), closed: p.closed.slice() });
       }
-      this.mobject.alignWith(this.targetCopy);
+      for (let i = 0; i < from.length; i++) from[i]!.alignData(to[i]!);
     }
     super.begin();
   }
@@ -231,7 +234,7 @@ export class Transform extends Animation {
 }
 
 /** A Transform whose target is the result of recorded .animate calls. */
-export function fromAnimateBuilder(builder: AnimateBuilderBase, opts: TransformOpts = {}): Transform {
+function fromAnimateBuilder(builder: AnimateBuilderBase, opts: TransformOpts = {}): Transform {
   const t = new Transform(builder.mobject, builder.buildTarget(), opts);
   t.ownsTarget = true; // the built target is this animation's alone; its structure may differ (setText), so it still aligns
   return t;

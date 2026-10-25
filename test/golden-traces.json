@@ -1,3 +1,76 @@
 {
-  "fixture": "a2b5ccfe60b9a926"
+  "fixture": {
+    "fps": 30,
+    "duration": 13,
+    "frames": 390,
+    "steps": [
+      {
+        "step": "draw",
+        "t0": 0,
+        "frame0": 0,
+        "meta": {
+          "caption": "A title is written and two shapes are drawn."
+        },
+        "before": {
+          "count": 0
+        },
+        "t1": 3.4,
+        "frame1": 102,
+        "hold": 2,
+        "after": {
+          "count": 0
+        }
+      },
+      {
+        "step": "code",
+        "t0": 3.4,
+        "frame0": 102,
+        "meta": {
+          "caption": "A loop appears and its condition is lit."
+        },
+        "before": {
+          "count": 0
+        },
+        "t1": 6.4,
+        "frame1": 192,
+        "hold": 5.4,
+        "after": {
+          "count": 0
+        }
+      },
+      {
+        "step": "count",
+        "t0": 6.4,
+        "frame0": 192,
+        "meta": {
+          "caption": "The counter rises while a dot rides the track."
+        },
+        "before": {
+          "count": 0
+        },
+        "t1": 9.8,
+        "frame1": 294,
+        "hold": 8.9,
+        "after": {
+          "count": 3
+        }
+      },
+      {
+        "step": "end",
+        "t0": 9.8,
+        "frame0": 294,
+        "meta": {
+          "caption": "The shapes pulse, then the code leaves."
+        },
+        "before": {
+          "count": 3
+        },
+        "t1": 13,
+        "frame1": 390,
+        "after": {
+          "count": 3
+        }
+      }
+    ]
+  }
 }

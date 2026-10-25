@@ -1,11 +1,11 @@
-// Property tests for explain/panels.ts: matchLines, CodeBlock and Card.
+// Property tests for explain/panels.ts: CodeBlock (and the line matching its morph uses) and Card.
 // Scenes use a NullSink and skip every frame, so a play costs its begin and
 // finish only. Counts: test/lib/pbt.ts (FULL=1 is 10x).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Scene, NullSink, Text, loadFonts } from '../src/index.ts';
 import type { Box, Vec } from '../src/index.ts';
-import { Card, CodeBlock, matchLines } from '../explain/panels.ts';
+import { Card, CodeBlock } from '../explain/panels.ts';
 import { REGIONS, emphasis } from '../explain/look.ts';
 import type { Region } from '../explain/look.ts';
 import { fc, params } from './lib/pbt.ts';
@@ -45,70 +45,6 @@ function lcs(a: readonly string[], b: readonly string[]): number {
       t[i]![j] = a[i - 1] === b[j - 1] ? t[i - 1]![j - 1]! + 1 : Math.max(t[i - 1]![j]!, t[i]![j - 1]!);
   return t[a.length]![b.length]!;
 }
-
-// ---- matchLines --------------------------------------------------------------
-
-test('matchLines pairs only equal lines, at valid indices', () => {
-  fc.assert(
-    fc.property(lines(), lines(), (a, b) => {
-      for (const [j, i] of matchLines(a, b)) {
-        assert.ok(Number.isInteger(j) && j >= 0 && j < b.length && Number.isInteger(i) && i >= 0 && i < a.length);
-        assert.equal(a[i], b[j]);
-      }
-    }),
-    params(),
-  );
-});
-
-test('matchLines pairs form a subsequence: increasing in both lines', () => {
-  fc.assert(
-    fc.property(lines(), lines(), (a, b) => {
-      const pairs = [...matchLines(a, b)].sort((x, y) => x[0] - y[0]);
-      for (let k = 1; k < pairs.length; k++) assert.ok(pairs[k]![1] > pairs[k - 1]![1], JSON.stringify(pairs));
-    }),
-    params(),
-  );
-});
-
-test('matchLines finds a longest common subsequence', () => {
-  fc.assert(
-    fc.property(lines(), lines(), (a, b) => assert.equal(matchLines(a, b).size, lcs(a, b))),
-    params(),
-  );
-});
-
-test('matchLines of a list with itself is the identity', () => {
-  fc.assert(
-    fc.property(lines(), (a) => assert.deepEqual([...matchLines(a, a)], a.map((_, i) => [i, i]))),
-    params(),
-  );
-});
-
-test('matchLines with an empty side pairs nothing', () => {
-  fc.assert(
-    fc.property(lines(), (a) => {
-      assert.equal(matchLines([], a).size, 0);
-      assert.equal(matchLines(a, []).size, 0);
-    }),
-    params(),
-  );
-});
-
-test('matchLines pairs as many lines either way round', () => {
-  fc.assert(
-    fc.property(lines(), lines(), (a, b) => assert.equal(matchLines(a, b).size, matchLines(b, a).size)),
-    params(),
-  );
-});
-
-test('scale probe: matchLines on 3000 x 3000 lines', () => {
-  const a = Array.from({ length: 3000 }, (_, i) => `line ${i % 97}`),
-    b = Array.from({ length: 3000 }, (_, i) => `line ${(i * 7) % 97}`);
-  const t = performance.now();
-  const m = matchLines(a, b);
-  assert.ok(m.size > 0 && m.size <= 3000);
-  assert.ok(performance.now() - t < 10_000);
-});
 
 // ---- CodeBlock -----------------------------------------------------------------
 
@@ -232,7 +168,7 @@ async function morphed({ colors, before, after, at, markAdded, focus, knobs: k }
   return { s, block, old, top, centre };
 }
 
-test('morph turns the code into the next lines, keeping each surviving line object', async () => {
+test('morph turns the code into the next lines, keeping as many line objects as any pairing of equal lines can', async () => {
   await fc.assert(
     fc.asyncProperty(morphCase, async (c) => {
       const { block, old } = await morphed(c);
@@ -240,11 +176,29 @@ test('morph turns the code into the next lines, keeping each surviving line obje
       const shown = (code: string[]) => new CodeBlock(scene(), c.colors, code).code.lines.map((l) => l.text);
       const [a, b] = [shown(c.before), shown(c.after)];
       assert.deepEqual(block.code.lines.map((l) => l.text), b);
-      for (const [j, i] of matchLines(a, b)) assert.equal(block.code.lines[j], old[i], `line ${j}`);
-      assert.equal(block.marks.length, c.markAdded ? b.length - matchLines(a, b).size : 0);
+      // A kept line keeps its text and its order among the kept: the pairs form a common subsequence...
+      const kept = block.code.lines.map((l, j) => [j, old.indexOf(l)] as const).filter(([, i]) => i >= 0);
+      for (const [j, i] of kept) assert.equal(a[i], b[j], `line ${j} kept old line ${i}`);
+      for (let k = 1; k < kept.length; k++) assert.ok(kept[k]![1] > kept[k - 1]![1], JSON.stringify(kept));
+      // ...and a longest one, so the fewest lines fade.
+      assert.equal(kept.length, lcs(a, b));
+      assert.equal(block.marks.length, c.markAdded ? b.length - kept.length : 0);
     }),
     params(300),
   );
+});
+
+test('scale probe: morphing 600 lines of code pairs its repeated lines quickly', async () => {
+  const a = Array.from({ length: 600 }, (_, i) => `line ${i % 37}`),
+    b = Array.from({ length: 600 }, (_, i) => `line ${(i * 7) % 37}`);
+  const s = scene();
+  const block = new CodeBlock(s, { paper: '#000000', ink: '#ffffff', accent: '#ff8800', muted: '#888888' }, a);
+  s.add(block);
+  const old = new Set(block.code.lines);
+  const t = performance.now();
+  await block.morph(b);
+  assert.equal(block.code.lines.filter((l) => old.has(l)).length, lcs(a, b));
+  assert.ok(performance.now() - t < 10_000);
 });
 
 test('morph leaves no departed line on stage', async () => {
@@ -255,7 +209,8 @@ test('morph leaves no departed line on stage', async () => {
       const kept = new Set(block.code.lines);
       assert.deepEqual(old.filter((l) => !kept.has(l) && present.has(l)).map((l) => l.text), []);
       const shown = s.familyMembers().filter((m): m is Text => m instanceof Text && m.parent === block.code);
-      assert.deepEqual(shown, block.code.lines);
+      // By identity: a deep diff of mobjects runs away on failure.
+      assert.ok(shown.length === block.code.lines.length && shown.every((t, i) => t === block.code.lines[i]), 'the block shows exactly its lines');
     }),
     params(300),
   );
@@ -433,6 +388,7 @@ test('every label and value fits inside its card, never mirrored', () => {
 
 test('a card too narrow for any row is refused', () => {
   // Too narrow: less than the padding, the label gap and one glyph's width (2 x 0.28 + 2.5 x size).
+  // The boundary is the card's contract with authors, so it is pinned exactly.
   fc.assert(
     fc.property(cardCase, fc.double({ min: 0, max: 1, noNaN: true }), (c, f) => {
       const size = c.fontSize ?? 0.24;
@@ -506,18 +462,15 @@ test('set with an unknown row changes nothing and plays nothing', async () => {
       const { s, k } = made;
       const children = [...k.children],
         values = [...k.values],
-        looks = JSON.stringify(k.family().map((m) => m.style));
-      let plays = 0;
-      const play = s.play.bind(s);
-      s.play = async (...args) => {
-        plays++;
-        return play(...args);
-      };
+        looks = JSON.stringify(k.family().map((m) => m.style)),
+        clock = [s.time, s.frameCount];
       await assert.rejects(k.set({ ...changes, ...Object.fromEntries([[extra, v]]) }), /No card row/);
-      assert.deepEqual(k.children, children);
-      assert.deepEqual([...k.values], values);
+      // Compared by identity: a deep diff of mobjects (parent links and all) runs away on failure.
+      const same = <T>(a: readonly T[], b: readonly T[]) => a.length === b.length && a.every((x, i) => x === b[i]);
+      assert.ok(same(k.children, children), 'no row was added or removed');
+      assert.ok(same([...k.values].flat(), values.flat()), 'every row keeps its value object');
       assert.equal(JSON.stringify(k.family().map((m) => m.style)), looks);
-      assert.equal(plays, 0);
+      assert.deepEqual([s.time, s.frameCount], clock, 'no time passed: nothing played');
     }),
     params(300),
   );

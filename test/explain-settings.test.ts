@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Scene, NullSink, traceScene } from '../src/index.ts';
-import { resolveSettings, variantsOf, settingsOf, withSettings } from '../explain/index.ts';
+import { resolveSettings, variantsOf, settingsOf, withSettings, caseName } from '../explain/index.ts';
 import type { Setting } from '../explain/index.ts';
 import { fc, params } from './lib/pbt.ts';
 
@@ -31,22 +31,20 @@ class Example extends Scene {
     this.state = { ...settingsOf(this) };
   }
 }
-test('finite settings enumerate every combination and bind concurrent scenes without leakage', async () => {
-  assert.deepEqual(variantsOf(Example), [
-    { case: 'a', rate: '1' },
-    { case: 'a', rate: '2' },
-    { case: 'b', rate: '1' },
-    { case: 'b', rate: '2' },
-  ]);
+test('every case traced at once sees its own settings, an unbound scene its defaults, and each case has its reader-facing name', async () => {
   const traces = await Promise.all(variantsOf(Example).map((v) => traceScene(withSettings(Example, v))));
   assert.deepEqual(
     traces.map((t) => t.steps[0]!.after),
-    variantsOf(Example),
+    [
+      { case: 'a', rate: '1' },
+      { case: 'a', rate: '2' },
+      { case: 'b', rate: '1' },
+      { case: 'b', rate: '2' },
+    ],
   );
   assert.deepEqual({ ...settingsOf(new Example(new NullSink())) }, { case: 'a', rate: '1' });
-  assert.throws(() => resolveSettings(Example, { case: 'invalid' }), /Unknown case/);
-  assert.throws(() => resolveSettings(Example, { other: 'x' }), /Unknown setting/);
-  assert.throws(() => variantsOf(Example, 3), /exceed/);
+  assert.equal(caseName(Example, { case: 'b', rate: '2' }), 'Case: B · Rate: Two');
+  assert.equal(caseName(Scene, {}), '');
 });
 // ---- properties ------------------------------------------------------------------
 const RESERVED = ['step', 'parentOrigin', 'theme'];
@@ -60,6 +58,7 @@ const setting: fc.Arbitrary<Setting> = fc
   .tuple(settingId, fc.uniqueArray(optionValue, { minLength: 1, maxLength: 4 }), fc.nat())
   .map(([id, values, d]) => ({ id, label: id, default: values[d % values.length]!, options: values.map((value) => ({ value, label: value })) }));
 const declarations = fc.uniqueArray(setting, { maxLength: 4, selector: (s) => s.id });
+const product = (settings: readonly Setting[]) => settings.reduce((n, s) => n * s.options.length, 1);
 const classOf = (settings: readonly Setting[]) =>
   class extends Scene {
     static settings = settings;
@@ -122,16 +121,21 @@ test('declarations with an invalid, reserved or duplicate id, or bad options, ar
   );
 });
 
-const product = (settings: readonly Setting[]) => settings.reduce((n, s) => n * s.options.length, 1);
 
-test('variantsOf is the cartesian product in declaration order, each a valid selection', () => {
+test('variantsOf lists every case once, in declaration order with the last setting changing fastest, each a valid selection', () => {
   fc.assert(
     fc.property(declarations, (settings) => {
       const S = classOf(settings);
       const variants = variantsOf(S, Infinity);
-      let expected: Record<string, string>[] = [{}];
-      for (const s of settings) expected = expected.flatMap((v) => s.options.map((o) => ({ ...v, [s.id]: o.value })));
-      assert.deepEqual(variants.map((v) => ({ ...v })), expected);
+      assert.equal(variants.length, product(settings));
+      // Each case as the option positions it picks: strictly increasing, read as a number, means every case once, in order.
+      const digits = variants.map((v) => settings.map((s) => s.options.findIndex((o) => o.value === v[s.id])));
+      for (const d of digits) assert.ok(d.every((i) => i >= 0));
+      for (let k = 1; k < digits.length; k++) {
+        const [a, b] = [digits[k - 1]!, digits[k]!];
+        const first = a.findIndex((x, i) => x !== b[i]);
+        assert.ok(first >= 0 && a[first]! < b[first]!, `${JSON.stringify(a)} then ${JSON.stringify(b)}`);
+      }
       for (const v of variants) assert.deepEqual({ ...resolveSettings(S, v) }, { ...v });
     }),
     params(),

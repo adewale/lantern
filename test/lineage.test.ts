@@ -9,17 +9,11 @@ import {
   Scene, StringSink, NullSink, Group, VMobject, Rectangle, Circle, Square, Line, Dot, Arc, Polygon, Text, Code, DecimalNumber,
   Transform, FadeIn, FadeOut, Create, Write, Indicate, MoveAlongPath, AnimationGroup, LaggedStart,
   linear, smooth, rushInto, rushFrom, thereAndBack, easeInQuad, easeOutQuad, easeOutBack, wiggle,
-  toSvgString, renderElements, renderAt, indexScene, loadFonts,
+  toSvgString, renderElements, renderAt, indexScene, loadFonts, shaperFor,
 } from '../src/index.ts';
 import type { Mobject, Sink, Vec, RateFunc, Animation, Style } from '../src/index.ts';
-import { shapeMemoSize, SHAPE_MEMO_MAX } from '../src/fonts.ts';
-import { expandTabs } from '../src/text.ts';
-import { StageZoom } from '../app/embed-zoom.ts';
-import { captionsVtt } from '../tools/lib/explain-video.ts';
-import { pathFromSvgD } from '../integrations/agentic-mermaid/build/read-svg.ts';
 
 await loadFonts();
-
 
 // ---- helpers ---------------------------------------------------------------
 
@@ -229,16 +223,13 @@ test('time: seeking to k/fps lands on frame k in a 40-minute scene (manim #1000,
   // https://github.com/3b1b/manim/issues/1000, https://github.com/3b1b/manim/pull/1189: frame timing drifted from the nominal rate.
   // A clock summed from dt drifted past the seek tolerance at about 29 minutes at 25 fps; it now
   // comes from the frame count.
-  const fps = 25, times: number[] = [];
+  const fps = 25, frames = 40 * 60 * fps;
   const S = class extends Scene { override async construct() { await this.wait(40 * 60); } };
-  await new S({ async frame(scene) { times.push(scene.time); } }, { fps }).run();
-  // renderAt(t) forwards the first frame with time + 1e-9 >= t: for t = k/fps that must be frame k
-  const off: number[] = [];
-  for (let k = 1; k < times.length && off.length < 3; k++) {
-    const t = k / fps;
-    if (!(times[k]! + 1e-9 >= t && times[k - 1]! + 1e-9 < t)) off.push(k);
+  // renderAt(k/fps) must land on frame k, late in the scene as well as early
+  for (const k of [1, 2, frames / 2 + 1, frames - 2, frames - 1, frames]) {
+    const scene = await renderAt(S, k / fps, new NullSink(), { fps });
+    assert.equal(scene.frameCount, k, `renderAt(${k}/${fps}) (${(k / fps / 60).toFixed(1)} min)`);
   }
-  assert.deepEqual(off, [], `first frames renderAt(k/fps) misses: ${off.map((k) => `${k} (${(k / fps / 60).toFixed(1)} min)`)}`);
 });
 
 test('run: an exception in an updater or a sink rejects run(), it never hangs or is swallowed (ManimCommunity #4904; manim-web #715)', async () => {
@@ -418,7 +409,12 @@ test('fade: FadeIn and FadeOut keep each family member\'s own opacity, 0 include
   await fc.assert(fc.asyncProperty(fc.array(fc.constantFrom(0, 0.14, 0.5, 1), { minLength: 1, maxLength: 4 }), async (ops) => {
     const kids = ops.map((o, i) => new Circle({ radius: 0.3 }).shift([i, 0]).setOpacity(o));
     const g = new Group(...kids);
-    await film(async (s) => { await s.play(new FadeIn(g)); await s.play(new FadeOut(g)); await s.play(new FadeIn(g)); });
+    await film(async (s) => {
+      await s.play(new FadeIn(g));
+      await s.play(new FadeOut(g));
+      assert.ok(!s.mobjects.includes(g), 'FadeOut takes the group off the screen');
+      await s.play(new FadeIn(g));
+    });
     assert.deepEqual(kids.map((k) => k.style.opacity), ops);
   }), params(30));
 });
@@ -655,10 +651,12 @@ test('code: a tab advances to the next tab stop, as source editors draw it (mani
   // https://github.com/3b1b/manim/pull/1316 (tabs not processed), https://github.com/3b1b/manim/pull/1036 (tab_width).
   // A tab was shaped as one .notdef advance, so tab-indented code (Go, Makefiles) lost its indentation.
   const col = new Text('x', { font: 'mono', fontSize: 0.26 }).advance();
+  /** The column a source editor puts the next character at: a tab moves to the next multiple of the width. */
+  const columnAfter = (line: string, w: number) => [...line].reduce((c, ch) => (ch === '\t' ? (Math.floor(c / w) + 1) * w : c + 1), 0);
   fc.assert(fc.property(fc.string({ unit: fc.constantFrom('\t', 'a', ' ', 'b'), maxLength: 10 }), fc.integer({ min: 1, max: 8 }), (line, tabWidth) => {
     const c = new Code([line + 'Z'], { tabWidth });
     const z = c.lines[0]!.children.at(-1)!, left = c.lines[0]!.frameBox[0]!;
-    const cols = expandTabs(line, tabWidth).length;
+    const cols = columnAfter(line, tabWidth);
     assert.ok(near(z.box()![0] - left, cols * col + (new Text('Z', { font: 'mono', fontSize: 0.26 }).children[0]!.box()![0] - new Text('Z', { font: 'mono', fontSize: 0.26 }).frameBox[0]!), 1e-4), JSON.stringify(line));
     assert.equal(c.lines[0]!.text, line + 'Z', 'the line keeps its source text');
   }), params(200));
@@ -672,7 +670,9 @@ test('code: a Code line re-set to its own text keeps its tab stops; bad tab widt
     l.setText(l.text);
     pointsOf(l).forEach((x, i) => assert.ok(near(x, before[i]!, 1e-5)));
   }), params(200));
-  assert.equal(expandTabs('é\t', 4), 'é   ', 'an accent combined with its letter is one column');
+  // An accented letter is one column, so the tab after it reaches the same stop as after 'x'
+  const stop = (text: string) => { const l = new Code([text]).lines[0]!; return l.children.at(-1)!.box()![0] - l.frameBox[0]!; };
+  assert.ok(near(stop('\u00e9\tZ'), stop('x\tZ'), 1e-4), 'é + tab reaches the same stop as x + tab');
   for (const w of [0, -1, 2.5, NaN]) assert.throws(() => new Code(['\tx'], { tabWidth: w }), RangeError);
 });
 
@@ -761,8 +761,15 @@ test('fonts: the shaping memo stays bounded however many distinct strings are sh
   // https://github.com/ManimCommunity/manim/issues/1959 (DecimalNumber with an updater got slower and slower),
   // https://github.com/maloyan/manim-web/issues/82 (a counter that grows without bound). A counting
   // DecimalNumber shapes a new string every frame, and the memo kept all of them.
-  for (let i = 0; i < SHAPE_MEMO_MAX * 2 + 10; i++) new DecimalNumber(i * 0.37, { decimals: 2 });
-  assert.ok(shapeMemoSize() <= 2 * SHAPE_MEMO_MAX, `${shapeMemoSize()} runs memoized`);
+  const shape = shaperFor('sans');
+  const idle = shape('idle', 0.4), busy = shape('busy', 0.4);
+  assert.equal(shape('idle', 0.4), idle, 'a repeat is memoized');
+  for (let i = 0; i < 20_000; i++) {
+    new DecimalNumber(i * 0.37, { decimals: 2 });
+    if (i % 1000 === 0) shape('busy', 0.4);
+  }
+  assert.notEqual(shape('idle', 0.4), idle, 'the idle run was let go: the memo is bounded');
+  assert.equal(shape('busy', 0.4), busy, 'a run still in use stays memoized (least recently used goes first)');
 });
 
 // ===========================================================================
@@ -820,58 +827,4 @@ test('svg: dash lists with stray separators, commas, odd lengths or "none" seria
     const el = renderElements((() => { const s = new Scene(new NullSink()); s.add(new Line([0, 0], [3, 0], { dashArray: none })); return s; })())[0]!;
     assert.equal(el.attrs['stroke-dasharray'], undefined, `${JSON.stringify(none)} is a solid stroke`);
   }
-});
-
-test('svg import: after Z, a drawing command starts a new subpath at the closed one\'s start (ManimCommunity #31; manim #1731)', () => {
-  // https://github.com/ManimCommunity/manim/issues/31 (improve the SVG parser), https://github.com/3b1b/manim/pull/1731.
-  // SVG 1.1 §8.3.3: after closepath the current point is the subpath's start, and the next command opens a new subpath there.
-  fc.assert(fc.property(fc.array(vec, { minLength: 3, maxLength: 5 }), vec, fc.constantFrom('L', 'l'), (poly, next, cmd) => {
-    const [p0] = poly;
-    const d = 'M' + poly.map(([x, y]) => `${x} ${y}`).join('L') + 'Z' + (cmd === 'L' ? `L${next[0]} ${next[1]}` : `l${next[0] - p0![0]} ${next[1] - p0![1]}`);
-    const v = pathFromSvgD(d);
-    assert.equal(v.subpaths.length, 2, d);
-    assert.equal(v.closed[0], true);
-    const s = v.subpaths[1]!;
-    assert.ok(near(s[0]!, p0![0], 1e-4) && near(s[1]!, p0![1], 1e-4) && near(s[s.length - 2]!, next[0], 1e-4) && near(s[s.length - 1]!, next[1], 1e-4), d);
-  }), params(300));
-});
-
-// ===========================================================================
-// Video export, captions, the browser player
-// ===========================================================================
-
-test('captions: a caption with a blank line or "-->" stays one WebVTT cue (ManimCommunity #2314, #3062, #3243)', () => {
-  // https://github.com/ManimCommunity/manim/pull/2314 (subcaptions), https://github.com/ManimCommunity/manim/pull/3062 (encoding),
-  // https://github.com/ManimCommunity/manim/issues/3243 (add_subcaption threw).
-  // A blank line inside a caption used to end the cue, and players dropped the rest.
-  fc.assert(fc.property(fc.array(fc.string({ unit: fc.constantFrom('a', ' ', '\n', '-', '>', 'é'), minLength: 1, maxLength: 12 }), { minLength: 1, maxLength: 4 }), (caps) => {
-    const steps = caps.map((caption, i) => ({ step: `s${i}`, t0: i, t1: i + 1, frame0: i * 30, meta: { caption }, before: {} }));
-    const vtt = captionsVtt({ fps: 30, duration: caps.length, frames: caps.length * 30, steps });
-    const blocks = vtt.trim().split(/\n\s*\n/).slice(1); // after the WEBVTT header
-    assert.equal(blocks.length, caps.filter((c) => c).length, vtt);
-    for (const b of blocks) assert.match(b, /^\d+\n\d\d:\d\d:\d\d\.\d{3} --> \d\d:\d\d:\d\d\.\d{3}(\n|$)/);
-  }), params(300));
-});
-
-test('zoom: after a resize the drawing point at the stage centre stays at the centre (manim-web #389, #838, #871)', () => {
-  // https://github.com/maloyan/manim-web/pull/389 (re-fit the canvas on resize and rotation),
-  // https://github.com/maloyan/manim-web/issues/838 (camera off-centre on mobile), https://github.com/maloyan/manim-web/pull/871.
-  // Turning a phone while zoomed used to slide the view; the pan now scales with the stage.
-  (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver ??= class { observe() {} disconnect() {} };
-  fc.assert(fc.property(fc.integer({ min: 200, max: 2000 }), fc.integer({ min: 200, max: 2000 }), fc.double({ min: 1.5, max: 6, noNaN: true }), fc.double({ min: 0.5, max: 2, noNaN: true }), (w, h, k, r) => {
-    const svg = { classList: { toggle() {} }, style: { transform: '', transformOrigin: '' } };
-    const stage = {
-      clientWidth: w, clientHeight: h, addEventListener() {}, getBoundingClientRect: () => ({ left: 0, top: 0 }),
-      querySelector: () => svg, classList: { toggle() {} }, setPointerCapture() {},
-    };
-    const z = new StageZoom(stage as unknown as HTMLElement, () => {});
-    z.apply();
-    z.zoomAt(k); // about the centre, as the + button does
-    const centre = (side: number, pan: number) => (side / 2 - pan) / z.k / side; // fraction across the drawing
-    const before = [centre(w, z.x), centre(h, z.y)];
-    stage.clientWidth = Math.round(w * r); stage.clientHeight = Math.round(h * r);
-    z.apply(); // what the ResizeObserver callback does
-    const after = [centre(stage.clientWidth, z.x), centre(stage.clientHeight, z.y)];
-    assert.ok(near(after[0]!, before[0]!, 1e-6) && near(after[1]!, before[1]!, 1e-6), `centre moved from ${before} to ${after}`);
-  }), params(300));
 });

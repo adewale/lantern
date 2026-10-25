@@ -7,7 +7,7 @@
 import { fc } from './pbt.ts';
 import {
   Scene, Group, Rectangle, Circle, Square, Line, Polygon, Arc, Dot, Text, Labeled,
-  Transform, FadeIn, FadeOut, Create, Write, Indicate, MoveAlongPath, LaggedStart, AnimationGroup,
+  Transform, FadeIn, FadeOut, Create, Write, Indicate, Flash, MoveAlongPath, LaggedStart, AnimationGroup,
   UP, DOWN, LEFT, RIGHT, linear, smooth, rushInto, thereAndBack,
 } from '../../src/index.ts';
 import type { Animation, AnimateBuilder, Mobject, Playable, SceneClass, Style, Vec } from '../../src/index.ts';
@@ -21,7 +21,7 @@ export interface Rng {
 }
 
 /** mulberry32: a small seeded PRNG so every failure is reproducible. */
-export function rng(seed: number): Rng {
+function rng(seed: number): Rng {
   let a = seed >>> 0;
   const next = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   const r = (lo = 0, hi = 1): number => lo + next() * (hi - lo);
@@ -45,7 +45,7 @@ export function tapeRng(tape: readonly number[]): Rng {
 }
 
 /** Draws a scene needs: a random scene uses under 300, so 512 never runs short. */
-export const TAPE = 512;
+const TAPE = 512;
 /**
  * A tape of uniform draws (noBias keeps the distribution of the seeded
  * generator: no extra weight on small values), the same length every time so
@@ -87,9 +87,9 @@ export function place<M extends Mobject>(r: Rng, m: M): M {
   return m;
 }
 
-function randomAnimation(r: Rng, _scene: Scene, pool: Mobject[]): Animation | AnimateBuilder<Mobject> {
+function randomAnimation(r: Rng, pool: Mobject[]): Animation | AnimateBuilder<Mobject> {
   const m = r.pick(pool);
-  switch (r.int(0, 8)) {
+  switch (r.int(0, 9)) {
     case 0: return new FadeIn(m, { shift: r.bool() ? [r(-1, 1), r(-1, 1)] : null, scale: r(0.5, 1.5) });
     case 1: return new FadeOut(m, { shift: r.bool() ? [r(-1, 1), r(-1, 1)] : null });
     case 2: return new Create(m);
@@ -98,30 +98,39 @@ function randomAnimation(r: Rng, _scene: Scene, pool: Mobject[]): Animation | An
     case 5: return m.animate.shift([r(-2, 2), r(-2, 2)]).setFill(r.pick(COLORS)).scale(r(0.5, 1.5));
     case 6: return new Indicate(m, { color: r.pick(COLORS), scaleFactor: r(1, 1.4) });
     case 7: return new MoveAlongPath(m, new Line([r(-5, 5), r(-3, 3)], [r(-5, 5), r(-3, 3)]), { fromCurrent: r.bool() });
+    // Opacity alone changes, in place: what a cache keyed on points could miss
+    case 8: return new Flash(m);
     default: return new LaggedStart(pool.map((x) => new FadeIn(x)), { lagRatio: r(0, 1) });
   }
 }
 
-/** A scene from a seed or a tape. `log` collects things the invariants check after plays. */
-export function makeScene(draws: Draws, log: Array<[Mobject, Mobject]> | null = null): SceneClass {
+/**
+ * A scene from a seed or a tape. Some scenes also carry a dot that an updater
+ * drifts every frame, outside the pool the plays animate: updaters integrate over
+ * frames, so a seek must not skip them.
+ */
+export function makeScene(draws: Draws): SceneClass {
   const seed = typeof draws === 'number' ? draws : null;
   return class extends Scene {
     override async construct(): Promise<void> {
       const r = drawsFrom(draws);
       const pool = Array.from({ length: r.int(1, 5) }, () => place(r, randomShape(r)));
       this.add(...pool);
+      if (r.bool(0.2)) {
+        const v: Vec = [r(-1, 1), r(-1, 1)];
+        this.add(place(r, new Dot({ radius: 0.1, color: r.pick(COLORS) })).addUpdater((m, dt) => void m.shift([v[0] * dt, v[1] * dt])));
+      }
       const state = (this.state = { seed, plays: 0 });
       const plays = r.int(2, 6);
       for (let i = 0; i < plays; i++) {
         if (r.bool(0.4)) await this.step(`s${i}`, { i });
         // One play drives each mobject at most once (Scene.play enforces it)
         const free = [...pool].sort(() => r() - 0.5);
-        const anims: Playable[] = Array.from({ length: r.int(1, Math.min(3, free.length)) }, () => randomAnimation(r, this, [free.pop()!]));
+        const anims: Playable[] = Array.from({ length: r.int(1, Math.min(3, free.length)) }, () => randomAnimation(r, [free.pop()!]));
         if (anims.some((a) => (a as Partial<AnimationGroup>).animations)) anims.splice(1); // a LaggedStart over the pool plays alone
         const rate = r.pick([linear, smooth, rushInto, thereAndBack]);
         await this.play(...anims, { runTime: r(0.05, 0.8), rateFunc: rate });
         state.plays = i + 1;
-        for (const a of anims) if (a instanceof Transform && !(a.remover) && log) log.push([a.mobject, a.target]);
         if (r.bool(0.3)) await this.wait(r(0.03, 0.4));
       }
     }

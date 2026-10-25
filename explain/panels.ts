@@ -455,7 +455,7 @@ export class CodeBlock extends Group {
 }
 
 /** Pairs of (new index → old index) for the longest common subsequence of equal lines. */
-export function matchLines(before: readonly string[], after: readonly string[]): Map<number, number> {
+function matchLines(before: readonly string[], after: readonly string[]): Map<number, number> {
   const n = before.length,
     m = after.length;
   const table = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));

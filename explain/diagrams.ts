@@ -134,7 +134,7 @@ function scaleStyle(style: Style, k: number): void {
       .join(' ');
   if (style.dashOffset) style.dashOffset *= k;
 }
-export function scaleArtwork(mob: Mobject, k: number, at: Vec = [0, 0]): void {
+function scaleArtwork(mob: Mobject, k: number, at: Vec = [0, 0]): void {
   mob.scale(k, { aboutPoint: at });
   for (const m of mob.family()) scaleStyle(m.style, k);
 }

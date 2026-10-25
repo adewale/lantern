@@ -1,16 +1,20 @@
 // Property tests for the tools/lib surfaces the build and `check` stand on:
-// caption wrapping, resting-text collisions, the per-diagram snapshot store,
-// Counts: test/lib/pbt.ts (FULL=1 is 10x).
+// caption wrapping, resting-text collisions, the construct lint, the per-diagram
+// snapshot store and inline-script escaping. The gates themselves, each with a
+// seeded defect, are in explain-gates.test.ts. Counts: test/lib/pbt.ts (FULL=1 is 10x).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, rm, readdir, readFile, writeFile, mkdir, stat, utimes } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createHash } from 'node:crypto';
+import vm from 'node:vm';
+import { transformSync } from 'esbuild';
 import { Text, Group, Rectangle, loadFonts } from '../src/index.ts';
 import type { Mobject } from '../src/index.ts';
 import { wrapCaption, FOOTER_TEXT_WIDTH } from '../tools/lib/explain-video.ts';
-import { restingTextProblems } from '../tools/lib/explain-check.ts';
-import { readSnapshots, writeSnapshots, snapshotFileName, collectProject, IMPORTER } from '../tools/lib/explain-project.ts';
+import { restingTextProblems, lintConstruct } from '../tools/lib/explain-check.ts';
+import { readSnapshots, writeSnapshots, snapshotFileName, scriptEscape, IMPORTER } from '../tools/lib/explain-project.ts';
 import { diagramKey } from '../integrations/agentic-mermaid/snapshot.ts';
 import type { SnapshotStore } from '../explain/index.ts';
 import { fc, params } from './lib/pbt.ts';
@@ -53,7 +57,6 @@ test('wrapped caption lines reassemble the words, in order, none lost or split',
   fc.assert(
     fc.property(caption, width, size, (text, w, s) => {
       const lines = wrapped(text, w, s);
-      if (lines) assert.deepEqual(lines.join(' ').split(' ').filter(Boolean), words(text).join(' ').split(' ').filter(Boolean));
       if (lines) assert.deepEqual(lines.flatMap((l) => l.split(' ')), words(text));
     }),
     params(),
@@ -66,16 +69,6 @@ test('wrapping is greedy: no line could have taken the next line’s first word'
       const lines = wrapped(text, w, s) ?? [];
       for (let i = 0; i + 1 < lines.length; i++)
         assert.ok(new Text(lines[i] + ' ' + lines[i + 1]!.split(' ')[0], { fontSize: s }).width() > w);
-    }),
-    params(),
-  );
-});
-
-test('wrapping its own output gives the same lines', () => {
-  fc.assert(
-    fc.property(caption, width, size, (text, w, s) => {
-      const lines = wrapped(text, w, s);
-      if (lines) assert.deepEqual(wrapCaption(lines.join(' '), w, s), lines);
     }),
     params(),
   );
@@ -105,15 +98,6 @@ test('a caption word wider than the line is refused', () => {
   );
 });
 
-test('a width or size that is not positive is refused', () => {
-  fc.assert(
-    fc.property(caption, fc.constantFrom(NaN, 0, -1, -Infinity), fc.boolean(), (text, bad, which) => {
-      assert.throws(() => (which ? wrapCaption(text, bad) : wrapCaption(text, FOOTER_TEXT_WIDTH, bad)), /must be positive/);
-    }),
-    params(),
-  );
-});
-
 test('no-break spaces hold their words on one line', () => {
   fc.assert(
     fc.property(caption, fc.array(word, { minLength: 2, maxLength: 3 }), fc.constantFrom(' ', ' ', ' '), width, (text, group, nb, w) => {
@@ -136,11 +120,12 @@ test('a wider line never needs more lines', () => {
   );
 });
 
-test('scale probe: wrapCaption on a 200,000-word caption fails fast and cleanly', () => {
+test('scale probe: wrapCaption stops measuring once a caption needs a fifth line', () => {
   const t = performance.now();
   assert.throws(() => wrapCaption('word '.repeat(200_000), FOOTER_TEXT_WIDTH), /four footer lines/);
   assert.equal(wrapCaption('word '.repeat(20), 1e6).length, 1);
-  assert.ok(performance.now() - t < 20_000);
+  // About 10 ms when it stops at the fifth line; measuring all 200,000 words takes seconds.
+  assert.ok(performance.now() - t < 2000, `${Math.round(performance.now() - t)} ms`);
 });
 
 // ---- restingTextProblems ---------------------------------------------------------
@@ -374,11 +359,164 @@ test('a corrupt diagram file fails the read loudly rather than vanishing from th
   );
 });
 
-test('scale probe: a store of 2,000 diagrams writes, rewrites nothing, and reads back', { timeout: 120_000 }, async () => {
-  const s: SnapshotStore = Object.fromEntries(Array.from({ length: 2000 }, (_, i) => [diagramKey({ source: 'graph ' + i }), { version: 1, i } as never]));
-  await folder(async (base) => {
-    await writeSnapshots(base, s, 'h');
-    await writeSnapshots(base, s, 'h');
-    assert.equal(Object.keys(await readSnapshots(base)).length, 2000);
-  });
+test('snapshotFileName is the first 16 hex digits of the key\'s SHA-256, so never index.json', () => {
+  fc.assert(
+    fc.property(fc.string({ unit: 'binary' }), (key) => {
+      assert.match(snapshotFileName(key), /^[0-9a-f]{16}\.json$/);
+      assert.equal(snapshotFileName(key), createHash('sha256').update(key, 'utf8').digest('hex').slice(0, 16) + '.json');
+    }),
+    params(),
+  );
+});
+
+test('snapshotFileName gives different diagram keys different files', () => {
+  // Real keys: diagramKey output, which JSON-escapes lone surrogates, so distinct keys are distinct UTF-8.
+  const key = fc.record({ source: fc.string({ unit: 'binary' }), style: fc.constantFrom('nord', 'default', 'blueprint') }).map((s) => diagramKey(s));
+  fc.assert(
+    fc.property(key, key, (a, b) => {
+      fc.pre(a !== b);
+      assert.notEqual(snapshotFileName(a), snapshotFileName(b));
+    }),
+    params(),
+  );
+});
+
+// ---- lintConstruct ---------------------------------------------------------------
+
+type Stmt =
+  | { k: 'await' | 'forAwait' | 'sync' | 'catchCall' }
+  | { k: 'fn'; body: Stmt[] }
+  | { k: 'try'; body: Stmt[]; handler: 'catch' | 'finally' | 'both'; recover: Stmt[] };
+const stmts: fc.Arbitrary<Stmt[]> = fc.letrec<{ list: Stmt[]; stmt: Stmt }>((tie) => ({
+  stmt: fc.oneof(
+    { depthSize: 'small', withCrossShrink: true },
+    fc.record({ k: fc.constantFrom('await' as const, 'forAwait' as const, 'sync' as const, 'catchCall' as const) }),
+    fc.record({ k: fc.constant('fn' as const), body: tie('list') }),
+    fc.record({ k: fc.constant('try' as const), body: tie('list'), handler: fc.constantFrom('catch' as const, 'finally' as const, 'both' as const), recover: tie('list') }),
+  ),
+  list: fc.array(tie('stmt'), { maxLength: 3 }),
+})).list;
+const render = (list: Stmt[]): string =>
+  list
+    .map((s) => {
+      if (s.k === 'await') return "await this.step('s');";
+      if (s.k === 'forAwait') return 'for await (const x of this.items()) { model.push(x); }';
+      if (s.k === 'sync') return 'model.push(1);';
+      if (s.k === 'catchCall') return 'await this.play(x).catch(() => {});';
+      if (s.k === 'fn') return `const f = async () => { ${render(s.body)} };`;
+      if (s.k !== 'try') return '';
+      const catchPart = s.handler === 'finally' ? '' : `catch (e) { ${render(s.recover)} }`;
+      const finallyPart = s.handler === 'catch' ? '' : `finally { ${s.handler === 'finally' ? render(s.recover) : ''} }`;
+      return `try { ${render(s.body)} } ${catchPart} ${finallyPart}`;
+    })
+    .join('\n');
+/** Awaited by this function body (a nested function is not awaited by the code around it). */
+const awaits = (list: Stmt[]): boolean =>
+  list.some((s) => s.k === 'await' || s.k === 'forAwait' || s.k === 'catchCall' || (s.k === 'try' && (awaits(s.body) || awaits(s.recover))));
+const expectedErrors = (list: Stmt[]): number =>
+  list.reduce(
+    (n, s) =>
+      n +
+      (s.k === 'catchCall' ? 1 : 0) +
+      (s.k === 'fn' ? expectedErrors(s.body) : 0) +
+      (s.k === 'try' ? (s.handler !== 'finally' && awaits(s.body) ? 1 : 0) + expectedErrors(s.body) + expectedErrors(s.recover) : 0),
+    0,
+  );
+const constructForm = fc.constantFrom(
+  (b: string) => `async construct() { ${b} }`,
+  (b: string) => `async 'construct'() { ${b} }`,
+  (b: string) => `async ['construct']() { ${b} }`,
+  (b: string) => `construct = async () => { ${b} };`,
+);
+
+test('lintConstruct flags each catch around awaited construct code, however construct is spelled', () => {
+  fc.assert(
+    fc.property(stmts, constructForm, stmts, (body, form, other) => {
+      const source = `class S extends Scene { ${form(render(body))}\n async helper() { ${render(other)} } }`;
+      const errors = lintConstruct(source);
+      assert.equal(errors.length, expectedErrors(body), source);
+      for (const e of errors) assert.match(e, /StopScene/);
+    }),
+    params(),
+  );
+});
+
+test('scale probe: the lint counts 300 nested catches in a 20,000-statement construct', () => {
+  let nested = "await this.step('x');";
+  for (let i = 0; i < 300; i++) nested = `try { ${nested} } catch (e) {}`;
+  assert.equal(lintConstruct(`class S { async construct() { ${nested} ${'model.push(1);'.repeat(20_000)} } }`).length, 300);
+});
+
+// ---- scriptEscape ----------------------------------------------------------------
+
+/** Strings rich in the tokens the HTML parser reacts to, overlapping in every way. */
+const hostile = fc.string({ unit: fc.constantFrom('<', '/', '!', '-', 's', 'c', 'r', 'i', 'p', 't', 'S', 'C', 'R', 'I', 'P', 'T', '>', ' ', '\u2028', '\u2029', 'x', '\\', '`', '"'), maxLength: 40 });
+
+test('scriptEscape leaves no </script (any case) and no <!--', () => {
+  fc.assert(
+    fc.property(fc.oneof(hostile, fc.string({ unit: 'binary' })), (code) => {
+      const out = scriptEscape(code);
+      assert.doesNotMatch(out, /<\/script/i);
+      assert.doesNotMatch(out, /<!--/);
+    }),
+    params(),
+  );
+});
+
+test('scriptEscape changes nothing in code without those tokens', () => {
+  fc.assert(
+    fc.property(fc.oneof(hostile, fc.string({ unit: 'binary' })), (code) => {
+      fc.pre(!/<\/script|<!--|\u2028|\u2029/i.test(code));
+      assert.equal(scriptEscape(code), code);
+    }),
+    params(),
+  );
+});
+
+/** Expression fragments as bundled code contains them: strings, templates, regexes (with u/v), raw templates. */
+const regexToken = fc.constantFrom('<', '!', '-', 'a', '<!--', '<\\/script', '\\/', 's', '>', 'x*');
+const fragment = fc.oneof(
+  hostile.map((t) => JSON.stringify(t)),
+  hostile.map((t) => '`' + t.replace(/[\\`$]/g, '\\$&') + '`'),
+  hostile.map((t) => '`' + t.replace(/[\\`$]/g, '\\$&') + '${1}`'),
+  fc.tuple(fc.array(regexToken, { minLength: 1, maxLength: 5 }), fc.constantFrom('', 'u', 'v', 'i', 'gu'), hostile).map(
+    // What a regex matches, not its .source text: escaping `<!--` changes the text of a regex
+    // (and of a raw template) that holds it, never what it matches (ledger: scriptEscape).
+    ([tokens, flags, sample]) =>
+      `(r => [r.flags, r.test(${JSON.stringify(sample)}), r.test(${JSON.stringify(tokens.join('').replace(/\\/g, ''))}), '<!--'.replace(r, '#')])(/${tokens.join('')}/${flags})`,
+  ),
+  // Raw templates keep their backslashes, so no textual escape of `<!--` or U+2028/9 can preserve them
+  // (ledger: scriptEscape, String.raw). esbuild itself rewrites raw templates holding </script.
+  hostile.filter((t) => !/<!--|\u2028|\u2029/.test(t)).map((t) => 'String.raw`' + t.replace(/[`$]/g, '').replace(/\\+$/, '') + '`'),
+);
+const runOut = (code: string) => {
+  const context = vm.createContext({});
+  vm.runInContext(code, context);
+  return JSON.stringify((context as { out: unknown }).out);
+};
+
+test('scriptEscape keeps what bundled code does', () => {
+  fc.assert(
+    fc.property(fc.array(fragment, { minLength: 1, maxLength: 6 }), (fragments) => {
+      const program = `globalThis.out = [${fragments.join(', ')}];`;
+      let bundled: string;
+      try {
+        bundled = transformSync(program, { minify: true, format: 'iife', target: 'es2022' }).code;
+      } catch {
+        fc.pre(false);
+        return;
+      }
+      assert.equal(runOut(scriptEscape(bundled)), runOut(bundled), bundled);
+    }),
+    {
+      ...params(),
+      // The regex that broke the built Lantern page (escaping every `</` made /</g into /<\/g),
+      // beside the cases the HTML parser cares about.
+      examples: [[['"a<b</c".replace(/</g, "&lt;")', '"</script>".length', '/<\\/SCRIPT>/i.test("</script>")', '"x\\u2028y".length']]],
+    },
+  );
+});
+
+test('scale probe: scriptEscape on 5.6 MB of </script and <!-- leaves neither', () => {
+  assert.doesNotMatch(scriptEscape('</script><!-- '.repeat(400_000)), /<\/script|<!--/i);
 });

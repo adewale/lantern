@@ -88,11 +88,14 @@ export function picture(all: readonly Seen[], before: ReadonlySet<string>): Pict
 export const shownNames = (seen: readonly Seen[]) =>
   new Set(seen.filter((s) => s.what).flatMap(({ what, parts }) => (parts.length ? parts.map((p) => p.name) : [what])));
 
-/** Up to `max` items joined with semicolons (code's column spacing closed up), then how many more. */
+/**
+ * Up to `max` items joined with semicolons (code's column spacing closed up, and an item's own
+ * trailing comma or semicolon dropped, as the join separates them), then how many more.
+ */
 function some(items: readonly string[], max = 3): string {
   const shown = items
     .slice(0, max)
-    .map((t) => t.trim().replace(/\s+/g, ' '))
+    .map((t) => t.trim().replace(/\s+/g, ' ').replace(/[,;]+$/, ''))
     .join('; ');
   return items.length > max ? `${shown}; and ${items.length - max} more` : shown;
 }

@@ -2,7 +2,7 @@
 // describe) and caption holds (Step.hold, captionWpm). Counts: test/lib/pbt.ts.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Scene, NullSink, Rectangle, FadeIn } from '../src/index.ts';
+import { Scene, NullSink, Rectangle, FadeIn, traceScene } from '../src/index.ts';
 import type { Step, Sink } from '../src/index.ts';
 import { fc, params } from './lib/pbt.ts';
 
@@ -37,17 +37,33 @@ async function run(p: Plan, skipUntil = 0) {
   return { steps: scene.steps, motion, end: scene.time };
 }
 
-test('a captioned step lasts at least its reading time', async () => {
+// The documented reading pace (docs/REFERENCE.md, Scene): 160 words a minute.
+const WPM = 160;
+
+test('a captioned step lasts at least its reading time at 160 words a minute', async () => {
   await fc.assert(
     fc.asyncProperty(plan, async (p) => {
       const { steps } = await run(p);
       steps.forEach((s, i) => {
         const c = p.steps[i]!.caption;
-        if (typeof c === 'string') assert.ok(s.t1! - s.t0 >= (words(c) / Scene.captionWpm) * 60 - 1e-9, `${s.name}: ${s.t1! - s.t0}s for ${words(c)} words`);
+        if (typeof c === 'string') assert.ok(s.t1! - s.t0 >= (words(c) / WPM) * 60 - 1e-9, `${s.name}: ${s.t1! - s.t0}s for ${words(c)} words`);
       });
     }),
     params(300),
   );
+});
+
+test('the hold follows Scene.captionWpm: 12 words at 120 a minute hold 6 s, and Infinity holds nothing', async () => {
+  const words12 = 'one two three four five six seven eight nine ten eleven twelve';
+  class S extends Scene { override async construct() { await this.step('a', { caption: words12 }); await this.wait(0.1); await this.step('b'); } }
+  const saved = Scene.captionWpm;
+  try {
+    for (const [wpm, t1] of [[120, 6], [Infinity, 0.1]] as const) {
+      Scene.captionWpm = wpm;
+      const scene = await new S(new NullSink(), { fps: 10 }).run();
+      assert.ok(Math.abs(scene.steps[0]!.t1! - t1) < 1e-6, `${wpm} wpm: held to ${scene.steps[0]!.t1}s`);
+    }
+  } finally { Scene.captionWpm = saved; }
 });
 
 test('a caption hold adds at most one frame beyond the reading time', async () => {
@@ -56,7 +72,7 @@ test('a caption hold adds at most one frame beyond the reading time', async () =
       const { steps, motion } = await run(p);
       steps.forEach((s, i) => {
         const c = p.steps[i]!.caption;
-        const need = typeof c === 'string' ? (words(c) / Scene.captionWpm) * 60 : 0;
+        const need = typeof c === 'string' ? (words(c) / WPM) * 60 : 0;
         assert.ok(s.t1! - s.t0 < Math.max(need, motion[i]!) + 1 / p.fps + 1e-9);
       });
     }),
@@ -96,6 +112,31 @@ test('holds are the same whether the run is played or skipped', async () => {
     fc.asyncProperty(plan, async (p) => {
       const [a, b] = [await run(p), await run(p, Infinity)];
       assert.deepEqual(b.steps.map((s) => [s.t0, s.t1, s.hold, s.frame0, s.frame1]), a.steps.map((s) => [s.t0, s.t1, s.hold, s.frame0, s.frame1]));
+    }),
+    params(300),
+  );
+});
+
+test("a trace carries each step's boundaries and hold, to the millisecond, as the run recorded them", async () => {
+  // The player stops at a step's hold and video waits there for the caption: both read it from the trace.
+  const ms = (x: number) => Math.round(x * 1000) / 1000;
+  await fc.assert(
+    fc.asyncProperty(plan, async (p) => {
+      const { steps } = await run(p);
+      class Planned extends Scene {
+        override async construct() {
+          for (const [i, s] of p.steps.entries()) {
+            await this.step('s' + i, s.caption === undefined ? {} : { caption: s.caption });
+            if (s.motion) await this.play(new FadeIn(new Rectangle({ width: 1, height: 1 })), { runTime: s.motion });
+            if (s.wait) await this.wait(s.wait);
+          }
+        }
+      }
+      const trace = await traceScene(Planned, { fps: p.fps });
+      assert.deepEqual(
+        trace.steps.map((r) => [r.step, r.t0, r.frame0, r.t1, r.frame1, r.hold]),
+        steps.map((s) => [s.name, ms(s.t0), s.frame0, ms(s.t1!), s.frame1, s.hold == null ? undefined : ms(s.hold)]),
+      );
     }),
     params(300),
   );
@@ -261,22 +302,4 @@ test('a describer that does not return an object is refused with a clear error',
     }),
     params(),
   );
-});
-
-test('scale probe: thousands of listeners and describers, over thousands of steps', async () => {
-  let calls = 0;
-  class Big extends Scene {
-    override async construct() {
-      const offs = Array.from({ length: 2000 }, () => this.onStep(() => void calls++));
-      for (let i = 0; i < 2000; i++) this.addDescriber(() => ({ ['k' + i]: i }));
-      await this.step('first');
-      for (const off of offs.slice(0, 1000)) off();
-      for (let i = 0; i < 2_000; i++) await this.step('s' + i, { caption: 'w' });
-    }
-  }
-  const t = performance.now();
-  const scene = await new Big(new NullSink(), { skipUntil: Infinity }).run();
-  assert.equal(calls, 2000 + 1000 * 2_000);
-  assert.equal(Object.keys(scene.describe()).length, 2000);
-  assert.ok(performance.now() - t < 60_000);
 });

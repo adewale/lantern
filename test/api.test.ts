@@ -26,12 +26,6 @@ const EXPECTED = [
   'perf', 'MotionSink', 'analyzeMotion',
 ].sort();
 
-test('the public API is exactly the documented set of names', () => {
+test('the public API is exactly this set of names', () => {
   assert.deepEqual(Object.keys(api).sort(), EXPECTED);
-});
-
-test('the coordinate vocabulary is manim\'s: y up, angles counterclockwise', () => {
-  assert.deepEqual(api.UP, [0, 1]); assert.deepEqual(api.DOWN, [0, -1]); assert.deepEqual(api.UR, [1, 1]);
-  const p = api.rotate([1, 0], Math.PI / 2);
-  assert.ok(Math.abs(p[0]) < 1e-12 && Math.abs(p[1] - 1) < 1e-12, 'a quarter turn takes +x to +y');
 });

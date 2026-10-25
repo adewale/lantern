@@ -10,7 +10,7 @@ import { perf } from './perf.ts';
 
 export const FRAME = { w: 16, h: 9 } as const;
 /** SVG user units per scene unit: lengths are emitted as integers (see VMobject.formatPathD). */
-export const UNITS = 1000;
+const UNITS = 1000;
 const VIEWBOX = `${-FRAME.w / 2 * UNITS} ${-FRAME.h / 2 * UNITS} ${FRAME.w * UNITS} ${FRAME.h * UNITS}`;
 /** A length in integer user units. */
 const len = (x: number): string => '' + Math.round(x * UNITS);
@@ -348,9 +348,6 @@ interface DomNode {
   attrsRef?: Attrs;
 }
 
-/** Opt-in frame logs that tools/playback.ts and tools/hitch.ts install on the page. */
-const logs = globalThis as { __frameLog?: number[]; __mutLog?: number[] };
-
 /**
  * Patches a live <svg> in place: one stable element per mobject, attributes
  * diffed, elements reordered only when draw order changes. Paces frames to
@@ -397,7 +394,7 @@ export class DomSink implements Sink {
    * than 250ms (a pause, a hidden tab) re-anchors the schedule.
    */
   async frame(scene: Scene, dt = 0): Promise<void> {
-    if (!this.realtime || dt === 0) { this.anchor = null; this.patch(scene, performance.now()); return; }
+    if (!this.realtime || dt === 0) { this.anchor = null; this.patch(scene); return; }
     const now = performance.now();
     if (this.anchor != null && now - (this.anchor + scene.time * 1000) > 250) this.anchor = null;
     if (this.anchor != null && now > this.anchor + scene.time * 1000 + dt * 1000 && now - this.lastPatch < this.maxFreezeMs) {
@@ -410,19 +407,18 @@ export class DomSink implements Sink {
     for (;;) {
       const vsync = await nextAnimationFrame();
       if (this.anchor == null) this.anchor = vsync - scene.time * 1000;
-      if (vsync >= this.anchor + scene.time * 1000 - 8) { this.patch(scene, vsync); return; }
+      if (vsync >= this.anchor + scene.time * 1000 - 8) { this.patch(scene); return; }
     }
   }
 
-  patch(scene: Scene, presentAt: number): void {
+  patch(scene: Scene): void {
     // Absolute path data: measured faster for live DOM patching than translate + relative
-    this.apply(renderElements(scene, { relative: false }), presentAt, scene.time);
+    this.apply(renderElements(scene, { relative: false }));
   }
 
   /** Bring the DOM to exactly these records (one frame). */
-  apply(els: readonly ElementRecord[], presentAt: number, t: number): void {
+  apply(els: readonly ElementRecord[]): void {
     this.lastPatch = performance.now();
-    let muts = 0, dMuts = 0;
     const end = perf.begin('dom.patch');
     const clips = clipsOf(els), signature = clips.map((c)=>c.id).join(' ');
     if (signature !== this.clipSignature) {
@@ -458,7 +454,6 @@ export class DomSink implements Sink {
       node.rec = rec;
       if (rec.transform !== node.transform) {
         if (rec.transform) node.el.setAttribute('transform', rec.transform); else node.el.removeAttribute('transform');
-        muts++;
         node.transform = rec.transform;
       }
       // Same attrs object: only the transform can have changed
@@ -470,7 +465,7 @@ export class DomSink implements Sink {
       node.attrsRef = rec.attrs;
       for (const k in rec.attrs) {
         const v = rec.attrs[k]!;
-        if (node.attrs[k] !== v) { node.el.setAttribute(k, v); node.attrs[k] = v; muts++; if (k === 'd') dMuts++; }
+        if (node.attrs[k] !== v) { node.el.setAttribute(k, v); node.attrs[k] = v; }
       }
       for (const k in node.attrs) {
         if (!(k in rec.attrs)) { node.el.removeAttribute(k); delete node.attrs[k]; }
@@ -484,12 +479,7 @@ export class DomSink implements Sink {
       if (!seen.has(id)) { node.el.remove(); this.nodes.delete(id); }
     }
     end();
-    // Opt-in frame log for the playback verifier (tools/playback.ts)
-    logs.__frameLog?.push(presentAt, t);
-    // Opt-in per-frame detail for tools/hitch.ts: attribute writes, of which path data
-    logs.__mutLog?.push(muts, dMuts, -1);
   }
-
 }
 
 const nextAnimationFrame = (): Promise<number> => new Promise((res) => requestAnimationFrame(res));

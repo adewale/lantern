@@ -8,8 +8,11 @@
 // FULL=1 runs ten times as many.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Scene, StringSink, SnapshotSink, Text, Transform, renderAt, traceScene, indexScene, renderText, loadFonts, VMobject } from '../src/index.ts';
-import type { Box, Mobject, Sink, StyleRecord } from '../src/index.ts';
+import {
+  Scene, StringSink, SnapshotSink, NullSink, Transform, Line, Arc, Text, VMobject,
+  renderAt, traceScene, indexScene, renderText, renderElements, toSvgString, loadFonts,
+} from '../src/index.ts';
+import type { Box, ElementRecord, Mobject } from '../src/index.ts';
 import { tapeRng, makeScene, place, randomShape, tape, drawsFrom } from './lib/random-scene.ts';
 import type { Draws } from './lib/random-scene.ts';
 import { fc, params } from './lib/pbt.ts';
@@ -30,67 +33,63 @@ const bruteBox = (m: Mobject): Box | null => {
   }
   return b;
 };
+/** A scene holding copies of these mobjects: a copy hits none of the original's render caches. */
+const fresh = (scene: Scene): Scene => new Scene(new NullSink()).add(...scene.mobjects.map((m) => m.copy()));
+/** The SVG a fresh scene draws with exactly these mobjects on it. */
+const drawn = (...mobs: Mobject[]): string => toSvgString(new Scene(new NullSink()).add(...mobs));
+const absolute = (els: ElementRecord[]): string => els.map((e) => `${e.transform ?? ''}|${JSON.stringify(e.attrs)}|${e.text ?? ''}`).join('\n');
 
-test('random scenes: deterministic, finite, cache-exact, box-exact, seek-exact', async () => {
+test('random scenes: deterministic, finite, cache-exact in both output modes, box-exact, seek-exact, skip-exact', async () => {
   await forDraws(300, async (seed, ctx) => {
-    VMobject.validateCaches = true;
-    try {
-      const S = makeScene(seed);
-      const a = new StringSink(), b = new StringSink();
-      const sa = new Scene(a, { fps: 20 }); Object.setPrototypeOf(sa, S.prototype);
-      // box(): the cache must agree with a fresh computation at every frame
-      const boxSink: Sink = { async frame(scene) {
-        await a.frame(scene);
-        for (const top of scene.mobjects) for (const m of top.family()) {
-          const cached = m.box(), fresh = bruteBox(m);
-          assert.deepEqual(cached, fresh, `${ctx}: stale box on ${m.constructor.name}#${m.id} at t=${scene.time}`);
-        }
-      } };
-      await new S(boxSink, { fps: 20 }).run();
-      await new S(b, { fps: 20 }).run();
-      assert.ok(a.frames.length > 1, ctx);
-      assert.deepEqual(a.frames, b.frames, `${ctx}: not deterministic`);
-      for (const f of a.frames) assert.ok(!/NaN|Infinity|undefined/.test(f), `${ctx}: non-finite output`);
-      // seeking to 3 times lands on the exact frame
-      const ix = await indexScene(S, { fps: 20 });
-      const r = typeof seed === 'number' ? drawsFrom(seed * 7919) : tapeRng(seed.slice(400));
-      for (let k = 0; k < 3; k++) {
-        const t = r(0, ix.duration);
-        const snap = new SnapshotSink();
-        const scene = await renderAt(S, t, snap, { fps: 20 });
-        const i = Math.round(scene.time * 20);
-        assert.equal(snap.svg, a.frames[i], `${ctx}: seek to ${t.toFixed(3)} (frame ${i}) differs from the full run`);
-        renderText(scene); // must not throw
-      }
-      await traceScene(S); // must not throw
-    } finally { VMobject.validateCaches = false; }
+    const S = makeScene(seed);
+    const a = new StringSink(), b = new StringSink();
+    // Relative mode (SVG strings): each frame equals a cache-free render of copies, and every box equals a fresh computation
+    await new S({ async frame(scene) {
+      await a.frame(scene);
+      assert.equal(a.last(), toSvgString(fresh(scene)), `${ctx}: stale render cache at t=${scene.time}`);
+      for (const top of scene.mobjects) for (const m of top.family())
+        assert.deepEqual(m.box(), bruteBox(m), `${ctx}: stale box on ${m.constructor.name}#${m.id} at t=${scene.time}`);
+    } }, { fps: 20 }).run();
+    // Absolute mode (what DomSink draws), in a run of its own: the path cache holds one mode, so alternating would bypass it
+    await new S({ async frame(scene) {
+      assert.equal(absolute(renderElements(scene, { relative: false })), absolute(renderElements(fresh(scene), { relative: false })), `${ctx}: stale absolute record at t=${scene.time}`);
+    } }, { fps: 20 }).run();
+    await new S(b, { fps: 20 }).run();
+    assert.ok(a.frames.length > 1, ctx);
+    assert.deepEqual(a.frames, b.frames, `${ctx}: not deterministic`);
+    for (const f of a.frames) assert.ok(!/NaN|Infinity|undefined/.test(f), `${ctx}: non-finite output`);
+    // seeking to 3 times lands on the exact frame
+    const ix = await indexScene(S, { fps: 20 });
+    const r = typeof seed === 'number' ? drawsFrom(seed * 7919) : tapeRng(seed.slice(400));
+    for (let k = 0; k < 3; k++) {
+      const t = r(0, ix.duration);
+      const snap = new SnapshotSink();
+      const scene = await renderAt(S, t, snap, { fps: 20 });
+      const i = Math.round(scene.time * 20);
+      assert.equal(snap.svg, a.frames[i], `${ctx}: seek to ${t.toFixed(3)} (frame ${i}) differs from the full run`);
+      assert.doesNotThrow(() => renderText(scene), `${ctx}: renderText`);
+    }
+    // A trace from a skipped run records the same boundaries and state as a played one
+    assert.deepEqual(await traceScene(S, { fps: 20 }), await traceScene(S, { fps: 20, skipUntil: 0 }), `${ctx}: skipped trace differs`);
   });
 });
 
-test('Transform lands exactly on its target: same path data and style, leaf by leaf', async () => {
-  await forDraws(300, async (seed) => {
+test('Transform ends drawing exactly what its target, as authored, draws', async () => {
+  // The oracle is the target as the author built it, not the copy Transform aligned: a
+  // container morphed into a lone path used to end drawing nothing (D1).
+  await forDraws(300, async (seed, ctx) => {
     const S = makeScene(seed);
-    const checks: number[] = [];
-    const scene = new S({ async frame() {} }, { fps: 20 });
+    const scene = new S(new NullSink(), { fps: 20 });
     const origPlay = scene.play.bind(scene);
     // Check right after each play, before the next one moves things again
     scene.play = async (...args) => {
+      const plain = (args as unknown[]).filter((an): an is Transform => an instanceof Transform && an.constructor === Transform && !an.replace && !an.remover);
+      const want = plain.map((an) => drawn(an.target.copy()));
       const r = await origPlay(...args);
-      for (const an of args) if (an instanceof Transform && an.constructor === Transform && !an.replace && !an.remover && Math.abs(an.rateFunc(1) - 1) < 1e-9) {
-        const got = an.mobject.family(), want = an.targetCopy.family();
-        assert.equal(got.length, want.length, `${typeof seed === 'number' ? 'seed ' + seed : 'tape'}: family sizes differ after Transform`);
-        got.forEach((g, i) => {
-          const w = want[i]!; // same length, asserted above
-          if (g instanceof VMobject && w instanceof VMobject) assert.equal(g.toPathD(), w.toPathD(), `${g.constructor.name}#${g.id} ended off its target`);
-          else if (g instanceof VMobject) {
-            // A path morphing into something with no path of its own collapses to its center
-            const c = w.center();
-            for (const arr of g.pointArrays()) for (let j = 0; j < arr.length; j += 2) assert.ok(Math.hypot(arr[j]! - c[0], arr[j + 1]! - c[1]) < 1e-4, `${g.constructor.name}#${g.id} should have collapsed to its target's center`);
-          }
-          for (const k of Object.keys(w.style) as Array<keyof StyleRecord>) if (k !== 'drawFraction') assert.equal(g.style[k], w.style[k], `style ${k} ended as ${g.style[k]}, target ${w.style[k]}`);
-        });
-        checks.push(1);
-      }
+      // play()'s options set the rate function: only one that ends at 1 lands on the target
+      plain.forEach((an, i) => {
+        if (Math.abs(an.rateFunc(1) - 1) < 1e-9) assert.equal(drawn(an.mobject.copy()), want[i], `${ctx}: ${an.mobject.constructor.name} -> ${an.target.constructor.name} ended off its target`);
+      });
       return r;
     };
     await scene.run();
@@ -110,7 +109,9 @@ test('subdividing any cubic path preserves its geometry (random paths, random n)
     const ref: Array<[number, number]> = [];
     for (let c = 0; c < n; c++) for (let i = 0; i <= 4000; i++) ref.push(p.pointOnCurve(0, c, i / 4000));
     const start = p.pointFromProportion(0), end = p.pointFromProportion(1);
-    p.insertNCurves(0, r.int(1, 12));
+    const extra = r.int(1, 12);
+    p.insertNCurves(0, extra);
+    assert.equal(p.numCurves(), n + extra, 'exactly n more curves');
     assert.deepEqual(p.pointFromProportion(0), start); assert.deepEqual(p.pointFromProportion(1), end);
     for (let c = 0; c < p.numCurves(); c++) for (const t of [0, 0.25, 0.5, 0.75]) {
       const q = p.pointOnCurve(0, c, t);
@@ -134,23 +135,28 @@ test('copy() is deep: mutating a copy never touches the original', async () => {
   });
 });
 
-test('a one-curve path morphing into a Text collapses to the text’s centre, not onto its advance box', async () => {
+test('a one-curve path morphing into a Text heads for the text’s centre, not onto its advance box', () => {
   // Regression: a one-curve path and a Text's advance box are both 8 floats, and equal length
-  // alone used to make them blend, so the line landed on the box's corners.
-  const { Line, Arc, Text: T, Transform: Tr, NullSink } = await import('../src/index.ts');
-  await fc.assert(
-    fc.asyncProperty(
+  // alone used to make them blend, so the line flew to the box's corners. The path is emptied
+  // once it lands, so the check is mid-morph, where a reader sees it.
+  fc.assert(
+    fc.property(
       fc.tuple(fc.double({ min: -5, max: 5, noNaN: true }), fc.double({ min: -3, max: 3, noNaN: true }), fc.double({ min: -5, max: 5, noNaN: true }), fc.double({ min: -3, max: 3, noNaN: true })),
       fc.string({ unit: 'grapheme', minLength: 1, maxLength: 6 }),
       fc.boolean(),
-      async ([x0, y0, x1, y1], text, arc) => {
+      fc.double({ min: 0.05, max: 0.99, noNaN: true }),
+      ([x0, y0, x1, y1], text, arc, alpha) => {
         const path = arc ? new Arc({ radius: 1, angle: 0.5 }).moveTo([x0, y0]) : new Line([x0, y0], [x1, y1]);
-        const target = new T(text, { fontSize: 0.3 }).moveTo([x1, y1]);
-        const scene = new Scene(new NullSink());
-        scene.add(path);
-        await scene.play(new Tr(path, target));
-        const c = target.center();
-        for (const a of path.pointArrays()) for (let j = 0; j < a.length; j += 2) assert.ok(Math.hypot(a[j]! - c[0], a[j + 1]! - c[1]) < 1e-4);
+        const target = new Text(text, { fontSize: 0.3 }).moveTo([x1, y1]);
+        const start = path.pointArrays()[0]!.slice();
+        const morph = new Transform(path, target);
+        morph.begin();
+        morph.interpolate(alpha);
+        const c = target.center(), now = path.pointArrays()[0]!;
+        for (let j = 0; j < start.length; j += 2) {
+          const want = [start[j]! + (c[0] - start[j]!) * alpha, start[j + 1]! + (c[1] - start[j + 1]!) * alpha];
+          assert.ok(Math.hypot(now[j]! - want[0]!, now[j + 1]! - want[1]!) < 1e-4, `point ${j / 2} at alpha ${alpha}`);
+        }
       },
     ),
     params(),

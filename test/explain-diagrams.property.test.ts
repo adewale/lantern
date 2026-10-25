@@ -5,16 +5,15 @@
 // cost their begin/finish only. Counts: test/lib/pbt.ts (FULL=1 is 10x).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Scene, NullSink, Dot, Group, VMobject, loadFonts } from '../src/index.ts';
+import { Scene, NullSink, Dot, loadFonts } from '../src/index.ts';
 import type { Box } from '../src/index.ts';
-import { Diagram, scaleArtwork } from '../explain/diagrams.ts';
+import { Diagram } from '../explain/diagrams.ts';
 import { REGIONS, emphasis, dimOpacity } from '../explain/look.ts';
 import type { Region } from '../explain/look.ts';
-import { findingsOf } from '../explain/index.ts';
 import { diagramKey, snapshotResolver, useDiagrams } from '../integrations/agentic-mermaid/snapshot.ts';
 import type { DiagramSnapshot } from '../explain/index.ts';
 import { fc, params } from './lib/pbt.ts';
-import { snapshot, hexColor, buildSnapshot, snapshotPlan, uniqueIds } from './lib/random-snapshot.ts';
+import { snapshot, hexColor, buildSnapshot, snapshotPlan, uniqueIds, planOf } from './lib/random-snapshot.ts';
 
 await loadFonts();
 
@@ -45,20 +44,18 @@ const overlaps = (a: Box, b: Box) => a[0] < b[2] && b[0] < a[2] && a[1] < b[3] &
 const union = (boxes: Box[]): Box =>
   boxes.reduce((u, b) => [Math.min(u[0], b[0]), Math.min(u[1], b[1]), Math.max(u[2], b[2]), Math.max(u[3], b[3])]);
 const links = (d: Diagram) => [...d.parts.values()].filter((p) => !p.info.owner && p.info.from && p.info.to);
-const isScaffold = (id: string, role: string) =>
-  id === '__frame' || /axis|lifeline|lane|grid|participant|actor|section/.test(role) || id.startsWith('branch:');
-/** The part an id names, as the docs define it: its own id, or a participant's or class's bare name. */
-const named = (d: Diagram, id: string) => [id, 'actor:' + id, 'class:' + id].find((n) => d.parts.has(n));
-/** The top-level part an id names: an owned label belongs to its owner. */
-const topOf = (d: Diagram, id: string) => {
-  let p = d.parts.get(named(d, id)!)!;
-  while (p.info.owner) p = d.parts.get(p.info.owner)!;
-  return p.info.id;
+/** The part a name names, from what the generator built: its own id, or the part a bare name stands for. */
+const named = (s: DiagramSnapshot, id: string) => (s.parts.some((p) => p.id === id) ? id : planOf(s).names.get(id));
+/** The top-level part a name names: an owned label belongs to the link that owns it. */
+const topOf = (s: DiagramSnapshot, id: string) => {
+  let p = s.parts.find((q) => q.id === named(s, id))!;
+  while (p.owner) p = s.parts.find((q) => q.id === p.owner)!;
+  return p.id;
 };
 
-/** A snapshot together with draws that index into its parts. */
+/** A snapshot together with draws that index into its parts, by id or by a bare name. */
 const withPicks = <T>(pick: (ids: string[]) => fc.Arbitrary<T>) =>
-  snapshot().chain((s) => fc.tuple(fc.constant(s), pick(s.parts.map((p) => p.id))));
+  snapshot().chain((s) => fc.tuple(fc.constant(s), pick([...s.parts.map((p) => p.id), ...planOf(s).names.keys()])));
 
 test('reading order lists every top-level part exactly once', async () => {
   await fc.assert(
@@ -124,7 +121,7 @@ test('mark colours outlines and links, never labels or owned parts', async () =>
         const { d } = await shown(s);
         const before = new Map(tops(d).map((id) => [id, d.parts.get(id)!.mob.family().map((m) => ({ ...m.style }))]));
         await d.mark(ids, { color });
-        for (const id of new Set(ids.map((i) => topOf(d, i)))) {
+        for (const id of new Set(ids.map((i) => topOf(s, i)))) {
           const p = d.parts.get(id)!;
           const connector = !!(p.info.from && p.info.to);
           p.mob.family().forEach((m, i) => {
@@ -175,9 +172,9 @@ async function finalLook(s: DiagramSnapshot, sequence: Op[]) {
   const marks = new Map<string, string>();
   let keep: string[] | null = null;
   for (const op of sequence) {
-    if (op.k === 'mark') for (const id of op.ids) marks.set(topOf(d, id), op.color);
+    if (op.k === 'mark') for (const id of op.ids) marks.set(topOf(s, id), op.color);
     else if (op.k === 'unmark') {
-      if (op.ids) for (const id of op.ids) marks.delete(topOf(d, id));
+      if (op.ids) for (const id of op.ids) marks.delete(topOf(s, id));
       else marks.clear();
     } else if (op.k === 'dim') keep = op.keep;
     else await d.focus(op.ids);
@@ -187,21 +184,7 @@ async function finalLook(s: DiagramSnapshot, sequence: Op[]) {
   return looks(d);
 }
 
-test('the resting look depends only on the final marks and dimming, not on the order of calls', async () => {
-  await fc.assert(
-    fc.asyncProperty(
-      withPicks((ids) => ops(ids, false)),
-      async ([s, sequence]) => {
-        const { d } = await shown(s);
-        for (const op of sequence) await apply(d, op);
-        assert.equal(looks(d), await finalLook(s, sequence));
-      },
-    ),
-    params(300),
-  );
-});
-
-test('emphasis keeps the camera: marks, unmarks and dimming under focus match the same end state', async () => {
+test('the resting look depends only on the final marks and dimming, not on their order or the camera moves between them', async () => {
   await fc.assert(
     fc.asyncProperty(
       withPicks((ids) => ops(ids, true)),
@@ -223,12 +206,13 @@ test('dim fades exactly the parts outside the kept set, the links between kept p
         const { d } = await shown(s);
         const base = new Map(tops(d).map((id) => [id, d.parts.get(id)!.mob.family().map((m) => m.style.opacity)]));
         await d.dim(keep);
-        const kept = new Set(keep.map((id) => topOf(d, id)));
+        const kept = new Set(keep.map((id) => topOf(s, id)));
         for (const l of links(d))
-          if ([l.info.from!, l.info.to!].every((n) => named(d, n) && kept.has(topOf(d, n)))) kept.add(l.info.id);
+          if ([l.info.from!, l.info.to!].every((n) => named(s, n) && kept.has(topOf(s, n)))) kept.add(l.info.id);
+        const { scaffold } = planOf(s);
         for (const id of tops(d)) {
           const p = d.parts.get(id)!;
-          const faded = !kept.has(id) && !isScaffold(id, p.info.role);
+          const faded = !kept.has(id) && !scaffold.has(id);
           p.mob.family().forEach((m, i) =>
             assert.equal(m.style.opacity, faded ? base.get(id)![i]! * dimOpacity(s.palette) : base.get(id)![i]!, `${id} faded=${faded}`),
           );
@@ -273,7 +257,7 @@ test('forget restores every style and takes the diagram off the stage', async ()
   );
 });
 
-test('hide fades every part and note out and resets emphasis', async () => {
+test('hide fades every part and note out and resets emphasis; reveal then draws it as if freshly built', async () => {
   await fc.assert(
     fc.asyncProperty(
       withPicks((ids) => fc.tuple(ops(ids, false), fc.subarray(ids))),
@@ -287,6 +271,8 @@ test('hide fades every part and note out and resets emphasis', async () => {
         assert.ok(tops(d).every((id) => !present.has(d.get(id))), 'no part left on stage');
         assert.equal(d.notes.length, 0);
         assert.equal(looks(d), before);
+        await d.reveal('rest');
+        assert.equal(looks(d), looks((await shown(s)).d));
       },
     ),
     params(300),
@@ -302,30 +288,17 @@ const walkSnapshot = snapshot().chain((s) => fc.tuple(fc.constant(s), hops(s)));
 /** Walks recorded so far (revealing a message records its walk too, so tests read the ones after a point). */
 const walks = (scene: Scene) => (scene.describe().walks ?? []) as { edge: string; from: string; to: string }[];
 
-test('walk records each hop, in order, on the link it travelled, and leaves no token behind', async () => {
+test('walk, one after another or in parallel, records each hop in order on the link it travelled, and leaves no token behind', async () => {
   await fc.assert(
-    fc.asyncProperty(walkSnapshot, async ([s, path]) => {
+    fc.asyncProperty(walkSnapshot, fc.boolean(), async ([s, path], parallel) => {
       const { scene, d } = await shown(s);
       const built = walks(scene).length;
-      await d.walk(path);
+      await d.walk(path, { parallel });
       const first = (from: string, to: string) => s.parts.find((p) => p.from === from && p.to === to)!.id;
       assert.deepEqual(
         walks(scene).slice(built).map((w) => [w.from, w.to, w.edge]),
         path.map(([from, to]) => [from, to, first(from, to)]),
       );
-      assert.ok(!scene.familyMembers().some((m) => m instanceof Dot), 'tokens fade out');
-    }),
-    params(),
-  );
-});
-
-test('walk in parallel records every hop and leaves no token behind', async () => {
-  await fc.assert(
-    fc.asyncProperty(walkSnapshot, async ([s, path]) => {
-      const { scene, d } = await shown(s);
-      const built = walks(scene).length;
-      await d.walk(path, { parallel: true });
-      assert.equal(walks(scene).length - built, path.length);
       assert.ok(!scene.familyMembers().some((m) => m instanceof Dot), 'tokens fade out');
     }),
     params(),
@@ -339,7 +312,8 @@ test('a walk trail leaves every travelled link marked in the trail colour', asyn
       await d.walk(path, { trail: color, parallel });
       for (const [from, to] of path) {
         const edge = d.parts.get(s.parts.find((p) => p.from === from && p.to === to)!.id)!;
-        const own = edge.mob.family().filter((m) => m.parent === edge.mob && m !== edge.route);
+        // The link's own strokes: not its route, not a label it owns, not its words.
+        const own = edge.mob.family().filter((m) => m.parent === edge.mob && m !== edge.route && m.key == null && typeof (m as { text?: unknown }).text !== 'string');
         for (const m of own)
           if (m.style.stroke !== 'none' && (m.style.strokeWidth ?? 0) > 0) assert.equal(m.style.stroke, color);
       }
@@ -355,7 +329,9 @@ test('walk rejects a hop that is not a link before anything moves or is recorded
         fc.tuple(fc.constant(s), fc.constant(path), fc.nat({ max: path.length }), fc.string(), fc.string()),
       ),
       async ([s, path, at, from, to]) => {
-        fc.pre(!s.parts.some((p) => p.from === from && p.to === to));
+        // A link's ends are bare names; a hop may name them by those or by the parts they stand for.
+        const end = (n: string) => named(s, n) ?? n;
+        fc.pre(!s.parts.some((p) => p.from && p.to && end(p.from) === end(from) && end(p.to) === end(to)));
         const { scene, d } = await shown(s);
         const before = looks(d),
           built = walks(scene).length;
@@ -380,7 +356,7 @@ test('walk rejects a link that has not been revealed', async () => {
   );
 });
 
-test("focus on any parts, then focus('all'), returns the diagram to its home frame", async () => {
+test("focus on any parts, then focus('all'), returns the diagram to its home frame and its home styles", async () => {
   await fc.assert(
     fc.asyncProperty(
       withPicks((ids) => fc.array(ids.length ? fc.subarray(ids, { minLength: 1 }) : fc.constant([] as string[]), { minLength: 1, maxLength: 3 })),
@@ -390,7 +366,8 @@ test("focus on any parts, then focus('all'), returns the diagram to its home fra
         const { d } = await shown(s, box);
         const boxes = () => tops(d).map((id) => d.get(id).box()).filter((b): b is Box => !!b);
         fc.pre(boxes().length > 0);
-        const home = union(boxes());
+        const home = union(boxes()),
+          styles = looks(d);
         const span = (b: Box) => Math.max(b[2] - b[0], b[3] - b[1]);
         let far = 0;
         for (const ids of focuses) {
@@ -406,9 +383,42 @@ test("focus on any parts, then focus('all'), returns the diagram to its home fra
         // budget is 64 such half-ulps per move: measured worst cases use about 25.
         const eps = 2 ** -24 * 64 * (focuses.length + 1) * (far / zoomed + Math.max(1, ...home.map(Math.abs)));
         now.forEach((v, i) => assert.ok(Math.abs(v - home[i]!) <= eps, `${now} vs ${home}`));
+        // Stroke widths and dashes followed the camera; at home they are exactly the authored ones.
+        assert.equal(looks(d), styles);
       },
     ),
     params(300),
+  );
+});
+
+test('under focus, stroke widths and dash lengths scale with the artwork', async () => {
+  const lengths = (d: Diagram) =>
+    tops(d).flatMap((id) => d.get(id).family().map((m) => [m.style.strokeWidth ?? 0, ...(m.style.dashArray ?? '').split(/[ ,]+/).filter(Boolean).map(Number)]));
+  await fc.assert(
+    fc.asyncProperty(
+      withPicks((ids) => (ids.length ? fc.subarray(ids, { minLength: 1 }) : fc.constant([] as string[]))),
+      fc.double({ min: 0.25, max: 4, noNaN: true }),
+      where,
+      async ([s, ids], zoom, box) => {
+        fc.pre(ids.length > 0);
+        const { d } = await shown(s, box);
+        const span = () => {
+          const u = union(tops(d).map((id) => d.get(id).box()).filter((b): b is Box => !!b));
+          return Math.max(u[2] - u[0], u[3] - u[1]);
+        };
+        const [before, home] = [lengths(d), span()];
+        fc.pre(home > 1e-3);
+        await d.focus(ids, { zoom });
+        const k = span() / home;
+        lengths(d).forEach((now, i) =>
+          now.forEach((v, j) => {
+            const want = before[i]![j]! * k;
+            assert.ok(Math.abs(v - want) <= 1e-3 * want + 1e-9, `length ${j} of member ${i}: ${v}, want ${want} (k ${k})`);
+          }),
+        );
+      },
+    ),
+    params(),
   );
 });
 
@@ -470,7 +480,7 @@ test('a note keeps its size through any focus', async () => {
 test("focus('all') on a diagram with nothing drawn is a no-op", async () => {
   await fc.assert(
     fc.asyncProperty(snapshotPlan, async (plan) => {
-      const s = buildSnapshot({ ...plan, nodes: [], links: [], frame: null, lifeline: null });
+      const s = buildSnapshot({ ...plan, nodes: [], links: [], frame: null });
       const { d } = await shown(s);
       await d.focus('all');
       assert.equal(d.root.children.length, 0);
@@ -533,30 +543,14 @@ test('a note avoids its part whenever one of the sides it tries has room', async
   );
 });
 
-test('findings() are the snapshot findings with their parts', async () => {
-  await fc.assert(
-    fc.asyncProperty(
-      snapshot().chain((s) =>
-        fc.tuple(
-          fc.constant(s),
-          fc.array(fc.record({ code: fc.string(), edge: fc.option(fc.string().map((e) => e + '#' + e.length), { nil: undefined }) }, { requiredKeys: ['code'] })),
-        ),
-      ),
-      async ([s, warnings]) => {
-        const { d } = await shown({ ...s, findings: { ok: false, warnings } }, 'full', null);
-        assert.deepEqual(d.findings(), findingsOf(d.snapshot));
-      },
-    ),
-    params(),
-  );
-});
-
 test('get finds every part by its id and rejects names that are not parts', async () => {
   await fc.assert(
     fc.asyncProperty(snapshot(), fc.string(), async (s, name) => {
       const { d } = await shown(s, 'full', null);
       for (const p of s.parts) assert.equal(d.get(p.id), d.parts.get(p.id)!.mob);
-      if (!named(d, name)) assert.throws(() => d.get(name), /No diagram mark/);
+      // A participant's or a class's bare name names its part.
+      for (const [bare, id] of planOf(s).names) if (!s.parts.some((p) => p.id === bare)) assert.equal(d.get(bare), d.get(id));
+      if (!named(s, name)) assert.throws(() => d.get(name), /No diagram mark/);
     }),
     params(),
   );
@@ -569,7 +563,7 @@ test('reveal(n) shows exactly the next n pending parts in reading order', async 
       for (const n of counts) {
         const pending = d.order.filter((id) => !d.visible.has(id));
         const expected = new Set([...d.visible, ...pending.slice(0, n)]);
-        for (const p of d.parts.values()) if (p.info.owner && expected.has(topOf(d, p.info.id))) expected.add(p.info.id);
+        for (const p of d.parts.values()) if (p.info.owner && expected.has(topOf(s, p.info.id))) expected.add(p.info.id);
         await d.reveal(n);
         assert.deepEqual([...d.visible].sort(), [...expected].sort());
       }
@@ -612,6 +606,8 @@ test('morph hands over to the next diagram: every part shown, at its fresh place
         assert.equal(d.notes.length, 0);
         assert.equal(looks(d), looks(fresh));
         for (const id of tops(d)) assert.deepEqual(d.get(id).box(), fresh.get(id).box(), id);
+        // The next style brings its own emphasis colour.
+        assert.equal(d.accent, emphasis(next.palette));
       },
     ),
     params(300),
@@ -639,7 +635,7 @@ test("build('frame') shows exactly the scaffolding, and build('all') everything"
   await fc.assert(
     fc.asyncProperty(snapshot(), async (s) => {
       const { d } = await shown(s, 'full', 'frame');
-      const scaffold = tops(d).filter((id) => isScaffold(id, d.parts.get(id)!.info.role));
+      const scaffold = tops(d).filter((id) => planOf(s).scaffold.has(id));
       assert.deepEqual(tops(d).filter((id) => d.visible.has(id)).sort(), scaffold.sort());
       await d.build('all');
       assert.deepEqual([...d.visible].sort(), allIds(d).sort());
@@ -679,7 +675,7 @@ test('mark and dim refuse an unknown part and change nothing', async () => {
   await fc.assert(
     fc.asyncProperty(withPicks((ids) => fc.subarray(ids)), fc.string(), fc.boolean(), async ([s, ids], name, dim) => {
       const { d } = await shown(s);
-      fc.pre(!named(d, name));
+      fc.pre(!named(s, name));
       const before = looks(d);
       const bad = [...ids, name];
       await assert.rejects(dim ? d.dim(bad) : d.mark(bad), /No diagram mark/);
@@ -689,73 +685,7 @@ test('mark and dim refuse an unknown part and change nothing', async () => {
   );
 });
 
-test('hide then reveal(rest) looks exactly like a freshly built diagram', async () => {
-  await fc.assert(
-    fc.asyncProperty(withPicks((ids) => ops(ids, false)), async ([s, sequence]) => {
-      const { d } = await shown(s);
-      for (const op of sequence) await apply(d, op);
-      await d.hide();
-      await d.reveal('rest');
-      assert.equal(looks(d), looks((await shown(s)).d));
-    }),
-    params(300),
-  );
-});
-
-test("morph takes the next style's emphasis colour", async () => {
-  await fc.assert(
-    fc.asyncProperty(snapshot(), snapshot('next'), async (s, next) => {
-      const { scene, d } = await shown(s);
-      useDiagrams(scene, snapshotResolver({ [diagramKey(next.spec)]: next }));
-      await d.morph(next.spec);
-      assert.equal(d.accent, emphasis(next.palette));
-    }),
-    params(),
-  );
-});
-
-/** Dash patterns the snapshot validator accepts: non-negative numbers split by spaces and/or commas. */
-const dashArray = fc
-  .tuple(
-    fc.array(fc.double({ min: 0, max: 10, noNaN: true }), { minLength: 1, maxLength: 4 }),
-    fc.constantFrom(' ', ',', ', ', '  '),
-  )
-  .map(([xs, sep]) => xs.join(sep));
-
-test('scaleArtwork by a power of two and back restores points and stroke widths exactly', async () => {
-  await fc.assert(
-    fc.asyncProperty(snapshot(), fc.integer({ min: -8, max: 8 }), async (s, e) => {
-      const { d } = await shown(s, 'full', null);
-      const all = new Group();
-      for (const id of tops(d)) all.add(d.get(id));
-      // Scaling by 2^e is exact for normal numbers; a subnormal width loses bits, so the oracle is the
-      // IEEE result of the two multiplications, which equals the original whenever nothing underflows.
-      const expected = JSON.stringify(
-        all.family().map((m) => [m.style.strokeWidth * 2 ** e * 2 ** -e, m.pointArrays().map((a) => Array.from(a, (x) => Math.fround(Math.fround(x * 2 ** e) * 2 ** -e)))]),
-      );
-      scaleArtwork(all, 2 ** e);
-      scaleArtwork(all, 2 ** -e);
-      assert.equal(JSON.stringify(all.family().map((m) => [m.style.strokeWidth, m.pointArrays().map((a) => Array.from(a))])), expected);
-    }),
-    params(),
-  );
-});
-
-test('scaleArtwork scales every length of any dash pattern the validator accepts', () => {
-  fc.assert(
-    fc.property(dashArray, fc.integer({ min: -8, max: 8 }), (dash, e) => {
-      const m = new VMobject({ dashArray: dash, dashOffset: 1 });
-      scaleArtwork(m, 2 ** e);
-      assert.deepEqual(
-        m.style.dashArray!.split(/[ ,]+/).map(Number),
-        dash.split(/[ ,]+/).map((v) => Number(v) * 2 ** e),
-      );
-    }),
-    params(),
-  );
-});
-
-test('scale probe: a diagram with thousands of parts builds, emphasises, focuses and walks', { timeout: 120_000 }, async () => {
+test('scale probe: a diagram of 1,800 parts with 600 outlined labels builds, emphasises, focuses and walks', { timeout: 120_000 }, async () => {
   const nodes = Array.from({ length: 600 }, (_, i) => ({
     id: 'n' + i,
     x: (i % 40) * 0.5,
@@ -763,14 +693,22 @@ test('scale probe: a diagram with thousands of parts builds, emphasises, focuses
     w: 0.3,
     h: 0.2,
     style: { fill: '#334455', stroke: '#aabbcc', strokeWidth: 0.02, fillOpacity: 1, strokeOpacity: 1, opacity: 1 },
-    label: { fill: '#ffffff', stroke: 'none', strokeWidth: 0, fillOpacity: 1, strokeOpacity: 1, opacity: 1 },
+    label: {
+      text: 'n' + i,
+      style: { fill: '#ffffff', stroke: 'none', strokeWidth: 0, fillOpacity: 1, strokeOpacity: 1, opacity: 1 },
+      anchor: 'middle' as const,
+      baseline: 'middle' as const,
+      width: true,
+      rotated: false,
+    },
+    value: i,
   }));
   const linksPlan = Array.from({ length: 1200 }, (_, i) => ({
     from: i % 600,
     to: (i * 7 + 1) % 600,
-    role: 'edge' as const,
     line: { fill: 'none', stroke: '#aabbcc', strokeWidth: 0.02, fillOpacity: 1, strokeOpacity: 1, opacity: 1 },
     head: null,
+    label: null,
   }));
   const s = buildSnapshot({
     family: 'flowchart',
@@ -779,10 +717,9 @@ test('scale probe: a diagram with thousands of parts builds, emphasises, focuses
     nodes,
     links: linksPlan,
     frame: null,
-    lifeline: null,
     palette: { paper: '#000000', ink: '#ffffff', accent: '#ff8800', muted: '#888888' },
   });
-  assert.ok(uniqueIds(s) && s.parts.length === 2400);
+  assert.ok(uniqueIds(s) && s.parts.length === 1800);
   const t = performance.now();
   const { scene, d } = await shown(s);
   await d.mark(['n1', 'n2']);
@@ -795,22 +732,38 @@ test('scale probe: a diagram with thousands of parts builds, emphasises, focuses
   assert.equal(d.visible.size, 0);
   assert.ok(!scene.familyMembers().some((m) => m instanceof Dot));
   const seconds = (performance.now() - t) / 1000;
-  assert.ok(seconds < 30, `2400 parts took ${seconds.toFixed(1)}s`);
+  assert.ok(seconds < 30, `1800 parts took ${seconds.toFixed(1)}s`);
 });
 
-// Keep the generator honest: it must reach every family and both link roles.
-test('the snapshot generator reaches parallel links, self links, owned labels and scaffolding', () => {
+// Keep the generator honest: it must reach what the importer writes (see test/lib/random-snapshot.ts).
+test('the snapshot generator reaches every shape the importer writes', () => {
   const seen = new Set<string>();
   fc.assert(
     fc.property(snapshotPlan, (p) => {
       const s = buildSnapshot(p);
-      if (s.parts.some((x) => x.owner)) seen.add('label');
+      const shapes = s.parts.flatMap((x) => x.shapes);
+      const run = shapes.flatMap((x) => (x.textRun ? [x.textRun] : []));
+      if (s.parts.some((x) => x.id.startsWith('edge-label:') && x.owner)) seen.add('edge label');
+      if (s.parts.some((x) => x.id.startsWith('rel-label:') && x.owner)) seen.add('relationship label');
       if (s.parts.some((x) => x.from && x.from === x.to)) seen.add('self');
       if (s.parts.some((x) => /#1$/.test(x.id))) seen.add('parallel');
       if (s.parts.some((x) => x.id === '__frame')) seen.add('frame');
-      if (s.parts.some((x) => x.role === 'message')) seen.add('message');
+      if (s.parts.some((x) => x.role === 'message' && x.shapes.some((y) => y.textRun))) seen.add('worded message');
+      for (const prefix of ['actor:', 'lifeline:', 'class:', 'bar:', 'axis:', 'grid:', 'branch:'])
+        if (s.parts.some((x) => x.id.startsWith(prefix))) seen.add(prefix);
+      if (planOf(s).names.size) seen.add('bare names');
+      if (shapes.some((x) => x.style.dashArray)) seen.add('dashes');
+      for (const r of run) {
+        seen.add(`anchor ${r.anchor}`);
+        if (r.baseline) seen.add(`baseline ${r.baseline}`);
+        if (r.width != null) seen.add('width');
+        if (r.matrix[1] !== 0) seen.add('rotated');
+      }
     }),
     params(300),
   );
-  assert.deepEqual([...seen].sort(), ['frame', 'label', 'message', 'parallel', 'self']);
+  assert.deepEqual([...seen].sort(), [
+    'actor:', 'anchor end', 'anchor middle', 'anchor start', 'axis:', 'bar:', 'bare names', 'baseline middle', 'branch:', 'class:', 'dashes',
+    'edge label', 'frame', 'grid:', 'lifeline:', 'parallel', 'relationship label', 'rotated', 'self', 'width', 'worded message',
+  ]);
 });

@@ -23,10 +23,7 @@ function bytesOf(b64: string): Uint8Array {
 let loading: Promise<Record<FontName, Shaper>> | null = null;
 
 /** Shaped runs kept per face: far more than one scene uses, so seeks never reshape. */
-export const SHAPE_MEMO_MAX = 8192;
-const memos: Array<Map<string, Run>> = [];
-/** How many shaped runs are memoized now, over both faces (for tests). */
-export function shapeMemoSize(): number { return memos.reduce((n, m) => n + m.size, 0); }
+const SHAPE_MEMO_MAX = 8192;
 let shapers: Record<FontName, Shaper> | null = null;
 
 /** Characters the embedded faces cannot draw (glyph 0), by the string that held them. */
@@ -79,7 +76,6 @@ async function buildShapers(): Promise<Record<FontName, Shaper>> {
     // string every frame, so a long count (or a Worker serving many scenes) would
     // otherwise keep every one of them.
     const memo = new Map<string, Run & { missing?: string }>();
-    memos.push(memo);
     out[key] = (text, size) => {
       const k = size + '\u0000' + text;
       let r = memo.get(k);

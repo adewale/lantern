@@ -84,7 +84,8 @@ export function diagramKey(spec: DiagramSpec): string {
     throw new Error(`Diagram spacing must be a finite number, not ${spec.spacing}`);
   return JSON.stringify([
     spec.source.replace(/\r\n/g, '\n').trim(),
-    spec.style ?? 'default',
+    // An empty style renders as the default (capture passes no style), so it is the default's key.
+    spec.style || 'default',
     spec.spacing ?? null,
   ]);
 }

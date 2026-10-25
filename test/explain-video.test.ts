@@ -5,23 +5,36 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
-import { renderVideo, vttTime, wrapCaption, captionsVtt, probeVideo } from '../tools/lib/explain-video.ts';
-import { Scene, Dot, FadeIn, loadFonts } from '../src/index.ts';
+import { renderVideo, vttTime, captionsVtt, probeVideo } from '../tools/lib/explain-video.ts';
+import { Scene, Dot, FadeIn } from '../src/index.ts';
+import { fc, params } from './lib/pbt.ts';
 
-test('caption timestamps and wrapping use real glyph advances', async () => {
-  await loadFonts();
+// Caption wrapping for the footer is proven in explain-tools.property.test.ts.
+test('caption timestamps round to the millisecond and carry into the next unit', () => {
   assert.equal(vttTime(0), '00:00:00.000');
   assert.equal(vttTime(3661.25), '01:01:01.250');
   assert.equal(vttTime(59.9999), '00:01:00.000');
-  for (const value of [-1, Infinity, NaN]) assert.throws(() => vttTime(value));
-  const lines = wrapCaption('A short sentence with several measured words.', 3, 0.25);
-  assert.equal(lines.join(' '), 'A short sentence with several measured words.');
-  assert.ok(lines.length <= 3);
-  assert.throws(() => wrapCaption('W'.repeat(1000), 3), /exceeds footer/);
+});
+test('WebVTT names the language and escapes markup in cues', () => {
   const trace = { fps: 30, duration: 1, frames: 30, steps: [{ step: 'a', t0: 0, t1: 1, frame0: 0, meta: { caption: 'Bonjour.' }, before: {} }] };
   assert.match(captionsVtt(trace, 'fr'), /^WEBVTT\nLanguage: fr\n\n1\n/);
   trace.steps[0]!.meta.caption = 'tokens < 1 --> 429 & stop';
   assert.match(captionsVtt(trace), /\ntokens &lt; 1 --&gt; 429 &amp; stop\n$/);
+});
+// Regression (ManimCommunity #2314, #3062, #3243: https://github.com/ManimCommunity/manim/pull/2314,
+// https://github.com/ManimCommunity/manim/pull/3062, https://github.com/ManimCommunity/manim/issues/3243).
+// A blank line inside a caption used to end the cue, and players dropped the rest.
+test('a caption with a blank line or "-->" stays one WebVTT cue', () => {
+  fc.assert(
+    fc.property(fc.array(fc.string({ unit: fc.constantFrom('a', ' ', '\n', '-', '>', 'é'), minLength: 1, maxLength: 12 }), { minLength: 1, maxLength: 4 }), (caps) => {
+      const steps = caps.map((caption, i) => ({ step: `s${i}`, t0: i, t1: i + 1, frame0: i * 30, meta: { caption }, before: {} }));
+      const vtt = captionsVtt({ fps: 30, duration: caps.length, frames: caps.length * 30, steps });
+      const blocks = vtt.trim().split(/\n\s*\n/).slice(1); // after the WEBVTT header
+      assert.equal(blocks.length, caps.filter((c) => c).length, vtt);
+      for (const b of blocks) assert.match(b, /^\d+\n\d\d:\d\d:\d\d\.\d{3} --> \d\d:\d\d:\d\d\.\d{3}(\n|$)/);
+    }),
+    params(300),
+  );
 });
 test(
   'real FFmpeg outputs silent H.264 footer video, subtitles, chapters, VTT and a truthful receipt',
@@ -79,7 +92,19 @@ test(
         renderVideo(project, { ...project.variants[0]!, Scene: TooLong }, out, { footer: true, fps: 4 }),
         /exceeds footer/,
       );
-      // The film skips the scene's caption hold, so a picture still moving there fails the render.
+      // Footer text is drawn as outlines: a character the fonts lack fails before FFmpeg starts.
+      class Han extends Scene {
+        override async construct() {
+          await this.step('han', { title: 'Han', caption: 'A caption with 中 in it.' });
+          await this.play(new FadeIn(new Dot(), { runTime: 0.5 }));
+        }
+      }
+      await assert.rejects(
+        renderVideo(project, { ...project.variants[0]!, Scene: Han }, out, { footer: true, fps: 4 }),
+        /han .*the title or caption has characters the fonts cannot draw: 中/,
+      );
+      // The film holds the first frame after the step's last play() under the caption, so a
+      // picture still moving there fails the render (check fails it too: explain-gates.test.ts).
       class Moving extends Scene {
         override async construct() {
           await this.step('moves', { caption: 'A caption long enough to need a hold of a few seconds at reading pace.' });

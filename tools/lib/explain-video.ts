@@ -43,6 +43,27 @@ export function wrapCaption(text: string, width: number, size = CAPTION.size): s
   return lines;
 }
 
+/**
+ * Each step's title and caption wrapped for the caption-footer preset. Throws, naming the step
+ * and case, when one does not fit four lines or has a character the embedded fonts cannot draw.
+ * `explain render --footer` runs it before FFmpeg starts; `demos:check` runs it on every case.
+ */
+export async function footerLines(trace: Trace, values: Settings): Promise<string[][][]> {
+  await loadFonts();
+  takeMissingGlyphs();
+  return trace.steps.map((s) => {
+    try {
+      const lines = [s.meta.title ?? s.step, s.meta.caption ?? ''].map((t) => wrapCaption(String(t), FOOTER_TEXT_WIDTH));
+      // Footer text is drawn as outlines too, so a character the fonts lack would be blank.
+      const lost = [...takeMissingGlyphs().values()].join('');
+      if (lost) throw new Error(`the title or caption has characters the fonts cannot draw: ${[...new Set(lost)].join(' ')}`);
+      return lines;
+    } catch (error) {
+      throw new Error(`${s.step} ${JSON.stringify(values)}: ${(error as Error).message}`);
+    }
+  });
+}
+
 let resvg: typeof import('@resvg/resvg-js') | undefined;
 /** Rasterise an SVG with the embedded fonts only. resvg loads on first use: only PNG and video output need it. */
 export async function rasterize(svg: string) {
@@ -176,18 +197,7 @@ export async function renderVideo(
   const steps = filmSteps(trace);
   if (!steps.length) throw new Error('A video needs at least one step');
   // The footer must hold every title and caption; fail before FFmpeg starts, naming the step and case.
-  takeMissingGlyphs();
-  const footerText = steps.map((s) => {
-    try {
-      const lines = withFooter ? [s.meta.title ?? s.step, s.meta.caption ?? ''].map((t) => wrapCaption(String(t), FOOTER_TEXT_WIDTH)) : [[], []];
-      // Footer text is drawn as outlines too, so a character the fonts lack would be blank.
-      const lost = [...takeMissingGlyphs().values()].join('');
-      if (lost) throw new Error(`the title or caption has characters the fonts cannot draw: ${[...new Set(lost)].join(' ')}`);
-      return lines;
-    } catch (error) {
-      throw new Error(`${s.step} ${JSON.stringify(variant.values)}: ${(error as Error).message}`);
-    }
-  });
+  const footerText = withFooter ? await footerLines(trace, variant.values) : steps.map((): string[][] => [[], []]);
   out = resolve(out);
   await mkdir(dirname(out), { recursive: true });
   const temp = await mkdtemp(join(dirname(out), '.lantern-video-'));

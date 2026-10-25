@@ -5,9 +5,19 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { build } from 'esbuild';
-import { Scene, traceScene } from '../src/index.ts';
-import { loadScene, collectProject, ROOT } from '../tools/lib/explain-project.ts';
+import { traceScene } from '../src/index.ts';
+import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
 
+/** The error a child process failed with, or undefined when it succeeded. */
+const failure = (run: () => unknown) => {
+  try {
+    run();
+  } catch (error) {
+    return error as { status: number; stderr: Buffer };
+  }
+};
+
+// The gates `explain check` runs, each with a seeded defect, are in explain-gates.test.ts.
 test('external source and compiled ESM scenes share the CLI engine; source hashes ignore checkout paths', async () => {
   const folder = await mkdtemp(join(tmpdir(), 'lantern-cli-'));
   try {
@@ -18,10 +28,9 @@ test('external source and compiled ESM scenes share the CLI engine; source hashe
     await mkdir(join(folder, 'b'));
     await writeFile(a, source);
     await writeFile(b, source);
-    const first = await loadScene(a),
-      second = await loadScene(b);
+    const first = await collectProject(a, { write: false }),
+      second = await collectProject(b, { write: false });
     assert.equal(first.sourceHash, second.sourceHash);
-    assert.ok(first.Scene.prototype instanceof Scene);
     const compiled = join(folder, 'compiled.js');
     await build({
       entryPoints: [a],
@@ -31,8 +40,7 @@ test('external source and compiled ESM scenes share the CLI engine; source hashe
       outfile: compiled,
       logLevel: 'silent',
     });
-    const loaded = await loadScene(compiled);
-    assert.ok(loaded.Scene.prototype instanceof Scene);
+    const loaded = await collectProject(compiled, { write: false });
     assert.deepEqual(await traceScene(loaded.Scene), await traceScene(first.Scene));
     const cli = join(ROOT, 'tools/explain.ts');
     const output = execFileSync(
@@ -43,26 +51,12 @@ test('external source and compiled ESM scenes share the CLI engine; source hashe
     assert.match(output, /Built/);
     const html = await readFile(join(folder, 'page.html'), 'utf8');
     assert.match(html, /External author/);
-    assert.match(html, /<summary>Transcript<\/summary>/);
+    // The notices every built page carries: Lantern's MIT licence and the fonts' OFL.
     assert.match(html, /Copyright \(c\) 2026 Ivar Vong/);
     assert.match(html, /SIL OPEN FONT LICENSE/);
-    const duplicate = join(folder, 'duplicate.ts');
-    await writeFile(
-      duplicate,
-      `import{Scene}from'manim-js';export default class Bad extends Scene{async construct(){await this.step('same');await this.wait(.5);await this.step('same');await this.wait(.5);}}`,
-    );
-    await assert.rejects(collectProject(duplicate, { write: false }), /Duplicate step names/);
-    // Text the embedded fonts cannot draw fails the build, named by case, step and string.
-    const blank = join(folder, 'blank.ts');
-    await writeFile(
-      blank,
-      `import{Scene,Text,FadeIn}from'manim-js';import{settingsOf}from'manim-js/explain';export default class Blank extends Scene{static settings=[{id:'k',label:'Kind',default:'a',options:[{value:'a',label:'Plain'},{value:'b',label:'Han'}]}];async construct(){await this.step('one');await this.play(new FadeIn(new Text('ok')));await this.step('two');await this.play(new FadeIn(new Text(settingsOf(this).k==='b'?'a中b':'ab')));}}`,
-    );
-    await assert.rejects(collectProject(blank, { write: false }), /Kind: Han, step two: "a中b" has 中 \(U\+4E2D\)/);
-    assert.throws(
-      () => execFileSync(process.execPath, [cli, 'not-a-command', a], { stdio: 'pipe' }),
-      /Command failed/,
-    );
+    const refused = failure(() => execFileSync(process.execPath, [cli, 'not-a-command', a], { stdio: 'pipe' }));
+    assert.equal(refused?.status, 1, 'an unknown command must exit 1');
+    assert.match(String(refused?.stderr), /^explain: Unknown command: not-a-command/);
   } finally {
     await rm(folder, { recursive: true, force: true });
   }

@@ -40,7 +40,7 @@ export interface Style extends SvgPaint {
 /** A mobject's resolved style: every field set except the transient drawFraction. */
 export type StyleRecord = Required<Omit<Style, keyof SvgPaint | 'drawFraction'>> & Pick<Style, keyof SvgPaint | 'drawFraction'>;
 
-export const DEFAULT_STYLE: StyleRecord = {
+const DEFAULT_STYLE: StyleRecord = {
   fill: 'none',
   fillOpacity: 1,
   stroke: '#ffffff',
@@ -246,8 +246,7 @@ export class Mobject {
   /**
    * Every in-place write to point arrays must end here. It bumps the points
    * version that render caches key on (array replacement is caught by array
-   * identity instead). VMobject.validateCaches = true re-checks every cache
-   * hit against the actual points; the test suite runs all scenes that way.
+   * identity instead).
    */
   touchPoints(): void {
     this._pv = (this._pv ?? 0) + 1;
@@ -452,19 +451,11 @@ export class Mobject {
     this.touchPoints();
   }
 
-  /**
-   * Make this and `other` structurally identical (same family shape, same
-   * point counts) so interpolate() is well-defined. Mutates both.
-   */
-  alignWith(other: Mobject): this {
-    perf.count('alignWith()');
-    this.alignFamily(other);
-    const fa = this.family(), fb = other.family();
-    for (let i = 0; i < fa.length; i++) fa[i]!.alignData(fb[i]!);
-    return this;
-  }
-
   alignFamily(other: Mobject): void {
+    // A container opposite a path that draws: the path moves into a first child of its own,
+    // so the container's children morph into it (manim's null_point_align). Left where it
+    // was, it would sit opposite something that draws nothing and end up not drawn at all.
+    if (this.pointKind() !== 'path' && other.pointKind() === 'path' && other.hasPoints()) other.pushIntoChildren();
     const n = Math.max(this.children.length, other.children.length);
     for (const [m, o] of [[this, other], [other, this]] as const) {
       while (m.children.length < n) {
@@ -476,6 +467,21 @@ export class Mobject {
       }
     }
     for (let i = 0; i < n; i++) this.children[i]!.alignFamily(other.children[i]!);
+  }
+
+  /** Move this path's own curves into a new first child, leaving it a container (manim's push_self_into_submobjects). */
+  pushIntoChildren(): void {
+    const kids = this.children;
+    this.children = [];
+    const self = this.copy();
+    this.children = kids;
+    // Only paths are pushed (see alignFamily), and a path's points are its subpaths
+    const path = this as unknown as { subpaths: Float32Array[]; closed: boolean[] };
+    path.subpaths = []; path.closed = [];
+    this.touchPoints();
+    self.parent = this;
+    this.children.unshift(self);
+    this.invalidateBox();
   }
 
   /** Align own point data with `other`. Subclasses override. */

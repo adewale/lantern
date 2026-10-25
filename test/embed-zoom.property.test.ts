@@ -31,7 +31,8 @@ const opOf = (num: fc.Arbitrary<number>): fc.Arbitrary<Op> =>
     fc.constant({ op: 'reset' as const }),
     fc.record({ op: fc.constant('resize' as const), w: size, h: size }),
   );
-/** What StageZoom does for each gesture: zoom/pan/reset clamp to the current stage, a resize re-clamps. */
+/** Each gesture through the pure functions: zoom/pan/reset clamp to the current stage, a resize re-clamps.
+ * (StageZoom also scales the pan with the stage on a resize; that is tested on StageZoom below.) */
 function play(ops: Op[], w0: number, h0: number, max: number): { z: Zoom; w: number; h: number } {
   let z: Zoom = clampZoom(IDENTITY, w0, h0, max),
     w = w0,
@@ -56,10 +57,13 @@ const reachableWith = (max: fc.Arbitrary<number>) =>
     .record({ ops: fc.array(opOf(finite), { maxLength: 40 }), w: size, h: size, max })
     .map(({ ops, w, h, max }) => ({ ...play(ops, w, h, max), max }));
 
-test('zoom: after any gesture sequence the drawing covers the stage (no gap at any edge)', () => {
+test('zoom: after any gesture sequence, hostile numbers included, the scale is finite and within [1, max] and the drawing covers the stage', () => {
   fc.assert(
     fc.property(session(any), ({ ops, w, h, max }) => {
       const { z, w: W, h: H } = play(ops, w, h, max);
+      assert.ok(Number.isFinite(z.k) && Number.isFinite(z.x) && Number.isFinite(z.y), JSON.stringify(z));
+      assert.doesNotMatch(zoomTransform(z), /NaN|Infinity/);
+      assert.ok(z.k >= 1 && z.k <= max, `k=${z.k} max=${max}`);
       assert.ok(z.x <= 0 && z.y <= 0, `left/top gap: ${JSON.stringify(z)}`);
       assert.ok(z.x + W * z.k >= W && z.y + H * z.k >= H, `right/bottom gap: ${JSON.stringify({ z, W, H })}`);
     }),
@@ -72,27 +76,6 @@ test('zoom: after any gesture sequence the drawing covers the stage (no gap at a
         [{ ops: [{ op: 'zoom', factor: 1.7976931348623157e308, px: 0, py: 14460.999999999998 }], w: 0, h: 14461, max: 983381559425.8154 }],
       ],
     },
-  );
-});
-
-test('zoom: the scale stays within [1, max] after any gesture sequence', () => {
-  fc.assert(
-    fc.property(session(any), ({ ops, w, h, max }) => {
-      const { z } = play(ops, w, h, max);
-      assert.ok(z.k >= 1 && z.k <= max, `k=${z.k} max=${max}`);
-    }),
-    params(),
-  );
-});
-
-test('zoom: hostile numbers (NaN, ±Infinity, 0, negative factors, zero-size stages) never paint a non-finite transform', () => {
-  fc.assert(
-    fc.property(session(any), ({ ops, w, h, max }) => {
-      const { z } = play(ops, w, h, max);
-      assert.ok(Number.isFinite(z.k) && Number.isFinite(z.x) && Number.isFinite(z.y), JSON.stringify(z));
-      assert.doesNotMatch(zoomTransform(z), /NaN|Infinity/);
-    }),
-    params(),
   );
 });
 
@@ -245,6 +228,7 @@ test('zoom: a NaN pan delta leaves that axis exactly where it was', () => {
 });
 
 test('zoom: the painted transform reads back as exactly the zoom it paints', () => {
+  // Parsed, not compared with zoomTransform itself: rounding the pan would pass that comparison.
   fc.assert(
     fc.property(reachableWith(cap), ({ z }) => {
       const t = zoomTransform(z);
@@ -266,14 +250,6 @@ test('zoom: clamping is idempotent (re-clamping on a resize to the same size cha
     }),
     params(),
   );
-});
-
-test('zoom: scale probe, 200 000 gestures on a large stage stay covered, bounded and fast', () => {
-  const r = fc.sample(opOf(finite), { numRuns: 200_000, seed: 42 });
-  const t = performance.now();
-  const { z, w, h } = play(r, 1e6, 5e5, ZOOM_MAX);
-  assert.ok(performance.now() - t < 2000);
-  assert.ok(z.k >= 1 && z.k <= ZOOM_MAX && z.x <= 0 && z.y <= 0 && z.x + w * z.k >= w && z.y + h * z.k >= h, JSON.stringify(z));
 });
 
 // ---------------------------------------------------------------------------
@@ -391,5 +367,29 @@ test('StageZoom: a motionless move while exactly two pointers are down never cha
       assert.deepEqual({ k: z.k, x: z.x, y: z.y }, before);
     }),
     params(),
+  );
+});
+
+// Regression (manim-web #389, #838, #871: https://github.com/maloyan/manim-web/pull/389,
+// https://github.com/maloyan/manim-web/issues/838, https://github.com/maloyan/manim-web/pull/871).
+// Turning a phone while zoomed used to slide the view; the pan now scales with the stage.
+test('StageZoom: after a resize the drawing point at the stage centre stays at the centre', () => {
+  fc.assert(
+    fc.property(fc.integer({ min: 200, max: 2000 }), fc.integer({ min: 200, max: 2000 }), fc.double({ min: 1.5, max: 6, noNaN: true }), fc.double({ min: 0.5, max: 2, noNaN: true }), (w, h, k, r) => {
+      const { stage } = fakeStage(w, h);
+      const z = new StageZoom(stage, () => {});
+      z.apply();
+      z.zoomAt(k); // about the centre, as the + button does
+      const size = stage as unknown as { clientWidth: number; clientHeight: number };
+      // The fraction of the drawing's width (height) under the stage centre.
+      const centre = (side: number, pan: number) => (side / 2 - pan) / z.k / side;
+      const before = [centre(w, z.x), centre(h, z.y)];
+      size.clientWidth = Math.round(w * r);
+      size.clientHeight = Math.round(h * r);
+      z.apply(); // what the ResizeObserver callback does
+      const after = [centre(size.clientWidth, z.x), centre(size.clientHeight, z.y)];
+      assert.ok(Math.abs(after[0]! - before[0]!) <= 1e-6 && Math.abs(after[1]! - before[1]!) <= 1e-6, `centre moved from ${before} to ${after}`);
+    }),
+    params(300),
   );
 });

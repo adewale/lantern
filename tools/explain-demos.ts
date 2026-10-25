@@ -9,7 +9,7 @@ import { collectProject, defaultVariant, ROOT, baseReceipt } from './lib/explain
 import { restingTime, htmlEscape } from '../explain/trace.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
 import { contactSheet } from './lib/explain-shots.ts';
-import { rasterize, exporterHash, probeVideo } from './lib/explain-video.ts';
+import { rasterize, exporterHash, probeVideo, footerLines } from './lib/explain-video.ts';
 import { checkProject } from './lib/explain-check.ts';
 
 const directory = join(ROOT, 'out/explainers');
@@ -39,7 +39,14 @@ for (const item of EXPLAINERS) {
   await renderAt(variant.Scene, restingTime(step, variant.trace.fps), sink);
   await writeFile(join(directory, item.id + '.png'), (await rasterize(sink.svg)).asPng());
   await contactSheet(project, join(directory, item.id + '.steps.png'));
-  if (check) await checkProject(project, join(ROOT, 'out/checks', item.id));
+  if (check) {
+    await checkProject(project, join(ROOT, 'out/checks', item.id));
+    // Every shipped case must export with the caption footer; no FFmpeg is needed to know.
+    for (const v of project.variants)
+      await footerLines(v.trace, v.values).catch((error: Error) => {
+        throw new Error(`${item.id}: ${error.message}`);
+      });
+  }
   evidence.push({
     id: item.id,
     title: project.Scene.meta?.title ?? item.id,

@@ -165,9 +165,23 @@ export async function checkProject(project: Project, out: string): Promise<Recor
     const resting = new Map<number, string>();
     const restingText = new Map<number, string>();
     const collisions: string[] = [];
+    // The caption hold: the player stops where it begins and the film holds the picture there, so
+    // nothing may change after it. A play lands after its last frame is drawn (a morph gets its
+    // paths' own structure back), so the first held frame is the resting picture, as in render.
+    const holds = v.trace.steps.flatMap((s) =>
+      s.hold == null ? [] : [{ step: s.step, from: Math.round(s.hold * v.trace.fps) + 1, to: s.frame1 ?? v.trace.frames }],
+    );
+    const held = new Map<string, string>(),
+      moved = new Set<string>();
     await new v.Scene({
-      async frame(scene) {
+      async frame(scene, dt) {
         await motion.frame(scene);
+        const hold = dt ? holds.find((h) => scene.frameCount >= h.from && scene.frameCount <= h.to) : undefined;
+        if (hold) {
+          const svg = toSvgString(scene);
+          if (scene.frameCount === hold.from) held.set(hold.step, svg);
+          else if (svg !== held.get(hold.step)) moved.add(hold.step);
+        }
         if (targets.has(scene.frameCount)) frames.set(scene.frameCount, toSvgString(scene));
         if (completedFrames.has(scene.frameCount)) {
           // The resting picture of a step, without the heading that names it.
@@ -214,6 +228,11 @@ export async function checkProject(project: Project, out: string): Promise<Recor
       events.length,
       0,
       `Motion failures ${where}: ${JSON.stringify(events.slice(0, 8))}`,
+    );
+    assert.deepEqual(
+      [...moved],
+      [],
+      `The picture changes after the caption hold begins, where the player stops; finish every change before the step's last play() ends ${where}`,
     );
     for (const [frame, svg] of frames) {
       const sink = new SnapshotSink();

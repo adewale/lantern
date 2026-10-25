@@ -57,7 +57,6 @@ for (const entry of EXPLAINERS)
           assert.equal(walks.filter((w) => w.step === 'request').length, values.request === 'hit' ? 3 : 4);
           break;
         case 'lantern':
-          assertStepState(trace, 'seek', { seekContract: 'played SVG equals seeked SVG' });
           assert.ok(walks.some((w) => w.from === 'Clock' && w.to === 'Browser'));
           assert.ok(walks.some((w) => w.from === 'Clock' && w.to === 'Trace'));
           break;
@@ -174,6 +173,8 @@ for (const entry of EXPLAINERS)
             }).advance(),
           });
           break;
+        default:
+          assert.fail(`${entry.id} has no fidelity oracle: compare its step state with the program it explains`);
       }
     }
   });

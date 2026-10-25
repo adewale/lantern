@@ -274,7 +274,7 @@ const graphemes = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segme
  * A column is a grapheme (an accent combined with its letter takes one). `width` must be a
  * positive integer.
  */
-export function expandTabs(line: string, width = 4): string {
+function expandTabs(line: string, width = 4): string {
   if (!Number.isInteger(width) || width < 1) throw new RangeError(`tabWidth must be a positive integer, not ${width}`);
   if (!line.includes('\t')) return line;
   let out = '', col = 0;

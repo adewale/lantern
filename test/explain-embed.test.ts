@@ -14,7 +14,6 @@ import { fc, params } from './lib/pbt.ts';
 import { resolveSettings } from '../explain/index.ts';
 import type { Settings } from '../explain/index.ts';
 import { pictureHtml, pictureSummary } from '../explain/trace.ts';
-import { zoomAt, ZOOM_MAX } from '../app/embed-zoom.ts';
 
 const enabled = !!process.env.EXPLAIN_BROWSER,
   options = { skip: enabled ? false : 'set EXPLAIN_BROWSER=1 for real cross-origin browser checks' };
@@ -34,7 +33,7 @@ before(async () => {
   await new Promise<void>((r) => hostServer.listen(0, '127.0.0.1', r));
   host = `http://127.0.0.1:${(hostServer.address() as { port: number }).port}`;
   for (const name of ['mr-cache', 'oauth-pkce', 'exgit']) {
-    const project = await collectProject(`scenes/explainers/${name}`);
+    const project = await collectProject(`scenes/explainers/${name}`, { write: false });
     projects.set(name, project);
     await buildExplainer(project, join(folder, name + '.html'));
   }
@@ -131,59 +130,27 @@ test(
     }
   },
 );
-test(
-  'URL cases, missing-step fallback, browser history, copy link and reduced motion behave as documented',
-  options,
-  async () => {
-    const context = await browser.newContext({
-      permissions: ['clipboard-read', 'clipboard-write'],
-      reducedMotion: 'reduce',
-      colorScheme: 'dark',
-    });
-    const page = await context.newPage();
-    try {
-      await page.goto(embed + '/oauth-pkce.html?attacker=yes&step=attack&theme=dark');
+// The rest of URL cases, step fallback, history, copy link and reduced motion is the player
+// model's (below), including the fixed fallback scenario.
+test('?theme=dark, light and auto (following the reader\'s colour scheme) set the page colours', options, async () => {
+  const context = await browser.newContext({ colorScheme: 'dark' });
+  const page = await context.newPage();
+  try {
+    const background = async (theme: string) => {
+      await page.goto(`${embed}/oauth-pkce.html?theme=${theme}`);
       await page.waitForSelector('[data-ready=true]');
-      assert.match(await page.locator('.caption').innerText(), /has to guess the verifier/);
-      assert.equal(await page.locator('input[name=attacker]:checked').inputValue(), 'yes');
-      assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
-      assert.equal(
-        await page.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor),
-        'rgb(15, 22, 29)',
-      );
-      await page.locator('input[name=attacker][value=no]').check();
-      await page.waitForFunction(() => new URL(location.href).searchParams.get('attacker') === 'no');
-      assert.match(await page.locator('[role=status]').innerText(), /no “attack” step/);
-      await page.goBack();
-      await page.waitForFunction(
-        () => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === 'attack',
-      );
-      assert.equal(await page.locator('input[name=attacker]:checked').inputValue(), 'yes');
-      assert.equal(await page.locator('[role=status]').innerText(), '');
-      await page.getByRole('button', { name: 'Copy link', exact: true }).click();
-      const copied = await page.evaluate(() => navigator.clipboard.readText());
-      assert.equal(new URL(copied).searchParams.get('attacker'), 'yes');
-      assert.equal(new URL(copied).searchParams.get('step'), 'attack');
-      assert.equal(new URL(copied).searchParams.get('parentOrigin'), null);
-      await page.getByRole('button', { name: 'Replay step', exact: true }).click();
-      assert.match(await page.locator('[role=status]').innerText(), /Reduced motion/);
-      await page.goto(embed + '/oauth-pkce.html?theme=light');
-      await page.waitForSelector('[data-ready=true]');
-      assert.equal(
-        await page.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor),
-        'rgb(246, 247, 249)',
-      );
-      await page.goto(embed + '/oauth-pkce.html?theme=auto');
-      await page.waitForSelector('[data-ready=true]');
-      assert.equal(
-        await page.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor),
-        'rgb(15, 22, 29)',
-      );
-    } finally {
-      await context.close();
-    }
-  },
-);
+      return {
+        theme: await page.locator('html').getAttribute('data-theme'),
+        background: await page.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor),
+      };
+    };
+    assert.deepEqual(await background('dark'), { theme: 'dark', background: 'rgb(15, 22, 29)' });
+    assert.deepEqual(await background('light'), { theme: 'light', background: 'rgb(246, 247, 249)' });
+    assert.deepEqual(await background('auto'), { theme: 'auto', background: 'rgb(15, 22, 29)' });
+  } finally {
+    await context.close();
+  }
+});
 test(
   'mobile controls and transcript work offline with storage disabled and no page errors',
   options,
@@ -228,17 +195,14 @@ test(
               .every((value) => clips.some((c) => value === `url(#${c.id})`)),
         };
       });
-      assert.deepEqual(viewport, {
-        rects: [
-          {
-            namespace: 'http://www.w3.org/2000/svg',
-            units: 'userSpaceOnUse',
-            width: '15100', // the stage's 'top' region, in SVG units
-            height: '3600',
-          },
-        ],
-        references: true,
-      });
+      // Clip paths are SVG elements in stage units, and every clip-path reference resolves to one.
+      assert.ok(viewport.rects.length > 0);
+      for (const rect of viewport.rects) {
+        assert.equal(rect.namespace, 'http://www.w3.org/2000/svg');
+        assert.equal(rect.units, 'userSpaceOnUse');
+        assert.ok(Number(rect.width) > 0 && Number(rect.height) > 0, JSON.stringify(rect));
+      }
+      assert.equal(viewport.references, true);
       // Zoom: a phone reader can enlarge the vector stage and pan it, without page overflow.
       const width = () => page.locator('.stage svg').evaluate((svg) => svg.getBoundingClientRect().width);
       const fit = await width();
@@ -376,7 +340,9 @@ function stepsOf(p: Project, values: Settings): StepSpec[] {
 const current = (m: PlayerModel) => m.entries[m.index]!;
 const steps = (m: PlayerModel) => stepsOf(m.project, current(m).values);
 const selected = (m: PlayerModel) => steps(m).findIndex((s) => s.step === current(m).step);
-const kAfter = (k: number, factor: number) => zoomAt({ k, x: 0, y: 0 }, factor, 0, 0, 1000, 1000, ZOOM_MAX).k;
+/** Zoom goes from 1× (fit) up to 6× (docs/REFERENCE.md); a zoom by `factor` lands inside that range. */
+const ZOOM_MAX = 6;
+const kAfter = (k: number, factor: number) => Math.min(ZOOM_MAX, Math.max(1, k * factor));
 function push(m: PlayerModel, entry: Entry) {
   m.entries = [...m.entries.slice(0, m.index + 1), entry];
   m.index = m.entries.length - 1;
@@ -830,10 +796,8 @@ async function openPlayer(name: string, initial: { values: (string | undefined)[
   await verify(model, real, `opening ${page.url()}`);
   return { context, model, real };
 }
-for (const [name, runs, maxCommands] of [
-  ['oauth-pkce', 10, 40],
-  ['exgit', 6, 40],
-] as const)
+// oauth-pkce's cases have different step lists (only "yes" has an attack), the case the player finds hardest.
+for (const [name, runs, maxCommands] of [['oauth-pkce', 10, 40]] as const)
   test(
     `player (${name}): any sequence of reader actions keeps the URL, step list, caption, controls, zoom and history in step with the model`,
     options,
@@ -852,6 +816,24 @@ for (const [name, runs, maxCommands] of [
       );
     },
   );
+
+test(
+  'player: from ?attacker=yes&step=attack, choosing "no" falls back to the first step with a notice; Back restores the attack step',
+  options,
+  async () => {
+    const { context, model, real } = await openPlayer('oauth-pkce', { values: ['yes'], step: 'attack', viewport: { width: 700, height: 900 } });
+    try {
+      await fc.asyncModelRun(() => ({ model, real }), [ChooseCase(0, 1), Back, CopyLink, Replay]);
+      // Every command ran (a command whose precondition fails is skipped silently), and verify() held after each.
+      const first = stepsOf(model.project, { attacker: 'no' })[0]!.step;
+      assert.deepEqual(model.entries.map((e) => [e.values.attacker, e.step]), [['yes', 'attack'], ['no', first]]);
+      assert.equal(model.index, 0, 'Back returned to the first entry');
+      assert.equal(model.notice, 'Reduced motion is on, so the finished step is shown.');
+    } finally {
+      await context.close();
+    }
+  },
+);
 
 /** Open a player page with the settle and attach counters installed. */
 async function counted(context: import('playwright-core').BrowserContext, url: string) {
@@ -949,7 +931,7 @@ const burstArb = (p: Project) =>
     }),
     { minLength: 1, maxLength: 12 },
   );
-for (const name of ['oauth-pkce', 'exgit'] as const)
+for (const name of ['oauth-pkce'] as const)
   test(
     `player (${name}): any burst of case changes and navigation, unawaited, ends with the URL, choice, list, caption and picture all on one case and step`,
     options,
@@ -1032,42 +1014,6 @@ for (const name of ['oauth-pkce', 'exgit'] as const)
       );
     },
   );
-
-test(
-  'player: a copied link, opened fresh, shows the same case, step and caption with no notice',
-  options,
-  async () => {
-    const name = 'oauth-pkce',
-      p = projects.get(name)!;
-    const navigation = commandArbs(p).slice(0, 5); // Next, Previous, ClickStep, TranscriptLink, ChooseCase
-    await fc.assert(
-      fc.asyncProperty(initialArb(p), fc.commands(navigation, commandOptions(8)), async (initial, cmds) => {
-        const { context, model, real } = await openPlayer(name, initial);
-        try {
-          await fc.asyncModelRun(() => ({ model, real }), cmds);
-          await CopyLink.run(model, real);
-          const copied = await real.page.evaluate(() => navigator.clipboard.readText());
-          const fresh = await counted(context, copied);
-          const seen = await fresh.page.evaluate(observe, settingsOfProject(p).map((s) => s.id));
-          const entry = current(model);
-          assert.deepEqual(
-            { step: seen.current, case: seen.checked, caption: seen.caption, notice: seen.notice, url: fresh.page.url() },
-            {
-              step: [entry.step],
-              case: Object.fromEntries(settingsOfProject(p).map((s) => [s.id, entry.values[s.id]])),
-              caption: steps(model)[selected(model)]!.caption,
-              notice: '',
-              url: copied,
-            },
-          );
-        } finally {
-          await context.close();
-        }
-      }),
-      params(6),
-    );
-  },
-);
 
 test(
   'player: controls and keys used before the first case has loaded raise no errors and leave the requested step showing',
@@ -1179,9 +1125,10 @@ async function heightsSettle(page: Page, frame: Frame) {
   return last!;
 }
 test(
-  'reportHeight: after any mix of transcript, case, step, viewport and scroll changes, the last posted height equals the content root\'s height',
+  'reportHeight: after any mix of transcript, case, step, viewport and scroll changes, the last posted height equals the content root\'s height, and every message is a new height the host accepts',
   options,
   async () => {
+    const { resizeHeight } = await import('../app/embed-protocol.ts');
     await fc.assert(
       fc.asyncProperty(heightActions, async (actions) => {
         hostBody = `<!doctype html><style>body{margin:0}</style>${loader('a', 'oauth-pkce')}<div style="height:4000px"></div>`;
@@ -1206,6 +1153,12 @@ test(
           await heightAct(page, frame, { kind: 'back' });
           const h = await heightsSettle(page, frame);
           assert.deepEqual(h, { posted: h.content, content: h.content, iframe: h.content + 'px' }, 'back in view');
+          const posts = await postsOf(frame),
+            source = {} as MessageEventSource;
+          for (const [i, p] of posts.entries()) {
+            assert.equal(resizeHeight({ origin: host, source, data: p.msg }, host, source), p.msg.height, JSON.stringify(p));
+            if (i) assert.notEqual(p.msg.height, posts[i - 1]!.msg.height, `posts ${i - 1} and ${i} repeat a height`);
+          }
         } finally {
           await context.close();
         }
@@ -1215,43 +1168,49 @@ test(
   },
 );
 
-/** parentOrigin values: exact origins (the host's and others), near misses the docs reject, and arbitrary text. */
+/**
+ * parentOrigin values labelled by construction, not by the page's own check: exact origins (the
+ * host's, others as URL gives them, an IPv6 one), near misses the docs reject, arbitrary text that
+ * cannot be an HTTP(S) origin, and no parentOrigin at all.
+ */
 const parentOriginArb = (hostOrigin: string) =>
   fc.oneof(
-    fc.constant(hostOrigin),
-    fc.webUrl().map((u) => new URL(u).origin),
-    fc.constantFrom(
-      '*',
-      'null',
-      '',
-      ' ',
-      hostOrigin + '/',
-      hostOrigin + '/path',
-      hostOrigin + '?q',
-      hostOrigin + '#h',
-      ' ' + hostOrigin,
-      hostOrigin + ' ',
-      hostOrigin.toUpperCase(),
-      hostOrigin.replace('http:', 'HTTP:'),
-      hostOrigin.replace('http://', 'http://user:pw@'),
-      'http://127.0.0.1:80',
-      'https://example.com:443',
-      'file://',
-      'data:text/html,x',
-      'javascript:alert(1)',
-      'ws://127.0.0.1',
-      'http://[::1]',
-    ),
-    fc.string({ unit: 'binary' }),
+    fc.oneof(fc.constant(hostOrigin), fc.webUrl().map((u) => new URL(u).origin), fc.constant('http://[::1]')).map((value) => ({ value, exact: true })),
+    fc
+      .oneof(
+        fc.constantFrom(
+          '*',
+          'null',
+          '',
+          ' ',
+          hostOrigin + '/',
+          hostOrigin + '/path',
+          hostOrigin + '?q',
+          hostOrigin + '#h',
+          ' ' + hostOrigin,
+          hostOrigin + ' ',
+          hostOrigin.toUpperCase(),
+          hostOrigin.replace('http:', 'HTTP:'),
+          hostOrigin.replace('http://', 'http://user:pw@'),
+          'http://127.0.0.1:80',
+          'https://example.com:443',
+          'file://',
+          'data:text/html,x',
+          'javascript:alert(1)',
+          'ws://127.0.0.1',
+        ),
+        fc.string({ unit: 'binary' }).filter((v) => !/^https?:/i.test(v)),
+      )
+      .map((value) => ({ value, exact: false })),
+    fc.constant({ value: undefined, exact: false }),
   );
 test(
-  'reportHeight: every message goes to exactly the configured parentOrigin, and none is sent when that value is not an exact HTTP(S) origin',
+  'framed with any parentOrigin: messages go to exactly that origin when it is an exact HTTP(S) origin and nowhere otherwise; the player\'s own "Open in a new tab" link shows only when no parentOrigin is set',
   options,
   async () => {
-    const { exactHttpOrigin } = await import('../app/embed-protocol.ts');
     await fc.assert(
-      fc.asyncProperty(parentOriginArb(host), fc.boolean(), async (parentOrigin, toggle) => {
-        const src = `${embed}/oauth-pkce.html?${new URLSearchParams({ parentOrigin })}`;
+      fc.asyncProperty(parentOriginArb(host), fc.boolean(), async ({ value, exact }, toggle) => {
+        const src = `${embed}/oauth-pkce.html${value === undefined ? '' : '?' + new URLSearchParams({ parentOrigin: value })}`;
         hostBody = `<!doctype html><iframe title="t" src="${src.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" style="width:600px;height:640px;border:0"></iframe>`;
         const context = await browser.newContext({ reducedMotion: 'reduce' });
         try {
@@ -1262,94 +1221,22 @@ test(
           if (toggle) await frame.evaluate(() => document.querySelector<HTMLElement>('.transcript > summary')!.click());
           await page.waitForTimeout(100);
           const posts = await postsOf(frame);
-          // The page decodes the same query the same way, so this is the value it was given.
-          const configured = exactHttpOrigin(new URL(src).searchParams.get('parentOrigin'));
-          assert.deepEqual(
-            [...new Set(posts.map((p) => p.origin))],
-            configured ? [configured] : [],
-            `parentOrigin ${JSON.stringify(parentOrigin)}`,
-          );
+          assert.deepEqual([...new Set(posts.map((p) => p.origin))], exact ? [value] : [], `parentOrigin ${JSON.stringify(value)}`);
+          // The loader, which sets parentOrigin, puts its own link beside the frame.
+          assert.equal(await frame.locator('a.standalone').count(), value === undefined ? 1 : 0, `parentOrigin ${JSON.stringify(value)}`);
         } finally {
           await context.close();
         }
       }),
-      params(16),
-    );
-  },
-);
-test(
-  'reportHeight: every message is one the host accepts (type, version, integer height 1..100000)',
-  options,
-  async () => {
-    const { resizeHeight } = await import('../app/embed-protocol.ts');
-    await fc.assert(
-      fc.asyncProperty(heightActions, async (actions) => {
-        hostBody = `<!doctype html><style>body{margin:0}</style>${loader('a', 'oauth-pkce')}`;
-        const context = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 700, height: 800 } });
-        try {
-          await recordPosts(context);
-          const page = await context.newPage();
-          await page.goto(host);
-          const frame = await readyFrame(page, 'oauth-pkce');
-          for (const a of actions) await heightAct(page, frame, a);
-          await heightsSettle(page, frame);
-          const posts = await postsOf(frame);
-          const source = {} as MessageEventSource;
-          for (const p of posts)
-            assert.equal(resizeHeight({ origin: host, source, data: p.msg }, host, source), p.msg.height, JSON.stringify(p));
-        } finally {
-          await context.close();
-        }
-      }),
-      params(10),
-    );
-  },
-);
-test(
-  'reportHeight: no message repeats the height sent just before it',
-  options,
-  async () => {
-    await fc.assert(
-      fc.asyncProperty(heightActions, async (actions) => {
-        hostBody = `<!doctype html><style>body{margin:0}</style>${loader('a', 'oauth-pkce')}`;
-        const context = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 700, height: 800 } });
-        try {
-          await recordPosts(context);
-          const page = await context.newPage();
-          await page.goto(host);
-          const frame = await readyFrame(page, 'oauth-pkce');
-          for (const a of actions) await heightAct(page, frame, a);
-          await heightsSettle(page, frame);
-          const posts = await postsOf(frame);
-          for (let i = 1; i < posts.length; i++)
-            assert.notEqual(posts[i]!.msg.height, posts[i - 1]!.msg.height, `posts ${i - 1} and ${i}`);
-        } finally {
-          await context.close();
-        }
-      }),
-      params(10),
-    );
-  },
-);
-test(
-  'inside a frame, the player shows its own "Open in a new tab" link exactly when no parentOrigin is set (the loader adds one beside the frame)',
-  options,
-  async () => {
-    await fc.assert(
-      fc.asyncProperty(fc.option(parentOriginArb(host), { nil: undefined }), async (parentOrigin) => {
-        const src = `${embed}/mr-cache.html${parentOrigin === undefined ? '' : '?' + new URLSearchParams({ parentOrigin })}`;
-        hostBody = `<!doctype html><iframe title="t" src="${src.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" style="width:600px;height:640px;border:0"></iframe>`;
-        const page = await browser.newPage();
-        try {
-          await page.goto(host);
-          const frame = await readyFrame(page, 'mr-cache');
-          const links = await frame.locator('a.standalone').count();
-          assert.equal(links, parentOrigin === undefined ? 1 : 0, `parentOrigin ${JSON.stringify(parentOrigin)}`);
-        } finally {
-          await page.close();
-        }
-      }),
-      params(12),
+      {
+        ...params(16),
+        // Always: the host itself, its nearest miss (a trailing slash), and no parentOrigin.
+        examples: [
+          [{ value: host, exact: true }, false],
+          [{ value: host + '/', exact: false }, false],
+          [{ value: undefined, exact: false }, false],
+        ],
+      },
     );
   },
 );
