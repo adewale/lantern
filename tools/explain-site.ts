@@ -23,12 +23,12 @@ const exists = (file: string) => access(file).then(() => true, () => false);
 
 await mkdir(target, { recursive: true });
 const blocks: string[] = [];
-for (const { id } of EXPLAINERS) {
+for (const { id, video } of EXPLAINERS) {
   const page = join(built, id + '.html');
   if (!(await exists(page))) throw new Error(`Missing ${page}: run npm run demos:build first`);
   await copyFile(page, join(target, id + '.html'));
   await copyFile(join(built, id + '.png'), join(target, id + '.png'));
-  for (const ext of ['.mp4', '.vtt']) if (await exists(join(videos, id + ext))) await copyFile(join(videos, id + ext), join(target, id + ext));
+  for (const ext of video === false ? [] : ['.mp4', '.vtt']) if (await exists(join(videos, id + ext))) await copyFile(join(videos, id + ext), join(target, id + ext));
   const headers = JSON.parse(await readFile(join(built, id + '.html.headers.json'), 'utf8')) as Record<string, string>;
   const lines = Object.entries(headers).map(([k, v]) => `  ${k}: ${v}`).join('\n');
   // The host serves /x.html at /x, so the rule covers both spellings.

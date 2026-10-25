@@ -14,7 +14,7 @@ const gc = (globalThis as { gc?: () => void }).gc;
 
 test('50 seeks and traces leave the heap where 10 did (no per-run growth)', { skip: typeof gc !== 'function' && 'run with node --expose-gc' }, async () => {
   await loadFonts();
-  const S = await explainer('pyex-limits');
+  const S = await explainer('token-bucket');
   const tr = await traceScene(S);
   const times = tr.steps.map((s) => s.t0 + 0.3);
   const heap = (): number => { gc!(); gc!(); return process.memoryUsage().heapUsed; };

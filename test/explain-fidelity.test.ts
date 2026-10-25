@@ -157,15 +157,6 @@ for (const entry of EXPLAINERS)
           assertStepState(trace, 'cat', { oldShell: original, newShell: run.shell, cat: cat.stdout });
           break;
         }
-        case 'pyex-limits':
-          assertStepState(
-            trace,
-            'failure',
-            values.limit === '3'
-              ? { steps: 3, memory: 15000, status: 'step limit' }
-              : { steps: 6, memory: 30000, status: 'memory limit' },
-          );
-          break;
         case 'glyph':
           await loadFonts();
           assertStepState(trace, 'measure', {

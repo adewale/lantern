@@ -122,7 +122,7 @@ console.log(`Gallery: ${join(directory, 'index.html')}\n${JSON.stringify(totals)
 
 if (render) {
   const exporter = await exporterHash();
-  const queue = [...EXPLAINERS];
+  const queue = EXPLAINERS.filter((e) => e.video !== false);
   let failed = false;
   async function worker() {
     while (queue.length) {

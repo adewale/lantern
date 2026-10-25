@@ -2,9 +2,10 @@
  * The collection, in gallery order. `topic` explainers are about subjects a
  * reader might search for; `toolchain` explainers show how these explanations
  * are made (the engine, the diagrams, the text outlines). `step` chooses
- * the default case's step each gallery tile shows and links to.
+ * the default case's step each gallery tile shows and links to. `video: false`
+ * leaves an explainer out of `demos:render`, so it ships as a page only.
  */
-export const EXPLAINERS: readonly { id: string; step: string; group: 'topic' | 'toolchain' }[] = [
+export const EXPLAINERS: readonly { id: string; step: string; group: 'topic' | 'toolchain'; video?: false }[] = [
   { id: 'seasons', step: 'year', group: 'topic' },
   { id: 'oauth-pkce', step: 'attack', group: 'topic' },
   { id: 'exgit', step: 'change', group: 'topic' },
@@ -14,7 +15,6 @@ export const EXPLAINERS: readonly { id: string; step: string; group: 'topic' | '
   { id: 'ring-buffer', step: 'result', group: 'topic' },
   { id: '2password', step: 'suggest', group: 'topic' },
   { id: 'just-bash', step: 'cat', group: 'topic' },
-  { id: 'pyex-limits', step: 'failure', group: 'topic' },
   { id: 'cert-renewal', step: 'other-rule', group: 'topic' },
   { id: 'quotient-familial', step: 'plafond', group: 'topic' },
   { id: 'send-sync', step: 'wrap-arc', group: 'topic' },

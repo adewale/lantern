@@ -120,17 +120,6 @@ export function exec(
   }
   return { shell: { fs, steps }, stdout };
 }
-export function checkStep(
-  ctx: { steps: number; memory: number; output: number },
-  limits: { steps: number; memory: number; output: number },
-  pastDeadline = false,
-): { status: string; steps: number } {
-  if (ctx.steps >= limits.steps) return { status: 'step limit', steps: ctx.steps };
-  if (ctx.memory >= limits.memory) return { status: 'memory limit', steps: ctx.steps };
-  if (ctx.output >= limits.output) return { status: 'output limit', steps: ctx.steps };
-  if (pastDeadline) return { status: 'deadline', steps: ctx.steps };
-  return { status: 'ok', steps: ctx.steps + 1 };
-}
 export function sunlight(latitude: number, declination: number): { altitude: number; daylight: number } {
   const rad = Math.PI / 180;
   const cos = -Math.tan(latitude * rad) * Math.tan(declination * rad);

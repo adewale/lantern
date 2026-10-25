@@ -11,7 +11,6 @@ import {
   Full,
   ringStory,
   exec,
-  checkStep,
   sunlight,
   daylightYear,
 } from '../scenes/explainers/lib/models.ts';
@@ -94,25 +93,6 @@ test('shell execution returns a new filesystem and never mutates its input', () 
   assert.equal(next.stdout, '');
   assert.equal(exec(original, [['cat', 'shout.txt']]).stdout, '');
   assert.equal(exec(next.shell, [['cat', 'shout.txt']]).stdout, 'HELLO\n');
-});
-test('resource errors use first matching clause, including simultaneous limits', () => {
-  assert.deepEqual(
-    checkStep({ steps: 3, memory: 30000, output: 100 }, { steps: 3, memory: 30000, output: 100 }, true),
-    { status: 'step limit', steps: 3 },
-  );
-  assert.equal(
-    checkStep({ steps: 3, memory: 30000, output: 100 }, { steps: 9, memory: 30000, output: 100 }, true)
-      .status,
-    'memory limit',
-  );
-  assert.equal(
-    checkStep({ steps: 0, memory: 0, output: 0 }, { steps: 9, memory: 30000, output: 100 }, true).status,
-    'deadline',
-  );
-  assert.deepEqual(checkStep({ steps: 0, memory: 0, output: 0 }, { steps: 9, memory: 30000, output: 100 }), {
-    status: 'ok',
-    steps: 1,
-  });
 });
 test('sunlight follows the sunrise equation: bounded, hemisphere-symmetric, polar extremes and mid-latitude hours', () => {
   for (let latitude = -89; latitude <= 89; latitude++)
