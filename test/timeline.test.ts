@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { SnapshotSink, indexScene, stepTime, renderAt, traceScene, renderText } from '../src/index.ts';
+import { SnapshotSink, StringSink, indexScene, stepTime, renderAt, traceScene, renderText, Scene, StopScene, Rectangle, FadeIn } from '../src/index.ts';
 import { Fixture } from './lib/scenes.ts';
 
 // The trace is what agents read and what fidelity tests compare: its records, timing and
@@ -21,4 +21,44 @@ test('text renderer shows the lit code line, the arrow and the dot', async () =>
   assert.match(txt, /▶/);
   assert.match(txt, /●/);
   assert.match(txt, /A fixture for the engine tests/);
+});
+
+// A construct() that swallows StopScene in a broad catch (the ring buffer's bug)
+class Swallows extends Scene {
+  override async construct() {
+    const box = new Rectangle({ width: 2, height: 1 });
+    try { await this.play(new FadeIn(box)); } catch { /* swallows the seek's stop too */ }
+    try { await this.play(box.animate.shift([2, 0])); } catch { /* and again */ }
+    try { await this.wait(0.5); } catch { /* and again */ }
+  }
+}
+
+test('a swallowed StopScene cannot emit frames: a seek still renders the played frame', async () => {
+  const full = new StringSink(); await new Swallows(full).run();
+  for (const t of [0, 0.4, 1, 1.5, 2.2]) {
+    const snap = new SnapshotSink();
+    let forwarded = 0;
+    const counting = { async frame(scene: Scene, dt: number) { forwarded++; await snap.frame(scene); void dt; } };
+    const scene = await renderAt(Swallows, t, counting);
+    assert.equal(forwarded, 1, `one frame reaches the sink at t=${t}`);
+    assert.ok(scene.stopped);
+    assert.equal(snap.svg, full.frames[Math.round(t * scene.fps)], `frame at t=${t}`);
+  }
+});
+
+test('after a stop, play(), wait() and step() reject at once without reaching the sink', async () => {
+  let calls = 0;
+  const sink = { async frame() { if (++calls === 3) throw new StopScene(); } };
+  const scene = new Swallows(sink);
+  await scene.run();
+  assert.equal(calls, 3);
+  assert.ok(scene.stopped);
+  const box = new Rectangle();
+  const before = scene.time;
+  await assert.rejects(scene.play(new FadeIn(box)), StopScene);
+  await assert.rejects(scene.wait(1), StopScene);
+  await assert.rejects(scene.step('later'), StopScene);
+  assert.equal(calls, 3, 'the sink saw nothing more');
+  assert.equal(scene.time, before, 'and the clock did not move');
+  assert.ok(!scene.mobjects.includes(box), 'nothing began');
 });

@@ -6,15 +6,18 @@ import { VMobject } from './vmobject.ts';
 import type { Mobject } from './mobject.ts';
 import { Arrow, CurvedArrow, Circle, Dot } from './shapes.ts';
 import { Text } from './text.ts';
-import { FRAME } from './svg.ts';
-import type { Scene, Sink, Step } from './scene.ts';
+import type { Evidence, Scene, Sink, Step } from './scene.ts';
+import { hunkHeader } from './diff.ts';
+import type { Hunk } from './diff.ts';
 import type { VecLike } from './vec.ts';
 
 export function renderText(scene: Scene, { cols = 96, rows = 27 }: { cols?: number; rows?: number } = {}): string {
   const grid = Array.from({ length: rows }, () => new Array<string>(cols).fill(' '));
-  const sx = cols / FRAME.w, sy = rows / FRAME.h;
-  const X = (x: number) => Math.round((x + FRAME.w / 2) * sx);
-  const Y = (y: number) => Math.round((FRAME.h / 2 - y) * sy); // model y is up; rows go down
+  // Camera: the grid shows the frame's box, so a zoomed frame reads larger
+  const [fx0, fy0, fx1, fy1] = scene.frame.box()!;
+  const sx = cols / (fx1 - fx0), sy = rows / (fy1 - fy0);
+  const X = (x: number) => Math.round((x - fx0) * sx);
+  const Y = (y: number) => Math.round((fy1 - y) * sy); // model y is up; rows go down
   const put = (c: number, r: number, ch: string) => { if (r >= 0 && r < rows && c >= 0 && c < cols) grid[r]![c] = ch; };
   const visible = (m: Mobject) => m.style.opacity > 0.05;
 
@@ -75,5 +78,20 @@ export function renderText(scene: Scene, { cols = 96, rows = 27 }: { cols?: numb
   for (const top of scene.mobjects) draw(top, 0);
   const order = (m: Mobject) => (m instanceof Text ? 2 : m instanceof Dot ? 3 : 1);
   for (const m of later.sort((a, b) => order(a) - order(b))) draw(m, 1);
-  return grid.map((r) => r.join('').replace(/\s+$/, '')).join('\n');
+  const text = grid.map((r) => r.join('').replace(/\s+$/, '')).join('\n');
+  // What the step recorded so far (Scene.record), one line under the grid
+  const evidence = scene.currentStep?.evidence;
+  return evidence?.length ? `${text}\n${evidence.map(evidenceLine).join(' · ')}` : text;
+}
+
+/** One record as a few words: a diff's hunk headers and line counts, a match's counts, else its kind. */
+function evidenceLine(e: Evidence): string {
+  const n = (k: string) => (typeof e[k] === 'number' ? e[k] : 0);
+  if (e.kind === 'diff' && Array.isArray(e.hunks)) {
+    const hunks = (e.hunks as Hunk[]).map(hunkHeader).join(' ');
+    const l = (e.lines ?? {}) as Record<string, number>;
+    return `diff ${hunks}: ${l.unchanged} unchanged, ${l.changed} rewritten, ${l.removed} removed, ${l.added} added lines`;
+  }
+  if (e.kind === 'match') return `match: ${n('matched')} matched, ${n('morphed')} morphed, ${n('removed')} removed, ${n('added')} added`;
+  return e.kind;
 }

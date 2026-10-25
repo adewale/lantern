@@ -5,6 +5,9 @@ import { Group } from './mobject.ts';
 import type { Mobject, Style } from './mobject.ts';
 import * as V from './vec.ts';
 import type { Vec } from './vec.ts';
+import type { Box } from './mobject.ts';
+import { RED, WHITE, YELLOW } from './color.ts';
+import { Text } from './text.ts';
 
 export class Polygon extends VMobject {
   constructor(points: ReadonlyArray<Readonly<Vec>>, style: Style = {}) {
@@ -204,4 +207,165 @@ export class CurvedArrow extends Group {
   }
   get arc(): ArcBetweenPoints { return this.children[0] as ArcBetweenPoints; }
   get tip(): Polygon { return this.children[1] as Polygon; }
+}
+
+// ---- shape matchers and braces ----
+//
+// Emphasis that stays on screen: an outline, an underline, a strike-through, a
+// brace. Each is built once from its target's box, a snapshot as in manim: it
+// does not follow the target if that moves later. A target is a mobject or a
+// Box, so a span of code lines (or any region) can be marked without grouping
+// the lines, which would take them from their parent.
+
+/** A box for a matcher to fit: a mobject's as it is now, or a Box as given. Internal (Circumscribe uses it too). */
+export function boxOf(target: Mobject | Box): Box {
+  if (Array.isArray(target)) return [...target];
+  const b = target.box();
+  if (!b) throw new Error(`${target.constructor.name}#${target.id} has no points to fit a shape to`);
+  return b;
+}
+
+export interface SurroundingRectangleOpts extends Style { buff?: number; cornerRadius?: number }
+
+/**
+ * A rectangle around a mobject's box (or a Box), `buff` out on every side.
+ * Yellow stroke, no fill. Drawn like Rectangle, from the top-left corner
+ * clockwise, so Create sweeps along the top first.
+ */
+export class SurroundingRectangle extends Rectangle {
+  constructor(target: Mobject | Box, { buff = 0.15, cornerRadius = 0, ...style }: SurroundingRectangleOpts = {}) {
+    const b = boxOf(target);
+    super({ width: b[2] - b[0] + 2 * buff, height: b[3] - b[1] + 2 * buff, cornerRadius, stroke: YELLOW, fill: 'none', ...style });
+    this.shift([(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]);
+  }
+}
+
+export interface UnderlineOpts extends Style { buff?: number }
+
+/** A line along the bottom of a mobject's box (or a Box), `buff` below it, drawn left to right. */
+export class Underline extends Line {
+  constructor(target: Mobject | Box, { buff = 0.1, ...style }: UnderlineOpts = {}) {
+    const b = boxOf(target), y = b[1] - buff;
+    super([b[0], y], [b[2], y], style);
+  }
+}
+
+export interface CrossOpts extends Style { scale?: number }
+
+/**
+ * Both diagonals of a mobject's box (or a Box): "not this". Red, slightly
+ * heavier than the default stroke, as in manim. One path of two subpaths,
+ * upper-left to lower-right first; `scale` grows or shrinks it about the
+ * box center.
+ */
+export class Cross extends VMobject {
+  constructor(target: Mobject | Box, { scale = 1, ...style }: CrossOpts = {}) {
+    super({ stroke: RED, strokeWidth: 0.06, fill: 'none', ...style });
+    const b = boxOf(target);
+    const cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2;
+    const w = (b[2] - b[0]) / 2 * scale, h = (b[3] - b[1]) / 2 * scale;
+    this.startNewPath([cx - w, cy + h]); this.addLineTo([cx + w, cy - h]);
+    this.startNewPath([cx + w, cy + h]); this.addLineTo([cx - w, cy - h]);
+  }
+}
+
+export interface BraceOpts extends Style {
+  /** Gap between the box edge and the brace's ends. */
+  buff?: number;
+  /** Higher is tighter: each curl is 2 · depth / sharpness long. */
+  sharpness?: number;
+  /** Distance from the brace's ends to its tip. */
+  depth?: number;
+}
+
+/**
+ * A curly brace along the edge of a mobject's box (or a Box) in `direction`,
+ * tip pointing away. One stroked path of six cubics, drawn from one end to the
+ * other through the tip: outer curl, straight run, inner curl into the tip,
+ * then the mirror image back out. Stroked rather than filled so it takes the
+ * same stroke weight and color as the outlines it sits beside, and so Create
+ * traces it once, as a pen would (a filled brace's outline is traced around
+ * both sides before the fill comes in); at Lantern's stroke widths the taper
+ * of a filled brace is too small to see anyway.
+ *
+ * Every direction is the same drawing: built pointing DOWN, as wide as the
+ * box's extent across `direction`, then rotated onto it. `tip()` and
+ * `direction()` are read from the points, so they stay right on copies and
+ * after the brace moves or turns.
+ */
+export class Brace extends VMobject {
+  constructor(target: Mobject | Box, direction: Readonly<Vec> = V.DOWN, { buff = 0.1, sharpness = 2, depth = 0.2, ...style }: BraceOpts = {}) {
+    super({ fill: 'none', ...style });
+    const b = boxOf(target);
+    const d = V.normalize(direction);
+    // The turn taking DOWN onto d; snapped so axis directions stay exact
+    const angle = V.angleOf(d) + Math.PI / 2;
+    const snap = (x: number): number => (Math.abs(x) < 1e-12 ? 0 : x);
+    const cos = snap(Math.cos(angle)), sin = snap(Math.sin(angle));
+    const along: Vec = [cos, sin];
+    // The box's corners, from its center, measured along the brace and out from it
+    const c: Vec = [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
+    const corners = ([[b[0], b[1]], [b[2], b[1]], [b[2], b[3]], [b[0], b[3]]] as Vec[]).map((p) => V.sub(p, c));
+    const ts = corners.map((p) => V.dot(p, along));
+    const lo = Math.min(...ts), hi = Math.max(...ts);
+    const out = Math.max(...corners.map((p) => V.dot(p, d)));
+    // Pointing DOWN about the origin: ends on y = 0, tip at (0, -depth).
+    // Short braces shorten their curls so the straight runs never go negative.
+    const w = (hi - lo) / 2, h = depth / 2, r = Math.min(2 * depth / sharpness, w / 2), k = 0.5523;
+    this.startNewPath([-w, 0]);
+    this.addCubic([-w, -h * k], [-w + r - r * k, -h], [-w + r, -h]);
+    this.addLineTo([-r, -h]);
+    this.addCubic([-r + r * k, -h], [0, -h - h * k], [0, -depth]);
+    this.addCubic([0, -h - h * k], [r - r * k, -h], [r, -h]);
+    this.addLineTo([w - r, -h]);
+    this.addCubic([w - r + r * k, -h], [w, -h * k], [w, 0]);
+    const at = V.add(V.add(c, V.mul(along, (lo + hi) / 2)), V.mul(d, out + buff));
+    this.applyAffine(cos, sin, -sin, cos, at[0], at[1], { aboutPoint: V.ORIGIN });
+  }
+
+  /** The tip: the anchor farthest from the line through the brace's two ends. */
+  tip(): Vec {
+    const a = this.subpaths[0]!, n = a.length;
+    const p0: Vec = [a[0]!, a[1]!], chord = V.normalize(V.sub([a[n - 2]!, a[n - 1]!], p0));
+    const normal: Vec = [-chord[1], chord[0]];
+    let best = p0, far = -1;
+    for (let i = 0; i < n; i += 6) {
+      const p: Vec = [a[i]!, a[i + 1]!];
+      const dist = Math.abs(V.dot(V.sub(p, p0), normal));
+      if (dist > far) { far = dist; best = p; }
+    }
+    return best;
+  }
+
+  /** Where the tip points: from the middle of the ends to the tip, snapped to an axis within ~0.01°. */
+  direction(): Vec {
+    const a = this.subpaths[0]!, n = a.length;
+    const d = V.normalize(V.sub(this.tip(), V.lerp([a[0]!, a[1]!], [a[n - 2]!, a[n - 1]!], 0.5)));
+    return [Math.abs(d[0]) < 1e-4 ? 0 : d[0], Math.abs(d[1]) < 1e-4 ? 0 : d[1]];
+  }
+
+  /** Put `mobject` beyond the tip, `buff` away and centered on it. */
+  putAtTip(mobject: Mobject, buff = 0.15): this {
+    mobject.nextTo(this.tip(), this.direction(), buff);
+    return this;
+  }
+}
+
+export interface BraceLabelOpts { fontSize?: number; color?: string; buff?: number; labelBuff?: number }
+
+/**
+ * A brace and a text label beyond its tip: "this span is n bytes". Children:
+ * [brace, label], read through indices (see Arrow). `color` paints both;
+ * `buff` is the brace's gap to the box, `labelBuff` the label's to the tip.
+ */
+export class BraceLabel extends Group {
+  constructor(target: Mobject | Box, text: string, direction: Readonly<Vec> = V.DOWN, { fontSize = 0.3, color = WHITE, buff = 0.1, labelBuff = 0.15 }: BraceLabelOpts = {}) {
+    super();
+    const brace = new Brace(target, direction, { buff, stroke: color });
+    const label = new Text(text, { fontSize, color });
+    brace.putAtTip(label, labelBuff);
+    this.add(brace, label);
+  }
+  get brace(): Brace { return this.children[0] as Brace; }
+  get label(): Text { return this.children[1] as Text; }
 }

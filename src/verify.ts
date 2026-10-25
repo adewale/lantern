@@ -16,11 +16,13 @@
 //              ReplacementTransform) but the replacement is somewhere else
 //
 // A cut-out and cut-in in the same frame with matching boxes is a seamless
-// handoff and is not reported. Every event carries the step it happened in.
+// handoff and is not reported, nor is a cut-in over a matching leaf that stays
+// (a copy taking off from its source). Every event carries the step it happened in.
 
 import { VMobject } from './vmobject.ts';
 import type { Box, HasText, Mobject } from './mobject.ts';
 import type { Scene, Sink } from './scene.ts';
+import { FRAME } from './svg.ts';
 
 /** Thresholds for analyzeMotion(); see DEFAULTS. */
 export interface MotionOptions {
@@ -75,6 +77,11 @@ export class MotionSink implements Sink {
   constructor() { this.frames = []; this.labels = new Map(); }
   async frame(scene: Scene): Promise<void> {
     const f = new Map<number, LeafSample>();
+    // Camera: sample in screen space, in scene units of the default 16-wide frame
+    // (exactly world space when the camera is home), so thresholds mean what a
+    // reader sees; a camera jump moves every leaf at once.
+    const [fx0, fy0, fx1, fy1] = scene.frame.box()!, k = FRAME.w / (fx1 - fx0), cx = (fx0 + fx1) / 2, cy = (fy0 + fy1) / 2;
+    const screen = (b: Box): Box => [(b[0] - cx) * k, (b[1] - cy) * k, (b[2] - cx) * k, (b[3] - cy) * k];
     const walk = (m: Mobject): void => {
       // A merged run (Text) is one visual thing whose glyphs are rebuilt when
       // its string changes, so it is tracked as a unit, not per glyph.
@@ -83,7 +90,7 @@ export class MotionSink implements Sink {
       if (drawn) {
         const a = unit ? Math.max(...m.children.map(alphaOf)) : alphaOf(m);
         if (a > 0.02) {
-          const b = m.box();
+          const w = m.box(), b = w && screen(w);
           if (b) {
             f.set(m.id, { cx: (b[0] + b[2]) / 2, cy: (b[1] + b[3]) / 2, w: b[2] - b[0], h: b[3] - b[1], a, box: b });
             if (!this.labels.has(m.id)) this.labels.set(m.id, describeLeaf(m));
@@ -169,9 +176,15 @@ export function analyzeMotion(sink: MotionSink, opts: MotionOptions = {}): Motio
       if (back) ev('flicker', f, oid, back - f, `hidden for ${back - f} frame(s)`);
       else ev('cut-out', f, oid, op.a, `vanished at alpha ${op.a.toFixed(2)}`);
     }
+    // A leaf appearing over one that was and still is drawn there, no more opaque,
+    // changes nothing a viewer sees: a copy leaving its source (TransformFromCopy)
+    const overStaying = (s: LeafSample): boolean => {
+      for (const [id, q] of cur) if (prev.has(id) && q.a + 0.02 >= s.a && iou(q.box, s.box) >= o.handoffIoU) return true;
+      return false;
+    };
     for (const [iid, ip] of cutIns) if (!usedIn.has(iid)) {
       // A leaf already present in the first rendered frames of the scene is just the opening state
-      if (f > 1) ev('cut-in', f, iid, ip.a, `appeared at alpha ${ip.a.toFixed(2)}`);
+      if (f > 1 && !overStaying(ip)) ev('cut-in', f, iid, ip.a, `appeared at alpha ${ip.a.toFixed(2)}`);
     }
   }
   return events;

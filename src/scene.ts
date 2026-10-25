@@ -6,12 +6,19 @@
 // deterministic regardless of sink.
 
 import { prepareAnimation, AnimationGroup } from './animation.ts';
+import { Succession, bindSuccessions } from './animation.ts';
+import { bindRecorders } from './animation.ts';
 import type { Animation, Playable, PlayOpts } from './animation.ts';
 import type { Mobject } from './mobject.ts';
 import { perf } from './perf.ts';
 import { loadFonts } from './fonts.ts';
+import { Frame } from './frame.ts';
 
-/** Thrown by a sink to end the run early (seeking). */
+/**
+ * Thrown by a sink to end the run early (seeking). Once a sink throws it, the
+ * scene is stopped for good: a construct() that catches it anyway cannot emit
+ * another frame (see Scene.stopped).
+ */
 export class StopScene extends Error {}
 
 /** Free-form data attached to a step; travels with the trace. A string `caption` holds the step until read. */
@@ -28,7 +35,18 @@ export interface Step {
   /** When the caption-reading hold began, if the step needed one. Players stop here; video plays on to t1. */
   hold?: number;
   meta: StepMeta;
+  /**
+   * What happened during the step, as recorded by Scene.record() (in order).
+   * Scene.step() always sets it; a step rebuilt elsewhere (an index) may not.
+   */
+  evidence?: Evidence[];
 }
+
+/**
+ * One fact recorded during a step (see Scene.record): what an animation did,
+ * such as the hunks a TransformDiff animated. JSON, like the state.
+ */
+export type Evidence = { kind: string } & Record<string, unknown>;
 
 /**
  * What a scene renders into: called once per frame (dt = 0 for the first),
@@ -60,12 +78,16 @@ export type SceneClass = new (sink: Sink, opts?: SceneOptions) => Scene;
  */
 function assertDisjoint(anims: readonly Animation[]): void {
   const seen = new Map<Mobject, Animation>();
-  const leaves = (a: Animation): Animation[] => (a instanceof AnimationGroup ? a.animations.flatMap(leaves) : [a]);
+  // A Succession's members run one at a time, so they may share mobjects with each
+  // other (each is checked on its own below), but not with anything beside them.
+  const leaves = (a: Animation): Animation[] => (a instanceof AnimationGroup && !(a instanceof Succession) ? a.animations.flatMap(leaves) : [a]);
+  const driven = (a: Animation): Mobject[] => (a instanceof Succession ? a.animations.flatMap(leaves).flatMap(driven) : a.mobject.family());
   for (const a of anims.flatMap(leaves)) {
-    for (const m of a.mobject.family()) {
+    if (a instanceof Succession) for (const member of a.animations) assertDisjoint([member]);
+    for (const m of driven(a)) {
       const other = seen.get(m);
       if (other && other !== a) {
-        const name = (x: Animation) => `${x.constructor.name}(${x.mobject.constructor.name}#${x.mobject.id})`;
+        const name = (x: Animation) => `${x.constructor.name}(${x.mobject ? `${x.mobject.constructor.name}#${x.mobject.id}` : '...'})`;
         throw new Error(`play(): ${name(other)} and ${name(a)} both animate ${m.constructor.name}#${m.id}; one play() can drive a mobject only once (sequence them, or combine into one Transform)`);
       }
       seen.set(m, a);
@@ -83,6 +105,22 @@ export class Scene {
   steps: Step[];
   current: Step | null;
   state: SceneState;
+  /** Every Scene.record() so far, in order, across steps. */
+  evidence: Evidence[];
+  /**
+   * The camera: which box of the scene is on screen (see frame.ts). Held here,
+   * not in `mobjects`: it is never drawn, and every walk over `mobjects`
+   * (renderers, verifiers, clear(), scenes' own bookkeeping) stays camera-free.
+   * play() animates it like any mobject; beginAnimations() just never adds it.
+   */
+  frame: Frame;
+  /**
+   * Set when a sink throws StopScene. From then on play(), wait(), step() and
+   * emitFrame() rethrow it at once, so a construct() that swallows the stop in
+   * a broad catch cannot emit frames after it (a seeked frame would differ from
+   * the played one). run() still ends quietly.
+   */
+  stopped: boolean;
   // One entry per registration, so each remover removes exactly its own.
   private stepListeners: Array<{ listener: (step: Step) => unknown; on: boolean }>;
   private describers: Array<{ describer: () => SceneState }>;
@@ -106,8 +144,19 @@ export class Scene {
     this.current = null;
     // The explanation's own state; describe() snapshots it for traces
     this.state = {};
+    this.evidence = [];
+    this.frame = new Frame();
+    this.stopped = false;
     this.stepListeners = [];
     this.describers = [];
+  }
+
+  /** Rethrow a stop a sink already raised: nothing reaches the sink after it. */
+  throwIfStopped(): void { if (this.stopped) throw new StopScene(); }
+
+  /** Call the sink; a StopScene it throws stops the scene for good (see `stopped`). */
+  async toSink(call: () => Promise<void> | undefined): Promise<void> {
+    try { await call(); } catch (e) { if (e instanceof StopScene) this.stopped = true; throw e; }
   }
 
   /**
@@ -137,7 +186,7 @@ export class Scene {
   async run(): Promise<this> {
     try {
       await loadFonts();
-      await this.sink.frame(this, 0);
+      await this.toSink(() => this.sink.frame(this, 0));
       await this.construct();
       await this.endCurrentStep();
     } catch (e) {
@@ -157,11 +206,12 @@ export class Scene {
    */
   async step(name: string, meta: StepMeta = {}): Promise<Step> {
     if (typeof meta === 'function') throw new TypeError('step(name, fn) is gone: call `await this.step(name)` where the step begins');
+    this.throwIfStopped();
     await this.endCurrentStep();
-    const s: Step = { name, path: name, t0: this.time, frame0: this.frameCount, t1: null, frame1: null, meta };
+    const s: Step = { name, path: name, t0: this.time, frame0: this.frameCount, t1: null, frame1: null, meta, evidence: [] };
     this.steps.push(s);
     this.current = s;
-    await this.sink.stepBegin?.(this, s);
+    await this.toSink(() => this.sink.stepBegin?.(this, s));
     // The listeners registered when the step began, minus any removed meanwhile; one added
     // during this dispatch first hears the next step.
     for (const entry of this.stepListeners.slice()) if (entry.on) await entry.listener(s);
@@ -174,6 +224,7 @@ export class Scene {
   async endCurrentStep(): Promise<void> {
     const s = this.current;
     if (!s) return;
+    this.throwIfStopped();
     // A captioned step holds until its caption could have been read or spoken,
     // so narration (or a reader) never runs past the picture it describes.
     const caption = s.meta?.caption;
@@ -189,12 +240,13 @@ export class Scene {
     }
     this.current = null;
     s.t1 = this.time; s.frame1 = this.frameCount;
-    await this.sink.stepEnd?.(this, s);
+    await this.toSink(() => this.sink.stepEnd?.(this, s));
   }
 
   hasUpdaters(): boolean {
     for (const top of this.mobjects) for (const m of top.family()) if (m.updaters.length) return true;
-    return false;
+    // Camera: an updater on the frame (follow a dot) integrates over frames too
+    return this.frame.updaters.length > 0;
   }
 
   /** The step running now, or null. */
@@ -217,6 +269,21 @@ export class Scene {
         Object.defineProperty(state, k, { value, enumerable: true, writable: true, configurable: true });
     }
     return state;
+  }
+
+  /**
+   * Record a fact about the step running now, for traces and fidelity tests:
+   * `{ kind, ...data }` is appended to the step's `evidence` (and to the
+   * scene's, which also keeps what happens before the first step). Matching
+   * transforms record what they paired; TransformDiff the hunks it animated.
+   * Unlike `state`, evidence is what the animation did, not what the program
+   * is: it lets a test check the picture against an outside oracle. Copied
+   * as JSON when recorded.
+   */
+  record(kind: string, data: Record<string, unknown> = {}): void {
+    const e = JSON.parse(JSON.stringify({ kind, ...data })) as Evidence;
+    this.evidence.push(e);
+    this.current?.evidence?.push(e);
   }
 
   // ---- mobject list ------------------------------------------------------
@@ -279,18 +346,23 @@ export class Scene {
   }
 
   async emitFrame(dt: number): Promise<void> {
+    this.throwIfStopped();
     this.tick();
-    perf.span('updaters', () => { for (const m of this.mobjects) m.update(dt); });
+    // Camera updaters run last, so a following frame sees this frame's positions
+    perf.span('updaters', () => { for (const m of this.mobjects) m.update(dt); this.frame.update(dt); });
     const end = perf.begin('sink');
-    await this.sink.frame(this, dt);
+    await this.toSink(() => this.sink.frame(this, dt));
     end();
   }
 
   /** Play animations together; a trailing plain object is options: { runTime, rateFunc, lagRatio }. */
   async play(...args: Playable[] | [...Playable[], PlayOpts]): Promise<void> {
+    this.throwIfStopped(); // before begin(): a stopped scene changes nothing more
     const list: unknown[] = [...args];
     const last = list[list.length - 1];
-    const opts = (last && Object.getPrototypeOf(last) === Object.prototype ? list.pop() : {}) as PlayOpts;
+    // An .animate builder is never the options: its prototype is not Object.prototype (Mobject.animate)
+    const isOpts = last && Object.getPrototypeOf(last) === Object.prototype;
+    const opts = (isOpts ? list.pop() : {}) as PlayOpts;
     const anims = list.map(prepareAnimation);
     for (const a of anims) a.setOptions(opts);
     assertDisjoint(anims);
@@ -318,12 +390,15 @@ export class Scene {
   }
 
   beginAnimations(anims: readonly Animation[]): void {
+    bindSuccessions(anims, this); // a Succession begins its members here, one by one, as their turns come
+    bindRecorders(anims, this); // matching transforms record what they paired (Scene.record) as they begin
     const present = new Set(this.familyMembers());
     for (const a of anims) {
       a.begin();
       const mobs = a instanceof AnimationGroup ? a.mobjects : [a.mobject];
       for (const m of mobs) {
-        if (!m || present.has(m)) continue;
+        // Camera: animated like any mobject, but never added to the drawn list
+        if (!m || m === this.frame || present.has(m)) continue;
         // A new wrapper around things already on screen (Indicate(new Group(a, b))) must not
         // draw them a second time on top: add it only if some drawable member is new.
         const drawn = m.family().filter((f) => f.pointArrays().some((a) => a.length > 0));
@@ -335,6 +410,7 @@ export class Scene {
   }
 
   async wait(seconds = 1): Promise<void> {
+    this.throwIfStopped();
     const dt = 1 / this.fps;
     const n = Math.round(seconds * this.fps);
     const canSkip = this.skipUntil > this.time && !this.hasUpdaters();

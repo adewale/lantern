@@ -10,10 +10,14 @@ import { perf } from './perf.ts';
 
 export const FRAME = { w: 16, h: 9 } as const;
 /** SVG user units per scene unit: lengths are emitted as integers (see VMobject.formatPathD). */
-const UNITS = 1000;
-const VIEWBOX = `${-FRAME.w / 2 * UNITS} ${-FRAME.h / 2 * UNITS} ${FRAME.w * UNITS} ${FRAME.h * UNITS}`;
+export const UNITS = 1000;
 /** A length in integer user units. */
 const len = (x: number): string => '' + Math.round(x * UNITS);
+/** A world box as a user-unit rect [x, y, width, height]: model y is up, SVG y is down, so y flips here. */
+const userRect = (b: Readonly<Box>): string[] => [len(b[0]), len(-b[3]), len(b[2] - b[0]), len(b[3] - b[1])];
+/** Camera: the viewBox is the scene's frame box (16 × 9 at the origin unless the camera moved). */
+const viewBoxOf = (scene: Scene): string => userRect(scene.frame.box()!).join(' ');
+const VIEWBOX = userRect([-FRAME.w / 2, -FRAME.h / 2, FRAME.w / 2, FRAME.h / 2]).join(' ');
 
 const fmt = (x: number): string => (Math.round(x * 1000) / 1000).toString();
 
@@ -51,9 +55,11 @@ export interface AttrsCache {
   rec: ElementRecord | null;
 }
 
-/** Per-group memo for a merged line of glyphs (Mobject._mrec). */
-export interface MergedCache {
+/** Per-group memo for a merged line of glyphs (Mobject._mrec): one entry per run of equal style. */
+export interface MergedCache { runs: MergedRun[] }
+interface MergedRun {
   id: number;
+  start: number;
   pds: Array<PathData | null>;
   fill: string;
   fillOpacity: number;
@@ -64,19 +70,44 @@ export interface MergedCache {
   rec: ElementRecord;
 }
 
-/** One record per drawable leaf: { id, tag, attrs, text }. */
-export function renderElements(scene: Scene, { relative = true }: { relative?: boolean } = {}): ElementRecord[] {
-  return perf.span('render.elements', () => renderElementsImpl(scene, relative));
+export interface RenderOptions {
+  /** Relative path data + translate (strings) or absolute (DOM); see VMobject.pathData. */
+  relative?: boolean;
+  /**
+   * Leave out what the camera cannot show. Off by default: sinks that patch a DOM
+   * keep one element per mobject. The video exporter turns it on, because resvg
+   * 2.6 aborts on an element with `opacity` whose visible box is empty, and with a
+   * camera a fading mobject can sit entirely outside the view. A pure function of
+   * the state, like everything else here: seeks are unaffected.
+   */
+  cull?: boolean;
 }
-function renderElementsImpl(scene: Scene, relative: boolean): ElementRecord[] {
+
+/** One record per drawable leaf: { id, tag, attrs, text }. */
+export function renderElements(scene: Scene, { relative = true, cull = false }: RenderOptions = {}): ElementRecord[] {
+  return perf.span('render.elements', () => renderElementsImpl(scene, relative, cull));
+}
+function renderElementsImpl(scene: Scene, relative: boolean, cull: boolean): ElementRecord[] {
   const out: ElementRecord[] = [];
+  const view = cull ? scene.frame.box()! : null;
+  // Culled: the mobject's box, grown by its stroke, leaves less than ~2 px of the
+  // view in some direction (a thinner sliver is what resvg rounds to nothing). A
+  // group is skipped whole only when it clears the view by a generous margin,
+  // since its stroke widths are its leaves'.
+  const unseen = (m: Mobject, margin: number): boolean => {
+    const b = m.box();
+    if (!b || !view) return false;
+    const px = 2 * (view[2] - view[0]) / 1280;
+    return b[2] + margin - view[0] < px || view[2] - (b[0] - margin) < px || b[3] + margin - view[1] < px || view[3] - (b[1] - margin) < px;
+  };
   const walk = (m: Mobject, inherited?: Clip): void => {
+    if (view && unseen(m, m.children.length ? 0.5 : m.style.stroke === 'none' ? 0 : m.style.strokeWidth / 2)) return;
     const clip = m.clipBox ? clipFor(m.clipBox, inherited?.box) : inherited;
     const emit = (rec: ElementRecord): void => { out.push(clip ? clippedRecord(rec, clip) : rec); };
     // A child-specific viewport cannot be lost by merging its parent.
     if (!relative && m.mergeLeaves && !m.children.some((c) => c.clipBox)) {
-      const merged = mergedRecord(m);
-      if (merged !== undefined) { if (merged) emit(merged); return; }
+      const merged = mergedRecords(m);
+      if (merged !== undefined) { for (const rec of merged) emit(rec); return; }
     }
     // A leaf wholly outside its clip draws nothing, so it is not written. Some rasterizers
     // (resvg 2.6) abort on a translucent element whose clip leaves it no area at all.
@@ -102,7 +133,7 @@ function clipFor(box: Box, parent?: Box): Clip {
     const x = Math.max(box[0], parent[0]), y = Math.max(box[1], parent[1]);
     box = [x, y, Math.max(x, Math.min(box[2], parent[2])), Math.max(y, Math.min(box[3], parent[3]))];
   }
-  const coords = [len(box[0]), len(-box[3]), len(box[2] - box[0]), len(box[3] - box[1])];
+  const coords = userRect(box);
   return {box, id: 'lantern-clip-' + coords.join('_'), attrs: {x:coords[0]!,y:coords[1]!,width:coords[2]!,height:coords[3]!}};
 }
 const clippedRecords = new WeakMap<ElementRecord, {id:string; rec:ElementRecord}>();
@@ -152,40 +183,52 @@ function elementFor(m: Mobject, relative: boolean): ElementRecord | null {
 }
 
 /**
- * One <path> for a group whose leaves all share a style: the leaves' path data
+ * One <path> per run of same-styled leaves: the leaves' path data
  * concatenated. Per-element costs in the browser (style recalc, layout, paint
  * invalidation) scale with element count, and the playback trace showed every
  * late frame was one writing hundreds of glyph elements at once: a code block
  * fading in (740 attribute writes per frame) or morphing (317). A line of glyphs
- * almost always shares one style, so this is one element per line. Returns
- * undefined when the leaves' styles differ (letter-by-letter Write) so the
- * caller falls back to one element per leaf, null when nothing is visible.
+ * almost always shares one style, so this is one element per line, keyed by
+ * the group's id; a syntax-coloured line is one element per colour run, each
+ * keyed by its first leaf's id. Invisible runs emit nothing. Returns undefined
+ * when a leaf needs its own element (a partial draw during Write, or paint
+ * attributes) so the caller falls back to one element per leaf.
  */
-function mergedRecord(g: Mobject): ElementRecord | null | undefined {
+function mergedRecords(g: Mobject): ElementRecord[] | undefined {
   const kids = g.children;
-  let s0: StyleRecord | null = null;
   for (const c of kids) {
     if (!(c instanceof VMobject) || c.children.length) return undefined;
     const s = c.style;
     if (s.drawFraction != null || s.lineCap || s.lineJoin || s.fillRule || s.dashArray || s.paintOrder) return undefined;
-    if (!s0) { s0 = s; continue; }
-    if (s.fill !== s0.fill || s.fillOpacity !== s0.fillOpacity || s.stroke !== s0.stroke || s.strokeWidth !== s0.strokeWidth ||
-        s.strokeOpacity !== s0.strokeOpacity || s.opacity !== s0.opacity) return undefined;
   }
-  if (!s0 || s0.opacity <= 0) return null;
   // Every child is a VMobject: the loop above returned otherwise
-  const pds = (kids as VMobject[]).map((c) => (c.hasPoints() ? c.pathData(false) : null));
-  const k = g._mrec;
-  if (k && k.id === g.id && k.pds.length === pds.length && k.pds.every((p, i) => p === pds[i]) && k.fill === s0.fill &&
-      k.fillOpacity === s0.fillOpacity && k.stroke === s0.stroke && k.strokeWidth === s0.strokeWidth && k.strokeOpacity === s0.strokeOpacity && k.opacity === s0.opacity) {
-    perf.count('merged hit');
-    return k.rec;
+  const leaves = kids as VMobject[], old = g._mrec?.runs, runs: MergedRun[] = [], out: ElementRecord[] = [];
+  for (let i = 0, j = 0; i < leaves.length; i = j) {
+    const s0 = leaves[i]!.style;
+    for (j = i + 1; j < leaves.length; j++) {
+      const s = leaves[j]!.style;
+      if (s.fill !== s0.fill || s.fillOpacity !== s0.fillOpacity || s.stroke !== s0.stroke || s.strokeWidth !== s0.strokeWidth ||
+          s.strokeOpacity !== s0.strokeOpacity || s.opacity !== s0.opacity) break;
+    }
+    if (s0.opacity <= 0) continue;
+    const id = i === 0 && j === leaves.length ? g.id : leaves[i]!.id;
+    const pds: Array<PathData | null> = [];
+    for (let n = i; n < j; n++) pds.push(leaves[n]!.hasPoints() ? leaves[n]!.pathData(false) : null);
+    let k = old?.[runs.length];
+    if (k && k.id === id && k.start === i && k.pds.length === pds.length && k.pds.every((p, n) => p === pds[n]) && k.fill === s0.fill &&
+        k.fillOpacity === s0.fillOpacity && k.stroke === s0.stroke && k.strokeWidth === s0.strokeWidth && k.strokeOpacity === s0.strokeOpacity && k.opacity === s0.opacity) {
+      perf.count('merged hit');
+    } else {
+      perf.count('merged miss');
+      const d = pds.map((p) => (p ? p.d : '')).join('');
+      const rec: ElementRecord = { id, tag: 'path', attrs: vmobjectAttrs(leaves[i]!, s0, { d }), transform: null, text: null };
+      k = { id, start: i, pds, fill: s0.fill, fillOpacity: s0.fillOpacity, stroke: s0.stroke, strokeWidth: s0.strokeWidth, strokeOpacity: s0.strokeOpacity, opacity: s0.opacity, rec };
+    }
+    runs.push(k);
+    out.push(k.rec);
   }
-  perf.count('merged miss');
-  const d = pds.map((p) => (p ? p.d : '')).join('');
-  const rec: ElementRecord = { id: g.id, tag: 'path', attrs: vmobjectAttrs(kids[0] as VMobject, s0, { d }), transform: null, text: null };
-  g._mrec = { id: g.id, pds, fill: s0.fill, fillOpacity: s0.fillOpacity, stroke: s0.stroke, strokeWidth: s0.strokeWidth, strokeOpacity: s0.strokeOpacity, opacity: s0.opacity, rec };
-  return rec;
+  g._mrec = { runs };
+  return out;
 }
 
 function vmobjectAttrs(m: VMobject, s: StyleRecord, pd: { d: string }): Attrs {
@@ -302,13 +345,17 @@ export interface SvgOptions {
   /** Pixel width; height follows the 16:9 frame. */
   width?: number;
   background?: string;
+  /** Leave out what the camera cannot show; see RenderOptions. */
+  cull?: boolean;
 }
 
-export function toSvgString(scene: Scene, { width = 1280, background = '#1a1a1a' }: SvgOptions = {}): string {
+export function toSvgString(scene: Scene, { width = 1280, background = '#1a1a1a', cull = false }: SvgOptions = {}): string {
   const height = Math.round(width * FRAME.h / FRAME.w);
-  let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${VIEWBOX}">`;
-  s += `<rect x="${-FRAME.w / 2 * UNITS}" y="${-FRAME.h / 2 * UNITS}" width="${FRAME.w * UNITS}" height="${FRAME.h * UNITS}" fill="${background}"/>`;
-  const els = renderElements(scene);
+  // Camera: the viewBox follows the frame; the background rect fills whatever it shows
+  const [vx, vy, vw, vh] = userRect(scene.frame.box()!);
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${vx} ${vy} ${vw} ${vh}">`;
+  s += `<rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" fill="${background}"/>`;
+  const els = renderElements(scene, { cull });
   const end = perf.begin('render.serialize');
   const parts = [s];
   const clips = clipsOf(els);
@@ -365,6 +412,8 @@ export class DomSink implements Sink {
   maxFreezeMs: number;
   private defs: SVGDefsElement | null = null;
   private clipSignature = '';
+  /** Camera: the viewBox last written, so an unchanged camera costs no DOM write. */
+  private viewBox = VIEWBOX;
 
   constructor(container: Element, { background = '#1a1a1a', realtime = true }: { background?: string; realtime?: boolean } = {}) {
     const NS = 'http://www.w3.org/2000/svg';
@@ -413,13 +462,15 @@ export class DomSink implements Sink {
 
   patch(scene: Scene): void {
     // Absolute path data: measured faster for live DOM patching than translate + relative
-    this.apply(renderElements(scene, { relative: false }));
+    this.apply(renderElements(scene, { relative: false }), viewBoxOf(scene));
   }
 
-  /** Bring the DOM to exactly these records (one frame). */
-  apply(els: readonly ElementRecord[]): void {
+  /** Bring the DOM to exactly these records (one frame), and the viewBox to the camera's when given. */
+  apply(els: readonly ElementRecord[], viewBox?: string): void {
     this.lastPatch = performance.now();
     const end = perf.begin('dom.patch');
+    // Camera: one attribute write when the frame moved, none otherwise
+    if (viewBox !== undefined && viewBox !== this.viewBox) { this.svg.setAttribute('viewBox', viewBox); this.viewBox = viewBox; }
     const clips = clipsOf(els), signature = clips.map((c)=>c.id).join(' ');
     if (signature !== this.clipSignature) {
       this.clipSignature = signature;
