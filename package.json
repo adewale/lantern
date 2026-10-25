@@ -24,7 +24,7 @@
     "@types/node": "26.6.5",
     "fast-check": "4.10.2"
   },
-  "description": "Step-through code explainers from one TypeScript scene, with build-time Agentic Mermaid diagrams and optional captioned video. The browser runtime has no dependencies.",
+  "description": "Step-through explainers from one TypeScript scene, with build-time Agentic Mermaid diagrams and optional captioned video. The browser runtime has no dependencies.",
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",

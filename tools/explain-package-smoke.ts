@@ -26,19 +26,19 @@ try {
   const cli = join(folder, 'node_modules/manim-js/dist/tools/explain.js');
   const bin = join(folder, 'node_modules/.bin/explain');
   assert.match((await run(bin, ['--help'], { cwd: folder })).stdout, /Lantern Explainers/);
-  await run(process.execPath, [cli, 'init', 'lesson'], { cwd: folder });
+  await run(process.execPath, [cli, 'init', 'first'], { cwd: folder });
   if (process.env.EXPLAIN_BROWSER) {
-    await run(bin, ['snapshots', 'lesson', '--refresh'], { cwd: folder });
-    const cache = JSON.parse(await readFile(join(folder, 'lesson/scene.snapshots/index.json'), 'utf8'));
+    await run(bin, ['snapshots', 'first', '--refresh'], { cwd: folder });
+    const cache = JSON.parse(await readFile(join(folder, 'first/scene.snapshots/index.json'), 'utf8'));
     assert.equal(Object.keys(cache.diagrams).length, 1);
   }
   // Use native objects only, so this distribution smoke needs no browser or optional renderer.
   await writeFile(
-    join(folder, 'lesson/scene.ts'),
+    join(folder, 'first/scene.ts'),
     `import{Scene,Text,FadeIn}from'manim-js';import{stage,settingsOf}from'manim-js/explain';export default class Outside extends Scene{static meta={id:'outside',title:'An outside author'};static settings=[{id:'case',label:'Case',default:'a',options:[{value:'a',label:'A'},{value:'b',label:'B'}]}];async construct(){const s=stage(this);await this.step('one',{title:'First step',caption:'A native scene outside the checkout.'});await this.play(new FadeIn(new Text(settingsOf(this).case,{color:s.palette.ink})));}}`,
   );
-  await run(process.execPath, [cli, 'check', 'lesson'], { cwd: folder });
-  await run(process.execPath, [cli, 'build', 'lesson', '--out', 'public/outside.html'], { cwd: folder });
+  await run(process.execPath, [cli, 'check', 'first'], { cwd: folder });
+  await run(process.execPath, [cli, 'build', 'first', '--out', 'public/outside.html'], { cwd: folder });
   const html = await readFile(join(folder, 'public/outside.html'), 'utf8');
   assert.match(html, /An outside author/);
   assert.match(html, /id="licenses"/);
@@ -54,7 +54,7 @@ try {
   );
   assert.equal(result.stdout.trim(), '2');
   if (process.env.EXPLAIN_VIDEO)
-    await run(bin, ['render', 'lesson', '--out', 'public/outside.mp4', '--footer', '--fps', '4'], {
+    await run(bin, ['render', 'first', '--out', 'public/outside.mp4', '--footer', '--fps', '4'], {
       cwd: folder,
     });
   console.log(

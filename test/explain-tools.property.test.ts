@@ -230,7 +230,7 @@ test('a native text is cut off exactly when its box leaves the frame', () => {
       const [m] = build([p]);
       const b = m!.box()!;
       const out = b[0] < -8 || b[1] < -4.5 || b[2] > 8 || b[3] > 4.5;
-      assert.equal(restingTextProblems(sceneOf([m!])).some((x) => x.endsWith('is cut off by the frame')), out);
+      assert.equal(restingTextProblems(sceneOf([m!])).some((x) => x.endsWith('crosses the stage edge')), out);
     }),
     params(),
   );

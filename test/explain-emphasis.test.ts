@@ -200,7 +200,7 @@ test('check rejects steps that end on the same picture, and colliding or cut-off
     new Text('off the edge', { fontSize: 0.3 }).moveTo([7.9, 0]),
   );
   assert.deepEqual(restingTextProblems(scene), [
-    '"off the edge" is cut off by the frame',
+    '"off the edge" crosses the stage edge',
     '"first label" overlaps "second label"',
   ]);
 });

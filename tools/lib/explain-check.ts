@@ -76,7 +76,7 @@ const readable = (m: Mobject, box: Box | null, viewport: Box) =>
 
 /**
  * Text a reader would see colliding: a native Text overlapping any other
- * visible text, or a native Text cut off by the frame. Diagram-internal label
+ * visible text, or a native Text crossing the stage edge. Diagram-internal label
  * placement is Agentic Mermaid's; native text placed over it is the author's.
  */
 export function restingTextProblems(scene: { familyMembers(): Mobject[] }): string[] {
@@ -108,7 +108,7 @@ export function restingTextProblems(scene: { familyMembers(): Mobject[] }): stri
   const problems: string[] = [];
   for (const t of texts)
     if (t.native && (t.box[0] < FRAME[0] || t.box[1] < FRAME[1] || t.box[2] > FRAME[2] || t.box[3] > FRAME[3]))
-      problems.push(`"${t.text}" is cut off by the frame`);
+      problems.push(`"${t.text}" crosses the stage edge`);
   const area = (b: Box) => Math.max(0, b[2] - b[0]) * Math.max(0, b[3] - b[1]);
   for (let i = 0; i < texts.length; i++)
     for (let j = i + 1; j < texts.length; j++) {

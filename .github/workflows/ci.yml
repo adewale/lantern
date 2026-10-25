@@ -24,7 +24,7 @@ jobs:
       # manim itself is the oracle for test/manim.test.ts (tools/oracle/manim_math.py)
       - run: git clone --depth 1 https://github.com/3b1b/manim.git /tmp/manim && git -C /tmp/manim fetch --depth 1 origin fafa083a4fb274bba9cabde0b6e2f50ba6da0622 && git -C /tmp/manim checkout -q fafa083a4fb274bba9cabde0b6e2f50ba6da0622
       - run: npm run check          # tsc -b over every project (emits dist/); compile a TS consumer against it
-      - run: npm run test:full      # every frame, 400 random scenes, cache validation, golden trace, manim oracle, leaks
+      - run: npm run test:full      # every frame, fast-check properties at ten times the default cases, cache validation, golden trace, manim oracle, leaks
         env:
           MANIM_DIR: /tmp/manim
       - run: node --expose-gc test/leak.test.ts # also run directly, outside the test runner's workers

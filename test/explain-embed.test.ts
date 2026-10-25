@@ -628,7 +628,7 @@ const ChooseCase = (setting: number, option: number) =>
       m.settles++;
     },
   );
-/** Back/Forward restore case and step; zoom keeps its place across steps and resets when the case changes (docs/EMBEDDING.md). */
+/** Back/Forward restore case and step; zoom keeps its place across steps and resets when the case changes (docs/REFERENCE.md). */
 function traverse(m: PlayerModel, by: number) {
   const was = current(m).values;
   m.index += by;

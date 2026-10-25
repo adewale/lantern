@@ -1,44 +1,43 @@
 ---
 name: lantern-explainers
-description: Author, inspect, check and publish native Lantern explanations as reader-paced HTML embeds and silent captioned video. Use for step-through diagrams, code-change explanations, protocol walkthroughs and program-driven animation.
+description: Author, check and publish native Lantern explainers as reader-paced HTML embeds and optional silent captioned video. Use for step-through diagrams, code-change explanations, protocol walkthroughs and program-driven animation.
 ---
 
-# Native Lantern explanations
+# Lantern explainers
 
-Read [authoring](../../docs/EXPLAINERS.md), [embedding](../../docs/EMBEDDING.md) and [export](../../docs/EXPORT.md) before implementing. Paths are relative to this skill directory. This is a CLI workflow; it needs no MCP server or hosted service.
+An explainer is one Lantern `Scene`. The CLI builds it into a step-through HTML page and, optionally, a video. It needs no server or MCP. Read the [reference](https://github.com/adewale/lantern/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/lantern/blob/main/docs/PUBLISHING.md) before you host a page or export a video.
 
-## Authoring loop
+## Loop
 
-1. Run `explain init <directory>` (or `npm run explain -- init <directory>` in a checkout).
-2. Keep one default-exported `Scene` subclass. Use static `meta` for title/id/sources and optional static `settings` for finite cases.
-3. Give every idea a stable step name, reader-facing title and short caption. Derive answers from a small executable model; state its scope and cite sources.
-4. Call `stage(this)` once; its heading follows step titles. Lay diagrams, cards (`s.card`) and code (`s.code`) into named regions (`'main'`, `'side'`, `'top'`, `'bottom'`…) so nothing overlaps. Native Lantern code, geometry and text remain first-class. Do not invent a second scene format or require a diagram for native geometry.
-5. Design each step's **resting frame**: the last frame is what the reader looks at while reading the caption. Leave the step's idea on screen with `walk(..., { trail: true })`, `mark`, `dim`, `note`, `card.set`/`card.mark` and `code.focus`. `highlight` is only a pulse. Keep useful context (a card beside its diagram) instead of clearing to a lone card. `check` fails steps that end exactly like the previous one.
-6. Run `explain snapshots scene.ts`; inspect the real verifier findings and generated cache. Use `--refresh` after importer changes.
-7. Run `explain preview scene.ts` or `explain shots scene.ts`. Inspect **every** step, including non-default cases (`--case id=value`); a build success is not a visual review.
-8. Run `explain check scene.ts`. Fix motion, exact seeking, runtime, unchanged-step, text-collision, legibility and construct lint failures at their cause.
-9. Build portable HTML and render video. Inspect the HTML without external network access and the video's footer/subtitles/chapters. Preserve receipts.
+Commands are `explain <command>`, or `npm run explain -- <command>` in a checkout.
 
-## Invariants
+1. `explain init <directory>` writes a working scene. Keep one default-exported `Scene` subclass with static `meta` (id, title, sources) and, if a second case teaches something, static `settings`.
+2. Derive every value on screen from a small model of the system. Test the model against its cited source; the checks below cannot tell whether a caption is true.
+3. Give each idea a step with a stable name, a title the frame can prove and a short caption naming what is on screen.
+4. Call `stage(this, { style })` once. Put diagrams (`s.show`), cards (`s.card`) and code (`s.code`) in named regions (`main`, `side`, `top`, `bottom`) so nothing overlaps. Native Lantern objects mix freely; bring several in together with `s.enter(...)`.
+5. Design each step's resting frame, the last frame it draws, because the reader looks at it while reading the caption. Leave the idea on screen with `walk(..., { trail: true })`, `mark`, `dim`, `note`, `card.set`, `card.mark` and `code.focus`. A token that walks and vanishes leaves nothing.
+6. `explain preview scene.ts --watch` and `explain shots scene.ts --case id=value`: look at every step of every case. A passing build is not a visual review.
+7. `explain check scene.ts`. Fix failures at their cause; `out/checks/<id>/report.json` has each resting frame as text.
+8. `explain build scene.ts --out public/<id>.html`; optionally `explain render scene.ts --out public/<id>.mp4 --footer`.
 
-- A setting changes the lesson, not its palette. Every combination is built before reading. Keep combinations few; the tool refuses more than 64.
-- Walks use real directed links and captured routes. Never draw an unrelated token shortcut to conceal a missing edge.
-- Morphs with typed `ops` must reproduce their next diagram through real mutation replay. Without ops, call it a visual transition, not a checked edit.
-- One scene owns one clock. For simultaneous tokens, use a single helper walk with `{parallel:true}` or one native `play`; never concurrent `Scene.play()` calls.
-- Never put awaited animations/steps inside a broad catch. Handle known model errors in pure code before animating; let Lantern's internal seeking signal propagate.
-- Do not weaken verifiers, bless corrupt snapshots or skip a failing case to get a green report. Add a focused regression test for an observed bug and run it red before the fix when feasible.
-- Preserve imported style geometry and paint. Unsupported SVG must fail explicitly; lettering uses embedded Inter, a documented limitation.
-- Use readable focus views for large diagrams. The 14 px label check is at a 1280-pixel stage, not a promise of phone-scale diagram readability; readers on phones use Enlarge.
+## Rules
 
-## Publishing
+- Walks use real links; a missing link is a bug in the diagram or the model, never a reason to draw a shortcut.
+- Morphs with `ops` must reproduce the next diagram through Agentic Mermaid's mutation replay. Without `ops`, call it a visual transition.
+- One scene, one clock: never call `Scene.play()` concurrently. Use `{ parallel: true }` or one `play`.
+- No awaited animation inside `try`/`catch` or `.catch()` in `construct()`; handle model errors in plain code first.
+- A setting may change diagrams, captions, numbers and which steps exist; keep the palette fixed. Keep cases few; the limit is 64.
+- Do not weaken a check, bless a corrupt snapshot or skip a case to get a pass. Add a regression test that fails before the fix.
+- Lettering is embedded Inter or JetBrains Mono; other scripts fail every command. Labels must reach 14 px at a 1280 px stage; phone readers zoom the stage.
+- Leave out panel titles and asides that repeat the heading, caption or values. Write titles and captions with [anti-slop-writing](https://github.com/adewale/anti-slop-writing): name the value or mechanism on screen, and state contrasts with because, although or so.
 
-- `explain build scene.ts --out public/explanation.html` creates one explanation's artifact, generated header recipe, receipt and optional self-hostable loader.
-- A raw iframe is the baseline. A loader is optional. No runtime network, font service, storage, account or live diagram renderer should be introduced.
-- Resize messages need exact origin **and** source-window checks, finite bounded height validation and lifecycle cleanup. Apply `frame-ancestors` as a response header; CORS is unrelated.
-- `explain render scene.ts --out public/explanation.mp4 --footer` produces a silent 1280 × 880 film. Check with ffprobe and a full FFmpeg decode. Use `--case id=value`, `--all`, `.webm`, or stage-only `--width` deliberately.
-- Captions must fit three real measured footer lines (`check` enforces this for every case). Shorten the writing instead of truncating it.
-- Leave out secondary labels (panel titles, chips, small asides) when the heading, caption or values already say it; if a frame needs one to make sense, move the panel next to what it describes instead.
-- Write titles, captions, notes and card labels with [anti-slop-writing](https://github.com/adewale/anti-slop-writing): name the mechanism or value on screen instead of asserting importance, and replace "X, not Y" closers with the relation (because, although, so) unless both sides are already shown.
-- Do not claim a local build was deployed or publicly released. Report the commands run, artifact paths, exact evidence and remaining limitations.
+## Reporting
 
-The underlying engine is Lantern by Ivar Vong (MIT). Keep the MIT and embedded-font notices. Do not imply endorsement by Lantern or Agentic Mermaid.
+Report the commands you ran, the artifact paths and what the checks found. Do not claim:
+
+- that a local build was deployed, released or tried by an outside author;
+- that a model is a complete implementation, or that a caption proves a security or scientific claim;
+- support for Mermaid families, fonts or SVG features the collection does not test;
+- identical video bytes across FFmpeg builds.
+
+The engine is Lantern by Ivar Vong (MIT). Keep the MIT and font notices, and do not imply endorsement by Lantern or Agentic Mermaid.

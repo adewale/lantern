@@ -75,7 +75,7 @@ const PATH = {
 } as const;
 
 export default class MyExplanation extends Scene {
-  static meta = { id: 'my-explanation', title: 'Why a cache changes the request path' };
+  static meta = { id: 'my-explainer', title: 'Why a cache changes the request path' };
   static settings = [{ id: 'request', label: 'Follow a request', default: 'hit', options: [{ value: 'hit', label: 'Cache hit' }, { value: 'miss', label: 'Cache miss' }] }];
   override async construct() {
     // The heading follows each step title; the style sets the palette and every diagram's look.
@@ -98,7 +98,7 @@ export default class MyExplanation extends Scene {
     await writeFile(join(dir, 'scene.ts'), template);
     await writeFile(
       join(dir, 'README.md'),
-      '# My explanation\n\nRun `explain preview scene.ts`, `explain check scene.ts`, then `explain build scene.ts --out explanation.html`.\n',
+      '# My explainer\n\nRun `explain preview scene.ts`, `explain check scene.ts`, then `explain build scene.ts --out explainer.html`.\n',
     );
     console.log(`Created ${join(dir, 'scene.ts')}`);
     return;
