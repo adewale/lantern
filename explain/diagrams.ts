@@ -275,12 +275,29 @@ function scaleArtwork(mob: Mobject, k: number, at: Vec = [0, 0]): void {
   mob.scale(k, { aboutPoint: at });
   for (const m of mob.family()) scaleStyle(m.style, k);
 }
-/** A copy of `m` scaled by k about `from`, then moved so `from` lands on `to`: one camera move. */
+/** A copy of `m` scaled by k about `from`, then moved so `from` lands on `to`: one move of the diagram's own view. */
 function moved(m: Group, k: number, from: Vec, to: Vec): Group {
   const target = m.copy();
   scaleArtwork(target, k, from);
   target.shift([to[0] - from[0], to[1] - from[1]]);
   return target;
+}
+/** The stage: the camera's home box, and the most it shows. */
+const STAGE: Box = [-8, -4.5, 8, 4.5];
+const atHome = (frame: Mobject) => frame.box()!.every((v, i) => Math.abs(v - STAGE[i]!) < 1e-6);
+/**
+ * The 16:9 camera box around `box` with `margin` on every side, `zoom` times
+ * closer, kept inside the stage so the paper always fills the view.
+ */
+export function cameraBox(box: Readonly<Box>, margin = 0.5, zoom = 1): Box {
+  const aspect = (STAGE[2] - STAGE[0]) / (STAGE[3] - STAGE[1]);
+  const fit = Math.max(box[2] - box[0] + 2 * margin, (box[3] - box[1] + 2 * margin) * aspect);
+  const w = Math.min(STAGE[2] - STAGE[0], fit / zoom),
+    h = w / aspect;
+  const clamp = (c: number, half: number, lo: number, hi: number) => Math.min(Math.max(c, lo + half), hi - half);
+  const cx = clamp((box[0] + box[2]) / 2, w / 2, STAGE[0], STAGE[2]),
+    cy = clamp((box[1] + box[3]) / 2, h / 2, STAGE[1], STAGE[3]);
+  return [cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2];
 }
 
 export class Diagram {
@@ -296,8 +313,10 @@ export class Diagram {
   private home = new Group();
   /** Unemphasised styles of each top-level part's family, at the home frame (captured when built). */
   private base = new Map<string, Style[]>();
-  /** How far the camera has scaled the artwork from home; stroke widths and dashes follow it. */
+  /** How far the diagram's own view has scaled the artwork from home; stroke widths and dashes follow it. */
   private zoom = 1;
+  /** The top-level parts last focused on, for the description; null when the diagram is seen whole. */
+  private focused: string[] | null = null;
   /** Marked parts: their colour, and the word a description gives the mark. */
   private marks = new Map<string, { color: string; as: string }>();
   private kept: Set<string> | null = null;
@@ -635,7 +654,8 @@ export class Diagram {
       if (info.from && info.to) links++;
       // A line through the things (a journey's experience curve) is not one of them.
       else if ((!isScaffold(info) || info.role === 'actor') && info.role !== 'series') things++;
-      const mark = this.marks.get(id)?.as;
+      // A part in focus is said to be, unless a mark says more.
+      const mark = this.marks.get(id)?.as ?? (this.focused?.includes(id) ? w.focused : undefined);
       const dimmed = !!this.kept && !this.kept.has(id) && !isScaffold(info);
       parts.push({ name, ...(mark ? { mark } : {}), ...(dimmed ? { dimmed } : {}) });
     }
@@ -751,7 +771,8 @@ export class Diagram {
   }
   /**
    * A short label beside a part, at a readable size whatever the diagram's
-   * scale. It follows the part through `focus`, and leaves with `hide`/`morph`.
+   * scale. It follows the part through `focus` (and, with `camera`, stays beside it,
+   * since the camera moves no part), and leaves with `hide`/`morph`.
    */
   async note(
     id: string,
@@ -851,7 +872,8 @@ export class Diagram {
       }
     }
   }
-  private async moveParts(mobs: Group[], targetFor: (m: Group) => Group, runTime: number): Promise<void> {
+  /** Transforms that take the shown parts and their notes to `targetFor`'s copies; hidden parts move at once. */
+  private partMoves(mobs: Group[], targetFor: (m: Group) => Group, runTime: number): Transform[] {
     const shown: Transform[] = [];
     const targets = new Map<Mobject, Group>();
     for (const m of mobs) {
@@ -874,31 +896,81 @@ export class Diagram {
       target.moveTo(notePosition(target, box, n.side, this.frameBox));
       shown.push(new Transform(n.mob, target, { runTime }));
     }
-    if (shown.length) await this.scene.play(...shown);
+    return shown;
   }
-  /** Move the camera onto these parts (or back to the whole diagram). Notes follow. */
-  async focus(ids: readonly string[] | 'all', { zoom = 1, runTime = 0.9 } = {}): Promise<void> {
+  /**
+   * Look closer at these parts, or back at the whole diagram with `'all'`. The description
+   * names the parts in focus.
+   *
+   * By default the diagram's own view moves: inside its box (which clips it) the artwork
+   * scales `zoom` times past a fit of the parts, notes follow, and whatever stands beside
+   * the box (cards, code, a column of text) stays where it is.
+   *
+   * With `camera: true` the stage's camera (`scene.frame`) moves instead, onto the parts,
+   * their notes and any native objects in `also`, with `margin` scene units around them;
+   * `zoom` above 1 goes closer, below 1 shows more. No point moves: labels keep their size
+   * in the world and the camera enlarges them on screen, which is how `explain check` and
+   * the player's close-ups measure them. The view never leaves the 16 × 9 stage, but it
+   * shows less of it: the heading, cards and code are world objects too, so keep what the
+   * step's last frame needs inside the view with `also`.
+   *
+   * `'all'` undoes both: the artwork returns to its box and the camera goes home, in one
+   * play. `s.clear()` also brings the camera home.
+   */
+  async focus(
+    ids: readonly string[] | 'all',
+    {
+      zoom = 1,
+      camera = false,
+      margin = 0.5,
+      also = [],
+      runTime = 0.9,
+    }: { zoom?: number; camera?: boolean; margin?: number; also?: readonly Mobject[]; runTime?: number } = {},
+  ): Promise<void> {
     if (!(zoom > 0 && Number.isFinite(zoom))) throw new Error(`focus() zoom must be a positive number, not ${zoom}`);
+    if (!camera && also.length) throw new Error('focus(): `also` frames native objects with the camera; pass camera: true');
+    const frame = this.scene.frame;
     const mobs = [...this.parts.values()].filter((p) => !p.info.owner).map((p) => p.mob);
     const whole = new Group(...mobs.map((m) => m.copy()));
     if (ids === 'all') {
+      this.focused = null;
+      const anims: Transform[] = atHome(frame) ? [] : [new Transform(frame, frame.copy().reset(), { runTime })];
       // Apply one global affine map from current full diagram bounds to its authored frame.
       const home = this.home.box(),
         now = whole.box();
-      if (!home || !now) return; // Nothing drawn: the camera has nothing to frame.
       // The map is uniform, so either extent gives k; the longer one is measured more precisely
       // (a thin diagram's short side is mostly float32 rounding once zoomed).
-      const wide = home[2] - home[0] >= home[3] - home[1];
-      const k = wide ? (home[2] - home[0]) / (now[2] - now[0]) : (home[3] - home[1]) / (now[3] - now[1]);
-      // A diagram fitted down to a point (an absurd canvas size) has no extent to restore.
-      if (!(Number.isFinite(k) && k > 0)) return;
-      const a: Vec = [(now[0] + now[2]) / 2, (now[1] + now[3]) / 2],
-        b: Vec = [(home[0] + home[2]) / 2, (home[1] + home[3]) / 2];
-      await this.moveParts(mobs, (m) => moved(m, k, a, b), runTime);
-      this.rezoom(1);
+      const wide = !!home && home[2] - home[0] >= home[3] - home[1];
+      const k = !home || !now ? NaN : wide ? (home[2] - home[0]) / (now[2] - now[0]) : (home[3] - home[1]) / (now[3] - now[1]);
+      // Nothing drawn, or a diagram fitted down to a point (an absurd canvas size): no extent to restore.
+      const restore = Number.isFinite(k) && k > 0;
+      if (restore) {
+        const a: Vec = [(now![0] + now![2]) / 2, (now![1] + now![3]) / 2],
+          b: Vec = [(home![0] + home![2]) / 2, (home![1] + home![3]) / 2];
+        anims.push(...this.partMoves(mobs, (m) => moved(m, k, a, b), runTime));
+      }
+      if (anims.length) await this.scene.play(...anims);
+      if (restore) this.rezoom(1);
       return;
     }
     if (!ids.length) throw new Error("focus() needs at least one part, or 'all'");
+    const tops = [...new Set(ids.map((id) => this.top(id)))];
+    if (camera) {
+      const notes = this.notes.filter((n) => tops.includes(this.top(n.id))).map((n) => n.mob);
+      const boxes = [...ids.map((id) => this.get(id)), ...notes, ...also]
+        .map((m) => m.box())
+        .filter((b): b is Box => b != null);
+      if (!boxes.length) throw new Error('focus(): nothing to look at');
+      const box: Box = [
+        Math.min(...boxes.map((b) => b[0])),
+        Math.min(...boxes.map((b) => b[1])),
+        Math.max(...boxes.map((b) => b[2])),
+        Math.max(...boxes.map((b) => b[3])),
+      ];
+      this.focused = tops;
+      await this.scene.play(frame.animate.fit(cameraBox(box, margin, zoom), { margin: 0 }), { runTime });
+      return;
+    }
     const chosen = new Group(...ids.map((id) => this.get(id).copy()));
     const center = chosen.center(),
       box = this.frameBox;
@@ -909,11 +981,13 @@ export class Diagram {
       ) *
       0.78 *
       zoom;
-    await this.moveParts(mobs, (m) => moved(m, k, center, boxCenter(box)), runTime);
+    this.focused = tops;
+    const anims = this.partMoves(mobs, (m) => moved(m, k, center, boxCenter(box)), runTime);
+    if (anims.length) await this.scene.play(...anims);
     this.rezoom(this.zoom * k);
   }
   /**
-   * The camera has moved: re-derive every look from the home styles at the new zoom (the move
+   * The diagram's view has moved: re-derive every look from the home styles at the new zoom (the move
    * already animated it), so a look depends only on zoom, marks and dimming, never on the order
    * of calls, and returning to 'all' restores the home styles exactly.
    */
@@ -973,6 +1047,7 @@ export class Diagram {
     this.marks.clear();
     this.kept = null;
     this.walked = null;
+    this.focused = null;
   }
   /** Fade the whole diagram (and its notes) out. `reveal` can bring parts back. */
   async hide(): Promise<void> {

@@ -98,7 +98,8 @@ export async function rasterize(svg: string) {
 export function band(scene: Scene, width: number, height: number, background?: string): string {
   const full = Math.round((width * FRAME.h) / FRAME.w),
     px = Math.round((width * height) / FRAME.w);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${px}" viewBox="0 ${(full - px) / 2} ${width} ${px}">${toSvgString(scene, { width, background })}</svg>`;
+  // cull: resvg 2.6.2 aborts on a fading element the camera has left outside the view.
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${px}" viewBox="0 ${(full - px) / 2} ${width} ${px}">${toSvgString(scene, { width, background, cull: true })}</svg>`;
 }
 
 export function vttTime(seconds: number): string {

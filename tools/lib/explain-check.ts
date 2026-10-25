@@ -18,7 +18,7 @@ import { ROOT, engineAlias, sceneSlug } from './explain-project.ts';
 import { caseName } from '../../explain/index.ts';
 import { restingFrame, undescribed } from '../../explain/trace.ts';
 import { labelOf } from '../../explain/diagrams.ts';
-import { closeUps, stageScale, stepLayouts, viewBox } from '../../app/embed-closeup.ts';
+import { closeUps, stageScale, stepLayouts, toView, viewBox } from '../../app/embed-closeup.ts';
 import type { Box, Mobject } from '../../src/index.ts';
 import type { Project } from './explain-project.ts';
 
@@ -62,11 +62,31 @@ export function lintConstruct(source: string): string[] {
   return errors;
 }
 /** Smallest label, in CSS pixels at a 1280-pixel stage, a reader must be able to see. */
-const MIN_PX = 14;
-/** Reader CSS pixels per scene unit on a 1280-pixel stage. */
+export const MIN_PX = 14;
+/** Reader CSS pixels per scene unit on a 1280-pixel stage, with the camera home. */
 const STAGE_PX_PER_UNIT = 1280 / 16;
 const FRAME: Box = [-8, -4.5, 8, 4.5];
-/** `box` cut down to every clip around `m`: the part of it that is drawn (a diagram's camera clips to its frame). */
+/** Anything with a camera: a Scene, or a test's stand-in. Without one, the view is the whole stage. */
+interface Viewed {
+  familyMembers(): Mobject[];
+  frame?: { box(): Box | null };
+}
+/** The box of the world on screen: the camera's (`scene.frame`), which the SVG viewBox shows. */
+export const viewOf = (scene: Pick<Viewed, 'frame'>): Box => [...(scene.frame?.box() ?? FRAME)] as Box;
+const isHome = (view: Box) => view.every((v, i) => Math.abs(v - FRAME[i]!) < 1e-6);
+/**
+ * A label's size as the reader sees it, in CSS pixels at a 1280-pixel stage: its size
+ * in the world times the camera's zoom. A label the camera has zoomed in on reads
+ * larger; one it has zoomed out from reads smaller. Null for a mobject that is not a
+ * sized label. A phone close-up multiplies this again (the reader's zoom, on top).
+ */
+export function labelPx(m: Mobject, scene: Pick<Viewed, 'frame'>): number | null {
+  const label = labelOf(m);
+  if (!label) return null;
+  const view = viewOf(scene);
+  return m.height() * label.emRatio * (1280 / (view[2] - view[0]));
+}
+/** `box` cut down to every clip around `m`: the part of it that is drawn (a diagram clips to its frame). */
 function clipped(m: Mobject, box: Box): Box {
   const out: Box = [...box];
   for (let a: Mobject | null = m; a; a = a.parent)
@@ -92,9 +112,16 @@ const readable = (m: Mobject, box: Box | null, viewport: Box) =>
  * Text a reader would see colliding: a native Text overlapping any other
  * visible text, or a native Text crossing the stage edge. Diagram-internal label
  * placement is Agentic Mermaid's; native text placed over it is the author's.
+ *
+ * With the camera away from home, text is judged in its view as well: native text
+ * or the heading across the view's edge is cut off; text wholly outside the view
+ * is off screen, and collides with nothing a reader sees.
  */
-export function restingTextProblems(scene: { familyMembers(): Mobject[] }): string[] {
+export function restingTextProblems(scene: Viewed): string[] {
+  const view = viewOf(scene),
+    zoomed = !isHome(view);
   const texts: { m: Mobject; box: Box; native: boolean; text: string }[] = [];
+  const problems: string[] = [];
   const visible = (m: Mobject) => {
     for (let a: Mobject | null = m; a; a = a.parent) if ((a.style.opacity ?? 1) < 0.5) return false;
     // Text is drawn by the fill (and any stroke) of its paths: with neither it shows nothing.
@@ -112,16 +139,21 @@ export function restingTextProblems(scene: { familyMembers(): Mobject[] }): stri
     seen.add(m);
     const text = (m as unknown as { text?: unknown }).text;
     if (typeof text !== 'string' || !text.trim() || !visible(m)) continue;
-    if (m.key === '__heading') continue;
     let nested = false;
     for (let a = m.parent; a; a = a.parent) if (typeof (a as unknown as { text?: unknown }).text === 'string') nested = true;
     if (nested) continue;
     const drawn = m.box();
     if (!drawn) continue;
     const box = clipped(m, drawn);
-    if (box[2] > box[0] && box[3] > box[1]) texts.push({ m, box, native: m instanceof Text, text });
+    if (!(box[2] > box[0] && box[3] > box[1])) continue;
+    const shown = box[0] < view[2] && box[2] > view[0] && box[1] < view[3] && box[3] > view[1];
+    if (zoomed && !shown) continue; // off screen while the camera looks elsewhere
+    const native = m instanceof Text;
+    const heading = m.key === '__heading';
+    if (zoomed && (native || heading) && (box[0] < view[0] || box[1] < view[1] || box[2] > view[2] || box[3] > view[3]))
+      problems.push(`"${text}" is cut off by the frame`);
+    if (!heading) texts.push({ m, box, native, text });
   }
-  const problems: string[] = [];
   for (const t of texts)
     if (t.native && (t.box[0] < FRAME[0] || t.box[1] < FRAME[1] || t.box[2] > FRAME[2] || t.box[3] > FRAME[3]))
       problems.push(`"${t.text}" crosses the stage edge`);
@@ -213,7 +245,12 @@ export async function checkProject(project: Project, out: string): Promise<Recor
         return [restingFrame(s), { k: tour[0]!.k, views: tour.map((z) => viewBox(z, PHONE_W, PHONE_H)) }] as const;
       }),
     );
-    /** Record a label readable in this frame: at 1280 px always, and on the phone when the frame is a resting one. */
+    /**
+     * Record a label readable in this frame: at 1280 px always, and on the phone when the
+     * frame is a resting one. `px` is already on screen (world size × the author's camera
+     * zoom); the phone's close-up is the reader's zoom over that view, so the two multiply.
+     * `box` is in the camera's view units, where close-ups are worked out.
+     */
     const seen = (record: LabelSizes, px: number, box: Box | null, frame: number) => {
       record.px = Math.max(record.px, px);
       const close = phoneViews.get(frame);
@@ -253,12 +290,16 @@ export async function checkProject(project: Project, out: string): Promise<Recor
           restingText.set(scene.frameCount, renderText(scene));
           collisions.push(...restingTextProblems(scene).map((p) => `${scene.currentStep?.name}: ${p}`));
         }
+        // Sizes on screen: world size times the camera's zoom, inside the camera's view
+        // cut by every clip; boxes for the phone's close-ups in the view's own units.
+        const view = viewOf(scene);
+        const shown = (b: Box | null) => (b ? toView(b, view) : null);
         for (const m of scene.familyMembers()) {
           const label = labelOf(m);
           if (!label?.text.trim()) continue;
           const { text } = label;
-          const viewport = clipped(m, FRAME),
-            px = m.height() * label.emRatio * STAGE_PX_PER_UNIT;
+          const viewport = clipped(m, view),
+            px = labelPx(m, scene)!;
           // Imported semantic labels must be readable in a completed step, not
           // merely flash past at a readable size halfway through a camera move.
           if (!(m instanceof Text)) {
@@ -268,10 +309,10 @@ export async function checkProject(project: Project, out: string): Promise<Recor
             if (!staticLabels.has(key)) staticLabels.set(key, { text, px: 0, phone: 0, inView: false });
             const record = staticLabels.get(key)!;
             if (completedFrames.has(scene.frameCount) && readable(m, (owner ?? m).box(), viewport))
-              seen(record, px, m.box(), scene.frameCount);
+              seen(record, px, shown(m.box()), scene.frameCount);
           } else {
             if (!labels.has(m)) labels.set(m, { text, px: 0, phone: 0, inView: false });
-            if (readable(m, m.box(), viewport)) seen(labels.get(m)!, px, m.box(), scene.frameCount);
+            if (readable(m, m.box(), viewport)) seen(labels.get(m)!, px, shown(m.box()), scene.frameCount);
           }
         }
       },

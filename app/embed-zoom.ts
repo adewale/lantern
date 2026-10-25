@@ -5,6 +5,8 @@
  * pointer, double-click about the point clicked. Once zoomed, a drag pans, and
  * so does a click or tap, which centres the point under it (no drag needed).
  */
+import { DomSink } from '../src/index.ts';
+import type { ElementRecord } from '../src/index.ts';
 /** A zoom: scale `k` about the stage's top-left corner, then a pan of (x, y) stage pixels. */
 export interface Zoom {
   k: number;
@@ -51,6 +53,124 @@ export function zoomTransform(z: Zoom): string {
   return z.k === 1 ? '' : `translate(${z.x}px, ${z.y}px) scale(${z.k})`;
 }
 
+// ---------------------------------------------------------------------------
+// The reader's zoom over the author's camera. The player paints a zoom the way the
+// author's camera (`scene.frame`) zooms: by narrowing the SVG viewBox, never by scaling
+// the element. Each stage SVG carries its author's frame in `data-camera` (the camera's
+// viewBox, as the sink last wrote it, or the built poster's own); the reader's zoom picks
+// part of that view. So the two compose: a camera glide still plays under a reader zoom,
+// a close-up zooms further into whatever the author framed, and Fit is the author's frame.
+// On screen, a label is world size × camera zoom × reader zoom × px per view unit.
+
+/** The camera's home viewBox: the whole 16 × 9 stage, in the sinks' user units. */
+export const HOME_VIEW = '-8000 -4500 16000 9000';
+type Rect = [number, number, number, number];
+const rect = (v: string) => v.trim().split(/[\s,]+/).map(Number) as Rect;
+/** How a `w`×`h` stage draws an `aw`×`ah` view at 1× (the SVG letterboxes): px per unit and the offset of its top-left corner. */
+function fitted(aw: number, ah: number, w: number, h: number) {
+  const s = Math.min(w / aw, h / ah);
+  return { s, ox: (w - aw * s) / 2, oy: (h - ah * s) / 2 };
+}
+/**
+ * The viewBox a reader sees on a `w`×`h` stage: the author's viewBox narrowed by `z`,
+ * whose pan is in stage px as for a CSS transform about the stage's top-left. At the
+ * identity it is the author's, exactly.
+ */
+export function readerViewBox(author: string, z: Zoom, w: number, h: number): string {
+  if ((z.k === 1 && z.x === 0 && z.y === 0) || !(w > 0) || !(h > 0)) return author;
+  const [ax, ay, aw, ah] = rect(author);
+  const { s, ox, oy } = fitted(aw, ah, w, h);
+  const box = [ax + (-z.x / z.k - ox) / s, ay + (-z.y / z.k - oy) / s, w / (z.k * s), h / (z.k * s)];
+  // A thousandth of a user unit (a millionth of a scene unit): exact enough to read the zoom back.
+  return box.map((n) => +n.toFixed(3)).join(' ');
+}
+/** The zoom that shows `shown` of the `author` viewBox on a `w`×`h` stage: `readerViewBox` read back. */
+export function zoomOfView(author: string, shown: string, w: number, h: number): Zoom {
+  if (shown === author) return { ...IDENTITY };
+  const [ax, ay, aw, ah] = rect(author),
+    [vx, vy, vw] = rect(shown);
+  const { s, ox, oy } = fitted(aw, ah, w, h);
+  const k = w / (vw * s);
+  return { k, x: -k * ((vx - ax) * s + ox), y: -k * ((vy - ay) * s + oy) };
+}
+/** The author's frame of a stage SVG: what its camera shows, recorded on first sight for a poster. */
+export function cameraOf(svg: SVGSVGElement): string {
+  let author = svg.getAttribute('data-camera');
+  if (author == null) svg.setAttribute('data-camera', (author = svg.getAttribute('viewBox') ?? HOME_VIEW));
+  return author;
+}
+/** Paints a zoom on the stage's picture; `glide` eases a discrete step. */
+export type Painter = (z: Zoom, glide: boolean) => void;
+/** A CSS transform on the stage's SVG, eased by the `.glide` class: StageZoom's own painter, for a stage without a camera. */
+export const cssPainter =
+  (stage: HTMLElement): Painter =>
+  (z, glide) => {
+    const svg = stage.querySelector('svg');
+    if (!svg) return;
+    svg.classList.toggle('glide', glide);
+    svg.style.transformOrigin = '0 0';
+    svg.style.transform = zoomTransform(z);
+  };
+/** A glide's length, as the CSS transition it replaces, and its ease-out. */
+const GLIDE_MS = 220;
+const easeOut = (a: number) => 1 - (1 - a) ** 3;
+/**
+ * The reader's zoom painted as a viewBox over the author's camera. `shown` is the zoom on
+ * screen: the last one painted, or a step of a glide toward it, which a ReaderSink reads
+ * each frame so a camera move under a gliding zoom lands in the same viewBox write.
+ */
+export class ReaderView {
+  shown: Zoom = { ...IDENTITY };
+  private readonly stage: HTMLElement;
+  private glide = 0;
+  constructor(stage: HTMLElement) {
+    this.stage = stage;
+  }
+  /** The viewBox for an author's frame at the zoom on screen, on this stage. */
+  view(author: string): string {
+    return readerViewBox(author, this.shown, this.stage.clientWidth, this.stage.clientHeight);
+  }
+  private show(z: Zoom): void {
+    this.shown = { k: z.k, x: z.x, y: z.y };
+    const svg = this.stage.querySelector('svg');
+    if (!svg) return;
+    const box = this.view(cameraOf(svg));
+    if (svg.getAttribute('viewBox') !== box) svg.setAttribute('viewBox', box);
+  }
+  readonly paint: Painter = (z, glide) => {
+    cancelAnimationFrame(this.glide);
+    const from = this.shown;
+    const still = from.k === z.k && from.x === z.x && from.y === z.y;
+    if (!glide || still || matchMedia('(prefers-reduced-motion: reduce)').matches) return this.show(z);
+    const t0 = performance.now();
+    const step = (now: number) => {
+      const a = Math.min(1, (now - t0) / GLIDE_MS),
+        e = easeOut(a);
+      this.show(a < 1 ? { k: from.k + (z.k - from.k) * e, x: from.x + (z.x - from.x) * e, y: from.y + (z.y - from.y) * e } : z);
+      if (a < 1) this.glide = requestAnimationFrame(step);
+    };
+    this.glide = requestAnimationFrame(step);
+  };
+}
+/**
+ * A DomSink whose viewBox is the author's camera with the reader's zoom on top. Each
+ * frame the camera's box arrives as `viewBox`; it is kept as the SVG's `data-camera`,
+ * and the reader's zoom is read then, so a camera move and a reader zoom both land in
+ * that frame's one viewBox write.
+ */
+export class ReaderSink extends DomSink {
+  private readonly reader: (author: string) => string;
+  constructor(container: Element, options: ConstructorParameters<typeof DomSink>[1], reader: (author: string) => string) {
+    super(container, options);
+    this.reader = reader;
+    this.svg.setAttribute('data-camera', this.svg.getAttribute('viewBox') ?? HOME_VIEW);
+  }
+  override apply(els: readonly ElementRecord[], viewBox?: string): void {
+    if (viewBox !== undefined && viewBox !== this.svg.getAttribute('data-camera')) this.svg.setAttribute('data-camera', viewBox);
+    super.apply(els, this.reader(this.svg.getAttribute('data-camera')!));
+  }
+}
+
 export class StageZoom {
   k = 1;
   x = 0;
@@ -58,10 +178,13 @@ export class StageZoom {
   readonly max = ZOOM_MAX;
   private readonly stage: HTMLElement;
   private readonly changed: () => void;
+  private readonly paint: Painter;
 
-  constructor(stage: HTMLElement, changed: () => void) {
+  /** `paint` puts the zoom on the picture: by default a CSS transform; the player narrows the viewBox (ReaderView). */
+  constructor(stage: HTMLElement, changed: () => void, paint: Painter = cssPainter(stage)) {
     this.stage = stage;
     this.changed = changed;
+    this.paint = paint;
     const local = (e: { clientX: number; clientY: number }) => {
       const r = stage.getBoundingClientRect();
       return [e.clientX - r.left, e.clientY - r.top] as const;
@@ -144,12 +267,7 @@ export class StageZoom {
     this.k = z.k;
     this.x = z.x;
     this.y = z.y;
-    const svg = this.stage.querySelector('svg');
-    if (svg) {
-      svg.classList.toggle('glide', glide);
-      svg.style.transformOrigin = '0 0';
-      svg.style.transform = zoomTransform(this);
-    }
+    this.paint({ k: z.k, x: z.x, y: z.y }, glide);
     this.stage.classList.toggle('zoomed', this.k > 1);
     this.changed();
   }

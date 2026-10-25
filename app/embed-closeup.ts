@@ -10,6 +10,12 @@
  * changed and every visible label's size; `closeUps` turns one step's layout into the
  * zooms for a stage of a given size. `explain check` uses both, so its phone number
  * is the size the player draws.
+ *
+ * A close-up is the reader's zoom, and it sits on top of the author's camera
+ * (`scene.frame`, which `d.focus()` moves). So a layout is recorded as the camera
+ * shows it: in the 16 × 9 units of the camera's view, centred on the origin, with
+ * label sizes multiplied by the camera's zoom. At home those are stage units. A
+ * close-up's zoom then multiplies the camera's, and Fit is the author's frame.
  */
 import type { Box, Mobject, Scene, SceneClass, Sink } from '../src/index.ts';
 import { labelOf } from '../explain/diagrams.ts';
@@ -29,11 +35,12 @@ export interface LayoutLabel {
   box: Box;
   size: number;
 }
-/** What a step's resting picture holds, for framing it. */
+/** What a step's resting picture holds, for framing it; boxes and sizes in the camera's view units. */
 export interface StepLayout {
   /**
-   * Where the picture changed during the step, in stage units, as separate parts in
-   * reading order (rows top to bottom, each left to right); empty when nothing is drawn.
+   * Where the picture changed during the step, in the units of the camera's view, as
+   * separate parts in reading order (rows top to bottom, each left to right); empty
+   * when nothing is drawn.
    */
   parts: Box[];
   /** The part the step opens on: the one whose lettering changed most (new words, new values), else the first. */
@@ -78,6 +85,19 @@ const painted = (m: Mobject) =>
 /** The paper and the heading frame every step; the heading changes each step but says nothing about where to look. */
 const fixed = (m: Mobject) => m.key === '__paper' || m.key === '__heading';
 
+/**
+ * A world box in the units of the camera's view `view`: 16 wide, centred on the origin.
+ * The identity at home. `explain check` maps its labels the same way (inView there).
+ */
+export function toView(box: Box, view: Box): Box {
+  const z = 16 / (view[2] - view[0]),
+    cx = (view[0] + view[2]) / 2,
+    cy = (view[1] + view[3]) / 2;
+  return [(box[0] - cx) * z, (box[1] - cy) * z, (box[2] - cx) * z, (box[3] - cy) * z];
+}
+/** The camera's box: what the author's frame shows, the most a leaf can be seen in. */
+const viewOf = (scene: Scene): Box => [...(scene.frame?.box() ?? FRAME)] as Box;
+
 function leavesOf(scene: Scene): Leaf[] {
   const out: Leaf[] = [];
   const walk = (m: Mobject, top: Mobject, opacity: number, clip: Box, inLabel: boolean) => {
@@ -97,12 +117,16 @@ function leavesOf(scene: Scene): Leaf[] {
     }
     for (const child of m.children) walk(child, top, o, c, text);
   };
-  for (const top of scene.mobjects) if (!fixed(top)) walk(top, top, 1, FRAME, false);
+  const view = viewOf(scene);
+  for (const top of scene.mobjects) if (!fixed(top)) walk(top, top, 1, view, false);
   return out;
 }
 
+/** Every readable label in the camera's view, in its units: a label's size grows with the camera's zoom. */
 function labelsOf(scene: Scene): LayoutLabel[] {
   const out: LayoutLabel[] = [];
+  const view = viewOf(scene),
+    zoom = 16 / (view[2] - view[0]);
   const walk = (m: Mobject, opacity: number, clip: Box) => {
     const o = opacity * (m.style.opacity ?? 1);
     if (o < 0.25) return;
@@ -112,12 +136,12 @@ function labelsOf(scene: Scene): LayoutLabel[] {
     if (label?.text.trim() && (m.style.drawFraction ?? 1) >= 0.95) {
       const b = m.box(),
         seen = b && intersect(b, c);
-      if (seen) out.push({ box: seen, size: m.height() * label.emRatio });
+      if (seen) out.push({ box: toView(seen, view), size: m.height() * label.emRatio * zoom });
       return; // a label's own parts are not labels
     }
     for (const child of m.children) walk(child, o, c);
   };
-  for (const top of scene.mobjects) walk(top, 1, FRAME);
+  for (const top of scene.mobjects) walk(top, 1, view);
   return out;
 }
 
@@ -179,7 +203,8 @@ export const focusOf = (layout: StepLayout): Box | null => layout.parts.reduce<B
 /**
  * Each step's layout, by step name, from one run of the scene with every frame
  * skipped. A step ends on its resting picture (nothing may change once its caption
- * hold begins), so the scene at each step's end is the picture the player rests on.
+ * hold begins), so the scene at each step's end is the picture the player rests on,
+ * seen through the camera where the step leaves it.
  */
 export async function stepLayouts(Scene: SceneClass): Promise<Map<string, StepLayout>> {
   const layouts = new Map<string, StepLayout>();
@@ -187,8 +212,11 @@ export async function stepLayouts(Scene: SceneClass): Promise<Map<string, StepLa
   const sink: Sink = {
     async frame() {},
     async stepEnd(scene, step) {
-      const leaves = leavesOf(scene);
-      layouts.set(step.name, { ...partsOf(changed(leaves, before)), labels: labelsOf(scene) });
+      const leaves = leavesOf(scene),
+        view = viewOf(scene);
+      // Changes are found in the world (a camera move alone changes no leaf), then framed as the camera shows them.
+      const changes = changed(leaves, before).map((c) => ({ ...c, box: toView(c.box, view) }));
+      layouts.set(step.name, { ...partsOf(changes), labels: labelsOf(scene) });
       before = leaves;
     },
   };
@@ -196,12 +224,12 @@ export async function stepLayouts(Scene: SceneClass): Promise<Map<string, StepLa
   return layouts;
 }
 
-/** How the stage draws the 16 × 9 frame at 1×: px per unit and the offset of its top-left corner (the SVG letterboxes). */
+/** How the stage draws the author's 16 × 9 view at 1×: px per view unit and the offset of its top-left corner (the SVG letterboxes). */
 export function stageScale(w: number, h: number) {
   const s = Math.min(w / 16, h / 9);
   return { s, ox: (w - 16 * s) / 2, oy: (h - 9 * s) / 2 };
 }
-/** The part of the frame a zoom shows on a `w`×`h` stage, in stage units. */
+/** The part of the author's view a zoom shows on a `w`×`h` stage, in its units (stage units when the camera is home). */
 export function viewBox(z: Zoom, w: number, h: number): Box {
   const { s, ox, oy } = stageScale(w, h);
   const x = (px: number) => (px / z.k - z.x / z.k - ox) / s - 8,
