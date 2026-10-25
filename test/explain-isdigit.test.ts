@@ -1,0 +1,213 @@
+// The isdigit explainer's model, held to the Unicode Character Database and to CPython.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { fc, params } from './lib/pbt.ts';
+import {
+  CHARS,
+  LINEUP,
+  PREDICATES,
+  COUNTS,
+  fields,
+  flags,
+  numericType,
+  predicates,
+  asciiFor,
+  intOf,
+  guarded,
+  accepts,
+  grouped,
+} from '../scenes/explainers/lib/isdigit.ts';
+import type { Char, CharId } from '../scenes/explainers/lib/isdigit.ts';
+
+// Copied verbatim from https://www.unicode.org/Public/17.0.0/ucd/UnicodeData.txt, with line numbers,
+// fetched 2026-10-25. 三 (U+4E09) has no line of its own: it falls in the range whose first line is 12349
+// ("9FFF;<CJK Ideograph, Last>;Lo;0;L;;;;;N;;;;;" is line 12350).
+const UNICODE_DATA: Record<CharId, readonly [number, string]> = {
+  ascii: [52, '0033;DIGIT THREE;Nd;0;EN;;3;3;3;N;;;;;'],
+  super: [179, '00B2;SUPERSCRIPT TWO;No;0;EN;<super> 0032;;2;2;N;SUPERSCRIPT DIGIT TWO;;;;'],
+  half: [190, '00BD;VULGAR FRACTION ONE HALF;No;0;ON;<fraction> 0031 2044 0032;;;1/2;N;FRACTION ONE HALF;;;;'],
+  arabic: [1598, '0663;ARABIC-INDIC DIGIT THREE;Nd;0;AN;;3;3;3;N;;;;;'],
+  devanagari: [2337, '0969;DEVANAGARI DIGIT THREE;Nd;0;L;;3;3;3;N;;;;;'],
+  roman: [7719, '216B;ROMAN NUMERAL TWELVE;Nl;0;L;<compat> 0058 0049 0049;;;12;N;;;;217B;'],
+  han: [12349, '4E00;<CJK Ideograph, First>;Lo;0;L;;;;;N;;;;;'],
+  fullwidth: [16765, 'FF13;FULLWIDTH DIGIT THREE;Nd;0;EN;<wide> 0033;3;3;3;N;;;;;'],
+};
+// Unihan.zip of the same release, Unihan_NumericValues.txt line 29 (tab-separated).
+const UNIHAN_LINE = [29, 'U+4E09\tkPrimaryNumeric\t3'] as const;
+
+// CPython 3.15.1 (unicodedata.unidata_version 17.0.0), Docker image python:3.15-slim, run on 2026-10-25
+// with `python -I -` reading SCRIPT below. Each row: isdecimal, isdigit, isnumeric, then int(c): the value
+// or the ValueError message. CPython 3.14.9 (Unicode 16.0.0) gives the same eight rows.
+const CPYTHON: Record<CharId, readonly [boolean, boolean, boolean, number | string]> = {
+  ascii: [true, true, true, 3],
+  arabic: [true, true, true, 3],
+  devanagari: [true, true, true, 3],
+  fullwidth: [true, true, true, 3],
+  super: [false, true, true, "invalid literal for int() with base 10: '²'"],
+  half: [false, false, true, "invalid literal for int() with base 10: '½'"],
+  roman: [false, false, true, "invalid literal for int() with base 10: 'Ⅻ'"],
+  han: [false, false, true, "invalid literal for int() with base 10: '三'"],
+};
+// The same run, over every code point but the surrogates, one character at a time. Every character int()
+// accepted was decimal and every decimal was accepted; isdecimal implied isdigit, which implied isnumeric.
+// (CPython 3.14.9 with Unicode 16.0.0 counts 760, 888, 2002 and 760.)
+const CPYTHON_COUNTS = { isdecimal: 770, isdigit: 898, isnumeric: 2023, int: 770 };
+const SCRIPT = String.raw`
+import json, unicodedata
+rows = {}
+for c in ${JSON.stringify(LINEUP.map((k) => CHARS[k].char))}:
+    try: n = int(c)
+    except ValueError as e: n = str(e)
+    rows[c] = [c.isdecimal(), c.isdigit(), c.isnumeric(), n]
+counts = dict(isdecimal=0, isdigit=0, isnumeric=0, int=0)
+nested = True
+for cp in range(0x110000):
+    if 0xD800 <= cp <= 0xDFFF: continue
+    c = chr(cp)
+    a, b, n = c.isdecimal(), c.isdigit(), c.isnumeric()
+    try: int(c); ok = True
+    except ValueError: ok = False
+    counts['isdecimal'] += a; counts['isdigit'] += b; counts['isnumeric'] += n; counts['int'] += ok
+    nested = nested and (not a or b) and (not b or n) and ok == a
+print(json.dumps(dict(unidata=unicodedata.unidata_version, rows=rows, counts=counts, nested=nested), ensure_ascii=False))
+`;
+
+test('the model’s rows are UnicodeData.txt’s and Unihan’s lines, verbatim', () => {
+  for (const id of LINEUP) {
+    const [line, text] = UNICODE_DATA[id];
+    assert.equal(CHARS[id].ucd, text, id);
+    assert.equal(CHARS[id].ucdLine, line, id);
+    // The line is the character's own, or the range that holds it
+    const first = parseInt(text.split(';')[0]!, 16),
+      cp = CHARS[id].char.codePointAt(0)!;
+    assert.ok(first === cp || (text.includes(', First>') && cp >= first && cp <= 0x9fff), id);
+  }
+  const [tag, value] = UNIHAN_LINE[1].split('\t').slice(1);
+  assert.deepEqual(CHARS.han.unihan, { tag, value, line: UNIHAN_LINE[0] });
+  assert.equal(UNIHAN_LINE[1].split('\t')[0], CHARS.han.code);
+});
+
+test('the model gives CPython 3.15.1’s answer for every character it shows', () => {
+  for (const id of LINEUP) {
+    const c = CHARS[id];
+    const [isdecimal, isdigit, isnumeric, int] = CPYTHON[id];
+    assert.deepEqual(predicates(c), { isdecimal, isdigit, isnumeric }, id);
+    assert.deepEqual(intOf(c), typeof int === 'number' ? { value: int } : { error: int }, id);
+  }
+  assert.deepEqual(COUNTS, CPYTHON_COUNTS);
+  assert.equal(accepts('isdecimal'), 0);
+  assert.equal(accepts('isdigit'), 128);
+  assert.equal(accepts('isnumeric'), 1253);
+});
+
+test('Numeric_Type follows UAX #44: which of fields 6, 7 and 8 are filled', () => {
+  const want: Record<CharId, string> = {
+    ascii: 'Decimal',
+    arabic: 'Decimal',
+    devanagari: 'Decimal',
+    fullwidth: 'Decimal',
+    super: 'Digit',
+    half: 'Numeric',
+    roman: 'Numeric',
+    han: 'Numeric',
+  };
+  for (const id of LINEUP) assert.equal(numericType(CHARS[id]), want[id], id);
+  assert.deepEqual(fields(CHARS.half), { decimal: '', digit: '', numeric: '1/2' });
+  assert.deepEqual(fields(CHARS.han), { decimal: '', digit: '', numeric: '3' });
+  assert.deepEqual(flags(CHARS.super), { DECIMAL_MASK: false, DIGIT_MASK: true, NUMERIC_MASK: true });
+  // int() puts an ASCII digit in a decimal's place and '?' in anything else's (unicodeobject.c:9545-9552)
+  assert.deepEqual(
+    LINEUP.map((k) => asciiFor(CHARS[k])),
+    ['3', '3', '3', '3', '?', '?', '?', '?'],
+  );
+});
+
+test('Node’s Unicode agrees where it can: the decimals are general category Nd', { skip: process.versions.unicode !== '17.0' && `Node has Unicode ${process.versions.unicode}, not 17.0` }, () => {
+  // stdtypes.rst:2437: "Formally a decimal character is a character in the Unicode General Category Nd".
+  let nd = 0;
+  for (let cp = 0; cp < 0x110000; cp++) if ((cp < 0xd800 || cp > 0xdfff) && /\p{Nd}/u.test(String.fromCodePoint(cp))) nd++;
+  assert.equal(nd, COUNTS.isdecimal);
+  for (const id of LINEUP) assert.equal(/\p{Nd}/u.test(CHARS[id].char), predicates(CHARS[id]).isdecimal, id);
+});
+
+/** A python3 whose unicodedata is Unicode 17.0.0, from $PYTHON or PATH; null if there is none. */
+function python(): string | null {
+  for (const exe of [process.env.PYTHON, 'python3'].filter(Boolean) as string[]) {
+    const r = spawnSync(exe, ['-I', '-c', 'import unicodedata; print(unicodedata.unidata_version)'], { encoding: 'utf8' });
+    if (r.status === 0 && r.stdout.trim() === '17.0.0') return exe;
+  }
+  return null;
+}
+const PY = python();
+test('python3, run now, gives the frozen answers', { skip: !PY && 'no python3 with Unicode 17.0.0 on PATH or in $PYTHON' }, () => {
+  const r = spawnSync(PY!, ['-I', '-c', SCRIPT], { encoding: 'utf8', timeout: 120_000 });
+  assert.equal(r.status, 0, r.stderr);
+  const got = JSON.parse(r.stdout) as { unidata: string; rows: Record<string, unknown[]>; counts: object; nested: boolean };
+  assert.equal(got.unidata, '17.0.0');
+  for (const id of LINEUP) assert.deepEqual(got.rows[CHARS[id].char], [...CPYTHON[id]], id);
+  assert.deepEqual(got.counts, CPYTHON_COUNTS);
+  assert.equal(got.nested, true);
+});
+
+// ------------------------------------------------------------------ properties over synthetic rows
+
+/** A UnicodeData.txt row as UAX #44 allows: Decimal fills 6, 7 and 8 alike; Digit 7 and 8; Numeric only 8; None none. */
+const anyRow = fc
+  .record({
+    cp: fc.integer({ min: 0x80, max: 0x10ffff }).filter((n) => n < 0xd800 || n > 0xdfff),
+    kind: fc.constantFrom('Decimal', 'Digit', 'Numeric', 'None'),
+    d: fc.integer({ min: 0, max: 9 }),
+    v: fc.constantFrom('1/2', '12', '-1/2', '1000', '7'),
+  })
+  .map(({ cp, kind, d, v }): Char => {
+    const f = Array(15).fill('');
+    f[0] = cp.toString(16).toUpperCase().padStart(4, '0');
+    f[1] = 'TEST';
+    if (kind === 'Decimal') f[6] = f[7] = f[8] = String(d);
+    if (kind === 'Digit') f[7] = f[8] = String(d);
+    if (kind === 'Numeric') f[8] = v;
+    return { id: 'han', char: String.fromCodePoint(cp), code: 'U+' + f[0], name: 'TEST', ucd: f.join(';'), ucdLine: 0 };
+  });
+
+test('the three predicates nest, whatever the row', () => {
+  fc.assert(
+    fc.property(anyRow, (c) => {
+      const p = predicates(c);
+      assert.ok(!p.isdecimal || p.isdigit);
+      assert.ok(!p.isdigit || p.isnumeric);
+      assert.equal(p.isnumeric, numericType(c) !== 'None');
+    }),
+    params(),
+  );
+});
+
+test('int() accepts a non-ASCII character exactly when isdecimal() does, with its field 6 value', () => {
+  fc.assert(
+    fc.property(anyRow, (c) => {
+      const int = intOf(c);
+      assert.equal('value' in int, predicates(c).isdecimal);
+      if ('value' in int) assert.equal(String(int.value), fields(c).decimal);
+    }),
+    params(),
+  );
+});
+
+test('a check lets a character through to a ValueError exactly when it passes and the character is not decimal', () => {
+  fc.assert(
+    fc.property(anyRow, fc.constantFrom(...PREDICATES), (c, guard) => {
+      const r = guarded(c, guard);
+      assert.equal(r.outcome === 'raised', predicates(c)[guard] && !predicates(c).isdecimal);
+      // isdecimal() never lets one through
+      if (guard === 'isdecimal') assert.notEqual(r.outcome, 'raised');
+    }),
+    params(),
+  );
+});
+
+test('counts print with thousands separators', () => {
+  assert.equal(grouped(2023), '2,023');
+  assert.equal(grouped(770), '770');
+  assert.equal(grouped(1253), '1,253');
+  assert.equal(grouped(1234567), '1,234,567');
+});

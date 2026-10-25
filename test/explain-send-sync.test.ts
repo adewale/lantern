@@ -1,9 +1,13 @@
 // The send-sync explainer's evaluator, held to the Rust standard library's impl lines and to rustc.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fc, params } from './lib/pbt.ts';
-import { RULES, t, isSend, isSync, nameOf, build, threads, quadrantOf } from '../scenes/explainers/lib/send-sync.ts';
-import type { Ctor, Needs, RustType } from '../scenes/explainers/lib/send-sync.ts';
+import { RULES, INNERS, WRAPS, SINGLES, t, isSend, isSync, nameOf, build, threads, quadrantOf } from '../scenes/explainers/lib/send-sync.ts';
+import type { Ctor, Inner, Needs, RustType, Wrapper } from '../scenes/explainers/lib/send-sync.ts';
 
 // Copied verbatim from rust-lang/rust at tag 1.99.1 (commit 213cfbe66a6da4e4b41bde365643286371af6e5a),
 // https://github.com/rust-lang/rust/tree/1.99.1/library, with file and line.
@@ -62,6 +66,8 @@ test('the rule table is the standard library’s impl lines, read mechanically',
 // `let x: TYPE = VALUE; thread::scope(|s| { let r = &x; s.spawn(move || { std::hint::black_box(r); });
 // s.spawn(move || { std::hint::black_box(r); }); });`, the guard from `static M: Mutex<i32>`, `M.lock().unwrap()`.
 // true: it compiled; false: it failed with error E0277 and no other error.
+// This table keeps the claims checked where rustc is absent; 'rustc, run now, gives the model’s
+// answers and this table’s' below asks the compiler again whenever one is on PATH (or in $RUSTC).
 const RUSTC: readonly [string, send: boolean, sync: boolean, spawn: boolean, scope: boolean][] = [
   ['i32', true, true, true, true],
   ['Cell<i32>', true, false, true, false],
@@ -123,6 +129,166 @@ test('the nine cases, built inside out, end where rustc puts them', () => {
       ['Cell<i32>', 4],
       ['Mutex<Cell<i32>>', 1],
     ],
+  );
+});
+
+// ---- the live check: the model's claims, written out as Rust and compiled by rustc now.
+type Check = 'send' | 'sync' | 'spawn' | 'scope';
+const CHECKS: readonly Check[] = ['send', 'sync', 'spawn', 'scope'];
+interface Claim {
+  rust: string;
+  check: Check;
+  holds: boolean;
+}
+
+/** A type as Rust source spells it; the model leaves out the guard's lifetime. */
+const rustName = (type: RustType): string =>
+  type.ctor === 'i32' ? 'i32' : type.ctor === 'MutexGuard' ? `MutexGuard<'static, ${rustName(type.of!)}>` : `${type.ctor}<${rustName(type.of!)}>`;
+
+/**
+ * Every claim the scene makes, read from the functions the scene calls: Send and Sync for the four
+ * single types and for each layer of the nine builds, and what thread::spawn and thread::scope accept
+ * for the nine built types. The single and inner types get spawn and scope answers too, from the
+ * same two rules threads() uses, so the frozen table's thirteen rows are covered in full.
+ */
+function modelClaims(): Claim[] {
+  const claims = new Map<string, Claim>();
+  const claim = (rust: string, check: Check, holds: boolean) => {
+    const key = `${rust}: ${check}`;
+    const had = claims.get(key);
+    assert.ok(!had || had.holds === holds, `the model gives two answers for ${key}`);
+    claims.set(key, { rust, check, holds });
+  };
+  const own = (type: RustType) => {
+    claim(rustName(type), 'send', isSend(type));
+    claim(rustName(type), 'sync', isSync(type));
+    claim(rustName(type), 'spawn', isSend(type));
+    claim(rustName(type), 'scope', isSend(t('&', type)));
+  };
+  SINGLES.forEach(own);
+  for (const wrapper of Object.keys(WRAPS) as Wrapper[])
+    for (const inner of Object.keys(INNERS) as Inner[]) {
+      let type: RustType = INNERS[inner];
+      const layers = build(wrapper, inner);
+      own(type);
+      WRAPS[wrapper].forEach((ctor, n) => {
+        type = t(ctor, type);
+        own(type);
+        const layer = layers[n + 1]!;
+        assert.equal(layer.name, nameOf(type));
+        claim(rustName(type), 'send', layer.send);
+        claim(rustName(type), 'sync', layer.sync);
+      });
+      const run = threads(wrapper, inner);
+      claim(rustName(type), 'spawn', run.spawnMove);
+      claim(rustName(type), 'scope', run.scopeBorrow);
+    }
+  return [...claims.values()];
+}
+
+// One claim per line, so rustc's error spans say which claim failed. The spawn and scope bodies
+// are the frozen table's, with x a parameter instead of a constructed value.
+const RUST_HEAD = [
+  '#![allow(dead_code, unused_imports)]',
+  'use std::{cell::Cell, hint::black_box, rc::Rc, sync::{Arc, Mutex, MutexGuard}, thread};',
+  'fn assert_send<T: Send>() {}',
+  'fn assert_sync<T: Sync>() {}',
+];
+const RUST_BODY: Record<Check, (type: string, n: number) => string> = {
+  send: (type, n) => `fn c${n}() { assert_send::<${type}>(); }`,
+  sync: (type, n) => `fn c${n}() { assert_sync::<${type}>(); }`,
+  spawn: (type, n) => `fn c${n}(x: ${type}) { thread::spawn(move || drop(x)).join().unwrap(); }`,
+  scope: (type, n) =>
+    `fn c${n}(x: ${type}) { thread::scope(|s| { let r = &x; s.spawn(move || { black_box(r); }); s.spawn(move || { black_box(r); }); }); }`,
+};
+/** The trait whose absence makes each kind of claim fail: a borrow crosses threads when &T is Send, that is when T is Sync. */
+const TRAIT: Record<Check, 'Send' | 'Sync'> = { send: 'Send', sync: 'Sync', spawn: 'Send', scope: 'Sync' };
+
+interface Diagnostic {
+  level: string;
+  code: { code: string } | null;
+  spans: { is_primary: boolean; line_start: number }[];
+  rendered: string;
+}
+/** Type-checks one crate (`--emit=metadata`, what cargo check runs) and returns its errors. */
+function compile(rustc: string, dir: string, name: string, source: string): Diagnostic[] {
+  const file = join(dir, `${name}.rs`);
+  writeFileSync(file, source);
+  const args = ['--edition', '2024', '--crate-type', 'lib', '--crate-name', name, '--emit=metadata', '--error-format=json', '-o', join(dir, `${name}.rmeta`), file];
+  const run = spawnSync(rustc, args, { encoding: 'utf8' });
+  assert.equal(run.error, undefined, String(run.error));
+  const errors = run.stderr
+    .split('\n')
+    .filter((line) => line.startsWith('{'))
+    .map((line) => JSON.parse(line) as Diagnostic)
+    .filter((d) => d.level === 'error' && d.spans.length > 0);
+  assert.equal(run.status === 0, errors.length === 0, run.stderr);
+  return errors;
+}
+
+/** rustc prints std::sync::MutexGuard<'_, i32>; the model's names have neither paths nor lifetimes. */
+const plain = (text: string) => text.replace(/\b(?:std|core|alloc)::(?:\w+::)*/g, '').replace(/'(?:_|static), /g, '');
+
+/** rustc's answer to each claim: true if its line compiled, false if every error on it is an E0277 naming the claim's trait. */
+function rustcAnswers(rustc: string, claims: readonly Claim[]): Map<Claim, boolean> {
+  const dir = mkdtempSync(join(tmpdir(), 'send-sync-'));
+  const answers = new Map<Claim, boolean>();
+  try {
+    // The claims the model says hold go in one crate that must compile; the rest in one that must fail on every line.
+    for (const [name, group] of [
+      ['holds', claims.filter((c) => c.holds)],
+      ['fails', claims.filter((c) => !c.holds)],
+    ] as const) {
+      const lines = [...RUST_HEAD, ...group.map((c, n) => RUST_BODY[c.check](c.rust, n))];
+      const errors = compile(rustc, dir, name, lines.join('\n') + '\n');
+      const byLine = new Map<number, Diagnostic[]>();
+      for (const e of errors) {
+        const line = e.spans.find((s) => s.is_primary)?.line_start ?? e.spans[0]!.line_start;
+        assert.ok(line > RUST_HEAD.length && line <= lines.length, `an error outside the claims:\n${e.rendered}`);
+        byLine.set(line, [...(byLine.get(line) ?? []), e]);
+      }
+      group.forEach((c, n) => {
+        const found = byLine.get(RUST_HEAD.length + n + 1) ?? [];
+        const trait = TRAIT[c.check],
+          type = plain(c.rust);
+        for (const e of found) {
+          assert.equal(e.code?.code, 'E0277', `${c.rust}: ${c.check} failed with another error:\n${e.rendered}`);
+          const text = plain(e.rendered);
+          assert.ok(
+            text.includes(`the trait \`${trait}\` is not implemented for \`${type}\``) || text.includes(`required for \`${type}\` to implement \`${trait}\``),
+            `${c.rust}: ${c.check} failed, but not for want of ${trait} on ${type}:\n${e.rendered}`,
+          );
+        }
+        answers.set(c, found.length === 0);
+      });
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+  return answers;
+}
+
+const RUSTC_BIN = process.env.RUSTC || 'rustc';
+const rustcVersion = spawnSync(RUSTC_BIN, ['--version'], { encoding: 'utf8' });
+const rustcSkip = rustcVersion.status === 0 ? false : `${RUSTC_BIN} is not runnable; put rustc on PATH or set RUSTC to a rustc binary`;
+
+test('rustc, run now, gives the model’s answers and this table’s', { skip: rustcSkip }, (tc) => {
+  const start = performance.now();
+  const claims = modelClaims();
+  const answers = rustcAnswers(RUSTC_BIN, claims);
+  const ms = Math.round(performance.now() - start);
+  tc.diagnostic(
+    `${rustcVersion.stdout.trim()}: ${claims.length} claims, ${claims.filter((c) => c.holds).length} that hold in one crate, ` +
+      `${claims.filter((c) => !c.holds).length} that fail in another; two rustc runs, ${ms} ms`,
+  );
+  const disagree = claims.filter((c) => answers.get(c) !== c.holds).map((c) => `${c.rust}: ${c.check}: the model says ${c.holds}, rustc says ${!c.holds}`);
+  assert.deepEqual(disagree, []);
+  // The live answers, laid out as the frozen table, are the frozen table.
+  const live = new Map(claims.map((c) => [`${c.rust}: ${c.check}`, answers.get(c)!]));
+  assert.deepEqual(new Set(claims.map((c) => c.rust)), new Set(RUSTC.map(([rust]) => rust)), 'the model shows the frozen table’s types and no others');
+  assert.deepEqual(
+    RUSTC.map(([rust]) => [rust, ...CHECKS.map((check) => live.get(`${rust}: ${check}`))]),
+    RUSTC.map((row) => [...row]),
   );
 });
 

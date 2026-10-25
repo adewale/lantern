@@ -1,11 +1,16 @@
 import { exactHttpOrigin, resizeHeight } from './embed-protocol.ts';
+import { chromeFor } from './embed-strings.ts';
 
-/** Optional host-side convenience. Never required by the artifact itself. */
+/**
+ * Optional host-side convenience. Never required by the artifact itself. Its own words (the
+ * link beside the frame) are in `lang`, the host page's language unless given.
+ */
 export function mountExplainer(
   target: HTMLElement,
   src: string,
-  options: { title: string; height?: number; theme?: 'light' | 'dark' | 'auto' },
+  options: { title: string; height?: number; theme?: 'light' | 'dark' | 'auto'; lang?: string },
 ): () => void {
+  const t = chromeFor(options.lang || document.documentElement.lang || 'en');
   const url = new URL(src, document.baseURI);
   const origin = exactHttpOrigin(url.origin);
   if (!origin) throw new Error('Auto-sizing requires an HTTP(S) artifact URL');
@@ -24,7 +29,7 @@ export function mountExplainer(
   window.addEventListener('message', receive);
   const link = document.createElement('a');
   link.href = src;
-  link.textContent = 'Open in a new tab';
+  link.textContent = t.newTab;
   link.target = '_blank';
   link.rel = 'noopener';
   target.append(frame, link);
@@ -42,7 +47,8 @@ if (script?.dataset.src) {
     : script.parentElement;
   if (target)
     mountExplainer(target, script.dataset.src, {
-      title: script.dataset.title ?? 'Interactive explainer',
+      title: script.dataset.title ?? chromeFor(script.dataset.lang || document.documentElement.lang || 'en').frame,
       theme: (script.dataset.theme ?? 'auto') as 'auto',
+      lang: script.dataset.lang,
     });
 }

@@ -11,13 +11,13 @@ const RUST = 'https://github.com/rust-lang/rust/blob/1.99.1/library/';
 const REFERENCE = 'https://github.com/rust-lang/reference/blob/d9d9ed57a120e3c87033fd598f191bbb84aad097/src/types/closure.md';
 const NOMICON = 'https://github.com/rust-lang/nomicon/blob/60ed8f3bb9d22a60865197a0ac74911436703430/src/send-and-sync.md';
 
-// Phone legibility sets every size here. A label needs 39.4 px on a 1280 px stage to be 12 px on a
-// 390 px phone, so native text is 0.5 units (40 px). The chart's labels are 20 px in a 696 px chart and
+// Phone legibility sets every size here. On a 390 px page the stage is 358 px wide, so a label needs
+// 0.54 units (43 px on a 1280 px stage) to be 12 px there; native text is 0.54 units. The chart's labels are 20 px in a 696 px chart and
 // reach that size when the camera frames one quadrant; the axis labels are 48 px of a 696 px chart, so
 // they read in the whole chart, and stand 16 px further off the plot than usual so that none of them
 // shows at the edge of a framed quadrant. The plot is 569 px, so a quadrant (284 px) holds the longest name,
 // "x is Arc<Mutex<Cell<i32>>>", to the right of its point.
-const SIZE = 0.5;
+const SIZE = 0.54;
 const HEAD =
   '---\nconfig:\n  quadrantChart:\n    chartWidth: 696\n    chartHeight: 680\n    pointLabelFontSize: 20\n    quadrantLabelFontSize: 32\n    xAxisLabelFontSize: 48\n    yAxisLabelFontSize: 48\n    yAxisLabelPadding: 12\n---\n';
 // Every point sits at one fixed spot per quadrant: at the left edge, so its name fits to its right, and
@@ -90,7 +90,7 @@ export default class SendSyncExplainer extends Scene {
     const values = settingsOf(this);
     const wrapper = values.wrapper as Wrapper,
       inner = values.inner as Inner;
-    const s = stage(this, { style: 'hand-drawn', headingSize: 0.5 });
+    const s = stage(this, { style: 'hand-drawn', headingSize: SIZE });
     const ink = s.palette.ink;
 
     /** Lines of text at the reader's size, wrapped to the right column, from `top` down. */

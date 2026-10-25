@@ -1,4 +1,6 @@
 import type { Scene, StepRecord } from '../src/index.ts';
+import { wordsFor, describedIn, markHeading } from './words.ts';
+import type { Words } from './words.ts';
 interface WalkRecord {
   step?: string;
   from: string;
@@ -28,7 +30,7 @@ export const restingTime = (s: Timed, fps: number) => Math.max(s.t0, (s.t1 ?? s.
 /** A part of something on the stage, as a reader would name it, with its emphasis. */
 export interface SeenPart {
   name: string;
-  /** The word for its emphasis ("marked", "rejected", "focused"); absent when plain. */
+  /** The word for its emphasis ("marked", "rejected", "focused", in the scene's language); absent when plain. */
   mark?: string;
   dimmed?: boolean;
 }
@@ -53,6 +55,8 @@ export interface Picture {
   /** Parts that arrived or changed during the step; absent when everything did. */
   changed?: string[];
   undescribed?: string[];
+  /** The language of its words when not English (explain/words.ts); the summary and list follow it. */
+  lang?: string;
 }
 export const htmlEscape = (value: unknown) =>
   String(value).replace(
@@ -60,15 +64,20 @@ export const htmlEscape = (value: unknown) =>
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
   );
 const pictureOf = (state: unknown): Picture | undefined => (state as { picture?: Picture } | undefined)?.picture;
-/** Seen things as entries, emphasis first, and what is new since `before` (the names shown when the step began). */
-export function picture(all: readonly Seen[], before: ReadonlySet<string>): Picture {
+/**
+ * Seen things as entries, emphasis first, and what is new since `before` (the names shown
+ * when the step began), in the words of `lang`, the scene's language.
+ */
+export function picture(all: readonly Seen[], before: ReadonlySet<string>, lang?: string): Picture {
+  const words = wordsFor(lang),
+    said = describedIn(lang);
   const undescribed = all.flatMap((s) => s.blank ?? []);
   const seen = all.filter((s) => s.what);
   const entries = seen.map(({ what, parts }) => {
     const marked: Record<string, string[]> = {};
     for (const p of parts) if (p.mark) (marked[p.mark] ??= []).push(p.name);
     const rest = parts.filter((p) => !p.mark).sort((a, b) => +!!a.dimmed - +!!b.dimmed);
-    const items = rest.map((p) => p.name + (p.dimmed ? ' (dimmed)' : ''));
+    const items = rest.map((p) => (p.dimmed ? words.dimmed(p.name) : p.name));
     return { what, ...(Object.keys(marked).length ? { marked } : {}), items };
   });
   // A thing wholly new is named once, by what it is; otherwise its new parts are.
@@ -82,6 +91,7 @@ export function picture(all: readonly Seen[], before: ReadonlySet<string>): Pict
     entries,
     ...(changed.length ? { changed } : {}),
     ...(undescribed.length ? { undescribed } : {}),
+    ...(said !== 'en' ? { lang: said } : {}),
   };
 }
 /** The names a picture shows, for the next step's `before`. */
@@ -90,14 +100,15 @@ export const shownNames = (seen: readonly Seen[]) =>
 
 /**
  * Up to `max` items joined with semicolons (code's column spacing closed up, and an item's own
- * trailing comma or semicolon dropped, as the join separates them), then how many more.
+ * trailing comma or semicolon dropped, as the join separates them), then how many more. No-break
+ * spaces stay: French sets one before a colon, and in 30 000 €.
  */
-function some(items: readonly string[], max = 3): string {
+function some(words: Words, items: readonly string[], max = 3): string {
   const shown = items
     .slice(0, max)
-    .map((t) => t.trim().replace(/\s+/g, ' ').replace(/[,;]+$/, ''))
-    .join('; ');
-  return items.length > max ? `${shown}; and ${items.length - max} more` : shown;
+    .map((t) => t.trim().replace(/[^\S\u00a0\u2007\u202f]+/g, ' ').replace(/[,;]+$/, ''))
+    .join(words.separator);
+  return items.length > max ? `${shown}${words.separator}${words.more(items.length - max)}` : shown;
 }
 const end = (text: string, mark: string) => (/[.;:!?,…]$/.test(text) ? text : text + mark);
 const sentence = (text: string) => end(text[0]!.toUpperCase() + text.slice(1), '.');
@@ -108,6 +119,7 @@ const sentence = (text: string) => end(text[0]!.toUpperCase() + text.slice(1), '
 export function pictureSummary(state: unknown): string {
   const p = pictureOf(state);
   if (!p?.entries.length) return '';
+  const w = wordsFor(p.lang);
   const words: Record<string, string[]> = {};
   for (const e of p.entries) for (const [word, names] of Object.entries(e.marked ?? {})) (words[word] ??= []).push(...names);
   // At most four emphasised parts in all, those new in this step first, so the description
@@ -122,13 +134,13 @@ export function pictureSummary(state: unknown): string {
   const marked = groups.flatMap(([word, names]) => {
     const shown = names.slice(0, Math.max(0, room));
     room -= shown.length;
-    return shown.length ? [`${word}: ${some(shown)}`] : [];
+    return shown.length ? [w.pair(markHeading(w, word, names.length), some(w, shown))] : [];
   });
   const changed = (p.changed ?? []).filter((c) => !named.includes(c));
   return [
-    p.entries.map((e) => e.what).join('; '),
-    ...(marked.length ? [marked.join('; ') + (named.length > 4 ? `; and ${named.length - 4} more` : '')] : []),
-    ...(changed.length ? [`new in this step: ${some(changed)}`] : []),
+    p.entries.map((e) => e.what).join(w.separator),
+    ...(marked.length ? [marked.join(w.separator) + (named.length > 4 ? w.separator + w.more(named.length - 4) : '')] : []),
+    ...(changed.length ? [w.pair(w.newInStep, some(w, changed))] : []),
   ]
     .map(sentence)
     .join(' ');
@@ -141,16 +153,17 @@ export function pictureSummary(state: unknown): string {
 export function pictureHtml(state: unknown, previous?: unknown): string {
   const p = pictureOf(state);
   if (!p?.entries.length) return '';
+  const w = wordsFor(p.lang);
   const marked = (e: PictureEntry) => Object.entries(e.marked ?? {}).flatMap(([word, names]) => names.map((n) => `${n} (${word})`));
   const key = (e: PictureEntry) => [...marked(e), ...e.items].sort().join('\n');
   const before = new Map((pictureOf(previous)?.entries ?? []).map((e) => [e.what, key(e)]));
   const li = (text: string, last: boolean, sub = '') =>
-    `<li>${htmlEscape(end(text, sub ? ':' : last ? '.' : ';'))}${sub}</li>`;
+    `<li>${htmlEscape(end(text, sub ? w.colon : last ? '.' : w.semicolon))}${sub}</li>`;
   const ul = (texts: string[]) => `<ul>${texts.map((t, i) => li(t, i === texts.length - 1)).join('')}</ul>`;
   return `<ul>${p.entries
     .map((e, i) => {
       const same = e.items.length && before.get(e.what) === key(e);
-      const items = [...marked(e), ...(same ? ['the rest as in the previous step'] : e.items)];
+      const items = [...marked(e), ...(same ? [w.restAsBefore] : e.items)];
       return li(e.what, i === p.entries.length - 1, items.length ? ul(items) : '');
     })
     .join('')}</ul>`;

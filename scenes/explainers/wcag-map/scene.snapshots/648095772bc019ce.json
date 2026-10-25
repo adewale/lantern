@@ -1,0 +1,551 @@
+{
+  "version": 1,
+  "renderer": "agentic-mermaid@0.4.1",
+  "spec": {
+    "source": "---\nconfig:\n  mindmap:\n    padding: 4\n    maxNodeWidth: 300\n---\nmindmap\n  g1_4((1.4 Distinguishable · 2))\n    c1_4_1[1.4.1 Use of Color · A, 2.0]\n    c1_4_2[1.4.2 Audio Control · A, 2.0]",
+    "style": "github-light"
+  },
+  "family": "mindmap",
+  "width": 536.364,
+  "height": 159.179,
+  "palette": {
+    "paper": "#ffffff",
+    "ink": "#1f2328",
+    "accent": "#0969da",
+    "muted": "#59636e"
+  },
+  "parts": [
+    {
+      "id": "__frame",
+      "role": "frame",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0,
+              0,
+              1.7878799438476562,
+              0,
+              3.5757598876953125,
+              0,
+              5.363640308380127,
+              0,
+              5.363640308380127,
+              -0.5305966734886169,
+              5.363640308380127,
+              -1.0611933469772339,
+              5.363640308380127,
+              -1.591789960861206,
+              3.5757601261138916,
+              -1.591789960861206,
+              1.7878800630569458,
+              -1.591789960861206,
+              0,
+              -1.591789960861206,
+              0,
+              -1.0611933469772339,
+              0,
+              -0.5305966734886169,
+              0,
+              0
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "g1_4->c1_4_1",
+      "role": "edge",
+      "kind": "connector",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.500699996948242,
+              -0.7958999872207642,
+              3.584700107574463,
+              -0.7958999872207642,
+              3.6167001724243164,
+              -0.7958999872207642,
+              3.700700044631958,
+              -0.7958999872207642
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#0969da",
+            "strokeWidth": 0.025,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "g1_4",
+      "to": "c1_4_1",
+      "route": [
+        [
+          3.5007,
+          -0.795895
+        ],
+        [
+          3.7007,
+          -0.795895
+        ]
+      ],
+      "channels": {
+        "importance": 1,
+        "category": "0"
+      }
+    },
+    {
+      "id": "g1_4->c1_4_2",
+      "role": "edge",
+      "kind": "connector",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.9889100790023804,
+              -0.7958999872207642,
+              1.9049099683761597,
+              -0.7958999872207642,
+              1.8729100227355957,
+              -0.7958999872207642,
+              1.7889100313186646,
+              -0.7958999872207642
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#0d67a5",
+            "strokeWidth": 0.025,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "g1_4",
+      "to": "c1_4_2",
+      "route": [
+        [
+          1.9889100000000002,
+          -0.795895
+        ],
+        [
+          1.78891,
+          -0.795895
+        ]
+      ],
+      "channels": {
+        "importance": 1,
+        "category": "1"
+      }
+    },
+    {
+      "id": "g1_4",
+      "role": "node",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.9889100790023804,
+              -0.7958999872207642,
+              1.9889100790023804,
+              -1.213371992111206,
+              2.3273379802703857,
+              -1.5517998933792114,
+              2.744809865951538,
+              -1.5517998933792114,
+              3.1622819900512695,
+              -1.5517998933792114,
+              3.5007102489471436,
+              -1.213371992111206,
+              3.5007102489471436,
+              -0.7958999872207642,
+              3.5007102489471436,
+              -0.3784279525279999,
+              3.1622819900512695,
+              -0.03999999910593033,
+              2.744809865951538,
+              -0.03999999910593033,
+              2.3273379802703857,
+              -0.03999999910593033,
+              1.9889100790023804,
+              -0.3784279525279999,
+              1.9889100790023804,
+              -0.7958999872207642
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "#0969da",
+            "strokeWidth": 0.015,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "1.4 Distinguishable · 2",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "1.4 Distinguishable · 2",
+            "x": 274.4805,
+            "y": 84.1395,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 127.179
+          }
+        }
+      ],
+      "channels": {
+        "importance": 5
+      }
+    },
+    {
+      "id": "c1_4_1",
+      "role": "node",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.700700044631958,
+              -0.621399998664856,
+              4.241680145263672,
+              -0.621399998664856,
+              4.782660007476807,
+              -0.621399998664856,
+              5.3236403465271,
+              -0.621399998664856,
+              5.3236403465271,
+              -0.7377333045005798,
+              5.3236403465271,
+              -0.8540666699409485,
+              5.3236403465271,
+              -0.9704000353813171,
+              4.782660007476807,
+              -0.9704000353813171,
+              4.241680145263672,
+              -0.9704000353813171,
+              3.700700044631958,
+              -0.9704000353813171,
+              3.700700044631958,
+              -0.8540666699409485,
+              3.700700044631958,
+              -0.7377333045005798,
+              3.700700044631958,
+              -0.621399998664856
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#b5d2f4",
+            "stroke": "#0969da",
+            "strokeWidth": 0.015,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "1.4.1 Use of Color · A, 2.0",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "1.4.1 Use of Color · A, 2.0",
+            "x": 451.217,
+            "y": 84.1395,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 138.294
+          }
+        }
+      ],
+      "channels": {
+        "importance": 4,
+        "category": "0"
+      }
+    },
+    {
+      "id": "c1_4_2",
+      "role": "node",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.03999999910593033,
+              -0.621399998664856,
+              0.6229699850082397,
+              -0.621399998664856,
+              1.2059400081634521,
+              -0.621399998664856,
+              1.7889100313186646,
+              -0.621399998664856,
+              1.7889100313186646,
+              -0.7377333045005798,
+              1.7889100313186646,
+              -0.8540666699409485,
+              1.7889100313186646,
+              -0.9704000353813171,
+              1.2059400081634521,
+              -0.9704000353813171,
+              0.6229699850082397,
+              -0.9704000353813171,
+              0.03999999910593033,
+              -0.9704000353813171,
+              0.03999999910593033,
+              -0.8540666699409485,
+              0.03999999910593033,
+              -0.7377333045005798,
+              0.03999999910593033,
+              -0.621399998664856
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#b6d1e4",
+            "stroke": "#0d67a5",
+            "strokeWidth": 0.015,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "1.4.2 Audio Control · A, 2.0",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "1.4.2 Audio Control · A, 2.0",
+            "x": 91.4455,
+            "y": 84.1395,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 150.891
+          }
+        }
+      ],
+      "channels": {
+        "importance": 4,
+        "category": "1"
+      }
+    }
+  ],
+  "findings": {
+    "ok": true,
+    "warnings": [],
+    "layout": {
+      "version": 1,
+      "kind": "mindmap",
+      "nodes": [
+        {
+          "id": "g1_4",
+          "x": 199,
+          "y": 4,
+          "w": 151,
+          "h": 151,
+          "shape": "ellipse",
+          "label": "1.4 Distinguishable · 2"
+        },
+        {
+          "id": "c1_4_1",
+          "x": 370,
+          "y": 62,
+          "w": 162,
+          "h": 35,
+          "shape": "rectangle",
+          "label": "1.4.1 Use of Color · A, 2.0"
+        },
+        {
+          "id": "c1_4_2",
+          "x": 4,
+          "y": 62,
+          "w": 175,
+          "h": 35,
+          "shape": "rectangle",
+          "label": "1.4.2 Audio Control · A, 2.0"
+        }
+      ],
+      "edges": [
+        {
+          "id": "edge#0:g1_4->c1_4_1",
+          "from": "g1_4",
+          "to": "c1_4_1",
+          "path": [
+            [
+              350,
+              80
+            ],
+            [
+              358,
+              80
+            ],
+            [
+              362,
+              80
+            ],
+            [
+              370,
+              80
+            ]
+          ]
+        },
+        {
+          "id": "edge#1:g1_4->c1_4_2",
+          "from": "g1_4",
+          "to": "c1_4_2",
+          "path": [
+            [
+              199,
+              80
+            ],
+            [
+              190,
+              80
+            ],
+            [
+              187,
+              80
+            ],
+            [
+              179,
+              80
+            ]
+          ]
+        }
+      ],
+      "groups": [],
+      "bounds": {
+        "w": 536,
+        "h": 159
+      }
+    }
+  }
+}

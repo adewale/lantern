@@ -21,6 +21,7 @@ const { check, render, force } = parseArgs({
 const evidence: {
   id: string;
   title: string;
+  lang: string;
   cases: Record<string, string>[];
   diagrams: number;
   styles: string[];
@@ -50,6 +51,7 @@ for (const item of EXPLAINERS) {
   evidence.push({
     id: item.id,
     title: project.Scene.meta?.title ?? item.id,
+    lang: project.Scene.meta?.lang ?? 'en',
     cases: project.variants.map((v) => v.values),
     diagrams: Object.keys(project.store).length,
     styles: [...new Set(Object.values(project.store).map((s) => s.spec.style ?? 'default'))],
@@ -82,7 +84,10 @@ await writeFile(
 const tile = (item: (typeof EXPLAINERS)[number], lead = false) => {
   const data = evidence.find((s) => s.id === item.id)!;
   const href = `${item.id}.html?step=${item.step}`;
-  return `<li${lead ? ' class="lead"' : ''}><a href="${htmlEscape(href)}"><img src="${item.id}.png" width="960" height="540" alt="" loading="${lead ? 'eager' : 'lazy'}"><span>${htmlEscape(data.title)}</span></a></li>`;
+  // A title in another language than the gallery's says so, for screen readers and the link.
+  const lang = data.lang === 'en' ? '' : ` lang="${htmlEscape(data.lang)}"`,
+    hreflang = data.lang === 'en' ? '' : ` hreflang="${htmlEscape(data.lang)}"`;
+  return `<li${lead ? ' class="lead"' : ''}><a href="${htmlEscape(href)}"${hreflang}><img src="${item.id}.png" width="960" height="540" alt="" loading="${lead ? 'eager' : 'lazy'}"><span${lang}>${htmlEscape(data.title)}</span></a></li>`;
 };
 const topics = EXPLAINERS.filter((e) => e.group === 'topic'),
   toolchain = EXPLAINERS.filter((e) => e.group === 'toolchain');

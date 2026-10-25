@@ -1,0 +1,966 @@
+{
+  "version": 1,
+  "renderer": "agentic-mermaid@0.4.1",
+  "spec": {
+    "source": "---\nconfig:\n  pie:\n    legendPosition: right\n    textPosition: 0.68\n  themeVariables:\n    pie1: '#6e7781'\n    pie2: '#4ac26b'\n    pie3: '#fb8f44'\n    pie4: '#cf222e'\n    pieLegendTextSize: 17px\n    pieSectionTextSize: 15px\n    pieTitleTextSize: 18px\n---\npie\n  title Every 4 KiB block of 1 GiB\n  \"Metadata\" : 13019\n  \"Users can write\" : 242408\n  \"Kernel reserve\" : 4096\n  \"Root reserve\" : 2621\n",
+    "style": "github-light"
+  },
+  "family": "pie",
+  "width": 471.88,
+  "height": 276,
+  "palette": {
+    "paper": "#ffffff",
+    "ink": "#1f2328",
+    "accent": "#0969da",
+    "muted": "#59636e"
+  },
+  "parts": [
+    {
+      "id": "__frame",
+      "role": "frame",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0,
+              0,
+              1.572933316230774,
+              0,
+              3.145866632461548,
+              0,
+              4.718800067901611,
+              0,
+              4.718800067901611,
+              -0.9200000166893005,
+              4.718800067901611,
+              -1.840000033378601,
+              4.718800067901611,
+              -2.759999990463257,
+              3.145866632461548,
+              -2.759999990463257,
+              1.572933316230774,
+              -2.759999990463257,
+              0,
+              -2.759999990463257,
+              0,
+              -1.840000033378601,
+              0,
+              -0.9200000166893005,
+              0,
+              0
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "slice:Metadata",
+      "role": "pie-slice",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.190000057220459,
+              -1.5700000524520874,
+              1.190000057220459,
+              -1.253333330154419,
+              1.190000057220459,
+              -0.9366666674613953,
+              1.190000057220459,
+              -0.6200000047683716,
+              1.2890313863754272,
+              -0.6200025677680969,
+              1.3874534368515015,
+              -0.6354896426200867,
+              1.4816999435424805,
+              -0.6658999919891357,
+              1.3844666481018066,
+              -0.9672666192054749,
+              1.2872332334518433,
+              -1.2686333656311035,
+              1.190000057220459,
+              -1.5700000524520874
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#6e7781",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.015,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Metadata",
+        "value": 0.049663543701171875
+      }
+    },
+    {
+      "id": "slice:Users can write",
+      "role": "pie-slice",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.190000057220459,
+              -1.5700000524520874,
+              1.2872332334518433,
+              -1.2686333656311035,
+              1.3844666481018066,
+              -0.9672666788101196,
+              1.4816999435424805,
+              -0.6658999919891357,
+              1.9397594928741455,
+              -0.8136823177337646,
+              2.2149219512939453,
+              -1.2806804180145264,
+              2.1222236156463623,
+              -1.7529780864715576,
+              2.0295250415802,
+              -2.2252755165100098,
+              1.5982589721679688,
+              -2.553621768951416,
+              1.118322491645813,
+              -2.5173025131225586,
+              0.638386070728302,
+              -2.480982780456543,
+              0.26144418120384216,
+              -2.091475009918213,
+              0.240877166390419,
+              -1.6106057167053223,
+              0.22031015157699585,
+              -1.1297366619110107,
+              0.5626174211502075,
+              -0.7094661593437195,
+              1.0376999378204346,
+              -0.6323000192642212,
+              1.0884666442871094,
+              -0.9448666572570801,
+              1.1392333507537842,
+              -1.257433295249939,
+              1.190000057220459,
+              -1.5700000524520874
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#4ac26b",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.015,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Users can write",
+        "value": 0.924713134765625
+      }
+    },
+    {
+      "id": "slice:Kernel reserve",
+      "role": "pie-slice",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.190000057220459,
+              -1.5700000524520874,
+              1.1392333507537842,
+              -1.257433295249939,
+              1.0884666442871094,
+              -0.9448666572570801,
+              1.0376999378204346,
+              -0.6323000192642212,
+              1.0684109926223755,
+              -0.627317488193512,
+              1.0993484258651733,
+              -0.6238465905189514,
+              1.1304000616073608,
+              -0.6218999624252319,
+              1.1502666473388672,
+              -0.9379333257675171,
+              1.170133352279663,
+              -1.2539666891098022,
+              1.190000057220459,
+              -1.5700000524520874
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#fb8f44",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.015,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Kernel reserve",
+        "value": 0.015625
+      }
+    },
+    {
+      "id": "slice:Root reserve",
+      "role": "pie-slice",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.190000057220459,
+              -1.5700000524520874,
+              1.170133352279663,
+              -1.2539666891098022,
+              1.1502666473388672,
+              -0.9379333257675171,
+              1.1304000616073608,
+              -0.6218999624252319,
+              1.1502419710159302,
+              -0.620643138885498,
+              1.1701183319091797,
+              -0.6200095415115356,
+              1.190000057220459,
+              -0.6200000047683716,
+              1.190000057220459,
+              -0.9366666674613953,
+              1.190000057220459,
+              -1.253333330154419,
+              1.190000057220459,
+              -1.5700000524520874
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#cf222e",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.015,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Root reserve",
+        "value": 0.009998321533203125
+      }
+    },
+    {
+      "id": "slice-label:Users can write",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#000000",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "92%",
+          "fontSize": 0.15,
+          "textRun": {
+            "text": "92%",
+            "x": 114.13,
+            "y": 226.67,
+            "size": 15,
+            "anchor": "middle",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 29.61
+          }
+        }
+      ],
+      "channels": {
+        "category": "Users can write",
+        "value": 0.924713134765625
+      }
+    },
+    {
+      "id": "legend:Metadata",
+      "role": "legend",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.4800000190734863,
+              -1.1100000143051147,
+              2.513333320617676,
+              -1.1100000143051147,
+              2.5466666221618652,
+              -1.1100000143051147,
+              2.5799999237060547,
+              -1.1100000143051147,
+              2.59104585647583,
+              -1.1100000143051147,
+              2.5999999046325684,
+              -1.1189543008804321,
+              2.5999999046325684,
+              -1.1299999952316284,
+              2.5999999046325684,
+              -1.1633334159851074,
+              2.5999999046325684,
+              -1.1966665983200073,
+              2.5999999046325684,
+              -1.2300000190734863,
+              2.5999999046325684,
+              -1.2410457134246826,
+              2.59104585647583,
+              -1.25,
+              2.5799999237060547,
+              -1.25,
+              2.5466666221618652,
+              -1.25,
+              2.513333320617676,
+              -1.25,
+              2.4800000190734863,
+              -1.25,
+              2.46895432472229,
+              -1.25,
+              2.4600000381469727,
+              -1.2410457134246826,
+              2.4600000381469727,
+              -1.2300000190734863,
+              2.4600000381469727,
+              -1.1966665983200073,
+              2.4600000381469727,
+              -1.1633334159851074,
+              2.4600000381469727,
+              -1.1299999952316284,
+              2.4600000381469727,
+              -1.1189543008804321,
+              2.46895432472229,
+              -1.1100000143051147,
+              2.4800000190734863,
+              -1.1100000143051147
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#6e7781",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Metadata",
+        "value": 0.049663543701171875
+      }
+    },
+    {
+      "id": "legend-label:Metadata",
+      "role": "legend",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Metadata (5.0%)",
+          "fontSize": 0.17,
+          "textRun": {
+            "text": "Metadata (5.0%)",
+            "x": 268,
+            "y": 125.45,
+            "size": 17,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 120.768
+          }
+        }
+      ],
+      "channels": {
+        "category": "Metadata",
+        "value": 0.049663543701171875
+      }
+    },
+    {
+      "id": "legend:Users can write",
+      "role": "legend",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.4800000190734863,
+              -1.3600000143051147,
+              2.513333320617676,
+              -1.3600000143051147,
+              2.5466666221618652,
+              -1.3600000143051147,
+              2.5799999237060547,
+              -1.3600000143051147,
+              2.59104585647583,
+              -1.3600000143051147,
+              2.5999999046325684,
+              -1.3689543008804321,
+              2.5999999046325684,
+              -1.3799999952316284,
+              2.5999999046325684,
+              -1.4133332967758179,
+              2.5999999046325684,
+              -1.4466667175292969,
+              2.5999999046325684,
+              -1.4800000190734863,
+              2.5999999046325684,
+              -1.4910457134246826,
+              2.59104585647583,
+              -1.5,
+              2.5799999237060547,
+              -1.5,
+              2.5466666221618652,
+              -1.5,
+              2.513333320617676,
+              -1.5,
+              2.4800000190734863,
+              -1.5,
+              2.46895432472229,
+              -1.5,
+              2.4600000381469727,
+              -1.4910457134246826,
+              2.4600000381469727,
+              -1.4800000190734863,
+              2.4600000381469727,
+              -1.4466667175292969,
+              2.4600000381469727,
+              -1.4133332967758179,
+              2.4600000381469727,
+              -1.3799999952316284,
+              2.4600000381469727,
+              -1.3689543008804321,
+              2.46895432472229,
+              -1.3600000143051147,
+              2.4800000190734863,
+              -1.3600000143051147
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#4ac26b",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Users can write",
+        "value": 0.924713134765625
+      }
+    },
+    {
+      "id": "legend-label:Users can write",
+      "role": "legend",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Users can write (92.5%)",
+          "fontSize": 0.17,
+          "textRun": {
+            "text": "Users can write (92.5%)",
+            "x": 268,
+            "y": 150.45,
+            "size": 17,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 179.877
+          }
+        }
+      ],
+      "channels": {
+        "category": "Users can write",
+        "value": 0.924713134765625
+      }
+    },
+    {
+      "id": "legend:Kernel reserve",
+      "role": "legend",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.4800000190734863,
+              -1.6100000143051147,
+              2.513333320617676,
+              -1.6100000143051147,
+              2.5466666221618652,
+              -1.6100000143051147,
+              2.5799999237060547,
+              -1.6100000143051147,
+              2.59104585647583,
+              -1.6100000143051147,
+              2.5999999046325684,
+              -1.6189543008804321,
+              2.5999999046325684,
+              -1.6299999952316284,
+              2.5999999046325684,
+              -1.6633332967758179,
+              2.5999999046325684,
+              -1.6966667175292969,
+              2.5999999046325684,
+              -1.7300000190734863,
+              2.5999999046325684,
+              -1.7410457134246826,
+              2.59104585647583,
+              -1.75,
+              2.5799999237060547,
+              -1.75,
+              2.5466666221618652,
+              -1.75,
+              2.513333320617676,
+              -1.75,
+              2.4800000190734863,
+              -1.75,
+              2.46895432472229,
+              -1.75,
+              2.4600000381469727,
+              -1.7410457134246826,
+              2.4600000381469727,
+              -1.7300000190734863,
+              2.4600000381469727,
+              -1.6966667175292969,
+              2.4600000381469727,
+              -1.6633332967758179,
+              2.4600000381469727,
+              -1.6299999952316284,
+              2.4600000381469727,
+              -1.6189543008804321,
+              2.46895432472229,
+              -1.6100000143051147,
+              2.4800000190734863,
+              -1.6100000143051147
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#fb8f44",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Kernel reserve",
+        "value": 0.015625
+      }
+    },
+    {
+      "id": "legend-label:Kernel reserve",
+      "role": "legend",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Kernel reserve (1.6%)",
+          "fontSize": 0.17,
+          "textRun": {
+            "text": "Kernel reserve (1.6%)",
+            "x": 268,
+            "y": 175.45,
+            "size": 17,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 163.404
+          }
+        }
+      ],
+      "channels": {
+        "category": "Kernel reserve",
+        "value": 0.015625
+      }
+    },
+    {
+      "id": "legend:Root reserve",
+      "role": "legend",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.4800000190734863,
+              -1.8600000143051147,
+              2.513333320617676,
+              -1.8600000143051147,
+              2.5466666221618652,
+              -1.8600000143051147,
+              2.5799999237060547,
+              -1.8600000143051147,
+              2.59104585647583,
+              -1.8600000143051147,
+              2.5999999046325684,
+              -1.8689543008804321,
+              2.5999999046325684,
+              -1.8799999952316284,
+              2.5999999046325684,
+              -1.9133332967758179,
+              2.5999999046325684,
+              -1.9466667175292969,
+              2.5999999046325684,
+              -1.9800000190734863,
+              2.5999999046325684,
+              -1.9910457134246826,
+              2.59104585647583,
+              -2,
+              2.5799999237060547,
+              -2,
+              2.5466666221618652,
+              -2,
+              2.513333320617676,
+              -2,
+              2.4800000190734863,
+              -2,
+              2.46895432472229,
+              -2,
+              2.4600000381469727,
+              -1.9910457134246826,
+              2.4600000381469727,
+              -1.9800000190734863,
+              2.4600000381469727,
+              -1.9466667175292969,
+              2.4600000381469727,
+              -1.9133332967758179,
+              2.4600000381469727,
+              -1.8799999952316284,
+              2.4600000381469727,
+              -1.8689543008804321,
+              2.46895432472229,
+              -1.8600000143051147,
+              2.4800000190734863,
+              -1.8600000143051147
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#cf222e",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Root reserve",
+        "value": 0.009998321533203125
+      }
+    },
+    {
+      "id": "legend-label:Root reserve",
+      "role": "legend",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Root reserve (1.0%)",
+          "fontSize": 0.17,
+          "textRun": {
+            "text": "Root reserve (1.0%)",
+            "x": 268,
+            "y": 200.45,
+            "size": 17,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 145.962
+          }
+        }
+      ],
+      "channels": {
+        "category": "Root reserve",
+        "value": 0.009998321533203125
+      }
+    },
+    {
+      "id": "title",
+      "role": "title",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Every 4 KiB block of 1 GiB",
+          "fontSize": 0.18,
+          "textRun": {
+            "text": "Every 4 KiB block of 1 GiB",
+            "x": 235.94,
+            "y": 39.3,
+            "size": 18,
+            "anchor": "middle",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 214.38
+          }
+        }
+      ]
+    }
+  ],
+  "findings": {
+    "ok": true,
+    "warnings": [],
+    "layout": {
+      "version": 1,
+      "kind": "pie",
+      "nodes": [
+        {
+          "id": "slice#0:Metadata",
+          "x": 246,
+          "y": 111,
+          "w": 119,
+          "h": 14,
+          "shape": "rectangle",
+          "label": "Metadata (5.0%)"
+        },
+        {
+          "id": "slice#1:Users can write",
+          "x": 246,
+          "y": 136,
+          "w": 175,
+          "h": 14,
+          "shape": "rectangle",
+          "label": "Users can write (92.5%)"
+        },
+        {
+          "id": "slice#2:Kernel reserve",
+          "x": 246,
+          "y": 161,
+          "w": 161,
+          "h": 14,
+          "shape": "rectangle",
+          "label": "Kernel reserve (1.6%)"
+        },
+        {
+          "id": "slice#3:Root reserve",
+          "x": 246,
+          "y": 186,
+          "w": 147,
+          "h": 14,
+          "shape": "rectangle",
+          "label": "Root reserve (1.0%)"
+        }
+      ],
+      "edges": [],
+      "groups": [],
+      "bounds": {
+        "w": 472,
+        "h": 276
+      }
+    }
+  }
+}

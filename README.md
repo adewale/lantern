@@ -43,7 +43,7 @@ npm run explain -- build my-explainer/scene.ts --out public/my-explainer.html
 
 `init` writes a working scene with one setting. `preview` serves the page and rebuilds it on save. `check` runs every case through [the checks](docs/REFERENCE.md#checks). `build` writes the page and the response headers it needs; [publishing](docs/PUBLISHING.md) shows how to embed it.
 
-Limits: lettering is always the embedded Inter or JetBrains Mono, so styles lose their own fonts and other scripts fail the build; labels are small on a phone until the reader zooms, unless the scene is laid out for a phone as `send-sync` is; only the Mermaid families in `evidence.json` are tested; the models are small and cited, and no subject expert has reviewed the explainers.
+Limits: lettering is the embedded Inter or JetBrains Mono, so styles lose their own fonts; beyond Latin, only numerals draw (Arabic-Indic, Devanagari and Chinese, from small Noto subsets), and other scripts fail the build; on a phone each step opens on a close-up of what it changed, so a reader pans for the rest; only the Mermaid families in `evidence.json` are tested; the models are small and cited, and no subject expert has reviewed the explainers.
 
 ## Documents
 
@@ -57,4 +57,4 @@ Limits: lettering is always the embedded Inter or JetBrains Mono, so styles lose
 
 ## Attribution
 
-Lantern is MIT, copyright 2026 Ivar Vong; its notice is in `LICENSE`. Inter 4.1 and JetBrains Mono 2.242 are under the SIL Open Font License, with notices in `vendor/licenses/`. Agentic Mermaid 0.4.1 is an optional, build-only dependency. Neither project endorses this fork.
+Lantern is MIT, copyright 2026 Ivar Vong; its notice is in `LICENSE`. Inter 4.1, JetBrains Mono 2.242 and the Noto Sans Arabic, Devanagari and SC subsets are under the SIL Open Font License, with notices in `vendor/licenses/`. Agentic Mermaid 0.4.1 is an optional, build-only dependency. Neither project endorses this fork.

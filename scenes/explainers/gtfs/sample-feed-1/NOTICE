@@ -1,0 +1,13 @@
+These seven files are copied unchanged from Google's sample GTFS feed, sample-feed-1, in the
+GTFS Schedule reference:
+
+  https://github.com/google/transit/tree/3c9e7b904b5035349622f03e11851e25c16d1d99/gtfs/spec/en/examples/sample-feed-1
+
+The google/transit repository is licensed under the Apache License, Version 2.0; a copy is in
+LICENSE beside this file. The feed describes an invented "Demo Transit Authority".
+
+The feed's other four files (agency.txt, fare_attributes.txt, fare_rules.txt, shapes.txt) are not
+used here.
+The same feed is also published as sample-feed-1.zip, whose stop_times.txt header misspells
+drop_off_type as drop_off_time and leaves the empty trailing fields off 13 rows; the folder copy
+used here has neither difference, and the times, stops and sequences are the same in both.

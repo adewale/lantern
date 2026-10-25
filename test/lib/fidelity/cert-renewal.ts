@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import type { Trace } from '../../../src/trace.ts';
 import { assertStepState } from '../explainer-state.ts';
-import { BR_PHASES, LE_DATES, LIFETIMES, simulate, summarize, windowFor } from '../../../scenes/explainers/lib/cert-renewal.ts';
+import { BR_PHASES, EMISSION, LE_DATES, LIFETIMES, LIMIT, ariSummary, simulate, summarize, windowFor } from '../../../scenes/explainers/lib/cert-renewal.ts';
 import type { LifetimeKey, Rule } from '../../../scenes/explainers/lib/cert-renewal.ts';
 
 /** Every case's step state equals the renewal model's answers for that lifetime and rule. */
@@ -37,7 +37,9 @@ export function check(trace: Trace, values: Record<string, string>): void {
       refused: mine.refusedPerYear,
     },
   });
-  assertStepState(trace, 'ari', { ari: { replacesSent: false } });
+  const ari = ariSummary(rule, key);
+  assertStepState(trace, 'ari', { ari: { start: ari.start, end: ari.end, runs: ari.runs, perYear: ari.perYear } });
+  assertStepState(trace, 'replaces', { replaces: { replacesSent: false, burst: LIMIT.burst, emissionHours: EMISSION } });
 
   // The headings say the model's counts.
   const title = (step: string) => String(trace.steps.find((s) => s.step === step)!.meta.title);

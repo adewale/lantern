@@ -1,0 +1,6006 @@
+{
+  "version": 1,
+  "renderer": "agentic-mermaid@0.4.1",
+  "spec": {
+    "source": "---\nconfig:\n  er:\n    rankSpacing: 40\n    nodeSpacing: 30\n---\nerDiagram\n  ROUTE ||--o{ TRIP : \"route_id\"\n  TRIP ||--|{ STOP_TIME : \"trip_id\"\n  STOP |o--o{ STOP_TIME : \"stop_id\"\n  TRIP ||--o{ FREQUENCY : \"trip_id\"\n  CALENDAR |o--o{ TRIP : \"service_id\"\n  CALENDAR_DATE }o--o{ TRIP : \"service_id\"\n  ROUTE {\n    id route_id\n    text route_short_name\n  }\n  TRIP {\n    id trip_id\n    id route_id\n    id service_id\n  }\n  STOP_TIME {\n    id trip_id\n    int stop_sequence\n    id stop_id\n    time departure_time\n  }\n  STOP {\n    id stop_id\n    text stop_name\n  }\n  FREQUENCY {\n    id trip_id\n    time start_time\n    time end_time\n    int headway_secs\n  }\n  CALENDAR {\n    id service_id\n    enum monday\n    enum tuesday\n    enum wednesday\n    enum thursday\n    enum friday\n    enum saturday\n    enum sunday\n    date start_date\n    date end_date\n  }\n  CALENDAR_DATE {\n    id service_id\n    date date\n    enum exception_type\n  }",
+    "style": "github-light"
+  },
+  "family": "er",
+  "width": 818.0360000000001,
+  "height": 572,
+  "palette": {
+    "paper": "#ffffff",
+    "ink": "#1f2328",
+    "accent": "#0969da",
+    "muted": "#59636e"
+  },
+  "parts": [
+    {
+      "id": "__frame",
+      "role": "frame",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0,
+              0,
+              2.7267868518829346,
+              0,
+              5.453573703765869,
+              0,
+              8.180359840393066,
+              0,
+              8.180359840393066,
+              -1.9066667556762695,
+              8.180359840393066,
+              -3.813333511352539,
+              8.180359840393066,
+              -5.71999979019165,
+              5.453573703765869,
+              -5.71999979019165,
+              2.7267868518829346,
+              -5.71999979019165,
+              0,
+              -5.71999979019165,
+              0,
+              -3.813333511352539,
+              0,
+              -1.9066667556762695,
+              0,
+              0
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "rel:ROUTE-TRIP#0",
+      "role": "relationship",
+      "kind": "connector",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.131999969482422,
+              -4.929999828338623,
+              2.501113176345825,
+              -4.929999828338623,
+              2.8702268600463867,
+              -4.929999828338623,
+              3.239339828491211,
+              -4.929999828338623,
+              3.239339828491211,
+              -4.360000133514404,
+              3.239339828491211,
+              -3.7899999618530273,
+              3.239339828491211,
+              -3.2200000286102295,
+              3.3393399715423584,
+              -3.2200000286102295,
+              3.4393398761749268,
+              -3.2200000286102295,
+              3.539340019226074,
+              -3.2200000286102295
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "ROUTE",
+      "to": "TRIP",
+      "route": [
+        [
+          2.1319999999999997,
+          -4.93
+        ],
+        [
+          3.2393400000000003,
+          -4.93
+        ],
+        [
+          3.2393400000000003,
+          -3.22
+        ],
+        [
+          3.53934,
+          -3.22
+        ]
+      ],
+      "channels": {
+        "category": "identifying"
+      }
+    },
+    {
+      "id": "rel:TRIP-STOP_TIME#0",
+      "role": "relationship",
+      "kind": "connector",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.939340114593506,
+              -2.8033335208892822,
+              5.2530131340026855,
+              -2.8033335208892822,
+              5.566686630249023,
+              -2.8033335208892822,
+              5.880360126495361,
+              -2.8033335208892822,
+              5.880360126495361,
+              -2.4787778854370117,
+              5.880360126495361,
+              -2.154222249984741,
+              5.880360126495361,
+              -1.8296666145324707,
+              5.98036003112793,
+              -1.8296666145324707,
+              6.080359935760498,
+              -1.8296666145324707,
+              6.180360317230225,
+              -1.8296666145324707
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "TRIP",
+      "to": "STOP_TIME",
+      "route": [
+        [
+          4.9393400000000005,
+          -2.8033333333333332
+        ],
+        [
+          5.8803600000000005,
+          -2.8033333333333332
+        ],
+        [
+          5.8803600000000005,
+          -1.8296666666666668
+        ],
+        [
+          6.18036,
+          -1.8296666666666668
+        ]
+      ],
+      "channels": {
+        "category": "identifying"
+      }
+    },
+    {
+      "id": "rel:STOP-STOP_TIME#0",
+      "role": "relationship",
+      "kind": "connector",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.939340114593506,
+              -1.4229999780654907,
+              5.353013515472412,
+              -1.4229999780654907,
+              5.76668643951416,
+              -1.4229999780654907,
+              6.180360317230225,
+              -1.4229999780654907
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "STOP",
+      "to": "STOP_TIME",
+      "route": [
+        [
+          4.9393400000000005,
+          -1.423
+        ],
+        [
+          6.18036,
+          -1.423
+        ]
+      ],
+      "channels": {
+        "category": "identifying"
+      }
+    },
+    {
+      "id": "rel:TRIP-FREQUENCY#0",
+      "role": "relationship",
+      "kind": "connector",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.939340114593506,
+              -3.1366665363311768,
+              4.972673416137695,
+              -3.1366665363311768,
+              5.006006717681885,
+              -3.1366665363311768,
+              5.039340019226074,
+              -3.1366665363311768,
+              5.039340019226074,
+              -3.1398890018463135,
+              5.039340019226074,
+              -3.143110990524292,
+              5.039340019226074,
+              -3.1463332176208496,
+              5.419680118560791,
+              -3.1463332176208496,
+              5.800020217895508,
+              -3.1463332176208496,
+              6.180360317230225,
+              -3.1463332176208496
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "TRIP",
+      "to": "FREQUENCY",
+      "route": [
+        [
+          4.9393400000000005,
+          -3.1366666666666663
+        ],
+        [
+          5.03934,
+          -3.1366666666666663
+        ],
+        [
+          5.03934,
+          -3.146333333333333
+        ],
+        [
+          6.18036,
+          -3.146333333333333
+        ]
+      ],
+      "channels": {
+        "category": "identifying"
+      }
+    },
+    {
+      "id": "rel:CALENDAR-TRIP#0",
+      "role": "relationship",
+      "kind": "connector",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.131999969482422,
+              -2.9700000286102295,
+              2.6011133193969727,
+              -2.9700000286102295,
+              3.0702266693115234,
+              -2.9700000286102295,
+              3.539340019226074,
+              -2.9700000286102295
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "CALENDAR",
+      "to": "TRIP",
+      "route": [
+        [
+          2.1319999999999997,
+          -2.97
+        ],
+        [
+          3.53934,
+          -2.97
+        ]
+      ],
+      "channels": {
+        "category": "identifying"
+      }
+    },
+    {
+      "id": "rel:CALENDAR_DATE-TRIP#0",
+      "role": "relationship",
+      "kind": "connector",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.131999969482422,
+              -0.8999999761581421,
+              2.501113176345825,
+              -0.8999999761581421,
+              2.8702268600463867,
+              -0.8999999761581421,
+              3.239339828491211,
+              -0.8999999761581421,
+              3.239339828491211,
+              -1.506666660308838,
+              3.239339828491211,
+              -2.113333225250244,
+              3.239339828491211,
+              -2.7200000286102295,
+              3.3393399715423584,
+              -2.7200000286102295,
+              3.4393398761749268,
+              -2.7200000286102295,
+              3.539340019226074,
+              -2.7200000286102295
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "CALENDAR_DATE",
+      "to": "TRIP",
+      "route": [
+        [
+          2.1319999999999997,
+          -0.9
+        ],
+        [
+          3.2393400000000003,
+          -0.9
+        ],
+        [
+          3.2393400000000003,
+          -2.72
+        ],
+        [
+          3.53934,
+          -2.72
+        ]
+      ],
+      "channels": {
+        "category": "identifying"
+      }
+    },
+    {
+      "id": "entity:ROUTE",
+      "role": "entity",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.4000000059604645,
+              -4.539999961853027,
+              0.9773333072662354,
+              -4.539999961853027,
+              1.5546666383743286,
+              -4.539999961853027,
+              2.131999969482422,
+              -4.539999961853027,
+              2.131999969482422,
+              -4.800000190734863,
+              2.131999969482422,
+              -5.059999942779541,
+              2.131999969482422,
+              -5.320000171661377,
+              1.5546666383743286,
+              -5.320000171661377,
+              0.9773333072662354,
+              -5.320000171661377,
+              0.4000000059604645,
+              -5.320000171661377,
+              0.4000000059604645,
+              -5.059999942779541,
+              0.4000000059604645,
+              -4.800000190734863,
+              0.4000000059604645,
+              -4.539999961853027
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f8f8f9",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              0.4000000059604645,
+              -4.539999961853027,
+              0.9773333072662354,
+              -4.539999961853027,
+              1.5546666383743286,
+              -4.539999961853027,
+              2.131999969482422,
+              -4.539999961853027,
+              2.131999969482422,
+              -4.65333366394043,
+              2.131999969482422,
+              -4.766666412353516,
+              2.131999969482422,
+              -4.880000114440918,
+              1.5546666383743286,
+              -4.880000114440918,
+              0.9773333072662354,
+              -4.880000114440918,
+              0.4000000059604645,
+              -4.880000114440918,
+              0.4000000059604645,
+              -4.766666412353516,
+              0.4000000059604645,
+              -4.65333366394043,
+              0.4000000059604645,
+              -4.539999961853027
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f4f4f4",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "ROUTE",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "ROUTE",
+            "x": 126.6,
+            "y": 475.55,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 48.75
+          }
+        },
+        {
+          "subpaths": [
+            [
+              0.4000000059604645,
+              -4.880000114440918,
+              0.9773333072662354,
+              -4.880000114440918,
+              1.5546666383743286,
+              -4.880000114440918,
+              2.131999969482422,
+              -4.880000114440918
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "id",
+            "x": 48,
+            "y": 502.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 13.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "route_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "route_id",
+            "x": 205.2,
+            "y": 502.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 52.8
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "text",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "text",
+            "x": 48,
+            "y": 524.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "route_short_name",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "route_short_name",
+            "x": 205.2,
+            "y": 524.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 105.6
+          }
+        }
+      ]
+    },
+    {
+      "id": "entity:TRIP",
+      "role": "entity",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.539340019226074,
+              -2.4700000286102295,
+              4.006006240844727,
+              -2.4700000286102295,
+              4.472673416137695,
+              -2.4700000286102295,
+              4.939340114593506,
+              -2.4700000286102295,
+              4.939340114593506,
+              -2.8033335208892822,
+              4.939340114593506,
+              -3.1366665363311768,
+              4.939340114593506,
+              -3.4700000286102295,
+              4.472673416137695,
+              -3.4700000286102295,
+              4.006006717681885,
+              -3.4700000286102295,
+              3.539340019226074,
+              -3.4700000286102295,
+              3.539340019226074,
+              -3.1366665363311768,
+              3.539340019226074,
+              -2.8033335208892822,
+              3.539340019226074,
+              -2.4700000286102295
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f8f8f9",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.539340019226074,
+              -2.4700000286102295,
+              4.006006240844727,
+              -2.4700000286102295,
+              4.472673416137695,
+              -2.4700000286102295,
+              4.939340114593506,
+              -2.4700000286102295,
+              4.939340114593506,
+              -2.5833334922790527,
+              4.939340114593506,
+              -2.6966664791107178,
+              4.939340114593506,
+              -2.809999942779541,
+              4.472673416137695,
+              -2.809999942779541,
+              4.006006717681885,
+              -2.809999942779541,
+              3.539340019226074,
+              -2.809999942779541,
+              3.539340019226074,
+              -2.6966664791107178,
+              3.539340019226074,
+              -2.5833334922790527,
+              3.539340019226074,
+              -2.4700000286102295
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f4f4f4",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "TRIP",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "TRIP",
+            "x": 423.934,
+            "y": 268.55,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 33.15
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.539340019226074,
+              -2.809999942779541,
+              4.006006240844727,
+              -2.809999942779541,
+              4.472673416137695,
+              -2.809999942779541,
+              4.939340114593506,
+              -2.809999942779541
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "id",
+            "x": 361.934,
+            "y": 295.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 13.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "trip_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "trip_id",
+            "x": 485.934,
+            "y": 295.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 46.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "id",
+            "x": 361.934,
+            "y": 317.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 13.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "route_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "route_id",
+            "x": 485.934,
+            "y": 317.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 52.8
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "id",
+            "x": 361.934,
+            "y": 339.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 13.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "service_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "service_id",
+            "x": 485.934,
+            "y": 339.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 66
+          }
+        }
+      ]
+    },
+    {
+      "id": "entity:STOP_TIME",
+      "role": "entity",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              6.180360317230225,
+              -1.0163333415985107,
+              6.713693141937256,
+              -1.0163333415985107,
+              7.2470269203186035,
+              -1.0163333415985107,
+              7.780360221862793,
+              -1.0163333415985107,
+              7.780360221862793,
+              -1.4229999780654907,
+              7.780360221862793,
+              -1.8296666145324707,
+              7.780360221862793,
+              -2.2363333702087402,
+              7.2470269203186035,
+              -2.2363333702087402,
+              6.713693141937256,
+              -2.2363333702087402,
+              6.180360317230225,
+              -2.2363333702087402,
+              6.180360317230225,
+              -1.8296666145324707,
+              6.180360317230225,
+              -1.4229999780654907,
+              6.180360317230225,
+              -1.0163333415985107
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f8f8f9",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              6.180360317230225,
+              -1.0163333415985107,
+              6.713693141937256,
+              -1.0163333415985107,
+              7.2470269203186035,
+              -1.0163333415985107,
+              7.780360221862793,
+              -1.0163333415985107,
+              7.780360221862793,
+              -1.1296666860580444,
+              7.780360221862793,
+              -1.2430000305175781,
+              7.780360221862793,
+              -1.3563332557678223,
+              7.2470269203186035,
+              -1.3563332557678223,
+              6.713693141937256,
+              -1.3563332557678223,
+              6.180360317230225,
+              -1.3563332557678223,
+              6.180360317230225,
+              -1.2429999113082886,
+              6.180360317230225,
+              -1.1296666860580444,
+              6.180360317230225,
+              -1.0163333415985107
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f4f4f4",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "STOP_TIME",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "STOP_TIME",
+            "x": 698.0360000000001,
+            "y": 123.18333333333332,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 80.73
+          }
+        },
+        {
+          "subpaths": [
+            [
+              6.180360317230225,
+              -1.3563332557678223,
+              6.713693141937256,
+              -1.3563332557678223,
+              7.2470269203186035,
+              -1.3563332557678223,
+              7.780360221862793,
+              -1.3563332557678223
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "id",
+            "x": 626.0360000000001,
+            "y": 150.48333333333332,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 13.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "trip_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "trip_id",
+            "x": 770.0360000000001,
+            "y": 150.48333333333332,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 46.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "int",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "int",
+            "x": 626.0360000000001,
+            "y": 172.48333333333332,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 19.8
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "stop_sequence",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "stop_sequence",
+            "x": 770.0360000000001,
+            "y": 172.48333333333332,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 85.8
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "id",
+            "x": 626.0360000000001,
+            "y": 194.48333333333332,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 13.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "stop_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "stop_id",
+            "x": 770.0360000000001,
+            "y": 194.48333333333332,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 46.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "time",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "time",
+            "x": 626.0360000000001,
+            "y": 216.48333333333332,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "departure_time",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "departure_time",
+            "x": 770.0360000000001,
+            "y": 216.48333333333332,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 92.4
+          }
+        }
+      ]
+    },
+    {
+      "id": "entity:STOP",
+      "role": "entity",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.539340019226074,
+              -1.0329999923706055,
+              4.006006240844727,
+              -1.0329999923706055,
+              4.472673416137695,
+              -1.0329999923706055,
+              4.939340114593506,
+              -1.0329999923706055,
+              4.939340114593506,
+              -1.2929999828338623,
+              4.939340114593506,
+              -1.5529999732971191,
+              4.939340114593506,
+              -1.8130000829696655,
+              4.472673416137695,
+              -1.8130000829696655,
+              4.006006717681885,
+              -1.8130000829696655,
+              3.539340019226074,
+              -1.8130000829696655,
+              3.539340019226074,
+              -1.5529999732971191,
+              3.539340019226074,
+              -1.2929999828338623,
+              3.539340019226074,
+              -1.0329999923706055
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f8f8f9",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.539340019226074,
+              -1.0329999923706055,
+              4.006006240844727,
+              -1.0329999923706055,
+              4.472673416137695,
+              -1.0329999923706055,
+              4.939340114593506,
+              -1.0329999923706055,
+              4.939340114593506,
+              -1.1463333368301392,
+              4.939340114593506,
+              -1.2596666812896729,
+              4.939340114593506,
+              -1.3730000257492065,
+              4.472673416137695,
+              -1.3730000257492065,
+              4.006006717681885,
+              -1.3730000257492065,
+              3.539340019226074,
+              -1.3730000257492065,
+              3.539340019226074,
+              -1.2596666812896729,
+              3.539340019226074,
+              -1.1463333368301392,
+              3.539340019226074,
+              -1.0329999923706055
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f4f4f4",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "STOP",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "STOP",
+            "x": 423.934,
+            "y": 124.85,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 39.39
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.539340019226074,
+              -1.3730000257492065,
+              4.006006240844727,
+              -1.3730000257492065,
+              4.472673416137695,
+              -1.3730000257492065,
+              4.939340114593506,
+              -1.3730000257492065
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "id",
+            "x": 361.934,
+            "y": 152.15,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 13.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "stop_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "stop_id",
+            "x": 485.934,
+            "y": 152.15,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 46.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "text",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "text",
+            "x": 361.934,
+            "y": 174.15,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "stop_name",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "stop_name",
+            "x": 485.934,
+            "y": 174.15,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 59.4
+          }
+        }
+      ]
+    },
+    {
+      "id": "entity:FREQUENCY",
+      "role": "entity",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              6.180360317230225,
+              -2.5363333225250244,
+              6.647693634033203,
+              -2.5363333225250244,
+              7.115026950836182,
+              -2.5363333225250244,
+              7.58236026763916,
+              -2.5363333225250244,
+              7.58236026763916,
+              -2.942999839782715,
+              7.58236026763916,
+              -3.3496668338775635,
+              7.58236026763916,
+              -3.756333351135254,
+              7.115026950836182,
+              -3.756333351135254,
+              6.647693634033203,
+              -3.756333351135254,
+              6.180360317230225,
+              -3.756333351135254,
+              6.180360317230225,
+              -3.3496668338775635,
+              6.180360317230225,
+              -2.942999839782715,
+              6.180360317230225,
+              -2.5363333225250244
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f8f8f9",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              6.180360317230225,
+              -2.5363333225250244,
+              6.647693634033203,
+              -2.5363333225250244,
+              7.115026950836182,
+              -2.5363333225250244,
+              7.58236026763916,
+              -2.5363333225250244,
+              7.58236026763916,
+              -2.6496667861938477,
+              7.58236026763916,
+              -2.7629997730255127,
+              7.58236026763916,
+              -2.876333236694336,
+              7.115026950836182,
+              -2.876333236694336,
+              6.647693634033203,
+              -2.876333236694336,
+              6.180360317230225,
+              -2.876333236694336,
+              6.180360317230225,
+              -2.7629997730255127,
+              6.180360317230225,
+              -2.6496667861938477,
+              6.180360317230225,
+              -2.5363333225250244
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f4f4f4",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "FREQUENCY",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "FREQUENCY",
+            "x": 688.1360000000001,
+            "y": 275.18333333333334,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 86.19
+          }
+        },
+        {
+          "subpaths": [
+            [
+              6.180360317230225,
+              -2.876333236694336,
+              6.647693634033203,
+              -2.876333236694336,
+              7.115026950836182,
+              -2.876333236694336,
+              7.58236026763916,
+              -2.876333236694336
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "id",
+            "x": 626.0360000000001,
+            "y": 302.48333333333335,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 13.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "trip_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "trip_id",
+            "x": 750.2360000000001,
+            "y": 302.48333333333335,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 46.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "time",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "time",
+            "x": 626.0360000000001,
+            "y": 324.48333333333335,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "start_time",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "start_time",
+            "x": 750.2360000000001,
+            "y": 324.48333333333335,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 66
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "time",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "time",
+            "x": 626.0360000000001,
+            "y": 346.48333333333335,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "end_time",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "end_time",
+            "x": 750.2360000000001,
+            "y": 346.48333333333335,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 52.8
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "int",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "int",
+            "x": 626.0360000000001,
+            "y": 368.48333333333335,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 19.8
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "headway_secs",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "headway_secs",
+            "x": 750.2360000000001,
+            "y": 368.48333333333335,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 79.2
+          }
+        }
+      ]
+    },
+    {
+      "id": "entity:CALENDAR",
+      "role": "entity",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.7319999933242798,
+              -1.7000000476837158,
+              1.1986665725708008,
+              -1.7000000476837158,
+              1.6653332710266113,
+              -1.7000000476837158,
+              2.131999969482422,
+              -1.7000000476837158,
+              2.131999969482422,
+              -2.5466666221618652,
+              2.131999969482422,
+              -3.3933334350585938,
+              2.131999969482422,
+              -4.239999771118164,
+              1.6653332710266113,
+              -4.239999771118164,
+              1.1986666917800903,
+              -4.239999771118164,
+              0.7319999933242798,
+              -4.239999771118164,
+              0.7319999933242798,
+              -3.3933334350585938,
+              0.7319999933242798,
+              -2.5466666221618652,
+              0.7319999933242798,
+              -1.7000000476837158
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f8f8f9",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              0.7319999933242798,
+              -1.7000000476837158,
+              1.1986665725708008,
+              -1.7000000476837158,
+              1.6653332710266113,
+              -1.7000000476837158,
+              2.131999969482422,
+              -1.7000000476837158,
+              2.131999969482422,
+              -1.81333327293396,
+              2.131999969482422,
+              -1.9266667366027832,
+              2.131999969482422,
+              -2.0399999618530273,
+              1.6653332710266113,
+              -2.0399999618530273,
+              1.1986666917800903,
+              -2.0399999618530273,
+              0.7319999933242798,
+              -2.0399999618530273,
+              0.7319999933242798,
+              -1.9266667366027832,
+              0.7319999933242798,
+              -1.81333327293396,
+              0.7319999933242798,
+              -1.7000000476837158
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f4f4f4",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "CALENDAR",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "CALENDAR",
+            "x": 143.2,
+            "y": 191.55,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 76.83
+          }
+        },
+        {
+          "subpaths": [
+            [
+              0.7319999933242798,
+              -2.0399999618530273,
+              1.1986665725708008,
+              -2.0399999618530273,
+              1.6653332710266113,
+              -2.0399999618530273,
+              2.131999969482422,
+              -2.0399999618530273
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "id",
+            "x": 81.19999999999999,
+            "y": 218.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 13.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "service_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "service_id",
+            "x": 205.2,
+            "y": 218.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 66
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "enum",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "enum",
+            "x": 81.19999999999999,
+            "y": 240.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "monday",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "monday",
+            "x": 205.2,
+            "y": 240.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 39.6
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "enum",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "enum",
+            "x": 81.19999999999999,
+            "y": 262.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "tuesday",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "tuesday",
+            "x": 205.2,
+            "y": 262.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 46.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "enum",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "enum",
+            "x": 81.19999999999999,
+            "y": 284.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "wednesday",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "wednesday",
+            "x": 205.2,
+            "y": 284.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 59.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "enum",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "enum",
+            "x": 81.19999999999999,
+            "y": 306.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "thursday",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "thursday",
+            "x": 205.2,
+            "y": 306.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 52.8
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "enum",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "enum",
+            "x": 81.19999999999999,
+            "y": 328.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "friday",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "friday",
+            "x": 205.2,
+            "y": 328.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 39.6
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "enum",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "enum",
+            "x": 81.19999999999999,
+            "y": 350.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "saturday",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "saturday",
+            "x": 205.2,
+            "y": 350.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 52.8
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "enum",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "enum",
+            "x": 81.19999999999999,
+            "y": 372.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "sunday",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "sunday",
+            "x": 205.2,
+            "y": 372.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 39.6
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "date",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "date",
+            "x": 81.19999999999999,
+            "y": 394.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "start_date",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "start_date",
+            "x": 205.2,
+            "y": 394.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 66
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "date",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "date",
+            "x": 81.19999999999999,
+            "y": 416.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "end_date",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "end_date",
+            "x": 205.2,
+            "y": 416.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 52.8
+          }
+        }
+      ]
+    },
+    {
+      "id": "entity:CALENDAR_DATE",
+      "role": "entity",
+      "kind": "group",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.5320000052452087,
+              -0.4000000059604645,
+              1.065333366394043,
+              -0.4000000059604645,
+              1.5986666679382324,
+              -0.4000000059604645,
+              2.131999969482422,
+              -0.4000000059604645,
+              2.131999969482422,
+              -0.7333333492279053,
+              2.131999969482422,
+              -1.066666603088379,
+              2.131999969482422,
+              -1.399999976158142,
+              1.5986666679382324,
+              -1.399999976158142,
+              1.065333366394043,
+              -1.399999976158142,
+              0.5320000052452087,
+              -1.399999976158142,
+              0.5320000052452087,
+              -1.066666603088379,
+              0.5320000052452087,
+              -0.7333333492279053,
+              0.5320000052452087,
+              -0.4000000059604645
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f8f8f9",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              0.5320000052452087,
+              -0.4000000059604645,
+              1.065333366394043,
+              -0.4000000059604645,
+              1.5986666679382324,
+              -0.4000000059604645,
+              2.131999969482422,
+              -0.4000000059604645,
+              2.131999969482422,
+              -0.5133333206176758,
+              2.131999969482422,
+              -0.6266666650772095,
+              2.131999969482422,
+              -0.7400000095367432,
+              1.5986666679382324,
+              -0.7400000095367432,
+              1.065333366394043,
+              -0.7400000095367432,
+              0.5320000052452087,
+              -0.7400000095367432,
+              0.5320000052452087,
+              -0.6266666650772095,
+              0.5320000052452087,
+              -0.5133333206176758,
+              0.5320000052452087,
+              -0.4000000059604645
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f4f4f4",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "CALENDAR_DATE",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "CALENDAR_DATE",
+            "x": 133.2,
+            "y": 61.55,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 122.07
+          }
+        },
+        {
+          "subpaths": [
+            [
+              0.5320000052452087,
+              -0.7400000095367432,
+              1.065333366394043,
+              -0.7400000095367432,
+              1.5986666679382324,
+              -0.7400000095367432,
+              2.131999969482422,
+              -0.7400000095367432
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "id",
+            "x": 61.19999999999999,
+            "y": 88.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 13.2
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "service_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "service_id",
+            "x": 205.2,
+            "y": 88.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 66
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "date",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "date",
+            "x": 61.19999999999999,
+            "y": 110.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "date",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "date",
+            "x": 205.2,
+            "y": 110.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "enum",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "enum",
+            "x": 61.19999999999999,
+            "y": 132.85,
+            "size": 11,
+            "anchor": "start",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 26.4
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "exception_type",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "exception_type",
+            "x": 205.2,
+            "y": 132.85,
+            "size": 11,
+            "anchor": "end",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 92.4
+          }
+        }
+      ]
+    },
+    {
+      "id": "card:ROUTE-TRIP#0:1",
+      "role": "cardinality",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.171999931335449,
+              -4.869999885559082,
+              2.171999931335449,
+              -4.909999847412109,
+              2.171999931335449,
+              -4.949999809265137,
+              2.171999931335449,
+              -4.989999771118164
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.2119998931884766,
+              -4.869999885559082,
+              2.2119998931884766,
+              -4.909999847412109,
+              2.2119998931884766,
+              -4.949999809265137,
+              2.2119998931884766,
+              -4.989999771118164
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "one"
+      }
+    },
+    {
+      "id": "card:ROUTE-TRIP#0:2",
+      "role": "cardinality",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.4993398189544678,
+              -3.2899999618530273,
+              3.4593398571014404,
+              -3.2666666507720947,
+              3.419339895248413,
+              -3.243333339691162,
+              3.3793399333953857,
+              -3.2200000286102295
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.4993398189544678,
+              -3.2200000286102295,
+              3.4593398571014404,
+              -3.2200000286102295,
+              3.419339895248413,
+              -3.2200000286102295,
+              3.3793399333953857,
+              -3.2200000286102295
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.4993398189544678,
+              -3.1500000953674316,
+              3.4593398571014404,
+              -3.1733334064483643,
+              3.419339895248413,
+              -3.1966664791107178,
+              3.3793399333953857,
+              -3.2200000286102295
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.299340009689331,
+              -3.2200000286102295,
+              3.299340009689331,
+              -3.242091417312622,
+              3.317248582839966,
+              -3.259999990463257,
+              3.3393399715423584,
+              -3.259999990463257,
+              3.361431360244751,
+              -3.259999990463257,
+              3.3793399333953857,
+              -3.242091417312622,
+              3.3793399333953857,
+              -3.2200000286102295,
+              3.3793399333953857,
+              -3.197908639907837,
+              3.361431360244751,
+              -3.180000066757202,
+              3.3393399715423584,
+              -3.180000066757202,
+              3.317248582839966,
+              -3.180000066757202,
+              3.299340009689331,
+              -3.197908639907837,
+              3.299340009689331,
+              -3.2200000286102295
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "zero-many"
+      }
+    },
+    {
+      "id": "card:TRIP-STOP_TIME#0:1",
+      "role": "cardinality",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.979340076446533,
+              -2.743333339691162,
+              4.979340076446533,
+              -2.7833335399627686,
+              4.979340076446533,
+              -2.823333501815796,
+              4.979340076446533,
+              -2.8633334636688232
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              5.0193400382995605,
+              -2.743333339691162,
+              5.0193400382995605,
+              -2.7833335399627686,
+              5.0193400382995605,
+              -2.823333501815796,
+              5.0193400382995605,
+              -2.8633334636688232
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "one"
+      }
+    },
+    {
+      "id": "card:TRIP-STOP_TIME#0:2",
+      "role": "cardinality",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              6.140359878540039,
+              -1.8996665477752686,
+              6.100359916687012,
+              -1.8763333559036255,
+              6.060359954833984,
+              -1.8530000448226929,
+              6.020359992980957,
+              -1.8296666145324707
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              6.140359878540039,
+              -1.8296666145324707,
+              6.100359916687012,
+              -1.8296666145324707,
+              6.060359954833984,
+              -1.8296666145324707,
+              6.020359992980957,
+              -1.8296666145324707
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              6.140359878540039,
+              -1.7596665620803833,
+              6.100359916687012,
+              -1.782999873161316,
+              6.060359954833984,
+              -1.806333303451538,
+              6.020359992980957,
+              -1.8296666145324707
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              5.98036003112793,
+              -1.8896665573120117,
+              5.98036003112793,
+              -1.8496665954589844,
+              5.98036003112793,
+              -1.809666633605957,
+              5.98036003112793,
+              -1.7696665525436401
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "many"
+      }
+    },
+    {
+      "id": "card:STOP-STOP_TIME#0:1",
+      "role": "cardinality",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.979340076446533,
+              -1.3630000352859497,
+              4.979340076446533,
+              -1.402999997138977,
+              4.979340076446533,
+              -1.443000078201294,
+              4.979340076446533,
+              -1.4830000400543213
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              5.0193400382995605,
+              -1.4229999780654907,
+              5.0193400382995605,
+              -1.4450913667678833,
+              5.037248611450195,
+              -1.4630000591278076,
+              5.059340000152588,
+              -1.4630000591278076,
+              5.0814313888549805,
+              -1.4630000591278076,
+              5.099339962005615,
+              -1.4450913667678833,
+              5.099339962005615,
+              -1.4229999780654907,
+              5.099339962005615,
+              -1.4009087085723877,
+              5.0814313888549805,
+              -1.3830000162124634,
+              5.059340000152588,
+              -1.3830000162124634,
+              5.037248611450195,
+              -1.3830000162124634,
+              5.0193400382995605,
+              -1.4009087085723877,
+              5.0193400382995605,
+              -1.4229999780654907
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "zero-one"
+      }
+    },
+    {
+      "id": "card:STOP-STOP_TIME#0:2",
+      "role": "cardinality",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              6.140359878540039,
+              -1.4930000305175781,
+              6.100359916687012,
+              -1.4696667194366455,
+              6.060359954833984,
+              -1.4463332891464233,
+              6.020359992980957,
+              -1.4229999780654907
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              6.140359878540039,
+              -1.4229999780654907,
+              6.100359916687012,
+              -1.4229999780654907,
+              6.060359954833984,
+              -1.4229999780654907,
+              6.020359992980957,
+              -1.4229999780654907
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              6.140359878540039,
+              -1.3530000448226929,
+              6.100359916687012,
+              -1.3763333559036255,
+              6.060359954833984,
+              -1.3996667861938477,
+              6.020359992980957,
+              -1.4229999780654907
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              5.940360069274902,
+              -1.4229999780654907,
+              5.940360069274902,
+              -1.4450913667678833,
+              5.958268642425537,
+              -1.4630000591278076,
+              5.98036003112793,
+              -1.4630000591278076,
+              6.002450942993164,
+              -1.4630000591278076,
+              6.020359992980957,
+              -1.4450913667678833,
+              6.020359992980957,
+              -1.4229999780654907,
+              6.020359992980957,
+              -1.4009087085723877,
+              6.002450942993164,
+              -1.3830000162124634,
+              5.98036003112793,
+              -1.3830000162124634,
+              5.958268642425537,
+              -1.3830000162124634,
+              5.940360069274902,
+              -1.4009087085723877,
+              5.940360069274902,
+              -1.4229999780654907
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "zero-many"
+      }
+    },
+    {
+      "id": "card:TRIP-FREQUENCY#0:1",
+      "role": "cardinality",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.979340076446533,
+              -3.0766665935516357,
+              4.979340076446533,
+              -3.116666555404663,
+              4.979340076446533,
+              -3.1566665172576904,
+              4.979340076446533,
+              -3.1966664791107178
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              5.0193400382995605,
+              -3.0766665935516357,
+              5.0193400382995605,
+              -3.116666555404663,
+              5.0193400382995605,
+              -3.1566665172576904,
+              5.0193400382995605,
+              -3.1966664791107178
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "one"
+      }
+    },
+    {
+      "id": "card:TRIP-FREQUENCY#0:2",
+      "role": "cardinality",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              6.140359878540039,
+              -3.2163333892822266,
+              6.100359916687012,
+              -3.192999839782715,
+              6.060359954833984,
+              -3.1696667671203613,
+              6.020359992980957,
+              -3.1463332176208496
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              6.140359878540039,
+              -3.1463332176208496,
+              6.100359916687012,
+              -3.1463332176208496,
+              6.060359954833984,
+              -3.1463332176208496,
+              6.020359992980957,
+              -3.1463332176208496
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              6.140359878540039,
+              -3.0763332843780518,
+              6.100359916687012,
+              -3.0996668338775635,
+              6.060359954833984,
+              -3.122999906539917,
+              6.020359992980957,
+              -3.1463332176208496
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              5.940360069274902,
+              -3.1463332176208496,
+              5.940360069274902,
+              -3.168424606323242,
+              5.958268642425537,
+              -3.186333417892456,
+              5.98036003112793,
+              -3.186333417892456,
+              6.002450942993164,
+              -3.186333417892456,
+              6.020359992980957,
+              -3.168424606323242,
+              6.020359992980957,
+              -3.1463332176208496,
+              6.020359992980957,
+              -3.124241828918457,
+              6.002450942993164,
+              -3.1063332557678223,
+              5.98036003112793,
+              -3.1063332557678223,
+              5.958268642425537,
+              -3.1063332557678223,
+              5.940360069274902,
+              -3.124241828918457,
+              5.940360069274902,
+              -3.1463332176208496
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "zero-many"
+      }
+    },
+    {
+      "id": "card:CALENDAR-TRIP#0:1",
+      "role": "cardinality",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.171999931335449,
+              -2.9100000858306885,
+              2.171999931335449,
+              -2.950000047683716,
+              2.171999931335449,
+              -2.990000009536743,
+              2.171999931335449,
+              -3.0299999713897705
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.2119998931884766,
+              -2.9700000286102295,
+              2.2119998931884766,
+              -2.992091417312622,
+              2.2299087047576904,
+              -3.009999990463257,
+              2.251999855041504,
+              -3.009999990463257,
+              2.2740912437438965,
+              -3.009999990463257,
+              2.2920000553131104,
+              -2.992091417312622,
+              2.2920000553131104,
+              -2.9700000286102295,
+              2.2920000553131104,
+              -2.947908639907837,
+              2.2740912437438965,
+              -2.930000066757202,
+              2.251999855041504,
+              -2.930000066757202,
+              2.2299087047576904,
+              -2.930000066757202,
+              2.2119998931884766,
+              -2.947908639907837,
+              2.2119998931884766,
+              -2.9700000286102295
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "zero-one"
+      }
+    },
+    {
+      "id": "card:CALENDAR-TRIP#0:2",
+      "role": "cardinality",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.4993398189544678,
+              -3.0399999618530273,
+              3.4593398571014404,
+              -3.0166666507720947,
+              3.419339895248413,
+              -2.993333339691162,
+              3.3793399333953857,
+              -2.9700000286102295
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.4993398189544678,
+              -2.9700000286102295,
+              3.4593398571014404,
+              -2.9700000286102295,
+              3.419339895248413,
+              -2.9700000286102295,
+              3.3793399333953857,
+              -2.9700000286102295
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.4993398189544678,
+              -2.9000000953674316,
+              3.4593398571014404,
+              -2.9233334064483643,
+              3.419339895248413,
+              -2.9466664791107178,
+              3.3793399333953857,
+              -2.9700000286102295
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.299340009689331,
+              -2.9700000286102295,
+              3.299340009689331,
+              -2.992091417312622,
+              3.317248582839966,
+              -3.009999990463257,
+              3.3393399715423584,
+              -3.009999990463257,
+              3.361431360244751,
+              -3.009999990463257,
+              3.3793399333953857,
+              -2.992091417312622,
+              3.3793399333953857,
+              -2.9700000286102295,
+              3.3793399333953857,
+              -2.947908639907837,
+              3.361431360244751,
+              -2.930000066757202,
+              3.3393399715423584,
+              -2.930000066757202,
+              3.317248582839966,
+              -2.930000066757202,
+              3.299340009689331,
+              -2.947908639907837,
+              3.299340009689331,
+              -2.9700000286102295
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "zero-many"
+      }
+    },
+    {
+      "id": "card:CALENDAR_DATE-TRIP#0:1",
+      "role": "cardinality",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.171999931335449,
+              -0.8299999833106995,
+              2.2119998931884766,
+              -0.8533333539962769,
+              2.251999855041504,
+              -0.8766666650772095,
+              2.2920000553131104,
+              -0.8999999761581421
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.171999931335449,
+              -0.8999999761581421,
+              2.2119998931884766,
+              -0.8999999761581421,
+              2.251999855041504,
+              -0.8999999761581421,
+              2.2920000553131104,
+              -0.8999999761581421
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.171999931335449,
+              -0.9700000286102295,
+              2.2119998931884766,
+              -0.9466666579246521,
+              2.251999855041504,
+              -0.9233333468437195,
+              2.2920000553131104,
+              -0.8999999761581421
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.2920000553131104,
+              -0.8999999761581421,
+              2.2920000553131104,
+              -0.9220913648605347,
+              2.309908628463745,
+              -0.9399999976158142,
+              2.3320000171661377,
+              -0.9399999976158142,
+              2.3540914058685303,
+              -0.9399999976158142,
+              2.371999979019165,
+              -0.9220913648605347,
+              2.371999979019165,
+              -0.8999999761581421,
+              2.371999979019165,
+              -0.8779086470603943,
+              2.3540914058685303,
+              -0.8600000143051147,
+              2.3320000171661377,
+              -0.8600000143051147,
+              2.309908628463745,
+              -0.8600000143051147,
+              2.2920000553131104,
+              -0.8779086470603943,
+              2.2920000553131104,
+              -0.8999999761581421
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "zero-many"
+      }
+    },
+    {
+      "id": "card:CALENDAR_DATE-TRIP#0:2",
+      "role": "cardinality",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.4993398189544678,
+              -2.7899999618530273,
+              3.4593398571014404,
+              -2.7666666507720947,
+              3.419339895248413,
+              -2.743333339691162,
+              3.3793399333953857,
+              -2.7200000286102295
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.4993398189544678,
+              -2.7200000286102295,
+              3.4593398571014404,
+              -2.7200000286102295,
+              3.419339895248413,
+              -2.7200000286102295,
+              3.3793399333953857,
+              -2.7200000286102295
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.4993398189544678,
+              -2.6500000953674316,
+              3.4593398571014404,
+              -2.6733334064483643,
+              3.419339895248413,
+              -2.6966664791107178,
+              3.3793399333953857,
+              -2.7200000286102295
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.299340009689331,
+              -2.7200000286102295,
+              3.299340009689331,
+              -2.742091417312622,
+              3.317248582839966,
+              -2.759999990463257,
+              3.3393399715423584,
+              -2.759999990463257,
+              3.361431360244751,
+              -2.759999990463257,
+              3.3793399333953857,
+              -2.742091417312622,
+              3.3793399333953857,
+              -2.7200000286102295,
+              3.3793399333953857,
+              -2.697908639907837,
+              3.361431360244751,
+              -2.680000066757202,
+              3.3393399715423584,
+              -2.680000066757202,
+              3.317248582839966,
+              -2.680000066757202,
+              3.299340009689331,
+              -2.697908639907837,
+              3.299340009689331,
+              -2.7200000286102295
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.0125,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "zero-many"
+      }
+    },
+    {
+      "id": "rel-label:ROUTE-TRIP#0:bg",
+      "role": "chrome",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.0150699615478516,
+              -4.377170085906982,
+              3.164583206176758,
+              -4.377170085906982,
+              3.314096689224243,
+              -4.377170085906982,
+              3.4636099338531494,
+              -4.377170085906982,
+              3.474655866622925,
+              -4.377170085906982,
+              3.483609914779663,
+              -4.386124134063721,
+              3.483609914779663,
+              -4.397170066833496,
+              3.483609914779663,
+              -4.451503276824951,
+              3.483609914779663,
+              -4.5058369636535645,
+              3.483609914779663,
+              -4.5601701736450195,
+              3.483609914779663,
+              -4.571215629577637,
+              3.474655866622925,
+              -4.580170154571533,
+              3.4636099338531494,
+              -4.580170154571533,
+              3.314096689224243,
+              -4.580170154571533,
+              3.164583444595337,
+              -4.580170154571533,
+              3.0150699615478516,
+              -4.580170154571533,
+              3.0040242671966553,
+              -4.580170154571533,
+              2.995069980621338,
+              -4.571215629577637,
+              2.995069980621338,
+              -4.5601701736450195,
+              2.995069980621338,
+              -4.5058369636535645,
+              2.995069980621338,
+              -4.451503276824951,
+              2.995069980621338,
+              -4.397170066833496,
+              2.995069980621338,
+              -4.386124134063721,
+              3.0040242671966553,
+              -4.377170085906982,
+              3.0150699615478516,
+              -4.377170085906982
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "#e4e5e5",
+            "strokeWidth": 0.005,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "identifying"
+      }
+    },
+    {
+      "id": "rel-label:ROUTE-TRIP#0",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "route_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "route_id",
+            "x": 323.934,
+            "y": 451.71700000000004,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 40.854
+          }
+        }
+      ],
+      "channels": {
+        "category": "identifying"
+      },
+      "owner": "rel:ROUTE-TRIP#0"
+    },
+    {
+      "id": "rel-label:TRIP-STOP_TIME#0:bg",
+      "role": "chrome",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              5.703610420227051,
+              -2.5355100631713867,
+              5.821443557739258,
+              -2.5355100631713867,
+              5.939276695251465,
+              -2.5355100631713867,
+              6.057109832763672,
+              -2.5355100631713867,
+              6.068155288696289,
+              -2.5355100631713867,
+              6.0771098136901855,
+              -2.544464349746704,
+              6.0771098136901855,
+              -2.5555100440979004,
+              6.0771098136901855,
+              -2.6098434925079346,
+              6.0771098136901855,
+              -2.6641767024993896,
+              6.0771098136901855,
+              -2.718510150909424,
+              6.0771098136901855,
+              -2.729555606842041,
+              6.068155288696289,
+              -2.7385101318359375,
+              6.057109832763672,
+              -2.7385101318359375,
+              5.939276695251465,
+              -2.7385101318359375,
+              5.821443557739258,
+              -2.7385101318359375,
+              5.703610420227051,
+              -2.7385101318359375,
+              5.692564010620117,
+              -2.7385101318359375,
+              5.683610439300537,
+              -2.729555606842041,
+              5.683610439300537,
+              -2.718510150909424,
+              5.683610439300537,
+              -2.6641767024993896,
+              5.683610439300537,
+              -2.6098434925079346,
+              5.683610439300537,
+              -2.5555100440979004,
+              5.683610439300537,
+              -2.544464349746704,
+              5.692564010620117,
+              -2.5355100631713867,
+              5.703610420227051,
+              -2.5355100631713867
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "#e4e5e5",
+            "strokeWidth": 0.005,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "identifying"
+      }
+    },
+    {
+      "id": "rel-label:TRIP-STOP_TIME#0",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "trip_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "trip_id",
+            "x": 588.0360000000001,
+            "y": 267.55100000000004,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 31.35
+          }
+        }
+      ],
+      "channels": {
+        "category": "identifying"
+      },
+      "owner": "rel:TRIP-STOP_TIME#0"
+    },
+    {
+      "id": "rel-label:STOP-STOP_TIME#0:bg",
+      "role": "chrome",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              5.359340190887451,
+              -1.3214999437332153,
+              5.493013381958008,
+              -1.3214999437332153,
+              5.626687049865723,
+              -1.3214999437332153,
+              5.760360240936279,
+              -1.3214999437332153,
+              5.7714056968688965,
+              -1.3214999437332153,
+              5.780360221862793,
+              -1.3304542303085327,
+              5.780360221862793,
+              -1.341499924659729,
+              5.780360221862793,
+              -1.3958332538604736,
+              5.780360221862793,
+              -1.4501665830612183,
+              5.780360221862793,
+              -1.504499912261963,
+              5.780360221862793,
+              -1.5155456066131592,
+              5.7714056968688965,
+              -1.5245000123977661,
+              5.760360240936279,
+              -1.5245000123977661,
+              5.626687049865723,
+              -1.5245000123977661,
+              5.493013381958008,
+              -1.5245000123977661,
+              5.359340190887451,
+              -1.5245000123977661,
+              5.348294258117676,
+              -1.5245000123977661,
+              5.3393402099609375,
+              -1.5155456066131592,
+              5.3393402099609375,
+              -1.504499912261963,
+              5.3393402099609375,
+              -1.4501665830612183,
+              5.3393402099609375,
+              -1.3958332538604736,
+              5.3393402099609375,
+              -1.341499924659729,
+              5.3393402099609375,
+              -1.3304542303085327,
+              5.348294258117676,
+              -1.3214999437332153,
+              5.359340190887451,
+              -1.3214999437332153
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "#e4e5e5",
+            "strokeWidth": 0.005,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "identifying"
+      }
+    },
+    {
+      "id": "rel-label:STOP-STOP_TIME#0",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "stop_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "stop_id",
+            "x": 555.985,
+            "y": 146.15,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 36.102
+          }
+        }
+      ],
+      "channels": {
+        "category": "identifying"
+      },
+      "owner": "rel:STOP-STOP_TIME#0"
+    },
+    {
+      "id": "rel-label:TRIP-FREQUENCY#0:bg",
+      "role": "chrome",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              5.37826681137085,
+              -3.0448334217071533,
+              5.496099948883057,
+              -3.0448334217071533,
+              5.613933086395264,
+              -3.0448334217071533,
+              5.731767177581787,
+              -3.0448334217071533,
+              5.742812633514404,
+              -3.0448334217071533,
+              5.751767158508301,
+              -3.0537874698638916,
+              5.751767158508301,
+              -3.064833402633667,
+              5.751767158508301,
+              -3.119166612625122,
+              5.751767158508301,
+              -3.1735000610351562,
+              5.751767158508301,
+              -3.2278332710266113,
+              5.751767158508301,
+              -3.2388792037963867,
+              5.742812633514404,
+              -3.247833251953125,
+              5.731767177581787,
+              -3.247833251953125,
+              5.613933563232422,
+              -3.247833251953125,
+              5.496099948883057,
+              -3.247833251953125,
+              5.37826681137085,
+              -3.247833251953125,
+              5.367220878601074,
+              -3.247833251953125,
+              5.358266830444336,
+              -3.2388792037963867,
+              5.358266830444336,
+              -3.2278332710266113,
+              5.358266830444336,
+              -3.1735000610351562,
+              5.358266830444336,
+              -3.119166612625122,
+              5.358266830444336,
+              -3.064833402633667,
+              5.358266830444336,
+              -3.0537874698638916,
+              5.367220878601074,
+              -3.0448334217071533,
+              5.37826681137085,
+              -3.0448334217071533
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "#e4e5e5",
+            "strokeWidth": 0.005,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "identifying"
+      }
+    },
+    {
+      "id": "rel-label:TRIP-FREQUENCY#0",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "trip_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "trip_id",
+            "x": 555.5016666666667,
+            "y": 318.48333333333335,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 31.35
+          }
+        }
+      ],
+      "channels": {
+        "category": "identifying"
+      },
+      "owner": "rel:TRIP-FREQUENCY#0"
+    },
+    {
+      "id": "rel-label:CALENDAR-TRIP#0:bg",
+      "role": "chrome",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.552000045776367,
+              -2.868499994277954,
+              2.7411131858825684,
+              -2.868499994277954,
+              2.9302268028259277,
+              -2.868499994277954,
+              3.119339942932129,
+              -2.868499994277954,
+              3.130385637283325,
+              -2.868499994277954,
+              3.1393399238586426,
+              -2.8774542808532715,
+              3.1393399238586426,
+              -2.8884999752044678,
+              3.1393399238586426,
+              -2.942833185195923,
+              3.1393399238586426,
+              -2.997166633605957,
+              3.1393399238586426,
+              -3.051499843597412,
+              3.1393399238586426,
+              -3.0625457763671875,
+              3.130385637283325,
+              -3.071499824523926,
+              3.119339942932129,
+              -3.071499824523926,
+              2.9302268028259277,
+              -3.071499824523926,
+              2.7411131858825684,
+              -3.071499824523926,
+              2.552000045776367,
+              -3.071499824523926,
+              2.540954351425171,
+              -3.071499824523926,
+              2.5320000648498535,
+              -3.0625457763671875,
+              2.5320000648498535,
+              -3.051499843597412,
+              2.5320000648498535,
+              -2.997166633605957,
+              2.5320000648498535,
+              -2.942833185195923,
+              2.5320000648498535,
+              -2.8884999752044678,
+              2.5320000648498535,
+              -2.8774542808532715,
+              2.540954351425171,
+              -2.868499994277954,
+              2.552000045776367,
+              -2.868499994277954
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "#e4e5e5",
+            "strokeWidth": 0.005,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "identifying"
+      }
+    },
+    {
+      "id": "rel-label:CALENDAR-TRIP#0",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "service_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "service_id",
+            "x": 283.567,
+            "y": 300.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 52.734
+          }
+        }
+      ],
+      "channels": {
+        "category": "identifying"
+      },
+      "owner": "rel:CALENDAR-TRIP#0"
+    },
+    {
+      "id": "rel-label:CALENDAR_DATE-TRIP#0:bg",
+      "role": "chrome",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.8165318965911865,
+              -0.7985000014305115,
+              3.005645513534546,
+              -0.7985000014305115,
+              3.194758653640747,
+              -0.7985000014305115,
+              3.3838720321655273,
+              -0.7985000014305115,
+              3.3949174880981445,
+              -0.7985000014305115,
+              3.403872013092041,
+              -0.8074542880058289,
+              3.403872013092041,
+              -0.8184999823570251,
+              3.403872013092041,
+              -0.8728333115577698,
+              3.403872013092041,
+              -0.9271667003631592,
+              3.403872013092041,
+              -0.9815000295639038,
+              3.403872013092041,
+              -0.9925457239151001,
+              3.3949174880981445,
+              -1.0015000104904175,
+              3.3838720321655273,
+              -1.0015000104904175,
+              3.194758653640747,
+              -1.0015000104904175,
+              3.005645513534546,
+              -1.0015000104904175,
+              2.8165318965911865,
+              -1.0015000104904175,
+              2.8054864406585693,
+              -1.0015000104904175,
+              2.796531915664673,
+              -0.9925457239151001,
+              2.796531915664673,
+              -0.9815000295639038,
+              2.796531915664673,
+              -0.9271667003631592,
+              2.796531915664673,
+              -0.8728333115577698,
+              2.796531915664673,
+              -0.8184999823570251,
+              2.796531915664673,
+              -0.8074542880058289,
+              2.8054864406585693,
+              -0.7985000014305115,
+              2.8165318965911865,
+              -0.7985000014305115
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "#e4e5e5",
+            "strokeWidth": 0.005,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "identifying"
+      }
+    },
+    {
+      "id": "rel-label:CALENDAR_DATE-TRIP#0",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "service_id",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "service_id",
+            "x": 310.0202,
+            "y": 93.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 52.734
+          }
+        }
+      ],
+      "channels": {
+        "category": "identifying"
+      },
+      "owner": "rel:CALENDAR_DATE-TRIP#0"
+    }
+  ],
+  "findings": {
+    "ok": true,
+    "warnings": [],
+    "layout": {
+      "version": 1,
+      "kind": "er",
+      "nodes": [
+        {
+          "id": "ROUTE",
+          "x": 40,
+          "y": 534,
+          "w": 173,
+          "h": 78,
+          "shape": "rectangle",
+          "label": "ROUTE"
+        },
+        {
+          "id": "TRIP",
+          "x": 454,
+          "y": 287,
+          "w": 140,
+          "h": 100,
+          "shape": "rectangle",
+          "label": "TRIP"
+        },
+        {
+          "id": "STOP_TIME",
+          "x": 818,
+          "y": 102,
+          "w": 160,
+          "h": 122,
+          "shape": "rectangle",
+          "label": "STOP_TIME"
+        },
+        {
+          "id": "STOP",
+          "x": 454,
+          "y": 103,
+          "w": 140,
+          "h": 78,
+          "shape": "rectangle",
+          "label": "STOP"
+        },
+        {
+          "id": "FREQUENCY",
+          "x": 818,
+          "y": 294,
+          "w": 140,
+          "h": 122,
+          "shape": "rectangle",
+          "label": "FREQUENCY"
+        },
+        {
+          "id": "CALENDAR",
+          "x": 73,
+          "y": 210,
+          "w": 140,
+          "h": 254,
+          "shape": "rectangle",
+          "label": "CALENDAR"
+        },
+        {
+          "id": "CALENDAR_DATE",
+          "x": 53,
+          "y": 40,
+          "w": 160,
+          "h": 100,
+          "shape": "rectangle",
+          "label": "CALENDAR_DATE"
+        }
+      ],
+      "edges": [
+        {
+          "id": "rel#0:ROUTE->TRIP",
+          "from": "ROUTE",
+          "to": "TRIP",
+          "path": [
+            [
+              213,
+              573
+            ],
+            [
+              374,
+              573
+            ],
+            [
+              374,
+              362
+            ],
+            [
+              454,
+              362
+            ]
+          ],
+          "label": {
+            "x": 374,
+            "y": 508,
+            "text": "route_id"
+          }
+        },
+        {
+          "id": "rel#1:TRIP->STOP_TIME",
+          "from": "TRIP",
+          "to": "STOP_TIME",
+          "path": [
+            [
+              594,
+              320
+            ],
+            [
+              738,
+              320
+            ],
+            [
+              738,
+              183
+            ],
+            [
+              818,
+              183
+            ]
+          ],
+          "label": {
+            "x": 738,
+            "y": 284,
+            "text": "trip_id"
+          }
+        },
+        {
+          "id": "rel#2:STOP->STOP_TIME",
+          "from": "STOP",
+          "to": "STOP_TIME",
+          "path": [
+            [
+              594,
+              142
+            ],
+            [
+              818,
+              142
+            ]
+          ],
+          "label": {
+            "x": 706,
+            "y": 142,
+            "text": "stop_id"
+          }
+        },
+        {
+          "id": "rel#3:TRIP->FREQUENCY",
+          "from": "TRIP",
+          "to": "FREQUENCY",
+          "path": [
+            [
+              594,
+              354
+            ],
+            [
+              604,
+              354
+            ],
+            [
+              604,
+              355
+            ],
+            [
+              818,
+              355
+            ]
+          ],
+          "label": {
+            "x": 706,
+            "y": 355,
+            "text": "trip_id"
+          }
+        },
+        {
+          "id": "rel#4:CALENDAR->TRIP",
+          "from": "CALENDAR",
+          "to": "TRIP",
+          "path": [
+            [
+              213,
+              337
+            ],
+            [
+              454,
+              337
+            ]
+          ],
+          "label": {
+            "x": 334,
+            "y": 337,
+            "text": "service_id"
+          }
+        },
+        {
+          "id": "rel#5:CALENDAR_DATE->TRIP",
+          "from": "CALENDAR_DATE",
+          "to": "TRIP",
+          "path": [
+            [
+              213,
+              90
+            ],
+            [
+              374,
+              90
+            ],
+            [
+              374,
+              312
+            ],
+            [
+              454,
+              312
+            ]
+          ],
+          "label": {
+            "x": 374,
+            "y": 161,
+            "text": "service_id"
+          }
+        }
+      ],
+      "groups": [],
+      "bounds": {
+        "w": 1018,
+        "h": 652
+      }
+    }
+  }
+}

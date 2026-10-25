@@ -5,13 +5,21 @@ import {
   BACKDATE,
   BR_PHASES,
   DAY,
+  EMISSION,
   FIXED_INTERVAL,
   LE_DATES,
   LIFETIMES,
   LIMIT,
   RUN_EVERY,
   YEAR,
+  ariRuns,
+  ariSummary,
+  ariTime,
+  ariWindow,
   defaultRenewalOffset,
+  maybeSpend,
+  orderAllowed,
+  spendAtIssue,
   dueByDefault,
   dueByInterval,
   issue,
@@ -77,7 +85,8 @@ test('Certbot 3.3’s 30-day rule renews strictly inside 30 days of expiry', () 
 });
 
 test('Let’s Encrypt’s validity window: backdated 58.5 minutes, one second short', () => {
-  // boulder issuance/cert.go:127–135 with maxValidityBackdate 1h5m (test/config-next/ca.json).
+  // boulder 4e1779d issuance/cert.go:127–135 with maxValidityBackdate 1h5m (test/config/ca.json:58);
+  // ten production certificates on 2026-10-25 lasted 90 days less one second, with SCTs 58.46–58.54 min after notBefore.
   const c = issue(100, 90 * DAY);
   assert.equal(Math.round((100 - c.notBefore) * 3600), 58.5 * 60);
   assert.equal(Math.round((c.notAfter - c.notBefore) * 3600), 90 * 86400 - 1);
@@ -90,7 +99,7 @@ test('the explainer’s eight cases', () => {
     '90d': { fraction: [60 * DAY, 6, 0], fixed30: [60 * DAY, 6, 0] },
     '64d': { fraction: [43 * DAY, 8, 0], fixed30: [34 * DAY, 10, 0] },
     '45d': { fraction: [30 * DAY, 12, 0], fixed30: [15 * DAY, 24, 0] },
-    '160h': { fraction: [84, 104, 0], fixed30: [12, 261, 468] },
+    '160h': { fraction: [84, 104, 0], fixed30: [12, 264, 465] },
   };
   for (const key of Object.keys(expect) as LifetimeKey[])
     for (const rule of ['fraction', 'fixed30'] as Rule[]) {
@@ -102,12 +111,102 @@ test('the explainer’s eight cases', () => {
   assert.equal(summarize('fixed30', '45d').renewalsPerYear, 2 * summarize('fraction', '45d').renewalsPerYear);
 });
 
-test('the 160-hour, 30-day case hits the 5-per-7-days limit on the seventh renewal', () => {
-  // letsencrypt.org/docs/rate-limits: 5 per exact set of identifiers, one back every 34 hours.
-  assert.deepEqual(LIMIT, { capacity: 5, refillHours: 34 });
-  const run = simulate('fixed30', LIFETIMES['160h'].hours, 14 * DAY);
-  assert.deepEqual(run.issued.slice(0, 8), [0, 12, 24, 36, 48, 60, 72, 108]);
-  assert.equal(run.refused[0], 84);
+test('Boulder’s GCRA, against its own TestDecide vector', () => {
+  // boulder 4e1779d ratelimits/gcra_test.go:13–60: burst 10, one per second, clock at 0.
+  const limit = { emissionS: 1, burst: 10 };
+  let d = maybeSpend(null, 0, limit);
+  assert.deepEqual(d, { allowed: true, tat: 1, retryInS: 0 }, 'resetIn 1 s');
+  d = maybeSpend(d.tat, 0, limit, 9);
+  assert.deepEqual(d, { allowed: true, tat: 10, retryInS: 0 }, 'new TAT 10 s ahead');
+  const denied = maybeSpend(d.tat, 0, limit);
+  assert.deepEqual(denied, { allowed: false, tat: 10, retryInS: 1 }, 'retryIn 1 s, bucket unchanged');
+  assert.deepEqual(maybeSpend(denied.tat, 1, limit), { allowed: true, tat: 11, retryInS: 0 }, 'after waiting retryIn');
+});
+
+test('the exact-set limit: 5 per 168 hours is one token every 33.6 hours', () => {
+  // limit.go:93–97: emissionInterval = period / count; docs/rate-limits.md:145–149 round it to 34.
+  assert.deepEqual(LIMIT, { burst: 5, count: 5, periodHours: 168 });
+  assert.equal(EMISSION, 33.6);
+  // A fresh bucket takes five at once, then refuses the sixth for 33.6 hours.
+  let tat: number | null = null;
+  for (let i = 0; i < 5; i++) {
+    assert.ok(orderAllowed(tat, 0), `order ${i + 1}`);
+    tat = spendAtIssue(tat, 0);
+  }
+  assert.equal(tat, 5 * 33.6 * 3600);
+  assert.equal(orderAllowed(tat, 0), false);
+  assert.equal(maybeSpend(tat, 0).retryInS, 33.6 * 3600);
+  assert.equal(orderAllowed(tat, 33.6 * 3600 - 1), false);
+  assert.equal(orderAllowed(tat, 33.6 * 3600), true);
+  // An order that names its predecessor inside the window skips the check (wfe.go:2297, 2488),
+  // and its certificate's spend is best effort: with no room left it spends nothing (limiter.go:298).
+  assert.equal(orderAllowed(tat, 0, true), true);
+  assert.equal(spendAtIssue(tat, 0), tat);
+});
+
+test('the 160-hour, 30-day case: seven certificates in three days, then one per 24 or 36 hours', () => {
+  // Worked by hand: after k issues from hour 0 the TAT is 33.6k hours, and a run at t passes
+  // when 33.6(k + 1) − 168 ≤ t. k = 7 needs t ≥ 100.8, so 84 and 96 are refused and 108 issues.
+  const run = simulate('fixed30', LIFETIMES['160h'].hours, 10 * DAY + 1);
+  assert.deepEqual(run.issued, [0, 12, 24, 36, 48, 60, 72, 108, 144, 168, 204, 240]);
+  assert.deepEqual(run.refused, [84, 96, 120, 132, 156, 180, 192, 216, 228]);
+});
+
+test('Boulder’s ARI window, worked from RenewalInfoSimple', () => {
+  // core/objects.go:454–468. 45 days: validity from issuance = 3,888,000 − 3,510 s = 3,884,490 s;
+  // ideal = notBefore + 3,887,999 − 1,294,830; margin 38,844.9 s; ends truncated to the second.
+  const sec = (h: number) => Math.round(h * 3600);
+  let c = issue(0, 45 * DAY),
+    w = ariWindow(c);
+  assert.deepEqual([sec(w.start - c.notBefore), sec(w.end - c.notBefore)], [2_554_324, 2_632_013]);
+  // 160 hours is under ten days, so the ideal is half way: 575,999 − 286,245; margin 5,724.9 s.
+  c = issue(0, 160);
+  w = ariWindow(c);
+  assert.deepEqual([sec(w.start - c.notBefore), sec(w.end - c.notBefore)], [284_029, 295_478]);
+});
+
+test('the ARI window matches Let’s Encrypt’s live answers', () => {
+  // GET https://acme-v02.api.letsencrypt.org/acme/renewal-info/<AKI>.<serial> on 2026-10-25,
+  // for the certificate each site served that day: [site, notBefore, notAfter, start, end].
+  const live: [string, string, string, string, string][] = [
+    ['caddyserver.com', '2026-10-12T12:02:35Z', '2027-01-10T12:02:34Z', '2026-12-10T14:46:39Z', '2026-12-12T09:57:28Z'],
+    ['certbot.eff.org', '2026-10-22T20:00:53Z', '2027-01-20T20:00:52Z', '2026-12-20T22:44:57Z', '2026-12-22T17:55:47Z'],
+    ['community.letsencrypt.org', '2026-10-17T00:01:41Z', '2027-01-15T00:01:40Z', '2026-12-15T02:45:45Z', '2026-12-16T21:56:35Z'],
+    ['eff.org', '2026-10-01T18:44:08Z', '2026-12-30T18:44:07Z', '2026-11-29T21:28:12Z', '2026-12-01T16:39:02Z'],
+    ['kernel.org', '2026-10-14T10:52:45Z', '2027-01-12T10:52:44Z', '2026-12-12T13:36:49Z', '2026-12-14T08:47:39Z'],
+    ['letsdebug.net', '2026-09-30T08:56:16Z', '2026-12-29T08:56:15Z', '2026-11-28T11:40:20Z', '2026-11-30T06:51:10Z'],
+    ['letsencrypt.org', '2026-09-04T14:34:32Z', '2026-12-03T14:34:31Z', '2026-11-02T17:18:36Z', '2026-11-04T12:29:25Z'],
+    ['valid-isrgrootx1.letsencrypt.org', '2026-10-21T17:38:33Z', '2027-01-19T17:38:32Z', '2026-12-19T20:22:37Z', '2026-12-21T15:33:27Z'],
+    ['valid-isrgrootx2.letsencrypt.org', '2026-10-15T17:38:33Z', '2027-01-13T17:38:32Z', '2026-12-13T20:22:37Z', '2026-12-15T15:33:26Z'],
+    ['www.debian.org', '2026-10-01T00:37:05Z', '2026-12-30T00:37:04Z', '2026-11-29T03:21:09Z', '2026-11-30T22:31:58Z'],
+  ];
+  const s = (iso: string) => Date.parse(iso) / 1000;
+  for (const [site, nb, na, start, end] of live) {
+    // Each lasts 90 days less one second.
+    assert.equal(s(na) - s(nb), 90 * 86400 - 1, site);
+    const c = issue(0, 90 * DAY),
+      w = ariWindow(c),
+      off = (h: number) => Math.round((h - c.notBefore) * 3600);
+    // The model issues at notBefore + 58.5 min exactly; the real instant is up to a second
+    // later, which can move an end one second later, never earlier.
+    assert.equal(s(start) - s(nb) - off(w.start), 0, `${site} start`);
+    assert.ok([0, 1].includes(s(end) - s(nb) - off(w.end)), `${site} end`);
+  }
+});
+
+test('Certbot’s ARI runs: the run at t renews with chance (t − start) / (end − start)', () => {
+  // client.py:365–368 draws uniformly in the window at each run; renewal.py:466 renews if now is past it.
+  const a = ariSummary('fraction', '45d');
+  assert.deepEqual(a.runs.map((r) => r.at), [720, 732]);
+  // Window in run hours: 2,550,814 s to 2,628,503 s after the issuing run.
+  assert.ok(Math.abs(a.runs[0]!.p - (720 * 3600 - 2_550_814) / (2_628_503 - 2_550_814)) < 1e-12);
+  assert.deepEqual(a.perYear, [11, 12]);
+  // The 30-day setting fires at day 15, long before the window: ARI changes nothing.
+  assert.deepEqual(ariSummary('fixed30', '45d').runs, [{ at: 360, p: 1 }]);
+  // For 90 days the window opens before the 30-day point, so the setting is not always first.
+  assert.deepEqual(ariSummary('fixed30', '90d').runs.map((r) => r.at), [1428, 1440]);
+  // 160 hours: the window (hours 77.9 to 81.1 after the run) holds no run, so hour 84 renews.
+  assert.deepEqual(ariSummary('fraction', '160h').runs, [{ at: 84, p: 1 }]);
 });
 
 test('the Baseline Requirements and Let’s Encrypt tables as published', () => {
@@ -170,16 +269,69 @@ test('property: the 30-day rule renews at least as often as the default exactly 
   );
 });
 
-test('property: no 34-hour-refill window issues more than the bucket allows', () => {
+test('property: no stretch of w hours issues more than the burst plus w / 33.6', () => {
   fc.assert(
     fc.property(lifetime, fc.constantFrom<Rule>('fraction', 'fixed30'), fc.integer({ min: 1, max: 60 }), (L, rule, span) => {
       const { issued } = simulate(rule, L, 60 * DAY),
         window = span * RUN_EVERY;
       for (const start of issued) {
         const inside = issued.filter((t) => t >= start && t < start + window).length;
-        assert.ok(inside <= LIMIT.capacity + window / LIMIT.refillHours + 1e-9, `${inside} in ${window} h`);
+        assert.ok(inside <= LIMIT.burst + window / EMISSION + 1e-9, `${inside} in ${window} h`);
       }
     }),
     params(200),
+  );
+});
+
+test('property: the GCRA never lets more than burst + w / emission through in w seconds, and a refusal changes nothing', () => {
+  const limit = { emissionS: 7, burst: 3 };
+  fc.assert(
+    fc.property(fc.array(fc.integer({ min: 0, max: 20 }), { minLength: 1, maxLength: 60 }), (steps) => {
+      let tat: number | null = null,
+        now = 0;
+      const passed: number[] = [];
+      for (const step of steps) {
+        now += step;
+        const d = maybeSpend(tat, now, limit);
+        if (d.allowed) {
+          passed.push(now);
+          tat = d.tat;
+        } else assert.equal(d.tat, tat, 'a refusal leaves the bucket alone');
+      }
+      for (const a of passed)
+        for (const b of passed)
+          if (b >= a) {
+            const inside = passed.filter((t) => t >= a && t <= b).length;
+            assert.ok(inside <= limit.burst + (b - a) / limit.emissionS, `${inside} in [${a}, ${b}]`);
+          }
+    }),
+    params(300),
+  );
+});
+
+test('property: a Certbot draw always lands in the window, and the run it picks is one ariRuns lists', () => {
+  const keys = Object.keys(LIFETIMES) as LifetimeKey[];
+  fc.assert(
+    fc.property(
+      fc.constantFrom(...keys),
+      fc.constantFrom<Rule>('fraction', 'fixed30'),
+      fc.array(fc.double({ min: 0, max: 1, maxExcluded: true, noNaN: true }), { minLength: 400, maxLength: 400 }),
+      (key, rule, draws) => {
+        const c = issue(0, LIFETIMES[key].hours),
+          w = ariWindow(c),
+          runs = ariRuns(rule, c);
+        let picked: number | null = null;
+        for (let i = 0, t = RUN_EVERY; picked == null && i < draws.length; i++, t += RUN_EVERY) {
+          const at = ariTime(w, draws[i]!);
+          // random.uniform(a, b) may return b (Python docs), so the window is closed.
+          assert.ok(at >= w.start && at <= w.end, `${at} outside [${w.start}, ${w.end}]`);
+          if (t > at || (rule === 'fixed30' && shouldRenew('fixed30', c, t))) picked = t;
+        }
+        assert.ok(picked != null && runs.some((r) => r.run === picked), `${key} ${rule}: run ${picked}`);
+        // The chances of the listed runs add up to one.
+        assert.ok(Math.abs(runs.reduce((sum, r) => sum + r.p, 0) - 1) < 1e-9);
+      },
+    ),
+    params(300),
   );
 });

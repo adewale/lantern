@@ -59,11 +59,16 @@ export function dueByDefault(notBefore: number, notAfter: number, now: number): 
 export const RUN_EVERY = 12;
 
 /**
- * Let's Encrypt's validity window for a certificate issued at `issued`: Boulder's
- * GenerateValidity (issuance/cert.go:127–135) backdates notBefore by 0.9 × maxBackdate and
- * ends one second short of the profile's validity, because the last second counts. Its
- * configuration (test/config-next/ca.json) sets maxBackdate to 1h5m, so the backdate is
- * 58.5 minutes; Let's Encrypt staff describe it as about an hour.
+ * Let's Encrypt's validity window for a certificate issued at `issued`. Boulder's
+ * GenerateValidity (letsencrypt/boulder 4e1779d, issuance/cert.go:127–135) backdates notBefore
+ * by 0.9 × maxValidityBackdate, truncated to the second, and ends one second short of the
+ * profile's validity, because the last second counts. Boulder's own configs set
+ * maxValidityBackdate to 1h5m (test/config/ca.json:58), which gives 58.5 minutes; Let's
+ * Encrypt does not publish its production config, but production certificates show the same
+ * number. Ten certificates fetched on 2026-10-25 (letsencrypt.org, eff.org, kernel.org,
+ * www.debian.org and six more, issuers YE1, YE2, YR1, YR2) all last exactly 90 days less
+ * one second, and their embedded SCT timestamps fall 58.46 to 58.54 minutes after notBefore.
+ * Let's Encrypt's live ARI answers for those certificates (ariWindow, below) agree.
  */
 export const BACKDATE = 0.9 * (65 / 60);
 export const SECOND = 1 / 3600;
@@ -86,12 +91,117 @@ export function shouldRenew(rule: Rule, c: Cert, now: number): boolean {
 }
 
 /**
- * Let's Encrypt's "New Certificates per Exact Set of Identifiers": up to 5 every 7 days,
- * refilling one every 34 hours, computed as a token bucket (docs/rate-limits.md, lines
- * 20–26 and 145–149). Certbot 5.8.0 sends no `replaces` field in its new order
- * (acme/src/acme/client.py new_order), so its renewals are not ARI renewals and count.
+ * Let's Encrypt's "New Certificates per Exact Set of Identifiers", as Boulder enforces it
+ * (letsencrypt/boulder 4e1779d, ratelimits/). The docs give 5 certificates per 7 days
+ * (letsencrypt/website e336493, content/en/docs/rate-limits.md:145–149); Let's Encrypt
+ * does not publish its production limit file,
+ * so the burst, count and period below are read from the docs. A limit's emission interval
+ * is period / count (limit.go:93–97): 168 h / 5 = 33.6 hours. The docs round it to 34,
+ * as they round 168 h / 50 = 201.6 minutes to 202 for the per-domain limit.
  */
-export const LIMIT = { capacity: 5, refillHours: 34 } as const;
+export const LIMIT = { burst: 5, count: 5, periodHours: 7 * DAY } as const;
+/** Hours per token: 33.6. */
+export const EMISSION = LIMIT.periodHours / LIMIT.count;
+const EMISSION_S = (LIMIT.periodHours * 3600) / LIMIT.count;
+const toS = (hours: number) => Math.round(hours * 3600);
+
+/** A limit as Boulder precomputes it (limit.go:93–97), in seconds. */
+export interface Gcra {
+  emissionS: number;
+  burst: number;
+}
+export const FQDN_SET: Gcra = { emissionS: EMISSION_S, burst: LIMIT.burst };
+
+/**
+ * Boulder's GCRA (gcra.go:12–60, maybeSpend), in whole seconds. A bucket is stored as its
+ * theoretical arrival time `tat`; null is a bucket that does not exist yet, which reads as
+ * full. A request costing n is allowed when now ≥ max(now, tat) + n × emission − burst ×
+ * emission. A denial leaves the bucket as it was and says how long until it would pass.
+ */
+export function maybeSpend(
+  tat: number | null,
+  nowS: number,
+  limit: Gcra = FQDN_SET,
+  cost = 1,
+): { allowed: boolean; tat: number | null; retryInS: number } {
+  const from = tat == null ? nowS : Math.max(nowS, tat),
+    next = from + limit.emissionS * cost,
+    difference = nowS - (next - limit.emissionS * limit.burst);
+  return difference < 0 ? { allowed: false, tat, retryInS: -difference } : { allowed: true, tat: next, retryInS: 0 };
+}
+
+/**
+ * A new order's check against the limit. The WFE checks the exact-set bucket with a
+ * check-only transaction (transaction.go:631–641, called from NewOrderLimitTransactions at
+ * 664–701), so a refused order spends nothing. An order whose `replaces` names a certificate
+ * of the same account, not replaced before, and arrives inside that certificate's ARI window
+ * skips every new-order limit (wfe2/wfe.go:2258–2297 and 2488). Repeating the same names
+ * within 120 days (wfe.go:2455–2470) exempts an order only from the per-account and
+ * per-domain limits, not this one.
+ */
+export function orderAllowed(tat: number | null, nowS: number, ariExempt = false): boolean {
+  return ariExempt || maybeSpend(tat, nowS).allowed;
+}
+
+/**
+ * Issuing spends the token: the RA's countCertificateIssued (ra/ra.go:1255–1279) sends a
+ * spend-only transaction, best effort, so it spends only if the bucket has room
+ * (limiter.go:298) and never refuses. An ARI-exempt order still spends here.
+ */
+export function spendAtIssue(tat: number | null, nowS: number): number | null {
+  return maybeSpend(tat, nowS).tat;
+}
+
+/**
+ * Let's Encrypt's ARI answer for a certificate: Boulder's RenewalInfoSimple
+ * (core/objects.go:449–468), reached through determineARIWindow (wfe2/wfe.go:2197–2240)
+ * for a certificate that is neither revoked nor named in an incident. It takes the
+ * validity from issuance (the CA's clock, ca/ca.go:449) to one second past notAfter, puts
+ * the ideal time a third of that before the end (half for under ten days) and opens a
+ * window 1% of the validity either side, truncated to the second. In nanoseconds, as Go does.
+ * Issuance is taken as notBefore + 58.5 minutes exactly; the real instant is up to a second
+ * later, since notBefore is truncated, and moves each end up to 0.35 s later. Against Let's
+ * Encrypt's live answers for ten certificates on 2026-10-25, every start matched to the
+ * second and every end matched or came one second later.
+ */
+export function ariWindow(c: Cert): { start: number; end: number } {
+  const ns = 1_000_000_000n,
+    issued = BigInt(toS(c.issued)) * ns,
+    expires = BigInt(toS(c.notAfter)) * ns;
+  const validity = expires + ns - issued,
+    offset = validity < 10n * 86_400n * ns ? validity / 2n : validity / 3n,
+    ideal = expires - offset,
+    margin = validity / 100n;
+  const toHours = (t: bigint) => Number((t - (((t % ns) + ns) % ns)) / ns) / 3600;
+  return { start: toHours(ideal - margin), end: toHours(ideal + margin) };
+}
+
+/**
+ * The runs that may renew `c` when every run gets an ARI answer, with the chance of each.
+ * Certbot 4.1 and later fetch the answer whenever the stored Retry-After has passed
+ * (certbot v5.8.0 renewal.py:378–392); Let's Encrypt sends 6 hours ± 20%
+ * (wfe2/wfe.go:2827, 2841–2846), less than the 12 hours between runs, so every run asks.
+ * Each fetch draws a fresh uniform time in the window (acme client.py:363–368) and the run
+ * renews if now is past it (renewal.py:466), so a run at t renews with chance
+ * (t − start) / (end − start) if no earlier run did. Under the 30-day rule a set
+ * renew_before_expiry still renews on its own (renewal.py:475–482).
+ */
+export function ariRuns(rule: Rule, c: Cert): { run: number; p: number }[] {
+  const { start, end } = ariWindow(c),
+    out: { run: number; p: number }[] = [];
+  let left = 1;
+  for (let t = c.issued + RUN_EVERY; left > 0; t += RUN_EVERY) {
+    const p = rule === 'fixed30' && dueByInterval(c.notAfter, t, FIXED_INTERVAL) ? 1 : Math.min(1, Math.max(0, (t - start) / (end - start)));
+    if (p > 0) out.push({ run: t, p: left * p });
+    left *= 1 - p;
+  }
+  return out;
+}
+
+/** A uniform draw `u` in [0, 1] placed in the window, as client.py:365–368 does; Python's random.uniform may return either end. */
+export function ariTime(w: { start: number; end: number }, u: number): number {
+  return w.start + u * (w.end - w.start);
+}
 
 export interface Run {
   /** Hours of the runs that issued a certificate; the first is hour 0. */
@@ -103,25 +213,31 @@ export interface Run {
 /**
  * Issue a certificate at hour 0, then run `certbot renew` every RUN_EVERY hours until
  * `horizon` (exclusive). A renewal the limit refuses leaves the current certificate in
- * place, and the next run tries again.
+ * place, costs nothing, and the next run tries again. Certbot 5.8.0 sends no `replaces`
+ * in its new order (acme/src/acme/client.py:115–135, identifiers and profile only), so no
+ * renewal is ARI-exempt. With `ari`, every run gets an ARI answer and each certificate is
+ * renewed at the earliest or the latest run `ariRuns` allows.
  */
-export function simulate(rule: Rule, lifetimeHours: number, horizon: number): Run {
-  let current = issue(0, lifetimeHours);
+export function simulate(rule: Rule, lifetimeHours: number, horizon: number, ari?: 'earliest' | 'latest'): Run {
+  let current = issue(0, lifetimeHours),
+    tat = spendAtIssue(null, 0);
   const issued = [0],
     refused: number[] = [];
-  let tokens: number = LIMIT.capacity - 1,
-    last = 0;
+  const target = (c: Cert) => {
+    const runs = ariRuns(rule, c);
+    return (ari === 'earliest' ? runs[0] : runs[runs.length - 1])!.run;
+  };
+  let due = ari ? target(current) : 0;
   for (let now = RUN_EVERY; now < horizon; now += RUN_EVERY) {
-    tokens = Math.min(LIMIT.capacity, tokens + (now - last) / LIMIT.refillHours);
-    last = now;
-    if (!shouldRenew(rule, current, now)) continue;
-    if (tokens < 1) {
+    if (ari ? now < due : !shouldRenew(rule, current, now)) continue;
+    if (!orderAllowed(tat, toS(now))) {
       refused.push(now);
       continue;
     }
-    tokens -= 1;
+    tat = spendAtIssue(tat, toS(now));
     issued.push(now);
     current = issue(now, lifetimeHours);
+    if (ari) due = target(current);
   }
   return { issued, refused };
 }
@@ -164,6 +280,30 @@ export function summarize(rule: Rule, key: LifetimeKey): CaseSummary {
     renewalsPerYear: year.issued.length - 1,
     refusedPerYear: year.refused.length,
     firstRefused: year.refused[0] ?? null,
+  };
+}
+
+export interface AriSummary {
+  /** Let's Encrypt's window, hours after notBefore. */
+  start: number;
+  end: number;
+  /** Runs that may renew, hours after the issuing run, with the chance of each. */
+  runs: { at: number; p: number }[];
+  /** Renewals in 365 days if every certificate renews at its latest and at its earliest run. */
+  perYear: [number, number];
+}
+
+/** What changes for this lifetime and rule when every run gets Let's Encrypt's ARI answer. */
+export function ariSummary(rule: Rule, key: LifetimeKey): AriSummary {
+  const lifetime = LIFETIMES[key].hours,
+    c = issue(0, lifetime),
+    w = ariWindow(c);
+  const round = (h: number) => Math.round(h * 3600) / 3600;
+  return {
+    start: round(w.start - c.notBefore),
+    end: round(w.end - c.notBefore),
+    runs: ariRuns(rule, c).map((r) => ({ at: r.run, p: r.p })),
+    perYear: [simulate(rule, lifetime, YEAR, 'latest').issued.length - 1, simulate(rule, lifetime, YEAR, 'earliest').issued.length - 1],
   };
 }
 

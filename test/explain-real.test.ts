@@ -44,7 +44,7 @@ const labelLeaves = (d: Diagram) =>
   );
 
 test('the corpus holds every family the explainers use', () => {
-  assert.deepEqual([...new Set(corpus.map((c) => c.s.family))].sort(), ['class', 'flowchart', 'gantt', 'gitgraph', 'quadrant', 'sequence', 'state', 'timeline', 'xychart']);
+  assert.deepEqual([...new Set(corpus.map((c) => c.s.family))].sort(), ['architecture', 'class', 'er', 'flowchart', 'gantt', 'gitgraph', 'journey', 'mindmap', 'pie', 'quadrant', 'radar', 'sequence', 'state', 'timeline', 'xychart']);
 });
 
 test('on every pinned snapshot, marking every part keeps each label its ink', async () => {
@@ -58,11 +58,11 @@ test('on every pinned snapshot, marking every part keeps each label its ink', as
   }
 });
 
-test('on every pinned snapshot, dimming everything spares the frame, participants, lifelines, axes, grid lines, branches, sections, rails and plates', async () => {
+test('on every pinned snapshot, dimming everything spares the frame and each family’s scaffolding (lifelines, axes, grids, branches, sections, rails, plates, groups)', async () => {
   // The scaffolding a reader keeps their bearings by, as each family's ids name it.
   const scaffold = (id: string) =>
-    ['__frame', 'rail', 'border'].includes(id) ||
-    /^(actor|lifeline|axis|grid|branch|section|section-band|section-label|plate|divider|quadrant-label):/.test(id);
+    ['__frame', 'rail', 'border', 'score-guide'].includes(id) ||
+    /^(actor|lifeline|axis|grid|branch|section|section-band|section-label|plate|divider|quadrant-label|group|junction|ring|spoke|leader|tick|tick-box|axis-label):/.test(id);
   for (const c of corpus) {
     const d = await shown(c.s);
     const opacity = (id: string) => d.get(id).family().map((m) => m.style.opacity ?? 1);

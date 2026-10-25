@@ -131,7 +131,7 @@ export default class QuotientFamilialExplainer extends Scene {
       caption: `Un couple marié ou pacsé, ${ENFANTS[enfants]}, déclare ${rniTexte} de revenu net imposable pour 2024. Le calcul reprend celui d’OpenFisca France 176.1.3, réduit aux étapes du schéma${deux} il s’arrête avant les réductions et crédits d’impôt, et ignore le seuil de 61 € sous lequel l’impôt n’est pas recouvré.`,
     });
     const flow = await s.show({ source: FLOW }, { box: TOP });
-    await flow.mark(['RNI'], { as: 'this step' });
+    await flow.mark(['RNI'], { as: 'étape en cours' });
     await card(
       [
         ['Foyer', 'couple marié ou pacsé'],
@@ -162,7 +162,7 @@ export default class QuotientFamilialExplainer extends Scene {
     });
     await s.clearOverlays();
     await flow.unmark();
-    await flow.mark(['QUOT'], { as: 'this step' });
+    await flow.mark(['QUOT'], { as: 'étape en cours' });
     await card(
       [
         ['Couple', '2'],
@@ -242,8 +242,8 @@ export default class QuotientFamilialExplainer extends Scene {
           : `Ce quotient de ${eur2(r.quotient)} reste dans la première tranche, taxée à 0${nb}%. Aucune barre ne monte et l’impôt d’une part est nul${pv} les parts des enfants ont fait descendre le quotient sous ${euros(BAREME[2024][1]!.from)}.`,
     });
     const topBar = `bar:0:${pourcent(top.rate)}`;
-    await bars.mark([topBar], { as: 'top tranche' });
-    await parTranche.mark(sliceLabel(top), { as: 'top tranche' });
+    await bars.mark([topBar], { as: 'tranche marginale' });
+    await parTranche.mark(sliceLabel(top), { as: 'tranche marginale' });
     this.state.tranche = top.rate;
     this.state.tauxMoyenPart = moyen;
 
@@ -338,7 +338,7 @@ export default class QuotientFamilialExplainer extends Scene {
     );
     // The y-axis title names the bars and the line, so the renderer's legend ("Bar 1", "Line 1") stays out.
     await cap.reveal(cap.order.filter((id) => id !== 'legend' && !cap.visible.has(id)));
-    await cap.mark([`bar:0:${COUNTS[enfants]}`], { as: 'this household' });
+    await cap.mark([`bar:0:${COUNTS[enfants]}`], { as: 'ce foyer' });
     await card(
       [
         [`Plafond (${r.demiParts} demi-part${r.demiParts > 1 ? 's' : ''} × ${plafondTexte})`, euros(r.plafond)],
@@ -395,7 +395,7 @@ export default class QuotientFamilialExplainer extends Scene {
     await card(
       tous.map((t) => [COUNTS[t.enfants]!, euros(t.impot)] as const),
       { at: RIGHT, title: `Impôt, revenu de ${rniTexte}` },
-    ).then((c) => c.mark(COUNTS[enfants]!, { as: 'this household' }));
+    ).then((c) => c.mark(COUNTS[enfants]!, { as: 'ce foyer' }));
     this.state.decote = r.decoteGain;
     this.state.impot = r.impot;
     this.state.parEnfants = tous.map((t) => t.impot);

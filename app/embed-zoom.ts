@@ -164,6 +164,15 @@ export class StageZoom {
     this.set(panBy(this, dx, dy, this.stage.clientWidth, this.stage.clientHeight, this.max), glide);
   }
 
+  /** Go to a zoom worked out elsewhere (a step's close-up), clamped to this stage. */
+  to(z: Zoom, glide = false): void {
+    const w = this.stage.clientWidth,
+      h = this.stage.clientHeight;
+    // Worked out for this size, so a later resize scales the pan from here.
+    this.size = [w, h];
+    this.set(clampZoom(z, w, h, this.max), glide);
+  }
+
   reset(glide = false): void {
     this.set(clampZoom(IDENTITY, this.stage.clientWidth, this.stage.clientHeight, this.max), glide);
   }

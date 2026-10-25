@@ -40,6 +40,17 @@ test('a clean scene passes every gate', async () => {
   assert.equal((report.variants as unknown[]).length, 1);
 });
 
+test('numerals outside Latin draw from the fallback faces and pass every gate, in sans and mono', async () => {
+  const report = await checked(
+    await write(
+      scene(
+        `await this.step('one',{caption:'Numerals.'});${label('٣ ۳ ३ ３ 三 Ⅻ ² ½ ①')}await this.step('two',{caption:'In code.'});await s.enter(new Text('n = int("٣") # 三 Ⅻ',{fontSize:.4,font:'mono'}).moveTo([0,-2]),{describe:'code'});`,
+      ),
+    ),
+  );
+  assert.equal((report.variants as unknown[]).length, 1);
+});
+
 // A diagram whose label B is readable only in mid-sweep: focus(['B']) zooms to it, focus('all') ends the step with it at 4 px.
 const spec = { source: 'graph LR\nA -->|hello| B', style: 'nord' };
 function smallLabel(): DiagramSnapshot {
@@ -135,6 +146,13 @@ const gates: { gate: string; source: string; message: RegExp; snapshots?: () => 
       `static settings=[{id:'k',label:'Kind',default:'a',options:[{value:'a',label:'Plain'},{value:'b',label:'Han'}]}];`,
     ),
     message: /Kind: Han, step two: "a中b" has 中 \(U\+4E2D\)/,
+  },
+  {
+    // The fallback faces hold digits and a few numerals, not their scripts: an Arabic letter, which
+    // would need shaping, and a Thai digit still fail, and only they are named.
+    gate: 'missing glyphs: a fallback face covers numerals, not its whole script',
+    source: scene(`await this.step('one');await s.enter(new Text('٣ب ३ ๓',{fontSize:.4}),{describe:'text'});`),
+    message: /step one: "٣ب ३ ๓" has ب \(U\+0628\), ๓ \(U\+0E53\)$/m,
   },
   {
     gate: 'duplicate step names',

@@ -1,0 +1,327 @@
+{
+ "image": "composer:2.8",
+ "sabre": "4.5.7",
+ "inputsDigest": "bfda201b6531cdfa5404fbe284ceec84436c52701b5e99e64a4eddc7de5a9c76",
+ "answers": {
+  "calendars": {
+   "series": {
+    "validate": [],
+    "starts": [
+     "20261102T090000Z",
+     "20261109T090000Z",
+     "20261116T090000Z",
+     "20261123T090000Z",
+     "20261130T090000Z",
+     "20261207T090000Z"
+    ]
+   },
+   "invited": {
+    "validate": [],
+    "starts": [
+     "20261102T090000Z",
+     "20261109T090000Z",
+     "20261116T090000Z",
+     "20261123T090000Z",
+     "20261130T090000Z",
+     "20261207T090000Z"
+    ]
+   },
+   "none/organiser": {
+    "validate": [],
+    "starts": [
+     "20261102T090000Z",
+     "20261109T090000Z",
+     "20261116T090000Z",
+     "20261123T090000Z",
+     "20261130T090000Z",
+     "20261207T090000Z"
+    ]
+   },
+   "none/guest": {
+    "validate": [],
+    "starts": []
+   },
+   "move/organiser": {
+    "validate": [],
+    "starts": [
+     "20261102T090000Z",
+     "20261110T140000Z",
+     "20261116T090000Z",
+     "20261123T090000Z",
+     "20261130T090000Z",
+     "20261207T090000Z"
+    ]
+   },
+   "move/guest": {
+    "validate": [],
+    "starts": []
+   },
+   "skip/organiser": {
+    "validate": [],
+    "starts": [
+     "20261102T090000Z",
+     "20261109T090000Z",
+     "20261123T090000Z",
+     "20261130T090000Z",
+     "20261207T090000Z"
+    ]
+   },
+   "skip/guest": {
+    "validate": [],
+    "starts": []
+   },
+   "two masters": {
+    "validate": [
+     [
+      3,
+      "More than one master object was found for the object with UID standup"
+     ]
+    ],
+    "starts": [
+     "20261102T090000Z",
+     "20261109T090000Z",
+     "20261116T090000Z",
+     "20261123T090000Z",
+     "20261130T090000Z",
+     "20261207T090000Z"
+    ]
+   },
+   "two RRULEs": {
+    "validate": [
+     [
+      3,
+      "RRULE MUST NOT appear more than once in a VEVENT component"
+     ]
+    ],
+    "starts": [
+     "20261102T090000Z",
+     "20261109T090000Z",
+     "20261116T090000Z",
+     "20261123T090000Z",
+     "20261130T090000Z",
+     "20261207T090000Z"
+    ]
+   },
+   "two identical RRULEs": {
+    "validate": [
+     [
+      3,
+      "RRULE MUST NOT appear more than once in a VEVENT component"
+     ]
+    ],
+    "starts": [
+     "20261102T090000Z",
+     "20261109T090000Z",
+     "20261116T090000Z",
+     "20261123T090000Z",
+     "20261130T090000Z",
+     "20261207T090000Z"
+    ]
+   },
+   "override only": {
+    "validate": [],
+    "starts": []
+   },
+   "two UIDs": {
+    "validate": [
+     [
+      3,
+      "A calendar object on a CalDAV server may only have components with the same UID."
+     ]
+    ],
+    "starts": [
+     "20261102T090000Z",
+     "20261109T090000Z",
+     "20261116T090000Z",
+     "20261123T090000Z",
+     "20261130T090000Z",
+     "20261207T090000Z",
+     "20261102T090000Z",
+     "20261109T090000Z",
+     "20261116T090000Z",
+     "20261123T090000Z",
+     "20261130T090000Z",
+     "20261207T090000Z"
+    ]
+   },
+   "moved override only": {
+    "validate": [],
+    "starts": [
+     "20261110T140000Z"
+    ]
+   },
+   "weekly, 10 occurrences": {
+    "validate": [],
+    "starts": [
+     "19970902T090000Z",
+     "19970909T090000Z",
+     "19970916T090000Z",
+     "19970923T090000Z",
+     "19970930T090000Z",
+     "19971007T090000Z",
+     "19971014T090000Z",
+     "19971021T090000Z",
+     "19971028T090000Z",
+     "19971104T090000Z"
+    ]
+   },
+   "weekly until 24 December 1997": {
+    "validate": [],
+    "starts": [
+     "19970902T090000Z",
+     "19970909T090000Z",
+     "19970916T090000Z",
+     "19970923T090000Z",
+     "19970930T090000Z",
+     "19971007T090000Z",
+     "19971014T090000Z",
+     "19971021T090000Z",
+     "19971028T090000Z",
+     "19971104T090000Z",
+     "19971111T090000Z",
+     "19971118T090000Z",
+     "19971125T090000Z",
+     "19971202T090000Z",
+     "19971209T090000Z",
+     "19971216T090000Z",
+     "19971223T090000Z"
+    ]
+   }
+  },
+  "schedules": {
+   "none": {
+    "messages": [
+     {
+      "method": "REQUEST",
+      "components": [
+       {
+        "recurrenceId": "20261116T090000Z",
+        "dtstart": "20261116T090000Z",
+        "rrules": [],
+        "exdates": [],
+        "attendees": [
+         "mailto:alice@example.com",
+         "mailto:bob@example.com"
+        ],
+        "status": null
+       }
+      ]
+     }
+    ],
+    "copy": [
+     {
+      "recurrenceId": "20261116T090000Z",
+      "dtstart": "20261116T090000Z",
+      "rrules": [],
+      "exdates": [],
+      "attendees": [
+       "mailto:alice@example.com",
+       "mailto:bob@example.com"
+      ],
+      "status": null
+     }
+    ],
+    "starts": []
+   },
+   "move": {
+    "messages": [
+     {
+      "method": "REQUEST",
+      "components": [
+       {
+        "recurrenceId": "20261116T090000Z",
+        "dtstart": "20261116T090000Z",
+        "rrules": [],
+        "exdates": [],
+        "attendees": [
+         "mailto:alice@example.com",
+         "mailto:bob@example.com"
+        ],
+        "status": null
+       }
+      ]
+     },
+     {
+      "method": "REQUEST",
+      "components": [
+       {
+        "recurrenceId": "20261116T090000Z",
+        "dtstart": "20261116T090000Z",
+        "rrules": [],
+        "exdates": [],
+        "attendees": [
+         "mailto:alice@example.com",
+         "mailto:bob@example.com"
+        ],
+        "status": null
+       }
+      ]
+     }
+    ],
+    "copy": [
+     {
+      "recurrenceId": "20261116T090000Z",
+      "dtstart": "20261116T090000Z",
+      "rrules": [],
+      "exdates": [],
+      "attendees": [
+       "mailto:alice@example.com",
+       "mailto:bob@example.com"
+      ],
+      "status": null
+     }
+    ],
+    "starts": []
+   },
+   "skip": {
+    "messages": [
+     {
+      "method": "REQUEST",
+      "components": [
+       {
+        "recurrenceId": "20261116T090000Z",
+        "dtstart": "20261116T090000Z",
+        "rrules": [],
+        "exdates": [],
+        "attendees": [
+         "mailto:alice@example.com",
+         "mailto:bob@example.com"
+        ],
+        "status": null
+       }
+      ]
+     },
+     {
+      "method": "CANCEL",
+      "components": [
+       {
+        "recurrenceId": null,
+        "dtstart": "20261102T090000Z",
+        "rrules": [],
+        "exdates": [],
+        "attendees": [
+         "mailto:bob@example.com"
+        ],
+        "status": null
+       }
+      ]
+     }
+    ],
+    "copy": [
+     {
+      "recurrenceId": "20261116T090000Z",
+      "dtstart": "20261116T090000Z",
+      "rrules": [],
+      "exdates": [],
+      "attendees": [
+       "mailto:alice@example.com",
+       "mailto:bob@example.com"
+      ],
+      "status": "CANCELLED"
+     }
+    ],
+    "starts": []
+   }
+  }
+ }
+}

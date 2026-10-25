@@ -1,0 +1,1997 @@
+{
+  "version": 1,
+  "renderer": "agentic-mermaid@0.4.1",
+  "spec": {
+    "source": "---\nconfig:\n  gantt:\n    barHeight: 6\n---\ngantt\n  dateFormat HHmm\n  axisFormat %H:%M\n  section service_id FULLW\n    AB1, route 10 :ab1, 0800, 0810\n    AB2, route 10 :ab2, 1205, 1215\n    BFC1, route 20 :bfc1, 0820, 0920\n    BFC2, route 20 :bfc2, 1100, 1200\n    STBA, route 30 every 30 min :stba, 0600, 2200\n    CITY1, route 40 every 10 or 30 min :city1, 0600, 2200\n    CITY2, route 40 every 10 or 30 min :city2, 0600, 2200\n  section service_id WE\n    AAMV1, route 50 :aamv1, 0800, 0900\n    AAMV2, route 50 :aamv2, 1000, 1100\n    AAMV3, route 50 :aamv3, 1300, 1400\n    AAMV4, route 50 :aamv4, 1500, 1600",
+    "style": "github-light"
+  },
+  "family": "gantt",
+  "width": 841,
+  "height": 393,
+  "palette": {
+    "paper": "#ffffff",
+    "ink": "#1f2328",
+    "accent": "#0969da",
+    "muted": "#59636e"
+  },
+  "parts": [
+    {
+      "id": "__frame",
+      "role": "frame",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0,
+              0,
+              2.8033335208892822,
+              0,
+              5.6066670417785645,
+              0,
+              8.40999984741211,
+              0,
+              8.40999984741211,
+              -1.309999942779541,
+              8.40999984741211,
+              -2.619999885559082,
+              8.40999984741211,
+              -3.930000066757202,
+              5.6066670417785645,
+              -3.930000066757202,
+              2.8033335208892822,
+              -3.930000066757202,
+              0,
+              -3.930000066757202,
+              0,
+              -2.619999885559082,
+              0,
+              -1.309999942779541,
+              0,
+              0
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "section-band:service_id FULLW#0",
+      "role": "section",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.25,
+              -0.1599999964237213,
+              4.25,
+              -0.1599999964237213,
+              6.25,
+              -0.1599999964237213,
+              8.25,
+              -0.1599999964237213,
+              8.25,
+              -0.8266666531562805,
+              8.25,
+              -1.493333339691162,
+              8.25,
+              -2.1600000858306885,
+              6.25,
+              -2.1600000858306885,
+              4.25,
+              -2.1600000858306885,
+              2.25,
+              -2.1600000858306885,
+              2.25,
+              -1.493333339691162,
+              2.25,
+              -0.8266666531562805,
+              2.25,
+              -0.1599999964237213
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.07,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "service_id FULLW"
+      }
+    },
+    {
+      "id": "grid:21600000",
+      "role": "grid",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.25,
+              -0.1599999964237213,
+              2.25,
+              -1.2833333015441895,
+              2.25,
+              -2.4066667556762695,
+              2.25,
+              -3.5299999713897705
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#d1d9e0",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.45,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "grid:43200000",
+      "role": "grid",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.5,
+              -0.1599999964237213,
+              4.5,
+              -1.2833333015441895,
+              4.5,
+              -2.4066667556762695,
+              4.5,
+              -3.5299999713897705
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#d1d9e0",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.45,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "grid:64800000",
+      "role": "grid",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              6.75,
+              -0.1599999964237213,
+              6.75,
+              -1.2833333015441895,
+              6.75,
+              -2.4066667556762695,
+              6.75,
+              -3.5299999713897705
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#d1d9e0",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.45,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "axis:21600000:bottom",
+      "role": "axis",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "06:00",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "06:00",
+            "x": 225,
+            "y": 365,
+            "size": 11,
+            "anchor": "middle",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 29.238
+          }
+        }
+      ]
+    },
+    {
+      "id": "axis:43200000:bottom",
+      "role": "axis",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "12:00",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "12:00",
+            "x": 450,
+            "y": 365,
+            "size": 11,
+            "anchor": "middle",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 25.476
+          }
+        }
+      ]
+    },
+    {
+      "id": "axis:64800000:bottom",
+      "role": "axis",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "18:00",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "18:00",
+            "x": 675,
+            "y": 365,
+            "size": 11,
+            "anchor": "middle",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 25.476
+          }
+        }
+      ]
+    },
+    {
+      "id": "section-label:service_id FULLW#0",
+      "role": "section",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "service_id FULLW",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "service_id FULLW",
+            "x": 8,
+            "y": 23,
+            "size": 13,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 120.51
+          }
+        }
+      ],
+      "channels": {
+        "category": "service_id FULLW"
+      }
+    },
+    {
+      "id": "section-label:service_id WE#0",
+      "role": "section",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "service_id WE",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "service_id WE",
+            "x": 8,
+            "y": 229,
+            "size": 13,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 92.43
+          }
+        }
+      ],
+      "channels": {
+        "category": "service_id WE"
+      }
+    },
+    {
+      "id": "task-label:ab1",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "AB1, route 10",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "AB1, route 10",
+            "x": 16,
+            "y": 44,
+            "size": 13,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 71.604
+          }
+        }
+      ],
+      "owner": "task:ab1"
+    },
+    {
+      "id": "task-label:ab2",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "AB2, route 10",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "AB2, route 10",
+            "x": 16,
+            "y": 69,
+            "size": 13,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 76.05
+          }
+        }
+      ],
+      "owner": "task:ab2"
+    },
+    {
+      "id": "task-label:bfc1",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "BFC1, route 20",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "BFC1, route 20",
+            "x": 16,
+            "y": 94,
+            "size": 13,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 84.942
+          }
+        }
+      ],
+      "owner": "task:bfc1"
+    },
+    {
+      "id": "task-label:bfc2",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "BFC2, route 20",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "BFC2, route 20",
+            "x": 16,
+            "y": 119,
+            "size": 13,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 89.388
+          }
+        }
+      ],
+      "owner": "task:bfc2"
+    },
+    {
+      "id": "task-label:stba",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "STBA, route 30 every 30 min",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "STBA, route 30 every 30 min",
+            "x": 16,
+            "y": 144,
+            "size": 13,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 167.193
+          }
+        }
+      ],
+      "owner": "task:stba"
+    },
+    {
+      "id": "task-label:city1",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "CITY1, route 40 every 10 or 30 min",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "CITY1, route 40 every 10 or 30 min",
+            "x": 16,
+            "y": 169,
+            "size": 13,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 192.387
+          }
+        }
+      ],
+      "owner": "task:city1"
+    },
+    {
+      "id": "task-label:city2",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "CITY2, route 40 every 10 or 30 min",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "CITY2, route 40 every 10 or 30 min",
+            "x": 16,
+            "y": 194,
+            "size": 13,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 196.833
+          }
+        }
+      ],
+      "owner": "task:city2"
+    },
+    {
+      "id": "task-label:aamv1",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "AAMV1, route 50",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "AAMV1, route 50",
+            "x": 16,
+            "y": 250,
+            "size": 13,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 96.057
+          }
+        }
+      ],
+      "owner": "task:aamv1"
+    },
+    {
+      "id": "task-label:aamv2",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "AAMV2, route 50",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "AAMV2, route 50",
+            "x": 16,
+            "y": 275,
+            "size": 13,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 100.503
+          }
+        }
+      ],
+      "owner": "task:aamv2"
+    },
+    {
+      "id": "task-label:aamv3",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "AAMV3, route 50",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "AAMV3, route 50",
+            "x": 16,
+            "y": 300,
+            "size": 13,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 100.503
+          }
+        }
+      ],
+      "owner": "task:aamv3"
+    },
+    {
+      "id": "task-label:aamv4",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "AAMV4, route 50",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "AAMV4, route 50",
+            "x": 16,
+            "y": 325,
+            "size": 13,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 100.503
+          }
+        }
+      ],
+      "owner": "task:aamv4"
+    },
+    {
+      "id": "task:ab1",
+      "role": "task",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.0299999713897705,
+              -0.4099999964237213,
+              3.0308334827423096,
+              -0.4099999964237213,
+              3.0316665172576904,
+              -0.4099999964237213,
+              3.0325000286102295,
+              -0.4099999964237213,
+              3.0490686893463135,
+              -0.4099999964237213,
+              3.0625,
+              -0.42343148589134216,
+              3.0625,
+              -0.4399999976158142,
+              3.0625,
+              -0.4399999976158142,
+              3.0625,
+              -0.4399999976158142,
+              3.0625,
+              -0.4399999976158142,
+              3.0625,
+              -0.45656853914260864,
+              3.0490686893463135,
+              -0.4699999988079071,
+              3.0325000286102295,
+              -0.4699999988079071,
+              3.0316665172576904,
+              -0.4699999988079071,
+              3.0308334827423096,
+              -0.4699999988079071,
+              3.0299999713897705,
+              -0.4699999988079071,
+              3.0134313106536865,
+              -0.4699999988079071,
+              3,
+              -0.45656853914260864,
+              3,
+              -0.4399999976158142,
+              3,
+              -0.4399999976158142,
+              3,
+              -0.4399999976158142,
+              3,
+              -0.4399999976158142,
+              3,
+              -0.42343148589134216,
+              3.0134313106536865,
+              -0.4099999964237213,
+              3.0299999713897705,
+              -0.4099999964237213
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.92,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "service_id FULLW"
+      }
+    },
+    {
+      "id": "task:ab2",
+      "role": "task",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.561300277709961,
+              -0.6600000262260437,
+              4.562133312225342,
+              -0.6600000262260437,
+              4.562966823577881,
+              -0.6600000262260437,
+              4.563799858093262,
+              -0.6600000262260437,
+              4.580368518829346,
+              -0.6600000262260437,
+              4.593800067901611,
+              -0.6734314560890198,
+              4.593800067901611,
+              -0.6899999976158142,
+              4.593800067901611,
+              -0.6899999976158142,
+              4.593800067901611,
+              -0.6899999976158142,
+              4.593800067901611,
+              -0.6899999976158142,
+              4.593800067901611,
+              -0.7065685391426086,
+              4.580368518829346,
+              -0.7200000286102295,
+              4.563799858093262,
+              -0.7200000286102295,
+              4.562966823577881,
+              -0.7200000286102295,
+              4.562133312225342,
+              -0.7200000286102295,
+              4.561300277709961,
+              -0.7200000286102295,
+              4.544731616973877,
+              -0.7200000286102295,
+              4.531300067901611,
+              -0.7065685391426086,
+              4.531300067901611,
+              -0.6899999976158142,
+              4.531300067901611,
+              -0.6899999976158142,
+              4.531300067901611,
+              -0.6899999976158142,
+              4.531300067901611,
+              -0.6899999976158142,
+              4.531300067901611,
+              -0.6734314560890198,
+              4.544731616973877,
+              -0.6600000262260437,
+              4.561300277709961,
+              -0.6600000262260437
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.92,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "service_id FULLW"
+      }
+    },
+    {
+      "id": "task:bfc1",
+      "role": "task",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.1549999713897705,
+              -0.9100000262260437,
+              3.259999990463257,
+              -0.9100000262260437,
+              3.365000009536743,
+              -0.9100000262260437,
+              3.4700000286102295,
+              -0.9100000262260437,
+              3.4865686893463135,
+              -0.9100000262260437,
+              3.5,
+              -0.9234314560890198,
+              3.5,
+              -0.9399999976158142,
+              3.5,
+              -0.9399999976158142,
+              3.5,
+              -0.9399999976158142,
+              3.5,
+              -0.9399999976158142,
+              3.5,
+              -0.9565685391426086,
+              3.4865686893463135,
+              -0.9700000286102295,
+              3.4700000286102295,
+              -0.9700000286102295,
+              3.365000009536743,
+              -0.9700000286102295,
+              3.259999990463257,
+              -0.9700000286102295,
+              3.1549999713897705,
+              -0.9700000286102295,
+              3.1384313106536865,
+              -0.9700000286102295,
+              3.125,
+              -0.9565685391426086,
+              3.125,
+              -0.9399999976158142,
+              3.125,
+              -0.9399999976158142,
+              3.125,
+              -0.9399999976158142,
+              3.125,
+              -0.9399999976158142,
+              3.125,
+              -0.9234314560890198,
+              3.1384313106536865,
+              -0.9100000262260437,
+              3.1549999713897705,
+              -0.9100000262260437
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.92,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "service_id FULLW"
+      }
+    },
+    {
+      "id": "task:bfc2",
+      "role": "task",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.15500020980835,
+              -1.159999966621399,
+              4.260000228881836,
+              -1.159999966621399,
+              4.364999771118164,
+              -1.159999966621399,
+              4.46999979019165,
+              -1.159999966621399,
+              4.486568450927734,
+              -1.159999966621399,
+              4.5,
+              -1.1734315156936646,
+              4.5,
+              -1.190000057220459,
+              4.5,
+              -1.190000057220459,
+              4.5,
+              -1.190000057220459,
+              4.5,
+              -1.190000057220459,
+              4.5,
+              -1.2065684795379639,
+              4.486568450927734,
+              -1.2200000286102295,
+              4.46999979019165,
+              -1.2200000286102295,
+              4.364999771118164,
+              -1.2200000286102295,
+              4.260000228881836,
+              -1.2200000286102295,
+              4.15500020980835,
+              -1.2200000286102295,
+              4.138431549072266,
+              -1.2200000286102295,
+              4.125,
+              -1.2065684795379639,
+              4.125,
+              -1.190000057220459,
+              4.125,
+              -1.190000057220459,
+              4.125,
+              -1.190000057220459,
+              4.125,
+              -1.190000057220459,
+              4.125,
+              -1.1734315156936646,
+              4.138431549072266,
+              -1.159999966621399,
+              4.15500020980835,
+              -1.159999966621399
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.92,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "service_id FULLW"
+      }
+    },
+    {
+      "id": "task:stba",
+      "role": "task",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.2799999713897705,
+              -1.409999966621399,
+              4.260000228881836,
+              -1.409999966621399,
+              6.239999771118164,
+              -1.409999966621399,
+              8.220000267028809,
+              -1.409999966621399,
+              8.236568450927734,
+              -1.409999966621399,
+              8.25,
+              -1.423431396484375,
+              8.25,
+              -1.440000057220459,
+              8.25,
+              -1.440000057220459,
+              8.25,
+              -1.440000057220459,
+              8.25,
+              -1.440000057220459,
+              8.25,
+              -1.4565685987472534,
+              8.236568450927734,
+              -1.4700000286102295,
+              8.220000267028809,
+              -1.4700000286102295,
+              6.239999771118164,
+              -1.4700000286102295,
+              4.260000228881836,
+              -1.4700000286102295,
+              2.2799999713897705,
+              -1.4700000286102295,
+              2.2634313106536865,
+              -1.4700000286102295,
+              2.25,
+              -1.4565685987472534,
+              2.25,
+              -1.440000057220459,
+              2.25,
+              -1.440000057220459,
+              2.25,
+              -1.440000057220459,
+              2.25,
+              -1.440000057220459,
+              2.25,
+              -1.423431396484375,
+              2.2634313106536865,
+              -1.409999966621399,
+              2.2799999713897705,
+              -1.409999966621399
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.92,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "service_id FULLW"
+      }
+    },
+    {
+      "id": "task:city1",
+      "role": "task",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.2799999713897705,
+              -1.659999966621399,
+              4.260000228881836,
+              -1.659999966621399,
+              6.239999771118164,
+              -1.659999966621399,
+              8.220000267028809,
+              -1.659999966621399,
+              8.236568450927734,
+              -1.659999966621399,
+              8.25,
+              -1.673431396484375,
+              8.25,
+              -1.690000057220459,
+              8.25,
+              -1.690000057220459,
+              8.25,
+              -1.690000057220459,
+              8.25,
+              -1.690000057220459,
+              8.25,
+              -1.7065685987472534,
+              8.236568450927734,
+              -1.7200000286102295,
+              8.220000267028809,
+              -1.7200000286102295,
+              6.239999771118164,
+              -1.7200000286102295,
+              4.260000228881836,
+              -1.7200000286102295,
+              2.2799999713897705,
+              -1.7200000286102295,
+              2.2634313106536865,
+              -1.7200000286102295,
+              2.25,
+              -1.7065685987472534,
+              2.25,
+              -1.690000057220459,
+              2.25,
+              -1.690000057220459,
+              2.25,
+              -1.690000057220459,
+              2.25,
+              -1.690000057220459,
+              2.25,
+              -1.673431396484375,
+              2.2634313106536865,
+              -1.659999966621399,
+              2.2799999713897705,
+              -1.659999966621399
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.92,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "service_id FULLW"
+      }
+    },
+    {
+      "id": "task:city2",
+      "role": "task",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.2799999713897705,
+              -1.909999966621399,
+              4.260000228881836,
+              -1.909999966621399,
+              6.239999771118164,
+              -1.909999966621399,
+              8.220000267028809,
+              -1.909999966621399,
+              8.236568450927734,
+              -1.909999966621399,
+              8.25,
+              -1.923431396484375,
+              8.25,
+              -1.940000057220459,
+              8.25,
+              -1.940000057220459,
+              8.25,
+              -1.940000057220459,
+              8.25,
+              -1.940000057220459,
+              8.25,
+              -1.9565685987472534,
+              8.236568450927734,
+              -1.9700000286102295,
+              8.220000267028809,
+              -1.9700000286102295,
+              6.239999771118164,
+              -1.9700000286102295,
+              4.260000228881836,
+              -1.9700000286102295,
+              2.2799999713897705,
+              -1.9700000286102295,
+              2.2634313106536865,
+              -1.9700000286102295,
+              2.25,
+              -1.9565685987472534,
+              2.25,
+              -1.940000057220459,
+              2.25,
+              -1.940000057220459,
+              2.25,
+              -1.940000057220459,
+              2.25,
+              -1.940000057220459,
+              2.25,
+              -1.923431396484375,
+              2.2634313106536865,
+              -1.909999966621399,
+              2.2799999713897705,
+              -1.909999966621399
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.92,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "service_id FULLW"
+      }
+    },
+    {
+      "id": "task:aamv1",
+      "role": "task",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.0299999713897705,
+              -2.4700000286102295,
+              3.134999990463257,
+              -2.4700000286102295,
+              3.240000009536743,
+              -2.4700000286102295,
+              3.3450000286102295,
+              -2.4700000286102295,
+              3.3615686893463135,
+              -2.4700000286102295,
+              3.375,
+              -2.483431339263916,
+              3.375,
+              -2.5,
+              3.375,
+              -2.5,
+              3.375,
+              -2.5,
+              3.375,
+              -2.5,
+              3.375,
+              -2.516568660736084,
+              3.3615686893463135,
+              -2.5299999713897705,
+              3.3450000286102295,
+              -2.5299999713897705,
+              3.240000009536743,
+              -2.5299999713897705,
+              3.134999990463257,
+              -2.5299999713897705,
+              3.0299999713897705,
+              -2.5299999713897705,
+              3.0134313106536865,
+              -2.5299999713897705,
+              3,
+              -2.516568660736084,
+              3,
+              -2.5,
+              3,
+              -2.5,
+              3,
+              -2.5,
+              3,
+              -2.5,
+              3,
+              -2.483431339263916,
+              3.0134313106536865,
+              -2.4700000286102295,
+              3.0299999713897705,
+              -2.4700000286102295
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.92,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "service_id WE"
+      }
+    },
+    {
+      "id": "task:aamv2",
+      "role": "task",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.7799999713897705,
+              -2.7200000286102295,
+              3.884999990463257,
+              -2.7200000286102295,
+              3.990000009536743,
+              -2.7200000286102295,
+              4.09499979019165,
+              -2.7200000286102295,
+              4.111568450927734,
+              -2.7200000286102295,
+              4.125,
+              -2.733431339263916,
+              4.125,
+              -2.75,
+              4.125,
+              -2.75,
+              4.125,
+              -2.75,
+              4.125,
+              -2.75,
+              4.125,
+              -2.766568660736084,
+              4.111568450927734,
+              -2.7799999713897705,
+              4.09499979019165,
+              -2.7799999713897705,
+              3.990000009536743,
+              -2.7799999713897705,
+              3.884999990463257,
+              -2.7799999713897705,
+              3.7799999713897705,
+              -2.7799999713897705,
+              3.7634313106536865,
+              -2.7799999713897705,
+              3.75,
+              -2.766568660736084,
+              3.75,
+              -2.75,
+              3.75,
+              -2.75,
+              3.75,
+              -2.75,
+              3.75,
+              -2.75,
+              3.75,
+              -2.733431339263916,
+              3.7634313106536865,
+              -2.7200000286102295,
+              3.7799999713897705,
+              -2.7200000286102295
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.92,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "service_id WE"
+      }
+    },
+    {
+      "id": "task:aamv3",
+      "role": "task",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.90500020980835,
+              -2.9700000286102295,
+              5.010000228881836,
+              -2.9700000286102295,
+              5.114999771118164,
+              -2.9700000286102295,
+              5.21999979019165,
+              -2.9700000286102295,
+              5.236568450927734,
+              -2.9700000286102295,
+              5.25,
+              -2.983431339263916,
+              5.25,
+              -3,
+              5.25,
+              -3,
+              5.25,
+              -3,
+              5.25,
+              -3,
+              5.25,
+              -3.016568660736084,
+              5.236568450927734,
+              -3.0299999713897705,
+              5.21999979019165,
+              -3.0299999713897705,
+              5.114999771118164,
+              -3.0299999713897705,
+              5.010000228881836,
+              -3.0299999713897705,
+              4.90500020980835,
+              -3.0299999713897705,
+              4.888431549072266,
+              -3.0299999713897705,
+              4.875,
+              -3.016568660736084,
+              4.875,
+              -3,
+              4.875,
+              -3,
+              4.875,
+              -3,
+              4.875,
+              -3,
+              4.875,
+              -2.983431339263916,
+              4.888431549072266,
+              -2.9700000286102295,
+              4.90500020980835,
+              -2.9700000286102295
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.92,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "service_id WE"
+      }
+    },
+    {
+      "id": "task:aamv4",
+      "role": "task",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              5.65500020980835,
+              -3.2200000286102295,
+              5.760000228881836,
+              -3.2200000286102295,
+              5.864999771118164,
+              -3.2200000286102295,
+              5.96999979019165,
+              -3.2200000286102295,
+              5.986568450927734,
+              -3.2200000286102295,
+              6,
+              -3.233431339263916,
+              6,
+              -3.25,
+              6,
+              -3.25,
+              6,
+              -3.25,
+              6,
+              -3.25,
+              6,
+              -3.266568660736084,
+              5.986568450927734,
+              -3.2799999713897705,
+              5.96999979019165,
+              -3.2799999713897705,
+              5.864999771118164,
+              -3.2799999713897705,
+              5.760000228881836,
+              -3.2799999713897705,
+              5.65500020980835,
+              -3.2799999713897705,
+              5.638431549072266,
+              -3.2799999713897705,
+              5.625,
+              -3.266568660736084,
+              5.625,
+              -3.25,
+              5.625,
+              -3.25,
+              5.625,
+              -3.25,
+              5.625,
+              -3.25,
+              5.625,
+              -3.233431339263916,
+              5.638431549072266,
+              -3.2200000286102295,
+              5.65500020980835,
+              -3.2200000286102295
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.92,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "service_id WE"
+      }
+    }
+  ],
+  "findings": {
+    "ok": true,
+    "warnings": [],
+    "layout": {
+      "version": 1,
+      "kind": "gantt",
+      "nodes": [
+        {
+          "id": "ab1",
+          "x": 300,
+          "y": 41,
+          "w": 6,
+          "h": 6,
+          "shape": "rectangle",
+          "label": "AB1, route 10"
+        },
+        {
+          "id": "ab2",
+          "x": 453,
+          "y": 66,
+          "w": 6,
+          "h": 6,
+          "shape": "rectangle",
+          "label": "AB2, route 10"
+        },
+        {
+          "id": "bfc1",
+          "x": 313,
+          "y": 91,
+          "w": 38,
+          "h": 6,
+          "shape": "rectangle",
+          "label": "BFC1, route 20"
+        },
+        {
+          "id": "bfc2",
+          "x": 413,
+          "y": 116,
+          "w": 38,
+          "h": 6,
+          "shape": "rectangle",
+          "label": "BFC2, route 20"
+        },
+        {
+          "id": "stba",
+          "x": 225,
+          "y": 141,
+          "w": 600,
+          "h": 6,
+          "shape": "rectangle",
+          "label": "STBA, route 30 every 30 min"
+        },
+        {
+          "id": "city1",
+          "x": 225,
+          "y": 166,
+          "w": 600,
+          "h": 6,
+          "shape": "rectangle",
+          "label": "CITY1, route 40 every 10 or 30 min"
+        },
+        {
+          "id": "city2",
+          "x": 225,
+          "y": 191,
+          "w": 600,
+          "h": 6,
+          "shape": "rectangle",
+          "label": "CITY2, route 40 every 10 or 30 min"
+        },
+        {
+          "id": "aamv1",
+          "x": 300,
+          "y": 247,
+          "w": 38,
+          "h": 6,
+          "shape": "rectangle",
+          "label": "AAMV1, route 50"
+        },
+        {
+          "id": "aamv2",
+          "x": 375,
+          "y": 272,
+          "w": 38,
+          "h": 6,
+          "shape": "rectangle",
+          "label": "AAMV2, route 50"
+        },
+        {
+          "id": "aamv3",
+          "x": 488,
+          "y": 297,
+          "w": 38,
+          "h": 6,
+          "shape": "rectangle",
+          "label": "AAMV3, route 50"
+        },
+        {
+          "id": "aamv4",
+          "x": 563,
+          "y": 322,
+          "w": 38,
+          "h": 6,
+          "shape": "rectangle",
+          "label": "AAMV4, route 50"
+        }
+      ],
+      "edges": [],
+      "groups": [
+        {
+          "id": "section#0",
+          "x": 225,
+          "y": 16,
+          "w": 600,
+          "h": 200,
+          "members": [
+            "ab1",
+            "ab2",
+            "bfc1",
+            "bfc2",
+            "stba",
+            "city1",
+            "city2"
+          ],
+          "label": "service_id FULLW"
+        },
+        {
+          "id": "section#1",
+          "x": 225,
+          "y": 222,
+          "w": 600,
+          "h": 125,
+          "members": [
+            "aamv1",
+            "aamv2",
+            "aamv3",
+            "aamv4"
+          ],
+          "label": "service_id WE"
+        }
+      ],
+      "bounds": {
+        "w": 841,
+        "h": 393
+      }
+    }
+  }
+}

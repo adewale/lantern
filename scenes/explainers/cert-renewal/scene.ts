@@ -4,10 +4,12 @@ import {
   BACKDATE,
   BR_PHASES,
   DAY,
+  EMISSION,
   LE_DATES,
   LIFETIMES,
   LIMIT,
   RUN_EVERY,
+  ariSummary,
   simulate,
   summarize,
   windowFor,
@@ -79,19 +81,34 @@ const NEW_CODE = [
   '    if now > default_rt:',
   '        return True',
 ];
-// certbot v5.8.0, renewal.py:462–487; logging, the OCSP check and the notAfter lookup left out.
+// certbot v5.8.0: acme/src/acme/client.py:363–368 (ClientV2.renewal_time, which
+// _ari_renewal_time calls at renewal.py:392) and renewal.py:462–482 (should_autorenew,
+// logging, the OCSP check and the notAfter lookup left out).
 const ARI_CODE = [
-  '# certbot 5.8.0, renewal.py:462–487, should_autorenew',
+  '# certbot 5.8.0, acme client.py:363–368, each time it asks',
+  'start = renewal_info.suggested_window.start',
+  'end = renewal_info.suggested_window.end',
+  'delta_seconds = (end - start).total_seconds()',
+  'random_seconds = random.uniform(0, delta_seconds)',
+  'random_time = start + datetime.timedelta(seconds=random_seconds)',
+  '# renewal.py:462–482, should_autorenew',
   'renewal_time = _ari_renewal_time(lineage, cert_pem, ari_clients)',
   'if renewal_time and now > renewal_time:',
   '    return True',
-  'config_interval = lineage.configuration.get("renew_before_expiry")',
   'if config_interval is not None:',
   '    if notAfter < storage.add_time_interval(now, config_interval):',
   '        return True',
-  'elif renewal_time is None:',
-  '    if now > _default_renewal_time(cert_pem):',
-  '        return True',
+];
+// letsencrypt/boulder 4e1779d, wfe2/wfe.go:2290–2297 (validateReplacementOrder) and
+// 2487–2489 (NewOrder); comments shortened.
+const EXEMPT_CODE = [
+  '// boulder wfe2/wfe.go:2290–2297, validateReplacementOrder',
+  '// exempt only if it replaces a certificate and is inside its window',
+  'renewalInfo, err := wfe.determineARIWindow(ctx, replaces)',
+  'return replaces, renewalInfo.SuggestedWindow.IsWithin(wfe.clk.Now()), nil',
+  '// wfe2/wfe.go:2487–2489, NewOrder',
+  'if !isARIRenewal {',
+  '    refundLimits, err = wfe.checkNewOrderLimits(ctx, acct.ID, idents, isRenewal)',
 ];
 
 /** Gantt dates: hour 0 is the first certificate's notBefore, 1 March 2028 00:00 UTC. */
@@ -128,13 +145,27 @@ export default class CertRenewalExplainer extends Scene {
       'https://letsencrypt.org/2025/12/02/from-90-to-45/',
       'https://letsencrypt.org/docs/profiles/',
       'https://letsencrypt.org/docs/rate-limits/',
+      'https://github.com/letsencrypt/website/blob/e336493f1d4110a0cc7c539097c455a6efcaff29/content/en/docs/rate-limits.md',
+      'https://github.com/letsencrypt/boulder/blob/4e1779d21f9a2b504f8a4e5f1865e8c631777922/issuance/cert.go#L125-L136',
+      'https://github.com/letsencrypt/boulder/blob/4e1779d21f9a2b504f8a4e5f1865e8c631777922/test/config/ca.json#L58',
+      'https://github.com/letsencrypt/boulder/blob/4e1779d21f9a2b504f8a4e5f1865e8c631777922/ratelimits/gcra.go#L9-L60',
+      'https://github.com/letsencrypt/boulder/blob/4e1779d21f9a2b504f8a4e5f1865e8c631777922/ratelimits/limit.go#L93-L97',
+      'https://github.com/letsencrypt/boulder/blob/4e1779d21f9a2b504f8a4e5f1865e8c631777922/ratelimits/transaction.go#L628-L701',
+      'https://github.com/letsencrypt/boulder/blob/4e1779d21f9a2b504f8a4e5f1865e8c631777922/ratelimits/limiter.go#L263-L360',
+      'https://github.com/letsencrypt/boulder/blob/4e1779d21f9a2b504f8a4e5f1865e8c631777922/ra/ra.go#L1251-L1279',
+      'https://github.com/letsencrypt/boulder/blob/4e1779d21f9a2b504f8a4e5f1865e8c631777922/wfe2/wfe.go#L2197-L2298',
+      'https://github.com/letsencrypt/boulder/blob/4e1779d21f9a2b504f8a4e5f1865e8c631777922/wfe2/wfe.go#L2446-L2500',
+      'https://github.com/letsencrypt/boulder/blob/4e1779d21f9a2b504f8a4e5f1865e8c631777922/wfe2/wfe.go#L2801-L2847',
+      'https://github.com/letsencrypt/boulder/blob/4e1779d21f9a2b504f8a4e5f1865e8c631777922/core/objects.go#L430-L468',
+      'https://www.rfc-editor.org/rfc/rfc9773.html#section-4.2',
       'https://github.com/certbot/certbot/blob/v3.3.0/certbot/certbot/_internal/storage.py#L1005-L1013',
       'https://github.com/certbot/certbot/blob/v5.8.0/certbot/src/certbot/_internal/renewal.py#L413-L489',
       'https://github.com/certbot/certbot/blob/v5.8.0/certbot/src/certbot/_internal/tests/renewal_test.py#L272-L280',
       'https://github.com/certbot/certbot/commit/3cbe1288c90e856e32e719e410147d12b7de1545',
       'https://github.com/certbot/certbot/blob/v5.8.0/certbot/CHANGELOG.md',
       'https://github.com/certbot/certbot/blob/v5.8.0/certbot/docs/using.rst',
-      'https://github.com/certbot/certbot/blob/v5.8.0/acme/src/acme/client.py',
+      'https://github.com/certbot/certbot/blob/v5.8.0/acme/src/acme/client.py#L115-L135',
+      'https://github.com/certbot/certbot/blob/v5.8.0/acme/src/acme/client.py#L307-L371',
     ],
   };
   static settings = [
@@ -201,7 +232,7 @@ export default class CertRenewalExplainer extends Scene {
     );
     await this.step('old-rule', {
       title: 'Certbot 3.3 renews 30 days before expiry',
-      caption: `Certbot 3.3 renews when the certificate expires within renew_before_expiry, 30 days unless the renewal file sets it. Let’s Encrypt dates a certificate about an hour before it issues it, so a 90-day one falls due just before the run at day ${days(ninety.renewsAt)}, which replaces it.`,
+      caption: `Certbot 3.3 renews when the certificate expires within renew_before_expiry, 30 days unless the renewal file sets it. Let’s Encrypt dates a certificate 58.5 minutes before it issues it, so a 90-day one falls due just before the run at day ${days(ninety.renewsAt)}, which replaces it.`,
     });
     await s.clear();
     const chart = await s.show({ source: oneRenewal }, { box: regionBox('top', { bottom: 0.0 }) });
@@ -337,7 +368,7 @@ export default class CertRenewalExplainer extends Scene {
         ? `Renewing at every run, Let’s Encrypt refuses at hour ${mine.firstRefused}`
         : `A failed renewal leaves ${length(mine.slack, short)} to retry`,
       caption: limited
-        ? `Every run renews, and Let’s Encrypt allows 5 certificates for the same names in 7 days, giving one back every ${LIMIT.refillHours} hours. After ${perWindow(rule).issued.filter((t) => t < mine.firstRefused!).length - 1} renewals the run at hour ${mine.firstRefused} is refused. In 365 days ${mine.refusedPerYear} attempts are refused and ${mine.renewalsPerYear} succeed.`
+        ? `Every run renews, and Let’s Encrypt allows 5 certificates for the same names in 7 days, giving one back every ${EMISSION} hours. After ${perWindow(rule).issued.filter((t) => t < mine.firstRefused!).length - 1} renewals the run at hour ${mine.firstRefused} is refused. In 365 days ${mine.refusedPerYear} attempts are refused and ${mine.renewalsPerYear} succeed.`
         : `When a renewal falls due the certificate still has ${length(mine.slack, short)} to run, time for ${mine.retries} twice-daily runs to try again if the CA or the challenge fails. ${upper(RULES[other].short)} leaves ${length(theirs.slack, short)}.`,
     });
     await s.clear();
@@ -364,7 +395,7 @@ export default class CertRenewalExplainer extends Scene {
     await s.card(
       limited
         ? [
-            ['Limit', `5 per 7 days, one back every ${LIMIT.refillHours} h`],
+            ['Limit', `${LIMIT.burst} per 7 days, one back every ${EMISSION} h`],
             ['First refusal', `hour ${mine.firstRefused}`],
             ['In 365 days', `${mine.renewalsPerYear} renewed, ${mine.refusedPerYear} refused`],
           ]
@@ -383,24 +414,58 @@ export default class CertRenewalExplainer extends Scene {
     };
 
     // -------------------------------------------------------------------- ari
+    // The window and the runs come from Boulder's RenewalInfoSimple and Certbot's draw (lib/cert-renewal.ts).
+    const ari = ariSummary(rule, key),
+      when = (h: number) => (short ? `hour ${h.toFixed(1)}` : `day ${days(h)}`),
+      pct = (p: number) => (p < 0.005 ? 'under 1%' : `${Math.round(p * 100)}%`),
+      runList = ari.runs.map((r) => `${at(r.at, short)} (${pct(r.p)})`),
+      // The card says the unit once: "day 42 (<1%), 42.5 (39%), …".
+      runCard = ari.runs.map((r, i) => `${i ? '' : short ? 'hour ' : 'day '}${short ? Math.round(r.at) : days(r.at)} (${r.p < 0.005 ? '<1%' : pct(r.p)})`).join(', '),
+      listed = runList.length > 1 ? `${runList.slice(0, -1).join(', ')} or ${runList[runList.length - 1]}` : runList[0]!;
+    // Under the 30-day rule a set renew_before_expiry can fire before the window opens.
+    const settingFirst = rule === 'fixed30' && ari.runs.length === 1 && ari.runs[0]!.at + BACKDATE < ari.start;
+    const [fewest, most] = ari.perYear,
+      yearly = fewest === most ? `${fewest}` : `${fewest} ${most - fewest === 1 ? 'or' : 'to'} ${most}`;
     await this.step('ari', {
-      title: 'An ARI answer overrides the default, not a set interval',
-      caption:
-        'With ACME Renewal Information the CA suggests when to renew. When a run gets an answer, Certbot 4.1 and later follow it instead of the default rule, though a set renew_before_expiry still renews first if it is earlier. Certbot’s new orders do not name the certificate they replace, so the rate limit still counts them.',
+      title: `Let’s Encrypt’s ARI window: ${when(ari.start)} to ${when(ari.end)}`,
+      caption: `Certbot 4.1 and later ask Let’s Encrypt when to renew; the answer is a window 1% of the life either side of ${short ? 'half way' : 'two thirds'}. ${
+        settingFirst
+          ? `The 30-day setting still renews on its own, at ${at(ari.runs[0]!.at, short)}, before the window opens, so the answer changes nothing.`
+          : ari.runs.length === 1 && ari.runs[0]!.at + BACKDATE >= ari.end
+            ? `No run falls inside it, so the first run after it, at ${at(ari.runs[0]!.at, short)}, renews.`
+            : `Each run draws a random time in it and renews once that time has passed: ${listed}.`
+      }`,
     });
     await s.clear();
-    // The order body is acme/src/acme/client.py new_order: identifiers and profile only.
-    const ari = await s.code(ARI_CODE, { at: regionBox('full', { bottom: -1.3 }), fontSize: 0.24 });
-    await ari.focus([1, 3], { as: 'ARI first' });
+    const ariCode = await s.code(ARI_CODE, { at: regionBox('full', { bottom: -1.0 }), fontSize: 0.22 });
+    await ariCode.focus(settingFirst ? [10, 12] : [4, 9], { as: settingFirst ? 'the setting first' : 'a fresh draw' });
     await s.card(
       [
-        ['ARI answer, no renew_before_expiry', 'the ARI time decides'],
-        ['ARI answer, renew_before_expiry set', 'whichever is earlier'],
-        ['No ARI answer this run', 'the rules above'],
-        ['New order from Certbot 5.8', 'no “replaces”: limit applies'],
+        ['Window', `${when(ari.start)} to ${when(ari.end)}`],
+        ['Runs that renew', runCard],
+        ['Renewals in 365 days', `${yearly} (${mine.renewalsPerYear} with no answer)`],
+      ],
+      { at: regionBox('full', { top: -1.25 }), width: 11 },
+    );
+    this.state.ari = { start: ari.start, end: ari.end, runs: ari.runs, perYear: ari.perYear };
+
+    // --------------------------------------------------------------- replaces
+    await this.step('replaces', {
+      title: 'Certbot’s renewals still count against the limit',
+      caption:
+        'Boulder skips the 5-in-7-days check only for an order that names the certificate it replaces and arrives inside that certificate’s window. Certbot 5.8’s order carries identifiers and a profile, nothing more, so every renewal is checked. A refused order costs nothing; an issued certificate takes a token.',
+    });
+    await s.clear();
+    await s.code(EXEMPT_CODE, { at: regionBox('full', { bottom: -1.3 }), fontSize: 0.22 });
+    await s.card(
+      [
+        ['Names its predecessor, inside the window', 'no limit check'],
+        ['Anything else, Certbot 5.8 included', `${LIMIT.burst} per 7 days`],
+        ['Refused order', 'costs no token'],
+        ['Issued certificate', 'takes a token if one is left'],
       ],
       { at: regionBox('full', { top: -1.5 }), width: 11 },
     );
-    this.state.ari = { replacesSent: false };
+    this.state.replaces = { replacesSent: false, burst: LIMIT.burst, emissionHours: EMISSION };
   }
 }

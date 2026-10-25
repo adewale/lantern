@@ -18,6 +18,8 @@ import type { Region } from './look.ts';
 import { diagramsOf, findingsOf, SVG_PX_PER_UNIT } from '../integrations/agentic-mermaid/snapshot.ts';
 import { outlineText } from '../integrations/agentic-mermaid/text.ts';
 import { recordWalk } from './trace.ts';
+import { wordsOf, familyNames } from './words.ts';
+import type { Words } from './words.ts';
 import type { Seen, SeenPart } from './trace.ts';
 import { lerpColor } from '../src/color.ts';
 import type {
@@ -52,9 +54,15 @@ const isScaffold = (info: SnapshotPart) =>
   info.id === '__frame' ||
   /axis|lifeline|lane|grid|participant|actor|section|rail|plate|chrome/.test(info.role) ||
   info.id.startsWith('branch:') ||
-  info.id.startsWith('quadrant-label:');
-/** A reader's name for each family, and for its things and its links. */
-const FAMILIES: Record<string, [string, string?, string?]> = {
+  info.id.startsWith('quadrant-label:') ||
+  // An architecture group (a node, a network) frames the services drawn in it; a junction only routes edges.
+  (info.role === 'group' && info.id.startsWith('group:')) ||
+  info.role === 'junction';
+/**
+ * A reader's name for each family, and for its things and its links, in English; other
+ * languages name them in explain/words.ts (a family missing there gets that language's generic words).
+ */
+export const FAMILIES: Record<string, [string, string?, string?]> = {
   flowchart: ['Flowchart', 'node', 'link'],
   sequence: ['Sequence diagram', 'participant', 'message'],
   state: ['State diagram', 'state', 'transition'],
@@ -66,9 +74,130 @@ const FAMILIES: Record<string, [string, string?, string?]> = {
   timeline: ['Timeline', 'period'],
   gantt: ['Gantt chart', 'task'],
   quadrant: ['Quadrant chart', 'point'],
+  pie: ['Pie chart', 'slice'],
+  architecture: ['Architecture diagram', 'service', 'edge'],
+  journey: ['User journey', 'task'],
+  radar: ['Radar chart', 'curve'],
 };
-const counted = (n: number, noun: string) =>
-  `${n} ${n === 1 ? noun : noun.replace(/(s|ch)$/, '$1e').replace(/y$/, 'ie') + 's'}`;
+/**
+ * An ER relationship's cardinality markers (`card:<rel>:1` at its first entity, `card:<rel>:2` at its
+ * second) and its label's background (`rel-label:<rel>:bg`) belong to the relationship `rel:<rel>`:
+ * they reveal, dim, mark and move with it, and the background draws under the label, not over it.
+ */
+function partsOf(snapshot: DiagramSnapshot): readonly SnapshotPart[] {
+  if (snapshot.family !== 'er' && snapshot.family !== 'radar') return snapshot.parts;
+  const ids = new Set(snapshot.parts.map((p) => p.id));
+  return snapshot.parts.map((p) => {
+    // A radar curve's vertex dots (`dot:<curve>:<i>`) belong to its polygon `curve:<curve>`.
+    const m =
+      snapshot.family === 'radar' ? /^dot:(.+):\d+$/.exec(p.id) : /^(?:card:(.+):[12]|rel-label:(.+):bg)$/.exec(p.id);
+    const owner = m ? (snapshot.family === 'radar' ? `curve:${m[1]}` : `rel:${m[1] ?? m[2]}`) : undefined;
+    return owner && !p.owner && ids.has(owner) ? { ...p, owner } : p;
+  });
+}
+/**
+ * A radar-beta source's axes and curves as written: `axis id["Label"], …` lines, `curve id["Label"]{1, 2}`
+ * (or keyed, `{id: 1, …}`) lines, and `min`/`max` (Mermaid's defaults: 0, and the largest value).
+ * Capture keeps no chart data for a radar, so its words come from the source.
+ */
+export function radarData(source: string): {
+  axes: { id: string; label: string }[];
+  curves: { id: string; label: string; values: number[] }[];
+  min: number;
+  max: number;
+} {
+  const axes: { id: string; label: string }[] = [];
+  const curves: { id: string; label: string; values: number[] }[] = [];
+  let min = 0,
+    max: number | undefined;
+  for (const line of source.split('\n')) {
+    const [, word, rest = ''] = /^\s*(axis|curve|min|max)\b\s*(.*)$/.exec(line) ?? [];
+    if (word === 'axis') for (const m of rest.matchAll(/([^\s,[{]+)\s*(?:\["([^"]*)"\])?/g)) axes.push({ id: m[1]!, label: m[2] ?? m[1]! });
+    else if (word === 'curve')
+      for (const m of rest.matchAll(/([^\s,[{]+)\s*(?:\["([^"]*)"\])?\s*\{([^}]*)\}/g)) {
+        const entries = m[3]!.split(',').map((e) => e.trim()).filter(Boolean);
+        const keyed = new Map(entries.filter((e) => e.includes(':')).map((e) => [e.split(':')[0]!.trim(), Number(e.split(':')[1])]));
+        const values = keyed.size ? axes.map((a) => keyed.get(a.id) ?? NaN) : entries.map(Number);
+        curves.push({ id: m[1]!, label: m[2] ?? m[1]!, values });
+      }
+    else if (word === 'min') min = Number(rest);
+    else if (word === 'max') max = Number(rest);
+  }
+  return { axes, curves, min, max: max ?? Math.max(...curves.flatMap((c) => c.values).filter(Number.isFinite)) };
+}
+/** An ER source's attributes by entity, as declared: `type name [PK, FK] ["comment"]` lines in `NAME { … }`. */
+function erAttributes(source: string): Map<string, { type: string; name: string; keys: string[] }[]> {
+  const out = new Map<string, { type: string; name: string; keys: string[] }[]>();
+  let entity: string | null = null;
+  for (const line of source.split('\n')) {
+    const open = /^\s*([A-Za-z_][\w-]*)\s*(?:\[[^\]]*\])?\s*\{\s*$/.exec(line);
+    if (open) out.set((entity = open[1]!), []);
+    else if (/^\s*\}\s*$/.test(line)) entity = null;
+    else if (entity) {
+      const a = /^\s*(\S+)\s+(\S+)((?:\s*,?\s*\b(?:PK|FK|UK)\b)*)/.exec(line);
+      if (a) out.get(entity)!.push({ type: a[1]!, name: a[2]!, keys: a[3]!.match(/PK|FK|UK/g) ?? [] });
+    }
+  }
+  return out;
+}
+/**
+ * ER words, as the source declares them: an entity with its attributes ("TRIP: trip_id (id, PK), …"),
+ * a relationship with its label and what each marker says ("TRIP → STOP_TIME: trip_id (each TRIP has
+ * one or more STOP_TIME, each STOP_TIME has exactly one TRIP)"). Undefined for any other part.
+ */
+function erName(w: Words, snapshot: DiagramSnapshot, info: SnapshotPart, words: string): string | undefined {
+  if (info.id.startsWith('entity:')) {
+    const name = info.id.slice('entity:'.length);
+    const attrs = erAttributes(snapshot.spec.source).get(name);
+    return attrs?.length ? w.pair(name, attrs.map((a) => `${a.name} (${[a.type, ...a.keys].join(', ')})`).join(', ')) : undefined;
+  }
+  if (!info.id.startsWith('rel:') || !info.from || !info.to) return undefined;
+  // What a crow's-foot marker says, by the category capture gives it (Mermaid's `||`, `|o`, `}o`, `}|`).
+  const marker = (end: 1 | 2) =>
+    w.cardinality[
+      String((snapshot.parts.find((p) => p.id === `card:${info.id.slice(4)}:${end}`)?.channels as { category?: unknown } | undefined)?.category)
+    ];
+  const [atFrom, atTo] = [marker(1), marker(2)];
+  const says = [atTo && w.eachHas(info.from, atTo, info.to), atFrom && w.eachHas(info.to, atFrom, info.from)].filter(Boolean);
+  const link = `${info.from} → ${info.to}`;
+  return `${words ? w.pair(link, words) : link}${says.length ? ` (${says.join(', ')})` : ''}`;
+}
+
+/** Mermaid's journey scores tasks from 1 to 5; a task's `channels.value` is its score over 5. */
+const JOURNEY_TOP = 5;
+const journeyScore = (info: SnapshotPart) => Math.round(Number((info.channels as { value?: unknown } | undefined)?.value) * JOURNEY_TOP);
+const textOf = (info: SnapshotPart) => info.shapes.map((s) => s.text?.trim()).filter(Boolean).join(' ');
+/**
+ * Journey words. A task is said with its score, which the chart draws only as the height of a face
+ * ("4 Undo the move: score 1 of 5"); the experience curve by its lowest and highest tasks. Undefined
+ * for any other part.
+ */
+function journeyName(w: Words, snapshot: DiagramSnapshot, info: SnapshotPart, words: string): string | undefined {
+  if (info.role === 'task') {
+    const score = journeyScore(info);
+    return words && Number.isFinite(score) ? w.pair(words, w.score(w.number(score), w.number(JOURNEY_TOP))) : undefined;
+  }
+  if (info.id !== 'experience-curve') return undefined;
+  const tasks = snapshot.parts.filter((p) => p.role === 'task' && Number.isFinite(journeyScore(p)));
+  if (!tasks.length) return undefined;
+  const scores = tasks.map(journeyScore);
+  const [lo, hi] = [Math.min(...scores), Math.max(...scores)];
+  if (lo === hi) return w.flat(w.curve, w.number(lo));
+  const at = (v: number) => {
+    const where = tasks.filter((_, i) => scores[i] === v).map(textOf);
+    return where.length > 3 ? `${where.slice(0, 3).join(', ')} ${w.more(where.length - 3)}` : where.join(', ');
+  };
+  return w.extremes(w.curve, w.number(lo), at(lo), w.number(hi), at(hi));
+}
+/** A journey's actors, as its task lines name them (`Task: 3: Alice, Bob`), in order of first mention. */
+function journeyActors(source: string): string[] {
+  const out: string[] = [];
+  for (const line of source.split('\n')) {
+    const m = /^\s*(?!title\b|section\b)[^:]+:\s*\d+\s*:(.*)$/.exec(line);
+    for (const a of m?.[1]!.split(',').map((x) => x.trim()) ?? []) if (a && !out.includes(a)) out.push(a);
+  }
+  return out;
+}
 
 /** The words and size of a label: a native Text, or a diagram label imported as outlines. */
 export interface LabelInfo {
@@ -190,7 +319,7 @@ export class Diagram {
     this.root.clipBox = [...box];
     this.accent = emphasis(snapshot.palette);
     this.dimmed = dimOpacity(snapshot.palette);
-    for (const info of snapshot.parts) {
+    for (const info of partsOf(snapshot)) {
       const mob = new Group();
       mob.key = info.id;
       for (const shape of info.shapes) {
@@ -243,26 +372,41 @@ export class Diagram {
     for (const p of [...this.root.children]) this.root.remove(p);
     // Family reading: preserve message/task/commit order; graph nodes precede outgoing links.
     const all = [...this.parts.values()].filter((p) => !p.info.owner);
-    const graph = ['flowchart', 'state', 'mindmap', 'class'].includes(snapshot.family);
+    const graph = ['flowchart', 'state', 'mindmap', 'class', 'architecture'].includes(snapshot.family);
     const nodes = all.filter((p) => p.info.from == null && p.info.id !== '__frame');
+    // Architecture edges name their ends by bare id ('lb' for 'service:lb').
+    const endOf = (id: string) => (snapshot.family === 'architecture' ? this.end(id) : id);
     if (graph) {
       const rank = new Map<string, number>();
       const edges = all.filter((p) => p.info.from && p.info.to);
       for (let i = 0; i < nodes.length; i++)
         for (const e of edges) {
-          const a = e.info.from!,
-            b = e.info.to!;
+          const a = endOf(e.info.from!),
+            b = endOf(e.info.to!);
           if (a !== b && !rank.has(b)) rank.set(b, (rank.get(a) ?? 0) + 1);
         }
-      nodes.sort(
-        (a, b) =>
-          (rank.get(a.info.id) ?? 0) - (rank.get(b.info.id) ?? 0) ||
-          b.mob.center()[1] - a.mob.center()[1] ||
-          a.mob.center()[0] - b.mob.center()[0],
+      // A mind map reads as its outline: depth first, children in source order, so each topic's
+      // subtopics follow it. Rank then height would interleave the root's two sides (1.1, 2.1, 1.2, …).
+      const outline = new Map<string, number>();
+      if (snapshot.family === 'mindmap') {
+        const visit = (id: string) => {
+          if (outline.has(id)) return;
+          outline.set(id, outline.size);
+          for (const e of edges) if (e.info.from === id) visit(e.info.to!);
+        };
+        for (const n of nodes) if (!edges.some((e) => e.info.to === n.info.id)) visit(n.info.id);
+        for (const n of nodes) visit(n.info.id);
+      }
+      nodes.sort((a, b) =>
+        snapshot.family === 'mindmap'
+          ? outline.get(a.info.id)! - outline.get(b.info.id)!
+          : (rank.get(a.info.id) ?? 0) - (rank.get(b.info.id) ?? 0) ||
+            b.mob.center()[1] - a.mob.center()[1] ||
+            a.mob.center()[0] - b.mob.center()[0],
       );
       this.order = nodes.flatMap((n) => [
         n.info.id,
-        ...edges.filter((e) => e.info.from === n.info.id).map((e) => e.info.id),
+        ...edges.filter((e) => endOf(e.info.from!) === n.info.id).map((e) => e.info.id),
       ]);
       this.order.push(...all.map((p) => p.info.id).filter((id) => !this.order.includes(id)));
     } else this.order = all.map((p) => p.info.id);
@@ -277,11 +421,15 @@ export class Diagram {
   }
 
   /**
-   * The one way an id names a part: its own id, or a participant's or class's
-   * bare name ('A' for 'actor:A'), the name links use for their endpoints.
+   * The one way an id names a part: its own id, or a participant's, class's or
+   * architecture service's bare name ('A' for 'actor:A', 'lb' for 'service:lb'),
+   * the name links use for their endpoints.
    */
   private find(id: string): Part | undefined {
-    return this.parts.get(id) ?? this.parts.get('actor:' + id) ?? this.parts.get('class:' + id);
+    return (
+      this.parts.get(id) ??
+      ['actor:', 'class:', 'service:', 'junction:', 'group:', 'entity:'].map((kind) => this.parts.get(kind + id)).find((p) => p)
+    );
   }
   get(id: string): Group {
     const part = this.find(id);
@@ -377,9 +525,16 @@ export class Diagram {
   private nameOf(id: string): string {
     const p = this.find(id);
     if (!p) return id;
+    const er = this.snapshot.family === 'er' ? erName(wordsOf(this.scene), this.snapshot, p.info, this.words(p.info.id)) : undefined;
+    if (er) return er;
+    const journey =
+      this.snapshot.family === 'journey' ? journeyName(wordsOf(this.scene), this.snapshot, p.info, this.words(p.info.id)) : undefined;
+    if (journey) return journey;
     const words = this.words(p.info.id);
-    if (p.info.from && p.info.to)
-      return `${this.nameOf(p.info.from)} → ${this.nameOf(p.info.to)}${words ? ': ' + words : ''}`;
+    if (p.info.from && p.info.to) {
+      const link = `${this.nameOf(p.info.from)} → ${this.nameOf(p.info.to)}`;
+      return words ? wordsOf(this.scene).pair(link, words) : link;
+    }
     return words || this.datum(p.info.id);
   }
   /** A bar's category and value, or a line's range, from the chart's data as written. */
@@ -388,25 +543,45 @@ export class Diagram {
       line = /^series:line-(\d+)$/.exec(id);
     // A quadrant point too close to another to be labelled is named by its id, the name in the source.
     if (id.startsWith('point:')) return id.slice(6);
+    // An architecture junction is drawn as a dot with no label; it is named by its id in the source.
+    if (id.startsWith('junction:')) return wordsOf(this.scene).junction(id.slice(9));
+    // A pie slice is said by its name and its legend line's data, "Name [value] (share)" with showData,
+    // "Name (share)" without; its own label is only a rounded share, and is said with it.
+    if (id.startsWith('slice:')) {
+      const legend = this.words(`legend-label:${id.slice(6)}`);
+      const data = /(?:\[([^\]]+)\]\s*)?\(([^)]+)\)\s*$/.exec(legend);
+      return data ? wordsOf(this.scene).pair(id.slice(6), data[1] ? `${data[1]} (${data[2]})` : data[2]!) : id.slice(6);
+    }
+    // A radar curve is said by its legend name and its value on each spoke, from the source; its dots are its own.
+    if (id.startsWith('curve:') && this.snapshot.family === 'radar') {
+      const w = wordsOf(this.scene);
+      const { axes, curves } = radarData(this.snapshot.spec.source);
+      const curve = curves.find((c) => c.id === id.slice(6));
+      if (!curve) return id.slice(6);
+      const said = curve.values.flatMap((v, i) => (Number.isFinite(v) ? [w.valueAt(w.number(v), axes[i]?.label ?? String(i + 1))] : []));
+      return said.length ? w.pair(curve.label, said.join(', ')) : curve.label;
+    }
     if (!bar && !line) return '';
     const categories = this.snapshot.chart?.categories ?? [];
     // Bars and lines are numbered within their kind: bar:1:… is the second bar series.
     const series = (this.snapshot.chart?.series ?? []).filter((s) => s.kind === (bar ? 'bar' : 'line'));
     const k = +(bar ?? line)![1]!;
     const values = series[k]?.values ?? [];
+    const w = wordsOf(this.scene);
     if (bar) {
       const value = values[categories.indexOf(bar[2]!)];
-      return `${bar[2]}${series.length > 1 ? ` (bars ${k + 1})` : ''}${value != null ? ': ' + value : ''}`;
+      const name = `${bar[2]}${series.length > 1 ? ` (${w.bars(k + 1)})` : ''}`;
+      return value != null ? w.pair(name, w.number(value)) : name;
     }
-    const name = series.length > 1 ? `Line ${k + 1}` : 'Line';
+    const name = w.series(series.length > 1 ? k + 1 : undefined);
     if (!values.length) return name;
     const [lo, hi] = [Math.min(...values), Math.max(...values)];
-    if (lo === hi) return `${name}: ${lo} throughout`;
+    if (lo === hi) return w.flat(name, w.number(lo));
     const at = (v: number) => {
       const where = values.flatMap((x, i) => (x === v ? [categories[i] ?? String(i + 1)] : []));
-      return where.length > 3 ? `${where.slice(0, 3).join(', ')} and ${where.length - 3} more` : where.join(', ');
+      return where.length > 3 ? `${where.slice(0, 3).join(', ')} ${w.more(where.length - 3)}` : where.join(', ');
     };
-    return `${name}: lowest ${lo} (${at(lo)}), highest ${hi} (${at(hi)})`;
+    return w.extremes(name, w.number(lo), at(lo), w.number(hi), at(hi));
   }
   /** The chart's axes, as a reader would read them: titles, the value range and the categories. */
   private axes(): string {
@@ -414,14 +589,15 @@ export class Diagram {
       .filter((id) => id.startsWith('axis:y:label:'))
       .map((id) => Number(this.words(id)))
       .filter(Number.isFinite);
-    const y = this.words('axis:y:title') || 'values';
-    const range = ticks.length ? ` from ${Math.min(...ticks)} to ${Math.max(...ticks)}` : '';
+    const w = wordsOf(this.scene);
+    const y = this.words('axis:y:title') || w.values;
+    const range = ticks.length ? ` ${w.span(w.number(Math.min(...ticks)), w.number(Math.max(...ticks)))}` : '';
     const categories = this.snapshot.chart?.categories ?? [];
     const x = this.words('axis:x:title');
     const over = categories.length
-      ? `, ${counted(categories.length, 'category')} from ${categories[0]} to ${categories.at(-1)}`
+      ? `, ${w.count(categories.length, w.category)} ${w.span(categories[0]!, categories.at(-1)!)}`
       : '';
-    return `${y}${range}${x ? ` by ${x}` : ''}${over}`;
+    return `${y}${range}${x ? ` ${w.by(x)}` : ''}${over}`;
   }
   /**
    * What a reader sees of this diagram: what it is and how big, then each shown part
@@ -429,16 +605,20 @@ export class Diagram {
    * and the notes on it. Parts drawn with no words are reported as blank.
    */
   describe(): Seen {
-    const [family, thing = 'part', link = 'link'] = FAMILIES[this.snapshot.family] ?? [`${this.snapshot.family} diagram`];
+    const w = wordsOf(this.scene);
+    const [family, thing, link] = familyNames(w, this.snapshot.family, FAMILIES[this.snapshot.family]);
+    // Blank parts are reported to the author, in English.
+    const english = FAMILIES[this.snapshot.family]?.[0] ?? `${this.snapshot.family} diagram`;
     const parts: SeenPart[] = [];
     const blank: string[] = [];
+    const journey = this.snapshot.family === 'journey';
     let things = 0,
       links = 0;
     const step = this.scene.steps.at(-1)?.name;
     // A trail already marks the path; a walk without one names it.
     const walked = this.walked;
-    if (walked && walked.step === step && !walked.trail) parts.push({ name: walked.hops.join(', '), mark: 'path' });
-    for (const n of this.notes) parts.push({ name: `“${n.text}” beside ${this.nameOf(n.id)}`, mark: 'note' });
+    if (walked && walked.step === step && !walked.trail) parts.push({ name: walked.hops.join(', '), mark: w.path });
+    for (const n of this.notes) parts.push({ name: w.beside(n.text, this.nameOf(n.id)), mark: w.note });
     const order = [...this.order].sort((a, b) => +!isScaffold(this.parts.get(a)!.info) - +!isScaffold(this.parts.get(b)!.info));
     for (const id of order) {
       const info = this.parts.get(id)!.info;
@@ -446,23 +626,43 @@ export class Diagram {
       if (!this.visible.has(id) || /axis|title|legend/.test(info.role)) continue;
       // A point's label is said with its point.
       if (id.endsWith(':label') && this.visible.has(id.slice(0, -6))) continue;
+      // A slice's share label is said with its slice.
+      if (id.startsWith('slice-label:') && this.visible.has('slice:' + id.slice(12))) continue;
+      // A journey's score guide is its scale, said in what the chart is.
+      if (journey && id === 'score-guide') continue;
       const name = this.nameOf(id);
       if (!name) {
-        if (!isScaffold(info)) blank.push(`${family} part ${id}`);
+        if (!isScaffold(info)) blank.push(`${english} part ${id}`);
         continue;
       }
       if (info.from && info.to) links++;
-      else if (!isScaffold(info) || info.role === 'actor') things++;
+      // A journey counts its tasks, not its experience curve.
+      else if ((!isScaffold(info) || info.role === 'actor') && (!journey || info.role === 'task')) things++;
       const mark = this.marks.get(id)?.as;
       const dimmed = !!this.kept && !this.kept.has(id) && !isScaffold(info);
       parts.push({ name, ...(mark ? { mark } : {}), ...(dimmed ? { dimmed } : {}) });
     }
     const title = this.words('title');
+    // A journey's scale is its score guide's digits; its actors are the ones its tasks name.
+    const scale = journey ? this.words('score-guide').split(' ').map(Number).filter(Number.isFinite) : [];
+    const actors = journey ? journeyActors(this.snapshot.spec.source) : [];
+    // A radar's spokes and its scale, from the centre out, as its source gives them.
+    const radar = this.snapshot.family === 'radar' ? radarData(this.snapshot.spec.source) : undefined;
+    const spokes = radar?.axes.length ? `${w.count(radar.axes.length, w.axis)} ${w.span(w.number(radar.min), w.number(radar.max))}` : '';
     const size =
       this.snapshot.family === 'xychart'
         ? this.axes()
-        : [things && counted(things, thing), links && counted(links, link)].filter(Boolean).join(', ');
-    return { what: `${family}${title ? ` “${title}”` : ''}${size ? ': ' + size : ''}`, parts, ...(blank.length ? { blank } : {}) };
+        : [
+            things && w.count(things, thing),
+            links && w.count(links, link),
+            things && scale.length > 1 && w.scale(w.number(Math.min(...scale)), w.number(Math.max(...scale))),
+            things && actors.length && w.actors(actors.length, actors.join(', ')),
+            spokes,
+          ]
+            .filter(Boolean)
+            .join(', ');
+    const what = `${family}${title ? ` ${w.quote(title)}` : ''}`;
+    return { what: size ? w.pair(what, size) : what, parts, ...(blank.length ? { blank } : {}) };
   }
   /**
    * Animations that bring each part to its current look: base style, then the
@@ -486,7 +686,8 @@ export class Diagram {
           st: Style = { ...b };
         if (this.zoom !== 1) scaleStyle(st, this.zoom);
         const text = within(m, (a) => !!labelOf(a));
-        const owned = within(m, (a) => a.key != null && a.key !== id);
+        // A part's own labels keep their look; an ER relationship's cardinality markers take its mark.
+        const owned = within(m, (a) => a.key != null && a.key !== id && !a.key.startsWith('card:'));
         if (color && !owned && !text) {
           if (st.stroke && st.stroke !== 'none' && (st.strokeWidth ?? 0) > 0) {
             st.stroke = color;
@@ -518,7 +719,7 @@ export class Diagram {
    */
   async mark(
     ids: readonly string[],
-    { color = this.accent, as = 'marked', runTime = 0.45 }: { color?: string; as?: string; runTime?: number } = {},
+    { color = this.accent, as = wordsOf(this.scene).marked, runTime = 0.45 }: { color?: string; as?: string; runTime?: number } = {},
   ): Promise<void> {
     const tops = ids.map((id) => this.top(id));
     for (const id of tops) this.marks.set(id, { color, as });
@@ -612,7 +813,7 @@ export class Diagram {
     const trailColor = trail === true ? color : trail || null;
     const lay = (ids: string[]) => {
       if (!trailColor) return [];
-      for (const id of ids) this.marks.set(id, { color: trailColor, as: 'travelled' });
+      for (const id of ids) this.marks.set(id, { color: trailColor, as: wordsOf(this.scene).travelled });
       return this.looks(ids, runTime);
     };
     const record = ({ edge, from, to }: (typeof path)[number]) =>

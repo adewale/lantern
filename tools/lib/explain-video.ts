@@ -28,7 +28,7 @@ export function trackLanguage(lang: string, webm = false): string {
 }
 /**
  * The video's text alternative (WCAG 1.2.1): title, then each step's title, caption and what its
- * picture shows. The descriptions are generated in English, so another language's page marks them.
+ * picture shows. Descriptions follow the page's language where explain/words.ts has it; otherwise they are English and marked so.
  */
 export function videoTranscript(title: string, lang: string, steps: Trace['steps']): string {
   return `<!doctype html><html lang="${htmlEscape(lang)}"><meta charset="utf-8"><title>${htmlEscape(title)}</title><h1>${htmlEscape(title)}</h1><ol>${steps

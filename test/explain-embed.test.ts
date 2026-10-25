@@ -14,6 +14,8 @@ import { fc, params } from './lib/pbt.ts';
 import { resolveSettings } from '../explain/index.ts';
 import type { Settings } from '../explain/index.ts';
 import { pictureHtml, pictureSummary } from '../explain/trace.ts';
+import { NARROW_PX, READ_PX, closeUps, labelsToRead, stageScale, stepLayouts, viewBox } from '../app/embed-closeup.ts';
+import type { StepLayout } from '../app/embed-closeup.ts';
 
 const enabled = !!process.env.EXPLAIN_BROWSER,
   options = { skip: enabled ? false : 'set EXPLAIN_BROWSER=1 for real cross-origin browser checks' };
@@ -203,8 +205,43 @@ test(
         assert.ok(Number(rect.width) > 0 && Number(rect.height) > 0, JSON.stringify(rect));
       }
       assert.equal(viewport.references, true);
-      // Zoom: a phone reader can enlarge the vector stage and pan it, without page overflow.
+      // A phone opens the step on its close-up: the labels near what the step changed read at
+      // 12 px or more, and the overview over the stage's corner steps through the rest of the change.
+      const project = projects.get('mr-cache')!,
+        values = resolveSettings(project.Scene, { request: 'miss' });
+      const size = await page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
+      const layout = (await stepLayouts(project.variants.find((v) => v.values.request === values.request)!.Scene)).get('request')!;
+      const tour = closeUps(layout, size.w, size.h);
+      const painted = async () =>
+        parseTransform(await page.locator('.stage svg:not(.leaving)').evaluate((svg) => (svg as SVGElement).style.transform));
+      const near = (a: ReturnType<typeof parseTransform>, b: { k: number; x: number; y: number }) =>
+        !!a && Math.abs(a.k - b.k) < 1e-4 * b.k && Math.abs(a.x - b.x) < 0.01 && Math.abs(a.y - b.y) < 0.01;
+      assert.ok(tour[0]!.k > 1 && tour.length > 1, `mr-cache's request step needs a close-up tour: ${JSON.stringify(tour)}`);
+      assert.ok(near(await painted(), tour[0]!), `opens on the first close-up ${JSON.stringify(tour[0])}`);
+      const smallest = Math.min(...labelsToRead(layout).map((l) => l.size));
+      assert.ok(smallest * stageScale(size.w, size.h).s * tour[0]!.k >= READ_PX - 1e-6, 'labels near the change read at 12 px');
+      for (let i = 1; i <= tour.length; i++) {
+        await page.locator('.overview').click();
+        const want = tour[i % tour.length]!;
+        await page.waitForFunction(
+          (want) => {
+            const m = (document.querySelector('.stage svg') as SVGElement).style.transform.match(/translate\((-?[\d.e+-]+)px, (-?[\d.e+-]+)px\)/);
+            return !!m && Math.abs(Number(m[1]) - want.x) < 0.01 && Math.abs(Number(m[2]) - want.y) < 0.01;
+          },
+          want,
+        );
+      }
+      // Fit shows the whole picture, and keeps it for the next steps; Close-up brings the close-ups back.
+      await page.getByRole('button', { name: 'Fit stage' }).click();
+      await page.waitForFunction(() => !(document.querySelector('.stage svg') as SVGElement).style.transform);
+      assert.equal(await page.getByRole('button', { name: 'Close-up of each step' }).isVisible(), true);
+      assert.equal(await page.locator('.overview').isHidden(), true, 'no overview of the whole picture');
+      // Zoom: a phone reader can still enlarge the vector stage and pan it, without page overflow.
       const width = () => page.locator('.stage svg').evaluate((svg) => svg.getBoundingClientRect().width);
+      // Fit glides for 220 ms; the whole picture is as wide as the stage once it lands.
+      await page.waitForFunction(
+        () => Math.abs(document.querySelector('.stage svg')!.getBoundingClientRect().width - document.querySelector('.stage')!.clientWidth) < 0.5,
+      );
       const fit = await width();
       await page.getByRole('button', { name: 'Zoom in' }).click();
       await page.getByRole('button', { name: 'Zoom in' }).click();
@@ -227,6 +264,12 @@ test(
         fit,
       );
       assert.equal(await page.getByRole('button', { name: 'Fit stage' }).isHidden(), true, 'Fit appears only when zoomed');
+      await page.getByRole('button', { name: 'Close-up of each step' }).click();
+      await page.waitForFunction(() => !!(document.querySelector('.stage svg') as SVGElement).style.transform);
+      assert.ok(near(await painted(), tour[0]!), 'Close-up returns to the step\'s first close-up');
+      assert.equal(await page.getByRole('button', { name: 'Close-up of each step' }).isHidden(), true);
+      await page.getByRole('button', { name: 'Fit stage' }).click();
+      await page.waitForFunction(() => !(document.querySelector('.stage svg') as SVGElement).style.transform);
       await page.locator('.transcript > summary').click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
       await page.locator('#content').focus();
@@ -315,6 +358,10 @@ interface PlayerModel {
   k: number;
   transcript: boolean;
   settles: number;
+  /** On a narrow stage, each step opens on its close-up (docs/REFERENCE.md); Fit turns this off, Close-up on. */
+  follow: boolean;
+  /** The scale of the step's close-ups, worked out when it settled on a narrow stage; the overview goes to them. */
+  tourK: number | null;
 }
 interface PlayerReal {
   page: Page;
@@ -407,6 +454,8 @@ function observe(ids: string[]) {
     zoomOutDisabled: button('Zoom out')!.disabled,
     zoomInDisabled: button('Zoom in')!.disabled,
     fitHidden: button('Fit stage')!.hidden,
+    closeUpHidden: button('Close-up of each step')!.hidden,
+    overviewHidden: document.querySelector<HTMLButtonElement>('.overview')!.hidden,
     transcriptOpen: (document.querySelector('details.transcript') as HTMLDetailsElement).open,
     transcriptLinks: [...document.querySelectorAll<HTMLAnchorElement>('.transcript section:not([hidden]) a')].map((a) => a.href),
   };
@@ -493,6 +542,9 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   eq('Zoom out disabled', seen.zoomOutDisabled, m.k <= 1);
   eq('Zoom in disabled', seen.zoomInDisabled, m.k >= ZOOM_MAX);
   eq('Fit hidden', seen.fitHidden, m.k <= 1);
+  const narrow = seen.stageW > 0 && seen.stageW < NARROW_PX;
+  eq('Close-up hidden', seen.closeUpHidden, !(narrow && !m.follow));
+  eq('overview hidden', seen.overviewHidden, !(narrow && m.k > 1));
   const t = parseTransform(seen.transform);
   if (m.k === 1) eq('transform at k=1', seen.transform, '');
   else if (!t) problems.push(`transform: none painted, model k=${m.k}`);
@@ -523,11 +575,35 @@ const command = (
 ): Cmd => ({
   check: (m) => check(m as PlayerModel),
   async run(m, r) {
+    const settles = m.settles;
     await act(m, r);
+    if (m.settles > settles) await reframe(m, r);
     await verify(m, r, name);
   },
   toString: () => name,
 });
+/** The stage's size now, and whether it is narrow enough for close-ups. */
+async function stageSize(r: PlayerReal) {
+  const { w, h } = await r.page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
+  return { w, h, narrow: w > 0 && w < NARROW_PX };
+}
+const layoutCache = new Map<string, Promise<Map<string, StepLayout>>>();
+/** A case's step layouts, worked out in Node as the page works them out. */
+function layoutsOf(p: Project, values: Settings) {
+  const key = JSON.stringify([p.file, values]);
+  if (!layoutCache.has(key)) layoutCache.set(key, stepLayouts(p.variants.find((v) => sameCase(p, v.values, values))!.Scene));
+  return layoutCache.get(key)!;
+}
+/** The close-ups of the current step on this stage. */
+async function tourOf(m: PlayerModel, w: number, h: number) {
+  return closeUps((await layoutsOf(m.project, current(m).values)).get(current(m).step), w, h);
+}
+/** A step settled: on a narrow stage with close-ups on, the zoom is the step's close-up; otherwise it keeps its place. */
+async function reframe(m: PlayerModel, r: PlayerReal) {
+  const { w, h, narrow } = await stageSize(r);
+  m.tourK = narrow ? (await tourOf(m, w, h))[0]!.k : null;
+  if (narrow && m.follow) m.k = m.tourK!;
+}
 const button = (r: PlayerReal, name: string) => r.page.locator(`button[aria-label="${name}"]`);
 /** Show a step of this case: a history entry when the step changes, a fresh resting picture always. */
 function goTo(m: PlayerModel, index: number) {
@@ -620,10 +696,28 @@ const ZoomButton = (which: 'Zoom in' | 'Zoom out' | 'Fit stage') =>
     `ZoomButton(${which})`,
     (m) => (which === 'Zoom in' ? m.k < ZOOM_MAX : m.k > 1),
     async (m, r) => {
+      const { narrow } = await stageSize(r);
       await button(r, which).click();
       m.k = which === 'Fit stage' ? 1 : kAfter(m.k, which === 'Zoom in' ? 1.6 : 1 / 1.6);
+      // On a narrow stage, Fit keeps the whole picture for the steps that follow.
+      if (which === 'Fit stage' && narrow) m.follow = false;
     },
   );
+/** Close-up: shown on a narrow stage once Fit has turned close-ups off; it turns them on and frames this step. */
+const CloseUpButton = command('CloseUpButton', (m) => !m.follow, async (m, r) => {
+  const { w, h, narrow } = await stageSize(r);
+  if (!narrow) return; // hidden, so there is nothing to press
+  await button(r, 'Close-up of each step').click();
+  m.follow = true;
+  m.k = m.tourK = (await tourOf(m, w, h))[0]!.k;
+});
+/** The overview: shown on a narrow zoomed stage; it moves to the step's next close-up, at the close-ups' scale. */
+const OverviewButton = command('OverviewButton', always, async (m, r) => {
+  const overview = r.page.locator('.overview');
+  if (!(await overview.isVisible()) || (await overview.isDisabled())) return;
+  await overview.click();
+  m.k = m.tourK!;
+});
 const Replay = command('Replay', always, async (m, r) => {
   await button(r, 'Replay step').click();
   m.notice = 'Reduced motion is on, so the finished step is shown.';
@@ -658,7 +752,10 @@ const Key = (key: string, onStage = false) =>
     if (!onStage) return;
     if (key === '+' || key === '=') m.k = kAfter(m.k, 1.6);
     if (key === '-') m.k = kAfter(m.k, 1 / 1.6);
-    if (key === '0') m.k = 1;
+    if (key === '0') {
+      m.k = 1;
+      if ((await stageSize(r)).narrow) m.follow = false;
+    }
   });
 /** A point on the stage. The stage has 12 px rounded corners, outside which a pointer is not on it. */
 async function stagePoint(r: PlayerReal, u: number, v: number) {
@@ -750,6 +847,8 @@ function commandArbs(p: Project): fc.Arbitrary<Cmd>[] {
     fc.tuple(fc.integer({ min: -400, max: 400 }), fc.integer({ min: -400, max: 400 })).map(([x, y]) => Drag(x, y)),
     fc.constant(ToggleTranscript),
     viewportArb.map((v) => Resize(v.width, v.height)),
+    fc.constant(CloseUpButton),
+    fc.constant(OverviewButton),
   ];
 }
 async function openPlayer(name: string, initial: { values: (string | undefined)[]; step?: string; viewport: { width: number; height: number } }) {
@@ -791,8 +890,9 @@ async function openPlayer(name: string, initial: { values: (string | undefined)[
   await page.waitForSelector('[data-ready=true]');
   const base = (await page.evaluate(() => history.length)) - 1;
   const parsed = (await page.evaluate(() => (window as unknown as { __attaches: number }).__attaches)) - 1;
-  const model: PlayerModel = { project: p, entries: [entry], index: 0, notice, k: 1, transcript: false, settles: 1 };
+  const model: PlayerModel = { project: p, entries: [entry], index: 0, notice, k: 1, transcript: false, settles: 1, follow: true, tourK: null };
   const real: PlayerReal = { page, errors, base, parsed };
+  await reframe(model, real);
   await verify(model, real, `opening ${page.url()}`);
   return { context, model, real };
 }
@@ -877,6 +977,67 @@ const caseQuery = (p: Project, values: Settings, step: string) => {
   q.set('step', step);
   return q.toString();
 };
+
+// Phone close-ups (app/embed-closeup.ts). On a 390 px page each step opens on the close-up
+// Node works out for it, whether reached by a link or by Next with motion on, and the two
+// rest on the same picture; on a desktop page no step is zoomed.
+test(
+  'phone close-ups: at 390 × 844 every step opens on its close-up, by link or by Next with motion; at 1280 × 900 none is zoomed',
+  options,
+  async () => {
+    for (const name of ['mr-cache', 'exgit']) {
+      const p = projects.get(name)!;
+      // mr-cache's two cases, and exgit's first: diagram, code and card changes, kept to a minute.
+      for (const v of name === 'exgit' ? p.variants.slice(0, 1) : p.variants) {
+        const list = v.trace.steps,
+          layouts = await stepLayouts(v.Scene);
+        const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'no-preference' });
+        const desk = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+        try {
+          const a = await counted(phone, `${embed}/${name}.html?${caseQuery(p, v.values, list[0]!.step)}`);
+          const d = await counted(desk, `${embed}/${name}.html?${caseQuery(p, v.values, list[0]!.step)}`);
+          for (let i = 0; i < list.length; i++) {
+            const step = list[i]!.step;
+            if (i > 0) {
+              await a.page.locator('button[aria-label="Next step"]').click();
+              await d.page.locator('button[aria-label="Next step"]').click();
+            }
+            await quiet(a.page);
+            await quiet(d.page);
+            const size = await a.page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
+            assert.ok(size.w < NARROW_PX);
+            const want = closeUps(layouts.get(step), size.w, size.h)[0]!;
+            const t = parseTransform(await a.page.locator('.stage svg:not(.leaving)').evaluate((svg) => (svg as SVGElement).style.transform));
+            const where = `${name} ${JSON.stringify(v.values)} ${step}`;
+            if (want.k === 1) assert.equal(t, null, where);
+            else
+              assert.ok(
+                t && Math.abs(t.k - want.k) < 1e-4 * want.k && Math.abs(t.x - want.x) < 0.01 && Math.abs(t.y - want.y) < 0.01,
+                `${where}: painted ${JSON.stringify(t)}, close-up ${JSON.stringify(want)}`,
+              );
+            assert.equal(await a.page.locator('.overview').isVisible(), want.k > 1, `${where}: overview`);
+            // Hold still: the picture Next rests on is the picture a link to the step shows, close-up and all.
+            const rested = await stagePicture(a.page);
+            const b = await phone.newPage();
+            await b.goto(`${embed}/${name}.html?${caseQuery(p, v.values, step)}`);
+            await b.waitForSelector('[data-ready=true]');
+            await quiet(b);
+            assert.equal(await stagePicture(b), rested, `${where}: Next and a link rest on different pictures`);
+            await b.close();
+            // Desktop: unchanged, the whole picture at every step, no overview, no close-up control.
+            assert.equal(await d.page.locator('.stage svg').evaluate((svg) => (svg as SVGElement).style.transform), '', where);
+            assert.equal(await d.page.locator('.overview').isHidden(), true);
+            assert.equal(await d.page.locator('button[aria-label="Close-up of each step"]').isHidden(), true);
+          }
+          assert.deepEqual([...a.errors, ...d.errors], []);
+        } finally {
+          await phone.close();
+          await desk.close();
+        }
+      }
+    }
+  },
+);
 
 // Regression (ledger P5): Next used to stop the animation where the caption hold
 // begins, before anything a step adds after its last play(), so the picture the

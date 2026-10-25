@@ -15,12 +15,12 @@ await this.step('stable-name', { title: 'A claim the picture can prove', caption
 this.state.reads = reads;   // program state, recorded at each step boundary
 ```
 
-- `meta.id` names the output files; `meta.title` is the page title; `meta.lang` (BCP 47, default `en`) is the language of the page, the transcripts and the subtitles; the player's and page's own words are in English or French (`app/embed-strings.ts`), and on a page in another language the generated picture descriptions, which are English, are marked `lang="en"`; `meta.sources` are listed under the transcript.
+- `meta.id` names the output files; `meta.title` is the page title; `meta.lang` (BCP 47, default `en`) is the language of the page, the transcripts and the subtitles; the player's and page's own words, and the generated picture descriptions (`explain/words.ts`), are in English or French; on a page in another language the descriptions are English and marked `lang="en"`; the loader's link follows its `data-lang`, else the host page's `lang`; `meta.sources` are listed under the transcript.
 - Step names are URL identifiers. They must be unique and non-empty in every case.
 - `this.state` is recorded before and after each step. Compute values with a model, show its result, and test that each step's state equals the model's (`assertStepState` in `test/lib/explainer-state.ts`).
 - A captioned step holds until its caption could be read at 160 words a minute (`Scene.captionWpm`), counting the step's motion as reading time. The page ignores the hold and stops when the picture stops; the video holds each caption for its full reading time (see [Video files](#video-files)). The picture must not change once the hold begins.
 - Do not put awaited animations inside `try`/`catch` or `.catch()` in `construct()`. Seeking stops a scene by throwing `StopScene`, and a broad catch swallows it, so a jump to a step would show a different picture from playing to it. Handle a known model error in plain code before animating.
-- All lettering is the embedded Inter and JetBrains Mono, drawn as outlines; diagram labels are Inter stretched to each label's width, so styles with their own fonts differ in letterforms. Every command fails on a character these fonts cannot draw and names the case, the step and the code point.
+- All lettering is the embedded fonts, drawn as outlines: Inter and JetBrains Mono, each falling back to Noto Sans Arabic, Devanagari and SC subsets that hold numerals only (Arabic-Indic and Devanagari digits, Chinese numerals, fullwidth digits). Diagram labels are Inter stretched to each label's width, so styles with their own fonts differ in letterforms. Every command fails on a character these fonts cannot draw and names the case, the step and the code point.
 
 ## Stage
 
@@ -36,7 +36,7 @@ const s = stage(this, { style: 'nord' });
 | `style` | An Agentic Mermaid style: the stage's palette, and the style of every diagram that names none |
 | `palette` | Colours for the stage, for example `palette('dusk')` in a scene with no diagrams |
 | `heading` | `'step'` (default), a fixed string, or `false` for no heading |
-| `headingSize` | The heading's font size, 0.36 by default; at 0.5 it reads at about 12 px on a 390 px phone |
+| `headingSize` | The heading's font size, 0.36 by default; at 0.54 it reads at 12 px on a 390 px page without a close-up |
 
 With neither `style` nor `palette`, the stage adopts the first diagram's palette.
 
@@ -152,9 +152,9 @@ Capture asserts that its output equals Agentic Mermaid's `renderMermaidSVG` byte
 | Bare runtime | The scene, bundled, gives different steps or state in a context with no DOM, Node, timers or console |
 | Glyphs | Any text the embedded fonts cannot draw (every command checks this) |
 
-14 px at a 1280 px stage is about 4 px on a 390 px phone; readers there zoom the stage.
+On a phone the player opens each step on a close-up (see [controls](#controls-and-accessibility)), and `check` measures labels the same way: `minLabelPx390` and `labelsUnder12PxAt390` are sizes in each step's close-up on a 390 px page, whose stage is 358 px wide. They are reported, not gated.
 
-The report goes to `out/checks/<id>/report.json`. For each case it holds the full step trace, each step's resting picture as a rough text drawing (`restingFrames`: boxes and lines, with diagram labels as bars), and the smallest label size at 1280 px and at 390 px before zooming (`legibility`).
+The report goes to `out/checks/<id>/report.json`. For each case it holds the full step trace, each step's resting picture as a rough text drawing (`restingFrames`: boxes and lines, with diagram labels as bars), and label sizes (`legibility`): `minLabelPx1280`; `minLabelPx390` and `labelsUnder12PxAt390` in each step's close-up on a 390 px page; `labelsOutsideCloseUpsAt390`, the labels no close-up shows whole, which a reader reaches by panning; and `minLabelPx390WholeStage`, the size without close-ups.
 
 These checks establish deterministic behaviour and readable pictures. They do not establish that a caption is true: test each model against its source.
 
@@ -209,7 +209,7 @@ An unknown setting or value resets every setting to its default, and a notice na
 
 The stage's accessible description is a one-sentence summary of the picture. "What the picture shows", under the caption, opens the full description: each diagram, card, code panel and described drawing, with what is marked, dimmed or changed in this step.
 
-The stage takes focus from Tab or a click. With the stage focused, `+`, `-` and `0` zoom and reset, and arrow keys pan when zoomed. Otherwise left and right arrows change step, except on a button, link or field. Pinch, Ctrl-scroll and double-click zoom; when zoomed, drag pans and a click recentres on the point clicked. Zoom goes up to 6×, keeps its place across steps, and resets when the case changes. With reduced motion, the previous picture crossfades into the step's resting picture instead of playing.
+The stage takes focus from Tab or a click. With the stage focused, `+`, `-` and `0` zoom and reset, and arrow keys pan when zoomed. Otherwise left and right arrows change step, except on a button, link or field. Pinch, Ctrl-scroll and double-click zoom; when zoomed, drag pans and a click recentres on the point clicked. Zoom goes up to 6×, keeps its place across steps, and resets when the case changes. On a stage under 600 px wide, each step opens on a close-up of what it changed, zoomed so labels near the change read at 12 px; a small map in the corner shows the whole frame and steps through the step's other close-ups, Fit keeps the whole picture for later steps, and the crosshair button brings close-ups back. A vertical swipe scrolls the page; a sideways drag or a pinch moves the view. With reduced motion, the previous picture crossfades into the step's resting picture instead of playing.
 
 Inside an iframe without `parentOrigin` (a raw iframe), the page adds its own "Open in a new tab" link.
 
@@ -260,12 +260,12 @@ With `--footer`, `render` fails before FFmpeg starts on a title or caption that 
 | `npm run test:video` | Real FFmpeg: H.264 and VP9 exports, subtitles, chapters, decode, receipts |
 | `npm run demos:build` | Build every explainer, the gallery, `evidence.json` and a two-embed page into `out/explainers/` |
 | `npm run demos:check` | `demos:build` plus `check` and the footer check on every case |
-| `npm run demos:render` | `demos:build` plus a caption-footer video of each default case in `out/videos/`, verified with ffprobe; unchanged videos are skipped unless `-- --force` |
+| `npm run demos:render` | `demos:build` plus a caption-footer video of each default case in `out/videos/`, verified with ffprobe; unchanged videos are skipped unless `-- --force`; a catalog entry with `video: false` ships as a page only |
 | `npm run demos:serve` | Serve `out/` on port 5175 with each page's headers and byte ranges; `-- --port n` |
 | `npm run demos:review` | Open every served case at 390 px and 1180 px in Chromium and check captions, artwork, errors, outside requests, headers and video byte ranges (needs `out/videos/exgit.mp4`); screenshots in `out/review/` |
 | `npm run site:export -- <site-root>` | Copy the built pages, posters, videos and loader under `<site-root>/projects/lantern-explainers` (`--path` changes it) and write their `_headers` block to `out/site-headers.txt` |
 | `npm run pack:smoke` | Pack, install into a fresh project without the optional packages, build an outside scene; `EXPLAIN_BROWSER=1` adds capture, `EXPLAIN_VIDEO=1` a render |
 | `npm run build:lib` | Compile `dist/` (runs on `npm pack`) |
-| `npm run fonts` | Regenerate `src/font-data.ts` from Inter and JetBrains Mono (needs `fonttools` and `brotli`) |
+| `npm run fonts` | Regenerate `src/font-data.ts` from Inter, JetBrains Mono and the Noto numeral subsets, reproducibly (needs `fonttools` and `brotli`) |
 
 Test environment: `FC_RUNS=n` sets the property cases, and `FC_SEED` with `FC_PATH` replays a fast-check failure. `UPDATE_GOLDEN=1` rewrites `test/golden-traces.json` after a deliberate change. Manim parity runs from the frozen answers in `test/manim-oracle.json`; `MANIM_DIR=<checkout of 3b1b/manim>` (with `python3` and numpy) also checks them against live Manim, and `UPDATE_ORACLE=1` rewrites them. `EXPLAIN_BROWSER=1` and `EXPLAIN_VIDEO=1` enable the browser and video tests. `test/explain-gates.test.ts` gives each check one seeded defect.

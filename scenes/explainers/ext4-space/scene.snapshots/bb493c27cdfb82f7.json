@@ -1,0 +1,582 @@
+{
+  "version": 1,
+  "renderer": "agentic-mermaid@0.4.1",
+  "spec": {
+    "source": "---\nconfig:\n  pie:\n    legendPosition: right\n    textPosition: 0.68\n  themeVariables:\n    pie1: '#6e7781'\n    pie2: '#4ac26b'\n    pie3: '#cf222e'\n    pieLegendTextSize: 17px\n    pieSectionTextSize: 15px\n    pieTitleTextSize: 18px\n---\npie\n  title Every 4 KiB block of 1 TiB\n  \"Metadata\" : 4495258\n  \"Users can write\" : 263936102\n",
+    "style": "github-light"
+  },
+  "family": "pie",
+  "width": 471.88,
+  "height": 276,
+  "palette": {
+    "paper": "#ffffff",
+    "ink": "#1f2328",
+    "accent": "#0969da",
+    "muted": "#59636e"
+  },
+  "parts": [
+    {
+      "id": "__frame",
+      "role": "frame",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0,
+              0,
+              1.572933316230774,
+              0,
+              3.145866632461548,
+              0,
+              4.718800067901611,
+              0,
+              4.718800067901611,
+              -0.9200000166893005,
+              4.718800067901611,
+              -1.840000033378601,
+              4.718800067901611,
+              -2.759999990463257,
+              3.145866632461548,
+              -2.759999990463257,
+              1.572933316230774,
+              -2.759999990463257,
+              0,
+              -2.759999990463257,
+              0,
+              -1.840000033378601,
+              0,
+              -0.9200000166893005,
+              0,
+              0
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "slice:Metadata",
+      "role": "pie-slice",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.190000057220459,
+              -1.5700000524520874,
+              1.190000057220459,
+              -1.253333330154419,
+              1.190000057220459,
+              -0.9366666674613953,
+              1.190000057220459,
+              -0.6200000047683716,
+              1.2233366966247559,
+              -0.6200143694877625,
+              1.256649374961853,
+              -0.6217834949493408,
+              1.2897999286651611,
+              -0.6252999901771545,
+              1.2565332651138306,
+              -0.9401999711990356,
+              1.2232667207717896,
+              -1.2551000118255615,
+              1.190000057220459,
+              -1.5700000524520874
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#6e7781",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.015,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Metadata",
+        "value": 0.016746396546215764
+      }
+    },
+    {
+      "id": "slice:Users can write",
+      "role": "pie-slice",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.190000057220459,
+              -1.5700000524520874,
+              1.2232667207717896,
+              -1.2551000118255615,
+              1.2565333843231201,
+              -0.9401999711990356,
+              1.2897999286651611,
+              -0.6252999901771545,
+              1.8018622398376465,
+              -0.6796176433563232,
+              2.1774260997772217,
+              -1.1320070028305054,
+              2.136599063873291,
+              -1.645321011543274,
+              2.0957725048065186,
+              -2.158635139465332,
+              1.6534204483032227,
+              -2.545970916748047,
+              1.1392098665237427,
+              -2.518663167953491,
+              0.6249994039535522,
+              -2.4913551807403564,
+              0.22615975141525269,
+              -2.059347152709961,
+              0.23992955684661865,
+              -1.5445960760116577,
+              0.253699392080307,
+              -1.029845118522644,
+              0.6750649809837341,
+              -0.6197776794433594,
+              1.190000057220459,
+              -0.6200000047683716,
+              1.190000057220459,
+              -0.9366666674613953,
+              1.190000057220459,
+              -1.253333330154419,
+              1.190000057220459,
+              -1.5700000524520874
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#4ac26b",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.015,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Users can write",
+        "value": 0.9832536034537842
+      }
+    },
+    {
+      "id": "slice-label:Users can write",
+      "role": "label",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#000000",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "98%",
+          "fontSize": 0.15,
+          "textRun": {
+            "text": "98%",
+            "x": 115.6,
+            "y": 226.76,
+            "size": 15,
+            "anchor": "middle",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 29.61
+          }
+        }
+      ],
+      "channels": {
+        "category": "Users can write",
+        "value": 0.9832536034537842
+      }
+    },
+    {
+      "id": "legend:Metadata",
+      "role": "legend",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.4800000190734863,
+              -1.3600000143051147,
+              2.513333320617676,
+              -1.3600000143051147,
+              2.5466666221618652,
+              -1.3600000143051147,
+              2.5799999237060547,
+              -1.3600000143051147,
+              2.59104585647583,
+              -1.3600000143051147,
+              2.5999999046325684,
+              -1.3689543008804321,
+              2.5999999046325684,
+              -1.3799999952316284,
+              2.5999999046325684,
+              -1.4133332967758179,
+              2.5999999046325684,
+              -1.4466667175292969,
+              2.5999999046325684,
+              -1.4800000190734863,
+              2.5999999046325684,
+              -1.4910457134246826,
+              2.59104585647583,
+              -1.5,
+              2.5799999237060547,
+              -1.5,
+              2.5466666221618652,
+              -1.5,
+              2.513333320617676,
+              -1.5,
+              2.4800000190734863,
+              -1.5,
+              2.46895432472229,
+              -1.5,
+              2.4600000381469727,
+              -1.4910457134246826,
+              2.4600000381469727,
+              -1.4800000190734863,
+              2.4600000381469727,
+              -1.4466667175292969,
+              2.4600000381469727,
+              -1.4133332967758179,
+              2.4600000381469727,
+              -1.3799999952316284,
+              2.4600000381469727,
+              -1.3689543008804321,
+              2.46895432472229,
+              -1.3600000143051147,
+              2.4800000190734863,
+              -1.3600000143051147
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#6e7781",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Metadata",
+        "value": 0.016746396546215764
+      }
+    },
+    {
+      "id": "legend-label:Metadata",
+      "role": "legend",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Metadata (1.7%)",
+          "fontSize": 0.17,
+          "textRun": {
+            "text": "Metadata (1.7%)",
+            "x": 268,
+            "y": 150.45,
+            "size": 17,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 114.954
+          }
+        }
+      ],
+      "channels": {
+        "category": "Metadata",
+        "value": 0.016746396546215764
+      }
+    },
+    {
+      "id": "legend:Users can write",
+      "role": "legend",
+      "kind": "shape",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.4800000190734863,
+              -1.6100000143051147,
+              2.513333320617676,
+              -1.6100000143051147,
+              2.5466666221618652,
+              -1.6100000143051147,
+              2.5799999237060547,
+              -1.6100000143051147,
+              2.59104585647583,
+              -1.6100000143051147,
+              2.5999999046325684,
+              -1.6189543008804321,
+              2.5999999046325684,
+              -1.6299999952316284,
+              2.5999999046325684,
+              -1.6633332967758179,
+              2.5999999046325684,
+              -1.6966667175292969,
+              2.5999999046325684,
+              -1.7300000190734863,
+              2.5999999046325684,
+              -1.7410457134246826,
+              2.59104585647583,
+              -1.75,
+              2.5799999237060547,
+              -1.75,
+              2.5466666221618652,
+              -1.75,
+              2.513333320617676,
+              -1.75,
+              2.4800000190734863,
+              -1.75,
+              2.46895432472229,
+              -1.75,
+              2.4600000381469727,
+              -1.7410457134246826,
+              2.4600000381469727,
+              -1.7300000190734863,
+              2.4600000381469727,
+              -1.6966667175292969,
+              2.4600000381469727,
+              -1.6633332967758179,
+              2.4600000381469727,
+              -1.6299999952316284,
+              2.4600000381469727,
+              -1.6189543008804321,
+              2.46895432472229,
+              -1.6100000143051147,
+              2.4800000190734863,
+              -1.6100000143051147
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#4ac26b",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "channels": {
+        "category": "Users can write",
+        "value": 0.9832536034537842
+      }
+    },
+    {
+      "id": "legend-label:Users can write",
+      "role": "legend",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Users can write (98.3%)",
+          "fontSize": 0.17,
+          "textRun": {
+            "text": "Users can write (98.3%)",
+            "x": 268,
+            "y": 175.45,
+            "size": 17,
+            "anchor": "start",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 179.877
+          }
+        }
+      ],
+      "channels": {
+        "category": "Users can write",
+        "value": 0.9832536034537842
+      }
+    },
+    {
+      "id": "title",
+      "role": "title",
+      "kind": "text",
+      "shapes": [
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Every 4 KiB block of 1 TiB",
+          "fontSize": 0.18,
+          "textRun": {
+            "text": "Every 4 KiB block of 1 TiB",
+            "x": 235.94,
+            "y": 39.3,
+            "size": 18,
+            "anchor": "middle",
+            "baseline": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 214.38
+          }
+        }
+      ]
+    }
+  ],
+  "findings": {
+    "ok": true,
+    "warnings": [],
+    "layout": {
+      "version": 1,
+      "kind": "pie",
+      "nodes": [
+        {
+          "id": "slice#0:Metadata",
+          "x": 246,
+          "y": 136,
+          "w": 119,
+          "h": 14,
+          "shape": "rectangle",
+          "label": "Metadata (1.7%)"
+        },
+        {
+          "id": "slice#1:Users can write",
+          "x": 246,
+          "y": 161,
+          "w": 175,
+          "h": 14,
+          "shape": "rectangle",
+          "label": "Users can write (98.3%)"
+        }
+      ],
+      "edges": [],
+      "groups": [],
+      "bounds": {
+        "w": 472,
+        "h": 276
+      }
+    }
+  }
+}

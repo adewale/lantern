@@ -14,7 +14,8 @@ export async function buildExplainer(
 ): Promise<{ html: string; receipt: Record<string, unknown> }> {
   const v = defaultVariant(project),
     first = v.trace.steps[0]!;
-  // The page's own words follow the scene's language; the picture descriptions are English in all.
+  // The page's own words follow the scene's language, and so do the picture descriptions where
+  // explain/words.ts has words for it; elsewhere they are English, marked lang="en".
   const title = project.Scene.meta?.title ?? sceneSlug(project),
     lang = project.Scene.meta?.lang ?? 'en',
     t = chromeFor(lang);
@@ -73,7 +74,7 @@ export async function buildExplainer(
     .join('');
   const licenses = (
     await Promise.all(
-      ['LICENSE', 'vendor/licenses/Inter-OFL.txt', 'vendor/licenses/JetBrainsMono-OFL.txt'].map((file) =>
+      ['LICENSE', 'vendor/licenses/Inter-OFL.txt', 'vendor/licenses/JetBrainsMono-OFL.txt', 'vendor/licenses/Noto-OFL.txt'].map((file) =>
         readFile(join(ROOT, file), 'utf8'),
       ),
     )

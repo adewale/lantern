@@ -8,7 +8,10 @@ import { reportHeight } from './embed-protocol.ts';
 import { icon } from './embed-icons.ts';
 import type { IconName } from './embed-icons.ts';
 import { StageZoom } from './embed-zoom.ts';
-import { chromeFor, isEnglish } from './embed-strings.ts';
+import type { Zoom } from './embed-zoom.ts';
+import { NARROW_PX, closeUps, stageScale, stepLayouts } from './embed-closeup.ts';
+import type { StepLayout } from './embed-closeup.ts';
+import { chromeFor, descriptionsLang, settingsProblem } from './embed-strings.ts';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, className?: string): HTMLElementTagNameMap[K] => {
   const node = document.createElement(tag);
@@ -38,7 +41,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     ? params.get('theme')!
     : 'auto';
   const Bound = bindSnapshots(Source, snapshots);
-  // The page's own words in the scene's language; the generated descriptions stay English.
+  // The page's own words in the scene's language; so are the generated descriptions, where
+  // explain/words.ts has the language (else they are English and marked so).
   const lang = Source.meta?.lang ?? 'en',
     t = chromeFor(lang);
   let values: Settings,
@@ -48,8 +52,13 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     selected = 0,
     generation = 0,
     loads = 0,
-    playing = false;
-  const cache = new Map<string, { Scene: ExplainerClass; trace: Trace }>();
+    playing = false,
+    // On a narrow stage, whether each step opens on its close-up; Fit turns it off, Close-up on.
+    follow = true;
+  type Entry = { Scene: ExplainerClass; trace: Trace; layouts?: Promise<Map<string, StepLayout>> };
+  const cache = new Map<string, Entry>();
+  /** The case on show, with its layouts once a close-up has needed them. */
+  let current: Entry | undefined;
 
   // Title, then the cases it can show: the choice sits next to what it changes.
   // The built page's heading is the title, so the live page says what the static one did.
@@ -99,7 +108,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     picture = el('div');
   summary.id = 'picture-summary';
   summary.hidden = true;
-  if (!isEnglish(lang)) summary.lang = picture.lang = 'en';
+  const said = descriptionsLang(lang);
+  if (said) summary.lang = picture.lang = said;
   described.append(el('summary', t.picture), picture);
   stage.setAttribute('aria-describedby', summary.id);
   const controls = el('nav', undefined, 'controls');
@@ -115,11 +125,18 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     copy = button(t.copy, 'link'),
     enlarge = button(t.enlarge, 'enlarge');
   enlarge.setAttribute('aria-pressed', 'false');
-  tools.append(zoomOut, zoomIn, zoomFit, replay, copy, ...(document.fullscreenEnabled ? [enlarge] : []));
+  // On a narrow stage, Fit shows the whole picture from then on; Close-up brings back a
+  // close-up of each step.
+  const closer = button(t.closeUp, 'closeUp');
+  closer.hidden = true;
+  tools.append(zoomOut, zoomIn, zoomFit, closer, replay, copy, ...(document.fullscreenEnabled ? [enlarge] : []));
   controls.append(prev, next, tools);
   const notice = el('p', undefined, 'notice');
   notice.setAttribute('role', 'status');
-  player.append(stage, summary, caption, described, controls, notice);
+  // The stage and, over its corner on a narrow stage, the overview: a control outside the
+  // stage, whose role of img makes everything inside it a picture.
+  const frame = el('div', undefined, 'frame');
+  player.append(frame, summary, caption, described, controls, notice);
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', t.stepList);
@@ -141,14 +158,72 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const framed = window.parent !== window && !params.has('parentOrigin');
   root.replaceChildren(head, player, steps, transcript, ...(framed ? [standalone] : []));
 
+  // A map of the whole picture over the stage's corner while a narrow stage is zoomed:
+  // where the view is, and where the step changed. Pressing it moves to the step's next
+  // close-up, so the reader can see every change in turn without hunting for it.
+  const overview = el('button', undefined, 'overview'),
+    map = el('span', undefined, 'map'),
+    view = el('span', undefined, 'view');
+  overview.type = 'button';
+  overview.hidden = true;
+  overview.append(map);
+  frame.append(stage, overview);
+  const narrow = () => stage.clientWidth > 0 && stage.clientWidth < NARROW_PX;
+  let shownLayout: StepLayout | undefined,
+    // The close-ups of the step on show, where it opened first; `stop` is the one last visited.
+    tour: Zoom[] = [],
+    stop = 0;
+  function drawOverview() {
+    const w = stage.clientWidth,
+      h = stage.clientHeight,
+      on = narrow() && zoom.k > 1;
+    stage.classList.toggle('narrow', narrow());
+    overview.hidden = !on;
+    if (!on) return;
+    overview.disabled = tour.length < 2;
+    const label = t.nextCloseUp(((stop + 1) % Math.max(1, tour.length)) + 1, Math.max(1, tour.length));
+    overview.setAttribute('aria-label', label);
+    overview.title = label;
+    const pc = (v: number) => `${(v * 100).toFixed(3)}%`;
+    const place = (node: HTMLElement, left: number, top: number, width: number, height: number) =>
+      Object.assign(node.style, { left: pc(left), top: pc(top), width: pc(width), height: pc(height) });
+    place(view, -zoom.x / (zoom.k * w), -zoom.y / (zoom.k * h), 1 / zoom.k, 1 / zoom.k);
+    const { s, ox, oy } = stageScale(w, h);
+    const parts = (shownLayout?.parts ?? []).map((b) => {
+      const part = el('span', undefined, 'part');
+      place(part, (ox + (b[0] + 8) * s) / w, (oy + (4.5 - b[3]) * s) / h, ((b[2] - b[0]) * s) / w, ((b[3] - b[1]) * s) / h);
+      return part;
+    });
+    map.replaceChildren(...parts, view);
+  }
+  overview.onclick = () => {
+    if (tour.length < 2) return;
+    stop = (stop + 1) % tour.length;
+    zoom.to(tour[stop]!, true);
+  };
   const zoom = new StageZoom(stage, () => {
     zoomOut.disabled = zoom.k <= 1;
     zoomIn.disabled = zoom.k >= zoom.max;
     zoomFit.hidden = zoom.k <= 1;
+    closer.hidden = follow || !narrow();
+    drawOverview();
   });
   zoomIn.onclick = () => zoom.zoomAt(1.6, undefined, undefined, true);
   zoomOut.onclick = () => zoom.zoomAt(1 / 1.6, undefined, undefined, true);
-  zoomFit.onclick = () => zoom.reset(true);
+  /** The whole picture; on a narrow stage, for the steps that follow too. */
+  const whole = (glide: boolean) => {
+    if (narrow()) follow = false;
+    zoom.reset(glide);
+  };
+  zoomFit.onclick = () => whole(true);
+  closer.onclick = async () => {
+    follow = true;
+    const target = trace && (await framing(trace.steps[selected]!));
+    if (target) zoom.to(target, true);
+    else zoom.apply();
+    // The button that was pressed hides; focus moves to the stage it changed.
+    stage.focus();
+  };
   reportHeight(root);
 
   function urlFor(): URL {
@@ -178,8 +253,27 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     described.hidden = !picture.innerHTML;
     setIcon(replay, playing ? t.stop : t.replay, playing ? 'stop' : 'replay');
   }
-  function settle(step: Trace['steps'][number]) {
-    zoom.apply();
+  /**
+   * The close-up a step opens on: on a narrow stage while close-ups are on, the zoom that
+   * frames what the step changed (app/embed-closeup.ts); otherwise null, and the zoom keeps
+   * its place. The case's layouts are worked out once, the first time a narrow stage needs
+   * them. The step's other close-ups wait behind the overview, close-ups on or off.
+   */
+  async function framing(step: Trace['steps'][number]): Promise<Zoom | null> {
+    const at = current;
+    shownLayout = undefined;
+    tour = [];
+    stop = 0;
+    if (!at || !narrow()) return null;
+    at.layouts ??= stepLayouts(at.Scene);
+    const layout = (await at.layouts).get(step.step);
+    shownLayout = layout;
+    tour = closeUps(layout, stage.clientWidth, stage.clientHeight, zoom.max);
+    return follow ? tour[0]! : null;
+  }
+  function settle(step: Trace['steps'][number], target: Zoom | null) {
+    if (target) zoom.to(target);
+    else zoom.apply();
     root.classList.remove('loading');
     document.dispatchEvent(new CustomEvent('lantern:step', { detail: { step: step.step, settings: values } }));
   }
@@ -193,14 +287,14 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     const step = trace.steps[selected]!;
     const container = el('div'),
       sink = new DomSink(container, { realtime: false });
-    await renderAt(Active, restingTime(step, trace.fps), sink);
+    const [, target] = await Promise.all([renderAt(Active, restingTime(step, trace.fps), sink), framing(step)]);
     if (gen !== generation) return;
     // Reduced motion: no animation, but the old picture fades out over the new one, so the change is still seen.
     const old = reduced() ? stage.querySelector('svg') : null;
     old?.classList.add('leaving');
     old?.addEventListener('animationend', () => old.remove());
     stage.replaceChildren(...container.childNodes, ...(old ? [old] : []));
-    settle(step);
+    settle(step, target);
   }
   const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
   /** Forward the way the author wrote it: play the step, then rest on its last frame. */
@@ -227,6 +321,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       end = step.hold ?? step.t1 ?? trace.duration;
     const container = el('div'),
       seek = new SeekSink(new DomSink(container), start);
+    const target = await framing(step);
+    if (gen !== generation) return;
     let attached = false;
     await new Active(
       {
@@ -239,6 +335,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
             attached = true;
             stage.replaceChildren(...container.childNodes);
             zoom.apply();
+            // The view glides to the step's close-up as the step begins, so the change is watched.
+            if (target) requestAnimationFrame(() => gen === generation && zoom.to(target, true));
           }
         },
       },
@@ -263,7 +361,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       next = resolveSettings(Source, request);
     } catch (error) {
       next = resolveSettings(Source);
-      fallback = t.fallback((error as Error).message);
+      fallback = t.fallback(settingsProblem(Source, request, error));
     }
     wanted = next;
     for (const [id, inputs] of choices) for (const input of inputs) input.checked = input.value === next[id];
@@ -280,6 +378,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     const changed = !values || JSON.stringify(values) !== key;
     values = next;
     wanted = undefined;
+    current = entry;
     Active = entry.Scene;
     trace = entry.trace;
     if (changed) zoom.reset();
@@ -355,7 +454,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
         '+': () => zoom.zoomAt(1.6),
         '=': () => zoom.zoomAt(1.6),
         '-': () => zoom.zoomAt(1 / 1.6),
-        '0': () => zoom.reset(),
+        '0': () => whole(false),
       });
     const action = keys[e.key];
     if (!action) return;

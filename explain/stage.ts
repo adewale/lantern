@@ -9,6 +9,7 @@ import type { Palette, DiagramSpec } from '../integrations/agentic-mermaid/snaps
 import { palette } from './palettes.ts';
 import { soft, emphasis, good, bad } from './look.ts';
 import { picture, shownNames } from './trace.ts';
+import { wordsOf, langOf } from './words.ts';
 import type { Seen } from './trace.ts';
 
 export interface StageOptions {
@@ -71,6 +72,7 @@ export function stage(scene: Scene, options: StageOptions = {}) {
   if (mode === 'step') scene.onStep((s) => setHeading(typeof s.meta.title === 'string' ? s.meta.title : ''));
   /** What a sighted reader sees: diagrams, then panels and described drawings, then other kept text. */
   function look(): Seen[] {
+    const w = wordsOf(scene);
     const present = new Set(scene.familyMembers());
     const seen: Seen[] = [];
     for (const d of diagrams) if (present.has(d.root)) seen.push(d.describe());
@@ -88,7 +90,7 @@ export function stage(scene: Scene, options: StageOptions = {}) {
         labels.push(...words.map((t) => t.text));
         if (!words.length) blank++;
       }
-    if (labels.length) seen.push({ what: `${labels.length} label${labels.length > 1 ? 's' : ''}`, parts: labels.map((name) => ({ name })) });
+    if (labels.length) seen.push({ what: w.count(labels.length, w.label), parts: labels.map((name) => ({ name })) });
     if (blank) seen.push({ what: '', parts: [], blank: [`${blank} kept drawing${blank > 1 ? 's' : ''} with no text: give s.keep or s.enter a describe`] });
     return seen;
   }
@@ -97,7 +99,7 @@ export function stage(scene: Scene, options: StageOptions = {}) {
   scene.onStep(() => {
     before = shownNames(look());
   });
-  scene.addDescriber(() => ({ picture: picture(look(), before) }));
+  scene.addDescriber(() => ({ picture: picture(look(), before, langOf(scene)) }));
   const keepAll = (mobs: Mobject[], { describe }: Describe) => {
     const say = typeof describe === 'string' ? () => describe : describe;
     for (const m of mobs) overlays.set(m, say);

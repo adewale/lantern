@@ -8,6 +8,8 @@ const PATHS = {
   zoomIn: ['M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14z', 'M20 20l-4-4', 'M11 8v6', 'M8 11h6'],
   zoomOut: ['M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14z', 'M20 20l-4-4', 'M8 11h6'],
   fit: ['M9 4v5H4', 'M15 4v5h5', 'M9 20v-5H4', 'M15 20v-5h5'],
+  // A crosshair: look here.
+  closeUp: ['M12 5a7 7 0 1 1 0 14 7 7 0 0 1 0-14z', 'M12 1.5v3', 'M12 19.5v3', 'M1.5 12h3', 'M19.5 12h3', 'M12 11.5v1'],
   enlarge: ['M4 9V4h5', 'M20 9V4h-5', 'M4 15v5h5', 'M20 15v5h-5'],
 } as const;
 export type IconName = keyof typeof PATHS;

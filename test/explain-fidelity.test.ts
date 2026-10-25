@@ -18,6 +18,16 @@ import { Repo, AUTHOR } from '../scenes/explainers/lib/git.ts';
 import { check as certRenewal } from './lib/fidelity/cert-renewal.ts';
 import { check as quotientFamilial } from './lib/fidelity/quotient-familial.ts';
 import { check as sendSync } from './lib/fidelity/send-sync.ts';
+import { check as gtfs } from './lib/fidelity/gtfs.ts';
+import { check as pgPage } from './lib/fidelity/pg-page.ts';
+import { check as trafficPolicy } from './lib/fidelity/traffic-policy.ts';
+import { check as isdigit } from './lib/fidelity/isdigit.ts';
+import { check as icalRecurrence } from './lib/fidelity/ical-recurrence.ts';
+import { check as ext4Space } from './lib/fidelity/ext4-space.ts';
+import { check as trustProxy } from './lib/fidelity/trust-proxy.ts';
+import { check as tailwindGamut } from './lib/fidelity/tailwind-gamut.ts';
+import { check as gnomeFiles } from './lib/fidelity/gnome-files.ts';
+import { check as wcagMap } from './lib/fidelity/wcag-map.ts';
 
 for (const entry of EXPLAINERS)
   test(`${entry.id}: every authored case exposes the program's answers at step boundaries`, async () => {
@@ -187,6 +197,36 @@ for (const entry of EXPLAINERS)
           break;
         case 'send-sync':
           sendSync(trace, values);
+          break;
+        case 'gtfs':
+          gtfs(trace, values);
+          break;
+        case 'pg-page':
+          pgPage(trace, values);
+          break;
+        case 'traffic-policy':
+          trafficPolicy(trace, values);
+          break;
+        case 'isdigit':
+          isdigit(trace, values);
+          break;
+        case 'ical-recurrence':
+          icalRecurrence(trace, values);
+          break;
+        case 'ext4-space':
+          ext4Space(trace, values);
+          break;
+        case 'trust-proxy':
+          trustProxy(trace, values);
+          break;
+        case 'tailwind-gamut':
+          tailwindGamut(trace, values);
+          break;
+        case 'gnome-files':
+          gnomeFiles(trace, values);
+          break;
+        case 'wcag-map':
+          wcagMap(trace, values);
           break;
         default:
           assert.fail(`${entry.id} has no fidelity oracle: compare its step state with the program it explains`);

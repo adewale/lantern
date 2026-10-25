@@ -18,6 +18,7 @@ import { ROOT, engineAlias, sceneSlug } from './explain-project.ts';
 import { caseName } from '../../explain/index.ts';
 import { restingFrame, undescribed } from '../../explain/trace.ts';
 import { labelOf } from '../../explain/diagrams.ts';
+import { closeUps, stageScale, stepLayouts, viewBox } from '../../app/embed-closeup.ts';
 import type { Box, Mobject } from '../../src/index.ts';
 import type { Project } from './explain-project.ts';
 
@@ -139,15 +140,42 @@ export function restingTextProblems(scene: { familyMembers(): Mobject[] }): stri
   return problems;
 }
 
-/** Smallest label sizes at a 1280 px stage and, scaled, on a 390 px phone before zooming. */
-function legibilityReport(px: number[]) {
-  const sizes = px.filter((p) => p > 0);
-  const min = sizes.length ? Math.min(...sizes) : null;
-  const phone = (p: number) => Math.round(((p * 390) / 1280) * 10) / 10;
+/**
+ * The phone the legibility report measures: a 390 px page, whose stage (inside the
+ * page's 16 px gutters) is 358 × 201 px. The player opens each step there on its
+ * close-up (app/embed-closeup.ts), so a label's phone size is its size at that zoom.
+ */
+const PHONE_PAGE = 390,
+  PHONE_W = PHONE_PAGE - 32,
+  PHONE_H = Math.round((PHONE_W * 9) / 16);
+/** One label across a case: its largest size at 1280 px, and in the phone's close-ups at rest. */
+interface LabelSizes {
+  text: string;
+  px: number;
+  /** Largest size in a resting picture's close-up on the phone, in CSS px; 0 if never at rest and readable. */
+  phone: number;
+  /** Whole inside one of a resting picture's close-ups (where the step opens, or its tour), so no panning finds it. */
+  inView: boolean;
+}
+const round1 = (n: number) => Math.round(n * 10) / 10;
+/**
+ * Smallest label sizes at a 1280 px stage, and on a 390 px phone as the player shows
+ * each resting picture there (its close-up); the whole-stage phone size is what the
+ * reader would get without close-ups.
+ */
+function legibilityReport(records: LabelSizes[]) {
+  const sizes = records.filter((r) => r.px > 0),
+    min = sizes.length ? Math.min(...sizes.map((r) => r.px)) : null;
+  const atRest = sizes.filter((r) => r.phone > 0),
+    phoneMin = atRest.length ? Math.min(...atRest.map((r) => r.phone)) : null;
+  const whole = stageScale(PHONE_W, PHONE_H).s / STAGE_PX_PER_UNIT;
   return {
-    minLabelPx1280: min == null ? null : Math.round(min * 10) / 10,
-    minLabelPx390: min == null ? null : phone(min),
-    labelsUnder12PxAt390: sizes.filter((p) => phone(p) < 12).length,
+    minLabelPx1280: min == null ? null : round1(min),
+    minLabelPx390: phoneMin == null ? null : round1(phoneMin),
+    labelsUnder12PxAt390: atRest.filter((r) => round1(r.phone) < 12).length,
+    // Labels no close-up shows whole, at rest: the reader pans to them (at the same size).
+    labelsOutsideCloseUpsAt390: atRest.filter((r) => !r.inView).length,
+    minLabelPx390WholeStage: min == null ? null : round1(min * whole),
     labels: sizes.length,
   };
 }
@@ -169,9 +197,28 @@ export async function checkProject(project: Project, out: string): Promise<Recor
       ]),
     );
     // Native labels by object, so a small label is not excused by a larger one with the same words.
-    const labels = new Map<Mobject, { text: string; px: number }>();
+    const labels = new Map<Mobject, LabelSizes>();
     const completedFrames = new Set(v.trace.steps.map(restingFrame));
-    const staticLabels = new Map<string, { text: string; px: number }>();
+    const staticLabels = new Map<string, LabelSizes>();
+    // Each resting frame's close-ups on the phone, worked out as the player works them out.
+    const layouts = await stepLayouts(v.Scene),
+      phoneUnit = stageScale(PHONE_W, PHONE_H).s;
+    const phoneViews = new Map(
+      v.trace.steps.map((s) => {
+        const tour = closeUps(layouts.get(s.step), PHONE_W, PHONE_H);
+        return [restingFrame(s), { k: tour[0]!.k, views: tour.map((z) => viewBox(z, PHONE_W, PHONE_H)) }] as const;
+      }),
+    );
+    /** Record a label readable in this frame: at 1280 px always, and on the phone when the frame is a resting one. */
+    const seen = (record: LabelSizes, px: number, box: Box | null, frame: number) => {
+      record.px = Math.max(record.px, px);
+      const close = phoneViews.get(frame);
+      if (!close) return;
+      record.phone = Math.max(record.phone, (px / STAGE_PX_PER_UNIT) * phoneUnit * close.k);
+      const inside = (v: Box) =>
+        !!box && box[0] >= v[0] - 1e-6 && box[2] <= v[2] + 1e-6 && box[1] >= v[1] - 1e-6 && box[3] <= v[3] + 1e-6;
+      if (close.views.some(inside)) record.inView = true;
+    };
     const resting = new Map<number, string>();
     const restingText = new Map<number, string>();
     const collisions: string[] = [];
@@ -222,13 +269,13 @@ export async function checkProject(project: Project, out: string): Promise<Recor
             let owner = m.parent;
             while (owner && !owner.key) owner = owner.parent;
             const key = `${owner?.key ?? text}@${label.fontSize.toPrecision(5)}`;
-            if (!staticLabels.has(key)) staticLabels.set(key, { text, px: 0 });
+            if (!staticLabels.has(key)) staticLabels.set(key, { text, px: 0, phone: 0, inView: false });
             const record = staticLabels.get(key)!;
             if (completedFrames.has(scene.frameCount) && readable(m, (owner ?? m).box(), viewport))
-              record.px = Math.max(record.px, px);
+              seen(record, px, m.box(), scene.frameCount);
           } else {
-            if (!labels.has(m)) labels.set(m, { text, px: 0 });
-            if (readable(m, m.box(), viewport)) labels.get(m)!.px = Math.max(labels.get(m)!.px, px);
+            if (!labels.has(m)) labels.set(m, { text, px: 0, phone: 0, inView: false });
+            if (readable(m, m.box(), viewport)) seen(labels.get(m)!, px, m.box(), scene.frameCount);
           }
         }
       },
@@ -264,13 +311,13 @@ export async function checkProject(project: Project, out: string): Promise<Recor
       [],
       `Resting frames have colliding or cut-off text ${where}`,
     );
-    const staticSmall = [...staticLabels.values()].filter((label) => label.px < MIN_PX);
+    const staticSmall = [...staticLabels.values()].filter((label) => label.px < MIN_PX).map(({ text, px }) => ({ text, px }));
     assert.deepEqual(
       staticSmall,
       [],
       `Imported labels need a readable completed-step view at 1280px ${where}: ${JSON.stringify(staticSmall)}`,
     );
-    const small = [...labels.values()].filter((label) => label.px < MIN_PX);
+    const small = [...labels.values()].filter((label) => label.px < MIN_PX).map(({ text, px }) => ({ text, px }));
     assert.deepEqual(small, [], `Labels never reach ${MIN_PX}px at 1280px stage ${where}: ${JSON.stringify(small)}`);
     const blank = v.trace.steps.flatMap((s) => undescribed(s.after).map((m) => `${s.step}: ${m}`));
     assert.deepEqual(blank, [], `Every drawing needs words for readers who cannot see it ${where}`);
@@ -302,8 +349,8 @@ export async function checkProject(project: Project, out: string): Promise<Recor
       motionEvents: events.length,
       labels: labels.size,
       completedStepLabels: staticLabels.size,
-      // What a reader sees before zooming: the same labels on a 390 px phone.
-      legibility: legibilityReport([...labels.values(), ...staticLabels.values()].map((l) => l.px)),
+      // What a reader sees: the labels at 1280 px, and on a 390 px phone in each step's close-up.
+      legibility: legibilityReport([...labels.values(), ...staticLabels.values()]),
       // Each step's resting frame as text, so an author can read it without a browser.
       restingFrames: Object.fromEntries(v.trace.steps.map((step) => [step.step, restingText.get(restingFrame(step)) ?? ''])),
     });

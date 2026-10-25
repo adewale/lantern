@@ -4,6 +4,7 @@ import type { Palette } from '../integrations/agentic-mermaid/snapshot.ts';
 import { soft, raised, rule, boxCenter, emphasis, good, bad, regionBox, REGIONS } from './look.ts';
 import type { Region } from './look.ts';
 import type { Seen } from './trace.ts';
+import { wordsOf } from './words.ts';
 
 export type CardRow = readonly [label: string, value: unknown];
 export interface CardOptions {
@@ -152,11 +153,12 @@ export class Card extends Group {
 
   /** The rows as a reader sees them, the lit one with its word. */
   describe(): Seen {
-    const n = `${this.rows.length} labelled value${this.rows.length === 1 ? '' : 's'}`;
+    const w = wordsOf(this.scene);
+    const n = w.count(this.rows.length, w.labelledValue);
     return {
-      what: this.title ? `“${this.title}”, ${n}` : n,
+      what: this.title ? `${w.quote(this.title)}, ${n}` : n,
       parts: this.rows.map((r) => ({
-        name: `${r.label}: ${r.value.text}`,
+        name: w.pair(r.label, r.value.text),
         ...(r.label === this.lit?.label ? { mark: this.lit.as } : {}),
       })),
     };
@@ -200,9 +202,9 @@ export class Card extends Group {
 
   /**
    * Light one row (null clears). The bar stays until moved, so it shows in the step's
-   * resting frame. `as` is the word the description gives it (default "marked").
+   * resting frame. `as` is the word the description gives it (default "marked", in the scene's language).
    */
-  async mark(label: string | null, { as = 'marked', runTime = 0.4 } = {}): Promise<void> {
+  async mark(label: string | null, { as = wordsOf(this.scene).marked, runTime = 0.4 } = {}): Promise<void> {
     const y = label == null ? 0 : this.row(label).anchorPoint()[1];
     this.lit = label == null ? null : { label, as };
     await moveBar(this.scene, this.bar, label == null ? null : this.bar.copy().moveTo([this.panel.center()[0], y]), runTime);
@@ -294,14 +296,15 @@ export class CodeBlock extends Group {
 
   /** The lines as a reader sees them, with the focused, added and removed ones named. */
   describe(): Seen {
-    const kinds = new Map(this.marks.map((m) => [m.line, m.kind]));
+    const w = wordsOf(this.scene);
+    const kinds = new Map(this.marks.map((m) => [m.line, w[m.kind]]));
     const f = this.focused;
     const n = this.code.lines.length;
     return {
-      what: `Code${this.title ? ` “${this.title}”` : ''}, ${n} line${n === 1 ? '' : 's'}`,
+      what: `${w.code}${this.title ? ` ${w.quote(this.title)}` : ''}, ${w.count(n, w.line)}`,
       parts: this.code.lines.map((l, i) => {
         const words = [...new Set([...(f && i >= f.lines[0] && i <= f.lines[1] ? [f.as] : []), ...(kinds.has(i) ? [kinds.get(i)!] : [])])];
-        return { name: `${i + 1}: ${l.text}`, ...(words.length ? { mark: words.join(', ') } : {}) };
+        return { name: w.pair(String(i + 1), l.text), ...(words.length ? { mark: words.join(', ') } : {}) };
       }),
     };
   }
@@ -337,9 +340,12 @@ export class CodeBlock extends Group {
 
   /**
    * Put the focus bar on line i, or lines [a, b] inclusive; null hides it. `as` is the
-   * word the description gives the lines (default "focused").
+   * word the description gives the lines (default "focused", in the scene's language).
    */
-  async focus(lines: number | readonly [number, number] | null, { as = 'focused', runTime = 0.4 } = {}): Promise<void> {
+  async focus(
+    lines: number | readonly [number, number] | null,
+    { as = wordsOf(this.scene).focused, runTime = 0.4 } = {},
+  ): Promise<void> {
     if (lines == null) {
       this.focused = null;
       return moveBar(this.scene, this.bar, null, runTime);
