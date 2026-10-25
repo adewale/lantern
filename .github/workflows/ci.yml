@@ -7,7 +7,7 @@ on:
 jobs:
   check:
     runs-on: ubuntu-24.04  # the pinned image the embed tests were validated on
-    timeout-minutes: 25  # full suite, browser gates, every demo case and video
+    timeout-minutes: 45  # full suite, browser gates and 140 demo cases take about 25 minutes; apt mirrors can add 5 more
     steps:
       - uses: actions/checkout@v4
         with:
@@ -24,7 +24,7 @@ jobs:
       # Product gates reuse this job and its Chromium installation; no scheduled lane.
       - run: npm run test:embeds    # real origin/source isolation, offline/no-JS reading and style fidelity
       - run: npm run demos:check    # every explainer case: seek, motion, hold, bare runtime, readable labels, and captions that fit the video footer
-      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - run: npm run test:video     # tiny real H.264/VP9 exports, not the full demo video batch
       - run: EXPLAIN_BROWSER=1 EXPLAIN_VIDEO=1 npm run pack:smoke  # packed archive in a fresh project: CLI, check, build, diagram capture, video
       # The review serves what demos:check built; one small video is enough for its byte-range check.
