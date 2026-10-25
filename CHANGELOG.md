@@ -4,6 +4,8 @@
 
 Newest first; all on 24–25 October 2026.
 
+- **Videos apart from CI**: `npm run videos` makes and tests everything video (`demos:render`, which first checks that every case's captions fit the footer; `test:video`; the package's installed render) and needs FFmpeg. CI no longer installs FFmpeg or renders; `demos:check` no longer runs the footer check, and `demos:review` checks video byte ranges only when videos have been built.
+
 - **Ten explainers, every diagram family, phone close-ups, French descriptions**: new explainers from real projects, each checked against its source by running it or by its own test vectors:
   - With video: `gtfs` (GTFS service days; ER and gantt; gtfs-kit), `pg-page` (a Postgres heap page; pie; Postgres 18.6), `traffic-policy` (Kubernetes externalTrafficPolicy; architecture; kube-proxy's tests and Go), `isdigit` (CPython's numeric predicates against int(); the first non-Latin numerals; CPython 3.15.1).
   - Page only (`video: false` in the catalog): `ical-recurrence` (ER; sabre/vobject and Baïkal), `ext4-space` (pie; mkfs.ext4 1.47.3 and real mounts), `trust-proxy` (architecture; Express 5.3.0), `tailwind-gamut` (radar; color.js), `gnome-files` (journey; GNOME's 2024 Files usability test), `wcag-map` (mindmap; W3C's pinned sources).

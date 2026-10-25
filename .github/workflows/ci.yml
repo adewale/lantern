@@ -7,7 +7,7 @@ on:
 jobs:
   check:
     runs-on: ubuntu-24.04  # the pinned image the embed tests were validated on
-    timeout-minutes: 45  # full suite, browser gates and 140 demo cases take about 25 minutes; apt mirrors can add 5 more
+    timeout-minutes: 35  # full suite, browser gates and every demo case take about 20 minutes
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,10 +23,7 @@ jobs:
       - run: npm run test:full      # every frame, fast-check properties at ten times the default cases, cache validation, golden trace, leaks
       # Product gates reuse this job and its Chromium installation; no scheduled lane.
       - run: npm run test:embeds    # real origin/source isolation, offline/no-JS reading and style fidelity
-      - run: npm run demos:check    # every explainer case: seek, motion, hold, bare runtime, readable labels, and captions that fit the video footer
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
-      - run: npm run test:video     # tiny real H.264/VP9 exports, not the full demo video batch
-      - run: EXPLAIN_BROWSER=1 EXPLAIN_VIDEO=1 npm run pack:smoke  # packed archive in a fresh project: CLI, check, build, diagram capture, video
-      # The review serves what demos:check built; one small video is enough for its byte-range check.
-      - run: node tools/explain.ts render scenes/explainers/exgit --width 320 --fps 4 --out out/videos/exgit.mp4
-      - run: npm run demos:review   # every served case at phone and desktop width, headers, video ranges, two embeds on one page
+      - run: npm run demos:check    # every explainer case: seek, motion, hold, bare runtime, readable labels
+      - run: EXPLAIN_BROWSER=1 npm run pack:smoke  # packed archive in a fresh project: CLI, check, build, diagram capture
+      - run: npm run demos:review   # every served case at phone and desktop width, headers, two embeds on one page
+      # Videos are made and tested apart from CI, with `npm run videos` (needs FFmpeg).

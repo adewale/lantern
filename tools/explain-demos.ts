@@ -40,14 +40,13 @@ for (const item of EXPLAINERS) {
   await renderAt(variant.Scene, restingTime(step, variant.trace.fps), sink);
   await writeFile(join(directory, item.id + '.png'), (await rasterize(sink.svg)).asPng());
   await contactSheet(project, join(directory, item.id + '.steps.png'));
-  if (check) {
-    await checkProject(project, join(ROOT, 'out/checks', item.id));
-    // Every shipped case must export with the caption footer; no FFmpeg is needed to know.
+  if (check) await checkProject(project, join(ROOT, 'out/checks', item.id));
+  // Videos only: every case of an explainer with video must export with the caption footer.
+  if (render && item.video !== false)
     for (const v of project.variants)
       await footerLines(v.trace, v.values).catch((error: Error) => {
         throw new Error(`${item.id}: ${error.message}`);
       });
-  }
   evidence.push({
     id: item.id,
     title: project.Scene.meta?.title ?? item.id,

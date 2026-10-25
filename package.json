@@ -13,6 +13,7 @@
     "demos:build": "node tools/explain-demos.ts",
     "demos:check": "node tools/explain-demos.ts --check",
     "demos:render": "node tools/explain-demos.ts --render",
+    "videos": "node tools/explain-demos.ts --render && EXPLAIN_VIDEO=1 node --test test/explain-video.test.ts && EXPLAIN_VIDEO=1 node tools/explain-package-smoke.ts",
     "demos:serve": "node tools/explain-serve.ts",
     "demos:review": "node tools/explain-review.ts",
     "pack:smoke": "node tools/explain-package-smoke.ts",

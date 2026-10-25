@@ -256,7 +256,7 @@ Each step plays its motion with the step's title in the footer, then holds its r
 | Caption footer (`--footer`) | 1280 × 960: a 1280 × 720 stage over a 240 px footer that shows the title, then the caption, each up to four lines at 27 px, in the page's light or dark colours |
 | Stage only | 16:9 at any even width; height rounds to an even number; no title or caption on screen |
 
-With `--footer`, `render` fails before FFmpeg starts on a title or caption that needs more than four lines or has a character the fonts cannot draw; `demos:check` runs this footer check on every case. Like `check`, `render` fails if the picture changes during a caption hold. An MP4 needs an ISO 639-2 code for `meta.lang`: three-letter tags pass, `en` and `fr` and their regional tags become `eng` and `fra`, and other tags fail. Video bytes may differ between FFmpeg and resvg builds.
+With `--footer`, `render` fails before FFmpeg starts on a title or caption that needs more than four lines or has a character the fonts cannot draw; `npm run videos` runs this footer check on every case of every explainer with video; `demos:check` does not, since pages have no footer. Like `check`, `render` fails if the picture changes during a caption hold. An MP4 needs an ISO 639-2 code for `meta.lang`: three-letter tags pass, `en` and `fr` and their regional tags become `eng` and `fra`, and other tags fail. Video bytes may differ between FFmpeg and resvg builds.
 
 ## Repository scripts
 
@@ -269,9 +269,10 @@ With `--footer`, `render` fails before FFmpeg starts on a title or caption that 
 | `npm run test:video` | Real FFmpeg: H.264 and VP9 exports, subtitles, chapters, decode, receipts |
 | `npm run demos:build` | Build every explainer, the gallery, `evidence.json` and a two-embed page into `out/explainers/` |
 | `npm run demos:check` | `demos:build` plus `check` and the footer check on every case |
-| `npm run demos:render` | `demos:build` plus a caption-footer video of each default case in `out/videos/`, verified with ffprobe; unchanged videos are skipped unless `-- --force`; a catalog entry with `video: false` ships as a page only |
+| `npm run demos:render` | `demos:build` plus a caption-footer video of each default case in `out/videos/`, verified with ffprobe, after checking that every case's captions fit the footer; unchanged videos are skipped unless `-- --force`; a catalog entry with `video: false` ships as a page only |
+| `npm run videos` | Everything video, kept out of CI: `demos:render`, `test:video` and the package smoke test's installed render. Needs FFmpeg |
 | `npm run demos:serve` | Serve `out/` on port 5175 with each page's headers and byte ranges; `-- --port n` |
-| `npm run demos:review` | Open every served case at 390 px and 1180 px in Chromium and check captions, artwork, errors, outside requests, headers and video byte ranges (needs `out/videos/exgit.mp4`); screenshots in `out/review/` |
+| `npm run demos:review` | Open every served case at 390 px and 1180 px in Chromium and check captions, artwork, errors, outside requests and headers, and video byte ranges when `out/videos/` has videos; screenshots in `out/review/` |
 | `npm run site:export -- <site-root>` | Copy the built pages, posters, videos and loader under `<site-root>/projects/lantern-explainers` (`--path` changes it) and write their `_headers` block to `out/site-headers.txt` |
 | `npm run pack:smoke` | Pack, install into a fresh project without the optional packages, build an outside scene; `EXPLAIN_BROWSER=1` adds capture, `EXPLAIN_VIDEO=1` a render |
 | `npm run build:lib` | Compile `dist/` (runs on `npm pack`) |
