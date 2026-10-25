@@ -38,10 +38,18 @@ export function reportHeight(root: HTMLElement): () => void {
     }
   };
   // ResizeObserver already delivers at most once per rendering update, so measure
-  // in its callback. Deferring to requestAnimationFrame lost reports: browsers
-  // throttle rAF in offscreen cross-origin frames, the usual place for an embed.
+  // in its callback. Browsers may stop rendering an offscreen cross-origin frame,
+  // the usual place for an embed, and then neither requestAnimationFrame nor
+  // ResizeObserver fires. Measuring forces layout without rendering, so also
+  // measure whenever the player settles on a step, and once the page has loaded.
   const observer = new ResizeObserver(measure);
   observer.observe(root);
+  document.addEventListener('lantern:step', measure);
+  window.addEventListener('load', measure);
   measure();
-  return () => observer.disconnect();
+  return () => {
+    observer.disconnect();
+    document.removeEventListener('lantern:step', measure);
+    window.removeEventListener('load', measure);
+  };
 }

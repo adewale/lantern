@@ -37,9 +37,9 @@ Open **KV-cache merge request** ("Five added lines put a KV cache in front of D1
 
 ### 4. Publish it
 
-Open **Two embeds on one host page** from the gallery. Open one transcript: only that iframe grows, and closing it shrinks the iframe again. Change a case in one embed; the other keeps its state. Each page also opens standalone. On a phone, double-tap a part of the stage or use **+** under it to read small labels, and **Enlarge** shows the stage full screen.
+Open **Two embeds on one host page** from the gallery. Open one transcript: only that iframe grows, and closing it shrinks the iframe again. Change a case in one embed; the other keeps its state. Each page also opens standalone. On a phone, double-tap a part of the stage or use the zoom buttons beside **Next** to read small labels, and **Enlarge** shows the stage, caption and controls full screen.
 
-Then open a **Captioned MP4**. It has the same steps and captions as the page, with one chapter per step, a subtitle track, a WebVTT file beside it and a build receipt. It has no audio track.
+Then open a video from `out/videos/`, such as `mr-cache.mp4`. It has the same steps and captions as the page, with one chapter per step, a subtitle track, a WebVTT file beside it and a build receipt. It has no audio track.
 
 What to say: the HTML file is the product. It needs no runtime network, account or storage, and the loader script that sizes the iframe is optional. Serve the page over HTTP to show auto-sizing; pages opened from `file:` do not auto-size.
 
@@ -49,7 +49,7 @@ What to say: the HTML file is the product. It needs no runtime network, account 
 | --- | --- |
 | Personal Agent Protocol | Each sign-in method marks the messages that differ from the others in the sequence diagram |
 | Lantern | The seek step runs a small scene twice, played and seeked, and shows both frames with the same SVG fingerprint |
-| Agentic Mermaid | `verify(flow)` warnings attached to the two unlabelled edges, then the two `set_label` operations that fix them |
+| Agentic Mermaid | The two unlabelled edges marked beside `verify(flow)`'s findings, then the two `set_label` operations, and the findings panel morphing to zero warnings |
 | State machine | Each event moves the marked state and the bar in the reducer's table; OPENED after closed throws `InvalidTransition` |
 | Token bucket | Request chips turn green or red as `allow()` returns; the final chart marks the 429 columns |
 | Ring buffer | Native drawing only: the tail wraps into freed slots, or push 6 and 7 are refused with the ring unchanged |

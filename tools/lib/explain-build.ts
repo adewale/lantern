@@ -69,8 +69,8 @@ export async function buildExplainer(
     .map(
       (variant) =>
         `<section><h2>${htmlEscape(
-          Object.entries(variant.values)
-            .map(([k, v]) => `${k}: ${v}`)
+          (project.Scene.settings ?? [])
+            .map((s) => `${s.label}: ${s.options.find((o) => o.value === variant.values[s.id])?.label ?? variant.values[s.id]}`)
             .join(' · ') || title,
         )}</h2><ol>${variant.trace.steps.map((s) => `<li id="${htmlEscape(hash(JSON.stringify(variant.values)).slice(0, 8) + '-' + s.step)}"><strong>${htmlEscape(s.meta.title ?? s.step)}</strong><p>${htmlEscape(s.meta.caption ?? '')}</p></li>`).join('')}</ol></section>`,
     )
@@ -85,7 +85,7 @@ export async function buildExplainer(
       ),
     )
   ).join('\n\n');
-  const html = `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${htmlEscape(title)}</title><meta name="generator" content="Lantern Explainers"><style>${css}</style></head><body><main id="content"><h1>${htmlEscape(title)}</h1><div class="stage poster">${sink.svg}</div><p>${htmlEscape(first.meta.caption ?? '')}</p><details class="transcript" open><summary>Read the transcript</summary>${transcript}${sources ? `<h2>Sources</h2><ul>${sources}</ul>` : ''}</details><noscript><p>This explanation is readable without JavaScript. Enable it to step through the animation and try another case.</p></noscript></main><template id="licenses"><pre>${htmlEscape(licenses)}</pre></template><script>${js}</script></body></html>\n`;
+  const html = `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${htmlEscape(title)}</title><meta name="generator" content="Lantern Explainers"><style>${css}</style></head><body><main id="content"><h1>${htmlEscape(title)}</h1><div class="stage poster">${sink.svg}</div><p class="caption">${htmlEscape(first.meta.caption ?? '')}</p><details class="transcript" open><summary>Transcript</summary>${transcript}${sources ? `<h2>Sources</h2><ul>${sources}</ul>` : ''}</details></main><template id="licenses"><pre>${htmlEscape(licenses)}</pre></template><script>${js}</script></body></html>\n`;
   const sri = (value: string) => "'sha256-" + createHash('sha256').update(value).digest('base64') + "'";
   const policy = `default-src 'none'; script-src ${sri(js)}; style-src ${sri(css)}; img-src data:; connect-src 'none'; font-src 'none'; base-uri 'none'; object-src 'none'; frame-ancestors *`;
   const receipt = {

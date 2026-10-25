@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "importer": 4,
+  "renderer": "agentic-mermaid@0.4.1",
+  "sourceHash": "addf67465ae978cb03100d33c585a342481da9b61a08e5c8b36957cf9d83d6be",
+  "diagrams": {
+    "[\"graph LR\\nRequest[Request] --> H[Handler]\\nH --> D1[(D1)]\",\"hand-drawn\",null]": "a9e6f21d875bb06d.json",
+    "[\"graph LR\\nRequest[Request] --> H[Handler]\\nH --> KV[KV cache]\\nKV -->|miss| D1[(D1)]\\nKV -->|hit| Reply[Reply]\\nD1 --> Reply\",\"hand-drawn\",null]": "3d9e7363c68889db.json"
+  }
+}

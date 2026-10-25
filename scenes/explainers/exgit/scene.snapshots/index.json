@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "importer": 4,
+  "renderer": "agentic-mermaid@0.4.1",
+  "sourceHash": "f18dcddca3dc4030ea184e161e0c9282a351a9378876080f21100e1ecdfeb1d5",
+  "diagrams": {
+    "[\"graph LR\\nHEAD([HEAD])\\nMain([main])\\nC2[\\\"commit<br/>7edf38a\\\"]\\nC1[\\\"commit<br/>161f392\\\"]\\nT2[\\\"tree 88e3870<br/>hello.txt, world.txt\\\"]\\nT1[\\\"tree aaa96ce<br/>hello.txt\\\"]\\nNew[\\\"blob<br/>cc628cc\\\"]\\nHello[\\\"blob<br/>ce01362\\\"]\\nC1 --> T1\\nT1 --> Hello\\nC2 --> C1\\nC2 --> T2\\nT2 --> Hello\\nT2 --> New\\nHEAD --> Main\\nMain --> C2\",\"catppuccin-mocha\",null]": "f98bc05d3ff5a00e.json",
+    "[\"graph LR\\nHEAD([HEAD])\\nMain([main])\\nC2[\\\"commit<br/>dfef583\\\"]\\nC1[\\\"commit<br/>161f392\\\"]\\nT2[\\\"tree a3424b7<br/>hello.txt\\\"]\\nT1[\\\"tree aaa96ce<br/>hello.txt\\\"]\\nNew[\\\"blob<br/>13ab7f7\\\"]\\nHello[\\\"blob<br/>ce01362\\\"]\\nC1 --> T1\\nT1 --> Hello\\nC2 --> C1\\nC2 --> T2\\nT2 --> New\\nHEAD --> Main\\nMain --> C2\",\"catppuccin-mocha\",null]": "4710ce01b97b87ff.json",
+    "[\"graph LR\\nMain([main])\\nC1[\\\"commit<br/>161f392\\\"]\\nT1[\\\"tree aaa96ce<br/>hello.txt\\\"]\\nHello[\\\"blob<br/>ce01362\\\"]\\nMain --> C1\\nC1 --> T1\\nT1 --> Hello\",\"catppuccin-mocha\",null]": "ed5df6a08f746726.json",
+    "[\"graph LR\\nMain([main])\\nC2[\\\"commit<br/>7edf38a\\\"]\\nC1[\\\"commit<br/>161f392\\\"]\\nT2[\\\"tree 88e3870<br/>hello.txt, world.txt\\\"]\\nT1[\\\"tree aaa96ce<br/>hello.txt\\\"]\\nNew[\\\"blob<br/>cc628cc\\\"]\\nHello[\\\"blob<br/>ce01362\\\"]\\nC1 --> T1\\nT1 --> Hello\\nC2 --> C1\\nC2 --> T2\\nT2 --> Hello\\nT2 --> New\\nMain --> C1\",\"catppuccin-mocha\",null]": "8c081e802aed7120.json",
+    "[\"graph LR\\nMain([main])\\nC2[\\\"commit<br/>dfef583\\\"]\\nC1[\\\"commit<br/>161f392\\\"]\\nT2[\\\"tree a3424b7<br/>hello.txt\\\"]\\nT1[\\\"tree aaa96ce<br/>hello.txt\\\"]\\nNew[\\\"blob<br/>13ab7f7\\\"]\\nHello[\\\"blob<br/>ce01362\\\"]\\nC1 --> T1\\nT1 --> Hello\\nC2 --> C1\\nC2 --> T2\\nT2 --> New\\nMain --> C1\",\"catppuccin-mocha\",null]": "4c61f131862a6b7b.json",
+    "[\"graph LR\\nT1[\\\"tree aaa96ce<br/>hello.txt\\\"]\\nHello[\\\"blob<br/>ce01362\\\"]\\nT1 --> Hello\",\"catppuccin-mocha\",null]": "b3e04770fb1e4f3f.json"
+  }
+}

@@ -98,19 +98,8 @@ export default class RingBufferExplainer extends Scene {
       count = countText(0);
     await this.play(...circles.map((c) => new FadeIn(c)), ...indices.map((t) => new FadeIn(t)));
     await this.play(new FadeIn(headPtr), new FadeIn(tailPtr), new FadeIn(count));
-    const card = await s.card(
-      [
-        ['Operation', '–'],
-        ['Result', '–'],
-        ['head · tail · count', '0 · 0 · 0'],
-      ],
-      { at: [-0.25, 1.0, 7.55, 3.25], width: 7.4, fontSize: 0.27, title: 'RingBuffer(5)' },
-    );
-    const code = await s.code(CODE, {
-      at: [-0.25, -4.25, 7.55, card.box()![1] - 0.25],
-      fontSize: 0.19,
-      title: 'models.ts',
-    });
+    // The ring already shows head, tail and count; the code beside it is the only panel.
+    const code = await s.code(CODE, { at: [-0.25, -4.25, 7.55, 3.25], fontSize: 0.22 });
 
     /** Animate the ring from `now` to `next`: slot values, cursors and count. */
     const show = async (next: Snapshot, runTime = 0.45, fresh = false): Promise<void> => {
@@ -136,7 +125,6 @@ export default class RingBufferExplainer extends Scene {
       if (anims.length) await this.play(...anims);
       now = next;
     };
-    const summary = (r: Snapshot) => `${r.head} · ${r.tail} · ${r.length}`;
     // A row of tokens under the ring: values that left (pop) or never got in (Full).
     const tray: Mobject[] = [];
     let trayX = -5;
@@ -191,14 +179,12 @@ export default class RingBufferExplainer extends Scene {
       });
       for (const event of groups[g]!) {
         const r = event.result;
-        await card.set({ Operation: event.operation });
         if (event.error) {
           await code.focus(1);
           const t = token(Number(event.operation.split(' ')[1]), false).moveTo([-0.9, 1.9]);
           await this.play(new FadeIn(t, { runTime: 0.25 }));
           const slot = polar(angle(r.tail), R + SLOT + 0.35);
           await this.play(t.animate.moveTo(slot), { runTime: 0.45 });
-          const bad = token(Number(event.operation.split(' ')[1]), true).moveTo(trayAt(refused));
           if (!marker) {
             marker = new Circle({ radius: SLOT + 0.12, fill: 'none', stroke: ERROR, strokeWidth: 0.04 }).moveTo(
               polar(angle(r.tail), R),
@@ -206,10 +192,10 @@ export default class RingBufferExplainer extends Scene {
             await this.play(new FadeIn(marker, { runTime: 0.3 }));
             await trayLabel('refused, Full:');
           }
+          // Placed after the tray label exists, so it lines up after the label.
+          const bad = token(Number(event.operation.split(' ')[1]), true).moveTo(trayAt(refused));
           await this.play(new Transform(t, bad, { runTime: 0.5 }));
           refused++;
-          await card.set({ Result: event.error, 'head · tail · count': summary(r) });
-          await card.mark('Result');
         } else if (event.operation.startsWith('pop')) {
           await code.focus([8, 12]);
           const gone = now.data.flatMap((v, i) => (v != null && r.data[i] == null ? [i] : [])),
@@ -222,20 +208,13 @@ export default class RingBufferExplainer extends Scene {
           await this.play(...out.map(({ t }) => new FadeIn(t, { runTime: 0.2 })));
           await show(r);
           await this.play(...out.map(({ t, to }) => t.animate.moveTo(to)), { runTime: 0.5 });
-          await card.set({
-            Result: `returned ${popped.join(', ')}`,
-            'head · tail · count': summary(r),
-          });
-          await card.mark('head · tail · count');
         } else {
           await code.focus([2, 4]);
           // Slots written after the first fill keep a tail-coloured ring.
           await show(r, 0.35, g > 0);
-          await card.set({ Result: 'ok', 'head · tail · count': summary(r) }, { runTime: 0.3 });
         }
         this.state = { ...r, operation: event.operation, error: event.error ?? null };
       }
-      if (g === 0) await card.mark('head · tail · count');
     }
   }
 }

@@ -48,7 +48,7 @@ export default class StateMachineExplainer extends Scene {
         'A session starts idle. Each arrow in the diagram is one row of the table named next in reducer.js, and reduceSession throws for any state and event pair without a row.',
     });
     const d = await s.show({ source: SOURCE, style: 'dracula' }, { box: DIAGRAM });
-    const code = await s.code(REDUCER, { at: CODE, title: 'reducer.js', fontSize: 0.195 });
+    const code = await s.code(REDUCER, { at: CODE, fontSize: 0.195 });
     let state = 'idle';
     const card = await s.card(
       [
@@ -56,10 +56,9 @@ export default class StateMachineExplainer extends Scene {
         ['Event', '–'],
         ['Returns', '–'],
       ],
-      { at: CARD, title: 'Session', fontSize: 0.28, width: 4.8 },
+      { at: CARD, fontSize: 0.28, width: 4.8 },
     );
     await d.mark([state]);
-    await d.note(state, 'start', { side: 'below' });
     await code.focus([1, 4]);
     this.state.session = state;
     const events = which === 'success' ? ['CONNECT', 'OPENED', 'CLOSE'] : ['CONNECT', 'ERROR'];
@@ -69,7 +68,6 @@ export default class StateMachineExplainer extends Scene {
         title: `${event}: ${state} → ${next}`,
         caption: `The session is ${state} and ${event} arrives. The reducer finds the row ${state}:${event} and returns ${next}.`,
       });
-      await d.clearNotes();
       await card.set({ Event: event, Returns: '…' });
       await code.focus(LINE[event]!);
       await d.unmark([state]);
@@ -91,10 +89,6 @@ export default class StateMachineExplainer extends Scene {
     await card.set({ Event: 'OPENED', Returns: invalid.error ?? invalid.state });
     await card.mark('Returns');
     await code.focus([7, 8]);
-    await d.note(state, 'OPENED rejected', {
-      side: 'below',
-      color: '#ff5555',
-    });
     this.state.terminal = true;
   }
 }

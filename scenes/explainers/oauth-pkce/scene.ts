@@ -46,7 +46,6 @@ export default class OAuthExplainer extends Scene {
   ];
   override async construct() {
     const attacker = settingsOf(this).attacker === 'yes';
-    let stolen = 'not attempted';
     const digest = sha256(VERIFIER),
       challenge = pkceChallenge(VERIFIER),
       s = stage(this, { palette: palette('github-light') });
@@ -62,7 +61,7 @@ export default class OAuthExplainer extends Scene {
           'graph LR\nV[code_verifier] -->|SHA-256| H[32-byte digest]\nH -->|base64url| C[code_challenge]',
         style: STYLE,
       },
-      { box: [-7.55, 0.1, 7.55, 3.25] },
+      { box: [-7.55, 0.0, 7.55, 3.15] },
     );
     const values = await s.card(
       [
@@ -70,7 +69,7 @@ export default class OAuthExplainer extends Scene {
         ['SHA-256 (hex)', hex(digest)],
         ['code_challenge', challenge],
       ],
-      { at: [-7.55, -4.25, 7.55, -0.6], title: 'RFC 7636 appendix B, computed', fontSize: 0.27 },
+      { at: [-7.55, -3.9, 7.55, -0.4], fontSize: 0.27 },
     );
     await derive.walk(
       [
@@ -80,8 +79,6 @@ export default class OAuthExplainer extends Scene {
       { trail: true },
     );
     await derive.mark(['C'], { color: CHALLENGE });
-    await derive.note('V', 'stays on the client', { side: 'below', color: VERIFIED });
-    await derive.note('C', 'sent to the server', { side: 'below', color: CHALLENGE });
     await values.mark('code_challenge');
     this.state = { verifier: VERIFIER, challenge };
 
@@ -99,11 +96,10 @@ export default class OAuthExplainer extends Scene {
         ['method', 'S256'],
         ['code_verifier', 'not sent'],
       ],
-      { at: 'side', title: 'Authorization request', fontSize: 0.26 },
+      { at: 'side', fontSize: 0.26 },
     );
     await seq.reveal(['message:C->S#0']);
     await seq.mark(['message:C->S#0'], { color: CHALLENGE });
-    await seq.note('message:C->S#0', 'via the user’s browser', { side: 'below', color: CHALLENGE });
     await request.mark('code_challenge');
 
     await this.step('code', {
@@ -115,17 +111,14 @@ export default class OAuthExplainer extends Scene {
     await seq.clearNotes();
     await seq.reveal(['message:S->C#0']);
     await seq.mark(['message:S->C#0'], { color: CODE });
-    await seq.note('message:S->C#0', 'code only, no verifier', { side: 'below', color: CODE });
     const redirect = await s.card(
       [
-        ['carries', 'code'],
+        ['bound challenge', short(challenge)],
         ['code_verifier', 'not in it'],
-        ['code bound to', short(challenge)],
-        ['code is', 'short-lived'],
       ],
-      { at: 'side', title: 'Redirect', fontSize: 0.26 },
+      { at: 'side', fontSize: 0.26 },
     );
-    await redirect.mark('code bound to');
+    await redirect.mark('bound challenge');
 
     if (attacker) {
       await this.step('attack', {
@@ -136,24 +129,20 @@ export default class OAuthExplainer extends Scene {
       const bad = pkceChallenge(GUESS);
       this.state.attackerChallenge = bad;
       this.state.attackerAccepted = bad === challenge;
-      stolen = bad === challenge ? 'accepted' : 'rejected: invalid_grant';
       await s.clearOverlays();
       await seq.clearNotes();
       await seq.reveal(['message:S->X#0', 'message:X->S#0', 'message:S->X#1']);
       await seq.mark(['message:S->X#0', 'message:X->S#0', 'message:S->X#1'], { color: ATTACK });
       const check = await s.card(
         [
-          ['code', 'stolen, valid'],
           ['guessed verifier', short(GUESS)],
           ['S256(guess)', short(bad)],
           ['bound challenge', short(challenge)],
           ['match', String(bad === challenge)],
-          ['result', bad === challenge ? 'token' : 'invalid_grant'],
         ],
-        { at: 'side', title: 'Attacker’s exchange', fontSize: 0.26 },
+        { at: 'side', fontSize: 0.26 },
       );
       await check.mark('match');
-      await seq.note('message:S->X#1', 'S256(guess) ≠ bound challenge', { side: 'below', color: ATTACK });
     }
 
     await this.step('exchange', {
@@ -173,12 +162,10 @@ export default class OAuthExplainer extends Scene {
         ['S256(verifier)', short(recomputed)],
         ['bound challenge', short(challenge)],
         ['match', String(accepted)],
-        ['result', accepted ? 'access token' : 'invalid_grant'],
       ],
-      { at: 'side', title: 'Token endpoint check', fontSize: 0.26 },
+      { at: 'side', fontSize: 0.26 },
     );
     await verify.mark('match');
-    await seq.note('message:S->C#1', 'only after S256(verifier) matches', { side: 'below', color: VERIFIED });
     this.state.accepted = accepted;
 
     await this.step('lifetime', {
@@ -194,12 +181,10 @@ export default class OAuthExplainer extends Scene {
           'gantt\n dateFormat HH:mm\n axisFormat %H:%M\n tickInterval 2minute\n section Client\n code_verifier held :v, 00:00, 4m\n section Auth server\n challenge stored :ch, 00:01, 3m\n code valid :c, 00:02, 2m\n section API\n access token :t, 00:04, 8m',
         style: STYLE,
       },
-      { box: [-7.55, -3.3, 7.55, 3.25] },
+      { box: 'full' },
     );
-    await time.mark(['task:c'], { color: CODE });
+    await time.mark(['task:t'], { color: VERIFIED });
     await time.note('task:c', 'single use', { side: 'right', color: CODE });
-    await time.note('task:t', 'outlives both', { side: 'above', color: VERIFIED });
-    await s.note('Illustrative minutes; real expiry is the server’s policy.', { at: [0, -3.85], size: 0.26 });
 
     await this.step('limits', {
       title: 'PKCE adds one check: does the exchanger hold the verifier?',
@@ -214,7 +199,7 @@ export default class OAuthExplainer extends Scene {
           'graph LR\nTLS[TLS] --> Redirect[Exact redirect]\nRedirect --> Client[Code + client checks]\nClient --> PKCE[PKCE: S256 match]\nPKCE --> Token[Token]',
         style: STYLE,
       },
-      { box: [-7.55, 0.7, 7.55, 3.25] },
+      { box: 'full' },
     );
     await checks.walk(
       [
@@ -226,16 +211,6 @@ export default class OAuthExplainer extends Scene {
       { trail: true },
     );
     await checks.mark(['PKCE'], { color: VERIFIED });
-    await checks.note('PKCE', 'checks the verifier', { side: 'below', color: VERIFIED });
-    const scope = await s.card(
-      [
-        ['PKCE answers', 'does the exchanger hold the verifier?'],
-        ['Does not cover', 'a verifier stolen too'],
-        ['Still required', 'TLS, exact redirects'],
-        ['Stolen code here', stolen],
-      ],
-      { at: [-7.55, -4.25, 7.55, -0.1], fontSize: 0.32 },
-    );
-    await scope.mark('PKCE answers');
+    await checks.note('PKCE', 'a stolen verifier passes', { side: 'below', color: ATTACK });
   }
 }

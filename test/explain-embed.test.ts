@@ -156,20 +156,20 @@ test(
       await page.goto(embed + '/oauth-pkce?attacker=yes&step=attack&theme=dark');
       await page.waitForSelector('[data-ready=true]');
       assert.match(await page.locator('.caption').innerText(), /has the code but has to guess a verifier/);
-      assert.equal(await page.locator('select[name=attacker]').inputValue(), 'yes');
+      assert.equal(await page.locator('input[name=attacker]:checked').inputValue(), 'yes');
       assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
       assert.equal(
         await page.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor),
-        'rgb(16, 23, 31)',
+        'rgb(15, 22, 29)',
       );
-      await page.locator('select[name=attacker]').selectOption('no');
+      await page.locator('input[name=attacker][value=no]').check();
       await page.waitForFunction(() => new URL(location.href).searchParams.get('attacker') === 'no');
       assert.match(await page.locator('[role=status]').innerText(), /no “attack” step/);
       await page.goBack();
       await page.waitForFunction(
         () => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === 'attack',
       );
-      assert.equal(await page.locator('select[name=attacker]').inputValue(), 'yes');
+      assert.equal(await page.locator('input[name=attacker]:checked').inputValue(), 'yes');
       assert.equal(await page.locator('[role=status]').innerText(), '');
       await page.getByRole('button', { name: 'Copy link', exact: true }).click();
       const copied = await page.evaluate(() => navigator.clipboard.readText());
@@ -182,13 +182,13 @@ test(
       await page.waitForSelector('[data-ready=true]');
       assert.equal(
         await page.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor),
-        'rgb(247, 248, 250)',
+        'rgb(246, 247, 249)',
       );
       await page.goto(embed + '/oauth-pkce?theme=auto');
       await page.waitForSelector('[data-ready=true]');
       assert.equal(
         await page.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor),
-        'rgb(16, 23, 31)',
+        'rgb(15, 22, 29)',
       );
     } finally {
       await context.close();
@@ -252,7 +252,11 @@ test(
       const fit = await width();
       await page.getByRole('button', { name: 'Zoom in' }).click();
       await page.getByRole('button', { name: 'Zoom in' }).click();
-      assert.ok(Math.abs((await width()) / fit - 1.6 * 1.6) < 0.01, 'two zoom steps enlarge the drawing 2.56×');
+      // Button zoom glides for 220 ms; wait for it to settle at 2.56×.
+      await page.waitForFunction(
+        (fit) => Math.abs(document.querySelector('.stage svg')!.getBoundingClientRect().width / fit - 2.56) < 0.01,
+        fit,
+      );
       const box = (await page.locator('.stage').boundingBox())!;
       const before = await page.locator('.stage svg').evaluate((svg) => svg.getBoundingClientRect().left);
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -262,7 +266,11 @@ test(
       assert.ok((await page.locator('.stage svg').evaluate((svg) => svg.getBoundingClientRect().left)) > before, 'drag pans');
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
       await page.getByRole('button', { name: 'Fit stage' }).click();
-      assert.ok(Math.abs((await width()) - fit) < 0.5);
+      await page.waitForFunction(
+        (fit) => Math.abs(document.querySelector('.stage svg')!.getBoundingClientRect().width - fit) < 0.5,
+        fit,
+      );
+      assert.equal(await page.getByRole('button', { name: 'Fit stage' }).isHidden(), true, 'Fit appears only when zoomed');
       await page.locator('summary').click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
       await page.locator('#content').focus();
@@ -270,9 +278,17 @@ test(
       await page.waitForFunction(
         () => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === 'after',
       );
+      // The first Tab reaches the case picker; its focus ring is drawn on the segment around the radio.
       await page.keyboard.press('Tab');
-      assert.equal(await page.evaluate(() => document.activeElement?.tagName), 'BUTTON');
-      assert.equal(await page.evaluate(() => getComputedStyle(document.activeElement!).outlineWidth), '3px');
+      assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('type')), 'radio');
+      assert.equal(
+        await page.evaluate(() => getComputedStyle(document.activeElement!.closest('label')!).outlineWidth),
+        '2px',
+      );
+      // Further Tabs reach the step controls, which show the same ring.
+      for (let i = 0; i < 6 && (await page.evaluate(() => document.activeElement?.tagName)) !== 'BUTTON'; i++)
+        await page.keyboard.press('Tab');
+      assert.equal(await page.evaluate(() => getComputedStyle(document.activeElement!).outlineWidth), '2px');
       assert.deepEqual(errors, []);
       assert.deepEqual(requests, []);
     } finally {
@@ -289,8 +305,8 @@ test(
     try {
       await page.goto(embed + '/mr-cache');
       assert.ok((await page.locator('.poster path').count()) > 10);
-      assert.match(await page.locator('.transcript').innerText(), /request: hit/);
-      assert.match(await page.locator('.transcript').innerText(), /request: miss/);
+      assert.match(await page.locator('.transcript').innerText(), /Follow a request: Cache hit/);
+      assert.match(await page.locator('.transcript').innerText(), /Follow a request: Cache miss/);
       hostBody = `<!doctype html><iframe title="Raw explanation" src="${embed}/mr-cache" style="width:390px;height:640px"></iframe><a href="${embed}/mr-cache">Open standalone</a>`;
       await page.goto(host);
       const frame = page.frames().find((f) => f.url().startsWith(embed));

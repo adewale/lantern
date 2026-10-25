@@ -4,6 +4,22 @@
 
 ### Lantern Explainers downstream product layer
 
+#### Third pass: review findings and a design pass
+
+- Engine hooks `Scene.onStep` and `Scene.addDescriber` replace the helpers' per-instance wrapping of
+  `step` and `describe`. Steps record `hold`, so the player stops when the picture stops.
+- Snapshots are stored one file per diagram in `scene.snapshots/`; the 52 existing diagrams were
+  migrated byte for byte.
+- `CodeBlock.morph` pairs lines by text, so a diff moves surviving lines and marks added ones;
+  `findingsOf`/`d.findings()` tie verifier warnings to diagram parts exactly.
+- `check` reports label sizes on a 390 px phone and each step's resting frame as text;
+  `preview --watch` rebuilds on save; captions are checked against the video footer in every case.
+- The player was redesigned: Next is the one primary action, the other tools are icon buttons,
+  cases are a segmented choice under the title, and the stage zooms and pans. The gallery leads
+  with reader topics and moves toolchain explainers below them. Taglines, helper text and
+  secondary labels were cut from the pages and from the scenes' frames.
+- The spec reads as a spec again, with a list of the decisions a release still needs.
+
 #### Second pass: what the reader sees
 
 - Every step's last frame now carries its idea. Diagrams gain `mark`, `dim`, `note` and walk

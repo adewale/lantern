@@ -1,7 +1,6 @@
 # Lantern Explainers
-**Write one native scene. Publish reader-paced steps. Export the same explanation as a captioned film.**
 
-A downstream fork of [Lantern](https://github.com/ivarvong/lantern) by Ivar Vong, with a small explanation library, build-time [Agentic Mermaid](https://github.com/adewale/agentic-mermaid) integration, portable embeds and video tooling. No second scene language, hosted service or browser diagram renderer.
+Each explanation is one TypeScript `Scene`. A web page steps through it at the reader's pace, and the same scene renders a silent, captioned MP4. This is a downstream fork of [Lantern](https://github.com/ivarvong/lantern) by Ivar Vong, with a small explanation library, build-time [Agentic Mermaid](https://github.com/adewale/agentic-mermaid) integration, portable embeds and video tooling. It adds no scene language, hosted service or diagram renderer in the browser.
 
 ## See it work
 Requires **Node 26+**, Git and npm. Video export also needs **FFmpeg/ffprobe**. Fresh diagram capture needs Chromium; checked-in snapshots let the demo collection build without it.
@@ -19,7 +18,7 @@ Open **http://127.0.0.1:5174/explainers/**. Four good starting points:
 - **OAuth with PKCE:** enable the attacker; a computed RFC test vector explains why the stolen code fails.
 - **KV-cache merge request:** read the diff, watch the diagram gain a KV cache, then follow a cache hit or miss.
 
-The collection contains **14 explanations, 31 cases, 52 captured diagrams, eight diagram families and twelve styles**. Each page loads only its own explanation. Contact sheets, HTML receipts and a two-embed integration lab are linked from the gallery.
+The collection contains **14 explanations, 31 cases, 52 captured diagrams, eight diagram families and twelve styles**. Each page loads only its own explanation. The gallery links a two-embed page and the build evidence; contact sheets and receipts sit beside each page in `out/explainers/`.
 
 ```sh
 npm run demos:check   # every case: seeking, motion, bare runtime, each step changes the picture, 14 px labels, footer fit
@@ -84,7 +83,7 @@ export default class CacheExplanation extends Scene {
   style="width:100%;height:640px;border:0;display:block"
   allow="fullscreen"
   loading="lazy"></iframe>
-<a href="/explainers/cache.html">Open explanation in a new page</a>
+<a href="/explainers/cache.html">Open in a new tab</a>
 ```
 
 For auto-height, host the generated `loader.js` alongside your artifacts:

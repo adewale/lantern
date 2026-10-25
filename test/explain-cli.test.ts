@@ -43,7 +43,7 @@ test('external source and compiled ESM scenes share the CLI engine; source hashe
     assert.match(output, /Built/);
     const html = await readFile(join(folder, 'page.html'), 'utf8');
     assert.match(html, /External author/);
-    assert.match(html, /Read the transcript/);
+    assert.match(html, /<summary>Transcript<\/summary>/);
     assert.match(html, /Copyright \(c\) 2026 Ivar Vong/);
     assert.match(html, /SIL OPEN FONT LICENSE/);
     const duplicate = join(folder, 'duplicate.ts');

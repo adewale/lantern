@@ -1,5 +1,5 @@
 import { Rectangle, Text, Group, FadeIn, FadeOut } from '../src/index.ts';
-import type { Scene, Vec, Box, Mobject, StepMeta } from '../src/index.ts';
+import type { Scene, Vec, Box, Mobject } from '../src/index.ts';
 import { Diagram } from './diagrams.ts';
 import type { ShowOptions } from './diagrams.ts';
 import { Card, CodeBlock } from './panels.ts';
@@ -52,15 +52,8 @@ export function stage(scene: Scene, options: StageOptions = {}) {
     if (!text) scene.add(next);
     if (anims.length) await scene.play(...anims);
   }
-  if (mode === 'step') {
-    // Follow step titles without asking authors to repeat them.
-    const step = scene.step.bind(scene);
-    scene.step = async (name: string, meta: StepMeta = {}) => {
-      const s = await step(name, meta);
-      await setHeading(typeof meta.title === 'string' ? meta.title : '');
-      return s;
-    };
-  }
+  // Follow step titles without asking authors to repeat them.
+  if (mode === 'step') scene.onStep((s) => setHeading(typeof s.meta.title === 'string' ? s.meta.title : ''));
   const place = (at: Vec | Box | Region | undefined): Vec | Box | undefined =>
     typeof at === 'string' ? regionBox(at) : at;
 

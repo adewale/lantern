@@ -37,6 +37,7 @@ Read [authoring](../../docs/EXPLAINERS.md), [embedding](../../docs/EMBEDDING.md)
 - Resize messages need exact origin **and** source-window checks, finite bounded height validation and lifecycle cleanup. Apply `frame-ancestors` as a response header; CORS is unrelated.
 - `explain render scene.ts --out public/explanation.mp4 --footer` produces a silent 1280 × 880 film. Check with ffprobe and a full FFmpeg decode. Use `--case id=value`, `--all`, `.webm`, or stage-only `--width` deliberately.
 - Captions must fit three real measured footer lines (`check` enforces this for every case). Shorten the writing instead of truncating it.
+- Leave out secondary labels (panel titles, chips, small asides) when the heading, caption or values already say it; if a frame needs one to make sense, move the panel next to what it describes instead.
 - Write titles, captions, notes and card labels with [anti-slop-writing](https://github.com/adewale/anti-slop-writing): name the mechanism or value on screen instead of asserting importance, and replace "X, not Y" closers with the relation (because, although, so) unless both sides are already shown.
 - Do not claim a local build was deployed or publicly released. Report the commands run, artifact paths, exact evidence and remaining limitations.
 

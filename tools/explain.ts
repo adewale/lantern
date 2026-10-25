@@ -7,7 +7,7 @@ import { createServer } from 'node:http';
 import { collectProject, defaultVariant, sceneSlug } from './lib/explain-project.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
 
-const HELP = `Lantern Explainers (Node 26+)\n\nUsage: explain <command> <scene.ts | directory> [options]\n\nCommands:\n  init <directory>    Create a native Scene with helpers and a meaningful setting\n  preview <scene>     Build, print step contact sheet, serve on localhost\n  snapshots <scene>   Run every case, capture/verify diagrams and replay morph edits\n  check <scene>       All cases: seek, motion, bare runtime, legibility, catch lint\n  build <scene>       Self-contained stepper-first HTML, transcript, poster, receipts\n  render <scene>      Silent MP4 (or .webm), captions, chapters and receipt\n  shots <scene>       Step contact sheet as SVG and PNG\n\nOptions:\n  --out <path>        Artifact destination\n  --refresh           Re-render snapshots instead of using the pinned cache\n  --footer            1280 × 880 caption-footer video preset\n  --width <even>      Stage-only video width (default 1280)\n  --fps <integer>     Video frame rate (default 30)\n  --all               Export videos for every declared case\n  --case id=value     Export (render) or show (shots) one case; repeat for multiple settings\n  --port <integer>    Preview server port (default 5174)\n\nDiagram capture requires Chromium: npx playwright-core install chromium\nOr set CHROMIUM_EXECUTABLE_PATH. Video requires ffmpeg on PATH.\n`;
+const HELP = `Lantern Explainers (Node 26+)\n\nUsage: explain <command> <scene.ts | directory> [options]\n\nCommands:\n  init <directory>    Create a native Scene with helpers and a meaningful setting\n  preview <scene>     Build, print step contact sheet, serve on localhost\n  snapshots <scene>   Run every case, capture/verify diagrams and replay morph edits\n  check <scene>       All cases: seek, motion, bare runtime, legibility, catch lint\n  build <scene>       Self-contained stepper-first HTML, transcript, poster, receipts\n  render <scene>      Silent MP4 (or .webm), captions, chapters and receipt\n  shots <scene>       Step contact sheet as SVG and PNG\n\nOptions:\n  --out <path>        Artifact destination\n  --refresh           Re-render snapshots instead of using the pinned cache\n  --footer            1280 × 880 caption-footer video preset\n  --width <even>      Stage-only video width (default 1280)\n  --fps <integer>     Video frame rate (default 30)\n  --all               Export videos for every declared case\n  --case id=value     Export (render) or show (shots) one case; repeat for multiple settings\n  --port <integer>    Preview server port (default 5174)\n  --watch             Preview: rebuild the page and contact sheet on save\n\nDiagram capture requires Chromium: npx playwright-core install chromium\nOr set CHROMIUM_EXECUTABLE_PATH. Video requires ffmpeg on PATH.\n`;
 export async function main(args = process.argv.slice(2)): Promise<void> {
   if (!args.length || args.includes('--help') || args[0] === 'help') {
     console.log(HELP);
@@ -19,8 +19,8 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
   for (let i = 0; i < rest.length; i++) {
     const key = rest[i]!;
     if (!key.startsWith('--')) throw new Error(`Unexpected argument: ${key}`);
-    const bool = ['--refresh', '--footer', '--all'].includes(key);
-    if (!['--out', '--width', '--fps', '--case', '--port', '--refresh', '--footer', '--all'].includes(key))
+    const bool = ['--refresh', '--footer', '--all', '--watch'].includes(key);
+    if (!['--out', '--width', '--fps', '--case', '--port', '--refresh', '--footer', '--all', '--watch'].includes(key))
       throw new Error(`Unknown option: ${key}`);
     const value = bool ? 'true' : rest[++i];
     if (!value || value.startsWith('--')) throw new Error(`Missing value for ${key}`);
@@ -122,8 +122,8 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     const shots = out.replace(/\.html$/, '.steps.png');
     await contactSheet(project, shots);
     console.log(`Step contact sheet: ${shots}`);
-    const html = result.html,
-      port = Number(option('--port', '5174'));
+    let html = result.html;
+    const port = Number(option('--port', '5174'));
     const server = createServer(async (req, res) => {
       if (req.url?.split('?')[0] === '/steps.png') {
         res.setHeader('content-type', 'image/png');
@@ -134,8 +134,34 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
       }
     });
     server.listen(port, '127.0.0.1', () =>
-      console.log(`Preview http://127.0.0.1:${port}/ (Ctrl-C to stop; rerun after edits)`),
+      console.log(
+        `Preview http://127.0.0.1:${port}/ (Ctrl-C to stop; ${flags.has('--watch') ? 'rebuilds on save' : 'rerun after edits, or pass --watch'})`,
+      ),
     );
+    if (flags.has('--watch')) {
+      // Rebuild when anything beside the scene changes; keep serving the last good build on error.
+      const { watch } = await import('node:fs');
+      let timer: ReturnType<typeof setTimeout> | undefined,
+        running = Promise.resolve();
+      watch(dirname(project.file), { recursive: true }, (_, name) => {
+        // Source edits only: the rebuild's own outputs (page, sheet, snapshots) must not retrigger it.
+        if (!name || !/\.(ts|mts|js|mjs)$/.test(name) || /\.snapshots(\/|\.json$)/.test(name)) return;
+        if ([out, shots].includes(resolve(dirname(project.file), name))) return;
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          running = running.then(async () => {
+            try {
+              const next = await collectProject(input!);
+              html = (await buildExplainer(next, out)).html;
+              await contactSheet(next, shots);
+              console.log(`Rebuilt ${slug}: ${next.variants.length} cases`);
+            } catch (error) {
+              console.error(`explain: ${(error as Error).message} (still serving the last good build)`);
+            }
+          });
+        }, 200);
+      });
+    }
   }
 }
 if (

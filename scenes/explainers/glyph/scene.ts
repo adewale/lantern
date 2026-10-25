@@ -23,8 +23,6 @@ const pipeline = (font: string) =>
   `graph TB\nFont[${font}] --> Shape[Shape text]\nShape --> Paths[Cubic paths]\nPaths --> SVG[SVG player]\nPaths --> Video[Video frames]`;
 
 type Pathed = Mobject & { subpaths: Float32Array[] };
-const segmentsOf = (g: Mobject) => (g as Pathed).subpaths.reduce((n, a) => n + (a.length - 2) / 6, 0);
-const contoursOf = (g: Mobject) => (g as Pathed).subpaths.length;
 
 /** What the shaper hands back for a run: segment kinds and per-glyph advances. */
 function shape(font: FontName, text: string) {
@@ -127,32 +125,16 @@ export default class GlyphExplainer extends Scene {
     await this.play(new Write(text, { runTime: 2.2 }));
     // The first 'o' of the run, drawn large with its control net.
     const oIndex = text.children.findIndex((g) => WORD[(g as unknown as { cluster: number }).cluster] === 'o');
-    const big = glyphAlone(font, 'o', 4.6, [-3.9, -1.95]);
+    const big = glyphAlone(font, 'o', 4.6, [0, -1.85]);
     big.setStyle({ fill: ink, fillOpacity: 0 });
     big.setStroke(hot, 0.022);
     const net = controlNet(big, hot, soft);
-    const glyphNote = new Text(`'o': ${contoursOf(big)} contours, ${segmentsOf(big)} cubic curves`, {
-      fontSize: 0.22,
-      color: soft,
-    }).moveTo([-3.9, -4.0]);
     s.keep(big);
     s.keep(net);
-    s.keep(glyphNote);
     const ob = text.children[oIndex]!.box()!;
     const underline = s.keep(new Line([ob[0], ob[1] - 0.12], [ob[2], ob[1] - 0.12], { stroke: hot, strokeWidth: 0.04 }));
     await this.play(new Create(big, { runTime: 1.2 }), new Create(underline, { runTime: 0.6 }));
-    await this.play(new FadeIn(net, { runTime: 0.6 }), new FadeIn(glyphNote, { runTime: 0.6 }));
-    const contours = text.children.reduce((n, g) => n + contoursOf(g), 0),
-      segments = text.children.reduce((n, g) => n + segmentsOf(g), 0);
-    await s.card(
-      [
-        ['Characters', WORD.length],
-        ['Glyph outlines', `${text.children.length} (a space has none)`],
-        ['Closed contours', contours],
-        ['Cubic curves', segments],
-      ],
-      { at: [0.6, -4.25, 7.4, -0.75], title: `${NAME[font]}, as paths` },
-    );
+    await this.play(new FadeIn(net, { runTime: 0.6 }));
 
     await this.step('measure', {
       title: 'Inter and JetBrains Mono give the same words different widths',
@@ -163,32 +145,24 @@ export default class GlyphExplainer extends Scene {
     const measured = new Text(WORD, { font, fontSize: SIZE, color: ink });
     measured.setStroke(ink, 0.012);
     const wide = Math.max(mine.width, theirs.width);
-    measured.moveTo([-wide / 2, 2.15], [-1, 0]);
+    measured.moveTo([-wide / 2, 1.75], [-1, 0]);
     await this.play(new Transform(text, measured, { replace: true }));
-    const compare = new Text(WORD, { font: other, fontSize: SIZE, color: soft }).moveTo([-wide / 2, -0.15], [-1, 0]);
-    const mineRule = ruler(measured, mine.stops, `${mine.width.toFixed(4)} units · ${NAME[font]}`, hot);
-    const theirRule = ruler(compare, theirs.stops, `${theirs.width.toFixed(4)} units · ${NAME[other]}`, soft);
-    s.keep(compare);
-    s.keep(mineRule);
-    s.keep(theirRule);
-    await this.play(new Create(mineRule, { runTime: 0.9, lagRatio: 0 }));
-    await this.play(new FadeIn(compare, { runTime: 0.5 }), new Create(theirRule, { runTime: 0.9, lagRatio: 0 }));
+    const compare = new Text(WORD, { font: other, fontSize: SIZE, color: soft }).moveTo([-wide / 2, -1.15], [-1, 0]);
     const spread = (a: number[]) => {
       const lo = Math.min(...a),
         hi = Math.max(...a);
       return hi - lo < 1e-6 ? `${lo.toFixed(3)} each` : `${lo.toFixed(3)} to ${hi.toFixed(3)}`;
     };
-    const advances = { [font]: mine.advances, [other]: theirs.advances } as Record<FontName, number[]>;
-    const card = await s.card(
-      [
-        [`${NAME.sans} advances`, spread(advances.sans)],
-        [`${NAME.mono} advances`, spread(advances.mono)],
-        [`${NAME[font]} − ${NAME[other]}`, `${(mine.width - theirs.width).toFixed(4)} units`],
-      ],
-      { at: [-4, -4.25, 4, -2.1] },
-    );
-    card.bar.style.fill = hot;
-    await card.mark(`${NAME[font]} advances`);
+    // Each ruler carries its own font's numbers: total width and the range of advances.
+    const label = (f: FontName, run: ReturnType<typeof shape>) =>
+      `${NAME[f]} · ${run.width.toFixed(4)} units · advances ${spread(run.advances)}`;
+    const mineRule = ruler(measured, mine.stops, label(font, mine), hot);
+    const theirRule = ruler(compare, theirs.stops, label(other, theirs), soft);
+    s.keep(compare);
+    s.keep(mineRule);
+    s.keep(theirRule);
+    await this.play(new Create(mineRule, { runTime: 0.9, lagRatio: 0 }));
+    await this.play(new FadeIn(compare, { runTime: 0.5 }), new Create(theirRule, { runTime: 0.9, lagRatio: 0 }));
     // Measured on a fresh run: moving the drawn copy re-rounds its float32 box.
     const probe = new Text(WORD, { font, fontSize: SIZE });
     this.state = { font, width: probe.advance(), glyphs: probe.children.length };
@@ -230,7 +204,7 @@ export default class GlyphExplainer extends Scene {
     lines.push('"/>');
     s.keep(solid);
     await this.play(new FadeIn(solid, { runTime: 0.5 }));
-    await s.code(lines, { at: [0.15, -4.25, 7.55, 0.7], title: `the 'o' as SVG path data (scene units)`, fontSize: 0.22 });
+    await s.code(lines, { at: [0.15, -4.25, 7.55, 0.7], fontSize: 0.22 });
 
     await this.step('morph', {
       title: 'A text diff becomes a glyph morph',
@@ -243,18 +217,15 @@ export default class GlyphExplainer extends Scene {
     s.keep(before);
     await this.play(new FadeIn(before, { runTime: 0.5 }));
     const diff = new CodeBlock(this, s.palette, ['- cache miss', '+ cache hit'], {
-      at: [3.0, -0.2, 7.55, 3.25],
+      // Level with the gap between the two words, beside the pairing lines.
+      at: [3.0, -1.6, 7.55, 1.9],
       fontSize: 0.3,
-      title: 'label.txt',
       diff: true,
     });
     s.keep(diff);
     await this.play(new FadeIn(diff, { runTime: 0.4 }));
     const charOf = (t: Text, g: Mobject) => t.text[(g as unknown as { cluster: number }).cluster]!;
-    const pairs = new Group(),
-      changed: string[] = [],
-      gone: string[] = [];
-    let kept = 0;
+    const pairs = new Group();
     before.children.forEach((g, i) => {
       const a = g.box()!,
         target = after.children[i],
@@ -262,9 +233,6 @@ export default class GlyphExplainer extends Scene {
       const from: Vec = [(a[0] + a[2]) / 2, a[1] - 0.12];
       const to: Vec = b ? [(b[0] + b[2]) / 2, b[3] + 0.12] : after.center();
       const same = !!target && charOf(before, g) === charOf(after, target);
-      if (same) kept++;
-      else if (target) changed.push(`${charOf(before, g)}→${charOf(after, target)}`);
-      else gone.push(charOf(before, g));
       pairs.add(
         new Line(from, to, {
           stroke: same ? soft : hot,
@@ -279,16 +247,6 @@ export default class GlyphExplainer extends Scene {
     await this.play(new Transform(before, after, { replace: true, runTime: 1.4 }), new FadeIn(ghost, { runTime: 1.4 }));
     s.keep(pairs);
     await this.play(new Create(pairs, { runTime: 0.8, lagRatio: 0 }));
-    const result = await s.card(
-      [
-        ['Same letter', `${kept} pairs`],
-        ['Reshaped', changed.join(', ')],
-        ['Shrinks away', gone.join(', ') || 'none'],
-      ],
-      { at: [3.0, -4.25, 7.55, -0.6], title: 'Glyph pairs', fontSize: 0.26 },
-    );
-    result.bar.style.fill = hot;
-    await result.mark('Reshaped');
 
     await this.step('tradeoff', {
       title: 'Diagram labels are Inter outlines stretched to textLength',
@@ -304,10 +262,10 @@ export default class GlyphExplainer extends Scene {
     const k = (run.width ?? natural) / natural;
     await again.mark(['Video'], { color: hot });
     await again.note('Video', `stretched ×${k.toFixed(3)}`, { side: 'below', color: hot });
-    const plain = new Text(run.text, { fontSize: 0.9, color: soft }).moveTo([-0.6, 2.4], [-1, 0]);
+    const plain = new Text(run.text, { fontSize: 0.9, color: soft }).moveTo([-0.6, 1.6], [-1, 0]);
     const fitted = new Text(run.text, { fontSize: 0.9, color: ink });
     fitted.stretch(k, 0);
-    fitted.moveTo([-0.6, 0.2], [-1, 0]);
+    fitted.moveTo([-0.6, -1.4], [-1, 0]);
     const w0 = plain.advance(),
       w1 = w0 * k;
     const plainRule = ruler(plain, [0], `Inter's own advance: ${w0.toFixed(3)}`, soft, 0.22);
@@ -318,13 +276,5 @@ export default class GlyphExplainer extends Scene {
     s.keep(fitRule);
     await this.play(new FadeIn(plain), new Create(plainRule, { lagRatio: 0 }));
     await this.play(new FadeIn(fitted), new Create(fitRule, { lagRatio: 0 }));
-    await s.card(
-      [
-        ['Shapes and strokes', 'from the style'],
-        ['Label width', 'from textLength'],
-        ['Letterforms', 'embedded Inter'],
-      ],
-      { at: [-0.6, -4.25, 7.55, -1.75], title: 'What survives import' },
-    );
   }
 }

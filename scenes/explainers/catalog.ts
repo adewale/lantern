@@ -1,87 +1,22 @@
-export const EXPLAINERS = [
-  {
-    id: 'pap',
-    tag: 'Protocol · 4 diagram families',
-    step: 'sign-in',
-    description: 'Compare direct, device and mediated sign-in. Each one signs in the session the agent opened before it.',
-  },
-  {
-    id: 'seasons',
-    tag: 'Geometry · computed chart',
-    step: 'year',
-    description: 'See polar day in Tromsø, a flat year in Quito and winter in Sydney’s June.',
-  },
-  {
-    id: 'oauth-pkce',
-    tag: 'Security · executable RFC vector',
-    step: 'attack',
-    query: 'attacker=yes',
-    description: 'An attacker with a stolen code still fails, because S256 of its guessed verifier misses the bound challenge.',
-  },
-  {
-    id: 'mr-cache',
-    tag: 'Code review · typed edit replay',
-    step: 'after',
-    description: 'Read a diff, watch the architecture morph, then follow a hit or a miss.',
-  },
-  {
-    id: 'lantern',
-    tag: 'Engine · native authoring',
-    step: 'objects',
-    description: 'A Lantern scene draws Lantern’s own classes, fixed-step clock, seek check and build.',
-  },
-  {
-    id: 'agentic-mermaid',
-    tag: 'Agent tools · real verification',
-    step: 'repair',
-    description: 'Catch unlabeled decision branches and repair them with replayed typed operations.',
-  },
-  {
-    id: '2password',
-    tag: 'Security · offline fixture',
-    step: 'boundary',
-    description: 'Rank items by metadata alone, count desktop approvals, and strip the service token from the child process.',
-  },
-  {
-    id: 'state-machine',
-    tag: 'Program trace · reducer',
-    step: 'opened',
-    description: 'Follow CONNECT → OPENED → CLOSE or CONNECT → ERROR; each transition on screen is a value the reducer returned.',
-  },
-  {
-    id: 'token-bucket',
-    tag: 'Program trace · rate limiter',
-    step: 'trace',
-    description: 'Run three refill rates through the same requests and plot the real balances.',
-  },
-  {
-    id: 'ring-buffer',
-    tag: 'Native geometry · invariants',
-    step: 'result',
-    description: 'Watch the tail wrap into freed slots, or watch push throw Full before any slot changes.',
-  },
-  {
-    id: 'exgit',
-    tag: 'Content addressing · real hashes',
-    step: 'change',
-    description: 'Compare adding and editing a file. Find which blobs, trees and commits Git can share.',
-  },
-  {
-    id: 'just-bash',
-    tag: 'Interpreter model · immutable values',
-    step: 'cat',
-    description: 'Run cat on the shell exec returned or on the original; only the returned shell has shout.txt.',
-  },
-  {
-    id: 'pyex-limits',
-    tag: 'Interpreter model · first-match policy',
-    step: 'failure',
-    description: 'With 9 steps the memory clause fires first; with 3 the step clause does. Follow check_step to see why.',
-  },
-  {
-    id: 'glyph',
-    tag: 'Typography · embedded outlines',
-    step: 'measure',
-    description: 'Write and measure real glyph geometry, then change the font and compare.',
-  },
-] as const;
+/**
+ * The collection, in gallery order. `topic` explainers are about subjects a
+ * reader might search for; `toolchain` explainers show how these explanations
+ * are made, and stay off the gallery's first screen. `step` (and `query`)
+ * choose the frame each gallery tile shows and links to.
+ */
+export const EXPLAINERS: readonly { id: string; step: string; query?: string; group: 'topic' | 'toolchain' }[] = [
+  { id: 'seasons', step: 'year', group: 'topic' },
+  { id: 'oauth-pkce', step: 'attack', query: 'attacker=yes', group: 'topic' },
+  { id: 'pap', step: 'sign-in', group: 'topic' },
+  { id: 'exgit', step: 'change', group: 'topic' },
+  { id: 'token-bucket', step: 'trace', group: 'topic' },
+  { id: 'mr-cache', step: 'after', group: 'topic' },
+  { id: 'state-machine', step: 'opened', group: 'topic' },
+  { id: 'ring-buffer', step: 'result', group: 'topic' },
+  { id: 'lantern', step: 'objects', group: 'toolchain' },
+  { id: 'agentic-mermaid', step: 'repair', group: 'toolchain' },
+  { id: 'glyph', step: 'measure', group: 'toolchain' },
+  { id: 'just-bash', step: 'cat', group: 'toolchain' },
+  { id: 'pyex-limits', step: 'failure', group: 'toolchain' },
+  { id: '2password', step: 'boundary', group: 'toolchain' },
+];

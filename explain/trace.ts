@@ -12,9 +12,8 @@ export function recordWalk(scene: Scene, walk: WalkRecord): void {
   if (!log) {
     log = [];
     logs.set(scene, log);
-    const describe = scene.describe.bind(scene),
-      entries = log;
-    scene.describe = () => ({ ...describe(), walks: entries.map((entry) => ({ ...entry })) });
+    const entries = log;
+    scene.addDescriber(() => ({ walks: entries.map((entry) => ({ ...entry })) }));
   }
   log.push(walk);
   scene.state.walks = log.map((entry) => ({ ...entry }));

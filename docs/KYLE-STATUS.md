@@ -29,12 +29,32 @@ The pass also fixed three bugs that the earlier checks missed:
 - **Reading holds:** a step's caption-reading hold is part of its scene time, so after **Next** the player kept "playing" a still frame for up to about 10 s. Each step now records when its hold begins (`hold` in the trace); the player stops there, and video still plays to `t1`. The three inherited golden traces changed only by gaining that field.
 - **Node 26** is the supported runtime in `package.json`, the lockfile, CI and the docs. On Node 26 the installer in `playwright-core` 1.56.1 hangs after downloading Chromium (reproduced locally; it stalled CI until the job timed out), so the pin moved to 1.64.1, which installs in about 15 s. The browser tests pass on both a cached Chromium and 1.64.1's own headless shell.
 
+## Third pass: an architecture review and a design pass
+
+An outside review of the spec, the code and its Manim lineage raised ten architecture issues. These are fixed here:
+- Helpers no longer wrap `scene.step` and `scene.describe` per instance; the engine has `onStep` and `addDescriber`.
+- Snapshots are stored one file per diagram (`scene.snapshots/`), so a one-diagram change is a one-file diff; all 52 diagrams were migrated byte for byte.
+- Code is no longer second-class to diagrams: `CodeBlock.morph` pairs lines by text, and the KV-cache diff moves the lines that survive and marks the five it adds.
+- `check` writes each step's resting frame as text and the label sizes a phone reader sees before zooming; `preview --watch` rebuilds on save.
+- The player's single function was split into the player, zoom and icons.
+- The spec is a spec again: status moved here, stale counts removed, the lettering exception stated in commitment 3, the ban on free-form inputs narrowed to the ones that need a renderer, Agentic Mermaid treated as the owner's own release, the film described as the stepper's derivative, and a list of the decisions a release still needs.
+- The gallery's first screen is reader topics; the six explainers about this toolchain sit under "How these are made".
+
+The pages and frames were then cut back and redesigned, using Emil Kowalski's design-engineering skill, make-interfaces-feel-better, Impeccable's craft floor and slop list, the animations.dev vocabulary, Robin Williams's contrast, repetition, alignment and proximity, and anti-slop-writing:
+- **Player:** Next is the one primary action. The other tools are icon buttons with names for assistive technology, and fit appears only while zoomed. Cases are a segmented choice under the title, steps are a contents list, and the footer tagline, the "Try another case" legend, the step counter, the zoom hint and the no-JavaScript notice are gone. Controls get 44 px touch targets, a pressed state, hover only on fine pointers, a themed focus ring and selection, and chrome motion under 250 ms with an ease-out curve.
+- **Gallery:** an eyebrow, a stats row, tags, descriptions and per-card links became a grid of pictures, each with the claim it makes.
+- **Stage frames:** panel titles, chips, notes and cards that repeated the heading, caption or values were removed from all fourteen explainers. Where a frame needed a label, the panel moved next to what it describes, two panels merged, or a panel morphed instead of being replaced.
+
+Validating this pass found two more defects, both fixed. The package listed its player files one by one, so the archive lacked the new zoom and icon modules and `explain build` failed after installation; the package smoke test caught it, and the list is now a glob. The second embed on a page could also keep a stale height, because browsers can stop rendering an offscreen cross-origin frame entirely, which silences `ResizeObserver` as well. The child now also measures when the player settles on a step and on load; the two-embed test went from about one failure in four runs to none in twelve.
+
+Some recommendations need the owner. Sending the engine patches to `ivarvong/lantern` is an outward action. Moving the Agentic Mermaid explainer into that repository, and choosing an outside author and a topic, are decisions. An advisory model judge for `check` needs an API key and a measured agreement rate. These are listed under *Decisions* in the spec.
+
 ## Evidence from this checkout (25 October 2026, Node 26.12.1, macOS, after the follow-up fixes)
 
 | Gate | Result | Command |
 | --- | --- | --- |
 | TypeScript, declarations, consumer compile | passed | `npm run check` |
-| Full suite with browser, video and FULL flags and both oracles | **114 tests: 114 passed, 0 failed, 0 skipped**; Manim at the CI-pinned commit with numpy, and Mermaid 11.4.1 | `MANIM_DIR=… MERMAID_JS=… EXPLAIN_BROWSER=1 EXPLAIN_VIDEO=1 FULL=1 node --expose-gc --test test/*.test.ts` |
+| Full suite with browser, video and FULL flags and both oracles | **117 tests: 117 passed, 0 failed, 0 skipped**; Manim at the CI-pinned commit with numpy, and Mermaid 11.4.1 | `MANIM_DIR=… MERMAID_JS=… EXPLAIN_BROWSER=1 EXPLAIN_VIDEO=1 FULL=1 node --expose-gc --test test/*.test.ts` |
 | Leak test outside the runner, motion over every inherited scene | passed | `node --expose-gc test/leak.test.ts`, `npm run verify:motion` |
 | Every case of every explainer | **31 cases** passed seek, motion, bare runtime, skipped-trace, step-change, text-collision, 14 px label and footer-fit checks; reports keep full program-state traces | `npm run demos:check`, `out/checks/*/report.json` |
 | Model fidelity | each case's step-boundary state equals its model; RFC 7636/Node crypto, `git hash-object` and scoped-model oracles | `test/explain-fidelity.test.ts`, `test/explain-models.test.ts` |

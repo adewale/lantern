@@ -24,7 +24,7 @@ export function mountExplainer(
   window.addEventListener('message', receive);
   const link = document.createElement('a');
   link.href = src;
-  link.textContent = 'Open explanation in a new page';
+  link.textContent = 'Open in a new tab';
   link.target = '_blank';
   link.rel = 'noopener';
   target.append(frame, link);

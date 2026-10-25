@@ -1,0 +1,1393 @@
+{
+  "version": 1,
+  "renderer": "agentic-mermaid@0.4.1",
+  "spec": {
+    "source": "stateDiagram-v2\n direction LR\n state \"Signed out\" as SignedOut\n state \"Signed in\" as SignedIn\n state \"Signed out again\" as SignedOutAgain\n SignedOut --> SignedIn: Sign in\n SignedIn --> SignedOutAgain: Sign out\n SignedOutAgain --> SignedIn: Same account only",
+    "style": "nord"
+  },
+  "family": "state",
+  "width": 760.47,
+  "height": 176.05,
+  "palette": {
+    "paper": "#2e3440",
+    "ink": "#d8dee9",
+    "accent": "#88c0d0",
+    "muted": "#616e88"
+  },
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"760.47\" height=\"176.05\" viewBox=\"0 0 760.47 176.05\" style=\"--bg:#2e3440;--fg:#d8dee9;--line:#4c566a;--accent:#88c0d0;--muted:#616e88;--font:Inter;background:#2e3440\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #d8dee9;\n    --_text-sec:      #616e88;\n    --_text-muted:    #616e88;\n    --_text-faint:    #8a909b;\n    --_line:          #4c566a;\n    --_arrow:         #88c0d0;\n    --_node-fill:     #333945;\n    --_node-stroke:   #505662;\n    --_group-fill:    #2e3440;\n    --_group-hdr:     #373d48;\n    --_inner-stroke:  #424854;\n    --_key-badge:     #3f4551;\n  }\n</style>\n<rect width=\"760.47\" height=\"176.05\" fill=\"#2e3440\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#88c0d0\" stroke=\"#88c0d0\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#88c0d0\" stroke=\"#88c0d0\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline class=\"edge\" data-from=\"SignedOut\" data-to=\"SignedIn\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"Sign in\" points=\"143.453,64.60000000000001 280.58500000000004,64.60000000000001\" fill=\"none\" stroke=\"#747d8e\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:SignedOut-&gt;SignedIn#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"SignedOut to SignedIn: Sign in\" />\n<polyline class=\"edge\" data-from=\"SignedIn\" data-to=\"SignedOutAgain\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"Sign out\" points=\"376.62800000000004,64.60000000000001 570.19,64.60000000000001\" fill=\"none\" stroke=\"#747d8e\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:SignedIn-&gt;SignedOutAgain#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"SignedIn to SignedOutAgain: Sign out\" />\n<polyline class=\"edge\" data-from=\"SignedOutAgain\" data-to=\"SignedIn\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"Same account only\" points=\"639.33,83.05000000000001 639.33,97.9 328.60650000000004,97.9 328.60650000000004,83.05000000000001\" fill=\"none\" stroke=\"#747d8e\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:SignedOutAgain-&gt;SignedIn#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"SignedOutAgain to SignedIn: Same account only\" />\n<g class=\"edge-label\" data-from=\"SignedOut\" data-to=\"SignedIn\" data-label=\"Sign in\">\n  <rect class=\"edge-label-halo\" x=\"183.453\" y=\"45.45000000000001\" width=\"57.132\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"#2e3440\" stroke=\"none\" />\n  <rect x=\"187.453\" y=\"49.45000000000001\" width=\"49.132\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"#2e3440\" stroke=\"#424854\" stroke-width=\"1\" />\n  <text x=\"212.019\" y=\"64.60000000000001\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"#9da7b9\" dy=\"3.8499999999999996\" textLength=\"33.132\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Sign in</text>\n</g>\n<g class=\"edge-label\" data-from=\"SignedIn\" data-to=\"SignedOutAgain\" data-label=\"Sign out\">\n  <rect class=\"edge-label-halo\" x=\"467.11800000000005\" y=\"44.60000000000001\" width=\"63.07200000000001\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"#2e3440\" stroke=\"none\" />\n  <rect x=\"471.11800000000005\" y=\"48.60000000000001\" width=\"55.07200000000001\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"#2e3440\" stroke=\"#424854\" stroke-width=\"1\" />\n  <text x=\"498.65400000000005\" y=\"63.75000000000001\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"#9da7b9\" dy=\"3.8499999999999996\" textLength=\"39.072\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Sign out</text>\n</g>\n<g class=\"edge-label\" data-from=\"SignedOutAgain\" data-to=\"SignedIn\" data-label=\"Same account only\">\n  <rect class=\"edge-label-halo\" x=\"427.18725\" y=\"96.9\" width=\"113.56200000000001\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"#2e3440\" stroke=\"none\" />\n  <rect x=\"431.18725\" y=\"100.9\" width=\"105.56200000000001\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"#2e3440\" stroke=\"#424854\" stroke-width=\"1\" />\n  <text x=\"483.96825\" y=\"116.05000000000001\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"#9da7b9\" dy=\"3.8499999999999996\" textLength=\"89.562\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Same account only</text>\n</g>\n<g class=\"node\" data-id=\"SignedOut\" data-label=\"Signed out\" data-shape=\"rounded\" data-role=\"node\">\n  <rect x=\"40\" y=\"46.150000000000006\" width=\"103.453\" height=\"36.900000000000006\" rx=\"6\" ry=\"6\" fill=\"#333945\" stroke=\"#505662\" stroke-width=\"0.75\" data-id=\"node-shape:SignedOut\" data-role=\"node\" />\n  <text x=\"91.7265\" y=\"64.60000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#d8dee9\" dy=\"4.55\" textLength=\"63.453\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Signed out</text>\n</g>\n<g class=\"node\" data-id=\"SignedIn\" data-label=\"Signed in\" data-shape=\"rounded\" data-role=\"node\">\n  <rect x=\"280.58500000000004\" y=\"46.150000000000006\" width=\"96.04299999999999\" height=\"36.900000000000006\" rx=\"6\" ry=\"6\" fill=\"#333945\" stroke=\"#505662\" stroke-width=\"0.75\" data-id=\"node-shape:SignedIn\" data-role=\"node\" />\n  <text x=\"328.60650000000004\" y=\"64.60000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#d8dee9\" dy=\"4.55\" textLength=\"56.043\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Signed in</text>\n</g>\n<g class=\"node\" data-id=\"SignedOutAgain\" data-label=\"Signed out again\" data-shape=\"rounded\" data-role=\"node\">\n  <rect x=\"570.19\" y=\"46.150000000000006\" width=\"138.28\" height=\"36.900000000000006\" rx=\"6\" ry=\"6\" fill=\"#333945\" stroke=\"#505662\" stroke-width=\"0.75\" data-id=\"node-shape:SignedOutAgain\" data-role=\"node\" />\n  <text x=\"639.33\" y=\"64.60000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#d8dee9\" dy=\"4.55\" textLength=\"98.28\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Signed out again</text>\n</g>\n</svg>",
+  "parts": [
+    {
+      "id": "__frame",
+      "role": "frame",
+      "kind": "shape",
+      "svg": "",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0,
+              0,
+              2.534899950027466,
+              0,
+              5.069799900054932,
+              0,
+              7.604699611663818,
+              0,
+              7.604699611663818,
+              -0.5868333578109741,
+              7.604699611663818,
+              -1.1736667156219482,
+              7.604699611663818,
+              -1.7605000734329224,
+              5.069799900054932,
+              -1.7605000734329224,
+              2.534899950027466,
+              -1.7605000734329224,
+              0,
+              -1.7605000734329224,
+              0,
+              -1.1736667156219482,
+              0,
+              -0.5868333578109741,
+              0,
+              0
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#2e3440",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "edge:SignedOut->SignedIn#0",
+      "role": "edge",
+      "kind": "connector",
+      "svg": "<polyline class=\"edge\" data-from=\"SignedOut\" data-to=\"SignedIn\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"Sign in\" points=\"143.453,64.60000000000001 280.58500000000004,64.60000000000001\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:SignedOut-&gt;SignedIn#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"SignedOut to SignedIn: Sign in\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.4345300197601318,
+              -0.6459999680519104,
+              1.891636610031128,
+              -0.6459999680519104,
+              2.348743200302124,
+              -0.6459999680519104,
+              2.805850028991699,
+              -0.6459999680519104
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#747d8e",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.7358498573303223,
+              -0.6209999918937683,
+              2.762516498565674,
+              -0.6293333172798157,
+              2.7891831398010254,
+              -0.637666642665863,
+              2.815850019454956,
+              -0.6459999680519104,
+              2.7891831398010254,
+              -0.6543332934379578,
+              2.762516498565674,
+              -0.6626666784286499,
+              2.7358498573303223,
+              -0.6710000038146973,
+              2.7358498573303223,
+              -0.6543332934379578,
+              2.7358498573303223,
+              -0.637666642665863,
+              2.7358498573303223,
+              -0.6209999918937683
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#88c0d0",
+            "stroke": "#88c0d0",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "SignedOut",
+      "to": "SignedIn",
+      "route": [
+        [
+          1.43453,
+          -0.6460000000000001
+        ],
+        [
+          2.8058500000000004,
+          -0.6460000000000001
+        ]
+      ]
+    },
+    {
+      "id": "edge:SignedIn->SignedOutAgain#0",
+      "role": "edge",
+      "kind": "connector",
+      "svg": "<polyline class=\"edge\" data-from=\"SignedIn\" data-to=\"SignedOutAgain\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"Sign out\" points=\"376.62800000000004,64.60000000000001 570.19,64.60000000000001\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:SignedIn-&gt;SignedOutAgain#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"SignedIn to SignedOutAgain: Sign out\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.766279935836792,
+              -0.6459999680519104,
+              4.411486625671387,
+              -0.6459999680519104,
+              5.0566935539245605,
+              -0.6459999680519104,
+              5.701900005340576,
+              -0.6459999680519104
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#747d8e",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              5.631899833679199,
+              -0.6209999918937683,
+              5.658566474914551,
+              -0.6293333172798157,
+              5.6852335929870605,
+              -0.637666642665863,
+              5.711900234222412,
+              -0.6459999680519104,
+              5.6852335929870605,
+              -0.6543332934379578,
+              5.658566474914551,
+              -0.6626666784286499,
+              5.631899833679199,
+              -0.6710000038146973,
+              5.631899833679199,
+              -0.6543332934379578,
+              5.631899833679199,
+              -0.637666642665863,
+              5.631899833679199,
+              -0.6209999918937683
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#88c0d0",
+            "stroke": "#88c0d0",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "SignedIn",
+      "to": "SignedOutAgain",
+      "route": [
+        [
+          3.7662800000000005,
+          -0.6460000000000001
+        ],
+        [
+          5.7019,
+          -0.6460000000000001
+        ]
+      ]
+    },
+    {
+      "id": "edge:SignedOutAgain->SignedIn#0",
+      "role": "edge",
+      "kind": "connector",
+      "svg": "<polyline class=\"edge\" data-from=\"SignedOutAgain\" data-to=\"SignedIn\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"Same account only\" points=\"639.33,83.05000000000001 639.33,97.9 328.60650000000004,97.9 328.60650000000004,83.05000000000001\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:SignedOutAgain-&gt;SignedIn#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"SignedOutAgain to SignedIn: Same account only\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              6.3933000564575195,
+              -0.8305000066757202,
+              6.3933000564575195,
+              -0.8799999952316284,
+              6.3933000564575195,
+              -0.9295000433921814,
+              6.3933000564575195,
+              -0.9790000319480896,
+              5.357554912567139,
+              -0.9790000319480896,
+              4.321809768676758,
+              -0.9790000319480896,
+              3.286065101623535,
+              -0.9790000319480896,
+              3.286065101623535,
+              -0.9295000433921814,
+              3.286065101623535,
+              -0.8799999952316284,
+              3.286065101623535,
+              -0.8305000066757202
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#747d8e",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.2610650062561035,
+              -0.9005000591278076,
+              3.2693984508514404,
+              -0.8738333582878113,
+              3.2777316570281982,
+              -0.8471667170524597,
+              3.286065101623535,
+              -0.8205000162124634,
+              3.294398307800293,
+              -0.8471667170524597,
+              3.30273175239563,
+              -0.8738333582878113,
+              3.3110649585723877,
+              -0.9005000591278076,
+              3.294398307800293,
+              -0.9005000591278076,
+              3.2777316570281982,
+              -0.9005000591278076,
+              3.2610650062561035,
+              -0.9005000591278076
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#88c0d0",
+            "stroke": "#88c0d0",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "SignedOutAgain",
+      "to": "SignedIn",
+      "route": [
+        [
+          6.3933,
+          -0.8305000000000001
+        ],
+        [
+          6.3933,
+          -0.9790000000000001
+        ],
+        [
+          3.2860650000000002,
+          -0.9790000000000001
+        ],
+        [
+          3.2860650000000002,
+          -0.8305000000000001
+        ]
+      ]
+    },
+    {
+      "id": "edge-label:SignedOut->SignedIn#0",
+      "role": "edge-label",
+      "kind": "group",
+      "svg": "<g class=\"edge-label\" data-from=\"SignedOut\" data-to=\"SignedIn\" data-label=\"Sign in\">\n  <rect class=\"edge-label-halo\" x=\"183.453\" y=\"45.45000000000001\" width=\"57.132\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"var(--bg)\" stroke=\"none\" />\n  <rect x=\"187.453\" y=\"49.45000000000001\" width=\"49.132\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"var(--bg)\" stroke=\"var(--_inner-stroke)\" stroke-width=\"1\" />\n  <text x=\"212.019\" y=\"64.60000000000001\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"var(--_text-sec)\" dy=\"3.8499999999999996\">Sign in</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.8745300769805908,
+              -0.4545000195503235,
+              2.0383033752441406,
+              -0.4545000195503235,
+              2.2020766735076904,
+              -0.4545000195503235,
+              2.3658499717712402,
+              -0.4545000195503235,
+              2.387941360473633,
+              -0.4545000195503235,
+              2.4058501720428467,
+              -0.47240859270095825,
+              2.4058501720428467,
+              -0.4945000112056732,
+              2.4058501720428467,
+              -0.5954999923706055,
+              2.4058501720428467,
+              -0.6965000033378601,
+              2.4058501720428467,
+              -0.7975000143051147,
+              2.4058501720428467,
+              -0.8195913434028625,
+              2.387941360473633,
+              -0.8374999761581421,
+              2.3658499717712402,
+              -0.8374999761581421,
+              2.2020766735076904,
+              -0.8374999761581421,
+              2.0383033752441406,
+              -0.8374999761581421,
+              1.8745300769805908,
+              -0.8374999761581421,
+              1.8524386882781982,
+              -0.8374999761581421,
+              1.834529995918274,
+              -0.8195913434028625,
+              1.834529995918274,
+              -0.7975000143051147,
+              1.834529995918274,
+              -0.6965000033378601,
+              1.834529995918274,
+              -0.5954999923706055,
+              1.834529995918274,
+              -0.4945000112056732,
+              1.834529995918274,
+              -0.47240859270095825,
+              1.8524386882781982,
+              -0.4545000195503235,
+              1.8745300769805908,
+              -0.4545000195503235
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#2e3440",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              1.8945300579071045,
+              -0.4945000112056732,
+              2.0449700355529785,
+              -0.4945000112056732,
+              2.1954100131988525,
+              -0.4945000112056732,
+              2.3458499908447266,
+              -0.4945000112056732,
+              2.356895685195923,
+              -0.4945000112056732,
+              2.3658499717712402,
+              -0.503454327583313,
+              2.3658499717712402,
+              -0.5145000219345093,
+              2.3658499717712402,
+              -0.6021666526794434,
+              2.3658499717712402,
+              -0.689833402633667,
+              2.3658499717712402,
+              -0.7774999737739563,
+              2.3658499717712402,
+              -0.7885456681251526,
+              2.356895685195923,
+              -0.7975000143051147,
+              2.3458499908447266,
+              -0.7975000143051147,
+              2.1954100131988525,
+              -0.7975000143051147,
+              2.0449700355529785,
+              -0.7975000143051147,
+              1.8945300579071045,
+              -0.7975000143051147,
+              1.8834843635559082,
+              -0.7975000143051147,
+              1.8745300769805908,
+              -0.7885456681251526,
+              1.8745300769805908,
+              -0.7774999737739563,
+              1.8745300769805908,
+              -0.6898332834243774,
+              1.8745300769805908,
+              -0.6021666526794434,
+              1.8745300769805908,
+              -0.5145000219345093,
+              1.8745300769805908,
+              -0.503454327583313,
+              1.8834843635559082,
+              -0.4945000112056732,
+              1.8945300579071045,
+              -0.4945000112056732
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#2e3440",
+            "stroke": "#424854",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#9da7b9",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Sign in",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "Sign in",
+            "x": 212.019,
+            "y": 68.45,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 33.132
+          }
+        }
+      ],
+      "owner": "edge:SignedOut->SignedIn#0"
+    },
+    {
+      "id": "edge-label:SignedIn->SignedOutAgain#0",
+      "role": "edge-label",
+      "kind": "group",
+      "svg": "<g class=\"edge-label\" data-from=\"SignedIn\" data-to=\"SignedOutAgain\" data-label=\"Sign out\">\n  <rect class=\"edge-label-halo\" x=\"467.11800000000005\" y=\"44.60000000000001\" width=\"63.07200000000001\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"var(--bg)\" stroke=\"none\" />\n  <rect x=\"471.11800000000005\" y=\"48.60000000000001\" width=\"55.07200000000001\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"var(--bg)\" stroke=\"var(--_inner-stroke)\" stroke-width=\"1\" />\n  <text x=\"498.65400000000005\" y=\"63.75000000000001\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"var(--_text-sec)\" dy=\"3.8499999999999996\">Sign out</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.711180210113525,
+              -0.44599997997283936,
+              4.894753456115723,
+              -0.44599997997283936,
+              5.07832670211792,
+              -0.44599997997283936,
+              5.261899948120117,
+              -0.44599997997283936,
+              5.283990859985352,
+              -0.44599997997283936,
+              5.3018999099731445,
+              -0.4639086127281189,
+              5.3018999099731445,
+              -0.4859999716281891,
+              5.3018999099731445,
+              -0.5870000123977661,
+              5.3018999099731445,
+              -0.6880000233650208,
+              5.3018999099731445,
+              -0.7890000343322754,
+              5.3018999099731445,
+              -0.8110913634300232,
+              5.283990859985352,
+              -0.8289999961853027,
+              5.261899948120117,
+              -0.8289999961853027,
+              5.07832670211792,
+              -0.8289999961853027,
+              4.894753456115723,
+              -0.8289999961853027,
+              4.711180210113525,
+              -0.8289999961853027,
+              4.689088821411133,
+              -0.8289999961853027,
+              4.671180248260498,
+              -0.8110913634300232,
+              4.671180248260498,
+              -0.7890000343322754,
+              4.671180248260498,
+              -0.6880000233650208,
+              4.671180248260498,
+              -0.5870000123977661,
+              4.671180248260498,
+              -0.4859999716281891,
+              4.671180248260498,
+              -0.4639086127281189,
+              4.689088821411133,
+              -0.44599997997283936,
+              4.711180210113525,
+              -0.44599997997283936
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#2e3440",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              4.731180191040039,
+              -0.4859999716281891,
+              4.9014201164245605,
+              -0.4859999716281891,
+              5.071660041809082,
+              -0.4859999716281891,
+              5.2418999671936035,
+              -0.4859999716281891,
+              5.252945423126221,
+              -0.4859999716281891,
+              5.261899948120117,
+              -0.49495428800582886,
+              5.261899948120117,
+              -0.5059999823570251,
+              5.261899948120117,
+              -0.593666672706604,
+              5.261899948120117,
+              -0.6813333034515381,
+              5.261899948120117,
+              -0.7689999938011169,
+              5.261899948120117,
+              -0.7800456881523132,
+              5.252945423126221,
+              -0.7890000343322754,
+              5.2418999671936035,
+              -0.7890000343322754,
+              5.071660041809082,
+              -0.7890000343322754,
+              4.9014201164245605,
+              -0.7890000343322754,
+              4.731180191040039,
+              -0.7890000343322754,
+              4.720134258270264,
+              -0.7890000343322754,
+              4.711180210113525,
+              -0.7800456881523132,
+              4.711180210113525,
+              -0.7689999938011169,
+              4.711180210113525,
+              -0.6813333034515381,
+              4.711180210113525,
+              -0.593666672706604,
+              4.711180210113525,
+              -0.5059999823570251,
+              4.711180210113525,
+              -0.49495428800582886,
+              4.720134258270264,
+              -0.4859999716281891,
+              4.731180191040039,
+              -0.4859999716281891
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#2e3440",
+            "stroke": "#424854",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#9da7b9",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Sign out",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "Sign out",
+            "x": 498.65400000000005,
+            "y": 67.60000000000001,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 39.072
+          }
+        }
+      ],
+      "owner": "edge:SignedIn->SignedOutAgain#0"
+    },
+    {
+      "id": "edge-label:SignedOutAgain->SignedIn#0",
+      "role": "edge-label",
+      "kind": "group",
+      "svg": "<g class=\"edge-label\" data-from=\"SignedOutAgain\" data-to=\"SignedIn\" data-label=\"Same account only\">\n  <rect class=\"edge-label-halo\" x=\"427.18725\" y=\"96.9\" width=\"113.56200000000001\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"var(--bg)\" stroke=\"none\" />\n  <rect x=\"431.18725\" y=\"100.9\" width=\"105.56200000000001\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"var(--bg)\" stroke=\"var(--_inner-stroke)\" stroke-width=\"1\" />\n  <text x=\"483.96825\" y=\"116.05000000000001\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"var(--_text-sec)\" dy=\"3.8499999999999996\">Same account only</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.311872482299805,
+              -0.9690000414848328,
+              4.663745880126953,
+              -0.9690000414848328,
+              5.015619277954102,
+              -0.9690000414848328,
+              5.36749267578125,
+              -0.9690000414848328,
+              5.389583587646484,
+              -0.9690000414848328,
+              5.407492637634277,
+              -0.9869086742401123,
+              5.407492637634277,
+              -1.0090000629425049,
+              5.407492637634277,
+              -1.1100000143051147,
+              5.407492637634277,
+              -1.2109999656677246,
+              5.407492637634277,
+              -1.3119999170303345,
+              5.407492637634277,
+              -1.334091305732727,
+              5.389583587646484,
+              -1.3519999980926514,
+              5.36749267578125,
+              -1.3519999980926514,
+              5.015619277954102,
+              -1.3519999980926514,
+              4.663745880126953,
+              -1.3519999980926514,
+              4.311872482299805,
+              -1.3519999980926514,
+              4.289781093597412,
+              -1.3519999980926514,
+              4.271872520446777,
+              -1.334091305732727,
+              4.271872520446777,
+              -1.3119999170303345,
+              4.271872520446777,
+              -1.2109999656677246,
+              4.271872520446777,
+              -1.1100000143051147,
+              4.271872520446777,
+              -1.0090000629425049,
+              4.271872520446777,
+              -0.9869086742401123,
+              4.289781093597412,
+              -0.9690000414848328,
+              4.311872482299805,
+              -0.9690000414848328
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#2e3440",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              4.331872463226318,
+              -1.0090000629425049,
+              4.670412540435791,
+              -1.0090000629425049,
+              5.008952617645264,
+              -1.0090000629425049,
+              5.347492694854736,
+              -1.0090000629425049,
+              5.3585381507873535,
+              -1.0090000629425049,
+              5.36749267578125,
+              -1.0179543495178223,
+              5.36749267578125,
+              -1.0290000438690186,
+              5.36749267578125,
+              -1.1166666746139526,
+              5.36749267578125,
+              -1.2043333053588867,
+              5.36749267578125,
+              -1.2919999361038208,
+              5.36749267578125,
+              -1.303045630455017,
+              5.3585381507873535,
+              -1.3119999170303345,
+              5.347492694854736,
+              -1.3119999170303345,
+              5.008952617645264,
+              -1.3119999170303345,
+              4.670412540435791,
+              -1.3119999170303345,
+              4.331872463226318,
+              -1.3119999170303345,
+              4.320826530456543,
+              -1.3119999170303345,
+              4.311872482299805,
+              -1.303045630455017,
+              4.311872482299805,
+              -1.2919999361038208,
+              4.311872482299805,
+              -1.2043333053588867,
+              4.311872482299805,
+              -1.1166666746139526,
+              4.311872482299805,
+              -1.0290000438690186,
+              4.311872482299805,
+              -1.0179543495178223,
+              4.320826530456543,
+              -1.0090000629425049,
+              4.331872463226318,
+              -1.0090000629425049
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#2e3440",
+            "stroke": "#424854",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#9da7b9",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Same account only",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "Same account only",
+            "x": 483.96825,
+            "y": 119.9,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 89.562
+          }
+        }
+      ],
+      "owner": "edge:SignedOutAgain->SignedIn#0"
+    },
+    {
+      "id": "SignedOut",
+      "role": "node",
+      "kind": "group",
+      "svg": "<g class=\"node\" data-id=\"SignedOut\" data-label=\"Signed out\" data-shape=\"rounded\" data-role=\"node\">\n  <rect x=\"40\" y=\"46.150000000000006\" width=\"103.453\" height=\"36.900000000000006\" rx=\"6\" ry=\"6\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:SignedOut\" data-role=\"node\" />\n  <text x=\"91.7265\" y=\"64.60000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Signed out</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.46000000834465027,
+              -0.46150001883506775,
+              0.7648433446884155,
+              -0.46150001883506775,
+              1.0696866512298584,
+              -0.46150001883506775,
+              1.3745300769805908,
+              -0.46150001883506775,
+              1.4076670408248901,
+              -0.46150001883506775,
+              1.4345300197601318,
+              -0.4883629083633423,
+              1.4345300197601318,
+              -0.5214999914169312,
+              1.4345300197601318,
+              -0.6044999957084656,
+              1.4345300197601318,
+              -0.6875,
+              1.4345300197601318,
+              -0.7705000042915344,
+              1.4345300197601318,
+              -0.8036370873451233,
+              1.4076670408248901,
+              -0.8305000066757202,
+              1.3745300769805908,
+              -0.8305000066757202,
+              1.0696866512298584,
+              -0.8305000066757202,
+              0.7648433446884155,
+              -0.8305000066757202,
+              0.46000000834465027,
+              -0.8305000066757202,
+              0.426862895488739,
+              -0.8305000066757202,
+              0.4000000059604645,
+              -0.8036370873451233,
+              0.4000000059604645,
+              -0.7705000042915344,
+              0.4000000059604645,
+              -0.6875,
+              0.4000000059604645,
+              -0.6044999957084656,
+              0.4000000059604645,
+              -0.5214999914169312,
+              0.4000000059604645,
+              -0.4883629083633423,
+              0.426862895488739,
+              -0.46150001883506775,
+              0.46000000834465027,
+              -0.46150001883506775
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#333945",
+            "stroke": "#505662",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#d8dee9",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Signed out",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "Signed out",
+            "x": 91.7265,
+            "y": 69.15,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 63.453
+          }
+        }
+      ]
+    },
+    {
+      "id": "SignedIn",
+      "role": "node",
+      "kind": "group",
+      "svg": "<g class=\"node\" data-id=\"SignedIn\" data-label=\"Signed in\" data-shape=\"rounded\" data-role=\"node\">\n  <rect x=\"280.58500000000004\" y=\"46.150000000000006\" width=\"96.04299999999999\" height=\"36.900000000000006\" rx=\"6\" ry=\"6\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:SignedIn\" data-role=\"node\" />\n  <text x=\"328.60650000000004\" y=\"64.60000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Signed in</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.8658499717712402,
+              -0.46150001883506775,
+              3.145993232727051,
+              -0.46150001883506775,
+              3.4261367321014404,
+              -0.46150001883506775,
+              3.706279993057251,
+              -0.46150001883506775,
+              3.73941707611084,
+              -0.46150001883506775,
+              3.766279935836792,
+              -0.4883629083633423,
+              3.766279935836792,
+              -0.5214999914169312,
+              3.766279935836792,
+              -0.6044999957084656,
+              3.766279935836792,
+              -0.6875,
+              3.766279935836792,
+              -0.7705000042915344,
+              3.766279935836792,
+              -0.8036370873451233,
+              3.73941707611084,
+              -0.8305000066757202,
+              3.706279993057251,
+              -0.8305000066757202,
+              3.4261364936828613,
+              -0.8305000066757202,
+              3.145993232727051,
+              -0.8305000066757202,
+              2.8658499717712402,
+              -0.8305000066757202,
+              2.8327131271362305,
+              -0.8305000066757202,
+              2.805850028991699,
+              -0.8036370873451233,
+              2.805850028991699,
+              -0.7705000042915344,
+              2.805850028991699,
+              -0.6875,
+              2.805850028991699,
+              -0.6044999957084656,
+              2.805850028991699,
+              -0.5214999914169312,
+              2.805850028991699,
+              -0.4883629083633423,
+              2.8327131271362305,
+              -0.46150001883506775,
+              2.8658499717712402,
+              -0.46150001883506775
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#333945",
+            "stroke": "#505662",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#d8dee9",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Signed in",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "Signed in",
+            "x": 328.60650000000004,
+            "y": 69.15,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 56.043
+          }
+        }
+      ]
+    },
+    {
+      "id": "SignedOutAgain",
+      "role": "node",
+      "kind": "group",
+      "svg": "<g class=\"node\" data-id=\"SignedOutAgain\" data-label=\"Signed out again\" data-shape=\"rounded\" data-role=\"node\">\n  <rect x=\"570.19\" y=\"46.150000000000006\" width=\"138.28\" height=\"36.900000000000006\" rx=\"6\" ry=\"6\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:SignedOutAgain\" data-role=\"node\" />\n  <text x=\"639.33\" y=\"64.60000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Signed out again</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              5.761899948120117,
+              -0.46150001883506775,
+              6.182833194732666,
+              -0.46150001883506775,
+              6.603766441345215,
+              -0.46150001883506775,
+              7.024699687957764,
+              -0.46150001883506775,
+              7.057837009429932,
+              -0.46150001883506775,
+              7.084699630737305,
+              -0.4883629083633423,
+              7.084699630737305,
+              -0.5214999914169312,
+              7.084699630737305,
+              -0.6044999957084656,
+              7.084699630737305,
+              -0.6875,
+              7.084699630737305,
+              -0.7705000042915344,
+              7.084699630737305,
+              -0.8036370873451233,
+              7.057837009429932,
+              -0.8305000066757202,
+              7.024699687957764,
+              -0.8305000066757202,
+              6.603766441345215,
+              -0.8305000066757202,
+              6.182833194732666,
+              -0.8305000066757202,
+              5.761899948120117,
+              -0.8305000066757202,
+              5.728762626647949,
+              -0.8305000066757202,
+              5.701900005340576,
+              -0.8036370873451233,
+              5.701900005340576,
+              -0.7705000042915344,
+              5.701900005340576,
+              -0.6875,
+              5.701900005340576,
+              -0.6044999957084656,
+              5.701900005340576,
+              -0.5214999914169312,
+              5.701900005340576,
+              -0.4883629083633423,
+              5.728762626647949,
+              -0.46150001883506775,
+              5.761899948120117,
+              -0.46150001883506775
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#333945",
+            "stroke": "#505662",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#d8dee9",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Signed out again",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "Signed out again",
+            "x": 639.33,
+            "y": 69.15,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 98.28
+          }
+        }
+      ]
+    }
+  ],
+  "findings": {
+    "ok": true,
+    "warnings": [],
+    "layout": {
+      "version": 1,
+      "kind": "state",
+      "nodes": [
+        {
+          "id": "SignedOut",
+          "x": 40,
+          "y": 46,
+          "w": 103,
+          "h": 37,
+          "shape": "rounded",
+          "label": "Signed out"
+        },
+        {
+          "id": "SignedIn",
+          "x": 281,
+          "y": 46,
+          "w": 96,
+          "h": 37,
+          "shape": "rounded",
+          "label": "Signed in"
+        },
+        {
+          "id": "SignedOutAgain",
+          "x": 570,
+          "y": 46,
+          "w": 138,
+          "h": 37,
+          "shape": "rounded",
+          "label": "Signed out again"
+        }
+      ],
+      "edges": [
+        {
+          "id": "SignedOut->SignedIn",
+          "from": "SignedOut",
+          "to": "SignedIn",
+          "path": [
+            [
+              143,
+              65
+            ],
+            [
+              281,
+              65
+            ]
+          ],
+          "label": {
+            "x": 212,
+            "y": 65,
+            "text": "Sign in"
+          }
+        },
+        {
+          "id": "SignedIn->SignedOutAgain",
+          "from": "SignedIn",
+          "to": "SignedOutAgain",
+          "path": [
+            [
+              377,
+              65
+            ],
+            [
+              570,
+              65
+            ]
+          ],
+          "label": {
+            "x": 499,
+            "y": 64,
+            "text": "Sign out"
+          }
+        },
+        {
+          "id": "SignedOutAgain->SignedIn",
+          "from": "SignedOutAgain",
+          "to": "SignedIn",
+          "path": [
+            [
+              639,
+              83
+            ],
+            [
+              639,
+              98
+            ],
+            [
+              329,
+              98
+            ],
+            [
+              329,
+              83
+            ]
+          ],
+          "label": {
+            "x": 484,
+            "y": 116,
+            "text": "Same account only"
+          }
+        }
+      ],
+      "groups": [],
+      "bounds": {
+        "w": 760,
+        "h": 176
+      }
+    }
+  }
+}

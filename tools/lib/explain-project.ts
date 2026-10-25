@@ -1,6 +1,6 @@
 import { build } from 'esbuild';
 import type { Plugin } from 'esbuild';
-import { readFile, writeFile, mkdir, stat, readdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, stat, readdir, rm } from 'node:fs/promises';
 import { dirname, resolve, join, basename, relative } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
@@ -123,22 +123,69 @@ export interface Project {
   variants: { values: Settings; Scene: ExplainerClass; trace: Trace }[];
   edits: number;
 }
+
+const IMPORTER = 4;
+/** File name for one diagram's snapshot: a short hash of its cache key. */
+export const snapshotFileName = (key: string) => hash(key).slice(0, 16) + '.json';
+const json = (value: unknown) => JSON.stringify(value, null, 2) + '\n';
+async function readJson(path: string): Promise<Record<string, unknown> | null> {
+  try {
+    return JSON.parse(await readFile(path, 'utf8'));
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw error;
+  }
+}
+/**
+ * Snapshots live in `scene.snapshots/`: `index.json` maps each diagram key to
+ * a file, and each diagram has its own file, so changing one diagram changes
+ * one file. The older single `scene.snapshots.json` is still read.
+ */
+export async function readSnapshots(base: string): Promise<SnapshotStore> {
+  const index = await readJson(join(base + '.snapshots', 'index.json'));
+  if (index?.version === 2 && index.importer === IMPORTER) {
+    const store: SnapshotStore = {};
+    for (const [key, name] of Object.entries(index.diagrams as Record<string, string>)) {
+      const snapshot = await readJson(join(base + '.snapshots', name));
+      if (snapshot) store[key] = snapshot as unknown as SnapshotStore[string];
+    }
+    return store;
+  }
+  const legacy = await readJson(base + '.snapshots.json');
+  return legacy?.version === 1 && legacy.importer === IMPORTER ? (legacy.diagrams as SnapshotStore) : {};
+}
+/** Write the store, delete files no diagram uses, and retire the single-file cache. */
+export async function writeSnapshots(base: string, store: SnapshotStore, sourceHash: string): Promise<void> {
+  const folder = base + '.snapshots';
+  await mkdir(folder, { recursive: true });
+  const keys = Object.keys(store).sort();
+  const names = Object.fromEntries(keys.map((key) => [key, snapshotFileName(key)]));
+  for (const key of keys) {
+    const path = join(folder, names[key]!),
+      body = json(store[key]);
+    if ((await readFile(path, 'utf8').catch(() => null)) !== body) await writeFile(path, body);
+  }
+  const keep = new Set([...Object.values(names), 'index.json']);
+  for (const name of await readdir(folder)) if (!keep.has(name)) await rm(join(folder, name));
+  const index = json({
+    version: 2,
+    importer: IMPORTER,
+    renderer: 'agentic-mermaid@0.4.1',
+    sourceHash,
+    diagrams: names,
+  });
+  if ((await readFile(join(folder, 'index.json'), 'utf8').catch(() => null)) !== index)
+    await writeFile(join(folder, 'index.json'), index);
+  await rm(base + '.snapshots.json', { force: true });
+}
 export async function collectProject(
   input: string,
   { refresh = false, write = true }: { refresh?: boolean; write?: boolean } = {},
 ): Promise<Project> {
   const loaded = await loadScene(input);
   const { Scene: Source, file } = loaded;
-  const cache = file.replace(/\.[^.]+$/, '') + '.snapshots.json';
-  let previous: SnapshotStore = {};
-  if (!refresh) {
-    try {
-      const saved = JSON.parse(await readFile(cache, 'utf8'));
-      if (saved.version === 1 && saved.importer === 4) previous = saved.diagrams;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-    }
-  }
+  const base = file.replace(/\.[^.]+$/, '');
+  const previous: SnapshotStore = refresh ? {} : await readSnapshots(base);
   // Lazy: native scenes never require Agentic Mermaid or Chromium.
   let builder:
     | Awaited<ReturnType<typeof import('../../integrations/agentic-mermaid/build/index.ts').snapshotBuilder>>
@@ -195,21 +242,7 @@ export async function collectProject(
         throw new Error(`Duplicate step names prevent stable links: ${JSON.stringify(values)}`);
       variants.push({ values, Scene: Bound, trace });
     }
-    if (write)
-      await writeFile(
-        cache,
-        JSON.stringify(
-          {
-            version: 1,
-            importer: 4,
-            sourceHash: loaded.sourceHash,
-            renderer: 'agentic-mermaid@0.4.1',
-            diagrams: store,
-          },
-          null,
-          2,
-        ) + '\n',
-      );
+    if (write) await writeSnapshots(base, store, loaded.sourceHash);
     return { ...loaded, store, variants, edits };
   } finally {
     await builder?.close();

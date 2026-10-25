@@ -23,6 +23,7 @@ function lookup(name: string): 'builtin' | 'unsupported' {
   }
 }
 const TOP: Box = [-7.55, -0.2, 7.55, 3.25],
+  BOTTOM: Box = [-7.55, -4.25, 7.55, -0.5],
   BOTTOM_LEFT: Box = [-7.55, -4.25, -0.15, -0.5],
   BOTTOM_RIGHT: Box = [0.15, -4.25, 7.55, -0.5];
 
@@ -85,19 +86,11 @@ export default class BashExplainer extends Scene {
     await this.play(new FadeIn(line, { runTime: 0.5 }));
     const legend = s.keep(new Group(...roles));
     await this.play(new FadeIn(legend, { runTime: 0.5 }));
-    const start = await s.card(
-      [
-        ['files', files(old)],
-        ['steps run', old.steps],
-      ],
-      { at: BOTTOM_LEFT, title: 'The shell, as a value', fontSize: 0.3 },
+    const api = await s.code(
+      [`shell = { fs: ${JSON.stringify(old.fs)}, steps: ${old.steps} }`, 'exec(shell, pipeline, redirect)', '  → { shell, stdout }'],
+      { at: BOTTOM, fontSize: 0.3 },
     );
-    const api = await s.code(['exec(shell, pipeline, redirect)', '  → { shell, stdout }'], {
-      at: BOTTOM_RIGHT,
-      title: 'the model’s only entry point',
-      fontSize: 0.3,
-    });
-    await start.mark('files');
+    await api.focus(0);
 
     // ── parse: the command is a tree ────────────────────────────────────
     await this.step('parse', {
@@ -116,7 +109,7 @@ export default class BashExplainer extends Scene {
     );
     const call = await s.code(
       ['exec(shell,', '  [["echo", "hello"],', '   ["tr", "a-z", "A-Z"]],', `  "${FILE}")`],
-      { at: 'side', title: 'what the executor receives', fontSize: 0.3 },
+      { at: 'side', fontSize: 0.3 },
     );
     await ast.mark(['Echo', 'Tr']);
     await call.focus([1, 2]);
@@ -126,7 +119,7 @@ export default class BashExplainer extends Scene {
     await this.step('reduce', {
       title: 'A pipeline is a reduce over strings',
       caption:
-        'Start with empty text. Echo replaces it with hello and a newline, and tr uppercases it. The card shows stdout after each builtin: one string handed to the next, with no kernel pipe between them.',
+        'Start with empty text. Echo replaces it with hello and a newline, and tr uppercases it. The note under each builtin is stdout after it runs: one string handed to the next, with no kernel pipe between them.',
     });
     await s.clear();
     const afterEcho = exec(old, [PIPELINE[0]]).stdout,
@@ -145,27 +138,14 @@ export default class BashExplainer extends Scene {
         '  echo: stdout = args + "\\n"',
         '  tr:   stdout = upper(stdout)',
       ],
-      { at: BOTTOM_LEFT, title: 'the model’s loop (simplified)', fontSize: 0.3 },
-    );
-    const acc = await s.card(
-      [
-        ['start', q('')],
-        ['after echo', '…'],
-        ['after tr', '…'],
-      ],
-      { at: BOTTOM_RIGHT, title: 'stdout, step by step', fontSize: 0.3, width: 5.2 },
+      { at: BOTTOM, fontSize: 0.3 },
     );
     await loop.focus(0);
-    await acc.mark('start');
     await flow.walk([['Input', 'Echo']], { trail: true });
     await loop.focus(2);
-    await acc.set({ 'after echo': q(afterEcho) });
-    await acc.mark('after echo');
     await flow.note('Echo', q(afterEcho), { side: 'below' });
     await flow.walk([['Echo', 'Tr']], { trail: true });
     await loop.focus(3);
-    await acc.set({ 'after tr': q(afterTr) });
-    await acc.mark('after tr');
     await flow.note('Tr', q(afterTr), { side: 'below' });
     await flow.walk([['Tr', 'Output']], { trail: true });
 
@@ -190,7 +170,7 @@ export default class BashExplainer extends Scene {
         ['files', files(old)],
         ['steps run', old.steps],
       ],
-      { at: BOTTOM_LEFT, title: 'Original shell (input)', fontSize: 0.3, width: 5.2 },
+      { at: BOTTOM_LEFT, align: 'top', title: 'Original shell', fontSize: 0.3, width: 5.2 },
     );
     const after = await s.card(
       [
@@ -199,7 +179,7 @@ export default class BashExplainer extends Scene {
         ['steps run', old.steps],
         ['stdout', q(afterTr)],
       ],
-      { at: BOTTOM_RIGHT, title: 'Returned shell (output)', fontSize: 0.3, width: 5.2 },
+      { at: BOTTOM_RIGHT, align: 'top', title: 'Returned shell', fontSize: 0.3, width: 5.2 },
     );
     await after.set({
       files: files(run.shell),
@@ -227,10 +207,6 @@ export default class BashExplainer extends Scene {
       },
       { box: TOP },
     );
-    const table = await s.card(
-      found.map(([n, r]) => [n, r === 'builtin' ? 'runs' : 'refused']),
-      { at: BOTTOM_LEFT, title: 'Asking the model about each name', fontSize: 0.3, width: 5.6 },
-    );
     const dispatch = await s.code(
       [
         'if (name === "echo") …',
@@ -238,7 +214,7 @@ export default class BashExplainer extends Scene {
         'else if (name === "cat") …',
         'else throw Error("Unknown model command")',
       ],
-      { at: BOTTOM_RIGHT, title: 'the model’s dispatch', fontSize: 0.28 },
+      { at: BOTTOM, fontSize: 0.3 },
     );
     await policy.walk(
       [
@@ -264,7 +240,6 @@ export default class BashExplainer extends Scene {
         .join(' · '),
       { side: 'below' },
     );
-    await table.mark('ls');
     await dispatch.focus(3);
 
     // ── cat: the same command against two shells ────────────────────────
@@ -305,9 +280,6 @@ export default class BashExplainer extends Scene {
     });
     await this.play(new Transform(unpicked, faded, { runTime: 0.4 }));
     await picked.mark('cat stdout');
-    await s.chip(which === 'new' ? 'cat ran here ↓' : '↓ cat ran here', {
-      at: [picked.panel.box()![0], picked.panel.box()![3] + 0.4],
-    });
     this.state.cat = result.stdout;
 
     // ── lesson: the shell as a chain of values ──────────────────────────
@@ -337,7 +309,7 @@ export default class BashExplainer extends Scene {
         `exec(s0, [["cat", "${FILE}"]]).stdout   // ${q(viaOld)}`,
         `s0.fs                               // ${JSON.stringify(old.fs)}`,
       ],
-      { at: [-7.55, -4.25, 7.55, -0.5], title: 'every value is still available', fontSize: 0.3 },
+      { at: BOTTOM, fontSize: 0.3 },
     );
     if (which === 'new')
       await chain.walk(
@@ -349,6 +321,5 @@ export default class BashExplainer extends Scene {
       );
     else await chain.walk([['S0', 'Out0']], { trail: true });
     await story.focus(which === 'new' ? 1 : 2);
-    await chain.note('S0', `unchanged: ${old.steps} steps, no files`, { side: 'above' });
   }
 }

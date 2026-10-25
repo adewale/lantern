@@ -11,6 +11,7 @@ import {
   renderAt,
   toSvgString,
   traceScene,
+  renderText,
   Text,
 } from '../../src/index.ts';
 import { ROOT, engineAlias, sceneSlug } from './explain-project.ts';
@@ -88,6 +89,19 @@ export function restingTextProblems(scene: { familyMembers(): Mobject[] }): stri
   return problems;
 }
 
+/** Smallest label sizes at a 1280 px stage and, scaled, on a 390 px phone before zooming. */
+function legibilityReport(px: number[]) {
+  const sizes = px.filter((p) => p > 0);
+  const min = sizes.length ? Math.min(...sizes) : null;
+  const phone = (p: number) => Math.round((p * 390) / 1280 * 10) / 10;
+  return {
+    minLabelPx1280: min == null ? null : Math.round(min * 10) / 10,
+    minLabelPx390: min == null ? null : phone(min),
+    labelsUnder12PxAt390: sizes.filter((p) => phone(p) < 12).length,
+    labels: sizes.length,
+  };
+}
+
 export async function checkProject(
   project: Project,
   out = join(ROOT, 'out/checks', sceneSlug(project)),
@@ -112,6 +126,7 @@ export async function checkProject(
     const completedFrames = new Set(v.trace.steps.map(restFrame));
     const staticLabels = new Map<string, { text: string; px: number }>();
     const resting = new Map<number, string>();
+    const restingText = new Map<number, string>();
     const collisions: string[] = [];
     await new v.Scene({
       async frame(scene) {
@@ -123,6 +138,7 @@ export async function checkProject(
           scene.mobjects = all.filter((m) => m.key !== '__heading');
           resting.set(scene.frameCount, toSvgString(scene));
           scene.mobjects = all;
+          restingText.set(scene.frameCount, renderText(scene));
           collisions.push(...restingTextProblems(scene).map((p) => `${scene.currentStep?.name}: ${p}`));
         }
         for (const m of scene.familyMembers()) {
@@ -257,6 +273,10 @@ export async function checkProject(
       completedStepLabels: staticLabels.size,
       everyStepChangesPicture: true,
       restingTextCollisions: 0,
+      // What a reader sees before zooming: the same labels on a 390 px phone.
+      legibility: legibilityReport([...labels.values(), ...[...staticLabels.values()].map((l) => l.px)]),
+      // Each step's resting frame as text, so an author can read it without a browser.
+      restingFrames: Object.fromEntries(v.trace.steps.map((step) => [step.step, restingText.get(restFrame(step)) ?? ''])),
       bareRuntime: true,
     });
   }

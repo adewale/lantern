@@ -1,5 +1,6 @@
-import { Scene } from '../../../src/index.ts';
-import { stage, settingsOf, edgePartOf } from '../../../explain/index.ts';
+import { Scene, FadeIn, FadeOut } from '../../../src/index.ts';
+import { stage, settingsOf, edgePartOf, Card, CodeBlock, REGIONS } from '../../../explain/index.ts';
+import type { CardRow } from '../../../explain/index.ts';
 import type { DiagramSnapshot } from '../../../integrations/agentic-mermaid/snapshot.ts';
 const STYLE = 'blueprint';
 const BAD = 'graph LR\nA{Cached} --> B[Reply]\nA --> C[Database]';
@@ -19,8 +20,8 @@ interface Findings {
   layout: { edges: { id: string; label?: { text: string } }[] };
 }
 const findingsOf = (snap: DiagramSnapshot) => snap.findings as Findings;
-const SIDE_TOP = [2.65, 0.15, 7.55, 3.25] as const,
-  SIDE_LOW = [2.65, -4.25, 7.55, -0.15] as const;
+const SIDE = REGIONS.side,
+  GAP = 0.3;
 
 export default class MermaidExplainer extends Scene {
   static meta = {
@@ -46,6 +47,19 @@ export default class MermaidExplainer extends Scene {
     const missing = settingsOf(this).edit === 'missing',
       s = stage(this);
     const first = missing ? BAD : GOOD;
+    const code = (lines: readonly string[], fontSize = 0.24) =>
+      new CodeBlock(this, s.palette, lines, { at: SIDE, fontSize });
+    const card = (rows: readonly CardRow[]) => new Card(this, s.palette, rows, { at: SIDE });
+    // Side panels share one left edge and one gap, stacked and centred beside the diagram.
+    const column = async (...panels: (Card | CodeBlock)[]) => {
+      const total = panels.reduce((h, p) => h + p.height(), 0) + GAP * (panels.length - 1);
+      let top = (SIDE[1] + SIDE[3]) / 2 + total / 2;
+      for (const p of panels) {
+        p.moveTo([SIDE[0], top], [-1, 1]);
+        top -= p.height() + GAP;
+      }
+      await this.play(...panels.map((p) => new FadeIn(s.keep(p), { runTime: 0.35 })));
+    };
 
     await this.step('source', {
       title: 'The agent’s edit, parsed into a snapshot with ids',
@@ -53,12 +67,11 @@ export default class MermaidExplainer extends Scene {
         'The agent’s edit is Mermaid source, and the card lists the id the snapshot gives each node and edge. Agentic Mermaid parses, lays out, styles and verifies it at build time, and none of Agentic Mermaid ships to the reader.',
     });
     const d = await s.show({ source: first, style: STYLE }, { box: 'main' });
-    await s.code(first.split('\n'), { at: [...SIDE_TOP], title: 'flow.mmd (the agent’s edit)', fontSize: 0.24 });
-    const ids = d.snapshot.parts.filter((p) => p.role === 'node' || p.role === 'edge');
-    await s.card(
-      ids.map((p) => [p.role, p.id] as const),
-      { at: [...SIDE_LOW], title: 'Ids in the snapshot' },
+    const source = code(first.split('\n'));
+    const ids = card(
+      d.snapshot.parts.filter((p) => p.role === 'node' || p.role === 'edge').map((p) => [p.role, p.id] as const),
     );
+    await column(source, ids);
 
     await this.step('verify', {
       title: missing ? 'The verifier flags both edges out of Cached' : 'The verifier finds no warnings in the first edit',
@@ -66,7 +79,7 @@ export default class MermaidExplainer extends Scene {
         ? 'verify(flow) returns ok: true with two DECISION_BRANCH_UNLABELED warnings, one per marked edge. The diagram renders, but nothing on it says which edge out of Cached means yes.'
         : 'Both edges out of Cached carry labels, yes and no, so verify(flow) returns no warnings and this case skips the repair step.',
     });
-    await s.clearOverlays();
+    await this.play(new FadeOut(ids, { runTime: 0.3 }));
     const findings = findingsOf(d.snapshot);
     this.state.warnings = findings.warnings;
     if (findings.warnings.length) {
@@ -75,21 +88,22 @@ export default class MermaidExplainer extends Scene {
         return w.part;
       });
       await d.mark(['A', ...flagged]);
-      for (const [i, id] of flagged.entries())
-        await d.note(id, 'unlabeled: yes or no?', { side: i === 0 ? 'above' : 'below' });
     } else {
       await d.mark(
         findings.layout.edges.flatMap((e, i) => (e.label ? [edgePartOf(d.snapshot, `${e.id}#${i}`)!] : [])),
       );
     }
-    await s.code(
+    // The verifier's report sits under the source it checked.
+    const report = code(
       [
         `verify(flow).ok: ${findings.ok}`,
         `warnings: ${findings.warnings.length}`,
         ...findings.warnings.flatMap((w) => [`  ${w.code}`, `    node ${w.node}, edge ${w.edge}`]),
       ],
-      { at: [2.65, -4.25, 7.55, 3.25], title: 'verifier findings', fontSize: 0.22 },
+      0.22,
     );
+    report.moveTo([SIDE[0], source.box()![1] - GAP], [-1, 1]);
+    await this.play(new FadeIn(s.keep(report), { runTime: 0.35 }));
 
     if (missing) {
       await this.step('repair', {
@@ -97,22 +111,18 @@ export default class MermaidExplainer extends Scene {
         caption:
           'Two set_label operations add yes and no to the edges. The build replays them on the parsed first edit and throws unless the result serializes to the same Mermaid as the next diagram.',
       });
-      await s.clearOverlays();
-      const ops = await s.code(
+      await this.play(new FadeOut(source, { runTime: 0.3 }));
+      const ops = code(
         OPS.flatMap((op) => [`{ kind: '${op.kind}',`, `  target: '${op.target}',`, `  label: '${op.label}' }`]),
-        { at: [...SIDE_TOP], title: 'typed ops (replayed by the build)', fontSize: 0.24 },
       );
+      ops.moveTo([SIDE[0], report.box()![3] + GAP], [-1, -1]);
+      await this.play(new FadeIn(s.keep(ops), { runTime: 0.35 }));
       await ops.focus([0, OPS.length * 3 - 1]);
       await d.morph({ source: GOOD, style: STYLE }, { ops: OPS });
       const after = findingsOf(d.snapshot);
       await d.mark(OPS.map((op) => `edge:${op.target}`));
-      await s.card(
-        [
-          ...after.layout.edges.map((e) => [`${e.id} label`, e.label?.text ?? '(none)'] as const),
-          ['warnings', after.warnings.length],
-        ],
-        { at: [...SIDE_LOW], title: 'Next snapshot' },
-      );
+      // The same report, rerun on the repaired diagram.
+      await report.morph([`verify(flow).ok: ${after.ok}`, `warnings: ${after.warnings.length}`]);
     }
 
     await this.step('walk', {
@@ -124,28 +134,30 @@ export default class MermaidExplainer extends Scene {
     await d.unmark();
     await d.dim(['A', 'B']);
     await d.walk([['A', 'B']], { trail: true });
-    await d.note('B', 'the yes branch', { side: 'below' });
     const route = d.snapshot.parts.find((p) => p.role === 'edge' && p.from === 'A' && p.to === 'B')!.route ?? [];
     const pt = (p: readonly number[] | undefined) => (p ? `(${p[0]!.toFixed(2)}, ${p[1]!.toFixed(2)})` : '–');
     const linked = d.snapshot.parts.some((p) => p.role === 'edge' && p.from === 'B' && p.to === 'C');
-    await s.card(
-      [
+    await column(
+      card([
         ['edge', 'A -> B'],
         ['route points', route.length],
         ['starts', pt(route[0])],
         ['ends', pt(route.at(-1))],
-      ],
-      { at: [...SIDE_TOP], title: 'Route the token used' },
-    );
-    await s.code(
-      ["d.walk([['A', 'B']])  // real edge", "d.walk([['B', 'C']])", linked ? '// B -> C exists' : '// throws: not a real link'],
-      { at: [...SIDE_LOW], title: 'walk() checks the snapshot', fontSize: 0.22 },
+      ]),
+      code(
+        [
+          "d.walk([['A', 'B']])  // real edge",
+          "d.walk([['B', 'C']])",
+          linked ? '// B -> C exists' : '// throws: not a real link',
+        ],
+        0.22,
+      ),
     );
 
     await this.step('evidence', {
       title: 'The chart counts stored verifier warnings',
       caption:
-        'scene.snapshots.json stores each diagram’s marks, ids, routes and verifier findings. The bars count the warnings stored for the first edit and for the final diagram.',
+        'The scene.snapshots folder stores each diagram’s marks, ids, routes and verifier findings. The bars count the warnings stored for the first edit and for the final diagram.',
     });
     const final = d.snapshot;
     const count = findings.warnings.length,
@@ -159,21 +171,15 @@ export default class MermaidExplainer extends Scene {
       },
       { box: 'main' },
     );
-    await chart.note('bar:0:First edit', count ? `${count} unlabeled branches` : '0: labeled from the start', {
-      side: 'above',
-    });
-    await chart.note('bar:0:Final', `${finalCount} after ${missing ? 'repair' : 'the first edit'}`, {
-      side: 'above',
-    });
-    await s.card(
-      [
+    // A bar of height zero draws nothing, so a zero gets its value as a note.
+    if (!count) await chart.note('bar:0:First edit', '0 warnings', { side: 'above' });
+    if (!finalCount) await chart.note('bar:0:Final', '0 warnings', { side: 'above' });
+    await column(
+      card([
         ['renderer', final.renderer],
         ['marks', final.parts.length],
         ['edge routes', final.parts.filter((p) => p.route).length],
-        ['first warnings', count],
-        ['final warnings', finalCount],
-      ],
-      { at: 'side', title: 'Stored in scene.snapshots.json' },
+      ]),
     );
     this.state.finalWarnings = finalCount;
 
@@ -189,18 +195,10 @@ export default class MermaidExplainer extends Scene {
         source: 'gitGraph TB:\n commit id: "source"\n commit id: "typed edit"\n commit id: "checked snapshot"',
         style: STYLE,
       },
-      { box: 'main' },
+      { box: 'full' },
     );
     await git.note('source', 'flow.mmd', { side: 'right' });
     await git.note('typed edit', missing ? '2 set_label ops' : 'labels in first edit', { side: 'right' });
-    await git.note('checked snapshot', `${finalCount} warnings, pinned`, { side: 'right' });
-    await s.card(
-      [
-        ['renderer', final.renderer],
-        ['cache', 'scene.snapshots.json'],
-        ['on upgrade', 'review the diff'],
-      ],
-      { at: 'side', title: 'Pinned with the source' },
-    );
+    await git.note('checked snapshot', `${finalCount} warnings, ${final.renderer}`, { side: 'right' });
   }
 }

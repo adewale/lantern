@@ -1,0 +1,1173 @@
+{
+  "version": 1,
+  "renderer": "agentic-mermaid@0.4.1",
+  "spec": {
+    "source": "graph LR\nInput[empty stdin] --> Echo[echo hello]\nEcho --> Tr[tr a-z A-Z]\nTr --> Output[stdout]",
+    "style": "chalkboard"
+  },
+  "family": "flowchart",
+  "width": 702.08,
+  "height": 124.8,
+  "palette": {
+    "paper": "#17362f",
+    "ink": "#f5f1df",
+    "accent": "#ffe08a",
+    "muted": "#c7d2c4"
+  },
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"702.08\" height=\"124.8\" viewBox=\"0 0 702.08 124.8\" style=\"--bg:#17362f;--fg:#f5f1df;--line:#ece6cf;--accent:#ffe08a;--muted:#c7d2c4;--surface:#17362f;--border:#f3ecd5;--font:Caveat;background:#17362f\">\n<style>\n  text { font-family: var(--font, 'Caveat'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #f5f1df;\n    --_text-sec:      #c7d2c4;\n    --_text-muted:    #c7d2c4;\n    --_text-faint:    #8f9b8e;\n    --_line:          #ece6cf;\n    --_arrow:         #ffe08a;\n    --_node-fill:     #17362f;\n    --_node-stroke:   #f3ecd5;\n    --_group-fill:    #17362f;\n    --_group-hdr:     #223f38;\n    --_inner-stroke:  #324c44;\n    --_key-badge:     #2d4941;\n  }\n</style>\n<rect width=\"702.08\" height=\"124.8\" fill=\"#17362f\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#ffe08a\" stroke=\"#ffe08a\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#ffe08a\" stroke=\"#ffe08a\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-var282d2dfg29\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#f5f1df\" stroke=\"#f5f1df\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start-var282d2dfg29\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#f5f1df\" stroke=\"#f5f1df\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Input\" data-to=\"Echo\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"173.92000000000002,62.4 221.92000000000002,62.4\" fill=\"none\" stroke=\"#f5f1df\" stroke-width=\"1.8\" marker-end=\"url(#arrowhead-var282d2dfg29)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Input-&gt;Echo#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Input to Echo\" />\n<path d=\"M175.02 63.27 C187.22 61.59, 206.42 60.72, 220.43 64.13 M173.23 63.1 C190.35 62.18, 205.48 63.31, 222.76 62.64\" fill=\"none\" stroke=\"#f5f1df\" stroke-width=\"3.42\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Echo\" data-to=\"Tr\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"350.08000000000004,62.4 398.08000000000004,62.4\" fill=\"none\" stroke=\"#f5f1df\" stroke-width=\"1.8\" marker-end=\"url(#arrowhead-var282d2dfg29)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Echo-&gt;Tr#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Echo to Tr\" />\n<path d=\"M351.13 62.82 C364.76 63.18, 379.48 63.34, 396.97 61.34 M349.22 62.5 C365.78 63.14, 380.01 62.37, 397.86 61.73\" fill=\"none\" stroke=\"#f5f1df\" stroke-width=\"3.42\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Tr\" data-to=\"Output\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"517.6,62.4 565.6,62.4\" fill=\"none\" stroke=\"#f5f1df\" stroke-width=\"1.8\" marker-end=\"url(#arrowhead-var282d2dfg29)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Tr-&gt;Output#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Tr to Output\" />\n<path d=\"M520.01 60.68 C526.19 63.85, 536.52 62.85, 566.1 61 M517.19 63.13 C532.18 63.49, 546.16 61.8, 565.63 62.09\" fill=\"none\" stroke=\"#f5f1df\" stroke-width=\"3.42\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<g class=\"node\" data-id=\"Input\" data-label=\"empty stdin\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M38.89 40.92 C85.78 43.06, 126.24 43.15, 173.44 41.18 M41.07 39.45 C74.82 40.04, 109.36 39.47, 173.91 40.09 M173.64 38.18 C174.92 54.47, 175.19 70.63, 171.68 82.81 M174 41.23 C172.82 52.2, 173.81 65.73, 173.95 84.78 M174.45 83.87 C132.51 82.19, 92.99 82.27, 38.87 85.64 M172.85 85.33 C137.78 85.86, 102.36 86.52, 39.05 86 M39 83.04 C41.35 75.41, 38.34 62.78, 40.3 39.34 M39.94 85.4 C39.28 71.36, 40.26 57.68, 39.36 39.95\" fill=\"none\" stroke=\"#f5f1df\" stroke-width=\"1.4249999999999998\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Input\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#17362f\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"106.96000000000001\" y=\"62.4\" text-anchor=\"middle\" font-size=\"16\" font-weight=\"700\" fill=\"#f5f1df\" dy=\"5.6\" textLength=\"85.92\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">empty stdin</text>\n</g>\n<g class=\"node\" data-id=\"Echo\" data-label=\"echo hello\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M219.63 38.52 C266.6 37.58, 308.05 39.96, 348.42 37.55 M221.98 40.75 C268.67 41.05, 314.24 40.95, 350.35 41.02 M349.45 38.65 C348.92 55.39, 350.49 69.65, 347.72 85.91 M349.29 40.89 C351.24 50.27, 351.72 58.31, 350.74 85.2 M348.29 84.72 C309.07 84.33, 265.96 83.29, 220.91 87.14 M351.29 85.28 C304.09 85.16, 258.34 86.23, 222.1 85.33 M223.71 85.47 C219.19 68.34, 219.79 48.38, 224.17 39.14 M221.58 84.78 C222.61 71.87, 222.64 60.37, 221.03 39.27\" fill=\"none\" stroke=\"#f5f1df\" stroke-width=\"1.4249999999999998\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Echo\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#17362f\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"286\" y=\"62.4\" text-anchor=\"middle\" font-size=\"16\" font-weight=\"700\" fill=\"#f5f1df\" dy=\"5.6\" textLength=\"80.16\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">echo hello</text>\n</g>\n<g class=\"node\" data-id=\"Tr\" data-label=\"tr a-z A-Z\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M399.38 37.85 C436.74 39.12, 473.28 37.71, 517.51 40.69 M396.95 40.71 C427.09 41.6, 457.61 41.31, 517.33 40.85 M516.39 38.34 C517.05 53.82, 517.59 69.51, 515.65 82.91 M516.86 40.09 C516.92 54.5, 517.19 66.41, 518.79 83.82 M518.52 87.27 C482.02 87.84, 451.7 87.01, 400.53 86.96 M516.4 85.15 C479.28 85.31, 441.27 84.46, 398.18 84.41 M397.43 86.62 C395.83 72.74, 396.09 60.49, 397.85 37.94 M398.02 85.53 C396.74 67.17, 398.27 51.38, 397.53 39.91\" fill=\"none\" stroke=\"#f5f1df\" stroke-width=\"1.4249999999999998\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Tr\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#17362f\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"457.84000000000003\" y=\"62.4\" text-anchor=\"middle\" font-size=\"16\" font-weight=\"700\" fill=\"#f5f1df\" dy=\"5.6\" textLength=\"71.52\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">tr a-z A-Z</text>\n</g>\n<g class=\"node\" data-id=\"Output\" data-label=\"stdout\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M567.15 38.06 C586.45 42.4, 611.59 38.7, 660.26 37.63 M566.23 40.52 C596.43 40.02, 627.93 42.06, 661.7 40.94 M662.8 42.28 C664.5 52.6, 660.68 72.02, 661.5 82.44 M662.87 40.14 C662.8 57.17, 662.65 73.91, 661.35 85 M661.91 86.9 C636.46 84.82, 612.62 82.73, 566.53 84.95 M661.68 85.9 C635.14 86.04, 606.3 85.64, 565.68 84.38 M566.61 85.47 C564.13 68.66, 566.38 59.3, 565.49 41.08 M565.42 85.86 C565.28 69.65, 565.19 53.59, 565.87 39.89\" fill=\"none\" stroke=\"#f5f1df\" stroke-width=\"1.4249999999999998\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Output\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#17362f\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"613.84\" y=\"62.4\" text-anchor=\"middle\" font-size=\"16\" font-weight=\"700\" fill=\"#f5f1df\" dy=\"5.6\" textLength=\"48.48\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">stdout</text>\n</g>\n</svg>",
+  "parts": [
+    {
+      "id": "__frame",
+      "role": "frame",
+      "kind": "shape",
+      "svg": "",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              -1.734723437202716e-20,
+              0,
+              2.340266704559326,
+              0,
+              4.680533409118652,
+              0,
+              7.0208001136779785,
+              0,
+              7.0208001136779785,
+              -0.41599997878074646,
+              7.0208001136779785,
+              -0.8319999575614929,
+              7.0208001136779785,
+              -1.2480000257492065,
+              4.680533409118652,
+              -1.2480000257492065,
+              2.340266704559326,
+              -1.2480000257492065,
+              -1.734723437202716e-20,
+              -1.2480000257492065,
+              -1.734723437202716e-20,
+              -0.8320000171661377,
+              -1.734723437202716e-20,
+              -0.41600000858306885,
+              -1.734723437202716e-20,
+              0
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#17362f",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "edge:Input->Echo#0",
+      "role": "edge",
+      "kind": "connector",
+      "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Input\" data-to=\"Echo\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"173.92000000000002,62.4 221.92000000000002,62.4\" fill=\"none\" stroke=\"var(--fg)\" stroke-width=\"1.8\" marker-end=\"url(#arrowhead-var282d2dfg29)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Input-&gt;Echo#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Input to Echo\" />\n<path d=\"M175.02 63.27 C187.22 61.59, 206.42 60.72, 220.43 64.13 M173.23 63.1 C190.35 62.18, 205.48 63.31, 222.76 62.64\" fill=\"none\" stroke=\"var(--fg)\" stroke-width=\"3.42\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.7391999959945679,
+              -0.6240000128746033,
+              1.8991999626159668,
+              -0.6240000128746033,
+              2.0592000484466553,
+              -0.6240000128746033,
+              2.2191998958587646,
+              -0.6240000128746033
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#f5f1df",
+            "strokeWidth": 0.018,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.0931999683380127,
+              -0.5789999961853027,
+              2.141200065612793,
+              -0.5940000414848328,
+              2.189199924468994,
+              -0.609000027179718,
+              2.2372000217437744,
+              -0.6240000128746033,
+              2.189199924468994,
+              -0.6389999985694885,
+              2.141200065612793,
+              -0.6539999842643738,
+              2.0931999683380127,
+              -0.6690000295639038,
+              2.0931999683380127,
+              -0.6389999985694885,
+              2.0931999683380127,
+              -0.609000027179718,
+              2.0931999683380127,
+              -0.5789999961853027
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f5f1df",
+            "stroke": "#f5f1df",
+            "strokeWidth": 0.01349999964237213,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              1.7502000331878662,
+              -0.6327000260353088,
+              1.8722000122070312,
+              -0.6158999800682068,
+              2.064199924468994,
+              -0.607200026512146,
+              2.2042999267578125,
+              -0.6412999629974365
+            ],
+            [
+              1.7322999238967896,
+              -0.6309999823570251,
+              1.9035000801086426,
+              -0.6218000054359436,
+              2.054800033569336,
+              -0.6331000328063965,
+              2.227599859237671,
+              -0.6263999938964844
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#f5f1df",
+            "strokeWidth": 0.034199999999999994,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "Input",
+      "to": "Echo",
+      "route": [
+        [
+          1.7392,
+          -0.624
+        ],
+        [
+          2.2192000000000003,
+          -0.624
+        ]
+      ]
+    },
+    {
+      "id": "edge:Echo->Tr#0",
+      "role": "edge",
+      "kind": "connector",
+      "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Echo\" data-to=\"Tr\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"350.08000000000004,62.4 398.08000000000004,62.4\" fill=\"none\" stroke=\"var(--fg)\" stroke-width=\"1.8\" marker-end=\"url(#arrowhead-var282d2dfg29)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Echo-&gt;Tr#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Echo to Tr\" />\n<path d=\"M351.13 62.82 C364.76 63.18, 379.48 63.34, 396.97 61.34 M349.22 62.5 C365.78 63.14, 380.01 62.37, 397.86 61.73\" fill=\"none\" stroke=\"var(--fg)\" stroke-width=\"3.42\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.5007998943328857,
+              -0.6240000128746033,
+              3.660799980163574,
+              -0.6240000128746033,
+              3.8207998275756836,
+              -0.6240000128746033,
+              3.980799913406372,
+              -0.6240000128746033
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#f5f1df",
+            "strokeWidth": 0.018,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.85479998588562,
+              -0.5789999961853027,
+              3.9027998447418213,
+              -0.5940000414848328,
+              3.9507999420166016,
+              -0.609000027179718,
+              3.9987998008728027,
+              -0.6240000128746033,
+              3.9507999420166016,
+              -0.6389999985694885,
+              3.9027998447418213,
+              -0.6539999842643738,
+              3.85479998588562,
+              -0.6690000295639038,
+              3.85479998588562,
+              -0.6389999985694885,
+              3.85479998588562,
+              -0.609000027179718,
+              3.85479998588562,
+              -0.5789999961853027
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f5f1df",
+            "stroke": "#f5f1df",
+            "strokeWidth": 0.01349999964237213,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.5113000869750977,
+              -0.6281999945640564,
+              3.6476001739501953,
+              -0.6317999958992004,
+              3.794800043106079,
+              -0.633400022983551,
+              3.9697000980377197,
+              -0.6133999824523926
+            ],
+            [
+              3.4921998977661133,
+              -0.625,
+              3.6577999591827393,
+              -0.6313999891281128,
+              3.800100088119507,
+              -0.623699963092804,
+              3.978599786758423,
+              -0.6172999739646912
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#f5f1df",
+            "strokeWidth": 0.034199999999999994,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "Echo",
+      "to": "Tr",
+      "route": [
+        [
+          3.5008000000000004,
+          -0.624
+        ],
+        [
+          3.9808000000000003,
+          -0.624
+        ]
+      ]
+    },
+    {
+      "id": "edge:Tr->Output#0",
+      "role": "edge",
+      "kind": "connector",
+      "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Tr\" data-to=\"Output\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"517.6,62.4 565.6,62.4\" fill=\"none\" stroke=\"var(--fg)\" stroke-width=\"1.8\" marker-end=\"url(#arrowhead-var282d2dfg29)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Tr-&gt;Output#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Tr to Output\" />\n<path d=\"M520.01 60.68 C526.19 63.85, 536.52 62.85, 566.1 61 M517.19 63.13 C532.18 63.49, 546.16 61.8, 565.63 62.09\" fill=\"none\" stroke=\"var(--fg)\" stroke-width=\"3.42\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              5.175999641418457,
+              -0.6240000128746033,
+              5.335999965667725,
+              -0.6240000128746033,
+              5.495999813079834,
+              -0.6240000128746033,
+              5.655999660491943,
+              -0.6240000128746033
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#f5f1df",
+            "strokeWidth": 0.018,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              5.529999732971191,
+              -0.5789999961853027,
+              5.577999591827393,
+              -0.5940000414848328,
+              5.625999927520752,
+              -0.609000027179718,
+              5.673999786376953,
+              -0.6240000128746033,
+              5.625999927520752,
+              -0.6389999985694885,
+              5.577999591827393,
+              -0.6539999842643738,
+              5.529999732971191,
+              -0.6690000295639038,
+              5.529999732971191,
+              -0.6389999985694885,
+              5.529999732971191,
+              -0.609000027179718,
+              5.529999732971191,
+              -0.5789999961853027
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f5f1df",
+            "stroke": "#f5f1df",
+            "strokeWidth": 0.01349999964237213,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              5.200099945068359,
+              -0.6068000197410583,
+              5.261899948120117,
+              -0.6384999752044678,
+              5.365200042724609,
+              -0.6284999847412109,
+              5.660999774932861,
+              -0.6100000143051147
+            ],
+            [
+              5.171899795532227,
+              -0.6313000321388245,
+              5.3217997550964355,
+              -0.6349000334739685,
+              5.461599826812744,
+              -0.6179999709129333,
+              5.656300067901611,
+              -0.6208999752998352
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#f5f1df",
+            "strokeWidth": 0.034199999999999994,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "Tr",
+      "to": "Output",
+      "route": [
+        [
+          5.176,
+          -0.624
+        ],
+        [
+          5.656000000000001,
+          -0.624
+        ]
+      ]
+    },
+    {
+      "id": "Input",
+      "role": "node",
+      "kind": "group",
+      "svg": "<g class=\"node\" data-id=\"Input\" data-label=\"empty stdin\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M38.89 40.92 C85.78 43.06, 126.24 43.15, 173.44 41.18 M41.07 39.45 C74.82 40.04, 109.36 39.47, 173.91 40.09 M173.64 38.18 C174.92 54.47, 175.19 70.63, 171.68 82.81 M174 41.23 C172.82 52.2, 173.81 65.73, 173.95 84.78 M174.45 83.87 C132.51 82.19, 92.99 82.27, 38.87 85.64 M172.85 85.33 C137.78 85.86, 102.36 86.52, 39.05 86 M39 83.04 C41.35 75.41, 38.34 62.78, 40.3 39.34 M39.94 85.4 C39.28 71.36, 40.26 57.68, 39.36 39.95\" fill=\"none\" stroke=\"var(--fg)\" stroke-width=\"1.4249999999999998\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Input\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"106.96000000000001\" y=\"62.4\" text-anchor=\"middle\" font-size=\"16\" font-weight=\"700\" fill=\"var(--fg)\" dy=\"5.6\">empty stdin</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.3888999819755554,
+              -0.409199982881546,
+              0.8578000068664551,
+              -0.43060001730918884,
+              1.2624000310897827,
+              -0.43150001764297485,
+              1.7344000339508057,
+              -0.41179999709129333
+            ],
+            [
+              0.4106999933719635,
+              -0.3945000171661377,
+              0.748199999332428,
+              -0.4004000127315521,
+              1.0936000347137451,
+              -0.3947000205516815,
+              1.7390999794006348,
+              -0.4009000062942505
+            ],
+            [
+              1.7364000082015991,
+              -0.38179999589920044,
+              1.7491999864578247,
+              -0.544700026512146,
+              1.75190007686615,
+              -0.7062999606132507,
+              1.7167999744415283,
+              -0.8280999660491943
+            ],
+            [
+              1.7400000095367432,
+              -0.4122999906539917,
+              1.728200078010559,
+              -0.5220000147819519,
+              1.7380999326705933,
+              -0.6573000550270081,
+              1.7394999265670776,
+              -0.8478000164031982
+            ],
+            [
+              1.744499921798706,
+              -0.8387000560760498,
+              1.3250999450683594,
+              -0.8219000101089478,
+              0.9298999905586243,
+              -0.8226999640464783,
+              0.3886999785900116,
+              -0.8564000129699707
+            ],
+            [
+              1.7285000085830688,
+              -0.8533000349998474,
+              1.3777999877929688,
+              -0.8586000204086304,
+              1.0235999822616577,
+              -0.8651999831199646,
+              0.3904999792575836,
+              -0.8600000143051147
+            ],
+            [
+              0.38999998569488525,
+              -0.8303999900817871,
+              0.41349998116493225,
+              -0.7541000247001648,
+              0.38339999318122864,
+              -0.6277999877929688,
+              0.40299999713897705,
+              -0.39340001344680786
+            ],
+            [
+              0.399399995803833,
+              -0.8540000319480896,
+              0.392799973487854,
+              -0.7135999798774719,
+              0.4025999903678894,
+              -0.5767999887466431,
+              0.3936000168323517,
+              -0.3995000123977661
+            ]
+          ],
+          "closed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#f5f1df",
+            "strokeWidth": 0.014249999999999999,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#f5f1df",
+            "stroke": "#17362f",
+            "strokeWidth": 0.029999999999999995,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "empty stdin",
+          "fontSize": 0.15999999999999998,
+          "textRun": {
+            "text": "empty stdin",
+            "x": 106.96000000000001,
+            "y": 68,
+            "size": 16,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              -1.734723475976807e-18,
+              0
+            ],
+            "width": 85.92
+          }
+        }
+      ]
+    },
+    {
+      "id": "Echo",
+      "role": "node",
+      "kind": "group",
+      "svg": "<g class=\"node\" data-id=\"Echo\" data-label=\"echo hello\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M219.63 38.52 C266.6 37.58, 308.05 39.96, 348.42 37.55 M221.98 40.75 C268.67 41.05, 314.24 40.95, 350.35 41.02 M349.45 38.65 C348.92 55.39, 350.49 69.65, 347.72 85.91 M349.29 40.89 C351.24 50.27, 351.72 58.31, 350.74 85.2 M348.29 84.72 C309.07 84.33, 265.96 83.29, 220.91 87.14 M351.29 85.28 C304.09 85.16, 258.34 86.23, 222.1 85.33 M223.71 85.47 C219.19 68.34, 219.79 48.38, 224.17 39.14 M221.58 84.78 C222.61 71.87, 222.64 60.37, 221.03 39.27\" fill=\"none\" stroke=\"var(--fg)\" stroke-width=\"1.4249999999999998\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Echo\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"286\" y=\"62.4\" text-anchor=\"middle\" font-size=\"16\" font-weight=\"700\" fill=\"var(--fg)\" dy=\"5.6\">echo hello</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.1963000297546387,
+              -0.38519999384880066,
+              2.6660001277923584,
+              -0.3758000135421753,
+              3.0804998874664307,
+              -0.39959999918937683,
+              3.4842002391815186,
+              -0.37549999356269836
+            ],
+            [
+              2.2197999954223633,
+              -0.4074999988079071,
+              2.6867001056671143,
+              -0.4104999899864197,
+              3.142399787902832,
+              -0.40950000286102295,
+              3.503499984741211,
+              -0.41019999980926514
+            ],
+            [
+              3.494500160217285,
+              -0.3865000009536743,
+              3.4892001152038574,
+              -0.5539000034332275,
+              3.5048999786376953,
+              -0.6965000033378601,
+              3.4772000312805176,
+              -0.8591000437736511
+            ],
+            [
+              3.4929001331329346,
+              -0.4088999927043915,
+              3.512399911880493,
+              -0.5027000308036804,
+              3.517199993133545,
+              -0.5831000208854675,
+              3.507399797439575,
+              -0.8519999980926514
+            ],
+            [
+              3.4829001426696777,
+              -0.8472000360488892,
+              3.090700149536133,
+              -0.8433000445365906,
+              2.659600019454956,
+              -0.8328999876976013,
+              2.2091000080108643,
+              -0.871399998664856
+            ],
+            [
+              3.5129001140594482,
+              -0.8528000116348267,
+              3.0408999919891357,
+              -0.8516000509262085,
+              2.583400011062622,
+              -0.8623000383377075,
+              2.2209999561309814,
+              -0.8533000349998474
+            ],
+            [
+              2.237100124359131,
+              -0.8547000288963318,
+              2.1919000148773193,
+              -0.6833999752998352,
+              2.19789981842041,
+              -0.4838000237941742,
+              2.2416999340057373,
+              -0.39139997959136963
+            ],
+            [
+              2.2158000469207764,
+              -0.8478000164031982,
+              2.226099967956543,
+              -0.7187000513076782,
+              2.2263998985290527,
+              -0.6036999821662903,
+              2.2102999687194824,
+              -0.3927000164985657
+            ]
+          ],
+          "closed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#f5f1df",
+            "strokeWidth": 0.014249999999999999,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#f5f1df",
+            "stroke": "#17362f",
+            "strokeWidth": 0.029999999999999995,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "echo hello",
+          "fontSize": 0.15999999999999998,
+          "textRun": {
+            "text": "echo hello",
+            "x": 286,
+            "y": 68,
+            "size": 16,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              -1.734723475976807e-18,
+              0
+            ],
+            "width": 80.16
+          }
+        }
+      ]
+    },
+    {
+      "id": "Tr",
+      "role": "node",
+      "kind": "group",
+      "svg": "<g class=\"node\" data-id=\"Tr\" data-label=\"tr a-z A-Z\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M399.38 37.85 C436.74 39.12, 473.28 37.71, 517.51 40.69 M396.95 40.71 C427.09 41.6, 457.61 41.31, 517.33 40.85 M516.39 38.34 C517.05 53.82, 517.59 69.51, 515.65 82.91 M516.86 40.09 C516.92 54.5, 517.19 66.41, 518.79 83.82 M518.52 87.27 C482.02 87.84, 451.7 87.01, 400.53 86.96 M516.4 85.15 C479.28 85.31, 441.27 84.46, 398.18 84.41 M397.43 86.62 C395.83 72.74, 396.09 60.49, 397.85 37.94 M398.02 85.53 C396.74 67.17, 398.27 51.38, 397.53 39.91\" fill=\"none\" stroke=\"var(--fg)\" stroke-width=\"1.4249999999999998\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Tr\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"457.84000000000003\" y=\"62.4\" text-anchor=\"middle\" font-size=\"16\" font-weight=\"700\" fill=\"var(--fg)\" dy=\"5.6\">tr a-z A-Z</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.993800163269043,
+              -0.37849998474121094,
+              4.3673996925354,
+              -0.3911999762058258,
+              4.732800006866455,
+              -0.37709999084472656,
+              5.175100326538086,
+              -0.40689998865127563
+            ],
+            [
+              3.9695000648498535,
+              -0.40709999203681946,
+              4.270899772644043,
+              -0.41599997878074646,
+              4.576099872589111,
+              -0.413100004196167,
+              5.173300266265869,
+              -0.40849998593330383
+            ],
+            [
+              5.163900375366211,
+              -0.38339999318122864,
+              5.170499801635742,
+              -0.5382000207901001,
+              5.175900459289551,
+              -0.6951000094413757,
+              5.156500339508057,
+              -0.8291000127792358
+            ],
+            [
+              5.168600082397461,
+              -0.4009000062942505,
+              5.1691999435424805,
+              -0.5450000166893005,
+              5.171899795532227,
+              -0.6641000509262085,
+              5.187899589538574,
+              -0.8381999731063843
+            ],
+            [
+              5.185200214385986,
+              -0.8726999759674072,
+              4.820199966430664,
+              -0.8783999681472778,
+              4.517000198364258,
+              -0.8701000213623047,
+              4.005300045013428,
+              -0.8695999979972839
+            ],
+            [
+              5.164000034332275,
+              -0.8515000343322754,
+              4.792799949645996,
+              -0.8531000018119812,
+              4.4126996994018555,
+              -0.8445999622344971,
+              3.981799840927124,
+              -0.8441000580787659
+            ],
+            [
+              3.974299907684326,
+              -0.8662000298500061,
+              3.9582998752593994,
+              -0.727400004863739,
+              3.960900068283081,
+              -0.6049000024795532,
+              3.9785001277923584,
+              -0.37939998507499695
+            ],
+            [
+              3.9801998138427734,
+              -0.8553000092506409,
+              3.967399835586548,
+              -0.6717000007629395,
+              3.9826998710632324,
+              -0.5138000249862671,
+              3.9753000736236572,
+              -0.39910000562667847
+            ]
+          ],
+          "closed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#f5f1df",
+            "strokeWidth": 0.014249999999999999,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#f5f1df",
+            "stroke": "#17362f",
+            "strokeWidth": 0.029999999999999995,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "tr a-z A-Z",
+          "fontSize": 0.15999999999999998,
+          "textRun": {
+            "text": "tr a-z A-Z",
+            "x": 457.84000000000003,
+            "y": 68,
+            "size": 16,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              -1.734723475976807e-18,
+              0
+            ],
+            "width": 71.52
+          }
+        }
+      ]
+    },
+    {
+      "id": "Output",
+      "role": "node",
+      "kind": "group",
+      "svg": "<g class=\"node\" data-id=\"Output\" data-label=\"stdout\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M567.15 38.06 C586.45 42.4, 611.59 38.7, 660.26 37.63 M566.23 40.52 C596.43 40.02, 627.93 42.06, 661.7 40.94 M662.8 42.28 C664.5 52.6, 660.68 72.02, 661.5 82.44 M662.87 40.14 C662.8 57.17, 662.65 73.91, 661.35 85 M661.91 86.9 C636.46 84.82, 612.62 82.73, 566.53 84.95 M661.68 85.9 C635.14 86.04, 606.3 85.64, 565.68 84.38 M566.61 85.47 C564.13 68.66, 566.38 59.3, 565.49 41.08 M565.42 85.86 C565.28 69.65, 565.19 53.59, 565.87 39.89\" fill=\"none\" stroke=\"var(--fg)\" stroke-width=\"1.4249999999999998\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Output\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"613.84\" y=\"62.4\" text-anchor=\"middle\" font-size=\"16\" font-weight=\"700\" fill=\"var(--fg)\" dy=\"5.6\">stdout</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              5.671500205993652,
+              -0.3806000053882599,
+              5.864500045776367,
+              -0.4240000247955322,
+              6.115900039672852,
+              -0.3869999945163727,
+              6.60260009765625,
+              -0.37630000710487366
+            ],
+            [
+              5.662299633026123,
+              -0.4052000045776367,
+              5.964300155639648,
+              -0.4002000093460083,
+              6.279299736022949,
+              -0.420600026845932,
+              6.617000102996826,
+              -0.40939998626708984
+            ],
+            [
+              6.627999782562256,
+              -0.4227999746799469,
+              6.644999980926514,
+              -0.5259999632835388,
+              6.606800079345703,
+              -0.7201999425888062,
+              6.614999771118164,
+              -0.824400007724762
+            ],
+            [
+              6.628699779510498,
+              -0.40139999985694885,
+              6.627999782562256,
+              -0.5716999769210815,
+              6.626500129699707,
+              -0.7391000390052795,
+              6.613499641418457,
+              -0.8500000238418579
+            ],
+            [
+              6.6190996170043945,
+              -0.8690000176429749,
+              6.36460018157959,
+              -0.8482000231742859,
+              6.126199722290039,
+              -0.8273000121116638,
+              5.665300369262695,
+              -0.8494999408721924
+            ],
+            [
+              6.616799831390381,
+              -0.859000027179718,
+              6.351400375366211,
+              -0.8604000210762024,
+              6.062999725341797,
+              -0.8564000129699707,
+              5.656799793243408,
+              -0.8437999486923218
+            ],
+            [
+              5.666100025177002,
+              -0.8547000288963318,
+              5.641300201416016,
+              -0.6866000294685364,
+              5.663800239562988,
+              -0.5929999947547913,
+              5.654900074005127,
+              -0.4108000099658966
+            ],
+            [
+              5.654199600219727,
+              -0.8586000204086304,
+              5.6528000831604,
+              -0.6965000033378601,
+              5.651899814605713,
+              -0.5358999967575073,
+              5.658699989318848,
+              -0.39890000224113464
+            ]
+          ],
+          "closed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#f5f1df",
+            "strokeWidth": 0.014249999999999999,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#f5f1df",
+            "stroke": "#17362f",
+            "strokeWidth": 0.029999999999999995,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "stdout",
+          "fontSize": 0.15999999999999998,
+          "textRun": {
+            "text": "stdout",
+            "x": 613.84,
+            "y": 68,
+            "size": 16,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              -1.734723475976807e-18,
+              0
+            ],
+            "width": 48.48
+          }
+        }
+      ]
+    }
+  ],
+  "findings": {
+    "ok": true,
+    "warnings": [],
+    "layout": {
+      "version": 1,
+      "kind": "flowchart",
+      "nodes": [
+        {
+          "id": "Input",
+          "x": 40,
+          "y": 40,
+          "w": 106,
+          "h": 37,
+          "shape": "rectangle",
+          "label": "empty stdin"
+        },
+        {
+          "id": "Echo",
+          "x": 194,
+          "y": 40,
+          "w": 102,
+          "h": 37,
+          "shape": "rectangle",
+          "label": "echo hello"
+        },
+        {
+          "id": "Tr",
+          "x": 344,
+          "y": 40,
+          "w": 95,
+          "h": 37,
+          "shape": "rectangle",
+          "label": "tr a-z A-Z"
+        },
+        {
+          "id": "Output",
+          "x": 488,
+          "y": 40,
+          "w": 78,
+          "h": 37,
+          "shape": "rectangle",
+          "label": "stdout"
+        }
+      ],
+      "edges": [
+        {
+          "id": "Input->Echo",
+          "from": "Input",
+          "to": "Echo",
+          "path": [
+            [
+              146,
+              58
+            ],
+            [
+              194,
+              58
+            ]
+          ]
+        },
+        {
+          "id": "Echo->Tr",
+          "from": "Echo",
+          "to": "Tr",
+          "path": [
+            [
+              296,
+              58
+            ],
+            [
+              344,
+              58
+            ]
+          ]
+        },
+        {
+          "id": "Tr->Output",
+          "from": "Tr",
+          "to": "Output",
+          "path": [
+            [
+              440,
+              58
+            ],
+            [
+              488,
+              58
+            ]
+          ]
+        }
+      ],
+      "groups": [],
+      "bounds": {
+        "w": 605,
+        "h": 117
+      }
+    }
+  }
+}

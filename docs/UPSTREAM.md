@@ -19,6 +19,8 @@ Merge deliberately, rerunning inherited tests, the explainer portfolio, style fi
 | Restore original FadeOut opacity | Re-showing styled artwork turned faint marks fully opaque | Failing 0.14-opacity regression observed, then fixed |
 | Optional SVG paint semantics and cache invalidation | Real styles need line caps/joins, dashes, fill rule, miter limit and paint order | Twelve-style non-text renderer comparison and all authored snapshots |
 | Interpolate optional style fields at exact endpoints | A native-to-styled transform previously omitted newly introduced paint fields; reverse easing also needs restoration | Failing add/remove/there-and-back regression observed, then fixed |
+| `Scene.onStep(listener)` and `Scene.addDescriber(fn)` | Helpers wrapped `scene.step` and `scene.describe` per instance, which a second wrapper would fight | `test/explain-emphasis.test.ts`; golden traces unchanged |
+| `Step.hold`: when a step's caption-reading hold begins | The player kept "playing" a still frame through the hold; video still needs it | Golden traces changed only by gaining the field (stripping it reproduces the old hashes) |
 | Fixed rectangular paint viewports | Visual review found zoomed diagram backgrounds painting over the heading | Real nested/translated raster regression failed before the fix; copy/record immutability, exact seeking and browser SVG namespaces/references are tested |
 
 Offer the general fixes upstream separately from the product layer. No upstream submission or acceptance is claimed here. External scene registration and video tooling stay downstream so this fork does not depend on an upstream decision.
@@ -27,7 +29,7 @@ Offer the general fixes upstream separately from the product layer. No upstream 
 
 The optional build dependency is pinned to **0.4.1**. Browser artifacts never import it. `build/capture.ts` is the small adapter to `registerBackend`, `createMermaidRenderer` and `drawNode`; capture must equal plain `renderMermaidSVG` byte for byte. CSS and SVG lowering are build-only and fail on unread artwork. Compact resolved snapshots form the runtime boundary.
 
-Upgrade requests for upstream:
+Agentic Mermaid is the same owner's project, so these are changes to release in 0.5 rather than requests:
 1. A documented per-mark renderer returning stable `{id, svg}` records and resources.
 2. Stable label/tick/legend identities across typed mutations.
 3. A distinct `state` family report (0.4.1 reports it as flowchart; the adapter normalizes this).

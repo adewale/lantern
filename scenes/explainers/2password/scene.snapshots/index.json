@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "importer": 4,
+  "renderer": "agentic-mermaid@0.4.1",
+  "sourceHash": "dfd41f5a3e7222db33255167a7734a4bd82a797e4c4d6aebdc6f27e97659338b",
+  "diagrams": {
+    "[\"graph LR\\nAgent[Agent model] --> Tool[Secret tool]\\nTool --> Metadata[Search metadata]\\nTool --> Op[1Password CLI]\\nOp --> Vault[Vault]\",\"excalidraw\",null]": "58b70df51b5f03d0.json",
+    "[\"graph LR\\nCredential[Desktop approval] --> Op[op run]\\nRefs[Secret reference] --> Op\\nOp --> Scrub[env -u token]\\nScrub --> Child[app]\",\"excalidraw\",null]": "1f60967777fa7bfd.json",
+    "[\"graph LR\\nCredential[Service-account token] --> Op[op run]\\nRefs[Secret reference] --> Op\\nOp --> Scrub[env -u token]\\nScrub --> Child[app]\",\"excalidraw\",null]": "7e94b2eab10748f1.json",
+    "[\"sequenceDiagram\\n participant A as Agent tool\\n participant O as op CLI\\n participant U as Desktop app\\n A->>O: op item list\\n O->>U: approve?\\n A->>O: op item get prod\\n O->>U: approve?\\n A->>O: op run … app\\n O->>U: approve?\",\"excalidraw\",null]": "1f9db65a2c4c7bac.json",
+    "[\"sequenceDiagram\\n participant A as Agent tool\\n participant O as op CLI\\n participant V as 1Password service\\n A->>O: op item list\\n O->>V: token auth\\n A->>O: op item get prod\\n O->>V: token auth\\n A->>O: op run … app\\n O->>V: token auth\",\"excalidraw\",null]": "7b495d000a50f9d8.json"
+  }
+}

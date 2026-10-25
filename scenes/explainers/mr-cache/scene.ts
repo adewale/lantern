@@ -1,5 +1,5 @@
-import { Scene, FadeIn, FadeOut } from '../../../src/index.ts';
-import { stage, settingsOf, CodeBlock } from '../../../explain/index.ts';
+import { Scene } from '../../../src/index.ts';
+import { stage, settingsOf } from '../../../explain/index.ts';
 const STYLE = 'hand-drawn';
 const BEFORE = 'graph LR\nRequest[Request] --> H[Handler]\nH --> D1[(D1)]';
 const AFTER =
@@ -15,16 +15,6 @@ const OPS = [
 ];
 // The merge request from Lantern's own example (scenes/mr-cache.ts).
 const OLD = ['async function getUser(id, env) {', '  return env.DB.prepare(SQL).bind(id).first();', '}'];
-const DIFF = [
-  '  async function getUser(id, env) {',
-  '-   return env.DB.prepare(SQL).bind(id).first();',
-  '+   const hit = await env.KV.get(`user:${id}`, "json");',
-  '+   if (hit) return hit;',
-  '+   const row = await env.DB.prepare(SQL).bind(id).first();',
-  '+   await env.KV.put(`user:${id}`, JSON.stringify(row), { expirationTtl: 300 });',
-  '+   return row;',
-  '  }',
-];
 const NEW = [
   'async function getUser(id, env) {',
   '  const hit = await env.KV.get(`user:${id}`, "json");',
@@ -75,7 +65,7 @@ export default class CacheMRExplainer extends Scene {
         'getUser is a single D1 query, so the walked request goes from the handler straight to D1, and every lookup is a database read.',
     });
     const flow = await s.show({ source: BEFORE, style: STYLE }, { box: 'top' });
-    const code = await s.code(OLD, { at: 'bottom', title: 'users.ts' });
+    const code = await s.code(OLD, { at: 'bottom' });
     await flow.walk(
       [
         ['Request', 'H'],
@@ -84,28 +74,23 @@ export default class CacheMRExplainer extends Scene {
       { trail: true },
     );
     await code.focus(1);
-    await flow.note('D1', 'read on every request', { side: 'below' });
     this.state.databaseReads = 'every request';
 
     await this.step('diff', {
       title: 'The merge request reads KV before D1',
       caption:
-        'The diff puts a KV lookup, keyed by the user’s id, ahead of the D1 query. Only a miss reads the database, and it then writes the row to KV with expirationTtl: 300, a five-minute time to live.',
+        'The five marked lines are the diff: a KV lookup, keyed by the user’s id, now runs before the D1 query. Only a miss reads the database, and it then writes the row to KV with expirationTtl: 300, a five-minute time to live.',
     });
-    const diff = new CodeBlock(this, s.palette, DIFF, { at: s.regions.bottom, fontSize: 0.22, title: 'users.ts', diff: true });
-    s.keep(diff);
     await flow.clearNotes();
     await flow.unmark();
-    await this.play(new FadeOut(code), new FadeIn(diff));
+    await code.morph(NEW, { markAdded: true });
 
     await this.step('after', {
       title: 'Replayed on the diagram, the diff adds KV and a hit path',
       caption:
         'The same edit, replayed as diagram operations, removes the handler’s edge to D1 and puts a KV cache between them. A hit goes from KV straight to Reply, while a miss falls through to D1 before replying.',
     });
-    const merged = new CodeBlock(this, s.palette, NEW, { at: s.regions.bottom, fontSize: 0.22, title: 'users.ts' });
-    s.keep(merged);
-    await this.play(new FadeOut(diff), new FadeIn(merged));
+    await code.clearMarks();
     await flow.morph({ source: AFTER, style: STYLE }, { ops: OPS });
     await flow.note('KV', 'TTL 300 s', { side: 'above' });
     this.state.databaseReads = 'misses only';
@@ -114,15 +99,15 @@ export default class CacheMRExplainer extends Scene {
       title: which === 'hit' ? 'A cache hit returns from KV with no D1 read' : 'A cache miss reads D1 once, then caches the row',
       caption:
         which === 'hit'
-          ? 'The user is already in KV, so getUser returns on line three, the second highlighted line, and the note under D1 shows 0 reads. Choose ‘Cache miss’ under ‘Follow a request’ to see the longer path.'
+          ? 'The user is already in KV, so getUser returns on line three, the second highlighted line, and the note under D1 shows 0 reads.'
           : 'KV has no entry, so getUser runs the highlighted lines: it reads the row from D1, puts it in KV for 300 seconds and returns it. Lookups for the same user in that window are hits; D1 still serves every miss.',
     });
     const path = PATH[which];
     await flow.clearNotes();
     await flow.dim([...new Set(path.flat())]);
     await flow.walk(path, { trail: true });
-    await merged.focus(which === 'hit' ? [1, 2] : [3, 5]);
-    await flow.note('D1', which === 'hit' ? '0 reads' : '1 read, then cached', {
+    await code.focus(which === 'hit' ? [1, 2] : [3, 5]);
+    await flow.note('D1', which === 'hit' ? '0 reads' : '1 read', {
       side: 'below',
     });
     this.state.request = which;

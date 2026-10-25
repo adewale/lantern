@@ -32,7 +32,7 @@ const evidence: {
 for (const item of EXPLAINERS) {
   const project = await collectProject(join(ROOT, 'scenes/explainers', item.id));
   const built = await buildExplainer(project, join(directory, item.id + '.html'));
-  const query = 'query' in item ? new URLSearchParams(item.query) : new URLSearchParams();
+  const query = new URLSearchParams(item.query ?? '');
   const variant =
       project.variants.find((v) => [...query].every(([k, value]) => v.values[k] === value)) ??
       defaultVariant(project),
@@ -75,19 +75,41 @@ await writeFile(
   join(directory, 'evidence.json'),
   JSON.stringify({ version: 1, totals, scenes: evidence }, null, 2) + '\n',
 );
-const cards = EXPLAINERS.map((item, i) => {
+const tile = (item: (typeof EXPLAINERS)[number], lead = false) => {
   const data = evidence.find((s) => s.id === item.id)!;
-  const query = 'query' in item ? item.query : '';
-  const href = `${item.id}.html?step=${item.step}${query ? '&' + query : ''}`;
-  return `<article class="card${i < 4 ? ' featured' : ''}"><a href="${htmlEscape(href)}"><img src="${item.id}.png" width="960" height="540" loading="${i < 2 ? 'eager' : 'lazy'}" alt="${htmlEscape(data.title)} — a frame from the explanation"><div class="card-body"><span class="tag">${htmlEscape(item.tag)}</span><h2>${htmlEscape(data.title)}</h2><p>${htmlEscape(item.description)}</p><span class="open">Explore ${data.variants === 1 ? 'the explanation' : data.variants + ' cases'} ↗</span></div></a><div class="card-links"><a href="${item.id}.steps.png">Step contact sheet</a><a href="../videos/${item.id}.mp4">Captioned MP4</a><a href="${item.id}.html.receipt.json">Build receipt</a></div></article>`;
-}).join('');
-const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lantern Explainers — one scene, every output</title><style>
-:root{color-scheme:dark;--bg:#0c151c;--panel:#15232d;--fg:#e9f1f5;--muted:#a0b3bf;--line:#2b414d;--accent:#8ee0cb;font:16px/1.6 system-ui,sans-serif}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg)}main{max-width:1180px;margin:auto;padding:clamp(20px,4vw,56px)}.eyebrow,.tag{font-size:.73rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}h1{font-size:clamp(2.5rem,7vw,5.2rem);line-height:1.04;letter-spacing:-.06em;max-width:900px;margin:22px 0}h1 em{font-style:normal;color:var(--accent)}.intro{font-size:1.18rem;color:var(--muted);max-width:690px}.stats{display:flex;gap:28px;flex-wrap:wrap;padding:24px 0;margin:26px 0;border-block:1px solid var(--line)}.stats strong{display:block;font-size:1.6rem;color:var(--fg)}.stats span{font-size:.8rem;color:var(--muted)}nav{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:34px}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}.card{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}.card>a{display:block;color:inherit}.card>a:hover{text-decoration:none}.card:hover{border-color:var(--accent)}img{display:block;width:100%;height:auto;aspect-ratio:16/9}.card-body{padding:22px}h2{font-size:1.35rem;line-height:1.25;letter-spacing:-.025em;margin:10px 0}p{color:var(--muted)}.open{color:var(--accent);font-weight:600;font-size:.85rem}.card-links{display:flex;flex-wrap:wrap;gap:16px;padding:0 22px 20px;font-size:.75rem}footer{margin-top:48px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:20px}code{background:var(--panel);padding:3px 6px;border-radius:4px}:focus-visible{outline:3px solid var(--accent);outline-offset:4px}@media(max-width:700px){.grid{grid-template-columns:1fr}.stats{gap:18px}}
-</style></head><body><main><span class="eyebrow">Lantern · native, inspectable explanations</span><h1>Each explanation here is<br><em>one TypeScript scene.</em></h1><p class="intro">The page steps through the scene at the reader’s pace, and the same scene renders the captioned MP4 linked under each card. Settings such as a sign-in method or a city are separate cases, each built and checked before anyone reads it.</p><div class="stats"><span><strong>${totals.explainers}</strong>explanations</span><span><strong>${variants}</strong>complete cases</span><span><strong>${families.size}</strong>diagram families</span><span><strong>${styles.size}</strong>authored diagram styles</span></div><nav><a href="pap.html">Start with a protocol ↗</a><a href="embed-lab.html">Two embeds on one host page ↗</a><a href="evidence.json">Inspect build evidence ↗</a></nav><section class="grid">${cards}</section><footer><p>Each page loads only its own explanation and cases. Scenes use embedded glyph outlines and build-time diagram snapshots; readers need no account, storage or runtime network access.</p><p>Built on Lantern by Ivar Vong (MIT), with Agentic Mermaid 0.4.1 at build time. Diagram lettering uses embedded Inter rather than style-specific fonts. The 2password example is an explicitly scoped offline fixture. No endorsement is implied.</p><p>Rebuild locally: <code>npm run demos:check</code> · <code>npm run demos:render</code></p></footer></main></body></html>`;
+  const href = `${item.id}.html?step=${item.step}${item.query ? '&' + item.query : ''}`;
+  return `<li${lead ? ' class="lead"' : ''}><a href="${htmlEscape(href)}"><img src="${item.id}.png" width="960" height="540" alt="" loading="${lead ? 'eager' : 'lazy'}"><span>${htmlEscape(data.title)}</span></a></li>`;
+};
+const topics = EXPLAINERS.filter((e) => e.group === 'topic'),
+  toolchain = EXPLAINERS.filter((e) => e.group === 'toolchain');
+// Experience surface: the pictures lead, each tile is a picture and the claim it makes.
+const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lantern explainers</title><style>
+:root{color-scheme:light dark;--bg:#f6f7f9;--fg:#14202b;--muted:#536170;--line:#d9dfe6;--accent:#176166;--outline:rgb(0 0 0/.1);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+@media(prefers-color-scheme:dark){:root{--bg:#0f161d;--fg:#e9eff5;--muted:#9fb0c0;--line:#2a3845;--accent:#86d3c8;--outline:rgb(255 255 255/.1)}}
+*{box-sizing:border-box}::selection{background:color-mix(in srgb,var(--accent) 30%,transparent)}
+body{margin:0;background:var(--bg);color:var(--fg)}
+main{max-width:1180px;margin:0 auto;padding:40px 16px 64px}
+h1{font-size:clamp(1.75rem,4vw,2.5rem);line-height:1.15;letter-spacing:-.02em;font-weight:650;margin:0 0 32px;text-wrap:balance}
+h2{font-size:1.125rem;font-weight:650;margin:64px 0 16px;padding-top:24px;border-top:1px solid var(--line)}
+ul.tiles{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:32px 24px}
+ul.tiles .lead{grid-column:1/-1}
+@media(min-width:760px){ul.tiles .lead{grid-column:span 2;grid-row:span 2}}
+.tiles a{display:block;color:inherit;text-decoration:none;border-radius:12px}
+.tiles img{display:block;width:100%;height:auto;aspect-ratio:16/9;border-radius:10px;outline:1px solid var(--outline);outline-offset:-1px;transition:transform 200ms cubic-bezier(.23,1,.32,1)}
+.tiles span{display:block;margin-top:12px;font-weight:600;line-height:1.35;text-wrap:balance}
+.tiles .lead span{font-size:1.25rem}
+.tiles a:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+@media(hover:hover) and (pointer:fine){.tiles a:hover img{transform:scale(1.01)}.tiles a:hover span{color:var(--accent)}}
+.more{display:flex;flex-wrap:wrap;gap:8px 24px;margin:24px 0 0;padding:0;list-style:none}
+.more a{color:var(--accent);text-underline-offset:.2em}
+footer{margin-top:64px;font-size:.875rem;color:var(--muted)}
+footer a{color:inherit}
+@media(prefers-reduced-motion:reduce){.tiles img{transition:none}}
+</style></head><body><main><h1>Lantern explainers</h1><ul class="tiles">${topics.map((t, i) => tile(t, i === 0)).join('')}</ul><h2>How these are made</h2><ul class="tiles">${toolchain.map((t) => tile(t)).join('')}</ul><ul class="more"><li><a href="embed-lab.html">Two embeds on one host page</a></li><li><a href="evidence.json">Build evidence</a></li></ul><footer>Built on <a href="https://github.com/ivarvong/lantern">Lantern</a> by Ivar Vong (MIT) and <a href="https://github.com/adewale/agentic-mermaid">Agentic Mermaid</a>.</footer></main></body></html>`;
 await writeFile(join(directory, 'index.html'), html);
 await writeFile(
   join(directory, 'embed-lab.html'),
-  `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two independent Lantern embeds</title><style>body{font:16px/1.5 system-ui;max-width:1200px;margin:auto;padding:20px;background:#eef2f5;color:#17232d}main{display:grid;grid-template-columns:1fr 1fr;gap:20px}section{min-width:0;background:white;border-radius:12px}a{color:#196469}@media(max-width:850px){main{grid-template-columns:1fr}}</style><h1>Two explanations on one host page</h1><p>Each iframe below resizes only itself when you open its transcript, change its case or move between steps. <a href="index.html">Back to the collection</a>.</p><main><section id="protocol"></section><section id="cache"></section></main><script src="loader.js" data-src="pap.html?step=sign-in" data-target="protocol" data-title="Personal Agent Protocol"></script><script src="loader.js" data-src="mr-cache.html?request=miss&step=request" data-target="cache" data-title="Cache request"></script></html>`,
+  `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two embeds on one host page</title><style>:root{color-scheme:light;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}body{max-width:1200px;margin:0 auto;padding:32px 16px 64px;background:#eceff3;color:#14202b}h1{font-size:1.5rem;font-weight:650;letter-spacing:-.015em;margin:0 0 8px;text-wrap:balance}a{color:#176166;text-underline-offset:.2em}main{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;align-items:start}section{min-width:0;background:#fff;border-radius:12px;box-shadow:0 1px 2px rgb(0 0 0/.06),0 0 0 1px rgb(0 0 0/.06);overflow:hidden}@media(max-width:850px){main{grid-template-columns:1fr}}</style><h1>Two embeds, each sized to its own content</h1><a href="index.html">All explainers</a><main><section id="protocol"></section><section id="cache"></section></main><script src="loader.js" data-src="pap.html?step=sign-in" data-target="protocol" data-title="Personal Agent Protocol"></script><script src="loader.js" data-src="mr-cache.html?request=miss&step=request" data-target="cache" data-title="Cache request"></script></html>`,
 );
 console.log(`Gallery: ${join(directory, 'index.html')}\n${JSON.stringify(totals)}`);
 

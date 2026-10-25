@@ -98,13 +98,12 @@ export default class LanternExplainer extends Scene {
       caption:
         'demo.ts holds one async construct method: each this.step call names an idea and each this.play call runs an animation on the stage beside it. The engine calls that method directly, with no lesson interpreter in between, as the card’s last row records.',
     });
-    const code = await s.code(DEMO, { at: 'main', title: 'demo.ts', fontSize: 0.26 });
+    const code = await s.code(DEMO, { at: 'main', fontSize: 0.26 });
     // The same program, running on a small stage beside it.
     const mini = s.keep(
       new Rectangle({ width: 4.6, height: 2.5875, stroke: s.soft, strokeWidth: 0.02, cornerRadius: 0.06 }),
     ).moveTo([5.1, 1.55]);
-    const miniLabel = s.keep(new Text('the program, running', { fontSize: 0.22, color: s.soft })).moveTo([5.1, 3.05]);
-    await this.play(new FadeIn(mini), new FadeIn(miniLabel));
+    await this.play(new FadeIn(mini));
     let stepLabel = s.keep(new Text("step 'before'", { fontSize: 0.22, font: 'mono', color: ink }));
     stepLabel.moveTo([3.0, 0.5], [-1, 0]);
     await code.focus(3);
@@ -126,7 +125,7 @@ export default class LanternExplainer extends Scene {
         ['plays', count('this.play(')],
         ['lesson interpreter', 'none'],
       ],
-      { at: [2.65, -4.25, 7.55, -0.3], title: 'What the engine sees' },
+      { at: [2.65, -4.25, 7.55, -0.3] },
     );
 
     await this.step('objects', {
@@ -146,7 +145,7 @@ export default class LanternExplainer extends Scene {
         ['StringSink', 'SVG string'],
         ['TraceSink', 'inspection trace'],
       ],
-      { at: 'side', title: 'One frame, three sinks' },
+      { at: [5.1, 1.9] },
     );
 
     // A real circle's points, drawn and listed.
@@ -165,7 +164,7 @@ export default class LanternExplainer extends Scene {
     await classes.clearNotes();
     await classes.unmark();
     await classes.focus(['Mobject'], { zoom: 0.85 });
-    await classes.note('Mobject', 'points: Float32Array of cubic Béziers', { side: 'below' });
+    await classes.note('Mobject', 'points: Float32Array', { side: 'below' });
     circle.moveTo(centre);
     const at = (p: Vec): Vec => [p[0] + centre[0], p[1] + centre[1]];
     const handles = new Group(),
@@ -185,8 +184,8 @@ export default class LanternExplainer extends Scene {
       .slice(0, 4)
       .map((p, i) => `[${f(p[0])}, ${f(p[1])}]  ${i === 0 || i === 3 ? 'anchor' : 'handle'}`);
     await s.code(
-      [`new Circle({ radius: ${R} })`, `${pts.length} points, ${(pts.length - 1) / 3} cubics`, ...first, '…'],
-      { at: [2.65, -4.25, 7.55, 0.2], title: 'circle.subpaths[0]', fontSize: 0.22 },
+      [`circle.subpaths[0]  // radius ${R}`, ...first, '…'],
+      { at: [2.65, -4.25, 7.55, 0.2], fontSize: 0.22 },
     );
 
     await this.step('clock', {
@@ -203,8 +202,6 @@ export default class LanternExplainer extends Scene {
       ],
       { parallel: true, trail: true },
     );
-    await flow.note('Browser', 'waits for display', { side: 'right' });
-    await flow.note('Trace', 'runs at once', { side: 'right' });
     // Frame times from the scene's own fps; two sinks pace the same frames differently.
     const dt = 1 / this.fps,
       frames = 9,
@@ -214,13 +211,9 @@ export default class LanternExplainer extends Scene {
     const lane = (label: string, y: number) =>
       new Text(label, { fontSize: 0.22, color: s.soft, anchor: 'start' }).moveTo([-7.3, y], [-1, 0]);
     ruler.add(
-      new Text(`dt = 1/${this.fps} s, fixed`, { fontSize: 0.24, color: ink, weight: 'bold', anchor: 'start' }).moveTo(
-        [-7.3, -1.0],
-        [-1, 0],
-      ),
       lane('scene time (ms)', -1.75),
-      lane('browser: one per display tick', -2.75),
-      lane('trace: all at once', -3.6),
+      lane('browser sink', -2.75),
+      lane('trace sink', -3.6),
       new Line([x0 - 0.2, -1.5], [x0 + pitch * (frames - 1) + 0.2, -1.5], { stroke: ink, strokeWidth: 0.02 }),
     );
     for (let n = 0; n < frames; n++) {
@@ -276,10 +269,7 @@ export default class LanternExplainer extends Scene {
       new Text(same ? '=' : '≠', { fontSize: 0.7, color: accent, weight: 'bold' }).moveTo([0, -2.35]),
     );
     await this.play(new FadeIn(left), new FadeIn(right));
-    const word = s.keep(
-      new Text(same ? 'identical SVG' : 'frames differ', { fontSize: 0.22, color: accent }).moveTo([0, -2.95]),
-    );
-    await this.play(new FadeIn(verdict), new FadeIn(word));
+    await this.play(new FadeIn(verdict));
     this.state.seekContract = 'played SVG equals seeked SVG';
 
     await this.step('publish', {
@@ -297,8 +287,6 @@ export default class LanternExplainer extends Scene {
       ],
       { trail: true },
     );
-    await flow.note('Build', 'diagrams captured once', { side: 'below' });
-    await flow.note('Reader', 'pace only', { side: 'below' });
     await s.code(
       [
         '$ explain build scenes/explainers/lantern',
@@ -307,7 +295,7 @@ export default class LanternExplainer extends Scene {
         '$ explain render scenes/explainers/lantern --footer',
         '  captioned video, chapters from the same steps',
       ],
-      { at: [-7.55, -4.25, 7.55, -0.85], title: 'explain build and explain render', fontSize: 0.24 },
+      { at: [-7.55, -4.25, 7.55, -0.85], fontSize: 0.24 },
     );
 
     await this.step('inspect', {
@@ -329,7 +317,7 @@ export default class LanternExplainer extends Scene {
         '  …',
         ']',
       ],
-      { at: [-7.55, -4.25, 1.6, -0.85], title: 'trace.json (this scene)', fontSize: 0.21 },
+      { at: [-7.55, -4.25, 1.6, -0.85], fontSize: 0.21 },
     );
     await s.card(
       [
@@ -338,7 +326,7 @@ export default class LanternExplainer extends Scene {
         ['legibility', 'text ≥ 14 px'],
         ['bare runtime', 'no renderer'],
       ],
-      { at: [1.9, -4.25, 7.55, -0.85], title: 'explain check, every case' },
+      { at: [1.9, -4.25, 7.55, -0.85] },
     );
   }
 }

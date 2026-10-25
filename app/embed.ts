@@ -4,17 +4,33 @@ import type { Trace } from '../src/trace.ts';
 import { bindSnapshots, withSettings, resolveSettings } from '../explain/index.ts';
 import type { ExplainerClass, Settings, SnapshotStore } from '../explain/index.ts';
 import { reportHeight } from './embed-protocol.ts';
+import { icon } from './embed-icons.ts';
+import type { IconName } from './embed-icons.ts';
+import { StageZoom } from './embed-zoom.ts';
 
-const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string): HTMLElementTagNameMap[K] => {
+const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, className?: string): HTMLElementTagNameMap[K] => {
   const node = document.createElement(tag);
   if (text != null) node.textContent = text;
+  if (className) node.className = className;
   return node;
 };
-export async function mountEmbed(
-  root: HTMLElement,
-  Source: ExplainerClass,
-  snapshots: SnapshotStore,
-): Promise<void> {
+/** A button named for assistive technology; `text` shows a visible label beside the icon. */
+function button(label: string, name: IconName, { text, className }: { text?: string; className?: string } = {}) {
+  const b = el('button', undefined, className ?? (text ? 'button' : 'button icon'));
+  b.type = 'button';
+  b.setAttribute('aria-label', label);
+  if (!text) b.title = label;
+  b.append(icon(name));
+  if (text) b.append(el('span', text));
+  return b;
+}
+function setIcon(b: HTMLButtonElement, label: string, name: IconName) {
+  b.setAttribute('aria-label', label);
+  b.title = label;
+  b.querySelector('svg')!.replaceWith(icon(name));
+}
+
+export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snapshots: SnapshotStore): Promise<void> {
   const params = new URLSearchParams(location.search);
   document.documentElement.dataset.theme = ['light', 'dark'].includes(params.get('theme') ?? '')
     ? params.get('theme')!
@@ -24,167 +40,85 @@ export async function mountEmbed(
     trace: Trace,
     Active: ExplainerClass,
     selected = 0,
-    generation = 0;
-  let playing = false;
+    generation = 0,
+    playing = false;
   const cache = new Map<string, { Scene: ExplainerClass; trace: Trace }>();
+
+  // Title, then the cases it can show: the choice sits next to what it changes.
   const title = el('h1', Source.meta?.title ?? 'An explanation');
-  const stage = el('div');
-  stage.className = 'stage';
+  const head = el('header', undefined, 'head');
+  head.append(title);
+  const choices = new Map<string, HTMLInputElement[]>();
+  for (const s of Source.settings ?? []) {
+    const group = el('fieldset', undefined, 'case');
+    group.append(el('legend', s.label));
+    const segments = el('div', undefined, 'segments');
+    const inputs = s.options.map((o) => {
+      const label = el('label'),
+        input = el('input');
+      input.type = 'radio';
+      input.name = s.id;
+      input.value = o.value;
+      input.addEventListener('change', () => {
+        if (input.checked) void load({ ...values, [s.id]: o.value }, trace.steps[selected]?.step, true);
+      });
+      label.append(input, el('span', o.label));
+      segments.append(label);
+      return input;
+    });
+    group.append(segments);
+    head.append(group);
+    choices.set(s.id, inputs);
+  }
+
+  // The player: the picture, what it says, and how to move on. Enlarge shows all three.
+  const player = el('section', undefined, 'player');
+  player.setAttribute('aria-label', 'Explanation');
+  const stage = el('div', undefined, 'stage');
   stage.setAttribute('role', 'img');
   stage.setAttribute('aria-label', title.textContent!);
-  const caption = el('p');
-  caption.className = 'caption';
-  caption.setAttribute('aria-live', 'polite');
-  const notice = el('p');
-  notice.className = 'notice';
-  notice.setAttribute('role', 'status');
-  const transport = el('div');
-  transport.className = 'transport';
-  transport.setAttribute('aria-label', 'Step navigation');
-  const prev = el('button', '← Previous'),
-    play = el('button', 'Replay step'),
-    next = el('button', 'Next →'),
-    copy = el('button', 'Copy link'),
-    enlarge = el('button', 'Enlarge'),
-    position = el('span');
-  position.className = 'position';
-  enlarge.setAttribute('aria-pressed', 'false');
-  transport.append(prev, next, play, copy, ...(document.fullscreenEnabled ? [enlarge] : []), position);
-  const chapters = el('ol');
-  chapters.className = 'steps';
-  chapters.setAttribute('aria-label', 'Chapters');
-  const fields = el('fieldset');
-  fields.className = 'settings';
-  fields.append(el('legend', 'Try another case'));
-  const selects = new Map<string, HTMLSelectElement>();
-  for (const s of Source.settings ?? []) {
-    const label = el('label', s.label + ' '),
-      select = el('select');
-    select.name = s.id;
-    for (const o of s.options) {
-      const option = el('option', o.label);
-      option.value = o.value;
-      select.append(option);
-    }
-    select.addEventListener('change', () => {
-      void load({ ...values, [s.id]: select.value }, trace.steps[selected]?.step, true);
-    });
-    label.append(select);
-    fields.append(label);
-    selects.set(s.id, select);
-  }
-  if (!selects.size) fields.hidden = true;
-  const transcript = root.querySelector<HTMLElement>('.transcript') ?? el('details');
-  transcript.className = 'transcript';
-  if (transcript instanceof HTMLDetailsElement) transcript.open = false;
   const poster = root.querySelector('svg');
   if (poster) stage.append(poster);
-  const footer = el('div');
-  footer.className = 'footer';
-  footer.append(el('span', 'Built with Lantern · Read at your own pace'));
-  const standalone = el('a', 'Open standalone');
-  standalone.href = location.href;
+  const caption = el('p', undefined, 'caption');
+  caption.setAttribute('aria-live', 'polite');
+  const controls = el('nav', undefined, 'controls');
+  controls.setAttribute('aria-label', 'Steps');
+  const prev = button('Previous step', 'previous'),
+    next = button('Next step', 'next', { text: 'Next', className: 'button primary' });
+  next.append(next.querySelector('svg')!); // the arrow follows the word
+  const tools = el('div', undefined, 'tools');
+  const zoomOut = button('Zoom out', 'zoomOut'),
+    zoomIn = button('Zoom in', 'zoomIn'),
+    zoomFit = button('Fit stage', 'fit'),
+    replay = button('Replay step', 'replay'),
+    copy = button('Copy link', 'link'),
+    enlarge = button('Enlarge', 'enlarge');
+  enlarge.setAttribute('aria-pressed', 'false');
+  tools.append(zoomOut, zoomIn, zoomFit, replay, copy, ...(document.fullscreenEnabled ? [enlarge] : []));
+  controls.append(prev, next, tools);
+  const notice = el('p', undefined, 'notice');
+  notice.setAttribute('role', 'status');
+  player.append(stage, caption, controls, notice);
+
+  const steps = el('ol', undefined, 'steps');
+  steps.setAttribute('aria-label', 'Steps in this explanation');
+  const transcript = root.querySelector<HTMLElement>('.transcript') ?? el('details', undefined, 'transcript');
+  if (transcript instanceof HTMLDetailsElement) transcript.open = false;
+  // Inside a frame, a way out to the full page; a standalone page needs none.
+  const standalone = el('a', 'Open in a new tab', 'standalone');
   standalone.target = '_blank';
   standalone.rel = 'noopener';
-  footer.append(standalone);
-  // Zoom and pan: a 16:9 stage on a phone shows 14 px labels at about 4 px, so the reader
-  // needs to enlarge the vector drawing itself. The controls sit in a row under the stage
-  // (outside its role=img, so assistive technology reaches them) and cover none of it.
-  const frame = el('div');
-  frame.className = 'stage-frame';
-  const zoomBar = el('div');
-  zoomBar.className = 'zoom';
-  zoomBar.setAttribute('aria-label', 'Zoom the stage');
-  const zoomIn = el('button', '+'),
-    zoomOut = el('button', '−'),
-    zoomFit = el('button', 'Fit');
-  zoomIn.setAttribute('aria-label', 'Zoom in');
-  zoomOut.setAttribute('aria-label', 'Zoom out');
-  zoomFit.setAttribute('aria-label', 'Fit stage');
-  zoomBar.append(zoomOut, zoomIn, zoomFit);
-  frame.append(stage, zoomBar);
-  root.replaceChildren(title, frame, caption, transport, notice, chapters, fields, transcript, footer);
-  let zoom = { k: 1, x: 0, y: 0 };
-  const MAX_ZOOM = 6;
-  function applyZoom() {
-    const w = stage.clientWidth,
-      h = stage.clientHeight;
-    zoom.k = Math.min(MAX_ZOOM, Math.max(1, zoom.k));
-    zoom.x = Math.min(0, Math.max(w - w * zoom.k, zoom.x));
-    zoom.y = Math.min(0, Math.max(h - h * zoom.k, zoom.y));
-    const svg = stage.querySelector('svg');
-    if (svg) {
-      svg.style.transformOrigin = '0 0';
-      svg.style.transform = zoom.k === 1 ? '' : `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.k})`;
-    }
-    stage.classList.toggle('zoomed', zoom.k > 1);
+  const framed = window.parent !== window;
+  root.replaceChildren(head, player, steps, transcript, ...(framed ? [standalone] : []));
+
+  const zoom = new StageZoom(stage, () => {
     zoomOut.disabled = zoom.k <= 1;
-    zoomFit.disabled = zoom.k <= 1;
-    zoomIn.disabled = zoom.k >= MAX_ZOOM;
-  }
-  /** Zoom by `factor` keeping the stage point (px, py) still. */
-  function zoomAt(factor: number, px = stage.clientWidth / 2, py = stage.clientHeight / 2) {
-    const k = Math.min(MAX_ZOOM, Math.max(1, zoom.k * factor)),
-      r = k / zoom.k;
-    zoom = { k, x: px - (px - zoom.x) * r, y: py - (py - zoom.y) * r };
-    applyZoom();
-  }
-  zoomIn.onclick = () => zoomAt(1.6);
-  zoomOut.onclick = () => zoomAt(1 / 1.6);
-  zoomFit.onclick = () => {
-    zoom = { k: 1, x: 0, y: 0 };
-    applyZoom();
-  };
-  const local = (e: { clientX: number; clientY: number }) => {
-    const r = stage.getBoundingClientRect();
-    return [e.clientX - r.left, e.clientY - r.top] as const;
-  };
-  stage.addEventListener(
-    'wheel',
-    (e) => {
-      // Trackpad pinch arrives as ctrl+wheel; a plain wheel keeps scrolling the page.
-      if (!e.ctrlKey) return;
-      e.preventDefault();
-      zoomAt(Math.exp(-e.deltaY / 100), ...local(e));
-    },
-    { passive: false },
-  );
-  stage.addEventListener('dblclick', (e) => {
-    if (zoom.k > 1) zoomFit.click();
-    else zoomAt(2.5, ...local(e));
+    zoomIn.disabled = zoom.k >= zoom.max;
+    zoomFit.hidden = zoom.k <= 1;
   });
-  const pointers = new Map<number, { x: number; y: number }>();
-  let pinch = 0;
-  stage.addEventListener('pointerdown', (e) => {
-    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.size === 2) {
-      const [a, b] = [...pointers.values()];
-      pinch = Math.hypot(a!.x - b!.x, a!.y - b!.y);
-    }
-    if (zoom.k > 1 || pointers.size === 2) stage.setPointerCapture(e.pointerId);
-  });
-  stage.addEventListener('pointermove', (e) => {
-    const last = pointers.get(e.pointerId);
-    if (!last) return;
-    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.size === 2) {
-      const [a, b] = [...pointers.values()];
-      const d = Math.hypot(a!.x - b!.x, a!.y - b!.y);
-      if (pinch) zoomAt(d / pinch, ...local({ clientX: (a!.x + b!.x) / 2, clientY: (a!.y + b!.y) / 2 }));
-      pinch = d;
-    } else if (zoom.k > 1) {
-      zoom.x += e.clientX - last.x;
-      zoom.y += e.clientY - last.y;
-      applyZoom();
-    }
-  });
-  const release = (e: PointerEvent) => {
-    pointers.delete(e.pointerId);
-    if (pointers.size < 2) pinch = 0;
-  };
-  stage.addEventListener('pointerup', release);
-  stage.addEventListener('pointercancel', release);
-  new ResizeObserver(() => applyZoom()).observe(stage);
+  zoomIn.onclick = () => zoom.zoomAt(1.6, undefined, undefined, true);
+  zoomOut.onclick = () => zoom.zoomAt(1 / 1.6, undefined, undefined, true);
+  zoomFit.onclick = () => zoom.reset(true);
   reportHeight(root);
 
   function urlFor(): URL {
@@ -197,20 +131,24 @@ export async function mountEmbed(
   function link(push: boolean) {
     const url = urlFor();
     (push ? history.pushState : history.replaceState).call(history, null, '', url);
-    const standaloneUrl = new URL(url);
-    standaloneUrl.searchParams.delete('parentOrigin');
-    standalone.href = standaloneUrl.href;
+    const out = new URL(url);
+    out.searchParams.delete('parentOrigin');
+    standalone.href = out.href;
   }
   function chrome() {
     const step = trace.steps[selected]!;
     caption.textContent = String(step.meta.caption ?? '');
-    position.textContent = `${selected + 1} / ${trace.steps.length}`;
     prev.disabled = selected === 0;
     next.disabled = selected === trace.steps.length - 1;
-    for (const b of chapters.querySelectorAll('button'))
+    for (const b of steps.querySelectorAll('button'))
       b.setAttribute('aria-current', b.dataset.step === step.step ? 'step' : 'false');
     stage.setAttribute('aria-label', `${title.textContent}: ${String(step.meta.title ?? step.step)}`);
-    play.textContent = playing ? 'Stop animation' : 'Replay step';
+    setIcon(replay, playing ? 'Stop animation' : 'Replay step', playing ? 'stop' : 'replay');
+  }
+  function settle(step: Trace['steps'][number]) {
+    zoom.apply();
+    root.classList.remove('loading');
+    document.dispatchEvent(new CustomEvent('lantern:step', { detail: { step: step.step, settings: values } }));
   }
   async function show(index: number, push = true) {
     const gen = ++generation;
@@ -219,53 +157,41 @@ export async function mountEmbed(
     chrome();
     link(push);
     const step = trace.steps[selected]!;
+    // A step's last frame: what the reader looks at while reading its caption.
     const at = Math.max(step.t0, (step.t1 ?? step.t0) - 0.5 / trace.fps);
     const container = el('div'),
       sink = new DomSink(container, { realtime: false });
     await renderAt(Active, at, sink);
-    if (gen === generation) {
-      stage.replaceChildren(...container.childNodes);
-      applyZoom();
-      root.classList.remove('loading');
-      document.dispatchEvent(
-        new CustomEvent('lantern:step', { detail: { step: step.step, settings: values } }),
-      );
-    }
+    if (gen !== generation) return;
+    stage.replaceChildren(...container.childNodes);
+    settle(step);
   }
   const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-  /** Move forward the way the author wrote it: play the step's animation, then rest on its last frame. */
+  /** Forward the way the author wrote it: play the step, then rest on its last frame. */
   async function advance() {
     if (selected >= trace.steps.length - 1) return;
-    if (reduced()) {
-      await show(selected + 1);
-      return;
-    }
+    if (reduced()) return show(selected + 1);
     selected += 1;
     link(true);
     await animate(true);
   }
   async function animate(force = false) {
-    if (playing && !force) {
-      await show(selected, false);
-      return;
-    }
+    if (playing && !force) return show(selected, false);
     if (reduced()) {
-      notice.textContent = 'Reduced motion is enabled; the completed step is shown.';
-      await show(selected, false);
-      return;
+      notice.textContent = 'Reduced motion is on, so the finished step is shown.';
+      return show(selected, false);
     }
     const gen = ++generation;
     playing = true;
     chrome();
     const step = trace.steps[selected]!,
       start = step.t0,
-      // Stop when the picture stops: the caption-reading hold is for video, while here the reader sets the pace.
+      // Stop when the picture stops: the caption-reading hold is for video; here the reader sets the pace.
       end = step.hold ?? step.t1 ?? trace.duration;
     const container = el('div'),
-      dom = new DomSink(container),
-      seek = new SeekSink(dom, start);
+      seek = new SeekSink(new DomSink(container), start);
     let attached = false;
-    const scene = new Active(
+    await new Active(
       {
         async frame(scene, dt) {
           if (gen !== generation || scene.time > end + 1e-8) throw new StopScene();
@@ -274,28 +200,27 @@ export async function mountEmbed(
           if (!attached && scene.time + 1e-8 >= start) {
             attached = true;
             stage.replaceChildren(...container.childNodes);
-            applyZoom();
+            zoom.apply();
           }
         },
       },
       { skipUntil: start },
-    );
-    await scene.run();
-    if (gen === generation) {
-      playing = false;
-      chrome();
-      root.classList.remove('loading');
-      document.dispatchEvent(
-        new CustomEvent('lantern:step', { detail: { step: step.step, settings: values } }),
-      );
-    }
+    ).run();
+    if (gen !== generation) return;
+    playing = false;
+    chrome();
+    settle(step);
+  }
+  function caseName(values: Settings): string {
+    return (Source.settings ?? [])
+      .map((s) => `${s.label}: ${s.options.find((o) => o.value === values[s.id])?.label ?? values[s.id]}`)
+      .join(' · ');
   }
   function updateTranscript() {
-    const summary = el('summary', 'Read the transcript'),
-      list = el('ol');
+    const list = el('ol');
     for (const s of trace.steps) {
-      const li = el('li');
-      const a = el('a', String(s.meta.title ?? s.step));
+      const li = el('li'),
+        a = el('a', String(s.meta.title ?? s.step));
       const url = urlFor();
       url.searchParams.set('step', s.step);
       a.href = url.href;
@@ -316,8 +241,10 @@ export async function mountEmbed(
       li.append(a);
       sources.append(li);
     }
+    const name = caseName(values);
     transcript.replaceChildren(
-      summary,
+      el('summary', 'Transcript'),
+      ...(name ? [el('h2', name)] : []),
       list,
       ...(sources.children.length ? [el('h2', 'Sources'), sources] : []),
     );
@@ -332,8 +259,8 @@ export async function mountEmbed(
       values = resolveSettings(Source);
       notice.textContent = `${(error as Error).message}. Showing the default case.`;
     }
-    for (const [id, select] of selects) select.value = values[id]!;
-    zoom = { k: 1, x: 0, y: 0 };
+    for (const [id, inputs] of choices) for (const input of inputs) input.checked = input.value === values[id];
+    zoom.reset();
     const key = JSON.stringify(values);
     let entry = cache.get(key);
     if (!entry) {
@@ -348,46 +275,40 @@ export async function mountEmbed(
     selected = step ? trace.steps.findIndex((s) => s.step === step) : 0;
     if (selected < 0) {
       selected = 0;
-      notice.textContent = `This case has no “${step}” step. Showing the first step.`;
+      notice.textContent = `This case has no “${step}” step, so it opens at the first step.`;
     }
-    chapters.replaceChildren(
+    steps.replaceChildren(
       ...trace.steps.map((s, i) => {
         const li = el('li'),
-          button = el('button', `${String(i + 1).padStart(2, '0')} · ${String(s.meta.title ?? s.step)}`);
-        button.dataset.step = s.step;
-        button.addEventListener('click', () => {
-          void show(i);
-        });
-        li.append(button);
+          b = el('button', String(s.meta.title ?? s.step));
+        b.type = 'button';
+        b.dataset.step = s.step;
+        b.addEventListener('click', () => void show(i));
+        li.append(b);
         return li;
       }),
     );
     updateTranscript();
     await show(selected, push);
   }
-  prev.onclick = () => {
-    void show(selected - 1);
-  };
-  next.onclick = () => {
-    void advance();
-  };
+  prev.onclick = () => void show(selected - 1);
+  next.onclick = () => void advance();
+  replay.onclick = () => void animate();
   enlarge.onclick = async () => {
     if (document.fullscreenElement) await document.exitFullscreen();
     else {
-      await frame.requestFullscreen();
+      await player.requestFullscreen();
       // Phones read a 16:9 stage best sideways; not every browser allows the lock.
       const orientation = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> };
       await orientation.lock?.('landscape').catch(() => {});
     }
   };
   document.addEventListener('fullscreenchange', () => {
-    const on = document.fullscreenElement === frame;
-    enlarge.textContent = on ? 'Exit full screen' : 'Enlarge';
+    const on = document.fullscreenElement === player;
+    setIcon(enlarge, on ? 'Exit full screen' : 'Enlarge', on ? 'fit' : 'enlarge');
     enlarge.setAttribute('aria-pressed', String(on));
+    zoom.apply();
   });
-  play.onclick = () => {
-    void animate();
-  };
   copy.onclick = async () => {
     const url = urlFor();
     url.searchParams.delete('parentOrigin');
@@ -400,32 +321,25 @@ export async function mountEmbed(
   };
   root.addEventListener('keydown', (e) => {
     const tag = (e.target as HTMLElement).tagName;
-    if (['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON', 'A', 'SUMMARY'].includes(tag) || e.ctrlKey || e.metaKey)
-      return;
-    if (e.key === '+' || e.key === '=') {
-      e.preventDefault();
-      zoomAt(1.6);
-    } else if (e.key === '-') {
-      e.preventDefault();
-      zoomAt(1 / 1.6);
-    } else if (e.key === '0') {
-      e.preventDefault();
-      zoomFit.click();
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      void advance();
-    } else if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      void show(selected - 1);
-    }
+    if (['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON', 'A', 'SUMMARY'].includes(tag) || e.ctrlKey || e.metaKey) return;
+    const keys: Record<string, () => void> = {
+      ArrowRight: () => void advance(),
+      ArrowLeft: () => void show(selected - 1),
+      '+': () => zoom.zoomAt(1.6),
+      '=': () => zoom.zoomAt(1.6),
+      '-': () => zoom.zoomAt(1 / 1.6),
+      '0': () => zoom.reset(),
+    };
+    const action = keys[e.key];
+    if (!action) return;
+    e.preventDefault();
+    action();
   });
   root.tabIndex = 0;
   const fromURL = () => {
     const q = new URLSearchParams(location.search);
     const request: Record<string, string> = {};
-    for (const s of Source.settings ?? []) {
-      if (q.has(s.id)) request[s.id] = q.get(s.id)!;
-    }
+    for (const s of Source.settings ?? []) if (q.has(s.id)) request[s.id] = q.get(s.id)!;
     return { request, step: q.get('step') ?? undefined };
   };
   window.addEventListener('popstate', () => {

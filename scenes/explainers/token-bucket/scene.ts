@@ -135,11 +135,7 @@ export default class TokenBucketExplainer extends Scene {
       new Text(fmt(n), { fontSize: 0.72, font: 'mono', color: ink }).moveTo(numberAt);
     const level = fill(5);
     let number = numberText(5);
-    const tokensLabel = new Text('tokens', { fontSize: 0.24, color: soft }).moveTo([
-      numberAt[0],
-      numberAt[1] - 0.7,
-    ]);
-    const gauge = new Group(shell, ticks, tokensLabel);
+    const gauge = new Group(shell, ticks);
 
     // ------------------------------------------------------------- balance
     await this.step('balance', {
@@ -151,7 +147,6 @@ export default class TokenBucketExplainer extends Scene {
     await this.play(...chips.map((c) => new FadeIn(c, { runTime: 0.4 })), ...times.map((t) => new FadeIn(t)));
     const code = await s.code(CODE, {
       at: [-2.75, -2.0, 7.55, 1.6],
-      title: 'bucket.allow(now)',
       fontSize: 0.25,
     });
     const card = await s.card(
@@ -160,7 +155,8 @@ export default class TokenBucketExplainer extends Scene {
         ['Last call', 'none yet'],
         ['Refill on arrival', '—'],
       ],
-      { at: [-2.75, -4.25, 7.55, -2.2], width: 6.4, fontSize: 0.24 },
+      // Same width and centre as the code above, so the two share both edges.
+      { at: [-2.75, -4.25, 7.55, -2.2], width: code.width(), fontSize: 0.24 },
     );
     await code.focus(1);
 
@@ -237,7 +233,7 @@ export default class TokenBucketExplainer extends Scene {
         leftover
           ? ` R${plan.indexOf(leftover) + 1} got 429 yet left ${fmt(leftover.after)} tokens, because a request needs a whole token.`
           : ''
-      } The chips, the earlier gauge and these bars all record one run of allow().`,
+      }`,
     });
     await this.play(...[gauge, level, number, code, card].map((m) => new FadeOut(m, { runTime: 0.4 })));
     // A wide canvas, so each column sits under its answer chip.

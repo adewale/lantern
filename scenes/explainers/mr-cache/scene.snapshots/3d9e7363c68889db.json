@@ -1,0 +1,2629 @@
+{
+  "version": 1,
+  "renderer": "agentic-mermaid@0.4.1",
+  "spec": {
+    "source": "graph LR\nRequest[Request] --> H[Handler]\nH --> KV[KV cache]\nKV -->|miss| D1[(D1)]\nKV -->|hit| Reply[Reply]\nD1 --> Reply",
+    "style": "hand-drawn"
+  },
+  "family": "flowchart",
+  "width": 766.307,
+  "height": 151.2,
+  "palette": {
+    "paper": "#f7f5ef",
+    "ink": "#1a1a1e",
+    "accent": "#26262b",
+    "muted": "#1a1a1e"
+  },
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"766.307\" height=\"151.2\" viewBox=\"0 0 766.307 151.2\" style=\"--bg:#f7f5ef;--fg:#1a1a1e;--line:#26262b;--accent:#26262b;--border:#26262b;--font:Caveat;background:#f7f5ef\">\n<style>\n  text { font-family: var(--font, 'Caveat'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #1a1a1e;\n    --_text-sec:      #4b4a4c;\n    --_text-muted:    #656465;\n    --_text-faint:    #807f7e;\n    --_line:          #26262b;\n    --_arrow:         #26262b;\n    --_node-fill:     #f0eee9;\n    --_node-stroke:   #26262b;\n    --_group-fill:    #f7f5ef;\n    --_group-hdr:     #eceae5;\n    --_inner-stroke:  #dcdbd6;\n    --_key-badge:     #e1dfda;\n  }\n</style>\n<rect width=\"766.307\" height=\"151.2\" fill=\"#f7f5ef\" data-backdrop=\"page\" />\n<g data-backdrop=\"paper-ruled\">\n  <line x1=\"0\" y1=\"26\" x2=\"766.307\" y2=\"26\" stroke=\"#26262b\" stroke-width=\"0.5\" opacity=\"0.14\" />\n  <line x1=\"0\" y1=\"52\" x2=\"766.307\" y2=\"52\" stroke=\"#26262b\" stroke-width=\"0.5\" opacity=\"0.14\" />\n  <line x1=\"0\" y1=\"78\" x2=\"766.307\" y2=\"78\" stroke=\"#26262b\" stroke-width=\"0.5\" opacity=\"0.14\" />\n  <line x1=\"0\" y1=\"104\" x2=\"766.307\" y2=\"104\" stroke=\"#26262b\" stroke-width=\"0.5\" opacity=\"0.14\" />\n  <line x1=\"0\" y1=\"130\" x2=\"766.307\" y2=\"130\" stroke=\"#26262b\" stroke-width=\"0.5\" opacity=\"0.14\" />\n</g>\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#26262b\" stroke=\"#26262b\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#26262b\" stroke=\"#26262b\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Request\" data-to=\"H\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"130.856,83.175 178.856,83.175\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Request-&gt;H#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Request to H\" />\n<path d=\"M129.09 84.89 C145.95 83.62, 164.83 82.02, 177.56 82.5 M131.42 82.26 C146.87 83.97, 161.29 83.36, 179.06 83.62\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1.8\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"H\" data-to=\"KV\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"268.23,83.175 316.23,83.175\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:H-&gt;KV#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"H to KV\" />\n<path d=\"M270.06 83.92 C285.98 83.52, 302.46 83.12, 318.07 82 M267.57 82.6 C280.55 83.5, 291.23 83.16, 317.08 82.36\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1.8\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"KV\" data-to=\"D1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"miss\" points=\"415.237,77.025 542.271,77.025\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:KV-&gt;D1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"KV to D1: miss\" />\n<path d=\"M414.36 76.04 C453.8 77.83, 488.74 75.8, 543.32 75.91 M415.08 76.86 C450.29 78.26, 483.83 78.67, 541.99 77.37\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1.8\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"KV\" data-to=\"Reply\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"hit\" points=\"415.23699999999997,89.325 461.929,89.325 461.929,100.9 638.271,100.9 638.271,71.60000000000001 650.271,71.60000000000001\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:KV-&gt;Reply#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"KV to Reply: hit\" />\n<path d=\"M414.04 88.79 C427.39 87.72, 438.43 90.24, 461.46 87.45 M415.98 89.92 C432.64 88.91, 450.1 89.13, 462.34 88.56 M461.94 90.37 C461.92 92.41, 462.08 94.08, 462.86 100.83 M461.7 89.61 C461.41 93.97, 461.67 98.63, 462.18 101.35 M463.23 99.79 C519.8 98.46, 576.78 101.93, 637.51 99.74 M461.65 101.4 C501.65 100.38, 539.19 101.45, 638.86 100.73 M638.82 99.76 C637.27 90.36, 639.72 81.6, 638.84 69.66 M638.22 99.97 C638.49 92.17, 638.02 81.75, 638.5 71.14 M637.44 72.68 C641.03 71.65, 643.8 71.74, 650.74 72.47 M638.79 71.14 C641.54 71.58, 644.85 71.94, 650.2 71.4\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1.8\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"D1\" data-to=\"Reply\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"602.271,65.45 650.271,65.45\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:D1-&gt;Reply#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"D1 to Reply\" />\n<path d=\"M601.1 67.34 C612.12 65.58, 622.13 64.86, 649.59 63.95 M602.19 64.9 C619.71 65.49, 635.38 66.78, 650.02 66.42\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1.8\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n<g class=\"edge-label\" data-from=\"KV\" data-to=\"D1\" data-label=\"miss\">\n  <rect class=\"edge-label-halo\" x=\"497.58166666666665\" y=\"57.87500000000001\" width=\"47.034000000000006\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"#f7f5ef\" stroke=\"none\" />\n  <rect x=\"501.58166666666665\" y=\"61.87500000000001\" width=\"39.034000000000006\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"#f7f5ef\" stroke=\"#dcdbd6\" stroke-width=\"1\" />\n  <text paint-order=\"stroke\" stroke=\"#f7f5ef\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"521.0986666666666\" y=\"77.025\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"#4b4a4c\" dy=\"3.8499999999999996\" textLength=\"23.034\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">miss</text>\n</g>\n<g class=\"edge-label\" data-from=\"KV\" data-to=\"Reply\" data-label=\"hit\">\n  <rect class=\"edge-label-halo\" x=\"420.412\" y=\"70.17500000000001\" width=\"36.342\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"#f7f5ef\" stroke=\"none\" />\n  <rect x=\"424.412\" y=\"74.175\" width=\"28.342\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"#f7f5ef\" stroke=\"#dcdbd6\" stroke-width=\"1\" />\n  <text paint-order=\"stroke\" stroke=\"#f7f5ef\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"438.58299999999997\" y=\"89.325\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"#4b4a4c\" dy=\"3.8499999999999996\" textLength=\"12.342\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">hit</text>\n</g>\n<g class=\"node\" data-id=\"Request\" data-label=\"Request\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M41.3 65.01 C66.22 63.91, 93.06 61.9, 129.16 65.94 M39.01 65.33 C71.79 63.32, 104.62 63.65, 130 64.56 M130.5 63.27 C130.06 79.94, 131 92.07, 132.69 99.73 M130.77 65.42 C131.02 76.6, 130.03 86.76, 130.26 102.37 M130.25 102.96 C98.03 101.55, 70.74 102.44, 41.81 103.49 M130.89 100.73 C96.55 100.71, 61.26 101.91, 40.35 102.06 M41.85 102.1 C39.43 93.16, 40.12 86.91, 40.51 64.12 M40.14 102.37 C39.84 92.67, 38.86 81.89, 39.1 65.67\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Request\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#f7f5ef\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"85.428\" y=\"83.175\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#1a1a1e\" dy=\"4.55\" textLength=\"50.856\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Request</text>\n</g>\n<g class=\"node\" data-id=\"H\" data-label=\"Handler\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M177.27 65.39 C207.88 66.37, 238.28 66.11, 268.12 66.25 M179.79 65.18 C212.58 64.04, 246.38 64.22, 268.07 64.85 M266.75 66.69 C269.23 78.89, 268.48 90.39, 269.7 103.58 M268.52 65.59 C267.66 72.06, 268.26 79.73, 268.02 101.88 M266.4 103.46 C240.03 100.07, 213.63 99.47, 178.85 103.13 M268.52 102.32 C248.08 101.05, 228.02 100.78, 179.61 100.98 M178.18 100.69 C177.45 88.18, 178.03 77.79, 179.73 65.46 M177.94 102.61 C178.45 92.38, 178.4 82.09, 178.43 65.11\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:H\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#f7f5ef\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"223.543\" y=\"83.175\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#1a1a1e\" dy=\"4.55\" textLength=\"49.374\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Handler</text>\n</g>\n<g class=\"node\" data-id=\"KV\" data-label=\"KV cache\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M317.96 65.58 C348.75 65.78, 382.36 65.61, 413.83 63.33 M317.01 64.28 C349.52 64.61, 384.16 65.62, 416.01 65.18 M416.29 65.67 C416.14 78, 415.91 89.09, 413.7 101.47 M414.9 64.13 C414.83 73.77, 415.01 84.45, 415.2 100.76 M416.43 103.39 C380.54 104.04, 346.72 103.51, 314.31 102.24 M414.37 102.56 C380.32 102.66, 343.19 102.13, 316.02 101 M316.17 101.18 C317.24 91.18, 315.8 79.82, 317.26 62.87 M316.27 102.2 C317.09 89.78, 315.91 79.43, 315.58 64.74\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:KV\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#f7f5ef\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"365.73350000000005\" y=\"83.175\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#1a1a1e\" dy=\"4.55\" textLength=\"59.007\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">KV cache</text>\n</g>\n<g class=\"node\" data-id=\"D1\" data-label=\"D1\" data-shape=\"cylinder\" data-role=\"node\">\n  <rect x=\"542.271\" y=\"47\" width=\"60\" height=\"36.900000000000006\" fill=\"#f0eee9\" stroke=\"none\" data-id=\"node-shape:D1\" data-role=\"node\" />\n  <path d=\"M541.3 46.93 C541.74 54.38, 542.43 65.1, 544.25 84.1 M542.16 47.56 C541.79 59.06, 542.78 70.97, 541.31 83.99\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n  <path d=\"M600.78 48.19 C603.17 60.29, 601.47 74.64, 600.61 83.36 M602.19 46.61 C602.53 55.35, 602.87 61.11, 602.28 83.29\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n  <path d=\"M559.16 78.46 C564.17 77.71, 572.4 77.6, 578.39 77.85 C584.38 78.1, 591.29 79.01, 595.08 79.95 C598.88 80.88, 601.59 81.95, 601.15 83.48 C600.71 85.01, 596.77 88.07, 592.44 89.12 C588.11 90.17, 581.17 89.65, 575.15 89.78 C569.14 89.91, 561.33 90.66, 556.36 89.91 C551.38 89.17, 547.12 86.76, 545.31 85.29 C543.5 83.83, 542.63 82.3, 545.5 81.13 C548.37 79.97, 559.21 79.07, 562.52 78.29 C565.83 77.52, 565.06 76.33, 565.36 76.46 M580.55 77.64 C586.29 77.9, 594.17 78.97, 597.59 80.07 C601.01 81.18, 602.07 82.86, 601.07 84.27 C600.07 85.68, 596.2 87.32, 591.57 88.55 C586.94 89.79, 579.31 91.53, 573.29 91.7 C567.28 91.87, 560.28 90.74, 555.48 89.57 C550.68 88.4, 546.03 86, 544.48 84.68 C542.94 83.35, 543.13 82.83, 546.2 81.63 C549.28 80.42, 556.87 78.16, 562.93 77.46 C568.98 76.76, 579.63 77.54, 582.53 77.4 C585.44 77.27, 580.63 76.53, 580.36 76.66\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n  <path d=\"M563.04 40.13 C569.05 39.61, 578.12 40.62, 584 41.1 C589.87 41.57, 595.28 41.81, 598.28 42.99 C601.28 44.16, 603.23 46.56, 602 48.16 C600.77 49.77, 596.03 51.68, 590.9 52.61 C585.77 53.55, 577.78 53.84, 571.24 53.77 C564.7 53.71, 556.35 53.05, 551.65 52.22 C546.95 51.4, 543.9 50.33, 543.03 48.81 C542.15 47.3, 542.35 44.41, 546.43 43.13 C550.5 41.85, 563.28 41.66, 567.48 41.14 C571.68 40.61, 571.6 40.1, 571.6 39.98 M583.43 39.82 C589.16 40.44, 595.05 43.57, 598.12 44.85 C601.19 46.13, 602.77 46.41, 601.85 47.48 C600.93 48.55, 597.36 50.07, 592.6 51.26 C587.84 52.46, 579.78 54.5, 573.28 54.67 C566.78 54.83, 558.98 53.48, 553.61 52.25 C548.23 51.02, 542.18 48.88, 541.02 47.27 C539.86 45.67, 542.94 43.8, 546.66 42.62 C550.38 41.44, 557.34 40.6, 563.33 40.2 C569.32 39.79, 579.23 40.09, 582.58 40.19 C585.93 40.3, 583.37 40.83, 583.42 40.82\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n  <text paint-order=\"stroke\" stroke=\"#f7f5ef\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"572.271\" y=\"65.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#1a1a1e\" dy=\"4.55\" textLength=\"13.806\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">D1</text>\n</g>\n<g class=\"node\" data-id=\"Reply\" data-label=\"Reply\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M648.83 45.37 C675.83 48.49, 700.17 45.19, 727.11 48.16 M649.33 47.96 C670.22 47.28, 691.24 47.33, 725.49 47.65 M725.28 48.22 C727.36 54.92, 727.77 63.13, 726.04 85.23 M727.05 46.78 C726.21 55.7, 726.66 63.42, 726.37 83.13 M726.03 85.76 C701.16 84.25, 674.47 84.65, 651.49 83.53 M725.59 83.11 C706.33 84.34, 684.79 83.08, 650.65 84.71 M650.35 84.67 C650.11 72.38, 651.61 59.22, 649.95 48.17 M651.16 83.01 C650.94 75.62, 650 67.07, 651.26 46.97\" fill=\"none\" stroke=\"#26262b\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Reply\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"#f7f5ef\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"688.289\" y=\"65.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#1a1a1e\" dy=\"4.55\" textLength=\"36.036\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Reply</text>\n</g>\n</svg>",
+  "parts": [
+    {
+      "id": "__frame",
+      "role": "frame",
+      "kind": "shape",
+      "svg": "",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.469446874405432e-20,
+              0,
+              2.554356575012207,
+              0,
+              5.108713150024414,
+              0,
+              7.663070201873779,
+              0,
+              7.663070201873779,
+              -0.5040000081062317,
+              7.663070201873779,
+              -1.0080000162124634,
+              7.663070201873779,
+              -1.5119999647140503,
+              5.108713150024414,
+              -1.5119999647140503,
+              2.554356575012207,
+              -1.5119999647140503,
+              3.469446874405432e-20,
+              -1.5119999647140503,
+              3.469446874405432e-20,
+              -1.0079998970031738,
+              3.469446874405432e-20,
+              -0.5039999485015869,
+              3.469446874405432e-20,
+              0
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f7f5ef",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.469446874405432e-20,
+              -0.25999999046325684,
+              2.554356575012207,
+              -0.25999999046325684,
+              5.108713150024414,
+              -0.25999999046325684,
+              7.663070201873779,
+              -0.25999999046325684
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#26262b",
+            "strokeWidth": 0.005,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.14,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.469446874405432e-20,
+              -0.5199999809265137,
+              2.554356575012207,
+              -0.5199999809265137,
+              5.108713150024414,
+              -0.5199999809265137,
+              7.663070201873779,
+              -0.5199999809265137
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#26262b",
+            "strokeWidth": 0.005,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.14,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.469446874405432e-20,
+              -0.7799999713897705,
+              2.554356575012207,
+              -0.7799999713897705,
+              5.108713150024414,
+              -0.7799999713897705,
+              7.663070201873779,
+              -0.7799999713897705
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#26262b",
+            "strokeWidth": 0.005,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.14,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.469446874405432e-20,
+              -1.0399999618530273,
+              2.554356575012207,
+              -1.0399999618530273,
+              5.108713150024414,
+              -1.0399999618530273,
+              7.663070201873779,
+              -1.0399999618530273
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#26262b",
+            "strokeWidth": 0.005,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.14,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.469446874405432e-20,
+              -1.2999999523162842,
+              2.554356575012207,
+              -1.2999999523162842,
+              5.108713150024414,
+              -1.2999999523162842,
+              7.663070201873779,
+              -1.2999999523162842
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#26262b",
+            "strokeWidth": 0.005,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 0.14,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "edge:Request->H#0",
+      "role": "edge",
+      "kind": "connector",
+      "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"Request\" data-to=\"H\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"130.856,83.175 178.856,83.175\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Request-&gt;H#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Request to H\" />\n<path d=\"M129.09 84.89 C145.95 83.62, 164.83 82.02, 177.56 82.5 M131.42 82.26 C146.87 83.97, 161.29 83.36, 179.06 83.62\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.8\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.3085600137710571,
+              -0.8317500352859497,
+              1.468559980392456,
+              -0.8317500352859497,
+              1.6285600662231445,
+              -0.8317500352859497,
+              1.7885600328445435,
+              -0.8317500352859497
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              1.718559980392456,
+              -0.8067500591278076,
+              1.7452267408370972,
+              -0.815083384513855,
+              1.7718933820724487,
+              -0.8234167098999023,
+              1.7985600233078003,
+              -0.8317500352859497,
+              1.7718933820724487,
+              -0.8400833606719971,
+              1.7452267408370972,
+              -0.8484166860580444,
+              1.718559980392456,
+              -0.8567500114440918,
+              1.718559980392456,
+              -0.8400833606719971,
+              1.718559980392456,
+              -0.8234167098999023,
+              1.718559980392456,
+              -0.8067500591278076
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#26262b",
+            "stroke": "#26262b",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              1.2908999919891357,
+              -0.8489000201225281,
+              1.4594999551773071,
+              -0.8361999988555908,
+              1.648300051689148,
+              -0.8201999664306641,
+              1.7755999565124512,
+              -0.824999988079071
+            ],
+            [
+              1.3141999244689941,
+              -0.8226000070571899,
+              1.4686999320983887,
+              -0.8396999835968018,
+              1.612899899482727,
+              -0.8335999846458435,
+              1.7905999422073364,
+              -0.8361999988555908
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.018000000000000002,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "Request",
+      "to": "H",
+      "route": [
+        [
+          1.30856,
+          -0.83175
+        ],
+        [
+          1.78856,
+          -0.83175
+        ]
+      ]
+    },
+    {
+      "id": "edge:H->KV#0",
+      "role": "edge",
+      "kind": "connector",
+      "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"H\" data-to=\"KV\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"268.23,83.175 316.23,83.175\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:H-&gt;KV#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"H to KV\" />\n<path d=\"M270.06 83.92 C285.98 83.52, 302.46 83.12, 318.07 82 M267.57 82.6 C280.55 83.5, 291.23 83.16, 317.08 82.36\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.8\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.682300090789795,
+              -0.8317500352859497,
+              2.8423001766204834,
+              -0.8317500352859497,
+              3.0023000240325928,
+              -0.8317500352859497,
+              3.1623001098632812,
+              -0.8317500352859497
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.0923001766204834,
+              -0.8067500591278076,
+              3.118966817855835,
+              -0.815083384513855,
+              3.1456334590911865,
+              -0.8234167098999023,
+              3.172300100326538,
+              -0.8317500352859497,
+              3.1456334590911865,
+              -0.8400833606719971,
+              3.118966817855835,
+              -0.8484166860580444,
+              3.0923001766204834,
+              -0.8567500114440918,
+              3.0923001766204834,
+              -0.8400833606719971,
+              3.0923001766204834,
+              -0.8234167098999023,
+              3.0923001766204834,
+              -0.8067500591278076
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#26262b",
+            "stroke": "#26262b",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.7005999088287354,
+              -0.839199960231781,
+              2.859800100326538,
+              -0.8351999521255493,
+              3.024600028991699,
+              -0.8312000036239624,
+              3.1807000637054443,
+              -0.8199999928474426
+            ],
+            [
+              2.6757001876831055,
+              -0.8259999752044678,
+              2.805499792098999,
+              -0.8349999785423279,
+              2.9123001098632812,
+              -0.83160001039505,
+              3.170799970626831,
+              -0.8235999941825867
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.018000000000000002,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "H",
+      "to": "KV",
+      "route": [
+        [
+          2.6823,
+          -0.83175
+        ],
+        [
+          3.1623,
+          -0.83175
+        ]
+      ]
+    },
+    {
+      "id": "edge:KV->D1#0",
+      "role": "edge",
+      "kind": "connector",
+      "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"KV\" data-to=\"D1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"miss\" points=\"415.237,77.025 542.271,77.025\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:KV-&gt;D1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"KV to D1: miss\" />\n<path d=\"M414.36 76.04 C453.8 77.83, 488.74 75.8, 543.32 75.91 M415.08 76.86 C450.29 78.26, 483.83 78.67, 541.99 77.37\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.8\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.152369976043701,
+              -0.7702500224113464,
+              4.575816631317139,
+              -0.7702500224113464,
+              4.999263286590576,
+              -0.7702500224113464,
+              5.422709941864014,
+              -0.7702500224113464
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              5.352709770202637,
+              -0.7452499866485596,
+              5.379376411437988,
+              -0.7535833716392517,
+              5.406043529510498,
+              -0.7619166970252991,
+              5.43271017074585,
+              -0.7702500224113464,
+              5.406043529510498,
+              -0.7785833477973938,
+              5.379376411437988,
+              -0.7869166731834412,
+              5.352709770202637,
+              -0.7952499985694885,
+              5.352709770202637,
+              -0.7785833477973938,
+              5.352709770202637,
+              -0.7619166970252991,
+              5.352709770202637,
+              -0.7452499866485596
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#26262b",
+            "stroke": "#26262b",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              4.143599987030029,
+              -0.7603999972343445,
+              4.538000106811523,
+              -0.7783000469207764,
+              4.887399673461914,
+              -0.7580000162124634,
+              5.433199882507324,
+              -0.7591000199317932
+            ],
+            [
+              4.150799751281738,
+              -0.7685999870300293,
+              4.502900123596191,
+              -0.7826000452041626,
+              4.838299751281738,
+              -0.7867000102996826,
+              5.419899940490723,
+              -0.7736999988555908
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.018000000000000002,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "KV",
+      "to": "D1",
+      "route": [
+        [
+          4.15237,
+          -0.7702500000000001
+        ],
+        [
+          5.4227099999999995,
+          -0.7702500000000001
+        ]
+      ]
+    },
+    {
+      "id": "edge:KV->Reply#0",
+      "role": "edge",
+      "kind": "connector",
+      "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"KV\" data-to=\"Reply\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"hit\" points=\"415.23699999999997,89.325 461.929,89.325 461.929,100.9 638.271,100.9 638.271,71.60000000000001 650.271,71.60000000000001\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:KV-&gt;Reply#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"KV to Reply: hit\" />\n<path d=\"M414.04 88.79 C427.39 87.72, 438.43 90.24, 461.46 87.45 M415.98 89.92 C432.64 88.91, 450.1 89.13, 462.34 88.56 M461.94 90.37 C461.92 92.41, 462.08 94.08, 462.86 100.83 M461.7 89.61 C461.41 93.97, 461.67 98.63, 462.18 101.35 M463.23 99.79 C519.8 98.46, 576.78 101.93, 637.51 99.74 M461.65 101.4 C501.65 100.38, 539.19 101.45, 638.86 100.73 M638.82 99.76 C637.27 90.36, 639.72 81.6, 638.84 69.66 M638.22 99.97 C638.49 92.17, 638.02 81.75, 638.5 71.14 M637.44 72.68 C641.03 71.65, 643.8 71.74, 650.74 72.47 M638.79 71.14 C641.54 71.58, 644.85 71.94, 650.2 71.4\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.8\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.152369976043701,
+              -0.8932499885559082,
+              4.308010101318359,
+              -0.8932499885559082,
+              4.463649749755859,
+              -0.8932499885559082,
+              4.619289875030518,
+              -0.8932499885559082,
+              4.619289875030518,
+              -0.9318333268165588,
+              4.619289875030518,
+              -0.9704166650772095,
+              4.619289875030518,
+              -1.0090000629425049,
+              5.207096576690674,
+              -1.0090000629425049,
+              5.794903755187988,
+              -1.0090000629425049,
+              6.382709980010986,
+              -1.0090000629425049,
+              6.382709980010986,
+              -0.9113333225250244,
+              6.382709980010986,
+              -0.8136667013168335,
+              6.382709980010986,
+              -0.715999960899353,
+              6.422709941864014,
+              -0.715999960899353,
+              6.462709903717041,
+              -0.715999960899353,
+              6.502709865570068,
+              -0.715999960899353
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              6.43271017074585,
+              -0.6909999847412109,
+              6.459376811981201,
+              -0.6993333101272583,
+              6.486043453216553,
+              -0.7076666355133057,
+              6.512710094451904,
+              -0.715999960899353,
+              6.486043453216553,
+              -0.7243333458900452,
+              6.459376811981201,
+              -0.7326666712760925,
+              6.43271017074585,
+              -0.7409999966621399,
+              6.43271017074585,
+              -0.7243333458900452,
+              6.43271017074585,
+              -0.7076666355133057,
+              6.43271017074585,
+              -0.6909999847412109
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#26262b",
+            "stroke": "#26262b",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              4.140399932861328,
+              -0.8878999948501587,
+              4.273900032043457,
+              -0.8772000074386597,
+              4.3842997550964355,
+              -0.9023999571800232,
+              4.614599704742432,
+              -0.8744999766349792
+            ],
+            [
+              4.159800052642822,
+              -0.8991999626159668,
+              4.326400279998779,
+              -0.8891000151634216,
+              4.500999927520752,
+              -0.8912999629974365,
+              4.62339973449707,
+              -0.8855999708175659
+            ],
+            [
+              4.6194000244140625,
+              -0.903700053691864,
+              4.619200229644775,
+              -0.9241000413894653,
+              4.620800018310547,
+              -0.9408000111579895,
+              4.628599643707275,
+              -1.0083000659942627
+            ],
+            [
+              4.617000102996826,
+              -0.8960999846458435,
+              4.614099979400635,
+              -0.9397000074386597,
+              4.616700172424316,
+              -0.986299991607666,
+              4.621799945831299,
+              -1.0134999752044678
+            ],
+            [
+              4.632299900054932,
+              -0.9979000091552734,
+              5.197999954223633,
+              -0.9846000075340271,
+              5.767800331115723,
+              -1.0192999839782715,
+              6.375100135803223,
+              -0.9973999857902527
+            ],
+            [
+              4.616499900817871,
+              -1.0140000581741333,
+              5.016499996185303,
+              -1.0037999153137207,
+              5.391900062561035,
+              -1.0145000219345093,
+              6.388599872589111,
+              -1.0073000192642212
+            ],
+            [
+              6.388200283050537,
+              -0.9976000189781189,
+              6.372700214385986,
+              -0.9035999774932861,
+              6.397199630737305,
+              -0.8159999847412109,
+              6.388400077819824,
+              -0.6966000199317932
+            ],
+            [
+              6.382199764251709,
+              -0.9997000098228455,
+              6.384900093078613,
+              -0.9217000007629395,
+              6.380200386047363,
+              -0.8174999952316284,
+              6.385000228881836,
+              -0.7113999724388123
+            ],
+            [
+              6.3744001388549805,
+              -0.7268000245094299,
+              6.410300254821777,
+              -0.7165000438690186,
+              6.437999725341797,
+              -0.7173999547958374,
+              6.507400035858154,
+              -0.7247000336647034
+            ],
+            [
+              6.387899875640869,
+              -0.7113999724388123,
+              6.415399551391602,
+              -0.7158000469207764,
+              6.44849967956543,
+              -0.7194000482559204,
+              6.502000331878662,
+              -0.7139999866485596
+            ]
+          ],
+          "closed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.018000000000000002,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "KV",
+      "to": "Reply",
+      "route": [
+        [
+          4.1523699999999995,
+          -0.89325
+        ],
+        [
+          4.6192899999999995,
+          -0.89325
+        ],
+        [
+          4.6192899999999995,
+          -1.0090000000000001
+        ],
+        [
+          6.382709999999999,
+          -1.0090000000000001
+        ],
+        [
+          6.382709999999999,
+          -0.7160000000000001
+        ],
+        [
+          6.5027099999999995,
+          -0.7160000000000001
+        ]
+      ]
+    },
+    {
+      "id": "edge:D1->Reply#0",
+      "role": "edge",
+      "kind": "connector",
+      "svg": "<polyline stroke-opacity=\"0\" class=\"edge\" data-from=\"D1\" data-to=\"Reply\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"602.271,65.45 650.271,65.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:D1-&gt;Reply#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"D1 to Reply\" />\n<path d=\"M601.1 67.34 C612.12 65.58, 622.13 64.86, 649.59 63.95 M602.19 64.9 C619.71 65.49, 635.38 66.78, 650.02 66.42\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.8\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              6.022709846496582,
+              -0.6544999480247498,
+              6.18271017074585,
+              -0.6544999480247498,
+              6.342710018157959,
+              -0.6544999480247498,
+              6.502709865570068,
+              -0.6544999480247498
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              6.43271017074585,
+              -0.6294999718666077,
+              6.459376811981201,
+              -0.637833297252655,
+              6.486043453216553,
+              -0.6461666226387024,
+              6.512710094451904,
+              -0.6544999480247498,
+              6.486043453216553,
+              -0.6628332734107971,
+              6.459376811981201,
+              -0.6711666584014893,
+              6.43271017074585,
+              -0.6794999837875366,
+              6.43271017074585,
+              -0.6628332734107971,
+              6.43271017074585,
+              -0.6461666226387024,
+              6.43271017074585,
+              -0.6294999718666077
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#26262b",
+            "stroke": "#26262b",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              6.01099967956543,
+              -0.6733999848365784,
+              6.121200084686279,
+              -0.6558000445365906,
+              6.22130012512207,
+              -0.6485999822616577,
+              6.4959001541137695,
+              -0.6395000219345093
+            ],
+            [
+              6.021900177001953,
+              -0.6489999890327454,
+              6.1971001625061035,
+              -0.6548999547958374,
+              6.353799819946289,
+              -0.6678000092506409,
+              6.500200271606445,
+              -0.6642000079154968
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.018000000000000002,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ],
+      "from": "D1",
+      "to": "Reply",
+      "route": [
+        [
+          6.02271,
+          -0.6545000000000001
+        ],
+        [
+          6.5027099999999995,
+          -0.6545000000000001
+        ]
+      ]
+    },
+    {
+      "id": "edge-label:KV->D1#0",
+      "role": "edge-label",
+      "kind": "group",
+      "svg": "<g class=\"edge-label\" data-from=\"KV\" data-to=\"D1\" data-label=\"miss\">\n  <rect class=\"edge-label-halo\" x=\"497.58166666666665\" y=\"57.87500000000001\" width=\"47.034000000000006\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"var(--bg)\" stroke=\"none\" />\n  <rect x=\"501.58166666666665\" y=\"61.87500000000001\" width=\"39.034000000000006\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"var(--bg)\" stroke=\"var(--_inner-stroke)\" stroke-width=\"1\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"521.0986666666666\" y=\"77.025\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"var(--_text-sec)\" dy=\"3.8499999999999996\">miss</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              5.015816688537598,
+              -0.5787500143051147,
+              5.145930290222168,
+              -0.5787500143051147,
+              5.276042938232422,
+              -0.5787500143051147,
+              5.406156539916992,
+              -0.5787500143051147,
+              5.428248405456543,
+              -0.5787500143051147,
+              5.4461565017700195,
+              -0.5966585874557495,
+              5.4461565017700195,
+              -0.6187499761581421,
+              5.4461565017700195,
+              -0.7197499871253967,
+              5.4461565017700195,
+              -0.8207499980926514,
+              5.4461565017700195,
+              -0.921750009059906,
+              5.4461565017700195,
+              -0.9438413977622986,
+              5.428248405456543,
+              -0.9617500305175781,
+              5.406156539916992,
+              -0.9617500305175781,
+              5.276042938232422,
+              -0.9617500305175781,
+              5.145930290222168,
+              -0.9617500305175781,
+              5.015816688537598,
+              -0.9617500305175781,
+              4.993725299835205,
+              -0.9617500305175781,
+              4.97581672668457,
+              -0.9438413977622986,
+              4.97581672668457,
+              -0.921750009059906,
+              4.97581672668457,
+              -0.8207500576972961,
+              4.97581672668457,
+              -0.7197499871253967,
+              4.97581672668457,
+              -0.6187499761581421,
+              4.97581672668457,
+              -0.5966585874557495,
+              4.993725299835205,
+              -0.5787500143051147,
+              5.015816688537598,
+              -0.5787500143051147
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f7f5ef",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              5.035816669464111,
+              -0.6187499761581421,
+              5.152596473693848,
+              -0.6187499761581421,
+              5.269376754760742,
+              -0.6187499761581421,
+              5.3861565589904785,
+              -0.6187499761581421,
+              5.397202014923096,
+              -0.6187499761581421,
+              5.406156539916992,
+              -0.6277043223381042,
+              5.406156539916992,
+              -0.6387500166893005,
+              5.406156539916992,
+              -0.7264167070388794,
+              5.406156539916992,
+              -0.8140833377838135,
+              5.406156539916992,
+              -0.9017500281333923,
+              5.406156539916992,
+              -0.9127957224845886,
+              5.397202014923096,
+              -0.921750009059906,
+              5.3861565589904785,
+              -0.921750009059906,
+              5.269376754760742,
+              -0.921750009059906,
+              5.152596473693848,
+              -0.921750009059906,
+              5.035816669464111,
+              -0.921750009059906,
+              5.024771213531494,
+              -0.921750009059906,
+              5.015816688537598,
+              -0.9127957224845886,
+              5.015816688537598,
+              -0.9017500281333923,
+              5.015816688537598,
+              -0.8140833377838135,
+              5.015816688537598,
+              -0.7264167070388794,
+              5.015816688537598,
+              -0.6387500166893005,
+              5.015816688537598,
+              -0.6277043223381042,
+              5.024771213531494,
+              -0.6187499761581421,
+              5.035816669464111,
+              -0.6187499761581421
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f7f5ef",
+            "stroke": "#dcdbd6",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#4b4a4c",
+            "stroke": "#f7f5ef",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "miss",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "miss",
+            "x": 521.0986666666666,
+            "y": 80.875,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              3.469446951953614e-18,
+              0
+            ],
+            "width": 23.034
+          }
+        }
+      ],
+      "owner": "edge:KV->D1#0"
+    },
+    {
+      "id": "edge-label:KV->Reply#0",
+      "role": "edge-label",
+      "kind": "group",
+      "svg": "<g class=\"edge-label\" data-from=\"KV\" data-to=\"Reply\" data-label=\"hit\">\n  <rect class=\"edge-label-halo\" x=\"420.412\" y=\"70.17500000000001\" width=\"36.342\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"var(--bg)\" stroke=\"none\" />\n  <rect x=\"424.412\" y=\"74.175\" width=\"28.342\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"var(--bg)\" stroke=\"var(--_inner-stroke)\" stroke-width=\"1\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"438.58299999999997\" y=\"89.325\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"var(--_text-sec)\" dy=\"3.8499999999999996\">hit</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.244119644165039,
+              -0.7017500400543213,
+              4.338593006134033,
+              -0.7017500400543213,
+              4.4330668449401855,
+              -0.7017500400543213,
+              4.52754020690918,
+              -0.7017500400543213,
+              4.549631118774414,
+              -0.7017500400543213,
+              4.567540168762207,
+              -0.719658613204956,
+              4.567540168762207,
+              -0.7417500019073486,
+              4.567540168762207,
+              -0.8427500128746033,
+              4.567540168762207,
+              -0.9437500238418579,
+              4.567540168762207,
+              -1.0447499752044678,
+              4.567540168762207,
+              -1.0668413639068604,
+              4.549631118774414,
+              -1.0847499370574951,
+              4.52754020690918,
+              -1.0847499370574951,
+              4.4330668449401855,
+              -1.0847499370574951,
+              4.338593482971191,
+              -1.0847499370574951,
+              4.244119644165039,
+              -1.0847499370574951,
+              4.222028732299805,
+              -1.0847499370574951,
+              4.204119682312012,
+              -1.0668413639068604,
+              4.204119682312012,
+              -1.0447499752044678,
+              4.204119682312012,
+              -0.9437500238418579,
+              4.204119682312012,
+              -0.8427500128746033,
+              4.204119682312012,
+              -0.7417500019073486,
+              4.204119682312012,
+              -0.719658613204956,
+              4.222028732299805,
+              -0.7017500400543213,
+              4.244119644165039,
+              -0.7017500400543213
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f7f5ef",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              4.264120101928711,
+              -0.7417500019073486,
+              4.345260143280029,
+              -0.7417500019073486,
+              4.4263997077941895,
+              -0.7417500019073486,
+              4.507539749145508,
+              -0.7417500019073486,
+              4.518585681915283,
+              -0.7417500019073486,
+              4.52754020690918,
+              -0.750704288482666,
+              4.52754020690918,
+              -0.7617500424385071,
+              4.52754020690918,
+              -0.8494166731834412,
+              4.52754020690918,
+              -0.93708336353302,
+              4.52754020690918,
+              -1.024749994277954,
+              4.52754020690918,
+              -1.0357956886291504,
+              4.518585681915283,
+              -1.0447499752044678,
+              4.507539749145508,
+              -1.0447499752044678,
+              4.4263997077941895,
+              -1.0447499752044678,
+              4.345260143280029,
+              -1.0447499752044678,
+              4.264120101928711,
+              -1.0447499752044678,
+              4.2530741691589355,
+              -1.0447499752044678,
+              4.244119644165039,
+              -1.0357956886291504,
+              4.244119644165039,
+              -1.024749994277954,
+              4.244119644165039,
+              -0.93708336353302,
+              4.244119644165039,
+              -0.8494166731834412,
+              4.244119644165039,
+              -0.7617500424385071,
+              4.244119644165039,
+              -0.750704288482666,
+              4.2530741691589355,
+              -0.7417500019073486,
+              4.264120101928711,
+              -0.7417500019073486
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f7f5ef",
+            "stroke": "#dcdbd6",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#4b4a4c",
+            "stroke": "#f7f5ef",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "hit",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "hit",
+            "x": 438.58299999999997,
+            "y": 93.175,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              3.469446951953614e-18,
+              0
+            ],
+            "width": 12.342
+          }
+        }
+      ],
+      "owner": "edge:KV->Reply#0"
+    },
+    {
+      "id": "Request",
+      "role": "node",
+      "kind": "group",
+      "svg": "<g class=\"node\" data-id=\"Request\" data-label=\"Request\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M41.3 65.01 C66.22 63.91, 93.06 61.9, 129.16 65.94 M39.01 65.33 C71.79 63.32, 104.62 63.65, 130 64.56 M130.5 63.27 C130.06 79.94, 131 92.07, 132.69 99.73 M130.77 65.42 C131.02 76.6, 130.03 86.76, 130.26 102.37 M130.25 102.96 C98.03 101.55, 70.74 102.44, 41.81 103.49 M130.89 100.73 C96.55 100.71, 61.26 101.91, 40.35 102.06 M41.85 102.1 C39.43 93.16, 40.12 86.91, 40.51 64.12 M40.14 102.37 C39.84 92.67, 38.86 81.89, 39.1 65.67\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Request\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"85.428\" y=\"83.175\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Request</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.4129999876022339,
+              -0.6500999927520752,
+              0.6622000336647034,
+              -0.6391000151634216,
+              0.9305999875068665,
+              -0.6190000176429749,
+              1.291599988937378,
+              -0.6594000458717346
+            ],
+            [
+              0.39009997248649597,
+              -0.6533000469207764,
+              0.7179000377655029,
+              -0.6331999897956848,
+              1.0462000370025635,
+              -0.6365000009536743,
+              1.2999999523162842,
+              -0.6455999612808228
+            ],
+            [
+              1.3049999475479126,
+              -0.6327000260353088,
+              1.3005999326705933,
+              -0.7994000315666199,
+              1.309999942779541,
+              -0.9207000136375427,
+              1.3269000053405762,
+              -0.9973000288009644
+            ],
+            [
+              1.3077000379562378,
+              -0.6541999578475952,
+              1.3102000951766968,
+              -0.765999972820282,
+              1.3003000020980835,
+              -0.8676000237464905,
+              1.3025999069213867,
+              -1.0236999988555908
+            ],
+            [
+              1.3025000095367432,
+              -1.0296000242233276,
+              0.9803000092506409,
+              -1.0155000686645508,
+              0.7073999643325806,
+              -1.024399995803833,
+              0.4180999994277954,
+              -1.0348999500274658
+            ],
+            [
+              1.308899998664856,
+              -1.0073000192642212,
+              0.9655000567436218,
+              -1.007099986076355,
+              0.6125999689102173,
+              -1.0191000699996948,
+              0.4034999907016754,
+              -1.0205999612808228
+            ],
+            [
+              0.41849997639656067,
+              -1.0210000276565552,
+              0.39430001378059387,
+              -0.931600034236908,
+              0.40119999647140503,
+              -0.869100034236908,
+              0.4050999879837036,
+              -0.6412000060081482
+            ],
+            [
+              0.40139999985694885,
+              -1.0236999988555908,
+              0.3984000086784363,
+              -0.9266999959945679,
+              0.3885999917984009,
+              -0.8188999891281128,
+              0.390999972820282,
+              -0.6566999554634094
+            ]
+          ],
+          "closed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.013500000000000002,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1a1a1e",
+            "stroke": "#f7f5ef",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "Request",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "Request",
+            "x": 85.428,
+            "y": 87.725,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              3.469446951953614e-18,
+              0
+            ],
+            "width": 50.856
+          }
+        }
+      ]
+    },
+    {
+      "id": "H",
+      "role": "node",
+      "kind": "group",
+      "svg": "<g class=\"node\" data-id=\"H\" data-label=\"Handler\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M177.27 65.39 C207.88 66.37, 238.28 66.11, 268.12 66.25 M179.79 65.18 C212.58 64.04, 246.38 64.22, 268.07 64.85 M266.75 66.69 C269.23 78.89, 268.48 90.39, 269.7 103.58 M268.52 65.59 C267.66 72.06, 268.26 79.73, 268.02 101.88 M266.4 103.46 C240.03 100.07, 213.63 99.47, 178.85 103.13 M268.52 102.32 C248.08 101.05, 228.02 100.78, 179.61 100.98 M178.18 100.69 C177.45 88.18, 178.03 77.79, 179.73 65.46 M177.94 102.61 C178.45 92.38, 178.4 82.09, 178.43 65.11\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:H\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"223.543\" y=\"83.175\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Handler</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.7727000713348389,
+              -0.6538999676704407,
+              2.0787999629974365,
+              -0.6637000441551208,
+              2.3828001022338867,
+              -0.6611000299453735,
+              2.6812000274658203,
+              -0.6625000238418579
+            ],
+            [
+              1.7978999614715576,
+              -0.6517999768257141,
+              2.125800132751465,
+              -0.6403999924659729,
+              2.4637999534606934,
+              -0.6421999931335449,
+              2.6807000637054443,
+              -0.6484999656677246
+            ],
+            [
+              2.6675000190734863,
+              -0.6669000387191772,
+              2.6923000812530518,
+              -0.7889000177383423,
+              2.684800148010254,
+              -0.9038999676704407,
+              2.697000026702881,
+              -1.0357999801635742
+            ],
+            [
+              2.6851999759674072,
+              -0.6558999419212341,
+              2.6765999794006348,
+              -0.7205999493598938,
+              2.6826000213623047,
+              -0.7973000407218933,
+              2.6801998615264893,
+              -1.0188000202178955
+            ],
+            [
+              2.6640000343322754,
+              -1.034600019454956,
+              2.4003000259399414,
+              -1.0006999969482422,
+              2.1363000869750977,
+              -0.994700014591217,
+              1.7885000705718994,
+              -1.0312999486923218
+            ],
+            [
+              2.6851999759674072,
+              -1.0232000350952148,
+              2.480799913406372,
+              -1.0105000734329224,
+              2.2802000045776367,
+              -1.0077999830245972,
+              1.7961000204086304,
+              -1.0098000764846802
+            ],
+            [
+              1.7817999124526978,
+              -1.0069000720977783,
+              1.7745000123977661,
+              -0.8817999958992004,
+              1.7803000211715698,
+              -0.777899980545044,
+              1.7972999811172485,
+              -0.6545999646186829
+            ],
+            [
+              1.7793999910354614,
+              -1.0261000394821167,
+              1.784500002861023,
+              -0.923799991607666,
+              1.7839999198913574,
+              -0.8208999633789062,
+              1.7842999696731567,
+              -0.6510999798774719
+            ]
+          ],
+          "closed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.013500000000000002,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1a1a1e",
+            "stroke": "#f7f5ef",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "Handler",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "Handler",
+            "x": 223.543,
+            "y": 87.725,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              3.469446951953614e-18,
+              0
+            ],
+            "width": 49.374
+          }
+        }
+      ]
+    },
+    {
+      "id": "KV",
+      "role": "node",
+      "kind": "group",
+      "svg": "<g class=\"node\" data-id=\"KV\" data-label=\"KV cache\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M317.96 65.58 C348.75 65.78, 382.36 65.61, 413.83 63.33 M317.01 64.28 C349.52 64.61, 384.16 65.62, 416.01 65.18 M416.29 65.67 C416.14 78, 415.91 89.09, 413.7 101.47 M414.9 64.13 C414.83 73.77, 415.01 84.45, 415.2 100.76 M416.43 103.39 C380.54 104.04, 346.72 103.51, 314.31 102.24 M414.37 102.56 C380.32 102.66, 343.19 102.13, 316.02 101 M316.17 101.18 C317.24 91.18, 315.8 79.82, 317.26 62.87 M316.27 102.2 C317.09 89.78, 315.91 79.43, 315.58 64.74\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:KV\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"365.73350000000005\" y=\"83.175\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">KV cache</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.1796000003814697,
+              -0.6558000445365906,
+              3.487499952316284,
+              -0.6577999591827393,
+              3.8235998153686523,
+              -0.6561000347137451,
+              4.138299942016602,
+              -0.6333000063896179
+            ],
+            [
+              3.170100212097168,
+              -0.642799973487854,
+              3.4951999187469482,
+              -0.6460999846458435,
+              3.841599941253662,
+              -0.6562000513076782,
+              4.160099983215332,
+              -0.6517999768257141
+            ],
+            [
+              4.162899971008301,
+              -0.6566999554634094,
+              4.161400318145752,
+              -0.7799999713897705,
+              4.15910005569458,
+              -0.8908999562263489,
+              4.13700008392334,
+              -1.0147000551223755
+            ],
+            [
+              4.14900016784668,
+              -0.6412999629974365,
+              4.148299694061279,
+              -0.7376999855041504,
+              4.150100231170654,
+              -0.844499945640564,
+              4.1519999504089355,
+              -1.0076000690460205
+            ],
+            [
+              4.164299964904785,
+              -1.0339000225067139,
+              3.8054001331329346,
+              -1.0404000282287598,
+              3.4672000408172607,
+              -1.035099983215332,
+              3.1431000232696533,
+              -1.0224000215530396
+            ],
+            [
+              4.143700122833252,
+              -1.0255999565124512,
+              3.8032000064849854,
+              -1.0266000032424927,
+              3.4319000244140625,
+              -1.021299958229065,
+              3.1601998805999756,
+              -1.0099999904632568
+            ],
+            [
+              3.1617002487182617,
+              -1.0118000507354736,
+              3.1723999977111816,
+              -0.9118000268936157,
+              3.1579999923706055,
+              -0.7982000112533569,
+              3.172600030899048,
+              -0.6287000179290771
+            ],
+            [
+              3.1626999378204346,
+              -1.0219999551773071,
+              3.1708998680114746,
+              -0.8977999687194824,
+              3.15910005569458,
+              -0.7943000197410583,
+              3.1557998657226562,
+              -0.6473999619483948
+            ]
+          ],
+          "closed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.013500000000000002,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1a1a1e",
+            "stroke": "#f7f5ef",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "KV cache",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "KV cache",
+            "x": 365.73350000000005,
+            "y": 87.725,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              3.469446951953614e-18,
+              0
+            ],
+            "width": 59.007
+          }
+        }
+      ]
+    },
+    {
+      "id": "D1",
+      "role": "node",
+      "kind": "group",
+      "svg": "<g class=\"node\" data-id=\"D1\" data-label=\"D1\" data-shape=\"cylinder\" data-role=\"node\">\n  <rect x=\"542.271\" y=\"47\" width=\"60\" height=\"36.900000000000006\" fill=\"var(--_node-fill)\" stroke=\"none\" data-id=\"node-shape:D1\" data-role=\"node\" />\n  <path d=\"M541.3 46.93 C541.74 54.38, 542.43 65.1, 544.25 84.1 M542.16 47.56 C541.79 59.06, 542.78 70.97, 541.31 83.99\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n  <path d=\"M600.78 48.19 C603.17 60.29, 601.47 74.64, 600.61 83.36 M602.19 46.61 C602.53 55.35, 602.87 61.11, 602.28 83.29\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n  <path d=\"M559.16 78.46 C564.17 77.71, 572.4 77.6, 578.39 77.85 C584.38 78.1, 591.29 79.01, 595.08 79.95 C598.88 80.88, 601.59 81.95, 601.15 83.48 C600.71 85.01, 596.77 88.07, 592.44 89.12 C588.11 90.17, 581.17 89.65, 575.15 89.78 C569.14 89.91, 561.33 90.66, 556.36 89.91 C551.38 89.17, 547.12 86.76, 545.31 85.29 C543.5 83.83, 542.63 82.3, 545.5 81.13 C548.37 79.97, 559.21 79.07, 562.52 78.29 C565.83 77.52, 565.06 76.33, 565.36 76.46 M580.55 77.64 C586.29 77.9, 594.17 78.97, 597.59 80.07 C601.01 81.18, 602.07 82.86, 601.07 84.27 C600.07 85.68, 596.2 87.32, 591.57 88.55 C586.94 89.79, 579.31 91.53, 573.29 91.7 C567.28 91.87, 560.28 90.74, 555.48 89.57 C550.68 88.4, 546.03 86, 544.48 84.68 C542.94 83.35, 543.13 82.83, 546.2 81.63 C549.28 80.42, 556.87 78.16, 562.93 77.46 C568.98 76.76, 579.63 77.54, 582.53 77.4 C585.44 77.27, 580.63 76.53, 580.36 76.66\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n  <path d=\"M563.04 40.13 C569.05 39.61, 578.12 40.62, 584 41.1 C589.87 41.57, 595.28 41.81, 598.28 42.99 C601.28 44.16, 603.23 46.56, 602 48.16 C600.77 49.77, 596.03 51.68, 590.9 52.61 C585.77 53.55, 577.78 53.84, 571.24 53.77 C564.7 53.71, 556.35 53.05, 551.65 52.22 C546.95 51.4, 543.9 50.33, 543.03 48.81 C542.15 47.3, 542.35 44.41, 546.43 43.13 C550.5 41.85, 563.28 41.66, 567.48 41.14 C571.68 40.61, 571.6 40.1, 571.6 39.98 M583.43 39.82 C589.16 40.44, 595.05 43.57, 598.12 44.85 C601.19 46.13, 602.77 46.41, 601.85 47.48 C600.93 48.55, 597.36 50.07, 592.6 51.26 C587.84 52.46, 579.78 54.5, 573.28 54.67 C566.78 54.83, 558.98 53.48, 553.61 52.25 C548.23 51.02, 542.18 48.88, 541.02 47.27 C539.86 45.67, 542.94 43.8, 546.66 42.62 C550.38 41.44, 557.34 40.6, 563.33 40.2 C569.32 39.79, 579.23 40.09, 582.58 40.19 C585.93 40.3, 583.37 40.83, 583.42 40.82\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"572.271\" y=\"65.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">D1</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              5.422709941864014,
+              -0.4699999988079071,
+              5.62270975112915,
+              -0.4699999988079071,
+              5.822710037231445,
+              -0.4699999988079071,
+              6.022709846496582,
+              -0.4699999988079071,
+              6.022709846496582,
+              -0.5929999947547913,
+              6.022709846496582,
+              -0.715999960899353,
+              6.022709846496582,
+              -0.8389999866485596,
+              5.822710037231445,
+              -0.8389999866485596,
+              5.62270975112915,
+              -0.8389999866485596,
+              5.422709941864014,
+              -0.8389999866485596,
+              5.422709941864014,
+              -0.715999960899353,
+              5.422709941864014,
+              -0.5929999947547913,
+              5.422709941864014,
+              -0.4699999988079071
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f0eee9",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              5.413000106811523,
+              -0.4693000018596649,
+              5.417399883270264,
+              -0.5437999963760376,
+              5.424299716949463,
+              -0.6509999632835388,
+              5.442500114440918,
+              -0.840999960899353
+            ],
+            [
+              5.421599864959717,
+              -0.475600004196167,
+              5.4178996086120605,
+              -0.5906000137329102,
+              5.427800178527832,
+              -0.7096999883651733,
+              5.413099765777588,
+              -0.8398999571800232
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.013500000000000002,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              6.007800102233887,
+              -0.4818999767303467,
+              6.0316996574401855,
+              -0.6029000282287598,
+              6.014699935913086,
+              -0.746399998664856,
+              6.006099700927734,
+              -0.8335999846458435
+            ],
+            [
+              6.021900177001953,
+              -0.4661000072956085,
+              6.0253005027771,
+              -0.5534999966621399,
+              6.02869987487793,
+              -0.6111000180244446,
+              6.022800445556641,
+              -0.8328999876976013
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.013500000000000002,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              5.591599941253662,
+              -0.784600019454956,
+              5.64169979095459,
+              -0.7770999670028687,
+              5.724000453948975,
+              -0.7759999632835388,
+              5.783900260925293,
+              -0.778499960899353,
+              5.843800067901611,
+              -0.7809999585151672,
+              5.912899971008301,
+              -0.7901000380516052,
+              5.950799942016602,
+              -0.7994999885559082,
+              5.988800048828125,
+              -0.8087999820709229,
+              6.015900135040283,
+              -0.8194999694824219,
+              6.011500358581543,
+              -0.8348000049591064,
+              6.0071001052856445,
+              -0.850100040435791,
+              5.967700004577637,
+              -0.8806999921798706,
+              5.9243998527526855,
+              -0.8912000060081482,
+              5.881099700927734,
+              -0.901699960231781,
+              5.811699867248535,
+              -0.8964999914169312,
+              5.751500129699707,
+              -0.8977999687194824,
+              5.691400051116943,
+              -0.8991000652313232,
+              5.613300323486328,
+              -0.9066000580787659,
+              5.563600063323975,
+              -0.8991000652313232,
+              5.513800144195557,
+              -0.8916999697685242,
+              5.471199989318848,
+              -0.8676000237464905,
+              5.453100204467773,
+              -0.8529000282287598,
+              5.434999942779541,
+              -0.8382999897003174,
+              5.426300048828125,
+              -0.8230000138282776,
+              5.454999923706055,
+              -0.8112999796867371,
+              5.483699798583984,
+              -0.7997000217437744,
+              5.592100143432617,
+              -0.7907000184059143,
+              5.625200271606445,
+              -0.7829000353813171,
+              5.658300399780273,
+              -0.7751999497413635,
+              5.650599956512451,
+              -0.7633000016212463,
+              5.653599739074707,
+              -0.7645999789237976
+            ],
+            [
+              5.805500030517578,
+              -0.7763999700546265,
+              5.8628997802734375,
+              -0.7790000438690186,
+              5.941699981689453,
+              -0.7897000312805176,
+              5.975900173187256,
+              -0.8007000088691711,
+              6.0100998878479,
+              -0.8118000030517578,
+              6.020699977874756,
+              -0.8285999894142151,
+              6.010700225830078,
+              -0.8426999449729919,
+              6.000699996948242,
+              -0.8568000197410583,
+              5.961999893188477,
+              -0.873199999332428,
+              5.9156999588012695,
+              -0.8855000138282776,
+              5.8694000244140625,
+              -0.8978999853134155,
+              5.793099880218506,
+              -0.9153000116348267,
+              5.7328996658325195,
+              -0.9169999957084656,
+              5.672800064086914,
+              -0.9187000393867493,
+              5.602800369262695,
+              -0.9073999524116516,
+              5.554800033569336,
+              -0.8956999778747559,
+              5.506799697875977,
+              -0.8840000033378601,
+              5.460300445556641,
+              -0.8600000143051147,
+              5.444799900054932,
+              -0.8468000292778015,
+              5.4293999671936035,
+              -0.8334999680519104,
+              5.431300163269043,
+              -0.8282999992370605,
+              5.461999893188477,
+              -0.8162999749183655,
+              5.492800235748291,
+              -0.8041999936103821,
+              5.568699836730957,
+              -0.7816000580787659,
+              5.629300117492676,
+              -0.7745999693870544,
+              5.689799785614014,
+              -0.7675999999046326,
+              5.796299934387207,
+              -0.7753999829292297,
+              5.825300216674805,
+              -0.7739999890327454,
+              5.854400157928467,
+              -0.7726999521255493,
+              5.806300163269043,
+              -0.7652999758720398,
+              5.803599834442139,
+              -0.7666000127792358
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.013500000000000002,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              5.630399703979492,
+              -0.40130001306533813,
+              5.690499782562256,
+              -0.3961000144481659,
+              5.781199932098389,
+              -0.40619999170303345,
+              5.840000152587891,
+              -0.41099998354911804,
+              5.898699760437012,
+              -0.4156999886035919,
+              5.952800273895264,
+              -0.4180999994277954,
+              5.982800483703613,
+              -0.42990002036094666,
+              6.012800216674805,
+              -0.4415999948978424,
+              6.032299995422363,
+              -0.46560001373291016,
+              6.019999980926514,
+              -0.48159998655319214,
+              6.007699966430664,
+              -0.4977000057697296,
+              5.960300445556641,
+              -0.5167999863624573,
+              5.909000396728516,
+              -0.5260999798774719,
+              5.857700347900391,
+              -0.5354999899864197,
+              5.7778000831604,
+              -0.5383999943733215,
+              5.712399959564209,
+              -0.5376999974250793,
+              5.647000312805176,
+              -0.5371000170707703,
+              5.563499927520752,
+              -0.5304999947547913,
+              5.516500473022461,
+              -0.5221999883651733,
+              5.4695000648498535,
+              -0.5139999985694885,
+              5.439000129699707,
+              -0.5033000111579895,
+              5.430300235748291,
+              -0.4881000220775604,
+              5.421500205993652,
+              -0.4729999899864197,
+              5.423499584197998,
+              -0.4440999925136566,
+              5.464300155639648,
+              -0.43130001425743103,
+              5.505000114440918,
+              -0.41849997639656067,
+              5.632800102233887,
+              -0.41659998893737793,
+              5.674799919128418,
+              -0.4113999903202057,
+              5.716799736022949,
+              -0.40610000491142273,
+              5.715999603271484,
+              -0.4009999930858612,
+              5.715999603271484,
+              -0.39980000257492065
+            ],
+            [
+              5.8343000411987305,
+              -0.39820000529289246,
+              5.891599655151367,
+              -0.4043999910354614,
+              5.950500011444092,
+              -0.435699999332428,
+              5.981199741363525,
+              -0.44849997758865356,
+              6.011899948120117,
+              -0.4613000154495239,
+              6.027700424194336,
+              -0.4641000032424927,
+              6.018499851226807,
+              -0.4747999906539917,
+              6.0092997550964355,
+              -0.4854999780654907,
+              5.973599910736084,
+              -0.5006999969482422,
+              5.925999641418457,
+              -0.5126000046730042,
+              5.8784003257751465,
+              -0.5245999693870544,
+              5.797800064086914,
+              -0.5450000166893005,
+              5.732800483703613,
+              -0.5467000007629395,
+              5.667800426483154,
+              -0.54830002784729,
+              5.589799880981445,
+              -0.5347999930381775,
+              5.536099910736084,
+              -0.5224999785423279,
+              5.4822998046875,
+              -0.510200023651123,
+              5.421800136566162,
+              -0.4888000190258026,
+              5.410200119018555,
+              -0.47269999980926514,
+              5.398599624633789,
+              -0.4566999673843384,
+              5.4293999671936035,
+              -0.43799999356269836,
+              5.466599941253662,
+              -0.4262000024318695,
+              5.503799915313721,
+              -0.41439998149871826,
+              5.573400497436523,
+              -0.4059999883174896,
+              5.633300304412842,
+              -0.4020000100135803,
+              5.69320011138916,
+              -0.3979000151157379,
+              5.792299747467041,
+              -0.4009000062942505,
+              5.825799942016602,
+              -0.4018999934196472,
+              5.859300136566162,
+              -0.40299999713897705,
+              5.833700180053711,
+              -0.4083000123500824,
+              5.834199905395508,
+              -0.4081999957561493
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.013500000000000002,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1a1a1e",
+            "stroke": "#f7f5ef",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "D1",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "D1",
+            "x": 572.271,
+            "y": 70,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              3.469446951953614e-18,
+              0
+            ],
+            "width": 13.806
+          }
+        }
+      ]
+    },
+    {
+      "id": "Reply",
+      "role": "node",
+      "kind": "group",
+      "svg": "<g class=\"node\" data-id=\"Reply\" data-label=\"Reply\" data-shape=\"rectangle\" data-role=\"node\">\n  <path d=\"M648.83 45.37 C675.83 48.49, 700.17 45.19, 727.11 48.16 M649.33 47.96 C670.22 47.28, 691.24 47.33, 725.49 47.65 M725.28 48.22 C727.36 54.92, 727.77 63.13, 726.04 85.23 M727.05 46.78 C726.21 55.7, 726.66 63.42, 726.37 83.13 M726.03 85.76 C701.16 84.25, 674.47 84.65, 651.49 83.53 M725.59 83.11 C706.33 84.34, 684.79 83.08, 650.65 84.71 M650.35 84.67 C650.11 72.38, 651.61 59.22, 649.95 48.17 M651.16 83.01 C650.94 75.62, 650 67.07, 651.26 46.97\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" data-id=\"node-shape:Reply\" data-role=\"node\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"688.289\" y=\"65.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Reply</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              6.488300323486328,
+              -0.4536999762058258,
+              6.758300304412842,
+              -0.48490002751350403,
+              7.001699924468994,
+              -0.4518999755382538,
+              7.271100044250488,
+              -0.48159998655319214
+            ],
+            [
+              6.493299961090088,
+              -0.4795999825000763,
+              6.702199935913086,
+              -0.47279998660087585,
+              6.912399768829346,
+              -0.4733000099658966,
+              7.254899978637695,
+              -0.476500004529953
+            ],
+            [
+              7.252800464630127,
+              -0.482200026512146,
+              7.273599624633789,
+              -0.5491999983787537,
+              7.277700424194336,
+              -0.6313000321388245,
+              7.26039981842041,
+              -0.8523000478744507
+            ],
+            [
+              7.2704997062683105,
+              -0.46779999136924744,
+              7.2621002197265625,
+              -0.5569999814033508,
+              7.266599655151367,
+              -0.6341999769210815,
+              7.263700008392334,
+              -0.8312999606132507
+            ],
+            [
+              7.260300159454346,
+              -0.8576000332832336,
+              7.011599540710449,
+              -0.8424999713897705,
+              6.744699478149414,
+              -0.846500039100647,
+              6.514899730682373,
+              -0.8352999687194824
+            ],
+            [
+              7.2559003829956055,
+              -0.8310999870300293,
+              7.063300132751465,
+              -0.8433999419212341,
+              6.847899913787842,
+              -0.8307999968528748,
+              6.506500244140625,
+              -0.847100019454956
+            ],
+            [
+              6.503499984741211,
+              -0.8466999530792236,
+              6.501100063323975,
+              -0.7237999439239502,
+              6.51609992980957,
+              -0.5922000408172607,
+              6.499500274658203,
+              -0.48169997334480286
+            ],
+            [
+              6.511599540710449,
+              -0.8300999999046326,
+              6.509399890899658,
+              -0.7562000155448914,
+              6.5,
+              -0.6707000136375427,
+              6.512599945068359,
+              -0.46970000863075256
+            ]
+          ],
+          "closed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#26262b",
+            "strokeWidth": 0.013500000000000002,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1a1a1e",
+            "stroke": "#f7f5ef",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "Reply",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "Reply",
+            "x": 688.289,
+            "y": 70,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              3.469446951953614e-18,
+              0
+            ],
+            "width": 36.036
+          }
+        }
+      ]
+    }
+  ],
+  "findings": {
+    "ok": true,
+    "warnings": [],
+    "layout": {
+      "version": 1,
+      "kind": "flowchart",
+      "nodes": [
+        {
+          "id": "Request",
+          "x": 40,
+          "y": 65,
+          "w": 91,
+          "h": 37,
+          "shape": "rectangle",
+          "label": "Request"
+        },
+        {
+          "id": "H",
+          "x": 179,
+          "y": 65,
+          "w": 89,
+          "h": 37,
+          "shape": "rectangle",
+          "label": "Handler"
+        },
+        {
+          "id": "KV",
+          "x": 316,
+          "y": 65,
+          "w": 99,
+          "h": 37,
+          "shape": "rectangle",
+          "label": "KV cache"
+        },
+        {
+          "id": "D1",
+          "x": 542,
+          "y": 40,
+          "w": 60,
+          "h": 51,
+          "shape": "cylinder",
+          "label": "D1"
+        },
+        {
+          "id": "Reply",
+          "x": 650,
+          "y": 47,
+          "w": 76,
+          "h": 37,
+          "shape": "rectangle",
+          "label": "Reply"
+        }
+      ],
+      "edges": [
+        {
+          "id": "Request->H",
+          "from": "Request",
+          "to": "H",
+          "path": [
+            [
+              131,
+              83
+            ],
+            [
+              179,
+              83
+            ]
+          ]
+        },
+        {
+          "id": "H->KV",
+          "from": "H",
+          "to": "KV",
+          "path": [
+            [
+              268,
+              83
+            ],
+            [
+              316,
+              83
+            ]
+          ]
+        },
+        {
+          "id": "KV->D1",
+          "from": "KV",
+          "to": "D1",
+          "path": [
+            [
+              415,
+              77
+            ],
+            [
+              542,
+              77
+            ]
+          ],
+          "label": {
+            "x": 521,
+            "y": 77,
+            "text": "miss"
+          }
+        },
+        {
+          "id": "KV->Reply",
+          "from": "KV",
+          "to": "Reply",
+          "path": [
+            [
+              415,
+              89
+            ],
+            [
+              462,
+              89
+            ],
+            [
+              462,
+              101
+            ],
+            [
+              638,
+              101
+            ],
+            [
+              638,
+              72
+            ],
+            [
+              650,
+              72
+            ]
+          ],
+          "label": {
+            "x": 439,
+            "y": 89,
+            "text": "hit"
+          }
+        },
+        {
+          "id": "D1->Reply",
+          "from": "D1",
+          "to": "Reply",
+          "path": [
+            [
+              602,
+              65
+            ],
+            [
+              650,
+              65
+            ]
+          ]
+        }
+      ],
+      "groups": [],
+      "bounds": {
+        "w": 766,
+        "h": 151
+      }
+    }
+  }
+}

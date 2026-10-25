@@ -83,6 +83,8 @@ export class Scene {
   steps: Step[];
   current: Step | null;
   state: SceneState;
+  private stepListeners: Array<(step: Step) => unknown>;
+  private describers: Array<() => SceneState>;
 
   /**
    * skipUntil: frames that end before this time are not rendered or
@@ -103,6 +105,27 @@ export class Scene {
     this.current = null;
     // The explanation's own state; describe() snapshots it for traces
     this.state = {};
+    this.stepListeners = [];
+    this.describers = [];
+  }
+
+  /**
+   * Run `listener` each time a step begins, after the sink hears about it.
+   * Helpers use it (a stage that shows the step's title) instead of wrapping
+   * step(). Returns a function that removes the listener.
+   */
+  onStep(listener: (step: Step) => unknown): () => void {
+    this.stepListeners.push(listener);
+    return () => { this.stepListeners = this.stepListeners.filter((l) => l !== listener); };
+  }
+
+  /**
+   * Merge `describer()`'s JSON into every describe(), so helper evidence (such as
+   * recorded walks) survives an author replacing `this.state`. Returns a remover.
+   */
+  addDescriber(describer: () => SceneState): () => void {
+    this.describers.push(describer);
+    return () => { this.describers = this.describers.filter((d) => d !== describer); };
   }
 
   /** Subclasses define the animation here. */
@@ -136,6 +159,7 @@ export class Scene {
     this.steps.push(s);
     this.current = s;
     await this.sink.stepBegin?.(this, s);
+    for (const listener of this.stepListeners) await listener(s);
     return s;
   }
 
@@ -175,7 +199,11 @@ export class Scene {
    * mutate it as the animation makes the same change on screen.
    * State is JSON: that is what traces serve and tests hash.
    */
-  describe(): SceneState { return JSON.parse(JSON.stringify(this.state)) as SceneState; }
+  describe(): SceneState {
+    const state = JSON.parse(JSON.stringify(this.state)) as SceneState;
+    for (const describer of this.describers) Object.assign(state, JSON.parse(JSON.stringify(describer())));
+    return state;
+  }
 
   // ---- mobject list ------------------------------------------------------
 

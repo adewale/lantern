@@ -278,3 +278,75 @@ test('a captioned step records where its reading hold begins, so the player can 
   assert.ok(Math.abs(one!.t1! - one!.t0 - (40 / 160) * 60) < 1e-6, 'video keeps the full reading time');
   assert.equal(two!.hold, undefined);
 });
+
+test('code morphs by line identity: surviving lines move, others fade, added lines are marked', async () => {
+  const { matchLines } = await import('../explain/panels.ts');
+  assert.deepEqual([...matchLines(['a', 'b', 'c'], ['a', 'x', 'c', 'y'])], [
+    [0, 0],
+    [2, 2],
+  ]);
+  class Morph extends Scene {
+    override async construct() {
+      const s = stage(this, { palette: { paper: PAPER, ink: INK, accent: ACCENT, muted: '#999999' } });
+      await this.step('one');
+      const code = await s.code(['function f() {', '  return a;', '}'], { at: 'bottom' });
+      const [first, , last] = code.code.lines;
+      await code.morph(['function f() {', '  const b = a;', '  return b;', '}'], { markAdded: true });
+      assert.equal(code.code.lines[0], first, 'the first line is the same object, moved');
+      assert.equal(code.code.lines[3], last);
+      assert.deepEqual(
+        code.code.lines.map((l) => l.text),
+        ['function f() {', '  const b = a;', '  return b;', '}'],
+      );
+      assert.equal(code.marks.length, 2);
+      assert.ok(!this.familyMembers().some((m) => m instanceof Text && m.text === '  return a;'));
+      assert.ok(code.box()![1] >= s.regions.full[1] - 1e-6, 'the grown block stays on stage');
+      await code.clearMarks();
+      assert.equal(code.marks.length, 0);
+    }
+  }
+  await new Morph(new NullSink()).run();
+});
+
+test('snapshots are stored one file per diagram, pruned, and read from the older single file', async () => {
+  const { readSnapshots, writeSnapshots, snapshotFileName } = await import('../tools/lib/explain-project.ts');
+  const { readdir, readFile: read, writeFile: write } = await import('node:fs/promises');
+  const folder = await mkdtemp(join(tmpdir(), 'lantern-snapshots-'));
+  try {
+    const base = join(folder, 'scene');
+    const a = fixture(),
+      b = { ...fixture(), spec: { source: 'graph LR\nX --> Y', style: 'nord' } };
+    const keyA = diagramKey(a.spec),
+      keyB = diagramKey(b.spec);
+    // An older single-file cache is still read.
+    await write(base + '.snapshots.json', JSON.stringify({ version: 1, importer: 4, diagrams: { [keyA]: a } }));
+    assert.deepEqual(Object.keys(await readSnapshots(base)), [keyA]);
+    await writeSnapshots(base, { [keyA]: a, [keyB]: b }, 'source');
+    assert.deepEqual((await readdir(base + '.snapshots')).sort(), [snapshotFileName(keyA), snapshotFileName(keyB), 'index.json'].sort());
+    await assert.rejects(read(base + '.snapshots.json'), /ENOENT/);
+    const before = await read(join(base + '.snapshots', snapshotFileName(keyA)), 'utf8');
+    await writeSnapshots(base, { [keyA]: a }, 'source');
+    assert.deepEqual((await readdir(base + '.snapshots')).sort(), [snapshotFileName(keyA), 'index.json'].sort());
+    assert.equal(await read(join(base + '.snapshots', snapshotFileName(keyA)), 'utf8'), before, 'unchanged diagrams are not rewritten');
+    assert.deepEqual(await readSnapshots(base), { [keyA]: a });
+  } finally {
+    await rm(folder, { recursive: true, force: true });
+  }
+});
+
+test('engine hooks replace monkey-patching: step listeners run after the sink and can be removed', async () => {
+  const seen: string[] = [];
+  class Hooks extends Scene {
+    override async construct() {
+      const off = this.onStep((s) => void seen.push(s.name));
+      this.addDescriber(() => ({ extra: 1 }));
+      await this.step('one');
+      off();
+      await this.step('two');
+      this.state = { replaced: true };
+      assert.deepEqual(this.describe(), { replaced: true, extra: 1 });
+    }
+  }
+  await new Hooks(new NullSink()).run();
+  assert.deepEqual(seen, ['one']);
+});

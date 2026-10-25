@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "importer": 4,
+  "renderer": "agentic-mermaid@0.4.1",
+  "sourceHash": "d6702675ad5d485bb344dd1932e6e9b014b9c165b41b0debd62ca7a8d16f6bc4",
+  "diagrams": {
+    "[\"gantt\\n dateFormat HH:mm\\n axisFormat %H:%M\\n tickInterval 2minute\\n section Client\\n code_verifier held :v, 00:00, 4m\\n section Auth server\\n challenge stored :ch, 00:01, 3m\\n code valid :c, 00:02, 2m\\n section API\\n access token :t, 00:04, 8m\",\"github-light\",null]": "d8fea658117675e6.json",
+    "[\"graph LR\\nTLS[TLS] --> Redirect[Exact redirect]\\nRedirect --> Client[Code + client checks]\\nClient --> PKCE[PKCE: S256 match]\\nPKCE --> Token[Token]\",\"github-light\",null]": "5c6bb5e73abf8419.json",
+    "[\"graph LR\\nV[code_verifier] -->|SHA-256| H[32-byte digest]\\nH -->|base64url| C[code_challenge]\",\"github-light\",null]": "77811525af7b558c.json",
+    "[\"sequenceDiagram\\n participant C as Client\\n participant S as Auth server\\n C->>S: Authorize request + code_challenge\\n S-->>C: Redirect with code\\n C->>S: Token request: code + code_verifier\\n S-->>C: Access token\",\"github-light\",null]": "69bb6df870a6bd4b.json",
+    "[\"sequenceDiagram\\n participant C as Client\\n participant S as Auth server\\n participant X as Attacker\\n C->>S: Authorize request + code_challenge\\n S-->>C: Redirect with code\\n S-->>X: Same redirect, intercepted\\n X->>S: Token request: code + a guess\\n S-->>X: invalid_grant\\n C->>S: Token request: code + code_verifier\\n S-->>C: Access token\",\"github-light\",null]": "78c021d76a9b9122.json"
+  }
+}

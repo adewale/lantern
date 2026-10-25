@@ -1,0 +1,3542 @@
+{
+  "version": 1,
+  "renderer": "agentic-mermaid@0.4.1",
+  "spec": {
+    "source": "sequenceDiagram\n participant A as Agent tool\n participant O as op CLI\n participant V as 1Password service\n A->>O: op item list\n O->>V: token auth\n A->>O: op item get prod\n O->>V: token auth\n A->>O: op run … app\n O->>V: token auth",
+    "style": "excalidraw"
+  },
+  "family": "sequence",
+  "width": 471.3445,
+  "height": 366,
+  "palette": {
+    "paper": "#ffffff",
+    "ink": "#1e1e1e",
+    "accent": "#4263eb",
+    "muted": "#1e1e1e"
+  },
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"471.3445\" height=\"366\" viewBox=\"0 0 471.3445 366\" style=\"--bg:#ffffff;--fg:#1e1e1e;--line:#1e1e1e;--accent:#4263eb;--surface:#f1f3f5;--font:Caveat;background:#ffffff\">\n<style>\n  text { font-family: var(--font, 'Caveat'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #1e1e1e;\n    --_text-sec:      #505050;\n    --_text-muted:    #6a6a6a;\n    --_text-faint:    #868686;\n    --_line:          #1e1e1e;\n    --_arrow:         #4263eb;\n    --_node-fill:     #f1f3f5;\n    --_node-stroke:   #d2d2d2;\n    --_group-fill:    #ffffff;\n    --_group-hdr:     #f4f4f4;\n    --_inner-stroke:  #e4e4e4;\n    --_key-badge:     #e9e9e9;\n  }\n</style>\n<rect width=\"471.3445\" height=\"366\" fill=\"#ffffff\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"seq-arrow\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#4263eb\" />\n  </marker>\n  <marker id=\"seq-arrow-open\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <polyline points=\"0 0, 8 2.5, 0 5\" fill=\"none\" stroke=\"#4263eb\" stroke-width=\"1\" />\n  </marker>\n  <marker id=\"seq-arrow-cross\" markerWidth=\"8\" markerHeight=\"5\" refX=\"4\" refY=\"2.5\" orient=\"auto\">\n    <path d=\"M1 1 L7 4 M1 4 L7 1\" fill=\"none\" stroke=\"#4263eb\" stroke-width=\"1.5\" />\n  </marker>\n  <marker id=\"seq-arrow-half-top\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <path d=\"M0 0 L8 2.5\" fill=\"none\" stroke=\"#4263eb\" stroke-width=\"1\" />\n  </marker>\n  <marker id=\"seq-arrow-half-bottom\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <path d=\"M0 5 L8 2.5\" fill=\"none\" stroke=\"#4263eb\" stroke-width=\"1\" />\n  </marker>\n</defs>\n<line stroke-opacity=\"0\" class=\"lifeline\" data-actor=\"A\" x1=\"75.5035\" y1=\"70\" x2=\"75.5035\" y2=\"336\" stroke=\"#1e1e1e\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />\n<path d=\"M75.53 68.51 C74.05 162.89, 76.23 251.64, 74.74 335.5 M75.34 69.31 C73.14 171.61, 73.05 271.03, 75.29 336.07\" fill=\"none\" stroke=\"#1e1e1e\" stroke-width=\"1.2000000000000002\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" stroke-dasharray=\"6 4\" />\n<line stroke-opacity=\"0\" class=\"lifeline\" data-actor=\"O\" x1=\"215.5035\" y1=\"70\" x2=\"215.5035\" y2=\"336\" stroke=\"#1e1e1e\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />\n<path d=\"M216.24 70.74 C211.47 137.31, 213.72 205.56, 214.07 335.83 M215 70.55 C212.55 149.38, 212.49 228.5, 215.87 335.51\" fill=\"none\" stroke=\"#1e1e1e\" stroke-width=\"1.2000000000000002\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" stroke-dasharray=\"6 4\" />\n<line stroke-opacity=\"0\" class=\"lifeline\" data-actor=\"V\" x1=\"368.424\" y1=\"70\" x2=\"368.424\" y2=\"336\" stroke=\"#1e1e1e\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />\n<path d=\"M367.16 69.19 C365.93 176.62, 367.05 282.82, 369.52 335.5 M368.08 70.2 C367.7 159.34, 366.74 247.85, 368.63 336.23\" fill=\"none\" stroke=\"#1e1e1e\" stroke-width=\"1.2000000000000002\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" stroke-dasharray=\"6 4\" />\n<g class=\"message\" data-label=\"op item list\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:A-&gt;O#0\" data-role=\"message\">\n  <line stroke-opacity=\"0\" x1=\"75.5035\" y1=\"96\" x2=\"215.5035\" y2=\"96\" stroke=\"#1e1e1e\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:A-&gt;O#0:line\" data-role=\"message\" data-from=\"A\" data-to=\"O\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"A to O: op item list\" />\n  <path d=\"M74.15 97.26 C118.52 96.77, 163.92 95.41, 216.04 96.25 M76.2 96.39 C117.34 97.23, 160.44 96.87, 214.64 97.01\" fill=\"none\" stroke=\"#1e1e1e\" stroke-width=\"1.6\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n  <text paint-order=\"stroke\" stroke=\"#ffffff\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"145.5035\" y=\"86\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#6a6a6a\" dy=\"3.8499999999999996\" textLength=\"47.982\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">op item list</text>\n</g>\n<g class=\"message\" data-label=\"token auth\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:O-&gt;V#0\" data-role=\"message\">\n  <line stroke-opacity=\"0\" x1=\"215.5035\" y1=\"136\" x2=\"368.424\" y2=\"136\" stroke=\"#1e1e1e\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:O-&gt;V#0:line\" data-role=\"message\" data-from=\"O\" data-to=\"V\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"O to V: token auth\" />\n  <path d=\"M213.78 135.3 C259.14 133.67, 300.47 135, 370.16 136.93 M215.75 136.94 C245.15 136.66, 277.23 136.76, 368.36 136.96\" fill=\"none\" stroke=\"#1e1e1e\" stroke-width=\"1.6\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n  <text paint-order=\"stroke\" stroke=\"#ffffff\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"291.96375\" y=\"126\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#6a6a6a\" dy=\"3.8499999999999996\" textLength=\"49.764\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">token auth</text>\n</g>\n<g class=\"message\" data-label=\"op item get prod\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:A-&gt;O#1\" data-role=\"message\">\n  <line stroke-opacity=\"0\" x1=\"75.5035\" y1=\"176\" x2=\"215.5035\" y2=\"176\" stroke=\"#1e1e1e\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:A-&gt;O#1:line\" data-role=\"message\" data-from=\"A\" data-to=\"O\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"A to O: op item get prod\" />\n  <path d=\"M76.95 176.59 C112.5 174.16, 152.84 173.21, 216.49 174.35 M75.56 176.34 C127.25 176.6, 177.09 177.58, 215.13 176.95\" fill=\"none\" stroke=\"#1e1e1e\" stroke-width=\"1.6\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n  <text paint-order=\"stroke\" stroke=\"#ffffff\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"145.5035\" y=\"166\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#6a6a6a\" dy=\"3.8499999999999996\" textLength=\"73.524\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">op item get prod</text>\n</g>\n<g class=\"message\" data-label=\"token auth\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:O-&gt;V#1\" data-role=\"message\">\n  <line stroke-opacity=\"0\" x1=\"215.5035\" y1=\"216\" x2=\"368.424\" y2=\"216\" stroke=\"#1e1e1e\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:O-&gt;V#1:line\" data-role=\"message\" data-from=\"O\" data-to=\"V\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"O to V: token auth\" />\n  <path d=\"M213.97 217.65 C273.37 217.98, 330.05 216.46, 368.25 217.14 M216.22 216.02 C273.58 216.79, 334.17 216.89, 369.06 214.96\" fill=\"none\" stroke=\"#1e1e1e\" stroke-width=\"1.6\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n  <text paint-order=\"stroke\" stroke=\"#ffffff\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"291.96375\" y=\"206\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#6a6a6a\" dy=\"3.8499999999999996\" textLength=\"49.764\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">token auth</text>\n</g>\n<g class=\"message\" data-label=\"op run … app\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:A-&gt;O#2\" data-role=\"message\">\n  <line stroke-opacity=\"0\" x1=\"75.5035\" y1=\"256\" x2=\"215.5035\" y2=\"256\" stroke=\"#1e1e1e\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:A-&gt;O#2:line\" data-role=\"message\" data-from=\"A\" data-to=\"O\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"A to O: op run … app\" />\n  <path d=\"M76.48 256.89 C127.05 253.67, 180.98 256.26, 215.04 256.43 M74.89 256.71 C128.11 254.36, 182.63 255.3, 215.6 256.3\" fill=\"none\" stroke=\"#1e1e1e\" stroke-width=\"1.6\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n  <text paint-order=\"stroke\" stroke=\"#ffffff\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"145.5035\" y=\"246\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#6a6a6a\" dy=\"3.8499999999999996\" textLength=\"59.268\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">op run … app</text>\n</g>\n<g class=\"message\" data-label=\"token auth\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:O-&gt;V#2\" data-role=\"message\">\n  <line stroke-opacity=\"0\" x1=\"215.5035\" y1=\"296\" x2=\"368.424\" y2=\"296\" stroke=\"#1e1e1e\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:O-&gt;V#2:line\" data-role=\"message\" data-from=\"O\" data-to=\"V\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"O to V: token auth\" />\n  <path d=\"M215.21 297.63 C271.14 297.32, 324.54 296.76, 368.03 295 M215.49 294.93 C252.77 298.57, 288.99 297.3, 367.77 296.11\" fill=\"none\" stroke=\"#1e1e1e\" stroke-width=\"1.6\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n  <text paint-order=\"stroke\" stroke=\"#ffffff\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"291.96375\" y=\"286\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#6a6a6a\" dy=\"3.8499999999999996\" textLength=\"49.764\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">token auth</text>\n</g>\n<g class=\"actor\" data-id=\"A\" data-label=\"Agent tool\" data-type=\"participant\" data-role=\"actor\">\n  <path d=\"M31.04 30.96 C31.04 30.96, 31.04 30.96, 31.04 30.96 M31.04 30.96 C31.04 30.96, 31.04 30.96, 31.04 30.96 M28.86 39.46 C32.51 37.04, 36.91 33.2, 38.11 30.64 M29.99 40.92 C33.02 38.05, 35.67 34.08, 39.92 30.37 M30.83 50.67 C33.31 43.14, 37.93 40.3, 47.68 31.31 M30.58 50.44 C34.67 44.97, 38.3 41.34, 47.41 31.49 M32.13 58.86 C34.61 54.19, 41.06 46.93, 56.05 32.35 M31.49 59.36 C40.36 48.6, 49.11 35.95, 56 31.77 M32.68 68.66 C40.94 55.47, 47.56 47.95, 65.67 32.07 M31.78 67.57 C42.21 53.36, 53.04 40.91, 63.53 30.66 M36.18 70.51 C49.97 57.71, 60.54 45.73, 70.96 30.68 M36.98 69.44 C47.83 59.15, 57.97 45.99, 70.77 30.42 M42.59 70.2 C53.29 59.59, 64.63 47.96, 80.98 28.63 M45.21 71.08 C53.82 59.73, 65.05 48.16, 78.13 30.22 M50.68 72.34 C62.91 55.69, 74.01 42.81, 87.6 32.34 M51.64 69.7 C59.46 61.29, 66.29 53.95, 86.64 29.95 M59.15 69.84 C70.3 60.12, 77.43 50, 94.23 29.85 M60.33 69.77 C70.82 56.18, 82.26 43.65, 95.52 30.34 M67.49 70.23 C78.74 62.67, 84.75 52.43, 104.9 27.97 M69.4 69.99 C79.19 57.88, 90.52 45.36, 104.25 30.81 M77.13 71.95 C87.04 60.67, 93.75 50.6, 110.12 31.68 M76.33 70.68 C89.05 56.63, 99.81 43.57, 111.32 31.08 M86.08 70.07 C96.23 56.45, 110.31 38.33, 118.86 29.11 M83.35 70.97 C97.15 54.57, 110.47 40.77, 119.53 29.73 M91.22 71.51 C99.58 59.83, 112.35 48.37, 120.85 39.36 M92.79 71.05 C103.51 57.65, 114.07 44.39, 120.04 36.99 M99.44 70.62 C108.67 60.43, 113.09 55.55, 122.24 47.95 M100.38 70.13 C107.14 62.15, 113.82 54.7, 121.13 45.71 M108.99 68.26 C111.61 65.73, 114.29 64.04, 122.17 54.02 M107.22 70.17 C111.98 66.55, 116.06 61.96, 120.25 56.73 M115.76 70.08 C117.14 69.29, 117.94 67.68, 120.12 64.67 M116.04 70.27 C117.08 68.52, 118.38 67.03, 120.6 64.89\" fill=\"none\" stroke=\"#f1f3f5\" stroke-width=\"0.9\" data-id=\"actor:A:box\" data-role=\"actor\" />\n  <path d=\"M34.48 29.35 C65.13 29.81, 93.62 29.93, 117.42 28.29 M33.76 29.89 C59.66 29.85, 85.92 30.44, 116.9 30.47 M117.01 30 C120.59 31.98, 123.16 30.21, 119.15 35.7 M117.56 29.94 C121.36 31.71, 119.65 29.57, 121.05 34.76 M122.58 33.15 C120.43 45.48, 123 58.28, 122.59 66.58 M121.81 33.38 C121.85 43.73, 120.97 53.86, 120.61 66.53 M121.01 66 C122.45 68.46, 121.08 69.17, 116 70.48 M120.48 65.33 C118.7 68.67, 117.56 69.82, 114.88 71.15 M115.66 70.62 C85.53 69.05, 57.32 70.17, 32.77 71.93 M118.08 71.05 C90.87 69.23, 62.08 70.13, 32.93 69 M34 70 C33.41 69.65, 30.02 70.14, 30.63 66.3 M33.13 71.85 C31.33 68.42, 32.26 70.47, 28.05 66.21 M27.86 64.65 C31.35 61.06, 28.8 52.61, 31.82 34.12 M30.42 66.68 C30.13 59.55, 29.7 52.84, 29.14 34.13 M30 34 C28.54 30.65, 30.39 30.39, 31.82 32.09 M31.55 32.96 C27.98 31.42, 33.56 28.6, 32.96 29.63 M34 30 C34 30, 34 30, 34 30 M34 30 C34 30, 34 30, 34 30\" fill=\"none\" stroke=\"#d2d2d2\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n  <text paint-order=\"stroke\" stroke=\"#ffffff\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"75.5035\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"#1e1e1e\" dy=\"4.55\" textLength=\"59.007\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Agent tool</text>\n</g>\n<g class=\"actor\" data-id=\"O\" data-label=\"op CLI\" data-type=\"participant\" data-role=\"actor\">\n  <path d=\"M176.24 31.3 C176.24 31.3, 176.24 31.3, 176.24 31.3 M176.24 31.3 C176.24 31.3, 176.24 31.3, 176.24 31.3 M179.15 37.57 C180.24 36.38, 180.75 34.25, 182.84 32.8 M178.91 37.32 C179.89 36.01, 181.08 34.3, 182.78 33.18 M180.74 44.27 C181.69 42.33, 186.45 38.46, 190.81 33.62 M179.91 46.18 C183.47 42.79, 187.18 38.69, 190.43 33.33 M178.35 54.35 C182.76 49.18, 186.7 45.49, 197.21 31.38 M179.69 54.3 C187 48.02, 193.25 40.06, 199.22 32.94 M178.1 67.21 C183.14 61.65, 188.62 53.87, 206.59 32 M177.72 66.72 C184.11 57.16, 193.56 48.51, 207.89 33.23 M179.61 73.63 C187.27 62.64, 200.44 50.37, 216.18 30.9 M181.13 71.03 C186.76 64.15, 194.56 54.78, 215.3 31.84 M188.32 72.48 C199.98 58.53, 212.89 47.61, 220.32 31.42 M189.04 72.21 C195.93 64.11, 204.2 54.29, 223.23 31.98 M195.76 73.31 C206.18 57.61, 217.34 46.62, 230.24 32.14 M195.28 71.97 C209.32 56.19, 223.75 42.13, 230.28 32.54 M203.56 73.77 C213.78 59.58, 226.69 46.95, 239.95 32.28 M203.93 71 C214.43 60.27, 223.33 50.24, 237.75 34.09 M212.83 73.32 C223.08 59.89, 231.43 48.14, 244.88 32.77 M212.72 72.28 C223.33 57.81, 235.9 45.7, 246.84 31.75 M219.73 70.52 C225.15 62.47, 234.07 57.07, 253.58 31.46 M220.01 72.42 C232.27 58.84, 243.63 44.08, 255.36 33.07 M226.48 72.2 C234.93 61.07, 243.88 53.33, 259.06 36.78 M227.48 71.39 C239.66 59.01, 250.11 46.74, 258.2 37.04 M238 72.51 C243.3 67.56, 246.07 61, 257.2 45.68 M235.07 72.09 C240.4 66.49, 246.06 59, 259.61 45.74 M244.74 72.31 C246.12 68.21, 254.75 63.56, 258.39 56.59 M244.09 71.64 C249 65.38, 254.71 59.17, 258.92 55.8\" fill=\"none\" stroke=\"#f1f3f5\" stroke-width=\"0.9\" data-id=\"actor:O:box\" data-role=\"actor\" />\n  <path d=\"M179.47 29.27 C196.75 29.09, 216.82 26.99, 252.32 29.76 M180.58 30.12 C200.89 28.96, 223.55 30.36, 252.51 30.67 M251.5 30 C255.41 31.36, 254.34 29.88, 256.3 33.03 M249.67 28.05 C252.49 27.79, 257.34 31.92, 254.09 35.49 M254.35 33.64 C256.51 41.4, 255.49 53.44, 255.22 64.56 M256.44 33 C254.99 46.71, 255.44 60.05, 255.69 66.6 M255.5 66 C256.35 68.24, 256.32 69.01, 249.93 69.16 M257.32 68.18 C255.62 70.34, 255.03 71.62, 250.29 68.5 M253.68 70.49 C224.13 71.44, 197.15 68.76, 178.39 67.84 M251.05 70.35 C233.37 70.23, 216.96 70.54, 178.68 70.11 M179.5 70 C177.36 71.47, 174.69 67.03, 176.71 65.94 M180.43 70.83 C177.7 68.3, 177.72 66.85, 176.19 65.23 M176.11 67.36 C174.55 53.18, 173.44 40.11, 175.06 35.46 M174.87 66.71 C175.63 52.97, 176.06 40.06, 175.31 33.91 M175.5 34 C173.87 31.07, 174.75 30.88, 177.97 28.97 M176.77 33.98 C176.26 30.99, 179.09 30.41, 178.98 31.11 M179.5 30 C179.5 30, 179.5 30, 179.5 30 M179.5 30 C179.5 30, 179.5 30, 179.5 30\" fill=\"none\" stroke=\"#d2d2d2\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n  <text paint-order=\"stroke\" stroke=\"#ffffff\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"215.5035\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"#1e1e1e\" dy=\"4.55\" textLength=\"39.741\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">op CLI</text>\n</g>\n<g class=\"actor\" data-id=\"V\" data-label=\"1Password service\" data-type=\"participant\" data-role=\"actor\">\n  <path d=\"M296.42 31.1 C296.42 31.1, 296.42 31.1, 296.42 31.1 M296.42 31.1 C296.42 31.1, 296.42 31.1, 296.42 31.1 M297.47 41.16 C299.19 37.69, 300.27 35.66, 303.51 30.76 M296.09 40.62 C299.22 37.58, 302.84 34.35, 305.36 31.19 M297.13 50.72 C301.68 43.98, 308.08 37.88, 315.14 31.82 M295.38 49.71 C303.05 41.73, 308.75 34.09, 313.94 30.99 M295.54 57.82 C304.47 51.57, 308.5 45.91, 322.73 28.45 M296.07 59.16 C304.49 49.5, 312.37 39.93, 320.2 30.86 M295.08 65.57 C303.9 59.91, 311.31 49.99, 327.31 30.45 M297.59 66.96 C303.17 58.66, 311.84 51.94, 327.98 30.56 M303.55 70.77 C313.11 55.88, 324.52 44.02, 335.96 28.63 M301.44 70.65 C313.8 55.8, 326.45 41.93, 337.8 30.94 M309.59 72.25 C321.57 58.49, 330.65 44.78, 343.49 28.89 M310.43 70.08 C319.5 60.98, 326.22 51.24, 344.23 31.07 M318.7 67.99 C331.69 56.96, 341.27 39.75, 351.67 31.95 M317.83 69.06 C327.43 61.24, 335.66 50.79, 353.22 31.23 M324.77 69.27 C339.73 54.48, 355.42 39.57, 360.43 32.12 M325.39 71.02 C334.11 61.62, 341.93 51.67, 361.65 29.61 M332.67 72.31 C343.24 60.34, 354.29 45.97, 366.82 30.83 M334.51 70.61 C345.05 59.29, 354.52 46.3, 367.64 30.56 M339.71 71.79 C353.18 55.02, 367.11 40.47, 377.14 31.63 M341.19 70.65 C352.37 56.78, 365.04 44.22, 375.37 30.92 M348.79 72.82 C359.5 60.23, 369.6 46.85, 383.9 31.71 M348.52 70.14 C361.63 57.52, 371.89 43.81, 383.4 30.46 M357.48 69.88 C366.3 58.42, 378.32 48.48, 392.24 29.46 M358.32 70.85 C367.76 58.13, 379.14 46.24, 392.78 30.8 M363.59 71.41 C377.76 55.49, 394.29 38.17, 400.17 29.89 M364.96 71.24 C377.86 54.47, 392.26 39.19, 400.88 31.03 M375.05 70.54 C385.13 57.2, 396.64 42.72, 408.55 29.47 M374.46 69.31 C385.35 56.43, 397.2 44.95, 408.41 30.46 M380.28 69.68 C392.2 55.44, 403.7 42.81, 417.79 31.03 M380.73 69.74 C393.79 56.84, 405.31 41.89, 416.52 31.44 M390.07 72.63 C394.88 63.15, 402.26 53.29, 424.58 28.61 M390.17 70.7 C399.49 58.67, 410.76 47.22, 425.07 31.1 M397.94 70.21 C407.81 60.81, 416.71 49.6, 433.01 30.46 M396.81 69.39 C408.36 58.44, 419.62 45.6, 430.78 30.16 M405.55 71.33 C413.38 63.47, 421.97 54.56, 440.63 32.18 M405.82 70.26 C412.23 61.31, 418.48 54.1, 439.13 30.45 M412.81 71.63 C420.5 61.83, 425.4 54.88, 443.71 37.62 M414.12 71.36 C422.42 60.78, 430.69 49.3, 441.28 37.32 M421.23 71.41 C427.62 63.16, 435.61 53.02, 440.84 47.75 M420.72 70.35 C428.06 63.09, 435.28 56.04, 441.23 46.42 M429.57 69.94 C433.37 64.33, 437.98 57.33, 439.9 53.84 M428.21 70.07 C431.35 67.64, 435.42 63.31, 441.09 55.8 M436.9 70.42 C438.88 67.74, 440.64 65.78, 441.84 65.39 M437.11 69.99 C438.55 69.18, 439.04 68.24, 441.83 64.62\" fill=\"none\" stroke=\"#f1f3f5\" stroke-width=\"0.9\" data-id=\"actor:V:box\" data-role=\"actor\" />\n  <path d=\"M299.92 30.32 C347.58 32.08, 395.78 28.02, 435.23 29.05 M300.25 30.92 C328.63 31.33, 359.72 31.91, 436.59 30.12 M437.34 30 C441.44 28.65, 443.15 31.66, 440.7 34.82 M436.91 29.59 C440.22 27.78, 441.48 29.55, 443.26 32.72 M439.2 35.51 C440.68 46.71, 440.82 56.36, 440.85 65.96 M441.86 34.22 C441.27 41.5, 441.05 48.22, 441.57 66.09 M441.34 66 C441.01 69.81, 439.88 68.28, 436.9 71.37 M439.99 67.05 C439.27 67.14, 439.29 69.38, 437.05 70.58 M436.18 68.65 C390.43 71.68, 346.14 71, 298.14 71.93 M436.76 69.09 C395.14 68.13, 352.87 69.26, 300.29 68.95 M299.5 70 C294.81 68.53, 295.56 69.47, 296.27 65.94 M301.36 71.85 C297.9 69.29, 295.8 68.04, 296.53 68.18 M295.32 66.05 C296.94 56.53, 295.45 45.81, 295.63 34.2 M295.32 66.58 C294.15 55.7, 295.91 42.76, 295.28 32.95 M295.5 34 C295.74 30.96, 297.07 29.37, 297.52 27.99 M294.93 33.71 C295.88 28.83, 296.55 28.23, 298.61 29.88 M299.5 30 C299.5 30, 299.5 30, 299.5 30 M299.5 30 C299.5 30, 299.5 30, 299.5 30\" fill=\"none\" stroke=\"#d2d2d2\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n  <text paint-order=\"stroke\" stroke=\"#ffffff\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"368.424\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"#1e1e1e\" dy=\"4.55\" textLength=\"113.841\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">1Password service</text>\n</g>\n</svg>",
+  "parts": [
+    {
+      "id": "__frame",
+      "role": "frame",
+      "kind": "shape",
+      "svg": "",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0,
+              0,
+              1.57114839553833,
+              0,
+              3.14229679107666,
+              0,
+              4.71344518661499,
+              0,
+              4.71344518661499,
+              -1.2200000286102295,
+              4.71344518661499,
+              -2.440000057220459,
+              4.71344518661499,
+              -3.6600000858306885,
+              3.14229679107666,
+              -3.6600000858306885,
+              1.57114839553833,
+              -3.6600000858306885,
+              0,
+              -3.6600000858306885,
+              0,
+              -2.440000057220459,
+              0,
+              -1.2200000286102295,
+              0,
+              0
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lifeline:A",
+      "role": "lifeline",
+      "kind": "connector",
+      "svg": "<line stroke-opacity=\"0\" class=\"lifeline\" data-actor=\"A\" x1=\"75.5035\" y1=\"70\" x2=\"75.5035\" y2=\"336\" stroke=\"var(--_line)\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />\n<path d=\"M75.53 68.51 C74.05 162.89, 76.23 251.64, 74.74 335.5 M75.34 69.31 C73.14 171.61, 73.05 271.03, 75.29 336.07\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.2000000000000002\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" stroke-dasharray=\"6 4\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.7550350427627563,
+              -0.699999988079071,
+              0.7550350427627563,
+              -1.5866667032241821,
+              0.7550350427627563,
+              -2.4733333587646484,
+              0.7550350427627563,
+              -3.359999895095825
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.06 0.04",
+            "dashOffset": 0
+          }
+        },
+        {
+          "subpaths": [
+            [
+              0.755299985408783,
+              -0.6851000189781189,
+              0.7405000329017639,
+              -1.6289000511169434,
+              0.7623000144958496,
+              -2.516400098800659,
+              0.7473999857902527,
+              -3.3550000190734863
+            ],
+            [
+              0.7533999681472778,
+              -0.6930999755859375,
+              0.7314000129699707,
+              -1.7160999774932861,
+              0.7305000424385071,
+              -2.7102999687194824,
+              0.7529000043869019,
+              -3.3607001304626465
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.012,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.06 0.04",
+            "dashOffset": 0
+          }
+        }
+      ],
+      "route": [
+        [
+          0.755035,
+          -0.7
+        ],
+        [
+          0.755035,
+          -3.36
+        ]
+      ]
+    },
+    {
+      "id": "lifeline:O",
+      "role": "lifeline",
+      "kind": "connector",
+      "svg": "<line stroke-opacity=\"0\" class=\"lifeline\" data-actor=\"O\" x1=\"215.5035\" y1=\"70\" x2=\"215.5035\" y2=\"336\" stroke=\"var(--_line)\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />\n<path d=\"M216.24 70.74 C211.47 137.31, 213.72 205.56, 214.07 335.83 M215 70.55 C212.55 149.38, 212.49 228.5, 215.87 335.51\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.2000000000000002\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" stroke-dasharray=\"6 4\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.1550350189208984,
+              -0.699999988079071,
+              2.1550350189208984,
+              -1.5866667032241821,
+              2.1550350189208984,
+              -2.4733333587646484,
+              2.1550350189208984,
+              -3.359999895095825
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.06 0.04",
+            "dashOffset": 0
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.162400007247925,
+              -0.7073999643325806,
+              2.1147000789642334,
+              -1.37309992313385,
+              2.137200117111206,
+              -2.0555999279022217,
+              2.140700101852417,
+              -3.358299970626831
+            ],
+            [
+              2.1500000953674316,
+              -0.7055000066757202,
+              2.125499963760376,
+              -1.4938000440597534,
+              2.1249001026153564,
+              -2.2850000858306885,
+              2.1586999893188477,
+              -3.355100154876709
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.012,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.06 0.04",
+            "dashOffset": 0
+          }
+        }
+      ],
+      "route": [
+        [
+          2.155035,
+          -0.7
+        ],
+        [
+          2.155035,
+          -3.36
+        ]
+      ]
+    },
+    {
+      "id": "lifeline:V",
+      "role": "lifeline",
+      "kind": "connector",
+      "svg": "<line stroke-opacity=\"0\" class=\"lifeline\" data-actor=\"V\" x1=\"368.424\" y1=\"70\" x2=\"368.424\" y2=\"336\" stroke=\"var(--_line)\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />\n<path d=\"M367.16 69.19 C365.93 176.62, 367.05 282.82, 369.52 335.5 M368.08 70.2 C367.7 159.34, 366.74 247.85, 368.63 336.23\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.2000000000000002\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" stroke-dasharray=\"6 4\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.6842401027679443,
+              -0.699999988079071,
+              3.6842401027679443,
+              -1.5866667032241821,
+              3.6842401027679443,
+              -2.4733333587646484,
+              3.6842401027679443,
+              -3.359999895095825
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.0075,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.06 0.04",
+            "dashOffset": 0
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.671600103378296,
+              -0.6919000148773193,
+              3.659299850463867,
+              -1.7661999464035034,
+              3.670499801635742,
+              -2.828200101852417,
+              3.695199966430664,
+              -3.3550000190734863
+            ],
+            [
+              3.680799961090088,
+              -0.7019999623298645,
+              3.677000045776367,
+              -1.593400001525879,
+              3.6673998832702637,
+              -2.4785001277923584,
+              3.686300039291382,
+              -3.362300157546997
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.012,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.06 0.04",
+            "dashOffset": 0
+          }
+        }
+      ],
+      "route": [
+        [
+          3.68424,
+          -0.7
+        ],
+        [
+          3.68424,
+          -3.36
+        ]
+      ]
+    },
+    {
+      "id": "message:A->O#0",
+      "role": "message",
+      "kind": "group",
+      "svg": "<g class=\"message\" data-label=\"op item list\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:A-&gt;O#0\" data-role=\"message\">\n  <line stroke-opacity=\"0\" x1=\"75.5035\" y1=\"96\" x2=\"215.5035\" y2=\"96\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:A-&gt;O#0:line\" data-role=\"message\" data-from=\"A\" data-to=\"O\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"A to O: op item list\" />\n  <path d=\"M74.15 97.26 C118.52 96.77, 163.92 95.41, 216.04 96.25 M76.2 96.39 C117.34 97.23, 160.44 96.87, 214.64 97.01\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.6\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"145.5035\" y=\"86\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">op item list</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.7550350427627563,
+              -0.9599999785423279,
+              1.2217016220092773,
+              -0.9599999785423279,
+              1.688368320465088,
+              -0.9599999785423279,
+              2.1550350189208984,
+              -0.9599999785423279
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.0750350952148438,
+              -0.9350000023841858,
+              2.1017017364501953,
+              -0.9433333277702332,
+              2.128368377685547,
+              -0.9516666531562805,
+              2.1550350189208984,
+              -0.9599999785423279,
+              2.128368377685547,
+              -0.9683333039283752,
+              2.1017017364501953,
+              -0.9766666889190674,
+              2.0750350952148438,
+              -0.9850000143051147,
+              2.0750350952148438,
+              -0.9683333039283752,
+              2.0750350952148438,
+              -0.9516666531562805,
+              2.0750350952148438,
+              -0.9350000023841858
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#4263eb",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              0.7415000200271606,
+              -0.9726000428199768,
+              1.1851999759674072,
+              -0.9676999449729919,
+              1.63919997215271,
+              -0.9541000127792358,
+              2.160399913787842,
+              -0.9624999761581421
+            ],
+            [
+              0.7619999647140503,
+              -0.9638999700546265,
+              1.1733999252319336,
+              -0.9723000526428223,
+              1.6044000387191772,
+              -0.9687000513076782,
+              2.146399974822998,
+              -0.9701000452041626
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.016,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#6a6a6a",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "op item list",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "op item list",
+            "x": 145.5035,
+            "y": 89.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 47.982
+          }
+        }
+      ],
+      "from": "A",
+      "to": "O",
+      "route": [
+        [
+          0.755035,
+          -0.96
+        ],
+        [
+          2.155035,
+          -0.96
+        ]
+      ]
+    },
+    {
+      "id": "message:O->V#0",
+      "role": "message",
+      "kind": "group",
+      "svg": "<g class=\"message\" data-label=\"token auth\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:O-&gt;V#0\" data-role=\"message\">\n  <line stroke-opacity=\"0\" x1=\"215.5035\" y1=\"136\" x2=\"368.424\" y2=\"136\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:O-&gt;V#0:line\" data-role=\"message\" data-from=\"O\" data-to=\"V\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"O to V: token auth\" />\n  <path d=\"M213.78 135.3 C259.14 133.67, 300.47 135, 370.16 136.93 M215.75 136.94 C245.15 136.66, 277.23 136.76, 368.36 136.96\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.6\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"291.96375\" y=\"126\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">token auth</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.1550350189208984,
+              -1.3600000143051147,
+              2.6647698879241943,
+              -1.3600000143051147,
+              3.1745049953460693,
+              -1.3600000143051147,
+              3.6842401027679443,
+              -1.3600000143051147
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.6042401790618896,
+              -1.3350000381469727,
+              3.630906820297241,
+              -1.34333336353302,
+              3.6575734615325928,
+              -1.3516666889190674,
+              3.6842401027679443,
+              -1.3600000143051147,
+              3.6575734615325928,
+              -1.368333339691162,
+              3.630906820297241,
+              -1.3766666650772095,
+              3.6042401790618896,
+              -1.3849999904632568,
+              3.6042401790618896,
+              -1.368333339691162,
+              3.6042401790618896,
+              -1.3516666889190674,
+              3.6042401790618896,
+              -1.3350000381469727
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#4263eb",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.1377999782562256,
+              -1.3530000448226929,
+              2.591400146484375,
+              -1.3366999626159668,
+              3.004699945449829,
+              -1.350000023841858,
+              3.7016000747680664,
+              -1.3692998886108398
+            ],
+            [
+              2.1575000286102295,
+              -1.3694000244140625,
+              2.4514999389648438,
+              -1.3666000366210938,
+              2.7723000049591064,
+              -1.3675999641418457,
+              3.6835999488830566,
+              -1.3696000576019287
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.016,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#6a6a6a",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "token auth",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "token auth",
+            "x": 291.96375,
+            "y": 129.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 49.764
+          }
+        }
+      ],
+      "from": "O",
+      "to": "V",
+      "route": [
+        [
+          2.155035,
+          -1.36
+        ],
+        [
+          3.68424,
+          -1.36
+        ]
+      ]
+    },
+    {
+      "id": "message:A->O#1",
+      "role": "message",
+      "kind": "group",
+      "svg": "<g class=\"message\" data-label=\"op item get prod\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:A-&gt;O#1\" data-role=\"message\">\n  <line stroke-opacity=\"0\" x1=\"75.5035\" y1=\"176\" x2=\"215.5035\" y2=\"176\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:A-&gt;O#1:line\" data-role=\"message\" data-from=\"A\" data-to=\"O\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"A to O: op item get prod\" />\n  <path d=\"M76.95 176.59 C112.5 174.16, 152.84 173.21, 216.49 174.35 M75.56 176.34 C127.25 176.6, 177.09 177.58, 215.13 176.95\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.6\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"145.5035\" y=\"166\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">op item get prod</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.7550350427627563,
+              -1.7599999904632568,
+              1.2217016220092773,
+              -1.7599999904632568,
+              1.688368320465088,
+              -1.7599999904632568,
+              2.1550350189208984,
+              -1.7599999904632568
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.0750350952148438,
+              -1.7350000143051147,
+              2.1017017364501953,
+              -1.743333339691162,
+              2.128368377685547,
+              -1.7516666650772095,
+              2.1550350189208984,
+              -1.7599999904632568,
+              2.128368377685547,
+              -1.7683333158493042,
+              2.1017017364501953,
+              -1.7766666412353516,
+              2.0750350952148438,
+              -1.784999966621399,
+              2.0750350952148438,
+              -1.7683333158493042,
+              2.0750350952148438,
+              -1.7516666650772095,
+              2.0750350952148438,
+              -1.7350000143051147
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#4263eb",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              0.7694999575614929,
+              -1.7659000158309937,
+              1.125,
+              -1.7416000366210938,
+              1.52839994430542,
+              -1.732100009918213,
+              2.164900064468384,
+              -1.7435001134872437
+            ],
+            [
+              0.7555999755859375,
+              -1.7633999586105347,
+              1.2725000381469727,
+              -1.7660000324249268,
+              1.770900011062622,
+              -1.7757999897003174,
+              2.1512999534606934,
+              -1.7695000171661377
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.016,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#6a6a6a",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "op item get prod",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "op item get prod",
+            "x": 145.5035,
+            "y": 169.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 73.524
+          }
+        }
+      ],
+      "from": "A",
+      "to": "O",
+      "route": [
+        [
+          0.755035,
+          -1.76
+        ],
+        [
+          2.155035,
+          -1.76
+        ]
+      ]
+    },
+    {
+      "id": "message:O->V#1",
+      "role": "message",
+      "kind": "group",
+      "svg": "<g class=\"message\" data-label=\"token auth\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:O-&gt;V#1\" data-role=\"message\">\n  <line stroke-opacity=\"0\" x1=\"215.5035\" y1=\"216\" x2=\"368.424\" y2=\"216\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:O-&gt;V#1:line\" data-role=\"message\" data-from=\"O\" data-to=\"V\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"O to V: token auth\" />\n  <path d=\"M213.97 217.65 C273.37 217.98, 330.05 216.46, 368.25 217.14 M216.22 216.02 C273.58 216.79, 334.17 216.89, 369.06 214.96\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.6\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"291.96375\" y=\"206\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">token auth</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.1550350189208984,
+              -2.1600000858306885,
+              2.6647698879241943,
+              -2.1600000858306885,
+              3.1745049953460693,
+              -2.1600000858306885,
+              3.6842401027679443,
+              -2.1600000858306885
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.6042401790618896,
+              -2.134999990463257,
+              3.630906820297241,
+              -2.1433334350585938,
+              3.6575734615325928,
+              -2.1516666412353516,
+              3.6842401027679443,
+              -2.1600000858306885,
+              3.6575734615325928,
+              -2.1683332920074463,
+              3.630906820297241,
+              -2.176666736602783,
+              3.6042401790618896,
+              -2.184999942779541,
+              3.6042401790618896,
+              -2.1683332920074463,
+              3.6042401790618896,
+              -2.1516666412353516,
+              3.6042401790618896,
+              -2.134999990463257
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#4263eb",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.139699935913086,
+              -2.176499843597412,
+              2.7337000370025635,
+              -2.179800033569336,
+              3.30049991607666,
+              -2.164600133895874,
+              3.682499885559082,
+              -2.1714000701904297
+            ],
+            [
+              2.1621999740600586,
+              -2.1602001190185547,
+              2.735799789428711,
+              -2.1678998470306396,
+              3.3417000770568848,
+              -2.1689000129699707,
+              3.6905999183654785,
+              -2.149600028991699
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.016,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#6a6a6a",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "token auth",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "token auth",
+            "x": 291.96375,
+            "y": 209.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 49.764
+          }
+        }
+      ],
+      "from": "O",
+      "to": "V",
+      "route": [
+        [
+          2.155035,
+          -2.16
+        ],
+        [
+          3.68424,
+          -2.16
+        ]
+      ]
+    },
+    {
+      "id": "message:A->O#2",
+      "role": "message",
+      "kind": "group",
+      "svg": "<g class=\"message\" data-label=\"op run … app\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:A-&gt;O#2\" data-role=\"message\">\n  <line stroke-opacity=\"0\" x1=\"75.5035\" y1=\"256\" x2=\"215.5035\" y2=\"256\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:A-&gt;O#2:line\" data-role=\"message\" data-from=\"A\" data-to=\"O\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"A to O: op run … app\" />\n  <path d=\"M76.48 256.89 C127.05 253.67, 180.98 256.26, 215.04 256.43 M74.89 256.71 C128.11 254.36, 182.63 255.3, 215.6 256.3\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.6\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"145.5035\" y=\"246\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">op run … app</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.7550350427627563,
+              -2.559999942779541,
+              1.2217016220092773,
+              -2.559999942779541,
+              1.688368320465088,
+              -2.559999942779541,
+              2.1550350189208984,
+              -2.559999942779541
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.0750350952148438,
+              -2.5350000858306885,
+              2.1017017364501953,
+              -2.5433332920074463,
+              2.128368377685547,
+              -2.551666736602783,
+              2.1550350189208984,
+              -2.559999942779541,
+              2.128368377685547,
+              -2.568333387374878,
+              2.1017017364501953,
+              -2.5766665935516357,
+              2.0750350952148438,
+              -2.5850000381469727,
+              2.0750350952148438,
+              -2.568333387374878,
+              2.0750350952148438,
+              -2.551666736602783,
+              2.0750350952148438,
+              -2.5350000858306885
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#4263eb",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              0.7648000121116638,
+              -2.5689001083374023,
+              1.2705000638961792,
+              -2.5367000102996826,
+              1.8097999095916748,
+              -2.5626001358032227,
+              2.150399923324585,
+              -2.5642998218536377
+            ],
+            [
+              0.7488999962806702,
+              -2.5670998096466064,
+              1.2811000347137451,
+              -2.543600082397461,
+              1.826300024986267,
+              -2.552999973297119,
+              2.1560001373291016,
+              -2.562999963760376
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.016,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#6a6a6a",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "op run … app",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "op run … app",
+            "x": 145.5035,
+            "y": 249.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 59.268
+          }
+        }
+      ],
+      "from": "A",
+      "to": "O",
+      "route": [
+        [
+          0.755035,
+          -2.56
+        ],
+        [
+          2.155035,
+          -2.56
+        ]
+      ]
+    },
+    {
+      "id": "message:O->V#2",
+      "role": "message",
+      "kind": "group",
+      "svg": "<g class=\"message\" data-label=\"token auth\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:O-&gt;V#2\" data-role=\"message\">\n  <line stroke-opacity=\"0\" x1=\"215.5035\" y1=\"296\" x2=\"368.424\" y2=\"296\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:O-&gt;V#2:line\" data-role=\"message\" data-from=\"O\" data-to=\"V\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"O to V: token auth\" />\n  <path d=\"M215.21 297.63 C271.14 297.32, 324.54 296.76, 368.03 295 M215.49 294.93 C252.77 298.57, 288.99 297.3, 367.77 296.11\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1.6\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" stroke-miterlimit=\"4\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"291.96375\" y=\"286\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">token auth</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.1550350189208984,
+              -2.9600000381469727,
+              2.6647698879241943,
+              -2.9600000381469727,
+              3.1745049953460693,
+              -2.9600000381469727,
+              3.6842401027679443,
+              -2.9600000381469727
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 0,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              3.6042401790618896,
+              -2.934999942779541,
+              3.630906820297241,
+              -2.943333387374878,
+              3.6575734615325928,
+              -2.9516665935516357,
+              3.6842401027679443,
+              -2.9600000381469727,
+              3.6575734615325928,
+              -2.9683332443237305,
+              3.630906820297241,
+              -2.9766666889190674,
+              3.6042401790618896,
+              -2.984999895095825,
+              3.6042401790618896,
+              -2.9683332443237305,
+              3.6042401790618896,
+              -2.9516665935516357,
+              3.6042401790618896,
+              -2.934999942779541
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#4263eb",
+            "stroke": "none",
+            "strokeWidth": 0.01,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.152100086212158,
+              -2.976300001144409,
+              2.711400032043457,
+              -2.9732000827789307,
+              3.2454001903533936,
+              -2.967600107192993,
+              3.680299997329712,
+              -2.950000047683716
+            ],
+            [
+              2.154900074005127,
+              -2.9492998123168945,
+              2.5276999473571777,
+              -2.9857001304626465,
+              2.889899969100952,
+              -2.9729998111724854,
+              3.6776998043060303,
+              -2.961099863052368
+            ]
+          ],
+          "closed": [
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#1e1e1e",
+            "strokeWidth": 0.016,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#6a6a6a",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "token auth",
+          "fontSize": 0.11,
+          "textRun": {
+            "text": "token auth",
+            "x": 291.96375,
+            "y": 289.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 49.764
+          }
+        }
+      ],
+      "from": "O",
+      "to": "V",
+      "route": [
+        [
+          2.155035,
+          -2.96
+        ],
+        [
+          3.68424,
+          -2.96
+        ]
+      ]
+    },
+    {
+      "id": "actor:A",
+      "role": "actor",
+      "kind": "group",
+      "svg": "<g class=\"actor\" data-id=\"A\" data-label=\"Agent tool\" data-type=\"participant\" data-role=\"actor\">\n  <path d=\"M31.04 30.96 C31.04 30.96, 31.04 30.96, 31.04 30.96 M31.04 30.96 C31.04 30.96, 31.04 30.96, 31.04 30.96 M28.86 39.46 C32.51 37.04, 36.91 33.2, 38.11 30.64 M29.99 40.92 C33.02 38.05, 35.67 34.08, 39.92 30.37 M30.83 50.67 C33.31 43.14, 37.93 40.3, 47.68 31.31 M30.58 50.44 C34.67 44.97, 38.3 41.34, 47.41 31.49 M32.13 58.86 C34.61 54.19, 41.06 46.93, 56.05 32.35 M31.49 59.36 C40.36 48.6, 49.11 35.95, 56 31.77 M32.68 68.66 C40.94 55.47, 47.56 47.95, 65.67 32.07 M31.78 67.57 C42.21 53.36, 53.04 40.91, 63.53 30.66 M36.18 70.51 C49.97 57.71, 60.54 45.73, 70.96 30.68 M36.98 69.44 C47.83 59.15, 57.97 45.99, 70.77 30.42 M42.59 70.2 C53.29 59.59, 64.63 47.96, 80.98 28.63 M45.21 71.08 C53.82 59.73, 65.05 48.16, 78.13 30.22 M50.68 72.34 C62.91 55.69, 74.01 42.81, 87.6 32.34 M51.64 69.7 C59.46 61.29, 66.29 53.95, 86.64 29.95 M59.15 69.84 C70.3 60.12, 77.43 50, 94.23 29.85 M60.33 69.77 C70.82 56.18, 82.26 43.65, 95.52 30.34 M67.49 70.23 C78.74 62.67, 84.75 52.43, 104.9 27.97 M69.4 69.99 C79.19 57.88, 90.52 45.36, 104.25 30.81 M77.13 71.95 C87.04 60.67, 93.75 50.6, 110.12 31.68 M76.33 70.68 C89.05 56.63, 99.81 43.57, 111.32 31.08 M86.08 70.07 C96.23 56.45, 110.31 38.33, 118.86 29.11 M83.35 70.97 C97.15 54.57, 110.47 40.77, 119.53 29.73 M91.22 71.51 C99.58 59.83, 112.35 48.37, 120.85 39.36 M92.79 71.05 C103.51 57.65, 114.07 44.39, 120.04 36.99 M99.44 70.62 C108.67 60.43, 113.09 55.55, 122.24 47.95 M100.38 70.13 C107.14 62.15, 113.82 54.7, 121.13 45.71 M108.99 68.26 C111.61 65.73, 114.29 64.04, 122.17 54.02 M107.22 70.17 C111.98 66.55, 116.06 61.96, 120.25 56.73 M115.76 70.08 C117.14 69.29, 117.94 67.68, 120.12 64.67 M116.04 70.27 C117.08 68.52, 118.38 67.03, 120.6 64.89\" fill=\"none\" stroke=\"var(--_node-fill)\" stroke-width=\"0.9\" data-id=\"actor:A:box\" data-role=\"actor\" />\n  <path d=\"M34.48 29.35 C65.13 29.81, 93.62 29.93, 117.42 28.29 M33.76 29.89 C59.66 29.85, 85.92 30.44, 116.9 30.47 M117.01 30 C120.59 31.98, 123.16 30.21, 119.15 35.7 M117.56 29.94 C121.36 31.71, 119.65 29.57, 121.05 34.76 M122.58 33.15 C120.43 45.48, 123 58.28, 122.59 66.58 M121.81 33.38 C121.85 43.73, 120.97 53.86, 120.61 66.53 M121.01 66 C122.45 68.46, 121.08 69.17, 116 70.48 M120.48 65.33 C118.7 68.67, 117.56 69.82, 114.88 71.15 M115.66 70.62 C85.53 69.05, 57.32 70.17, 32.77 71.93 M118.08 71.05 C90.87 69.23, 62.08 70.13, 32.93 69 M34 70 C33.41 69.65, 30.02 70.14, 30.63 66.3 M33.13 71.85 C31.33 68.42, 32.26 70.47, 28.05 66.21 M27.86 64.65 C31.35 61.06, 28.8 52.61, 31.82 34.12 M30.42 66.68 C30.13 59.55, 29.7 52.84, 29.14 34.13 M30 34 C28.54 30.65, 30.39 30.39, 31.82 32.09 M31.55 32.96 C27.98 31.42, 33.56 28.6, 32.96 29.63 M34 30 C34 30, 34 30, 34 30 M34 30 C34 30, 34 30, 34 30\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"75.5035\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Agent tool</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.31040000915527344,
+              -0.30959999561309814,
+              0.31040000915527344,
+              -0.30959999561309814,
+              0.31040000915527344,
+              -0.30959999561309814,
+              0.31040000915527344,
+              -0.30959999561309814
+            ],
+            [
+              0.31040000915527344,
+              -0.30959999561309814,
+              0.31040000915527344,
+              -0.30959999561309814,
+              0.31040000915527344,
+              -0.30959999561309814,
+              0.31040000915527344,
+              -0.30959999561309814
+            ],
+            [
+              0.28859999775886536,
+              -0.3946000039577484,
+              0.32509997487068176,
+              -0.37040001153945923,
+              0.36910000443458557,
+              -0.3320000171661377,
+              0.38109999895095825,
+              -0.30640000104904175
+            ],
+            [
+              0.29989999532699585,
+              -0.409199982881546,
+              0.3302000164985657,
+              -0.3804999887943268,
+              0.35669997334480286,
+              -0.340800017118454,
+              0.3991999924182892,
+              -0.3037000000476837
+            ],
+            [
+              0.3082999885082245,
+              -0.5066999793052673,
+              0.33310002088546753,
+              -0.43140000104904175,
+              0.37929999828338623,
+              -0.40299999713897705,
+              0.47679999470710754,
+              -0.3130999803543091
+            ],
+            [
+              0.3057999908924103,
+              -0.5044000148773193,
+              0.346699982881546,
+              -0.4496999979019165,
+              0.382999986410141,
+              -0.41339999437332153,
+              0.4740999937057495,
+              -0.3149000108242035
+            ],
+            [
+              0.3212999999523163,
+              -0.5885999798774719,
+              0.34610000252723694,
+              -0.5418999791145325,
+              0.4106000065803528,
+              -0.4693000018596649,
+              0.5604999661445618,
+              -0.32349997758865356
+            ],
+            [
+              0.3149000108242035,
+              -0.5936000347137451,
+              0.4036000072956085,
+              -0.4859999716281891,
+              0.491100013256073,
+              -0.3595000207424164,
+              0.5600000023841858,
+              -0.31769999861717224
+            ],
+            [
+              0.32679998874664307,
+              -0.6866000294685364,
+              0.40939998626708984,
+              -0.5547000169754028,
+              0.475600004196167,
+              -0.4794999957084656,
+              0.6566999554634094,
+              -0.3206999897956848
+            ],
+            [
+              0.31780001521110535,
+              -0.6757000088691711,
+              0.4220999777317047,
+              -0.5336000323295593,
+              0.5304000377655029,
+              -0.4090999960899353,
+              0.6352999806404114,
+              -0.30660000443458557
+            ],
+            [
+              0.36180001497268677,
+              -0.7050999999046326,
+              0.49970000982284546,
+              -0.5770999789237976,
+              0.605400025844574,
+              -0.45730000734329224,
+              0.7095999717712402,
+              -0.3068000078201294
+            ],
+            [
+              0.36980000138282776,
+              -0.6944000124931335,
+              0.478300005197525,
+              -0.5915000438690186,
+              0.5796999931335449,
+              -0.45990002155303955,
+              0.7076999545097351,
+              -0.3041999936103821
+            ],
+            [
+              0.42590001225471497,
+              -0.7019999623298645,
+              0.5329000353813171,
+              -0.5958999991416931,
+              0.6462999582290649,
+              -0.4795999825000763,
+              0.8098000288009644,
+              -0.28630000352859497
+            ],
+            [
+              0.4520999789237976,
+              -0.7107999920845032,
+              0.5382000207901001,
+              -0.5972999930381775,
+              0.6505000591278076,
+              -0.48159998655319214,
+              0.7812999486923218,
+              -0.30219998955726624
+            ],
+            [
+              0.5067999958992004,
+              -0.7233999371528625,
+              0.6291000247001648,
+              -0.5568999648094177,
+              0.7401000261306763,
+              -0.42810001969337463,
+              0.8759999871253967,
+              -0.32339999079704285
+            ],
+            [
+              0.5163999795913696,
+              -0.6969999670982361,
+              0.5945999622344971,
+              -0.6129000186920166,
+              0.6629000306129456,
+              -0.5394999980926514,
+              0.8664000034332275,
+              -0.2995000183582306
+            ],
+            [
+              0.5915000438690186,
+              -0.6983999609947205,
+              0.703000009059906,
+              -0.6011999845504761,
+              0.7742999792098999,
+              -0.5,
+              0.942300021648407,
+              -0.2985000014305115
+            ],
+            [
+              0.6033000349998474,
+              -0.6976999640464783,
+              0.7081999778747559,
+              -0.5618000030517578,
+              0.8226000070571899,
+              -0.43650001287460327,
+              0.9551999568939209,
+              -0.3034000098705292
+            ],
+            [
+              0.6748999953269958,
+              -0.7023000121116638,
+              0.7874000072479248,
+              -0.6266999840736389,
+              0.8475000262260437,
+              -0.5242999792098999,
+              1.0490000247955322,
+              -0.27969998121261597
+            ],
+            [
+              0.6940000057220459,
+              -0.6998999714851379,
+              0.7919000387191772,
+              -0.5788000226020813,
+              0.9051999449729919,
+              -0.4536000192165375,
+              1.0425000190734863,
+              -0.30809998512268066
+            ],
+            [
+              0.7712999582290649,
+              -0.719499945640564,
+              0.8704000115394592,
+              -0.6067000031471252,
+              0.9375,
+              -0.5059999823570251,
+              1.101199984550476,
+              -0.31679999828338623
+            ],
+            [
+              0.7633000016212463,
+              -0.7067999839782715,
+              0.890500009059906,
+              -0.5663000345230103,
+              0.9980999827384949,
+              -0.435699999332428,
+              1.1131999492645264,
+              -0.3107999861240387
+            ],
+            [
+              0.86080002784729,
+              -0.7006999850273132,
+              0.9623000621795654,
+              -0.5645000338554382,
+              1.1030999422073364,
+              -0.3833000063896179,
+              1.1886000633239746,
+              -0.29109999537467957
+            ],
+            [
+              0.8334999680519104,
+              -0.7096999883651733,
+              0.971500039100647,
+              -0.5457000136375427,
+              1.104699969291687,
+              -0.4077000021934509,
+              1.1952999830245972,
+              -0.29729998111724854
+            ],
+            [
+              0.9122000336647034,
+              -0.7151000499725342,
+              0.9958000183105469,
+              -0.598300039768219,
+              1.1234999895095825,
+              -0.4836999773979187,
+              1.2085000276565552,
+              -0.3936000168323517
+            ],
+            [
+              0.9279000163078308,
+              -0.7105000019073486,
+              1.035099983215332,
+              -0.5764999985694885,
+              1.1406999826431274,
+              -0.4438999891281128,
+              1.2003999948501587,
+              -0.36990001797676086
+            ],
+            [
+              0.9944000244140625,
+              -0.7062000036239624,
+              1.0866999626159668,
+              -0.6043000221252441,
+              1.1308999061584473,
+              -0.5554999709129333,
+              1.2223999500274658,
+              -0.4794999957084656
+            ],
+            [
+              1.0037999153137207,
+              -0.7012999653816223,
+              1.0714000463485718,
+              -0.6215000152587891,
+              1.138200044631958,
+              -0.546999990940094,
+              1.211300015449524,
+              -0.4571000039577484
+            ],
+            [
+              1.089900016784668,
+              -0.6826000213623047,
+              1.1160999536514282,
+              -0.6573000550270081,
+              1.142899990081787,
+              -0.6403999924659729,
+              1.2216999530792236,
+              -0.5401999950408936
+            ],
+            [
+              1.072200059890747,
+              -0.70169997215271,
+              1.119800090789795,
+              -0.6655000448226929,
+              1.160599946975708,
+              -0.6195999979972839,
+              1.2024999856948853,
+              -0.567300021648407
+            ],
+            [
+              1.1576000452041626,
+              -0.7008000016212463,
+              1.1713999509811401,
+              -0.6929000020027161,
+              1.1793999671936035,
+              -0.676800012588501,
+              1.201200008392334,
+              -0.6466999650001526
+            ],
+            [
+              1.1604000329971313,
+              -0.7026999592781067,
+              1.170799970626831,
+              -0.6851999759674072,
+              1.1837999820709229,
+              -0.6703000068664551,
+              1.2059999704360962,
+              -0.6488999724388123
+            ]
+          ],
+          "closed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#f1f3f5",
+            "strokeWidth": 0.009000000000000001,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              0.3447999954223633,
+              -0.29350000619888306,
+              0.6512999534606934,
+              -0.29809999465942383,
+              0.9362000226974487,
+              -0.29930001497268677,
+              1.1741999387741089,
+              -0.28290000557899475
+            ],
+            [
+              0.3375999927520752,
+              -0.2989000082015991,
+              0.5965999960899353,
+              -0.2985000014305115,
+              0.8592000007629395,
+              -0.3043999969959259,
+              1.1690000295639038,
+              -0.30469998717308044
+            ],
+            [
+              1.1700999736785889,
+              -0.30000001192092896,
+              1.205899953842163,
+              -0.3197999894618988,
+              1.231600046157837,
+              -0.3021000027656555,
+              1.1915000677108765,
+              -0.3569999933242798
+            ],
+            [
+              1.1755999326705933,
+              -0.2994000017642975,
+              1.2136000394821167,
+              -0.31709998846054077,
+              1.1965000629425049,
+              -0.29569998383522034,
+              1.2105000019073486,
+              -0.34759998321533203
+            ],
+            [
+              1.2258000373840332,
+              -0.33150002360343933,
+              1.204300045967102,
+              -0.454800009727478,
+              1.2300000190734863,
+              -0.5827999711036682,
+              1.2258999347686768,
+              -0.6658000349998474
+            ],
+            [
+              1.2180999517440796,
+              -0.3338000178337097,
+              1.218500018119812,
+              -0.4372999966144562,
+              1.2096999883651733,
+              -0.5386000275611877,
+              1.2060999870300293,
+              -0.6653000116348267
+            ],
+            [
+              1.2101000547409058,
+              -0.6600000262260437,
+              1.2244999408721924,
+              -0.6845999956130981,
+              1.210800051689148,
+              -0.6916999816894531,
+              1.159999966621399,
+              -0.704800009727478
+            ],
+            [
+              1.204800009727478,
+              -0.6533000469207764,
+              1.1869999170303345,
+              -0.6866999864578247,
+              1.1755999326705933,
+              -0.698199987411499,
+              1.148800015449524,
+              -0.7114999890327454
+            ],
+            [
+              1.156599998474121,
+              -0.7062000036239624,
+              0.8553000092506409,
+              -0.690500020980835,
+              0.573199987411499,
+              -0.70169997215271,
+              0.32770001888275146,
+              -0.7193000316619873
+            ],
+            [
+              1.180799961090088,
+              -0.7105000019073486,
+              0.9087000489234924,
+              -0.692300021648407,
+              0.6208000183105469,
+              -0.7012999653816223,
+              0.32930001616477966,
+              -0.6899999976158142
+            ],
+            [
+              0.3400000035762787,
+              -0.699999988079071,
+              0.33410000801086426,
+              -0.6965000033378601,
+              0.3002000153064728,
+              -0.7013999819755554,
+              0.30629998445510864,
+              -0.6630000472068787
+            ],
+            [
+              0.3313000202178955,
+              -0.7184999585151672,
+              0.3133000135421753,
+              -0.6841999888420105,
+              0.32259997725486755,
+              -0.7046999931335449,
+              0.28049999475479126,
+              -0.6621000170707703
+            ],
+            [
+              0.2786000072956085,
+              -0.6464999914169312,
+              0.3135000169277191,
+              -0.6105999946594238,
+              0.2879999876022339,
+              -0.5260999798774719,
+              0.3181999921798706,
+              -0.34119999408721924
+            ],
+            [
+              0.3041999936103821,
+              -0.6668000221252441,
+              0.3012999892234802,
+              -0.5954999923706055,
+              0.2970000207424164,
+              -0.5284000039100647,
+              0.2913999855518341,
+              -0.34130001068115234
+            ],
+            [
+              0.30000001192092896,
+              -0.3400000035762787,
+              0.28540000319480896,
+              -0.30649998784065247,
+              0.30390000343322754,
+              -0.30390000343322754,
+              0.3181999921798706,
+              -0.32089999318122864
+            ],
+            [
+              0.3154999911785126,
+              -0.3295999765396118,
+              0.2797999978065491,
+              -0.3142000138759613,
+              0.33560001850128174,
+              -0.28600001335144043,
+              0.3295999765396118,
+              -0.2962999939918518
+            ],
+            [
+              0.3400000035762787,
+              -0.30000001192092896,
+              0.3400000035762787,
+              -0.30000001192092896,
+              0.3400000035762787,
+              -0.30000001192092896,
+              0.3400000035762787,
+              -0.30000001192092896
+            ],
+            [
+              0.3400000035762787,
+              -0.30000001192092896,
+              0.3400000035762787,
+              -0.30000001192092896,
+              0.3400000035762787,
+              -0.30000001192092896,
+              0.3400000035762787,
+              -0.30000001192092896
+            ]
+          ],
+          "closed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#d2d2d2",
+            "strokeWidth": 0.016,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1e1e1e",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "Agent tool",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "Agent tool",
+            "x": 75.5035,
+            "y": 54.55,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 59.007
+          }
+        }
+      ],
+      "channels": {
+        "category": "A"
+      }
+    },
+    {
+      "id": "actor:O",
+      "role": "actor",
+      "kind": "group",
+      "svg": "<g class=\"actor\" data-id=\"O\" data-label=\"op CLI\" data-type=\"participant\" data-role=\"actor\">\n  <path d=\"M176.24 31.3 C176.24 31.3, 176.24 31.3, 176.24 31.3 M176.24 31.3 C176.24 31.3, 176.24 31.3, 176.24 31.3 M179.15 37.57 C180.24 36.38, 180.75 34.25, 182.84 32.8 M178.91 37.32 C179.89 36.01, 181.08 34.3, 182.78 33.18 M180.74 44.27 C181.69 42.33, 186.45 38.46, 190.81 33.62 M179.91 46.18 C183.47 42.79, 187.18 38.69, 190.43 33.33 M178.35 54.35 C182.76 49.18, 186.7 45.49, 197.21 31.38 M179.69 54.3 C187 48.02, 193.25 40.06, 199.22 32.94 M178.1 67.21 C183.14 61.65, 188.62 53.87, 206.59 32 M177.72 66.72 C184.11 57.16, 193.56 48.51, 207.89 33.23 M179.61 73.63 C187.27 62.64, 200.44 50.37, 216.18 30.9 M181.13 71.03 C186.76 64.15, 194.56 54.78, 215.3 31.84 M188.32 72.48 C199.98 58.53, 212.89 47.61, 220.32 31.42 M189.04 72.21 C195.93 64.11, 204.2 54.29, 223.23 31.98 M195.76 73.31 C206.18 57.61, 217.34 46.62, 230.24 32.14 M195.28 71.97 C209.32 56.19, 223.75 42.13, 230.28 32.54 M203.56 73.77 C213.78 59.58, 226.69 46.95, 239.95 32.28 M203.93 71 C214.43 60.27, 223.33 50.24, 237.75 34.09 M212.83 73.32 C223.08 59.89, 231.43 48.14, 244.88 32.77 M212.72 72.28 C223.33 57.81, 235.9 45.7, 246.84 31.75 M219.73 70.52 C225.15 62.47, 234.07 57.07, 253.58 31.46 M220.01 72.42 C232.27 58.84, 243.63 44.08, 255.36 33.07 M226.48 72.2 C234.93 61.07, 243.88 53.33, 259.06 36.78 M227.48 71.39 C239.66 59.01, 250.11 46.74, 258.2 37.04 M238 72.51 C243.3 67.56, 246.07 61, 257.2 45.68 M235.07 72.09 C240.4 66.49, 246.06 59, 259.61 45.74 M244.74 72.31 C246.12 68.21, 254.75 63.56, 258.39 56.59 M244.09 71.64 C249 65.38, 254.71 59.17, 258.92 55.8\" fill=\"none\" stroke=\"var(--_node-fill)\" stroke-width=\"0.9\" data-id=\"actor:O:box\" data-role=\"actor\" />\n  <path d=\"M179.47 29.27 C196.75 29.09, 216.82 26.99, 252.32 29.76 M180.58 30.12 C200.89 28.96, 223.55 30.36, 252.51 30.67 M251.5 30 C255.41 31.36, 254.34 29.88, 256.3 33.03 M249.67 28.05 C252.49 27.79, 257.34 31.92, 254.09 35.49 M254.35 33.64 C256.51 41.4, 255.49 53.44, 255.22 64.56 M256.44 33 C254.99 46.71, 255.44 60.05, 255.69 66.6 M255.5 66 C256.35 68.24, 256.32 69.01, 249.93 69.16 M257.32 68.18 C255.62 70.34, 255.03 71.62, 250.29 68.5 M253.68 70.49 C224.13 71.44, 197.15 68.76, 178.39 67.84 M251.05 70.35 C233.37 70.23, 216.96 70.54, 178.68 70.11 M179.5 70 C177.36 71.47, 174.69 67.03, 176.71 65.94 M180.43 70.83 C177.7 68.3, 177.72 66.85, 176.19 65.23 M176.11 67.36 C174.55 53.18, 173.44 40.11, 175.06 35.46 M174.87 66.71 C175.63 52.97, 176.06 40.06, 175.31 33.91 M175.5 34 C173.87 31.07, 174.75 30.88, 177.97 28.97 M176.77 33.98 C176.26 30.99, 179.09 30.41, 178.98 31.11 M179.5 30 C179.5 30, 179.5 30, 179.5 30 M179.5 30 C179.5 30, 179.5 30, 179.5 30\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"215.5035\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">op CLI</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              1.7624000310897827,
+              -0.31299999356269836,
+              1.7624000310897827,
+              -0.31299999356269836,
+              1.7624000310897827,
+              -0.31299999356269836,
+              1.7624000310897827,
+              -0.31299999356269836
+            ],
+            [
+              1.7624000310897827,
+              -0.31299999356269836,
+              1.7624000310897827,
+              -0.31299999356269836,
+              1.7624000310897827,
+              -0.31299999356269836,
+              1.7624000310897827,
+              -0.31299999356269836
+            ],
+            [
+              1.7914999723434448,
+              -0.3756999969482422,
+              1.8024001121520996,
+              -0.3638000190258026,
+              1.8075000047683716,
+              -0.3425000011920929,
+              1.8284000158309937,
+              -0.3279999792575836
+            ],
+            [
+              1.7891000509262085,
+              -0.373199999332428,
+              1.7989000082015991,
+              -0.3600999712944031,
+              1.8108000755310059,
+              -0.34299999475479126,
+              1.8278000354766846,
+              -0.33180001378059387
+            ],
+            [
+              1.807400107383728,
+              -0.44269999861717224,
+              1.8169000148773193,
+              -0.42330002784729004,
+              1.8644999265670776,
+              -0.3845999836921692,
+              1.9081000089645386,
+              -0.3361999988555908
+            ],
+            [
+              1.7991000413894653,
+              -0.4618000090122223,
+              1.8346999883651733,
+              -0.4279000163078308,
+              1.8717999458312988,
+              -0.3868999779224396,
+              1.9042999744415283,
+              -0.33330002427101135
+            ],
+            [
+              1.783500075340271,
+              -0.5435000061988831,
+              1.8276000022888184,
+              -0.4918000102043152,
+              1.8669999837875366,
+              -0.45490002632141113,
+              1.972100019454956,
+              -0.31379997730255127
+            ],
+            [
+              1.7969000339508057,
+              -0.5429999828338623,
+              1.8700000047683716,
+              -0.48019999265670776,
+              1.9325000047683716,
+              -0.40060001611709595,
+              1.9922000169754028,
+              -0.329399973154068
+            ],
+            [
+              1.781000018119812,
+              -0.6721000075340271,
+              1.8314000368118286,
+              -0.6165000200271606,
+              1.886199951171875,
+              -0.5386999845504761,
+              2.0658998489379883,
+              -0.3199999928474426
+            ],
+            [
+              1.7771999835968018,
+              -0.6672000288963318,
+              1.8410999774932861,
+              -0.5716000199317932,
+              1.93559992313385,
+              -0.4850999712944031,
+              2.078900098800659,
+              -0.33230000734329224
+            ],
+            [
+              1.7961000204086304,
+              -0.736299991607666,
+              1.8727000951766968,
+              -0.6263999938964844,
+              2.0044000148773193,
+              -0.5037000179290771,
+              2.161799907684326,
+              -0.3089999854564667
+            ],
+            [
+              1.8113000392913818,
+              -0.7102999687194824,
+              1.8675999641418457,
+              -0.6414999961853027,
+              1.9456000328063965,
+              -0.5478000044822693,
+              2.1530001163482666,
+              -0.31839999556541443
+            ],
+            [
+              1.8832000494003296,
+              -0.7248000502586365,
+              1.9997999668121338,
+              -0.5852999687194824,
+              2.1289000511169434,
+              -0.47609999775886536,
+              2.203200101852417,
+              -0.3142000138759613
+            ],
+            [
+              1.8903999328613281,
+              -0.722100019454956,
+              1.959299921989441,
+              -0.6410999894142151,
+              2.0420000553131104,
+              -0.542900025844574,
+              2.232300043106079,
+              -0.3197999894618988
+            ],
+            [
+              1.9575999975204468,
+              -0.7330999970436096,
+              2.061800003051758,
+              -0.5760999917984009,
+              2.1733999252319336,
+              -0.46619999408721924,
+              2.3024001121520996,
+              -0.321399986743927
+            ],
+            [
+              1.9528000354766846,
+              -0.719700038433075,
+              2.0931999683380127,
+              -0.5618999600410461,
+              2.237499952316284,
+              -0.4213000237941742,
+              2.302799940109253,
+              -0.3253999948501587
+            ],
+            [
+              2.035599946975708,
+              -0.7376999855041504,
+              2.1377999782562256,
+              -0.5958000421524048,
+              2.266900062561035,
+              -0.46950000524520874,
+              2.3994998931884766,
+              -0.3227999806404114
+            ],
+            [
+              2.039299964904785,
+              -0.7099999785423279,
+              2.1442999839782715,
+              -0.6026999950408936,
+              2.233299970626831,
+              -0.5024000406265259,
+              2.377500057220459,
+              -0.3409000039100647
+            ],
+            [
+              2.1282999515533447,
+              -0.7332000136375427,
+              2.230799913406372,
+              -0.5989000201225281,
+              2.3142998218536377,
+              -0.4813999831676483,
+              2.4488000869750977,
+              -0.32770001888275146
+            ],
+            [
+              2.127200126647949,
+              -0.7228000164031982,
+              2.233299970626831,
+              -0.5781000256538391,
+              2.3589999675750732,
+              -0.4570000171661377,
+              2.468400001525879,
+              -0.3174999952316284
+            ],
+            [
+              2.1972999572753906,
+              -0.7051999568939209,
+              2.251499891281128,
+              -0.6247000098228455,
+              2.340700149536133,
+              -0.5706999897956848,
+              2.535799980163574,
+              -0.31459999084472656
+            ],
+            [
+              2.2000999450683594,
+              -0.7242000102996826,
+              2.322700023651123,
+              -0.5884000062942505,
+              2.436300039291382,
+              -0.4408000111579895,
+              2.5536000728607178,
+              -0.33070001006126404
+            ],
+            [
+              2.2648000717163086,
+              -0.7219999432563782,
+              2.349299907684326,
+              -0.6107000112533569,
+              2.438800096511841,
+              -0.5333000421524048,
+              2.59060001373291,
+              -0.3677999973297119
+            ],
+            [
+              2.2748000621795654,
+              -0.7138999700546265,
+              2.3966000080108643,
+              -0.5900999903678894,
+              2.5011000633239746,
+              -0.4674000144004822,
+              2.5820000171661377,
+              -0.37040001153945923
+            ],
+            [
+              2.380000114440918,
+              -0.725100040435791,
+              2.433000087738037,
+              -0.675599992275238,
+              2.460700035095215,
+              -0.6100000143051147,
+              2.572000026702881,
+              -0.45680001378059387
+            ],
+            [
+              2.3507001399993896,
+              -0.7208999395370483,
+              2.4040000438690186,
+              -0.664900004863739,
+              2.460599899291992,
+              -0.5899999737739563,
+              2.596099853515625,
+              -0.45740002393722534
+            ],
+            [
+              2.4474000930786133,
+              -0.723099946975708,
+              2.461199998855591,
+              -0.6820999979972839,
+              2.547499895095825,
+              -0.6356000304222107,
+              2.583900213241577,
+              -0.5659000277519226
+            ],
+            [
+              2.4408998489379883,
+              -0.7163999676704407,
+              2.490000009536743,
+              -0.6537999510765076,
+              2.547100067138672,
+              -0.5916999578475952,
+              2.589200019836426,
+              -0.5579999685287476
+            ]
+          ],
+          "closed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#f1f3f5",
+            "strokeWidth": 0.009000000000000001,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              1.794700026512146,
+              -0.29269999265670776,
+              1.9674999713897705,
+              -0.29089999198913574,
+              2.1682000160217285,
+              -0.26989999413490295,
+              2.523200035095215,
+              -0.29760000109672546
+            ],
+            [
+              1.805799961090088,
+              -0.3012000024318695,
+              2.0088999271392822,
+              -0.2895999848842621,
+              2.2355000972747803,
+              -0.303600013256073,
+              2.525099992752075,
+              -0.3066999912261963
+            ],
+            [
+              2.515000104904175,
+              -0.30000001192092896,
+              2.5541000366210938,
+              -0.31360000371932983,
+              2.5434000492095947,
+              -0.298799991607666,
+              2.562999963760376,
+              -0.330299973487854
+            ],
+            [
+              2.4967000484466553,
+              -0.28049999475479126,
+              2.524899959564209,
+              -0.27790001034736633,
+              2.5734000205993652,
+              -0.3192000091075897,
+              2.5408999919891357,
+              -0.3549000024795532
+            ],
+            [
+              2.5434999465942383,
+              -0.33640000224113464,
+              2.5651001930236816,
+              -0.414000004529953,
+              2.5549001693725586,
+              -0.5343999862670898,
+              2.5522000789642334,
+              -0.6455999612808228
+            ],
+            [
+              2.5643999576568604,
+              -0.33000001311302185,
+              2.5499000549316406,
+              -0.46709999442100525,
+              2.5543999671936035,
+              -0.6004999876022339,
+              2.5569000244140625,
+              -0.6660000085830688
+            ],
+            [
+              2.555000066757202,
+              -0.6600000262260437,
+              2.563500165939331,
+              -0.6823999881744385,
+              2.563199996948242,
+              -0.6901000142097473,
+              2.499300003051758,
+              -0.6916000247001648
+            ],
+            [
+              2.573199987411499,
+              -0.6818000078201294,
+              2.5562000274658203,
+              -0.7033999562263489,
+              2.550299882888794,
+              -0.716200053691864,
+              2.5028998851776123,
+              -0.6850000023841858
+            ],
+            [
+              2.536799907684326,
+              -0.7048999667167664,
+              2.241300106048584,
+              -0.714400053024292,
+              1.9714999198913574,
+              -0.6876000165939331,
+              1.7839000225067139,
+              -0.6783999800682068
+            ],
+            [
+              2.510499954223633,
+              -0.703499972820282,
+              2.333699941635132,
+              -0.7023000121116638,
+              2.169600009918213,
+              -0.7053999900817871,
+              1.7867999076843262,
+              -0.7010999917984009
+            ],
+            [
+              1.7949999570846558,
+              -0.699999988079071,
+              1.7735999822616577,
+              -0.7146999835968018,
+              1.7469000816345215,
+              -0.6703000068664551,
+              1.7671000957489014,
+              -0.6594000458717346
+            ],
+            [
+              1.8042999505996704,
+              -0.708299994468689,
+              1.7769999504089355,
+              -0.6830000281333923,
+              1.7771999835968018,
+              -0.6685000061988831,
+              1.7619000673294067,
+              -0.6523000597953796
+            ],
+            [
+              1.7611000537872314,
+              -0.6736000180244446,
+              1.745500087738037,
+              -0.5318000316619873,
+              1.7344000339508057,
+              -0.4011000096797943,
+              1.750599980354309,
+              -0.3545999825000763
+            ],
+            [
+              1.7486999034881592,
+              -0.6671000123023987,
+              1.7563000917434692,
+              -0.5297000408172607,
+              1.760599970817566,
+              -0.40060001611709595,
+              1.7530999183654785,
+              -0.3391000032424927
+            ],
+            [
+              1.7549999952316284,
+              -0.3400000035762787,
+              1.7386999130249023,
+              -0.310699999332428,
+              1.747499942779541,
+              -0.30879998207092285,
+              1.7797000408172607,
+              -0.2897000014781952
+            ],
+            [
+              1.7677000761032104,
+              -0.33980000019073486,
+              1.7625999450683594,
+              -0.3098999857902527,
+              1.7908999919891357,
+              -0.30410000681877136,
+              1.7897999286651611,
+              -0.3111000061035156
+            ],
+            [
+              1.7949999570846558,
+              -0.30000001192092896,
+              1.7949999570846558,
+              -0.30000001192092896,
+              1.7949999570846558,
+              -0.30000001192092896,
+              1.7949999570846558,
+              -0.30000001192092896
+            ],
+            [
+              1.7949999570846558,
+              -0.30000001192092896,
+              1.7949999570846558,
+              -0.30000001192092896,
+              1.7949999570846558,
+              -0.30000001192092896,
+              1.7949999570846558,
+              -0.30000001192092896
+            ]
+          ],
+          "closed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#d2d2d2",
+            "strokeWidth": 0.016,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1e1e1e",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "op CLI",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "op CLI",
+            "x": 215.5035,
+            "y": 54.55,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 39.741
+          }
+        }
+      ],
+      "channels": {
+        "category": "O"
+      }
+    },
+    {
+      "id": "actor:V",
+      "role": "actor",
+      "kind": "group",
+      "svg": "<g class=\"actor\" data-id=\"V\" data-label=\"1Password service\" data-type=\"participant\" data-role=\"actor\">\n  <path d=\"M296.42 31.1 C296.42 31.1, 296.42 31.1, 296.42 31.1 M296.42 31.1 C296.42 31.1, 296.42 31.1, 296.42 31.1 M297.47 41.16 C299.19 37.69, 300.27 35.66, 303.51 30.76 M296.09 40.62 C299.22 37.58, 302.84 34.35, 305.36 31.19 M297.13 50.72 C301.68 43.98, 308.08 37.88, 315.14 31.82 M295.38 49.71 C303.05 41.73, 308.75 34.09, 313.94 30.99 M295.54 57.82 C304.47 51.57, 308.5 45.91, 322.73 28.45 M296.07 59.16 C304.49 49.5, 312.37 39.93, 320.2 30.86 M295.08 65.57 C303.9 59.91, 311.31 49.99, 327.31 30.45 M297.59 66.96 C303.17 58.66, 311.84 51.94, 327.98 30.56 M303.55 70.77 C313.11 55.88, 324.52 44.02, 335.96 28.63 M301.44 70.65 C313.8 55.8, 326.45 41.93, 337.8 30.94 M309.59 72.25 C321.57 58.49, 330.65 44.78, 343.49 28.89 M310.43 70.08 C319.5 60.98, 326.22 51.24, 344.23 31.07 M318.7 67.99 C331.69 56.96, 341.27 39.75, 351.67 31.95 M317.83 69.06 C327.43 61.24, 335.66 50.79, 353.22 31.23 M324.77 69.27 C339.73 54.48, 355.42 39.57, 360.43 32.12 M325.39 71.02 C334.11 61.62, 341.93 51.67, 361.65 29.61 M332.67 72.31 C343.24 60.34, 354.29 45.97, 366.82 30.83 M334.51 70.61 C345.05 59.29, 354.52 46.3, 367.64 30.56 M339.71 71.79 C353.18 55.02, 367.11 40.47, 377.14 31.63 M341.19 70.65 C352.37 56.78, 365.04 44.22, 375.37 30.92 M348.79 72.82 C359.5 60.23, 369.6 46.85, 383.9 31.71 M348.52 70.14 C361.63 57.52, 371.89 43.81, 383.4 30.46 M357.48 69.88 C366.3 58.42, 378.32 48.48, 392.24 29.46 M358.32 70.85 C367.76 58.13, 379.14 46.24, 392.78 30.8 M363.59 71.41 C377.76 55.49, 394.29 38.17, 400.17 29.89 M364.96 71.24 C377.86 54.47, 392.26 39.19, 400.88 31.03 M375.05 70.54 C385.13 57.2, 396.64 42.72, 408.55 29.47 M374.46 69.31 C385.35 56.43, 397.2 44.95, 408.41 30.46 M380.28 69.68 C392.2 55.44, 403.7 42.81, 417.79 31.03 M380.73 69.74 C393.79 56.84, 405.31 41.89, 416.52 31.44 M390.07 72.63 C394.88 63.15, 402.26 53.29, 424.58 28.61 M390.17 70.7 C399.49 58.67, 410.76 47.22, 425.07 31.1 M397.94 70.21 C407.81 60.81, 416.71 49.6, 433.01 30.46 M396.81 69.39 C408.36 58.44, 419.62 45.6, 430.78 30.16 M405.55 71.33 C413.38 63.47, 421.97 54.56, 440.63 32.18 M405.82 70.26 C412.23 61.31, 418.48 54.1, 439.13 30.45 M412.81 71.63 C420.5 61.83, 425.4 54.88, 443.71 37.62 M414.12 71.36 C422.42 60.78, 430.69 49.3, 441.28 37.32 M421.23 71.41 C427.62 63.16, 435.61 53.02, 440.84 47.75 M420.72 70.35 C428.06 63.09, 435.28 56.04, 441.23 46.42 M429.57 69.94 C433.37 64.33, 437.98 57.33, 439.9 53.84 M428.21 70.07 C431.35 67.64, 435.42 63.31, 441.09 55.8 M436.9 70.42 C438.88 67.74, 440.64 65.78, 441.84 65.39 M437.11 69.99 C438.55 69.18, 439.04 68.24, 441.83 64.62\" fill=\"none\" stroke=\"var(--_node-fill)\" stroke-width=\"0.9\" data-id=\"actor:V:box\" data-role=\"actor\" />\n  <path d=\"M299.92 30.32 C347.58 32.08, 395.78 28.02, 435.23 29.05 M300.25 30.92 C328.63 31.33, 359.72 31.91, 436.59 30.12 M437.34 30 C441.44 28.65, 443.15 31.66, 440.7 34.82 M436.91 29.59 C440.22 27.78, 441.48 29.55, 443.26 32.72 M439.2 35.51 C440.68 46.71, 440.82 56.36, 440.85 65.96 M441.86 34.22 C441.27 41.5, 441.05 48.22, 441.57 66.09 M441.34 66 C441.01 69.81, 439.88 68.28, 436.9 71.37 M439.99 67.05 C439.27 67.14, 439.29 69.38, 437.05 70.58 M436.18 68.65 C390.43 71.68, 346.14 71, 298.14 71.93 M436.76 69.09 C395.14 68.13, 352.87 69.26, 300.29 68.95 M299.5 70 C294.81 68.53, 295.56 69.47, 296.27 65.94 M301.36 71.85 C297.9 69.29, 295.8 68.04, 296.53 68.18 M295.32 66.05 C296.94 56.53, 295.45 45.81, 295.63 34.2 M295.32 66.58 C294.15 55.7, 295.91 42.76, 295.28 32.95 M295.5 34 C295.74 30.96, 297.07 29.37, 297.52 27.99 M294.93 33.71 C295.88 28.83, 296.55 28.23, 298.61 29.88 M299.5 30 C299.5 30, 299.5 30, 299.5 30 M299.5 30 C299.5 30, 299.5 30, 299.5 30\" fill=\"none\" stroke=\"var(--_node-stroke)\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n  <text paint-order=\"stroke\" stroke=\"var(--bg)\" stroke-width=\"3\" stroke-linejoin=\"round\" stroke-linecap=\"round\" x=\"368.424\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">1Password service</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.964200019836426,
+              -0.3109999895095825,
+              2.964200019836426,
+              -0.3109999895095825,
+              2.964200019836426,
+              -0.3109999895095825,
+              2.964200019836426,
+              -0.3109999895095825
+            ],
+            [
+              2.964200019836426,
+              -0.3109999895095825,
+              2.964200019836426,
+              -0.3109999895095825,
+              2.964200019836426,
+              -0.3109999895095825,
+              2.964200019836426,
+              -0.3109999895095825
+            ],
+            [
+              2.9746999740600586,
+              -0.4115999937057495,
+              2.9918999671936035,
+              -0.37689998745918274,
+              3.002699851989746,
+              -0.35659998655319214,
+              3.035099983215332,
+              -0.3075999915599823
+            ],
+            [
+              2.960900068283081,
+              -0.40619999170303345,
+              2.9921998977661133,
+              -0.3758000135421753,
+              3.02839994430542,
+              -0.3434999883174896,
+              3.0535998344421387,
+              -0.3119000196456909
+            ],
+            [
+              2.9713001251220703,
+              -0.5072000026702881,
+              3.0167999267578125,
+              -0.4397999942302704,
+              3.0807998180389404,
+              -0.37880000472068787,
+              3.151400089263916,
+              -0.3181999921798706
+            ],
+            [
+              2.9537999629974365,
+              -0.49709999561309814,
+              3.0304999351501465,
+              -0.4172999858856201,
+              3.0875000953674316,
+              -0.3409000039100647,
+              3.139400005340576,
+              -0.3098999857902527
+            ],
+            [
+              2.955399990081787,
+              -0.5781999826431274,
+              3.0446999073028564,
+              -0.5156999826431274,
+              3.0850000381469727,
+              -0.45910000801086426,
+              3.2273001670837402,
+              -0.28450000286102295
+            ],
+            [
+              2.960700035095215,
+              -0.5916000008583069,
+              3.0448999404907227,
+              -0.4950000047683716,
+              3.123699903488159,
+              -0.3993000090122223,
+              3.202000141143799,
+              -0.3086000084877014
+            ],
+            [
+              2.9507999420166016,
+              -0.6556999683380127,
+              3.0390000343322754,
+              -0.5990999937057495,
+              3.113100051879883,
+              -0.4999000132083893,
+              3.273099899291992,
+              -0.304500013589859
+            ],
+            [
+              2.9758999347686768,
+              -0.6696000099182129,
+              3.0317001342773438,
+              -0.5866000056266785,
+              3.1183998584747314,
+              -0.5194000005722046,
+              3.2798001766204834,
+              -0.30559998750686646
+            ],
+            [
+              3.0354998111724854,
+              -0.7076999545097351,
+              3.1310999393463135,
+              -0.5587999820709229,
+              3.2451999187469482,
+              -0.44020000100135803,
+              3.3595998287200928,
+              -0.28630000352859497
+            ],
+            [
+              3.014400005340576,
+              -0.7064999938011169,
+              3.1379997730255127,
+              -0.5579999685287476,
+              3.264500141143799,
+              -0.41929998993873596,
+              3.377999782562256,
+              -0.3093999922275543
+            ],
+            [
+              3.095900058746338,
+              -0.7225000262260437,
+              3.215700149536133,
+              -0.5849000215530396,
+              3.30649995803833,
+              -0.4477999806404114,
+              3.4348998069763184,
+              -0.2888999879360199
+            ],
+            [
+              3.104300022125244,
+              -0.7008000016212463,
+              3.194999933242798,
+              -0.6097999811172485,
+              3.262200117111206,
+              -0.5124000310897827,
+              3.4423000812530518,
+              -0.310699999332428
+            ],
+            [
+              3.187000036239624,
+              -0.6798999905586243,
+              3.3169000148773193,
+              -0.569599986076355,
+              3.4126999378204346,
+              -0.39750000834465027,
+              3.516700029373169,
+              -0.31949999928474426
+            ],
+            [
+              3.178299903869629,
+              -0.6905999779701233,
+              3.2742998600006104,
+              -0.6123999953269958,
+              3.356600046157837,
+              -0.5078999996185303,
+              3.5322000980377197,
+              -0.3122999966144562
+            ],
+            [
+              3.2476999759674072,
+              -0.6926999688148499,
+              3.3973000049591064,
+              -0.5447999835014343,
+              3.5542001724243164,
+              -0.39570000767707825,
+              3.604300022125244,
+              -0.3211999833583832
+            ],
+            [
+              3.2539000511169434,
+              -0.7101999521255493,
+              3.341099739074707,
+              -0.6161999702453613,
+              3.419299840927124,
+              -0.5166999697685242,
+              3.616499900817871,
+              -0.29610002040863037
+            ],
+            [
+              3.326700210571289,
+              -0.723099946975708,
+              3.4323999881744385,
+              -0.6033999919891357,
+              3.5429000854492188,
+              -0.4597000181674957,
+              3.6682000160217285,
+              -0.3082999885082245
+            ],
+            [
+              3.345100164413452,
+              -0.7060999870300293,
+              3.4504997730255127,
+              -0.5929000377655029,
+              3.5451998710632324,
+              -0.46299999952316284,
+              3.6764001846313477,
+              -0.30559998750686646
+            ],
+            [
+              3.3970999717712402,
+              -0.7179000377655029,
+              3.5318000316619873,
+              -0.5501999855041504,
+              3.671099901199341,
+              -0.40470001101493835,
+              3.771400213241577,
+              -0.31630000472068787
+            ],
+            [
+              3.411900043487549,
+              -0.7064999938011169,
+              3.523699998855591,
+              -0.567799985408783,
+              3.650400161743164,
+              -0.4422000050544739,
+              3.753700017929077,
+              -0.3091999888420105
+            ],
+            [
+              3.4879000186920166,
+              -0.7282000184059143,
+              3.5950000286102295,
+              -0.6022999882698059,
+              3.696000099182129,
+              -0.4684999883174896,
+              3.8389999866485596,
+              -0.31709998846054077
+            ],
+            [
+              3.4851999282836914,
+              -0.7013999819755554,
+              3.616300106048584,
+              -0.5752000212669373,
+              3.718900203704834,
+              -0.43810001015663147,
+              3.8339998722076416,
+              -0.3046000003814697
+            ],
+            [
+              3.5748000144958496,
+              -0.6987999677658081,
+              3.6629998683929443,
+              -0.5841999650001526,
+              3.7832000255584717,
+              -0.48479998111724854,
+              3.9223999977111816,
+              -0.2945999801158905
+            ],
+            [
+              3.583199977874756,
+              -0.7084999680519104,
+              3.677600145339966,
+              -0.5813000202178955,
+              3.791400194168091,
+              -0.46240001916885376,
+              3.927799940109253,
+              -0.30799999833106995
+            ],
+            [
+              3.6359000205993652,
+              -0.7141000628471375,
+              3.777600049972534,
+              -0.5548999905586243,
+              3.9429001808166504,
+              -0.38169997930526733,
+              4.001699924468994,
+              -0.2989000082015991
+            ],
+            [
+              3.649600028991699,
+              -0.712399959564209,
+              3.778599739074707,
+              -0.544700026512146,
+              3.922600030899048,
+              -0.391899973154068,
+              4.008800029754639,
+              -0.31029999256134033
+            ],
+            [
+              3.750499963760376,
+              -0.7053999900817871,
+              3.851300001144409,
+              -0.5720000267028809,
+              3.966400146484375,
+              -0.4272000193595886,
+              4.0854997634887695,
+              -0.2946999967098236
+            ],
+            [
+              3.7445998191833496,
+              -0.6930999755859375,
+              3.8535001277923584,
+              -0.564300000667572,
+              3.9720001220703125,
+              -0.4494999945163727,
+              4.084100246429443,
+              -0.3046000003814697
+            ],
+            [
+              3.802799940109253,
+              -0.6967999935150146,
+              3.9220001697540283,
+              -0.5543999671936035,
+              4.0370001792907715,
+              -0.42810001969337463,
+              4.177900314331055,
+              -0.31029999256134033
+            ],
+            [
+              3.807300090789795,
+              -0.6973999738693237,
+              3.9379000663757324,
+              -0.5684000253677368,
+              4.053100109100342,
+              -0.4188999831676483,
+              4.1651997566223145,
+              -0.3144000172615051
+            ],
+            [
+              3.900700092315674,
+              -0.7263000011444092,
+              3.9488000869750977,
+              -0.6315000057220459,
+              4.022600173950195,
+              -0.5329000353813171,
+              4.245800018310547,
+              -0.28610000014305115
+            ],
+            [
+              3.901700019836426,
+              -0.7069999575614929,
+              3.9948999881744385,
+              -0.5866999626159668,
+              4.107600212097168,
+              -0.4722000062465668,
+              4.250699996948242,
+              -0.3109999895095825
+            ],
+            [
+              3.9793999195098877,
+              -0.7020999789237976,
+              4.078100204467773,
+              -0.6080999970436096,
+              4.167099952697754,
+              -0.4959999918937683,
+              4.330100059509277,
+              -0.3046000003814697
+            ],
+            [
+              3.968100070953369,
+              -0.6938999891281128,
+              4.083600044250488,
+              -0.5843999981880188,
+              4.196199893951416,
+              -0.4559999704360962,
+              4.307799816131592,
+              -0.30160000920295715
+            ],
+            [
+              4.055500030517578,
+              -0.7132999897003174,
+              4.133800029754639,
+              -0.6347000002861023,
+              4.219699859619141,
+              -0.5455999970436096,
+              4.406300067901611,
+              -0.32179999351501465
+            ],
+            [
+              4.058199882507324,
+              -0.7026000022888184,
+              4.122300148010254,
+              -0.613099992275238,
+              4.184800148010254,
+              -0.5410000085830688,
+              4.391300201416016,
+              -0.304500013589859
+            ],
+            [
+              4.1280999183654785,
+              -0.7162999510765076,
+              4.204999923706055,
+              -0.6183000206947327,
+              4.253999710083008,
+              -0.548799991607666,
+              4.437099933624268,
+              -0.37619999051094055
+            ],
+            [
+              4.141200065612793,
+              -0.7135999798774719,
+              4.224200248718262,
+              -0.6078000068664551,
+              4.3069000244140625,
+              -0.49300000071525574,
+              4.412799835205078,
+              -0.373199999332428
+            ],
+            [
+              4.2123003005981445,
+              -0.7141000628471375,
+              4.276199817657471,
+              -0.631600022315979,
+              4.356100082397461,
+              -0.5302000045776367,
+              4.408400058746338,
+              -0.47749999165534973
+            ],
+            [
+              4.207200050354004,
+              -0.703499972820282,
+              4.280600070953369,
+              -0.6309000253677368,
+              4.352799892425537,
+              -0.5604000091552734,
+              4.412300109863281,
+              -0.4641999900341034
+            ],
+            [
+              4.2957000732421875,
+              -0.699400007724762,
+              4.333700180053711,
+              -0.6432999968528748,
+              4.379800319671631,
+              -0.5733000040054321,
+              4.39900016784668,
+              -0.5383999943733215
+            ],
+            [
+              4.282099723815918,
+              -0.7006999850273132,
+              4.313499927520752,
+              -0.6764000058174133,
+              4.35420036315918,
+              -0.6331000328063965,
+              4.410900115966797,
+              -0.5579999685287476
+            ],
+            [
+              4.36899995803833,
+              -0.7041999697685242,
+              4.388800144195557,
+              -0.6773999929428101,
+              4.406400203704834,
+              -0.6577999591827393,
+              4.418399810791016,
+              -0.6538999676704407
+            ],
+            [
+              4.371099948883057,
+              -0.6998999714851379,
+              4.385499954223633,
+              -0.6917999982833862,
+              4.390399932861328,
+              -0.6823999881744385,
+              4.418299674987793,
+              -0.6462000012397766
+            ]
+          ],
+          "closed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#f1f3f5",
+            "strokeWidth": 0.009000000000000001,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.9992001056671143,
+              -0.30320000648498535,
+              3.475799798965454,
+              -0.3208000063896179,
+              3.9577999114990234,
+              -0.2802000045776367,
+              4.35230016708374,
+              -0.2904999852180481
+            ],
+            [
+              3.002500057220459,
+              -0.3091999888420105,
+              3.28629994392395,
+              -0.3133000135421753,
+              3.5971999168395996,
+              -0.3190999925136566,
+              4.365900039672852,
+              -0.3012000024318695
+            ],
+            [
+              4.37339973449707,
+              -0.30000001192092896,
+              4.414400100708008,
+              -0.2865000069141388,
+              4.43149995803833,
+              -0.3165999948978424,
+              4.4070000648498535,
+              -0.3481999933719635
+            ],
+            [
+              4.369100093841553,
+              -0.29589998722076416,
+              4.402200222015381,
+              -0.2777999937534332,
+              4.41480016708374,
+              -0.2954999804496765,
+              4.432600021362305,
+              -0.3272000253200531
+            ],
+            [
+              4.392000198364258,
+              -0.35509997606277466,
+              4.406799793243408,
+              -0.46709999442100525,
+              4.408200263977051,
+              -0.5636000037193298,
+              4.4085001945495605,
+              -0.659600019454956
+            ],
+            [
+              4.418600082397461,
+              -0.34220001101493835,
+              4.4126996994018555,
+              -0.41499999165534973,
+              4.4105000495910645,
+              -0.482200026512146,
+              4.4156999588012695,
+              -0.6608999371528625
+            ],
+            [
+              4.413400173187256,
+              -0.6600000262260437,
+              4.410099983215332,
+              -0.6980999708175659,
+              4.398799896240234,
+              -0.6827999949455261,
+              4.36899995803833,
+              -0.7137000560760498
+            ],
+            [
+              4.399899959564209,
+              -0.6705000400543213,
+              4.392699718475342,
+              -0.6714000105857849,
+              4.392899990081787,
+              -0.6937999725341797,
+              4.370500087738037,
+              -0.7057999968528748
+            ],
+            [
+              4.361799716949463,
+              -0.6865000128746033,
+              3.9042999744415283,
+              -0.7167999744415283,
+              3.461400032043457,
+              -0.7099999785423279,
+              2.98140025138855,
+              -0.7193000316619873
+            ],
+            [
+              4.367599964141846,
+              -0.6908999681472778,
+              3.9514000415802,
+              -0.6812999844551086,
+              3.5286998748779297,
+              -0.6926000118255615,
+              3.0029001235961914,
+              -0.6894999742507935
+            ],
+            [
+              2.994999885559082,
+              -0.699999988079071,
+              2.9481000900268555,
+              -0.6852999925613403,
+              2.9556000232696533,
+              -0.6947000026702881,
+              2.9626998901367188,
+              -0.6594000458717346
+            ],
+            [
+              3.0135998725891113,
+              -0.7184999585151672,
+              2.9789998531341553,
+              -0.6929000020027161,
+              2.9579999446868896,
+              -0.680400013923645,
+              2.9653000831604004,
+              -0.6818000078201294
+            ],
+            [
+              2.953200101852417,
+              -0.6605000495910645,
+              2.969399929046631,
+              -0.5652999877929688,
+              2.954500198364258,
+              -0.45810002088546753,
+              2.9563000202178955,
+              -0.34200000762939453
+            ],
+            [
+              2.953200101852417,
+              -0.6658000349998474,
+              2.941499948501587,
+              -0.5569999814033508,
+              2.9591000080108643,
+              -0.4275999963283539,
+              2.9528000354766846,
+              -0.3295000195503235
+            ],
+            [
+              2.9549999237060547,
+              -0.3400000035762787,
+              2.957399845123291,
+              -0.30959999561309814,
+              2.9707000255584717,
+              -0.2937000095844269,
+              2.9751999378204346,
+              -0.2798999845981598
+            ],
+            [
+              2.9492998123168945,
+              -0.33709999918937683,
+              2.9588000774383545,
+              -0.2883000075817108,
+              2.9654998779296875,
+              -0.2822999954223633,
+              2.9860999584198,
+              -0.298799991607666
+            ],
+            [
+              2.994999885559082,
+              -0.30000001192092896,
+              2.994999885559082,
+              -0.30000001192092896,
+              2.994999885559082,
+              -0.30000001192092896,
+              2.994999885559082,
+              -0.30000001192092896
+            ],
+            [
+              2.994999885559082,
+              -0.30000001192092896,
+              2.994999885559082,
+              -0.30000001192092896,
+              2.994999885559082,
+              -0.30000001192092896,
+              2.994999885559082,
+              -0.30000001192092896
+            ]
+          ],
+          "closed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "style": {
+            "fill": "none",
+            "stroke": "#d2d2d2",
+            "strokeWidth": 0.016,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1e1e1e",
+            "stroke": "#ffffff",
+            "strokeWidth": 0.03,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "round",
+            "lineJoin": "round",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "stroke"
+          },
+          "text": "1Password service",
+          "fontSize": 0.13,
+          "textRun": {
+            "text": "1Password service",
+            "x": 368.424,
+            "y": 54.55,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "width": 113.841
+          }
+        }
+      ],
+      "channels": {
+        "category": "V"
+      }
+    }
+  ],
+  "findings": {
+    "ok": true,
+    "warnings": [],
+    "layout": {
+      "version": 1,
+      "kind": "sequence",
+      "nodes": [
+        {
+          "id": "A",
+          "x": 30,
+          "y": 30,
+          "w": 91,
+          "h": 40,
+          "shape": "rectangle",
+          "label": "Agent tool",
+          "role": "box"
+        },
+        {
+          "id": "O",
+          "x": 176,
+          "y": 30,
+          "w": 80,
+          "h": 40,
+          "shape": "rectangle",
+          "label": "op CLI",
+          "role": "box"
+        },
+        {
+          "id": "V",
+          "x": 296,
+          "y": 30,
+          "w": 146,
+          "h": 40,
+          "shape": "rectangle",
+          "label": "1Password service",
+          "role": "box"
+        }
+      ],
+      "edges": [
+        {
+          "id": "msg#0:A->O",
+          "from": "A",
+          "to": "O",
+          "path": [
+            [
+              76,
+              96
+            ],
+            [
+              216,
+              96
+            ]
+          ],
+          "label": {
+            "x": 146,
+            "y": 86,
+            "text": "op item list"
+          }
+        },
+        {
+          "id": "msg#1:O->V",
+          "from": "O",
+          "to": "V",
+          "path": [
+            [
+              216,
+              136
+            ],
+            [
+              368,
+              136
+            ]
+          ],
+          "label": {
+            "x": 292,
+            "y": 126,
+            "text": "token auth"
+          }
+        },
+        {
+          "id": "msg#2:A->O",
+          "from": "A",
+          "to": "O",
+          "path": [
+            [
+              76,
+              176
+            ],
+            [
+              216,
+              176
+            ]
+          ],
+          "label": {
+            "x": 146,
+            "y": 166,
+            "text": "op item get prod"
+          }
+        },
+        {
+          "id": "msg#3:O->V",
+          "from": "O",
+          "to": "V",
+          "path": [
+            [
+              216,
+              216
+            ],
+            [
+              368,
+              216
+            ]
+          ],
+          "label": {
+            "x": 292,
+            "y": 206,
+            "text": "token auth"
+          }
+        },
+        {
+          "id": "msg#4:A->O",
+          "from": "A",
+          "to": "O",
+          "path": [
+            [
+              76,
+              256
+            ],
+            [
+              216,
+              256
+            ]
+          ],
+          "label": {
+            "x": 146,
+            "y": 246,
+            "text": "op run … app"
+          }
+        },
+        {
+          "id": "msg#5:O->V",
+          "from": "O",
+          "to": "V",
+          "path": [
+            [
+              216,
+              296
+            ],
+            [
+              368,
+              296
+            ]
+          ],
+          "label": {
+            "x": 292,
+            "y": 286,
+            "text": "token auth"
+          }
+        }
+      ],
+      "groups": [],
+      "bounds": {
+        "w": 471,
+        "h": 366
+      }
+    }
+  }
+}

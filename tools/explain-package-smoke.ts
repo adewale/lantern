@@ -29,7 +29,7 @@ try {
   await run(process.execPath, [cli, 'init', 'lesson'], { cwd: folder });
   if (process.env.EXPLAIN_BROWSER) {
     await run(bin, ['snapshots', 'lesson', '--refresh'], { cwd: folder });
-    const cache = JSON.parse(await readFile(join(folder, 'lesson/scene.snapshots.json'), 'utf8'));
+    const cache = JSON.parse(await readFile(join(folder, 'lesson/scene.snapshots/index.json'), 'utf8'));
     assert.equal(Object.keys(cache.diagrams).length, 1);
   }
   // Use native objects only, so this distribution smoke needs no browser or optional renderer.

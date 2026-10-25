@@ -1,4 +1,4 @@
-import { Scene, Text, Arrow, Group, Line, FadeIn, FadeOut, Create } from '../../../src/index.ts';
+import { Scene, Text, Arrow, Group, Line, FadeIn, Create } from '../../../src/index.ts';
 import { stage, palette, settingsOf, CodeBlock } from '../../../explain/index.ts';
 import { ITEMS, rankMetadata, secretWorkflow } from './model.ts';
 
@@ -38,7 +38,6 @@ export default class PasswordExplainer extends Scene {
       model = secretWorkflow(auth),
       s = stage(this, { palette: palette(STYLE) }),
       hot = s.emphasis;
-    const fields = Object.keys(ITEMS[0]!).filter((k) => k !== 'id');
     const results = rankMetadata(QUERY),
       selected = results[0]!;
 
@@ -55,16 +54,11 @@ export default class PasswordExplainer extends Scene {
       ],
       { trail: true },
     );
-    await boundary.note('Vault', 'never opened here', { side: 'below' });
     const table = [
       pad('title', 16) + pad('username', 10) + 'tags',
       ...ITEMS.map((i) => pad(i.title, 16) + pad(i.username, 10) + i.tags.join(', ')),
     ];
-    const items = await s.code(table, {
-      at: [-5.5, -4.25, 5.5, -0.5],
-      title: `fixture items: ${fields.join(', ')}; no secret field`,
-      fontSize: 0.3,
-    });
+    const items = await s.code(table, { at: [-5.5, -4.25, 5.5, -0.5], fontSize: 0.3 });
     await items.focus([1, ITEMS.length]);
 
     await this.step('search', {
@@ -72,9 +66,7 @@ export default class PasswordExplainer extends Scene {
       caption:
         'rankMetadata scores titles, usernames and tags, and drops any item missing a query word. Production API scores 80 and the other two are filtered out. The fixture items have no password field to search.',
     });
-    await boundary.clearNotes();
     await boundary.dim(['Agent', 'Tool', 'Metadata']);
-    await boundary.note('Metadata', `${results.length} match of ${ITEMS.length}`, { side: 'right' });
     const terms = QUERY.split(' ');
     const termScore = (id: string, term: string) => rankMetadata(term).find((r) => r.id === id)?.score;
     const scored = [
@@ -89,30 +81,20 @@ export default class PasswordExplainer extends Scene {
         );
       }),
     ];
-    const ranking = new CodeBlock(this, s.palette, scored, {
-      at: [-5.5, -4.25, 5.5, -0.5],
-      title: 'rankMetadata (model.ts)',
-      fontSize: 0.3,
-    });
-    s.keep(ranking);
-    await this.play(new FadeOut(items), new FadeIn(ranking));
+    // The same panel turns from the fixture's items into their scores.
+    const ranking = items;
+    await ranking.morph(scored);
     await ranking.focus(2 + ITEMS.findIndex((i) => i.id === selected.id));
     this.state.matches = results;
 
     await this.step('select', {
       title: 'op item get asks for one item: prod',
       caption:
-        'The top result’s id, prod, is the only item the CLI is asked for: op item get prod, noted under the CLI node. Retrieval is limited to that one item, so the other items never reach the model.',
+        'The top result’s id, prod, is the only item the CLI is asked for, with op item get prod. Retrieval is limited to that one item, so the other items never reach the model.',
     });
-    await boundary.clearNotes();
     await boundary.dim(['Agent', 'Tool', 'Metadata', 'Op']);
     await boundary.walk([['Tool', 'Op']], { trail: true });
-    await boundary.note('Op', model.commands[1]!, { side: 'below' });
     await ranking.focus(2 + ITEMS.findIndex((i) => i.id === selected.id));
-    const pick = new Text(`selected id: ${selected.id}`, { fontSize: 0.26, color: hot, font: 'mono' });
-    pick.moveTo([ranking.panel.box()![2] + 0.25, ranking.panel.center()[1]], [-1, 0]);
-    s.keep(pick);
-    await this.play(new FadeIn(pick, { shift: [-0.1, 0] }));
 
     await this.step('auth', {
       title: service ? 'With a service-account token, op never prompts' : 'The fixture counts one approval per op command',
@@ -150,7 +132,7 @@ export default class PasswordExplainer extends Scene {
         '',
         `approvals: ${model.approvals}`,
       ],
-      { at: s.regions.side, title: 'secretWorkflow (model.ts)', fontSize: 0.28 },
+      { at: s.regions.side, fontSize: 0.28 },
     );
     s.keep(ledger);
     await this.play(new FadeIn(ledger));
@@ -187,32 +169,15 @@ export default class PasswordExplainer extends Scene {
     s.keep(anatomy);
     await this.play(new FadeIn(refText, { runTime: 0.5 }));
     await this.play(new Create(anatomy, { lagRatio: 0 }));
-    const transcript = await s.card(
+    const where = await s.card(
       [
-        ['Reference', ref],
-        ['Item, from search', selected.id],
-        ['Secret value', 'not in transcript'],
-      ],
-      { at: [-7.3, -3.0, -0.4, 0.6], title: 'What the agent sees' },
-    );
-    const run = await s.card(
-      [
-        ['Resolved by', 'op run'],
+        ['Secret in transcript', 'none'],
+        ['Resolved by', 'op run, at run time'],
         ['Delivered to', 'app environment'],
-        ['Approvals (fixture)', model.approvals],
       ],
-      { at: [0.9, -3.0, 7.3, 0.6], title: 'At run time' },
+      { at: [-4, -1.4, 4, 0.4], fontSize: 0.28 },
     );
-    const link = s.keep(
-      new Arrow([transcript.panel.box()![2] + 0.1, transcript.panel.center()[1]], [run.panel.box()![0] - 0.1, transcript.panel.center()[1]], {
-        stroke: hot,
-        strokeWidth: 0.03,
-        tipLength: 0.2,
-        tipWidth: 0.16,
-      }),
-    );
-    await this.play(new Create(link));
-    await transcript.mark('Secret value');
+    await where.mark('Secret in transcript');
 
     await this.step('child', {
       title: service ? 'env -u strips op’s token from the app' : 'Desktop approval leaves no token to strip',
@@ -221,7 +186,7 @@ export default class PasswordExplainer extends Scene {
         : 'With desktop approvals op’s environment has no service token, so the same env -u removes nothing and the app still gets only PATH and APP_MODE.',
     });
     await s.clear();
-    const command = await s.code([model.commands[2]!], { at: [-7.55, 1.6, 7.55, 3.25], fontSize: 0.34, title: 'wrapper command' });
+    const command = await s.code([model.commands[2]!], { at: [-7.55, 1.6, 7.55, 3.25], fontSize: 0.34 });
     const parent: Record<string, string> = {
       ...model.childEnv,
       ...(model.hasServiceTokenBefore ? { [TOKEN]: '<fixture token>' } : {}),
@@ -229,10 +194,7 @@ export default class PasswordExplainer extends Scene {
     const before = new CodeBlock(
       this,
       s.palette,
-      [
-        ...Object.entries(parent).map(([k, v]) => (k === TOKEN ? '- ' : '  ') + `${k}=${v}`),
-        ...(model.hasServiceTokenBefore ? [] : ['  (no service token set)']),
-      ],
+      Object.entries(parent).map(([k, v]) => (k === TOKEN ? '- ' : '  ') + `${k}=${v}`),
       { at: [-7.55, -4.25, -0.75, 1.1], title: "op's environment", fontSize: 0.27, diff: true },
     );
     const child = new CodeBlock(
@@ -254,12 +216,6 @@ export default class PasswordExplainer extends Scene {
     await this.play(new FadeIn(before));
     await this.play(new Create(pass), new FadeIn(child));
     await command.focus(0);
-    const gone = new Text(
-      TOKEN in model.childEnv ? `${TOKEN} reached the app` : `${TOKEN}: absent`,
-      { fontSize: 0.24, color: hot, font: 'mono' },
-    ).moveTo([(child.panel.box()![0] + child.panel.box()![2]) / 2, child.panel.box()![1] - 0.35]);
-    s.keep(gone);
-    await this.play(new FadeIn(gone));
     this.state.childEnv = model.childEnv;
 
     await this.step('invariants', {
@@ -284,7 +240,7 @@ export default class PasswordExplainer extends Scene {
       ],
       { trail: true },
     );
-    await flow.note('Credential', service ? 'token stops at op' : 'no token variable', { side: 'above', color: '#e03131' });
+    await flow.note('Credential', service ? 'token stops at op' : 'no token variable', { side: 'above' });
     await flow.note('Child', `${Object.keys(model.childEnv).join(', ')} only`, { side: 'below' });
     const resultKeys = [...new Set(results.flatMap((r) => Object.keys(r)))];
     const secretish = resultKeys.filter((k) => /pass|secret|credential|value/i.test(k));
@@ -294,7 +250,7 @@ export default class PasswordExplainer extends Scene {
         ['Secret-like fields', secretish.length ? secretish.join(', ') : 'none'],
         [`${TOKEN} in childEnv`, TOKEN in model.childEnv ? 'present' : 'absent'],
       ],
-      { at: [-5, -4.25, 5, -0.4], title: 'Checked on the model', fontSize: 0.27 },
+      { at: [-5, -4.25, 5, -0.4], fontSize: 0.27 },
     );
     await checks.mark(`${TOKEN} in childEnv`);
 
@@ -316,7 +272,8 @@ export default class PasswordExplainer extends Scene {
           ],
           {
             at: which === 'desktop' ? [-7.3, -3.5, -0.4, -0.3] : [0.4, -3.5, 7.3, -0.3],
-            title: (which === 'desktop' ? 'Desktop approvals' : 'Service account') + (which === auth ? ' (this case)' : ''),
+            // The two titles are the difference this frame shows, so they stay.
+            title: which === 'desktop' ? 'Desktop approvals' : 'Service account',
             fontSize: 0.27,
             width: 6.2,
           },
@@ -324,8 +281,5 @@ export default class PasswordExplainer extends Scene {
       );
     }
     await cards[service ? 1 : 0]!.mark('Approvals');
-    await s.note('Offline fixture: three made-up items, no vault, no network, no real credentials.', {
-      at: [0, -3.95],
-    });
   }
 }

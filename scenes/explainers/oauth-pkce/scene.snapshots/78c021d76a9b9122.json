@@ -1,0 +1,1664 @@
+{
+  "version": 1,
+  "renderer": "agentic-mermaid@0.4.1",
+  "spec": {
+    "source": "sequenceDiagram\n participant C as Client\n participant S as Auth server\n participant X as Attacker\n C->>S: Authorize request + code_challenge\n S-->>C: Redirect with code\n S-->>X: Same redirect, intercepted\n X->>S: Token request: code + a guess\n S-->>X: invalid_grant\n C->>S: Token request: code + code_verifier\n S-->>C: Access token",
+    "style": "github-light"
+  },
+  "family": "sequence",
+  "width": 492.88300000000004,
+  "height": 406,
+  "palette": {
+    "paper": "#ffffff",
+    "ink": "#1f2328",
+    "accent": "#0969da",
+    "muted": "#59636e"
+  },
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"492.88300000000004\" height=\"406\" viewBox=\"0 0 492.88300000000004 406\" style=\"--bg:#ffffff;--fg:#1f2328;--line:#d1d9e0;--accent:#0969da;--muted:#59636e;--font:Inter;background:#ffffff\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #1f2328;\n    --_text-sec:      #59636e;\n    --_text-muted:    #59636e;\n    --_text-faint:    #86888b;\n    --_line:          #d1d9e0;\n    --_arrow:         #0969da;\n    --_node-fill:     #f8f8f9;\n    --_node-stroke:   #d2d3d4;\n    --_group-fill:    #ffffff;\n    --_group-hdr:     #f4f4f4;\n    --_inner-stroke:  #e4e5e5;\n    --_key-badge:     #e9e9ea;\n  }\n</style>\n<rect width=\"492.88300000000004\" height=\"406\" fill=\"#ffffff\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"seq-arrow\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#0969da\" />\n  </marker>\n  <marker id=\"seq-arrow-open\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <polyline points=\"0 0, 8 2.5, 0 5\" fill=\"none\" stroke=\"#0969da\" stroke-width=\"1\" />\n  </marker>\n  <marker id=\"seq-arrow-cross\" markerWidth=\"8\" markerHeight=\"5\" refX=\"4\" refY=\"2.5\" orient=\"auto\">\n    <path d=\"M1 1 L7 4 M1 4 L7 1\" fill=\"none\" stroke=\"#0969da\" stroke-width=\"1.5\" />\n  </marker>\n  <marker id=\"seq-arrow-half-top\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <path d=\"M0 0 L8 2.5\" fill=\"none\" stroke=\"#0969da\" stroke-width=\"1\" />\n  </marker>\n  <marker id=\"seq-arrow-half-bottom\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <path d=\"M0 5 L8 2.5\" fill=\"none\" stroke=\"#0969da\" stroke-width=\"1\" />\n  </marker>\n</defs>\n<line class=\"lifeline\" data-actor=\"C\" x1=\"70\" y1=\"70\" x2=\"70\" y2=\"376\" stroke=\"#8f959c\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />\n<line class=\"lifeline\" data-actor=\"S\" x1=\"258.72200000000004\" y1=\"70\" x2=\"258.72200000000004\" y2=\"376\" stroke=\"#8f959c\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />\n<line class=\"lifeline\" data-actor=\"X\" x1=\"420.71400000000006\" y1=\"70\" x2=\"420.71400000000006\" y2=\"376\" stroke=\"#8f959c\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />\n<g class=\"message\" data-label=\"Authorize request + code_challenge\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:C-&gt;S#0\" data-role=\"message\">\n  <line x1=\"70\" y1=\"96\" x2=\"258.72200000000004\" y2=\"96\" stroke=\"#8f959c\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:C-&gt;S#0:line\" data-role=\"message\" data-from=\"C\" data-to=\"S\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C to S: Authorize request + code_challenge\" />\n  <text x=\"164.36100000000002\" y=\"86\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"172.128\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Authorize request + code_challenge</text>\n</g>\n<g class=\"message\" data-label=\"Redirect with code\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;C#0\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"136\" x2=\"70\" y2=\"136\" stroke=\"#8f959c\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;C#0:line\" data-role=\"message\" data-from=\"S\" data-to=\"C\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to C: Redirect with code\" />\n  <text x=\"164.36100000000002\" y=\"126\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"87.186\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Redirect with code</text>\n</g>\n<g class=\"message\" data-label=\"Same redirect, intercepted\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;X#0\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"176\" x2=\"420.71400000000006\" y2=\"176\" stroke=\"#8f959c\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;X#0:line\" data-role=\"message\" data-from=\"S\" data-to=\"X\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to X: Same redirect, intercepted\" />\n  <text x=\"339.7180000000001\" y=\"166\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"125.202\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Same redirect, intercepted</text>\n</g>\n<g class=\"message\" data-label=\"Token request: code + a guess\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:X-&gt;S#0\" data-role=\"message\">\n  <line x1=\"420.71400000000006\" y1=\"216\" x2=\"258.72200000000004\" y2=\"216\" stroke=\"#8f959c\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:X-&gt;S#0:line\" data-role=\"message\" data-from=\"X\" data-to=\"S\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"X to S: Token request: code + a guess\" />\n  <text x=\"339.7180000000001\" y=\"206\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"145.992\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Token request: code + a guess</text>\n</g>\n<g class=\"message\" data-label=\"invalid_grant\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;X#1\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"256\" x2=\"420.71400000000006\" y2=\"256\" stroke=\"#8f959c\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;X#1:line\" data-role=\"message\" data-from=\"S\" data-to=\"X\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to X: invalid_grant\" />\n  <text x=\"339.7180000000001\" y=\"246\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"63.426\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">invalid_grant</text>\n</g>\n<g class=\"message\" data-label=\"Token request: code + code_verifier\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:C-&gt;S#1\" data-role=\"message\">\n  <line x1=\"70\" y1=\"296\" x2=\"258.72200000000004\" y2=\"296\" stroke=\"#8f959c\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:C-&gt;S#1:line\" data-role=\"message\" data-from=\"C\" data-to=\"S\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C to S: Token request: code + code_verifier\" />\n  <text x=\"164.36100000000002\" y=\"286\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"172.722\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Token request: code + code_verifier</text>\n</g>\n<g class=\"message\" data-label=\"Access token\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;C#1\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"336\" x2=\"70\" y2=\"336\" stroke=\"#8f959c\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;C#1:line\" data-role=\"message\" data-from=\"S\" data-to=\"C\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to C: Access token\" />\n  <text x=\"164.36100000000002\" y=\"326\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"66.396\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Access token</text>\n</g>\n<g class=\"actor\" data-id=\"C\" data-label=\"Client\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"30\" y=\"30\" width=\"80\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"1\" data-id=\"actor:C:box\" data-role=\"actor\" />\n  <text x=\"70\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"34.554\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Client</text>\n</g>\n<g class=\"actor\" data-id=\"S\" data-label=\"Auth server\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"206.54950000000002\" y=\"30\" width=\"104.345\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"1\" data-id=\"actor:S:box\" data-role=\"actor\" />\n  <text x=\"258.72200000000004\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"72.345\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Auth server</text>\n</g>\n<g class=\"actor\" data-id=\"X\" data-label=\"Attacker\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"378.5450000000001\" y=\"30\" width=\"84.338\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"1\" data-id=\"actor:X:box\" data-role=\"actor\" />\n  <text x=\"420.71400000000006\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"52.338\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Attacker</text>\n</g>\n</svg>",
+  "parts": [
+    {
+      "id": "__frame",
+      "role": "frame",
+      "kind": "shape",
+      "svg": "",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0,
+              4.33680859300679e-21,
+              1.642943263053894,
+              4.33680859300679e-21,
+              3.285886526107788,
+              4.33680859300679e-21,
+              4.928830146789551,
+              4.33680859300679e-21,
+              4.928830146789551,
+              -1.3533332347869873,
+              4.928830146789551,
+              -2.7066664695739746,
+              4.928830146789551,
+              -4.059999942779541,
+              3.285886526107788,
+              -4.059999942779541,
+              1.642943263053894,
+              -4.059999942779541,
+              0,
+              -4.059999942779541,
+              0,
+              -2.7066664695739746,
+              0,
+              -1.3533332347869873,
+              0,
+              4.33680859300679e-21
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#ffffff",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lifeline:C",
+      "role": "lifeline",
+      "kind": "connector",
+      "svg": "<line class=\"lifeline\" data-actor=\"C\" x1=\"70\" y1=\"70\" x2=\"70\" y2=\"376\" stroke=\"var(--_line)\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.699999988079071,
+              -0.699999988079071,
+              0.699999988079071,
+              -1.7200000286102295,
+              0.699999988079071,
+              -2.740000009536743,
+              0.699999988079071,
+              -3.759999990463257
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.007499999999999999,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.05999999999999999 0.039999999999999994",
+            "dashOffset": 0
+          }
+        }
+      ],
+      "route": [
+        [
+          0.7,
+          -0.7
+        ],
+        [
+          0.7,
+          -3.76
+        ]
+      ]
+    },
+    {
+      "id": "lifeline:S",
+      "role": "lifeline",
+      "kind": "connector",
+      "svg": "<line class=\"lifeline\" data-actor=\"S\" x1=\"258.72200000000004\" y1=\"70\" x2=\"258.72200000000004\" y2=\"376\" stroke=\"var(--_line)\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.5872199535369873,
+              -0.699999988079071,
+              2.5872199535369873,
+              -1.7200000286102295,
+              2.5872199535369873,
+              -2.740000009536743,
+              2.5872199535369873,
+              -3.759999990463257
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.007499999999999999,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.05999999999999999 0.039999999999999994",
+            "dashOffset": 0
+          }
+        }
+      ],
+      "route": [
+        [
+          2.5872200000000003,
+          -0.7
+        ],
+        [
+          2.5872200000000003,
+          -3.76
+        ]
+      ]
+    },
+    {
+      "id": "lifeline:X",
+      "role": "lifeline",
+      "kind": "connector",
+      "svg": "<line class=\"lifeline\" data-actor=\"X\" x1=\"420.71400000000006\" y1=\"70\" x2=\"420.71400000000006\" y2=\"376\" stroke=\"var(--_line)\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.20713996887207,
+              -0.699999988079071,
+              4.20713996887207,
+              -1.7200000286102295,
+              4.20713996887207,
+              -2.740000009536743,
+              4.20713996887207,
+              -3.759999990463257
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.007499999999999999,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.05999999999999999 0.039999999999999994",
+            "dashOffset": 0
+          }
+        }
+      ],
+      "route": [
+        [
+          4.207140000000001,
+          -0.7
+        ],
+        [
+          4.207140000000001,
+          -3.76
+        ]
+      ]
+    },
+    {
+      "id": "message:C->S#0",
+      "role": "message",
+      "kind": "group",
+      "svg": "<g class=\"message\" data-label=\"Authorize request + code_challenge\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:C-&gt;S#0\" data-role=\"message\">\n  <line x1=\"70\" y1=\"96\" x2=\"258.72200000000004\" y2=\"96\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:C-&gt;S#0:line\" data-role=\"message\" data-from=\"C\" data-to=\"S\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C to S: Authorize request + code_challenge\" />\n  <text x=\"164.36100000000002\" y=\"86\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Authorize request + code_challenge</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.699999988079071,
+              -0.9599999785423279,
+              1.3290733098983765,
+              -0.9599999785423279,
+              1.9581466913223267,
+              -0.9599999785423279,
+              2.5872199535369873,
+              -0.9599999785423279
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.5072197914123535,
+              -0.9350000023841858,
+              2.533886432647705,
+              -0.9433333277702332,
+              2.5605530738830566,
+              -0.9516666531562805,
+              2.5872199535369873,
+              -0.9599999785423279,
+              2.5605530738830566,
+              -0.9683333039283752,
+              2.533886432647705,
+              -0.9766666889190674,
+              2.5072197914123535,
+              -0.9850000143051147,
+              2.5072197914123535,
+              -0.9683333039283752,
+              2.5072197914123535,
+              -0.9516666531562805,
+              2.5072197914123535,
+              -0.9350000023841858
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Authorize request + code_challenge",
+          "fontSize": 0.10999999999999999,
+          "textRun": {
+            "text": "Authorize request + code_challenge",
+            "x": 164.36100000000002,
+            "y": 89.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              -4.336808689942018e-19
+            ],
+            "width": 172.128
+          }
+        }
+      ],
+      "from": "C",
+      "to": "S",
+      "route": [
+        [
+          0.7,
+          -0.96
+        ],
+        [
+          2.5872200000000003,
+          -0.96
+        ]
+      ]
+    },
+    {
+      "id": "message:S->C#0",
+      "role": "message",
+      "kind": "group",
+      "svg": "<g class=\"message\" data-label=\"Redirect with code\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;C#0\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"136\" x2=\"70\" y2=\"136\" stroke=\"var(--_line)\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;C#0:line\" data-role=\"message\" data-from=\"S\" data-to=\"C\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to C: Redirect with code\" />\n  <text x=\"164.36100000000002\" y=\"126\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Redirect with code</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.5872199535369873,
+              -1.3600000143051147,
+              1.958146572113037,
+              -1.3600000143051147,
+              1.3290733098983765,
+              -1.3600000143051147,
+              0.699999988079071,
+              -1.3600000143051147
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.05999999999999999 0.039999999999999994",
+            "dashOffset": 0
+          }
+        },
+        {
+          "subpaths": [
+            [
+              0.7799999713897705,
+              -1.3849999904632568,
+              0.753333330154419,
+              -1.3766666650772095,
+              0.7266666889190674,
+              -1.368333339691162,
+              0.699999988079071,
+              -1.3600000143051147,
+              0.7266666889190674,
+              -1.3516666889190674,
+              0.753333330154419,
+              -1.34333336353302,
+              0.7799999713897705,
+              -1.3350000381469727,
+              0.7799999713897705,
+              -1.3516666889190674,
+              0.7799999713897705,
+              -1.368333339691162,
+              0.7799999713897705,
+              -1.3849999904632568
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Redirect with code",
+          "fontSize": 0.10999999999999999,
+          "textRun": {
+            "text": "Redirect with code",
+            "x": 164.36100000000002,
+            "y": 129.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              -4.336808689942018e-19
+            ],
+            "width": 87.186
+          }
+        }
+      ],
+      "from": "S",
+      "to": "C",
+      "route": [
+        [
+          2.5872200000000003,
+          -1.36
+        ],
+        [
+          0.7,
+          -1.36
+        ]
+      ]
+    },
+    {
+      "id": "message:S->X#0",
+      "role": "message",
+      "kind": "group",
+      "svg": "<g class=\"message\" data-label=\"Same redirect, intercepted\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;X#0\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"176\" x2=\"420.71400000000006\" y2=\"176\" stroke=\"var(--_line)\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;X#0:line\" data-role=\"message\" data-from=\"S\" data-to=\"X\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to X: Same redirect, intercepted\" />\n  <text x=\"339.7180000000001\" y=\"166\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Same redirect, intercepted</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.5872199535369873,
+              -1.7599999904632568,
+              3.1271932125091553,
+              -1.7599999904632568,
+              3.6671667098999023,
+              -1.7599999904632568,
+              4.20713996887207,
+              -1.7599999904632568
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.05999999999999999 0.039999999999999994",
+            "dashOffset": 0
+          }
+        },
+        {
+          "subpaths": [
+            [
+              4.127140045166016,
+              -1.7350000143051147,
+              4.153806686401367,
+              -1.743333339691162,
+              4.180473327636719,
+              -1.7516666650772095,
+              4.20713996887207,
+              -1.7599999904632568,
+              4.180473327636719,
+              -1.7683333158493042,
+              4.153806686401367,
+              -1.7766666412353516,
+              4.127140045166016,
+              -1.784999966621399,
+              4.127140045166016,
+              -1.7683333158493042,
+              4.127140045166016,
+              -1.7516666650772095,
+              4.127140045166016,
+              -1.7350000143051147
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Same redirect, intercepted",
+          "fontSize": 0.10999999999999999,
+          "textRun": {
+            "text": "Same redirect, intercepted",
+            "x": 339.7180000000001,
+            "y": 169.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              -4.336808689942018e-19
+            ],
+            "width": 125.202
+          }
+        }
+      ],
+      "from": "S",
+      "to": "X",
+      "route": [
+        [
+          2.5872200000000003,
+          -1.76
+        ],
+        [
+          4.207140000000001,
+          -1.76
+        ]
+      ]
+    },
+    {
+      "id": "message:X->S#0",
+      "role": "message",
+      "kind": "group",
+      "svg": "<g class=\"message\" data-label=\"Token request: code + a guess\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:X-&gt;S#0\" data-role=\"message\">\n  <line x1=\"420.71400000000006\" y1=\"216\" x2=\"258.72200000000004\" y2=\"216\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:X-&gt;S#0:line\" data-role=\"message\" data-from=\"X\" data-to=\"S\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"X to S: Token request: code + a guess\" />\n  <text x=\"339.7180000000001\" y=\"206\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Token request: code + a guess</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              4.20713996887207,
+              -2.1600000858306885,
+              3.6671664714813232,
+              -2.1600000858306885,
+              3.1271932125091553,
+              -2.1600000858306885,
+              2.5872199535369873,
+              -2.1600000858306885
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.667219877243042,
+              -2.184999942779541,
+              2.6405532360076904,
+              -2.176666736602783,
+              2.613886594772339,
+              -2.1683332920074463,
+              2.5872199535369873,
+              -2.1600000858306885,
+              2.613886594772339,
+              -2.1516666412353516,
+              2.6405532360076904,
+              -2.1433334350585938,
+              2.667219877243042,
+              -2.134999990463257,
+              2.667219877243042,
+              -2.1516666412353516,
+              2.667219877243042,
+              -2.1683332920074463,
+              2.667219877243042,
+              -2.184999942779541
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Token request: code + a guess",
+          "fontSize": 0.10999999999999999,
+          "textRun": {
+            "text": "Token request: code + a guess",
+            "x": 339.7180000000001,
+            "y": 209.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              -4.336808689942018e-19
+            ],
+            "width": 145.992
+          }
+        }
+      ],
+      "from": "X",
+      "to": "S",
+      "route": [
+        [
+          4.207140000000001,
+          -2.16
+        ],
+        [
+          2.5872200000000003,
+          -2.16
+        ]
+      ]
+    },
+    {
+      "id": "message:S->X#1",
+      "role": "message",
+      "kind": "group",
+      "svg": "<g class=\"message\" data-label=\"invalid_grant\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;X#1\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"256\" x2=\"420.71400000000006\" y2=\"256\" stroke=\"var(--_line)\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;X#1:line\" data-role=\"message\" data-from=\"S\" data-to=\"X\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to X: invalid_grant\" />\n  <text x=\"339.7180000000001\" y=\"246\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">invalid_grant</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.5872199535369873,
+              -2.559999942779541,
+              3.1271932125091553,
+              -2.559999942779541,
+              3.6671667098999023,
+              -2.559999942779541,
+              4.20713996887207,
+              -2.559999942779541
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.05999999999999999 0.039999999999999994",
+            "dashOffset": 0
+          }
+        },
+        {
+          "subpaths": [
+            [
+              4.127140045166016,
+              -2.5350000858306885,
+              4.153806686401367,
+              -2.5433332920074463,
+              4.180473327636719,
+              -2.551666736602783,
+              4.20713996887207,
+              -2.559999942779541,
+              4.180473327636719,
+              -2.568333387374878,
+              4.153806686401367,
+              -2.5766665935516357,
+              4.127140045166016,
+              -2.5850000381469727,
+              4.127140045166016,
+              -2.568333387374878,
+              4.127140045166016,
+              -2.551666736602783,
+              4.127140045166016,
+              -2.5350000858306885
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "invalid_grant",
+          "fontSize": 0.10999999999999999,
+          "textRun": {
+            "text": "invalid_grant",
+            "x": 339.7180000000001,
+            "y": 249.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              -4.336808689942018e-19
+            ],
+            "width": 63.426
+          }
+        }
+      ],
+      "from": "S",
+      "to": "X",
+      "route": [
+        [
+          2.5872200000000003,
+          -2.56
+        ],
+        [
+          4.207140000000001,
+          -2.56
+        ]
+      ]
+    },
+    {
+      "id": "message:C->S#1",
+      "role": "message",
+      "kind": "group",
+      "svg": "<g class=\"message\" data-label=\"Token request: code + code_verifier\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:C-&gt;S#1\" data-role=\"message\">\n  <line x1=\"70\" y1=\"296\" x2=\"258.72200000000004\" y2=\"296\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:C-&gt;S#1:line\" data-role=\"message\" data-from=\"C\" data-to=\"S\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C to S: Token request: code + code_verifier\" />\n  <text x=\"164.36100000000002\" y=\"286\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Token request: code + code_verifier</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.699999988079071,
+              -2.9600000381469727,
+              1.3290733098983765,
+              -2.9600000381469727,
+              1.9581466913223267,
+              -2.9600000381469727,
+              2.5872199535369873,
+              -2.9600000381469727
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [
+            [
+              2.5072197914123535,
+              -2.934999942779541,
+              2.533886432647705,
+              -2.943333387374878,
+              2.5605530738830566,
+              -2.9516665935516357,
+              2.5872199535369873,
+              -2.9600000381469727,
+              2.5605530738830566,
+              -2.9683332443237305,
+              2.533886432647705,
+              -2.9766666889190674,
+              2.5072197914123535,
+              -2.984999895095825,
+              2.5072197914123535,
+              -2.9683332443237305,
+              2.5072197914123535,
+              -2.9516665935516357,
+              2.5072197914123535,
+              -2.934999942779541
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Token request: code + code_verifier",
+          "fontSize": 0.10999999999999999,
+          "textRun": {
+            "text": "Token request: code + code_verifier",
+            "x": 164.36100000000002,
+            "y": 289.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              -4.336808689942018e-19
+            ],
+            "width": 172.722
+          }
+        }
+      ],
+      "from": "C",
+      "to": "S",
+      "route": [
+        [
+          0.7,
+          -2.96
+        ],
+        [
+          2.5872200000000003,
+          -2.96
+        ]
+      ]
+    },
+    {
+      "id": "message:S->C#1",
+      "role": "message",
+      "kind": "group",
+      "svg": "<g class=\"message\" data-label=\"Access token\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;C#1\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"336\" x2=\"70\" y2=\"336\" stroke=\"var(--_line)\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;C#1:line\" data-role=\"message\" data-from=\"S\" data-to=\"C\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to C: Access token\" />\n  <text x=\"164.36100000000002\" y=\"326\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Access token</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.5872199535369873,
+              -3.359999895095825,
+              1.958146572113037,
+              -3.359999895095825,
+              1.3290733098983765,
+              -3.359999895095825,
+              0.699999988079071,
+              -3.359999895095825
+            ]
+          ],
+          "closed": [
+            false
+          ],
+          "style": {
+            "fill": "#000000",
+            "stroke": "#8f959c",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal",
+            "dashArray": "0.05999999999999999 0.039999999999999994",
+            "dashOffset": 0
+          }
+        },
+        {
+          "subpaths": [
+            [
+              0.7799999713897705,
+              -3.384999990463257,
+              0.753333330154419,
+              -3.376666784286499,
+              0.7266666889190674,
+              -3.368333339691162,
+              0.699999988079071,
+              -3.359999895095825,
+              0.7266666889190674,
+              -3.3516666889190674,
+              0.753333330154419,
+              -3.3433332443237305,
+              0.7799999713897705,
+              -3.3350000381469727,
+              0.7799999713897705,
+              -3.3516666889190674,
+              0.7799999713897705,
+              -3.368333339691162,
+              0.7799999713897705,
+              -3.384999990463257
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#0969da",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#59636e",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Access token",
+          "fontSize": 0.10999999999999999,
+          "textRun": {
+            "text": "Access token",
+            "x": 164.36100000000002,
+            "y": 329.85,
+            "size": 11,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              -4.336808689942018e-19
+            ],
+            "width": 66.396
+          }
+        }
+      ],
+      "from": "S",
+      "to": "C",
+      "route": [
+        [
+          2.5872200000000003,
+          -3.36
+        ],
+        [
+          0.7,
+          -3.36
+        ]
+      ]
+    },
+    {
+      "id": "actor:C",
+      "role": "actor",
+      "kind": "group",
+      "svg": "<g class=\"actor\" data-id=\"C\" data-label=\"Client\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"30\" y=\"30\" width=\"80\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" data-id=\"actor:C:box\" data-role=\"actor\" />\n  <text x=\"70\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Client</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              0.3400000035762787,
+              -0.30000001192092896,
+              0.5799999833106995,
+              -0.30000001192092896,
+              0.8199999928474426,
+              -0.30000001192092896,
+              1.059999942779541,
+              -0.30000001192092896,
+              1.0820913314819336,
+              -0.30000001192092896,
+              1.100000023841858,
+              -0.3179086148738861,
+              1.100000023841858,
+              -0.3400000035762787,
+              1.100000023841858,
+              -0.4466666877269745,
+              1.100000023841858,
+              -0.5533333420753479,
+              1.100000023841858,
+              -0.6600000262260437,
+              1.100000023841858,
+              -0.6820913553237915,
+              1.0820913314819336,
+              -0.699999988079071,
+              1.059999942779541,
+              -0.699999988079071,
+              0.8199999928474426,
+              -0.699999988079071,
+              0.5799999833106995,
+              -0.699999988079071,
+              0.3400000035762787,
+              -0.699999988079071,
+              0.3179086148738861,
+              -0.699999988079071,
+              0.30000001192092896,
+              -0.6820913553237915,
+              0.30000001192092896,
+              -0.6600000262260437,
+              0.30000001192092896,
+              -0.5533333420753479,
+              0.30000001192092896,
+              -0.4466666877269745,
+              0.30000001192092896,
+              -0.3400000035762787,
+              0.30000001192092896,
+              -0.3179086148738861,
+              0.3179086148738861,
+              -0.30000001192092896,
+              0.3400000035762787,
+              -0.30000001192092896
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f8f8f9",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Client",
+          "fontSize": 0.12999999999999998,
+          "textRun": {
+            "text": "Client",
+            "x": 70,
+            "y": 54.55,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              -4.336808689942018e-19
+            ],
+            "width": 34.554
+          }
+        }
+      ],
+      "channels": {
+        "category": "C"
+      }
+    },
+    {
+      "id": "actor:S",
+      "role": "actor",
+      "kind": "group",
+      "svg": "<g class=\"actor\" data-id=\"S\" data-label=\"Auth server\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"206.54950000000002\" y=\"30\" width=\"104.345\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" data-id=\"actor:S:box\" data-role=\"actor\" />\n  <text x=\"258.72200000000004\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Auth server</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              2.105494976043701,
+              -0.30000001192092896,
+              2.426645040512085,
+              -0.30000001192092896,
+              2.7477951049804688,
+              -0.30000001192092896,
+              3.0689449310302734,
+              -0.30000001192092896,
+              3.091036319732666,
+              -0.30000001192092896,
+              3.108944892883301,
+              -0.3179086148738861,
+              3.108944892883301,
+              -0.3400000035762787,
+              3.108944892883301,
+              -0.4466666877269745,
+              3.108944892883301,
+              -0.5533333420753479,
+              3.108944892883301,
+              -0.6600000262260437,
+              3.108944892883301,
+              -0.6820913553237915,
+              3.091036319732666,
+              -0.699999988079071,
+              3.0689449310302734,
+              -0.699999988079071,
+              2.7477951049804688,
+              -0.699999988079071,
+              2.426645040512085,
+              -0.699999988079071,
+              2.105494976043701,
+              -0.699999988079071,
+              2.0834035873413086,
+              -0.699999988079071,
+              2.065495014190674,
+              -0.6820913553237915,
+              2.065495014190674,
+              -0.6600000262260437,
+              2.065495014190674,
+              -0.5533333420753479,
+              2.065495014190674,
+              -0.4466666877269745,
+              2.065495014190674,
+              -0.3400000035762787,
+              2.065495014190674,
+              -0.3179086148738861,
+              2.0834035873413086,
+              -0.30000001192092896,
+              2.105494976043701,
+              -0.30000001192092896
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f8f8f9",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Auth server",
+          "fontSize": 0.12999999999999998,
+          "textRun": {
+            "text": "Auth server",
+            "x": 258.72200000000004,
+            "y": 54.55,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              -4.336808689942018e-19
+            ],
+            "width": 72.345
+          }
+        }
+      ],
+      "channels": {
+        "category": "S"
+      }
+    },
+    {
+      "id": "actor:X",
+      "role": "actor",
+      "kind": "group",
+      "svg": "<g class=\"actor\" data-id=\"X\" data-label=\"Attacker\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"378.5450000000001\" y=\"30\" width=\"84.338\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" data-id=\"actor:X:box\" data-role=\"actor\" />\n  <text x=\"420.71400000000006\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Attacker</text>\n</g>",
+      "shapes": [
+        {
+          "subpaths": [
+            [
+              3.8254501819610596,
+              -0.30000001192092896,
+              4.079909801483154,
+              -0.30000001192092896,
+              4.334370136260986,
+              -0.30000001192092896,
+              4.58882999420166,
+              -0.30000001192092896,
+              4.610921382904053,
+              -0.30000001192092896,
+              4.6288299560546875,
+              -0.3179086148738861,
+              4.6288299560546875,
+              -0.3400000035762787,
+              4.6288299560546875,
+              -0.4466666877269745,
+              4.6288299560546875,
+              -0.5533333420753479,
+              4.6288299560546875,
+              -0.6600000262260437,
+              4.6288299560546875,
+              -0.6820913553237915,
+              4.610921382904053,
+              -0.699999988079071,
+              4.58882999420166,
+              -0.699999988079071,
+              4.334370136260986,
+              -0.699999988079071,
+              4.079909801483154,
+              -0.699999988079071,
+              3.8254501819610596,
+              -0.699999988079071,
+              3.803358554840088,
+              -0.699999988079071,
+              3.7854502201080322,
+              -0.6820913553237915,
+              3.7854502201080322,
+              -0.6600000262260437,
+              3.7854502201080322,
+              -0.5533333420753479,
+              3.7854502201080322,
+              -0.4466666877269745,
+              3.7854502201080322,
+              -0.3400000035762787,
+              3.7854502201080322,
+              -0.3179086148738861,
+              3.803358554840088,
+              -0.30000001192092896,
+              3.8254501819610596,
+              -0.30000001192092896
+            ]
+          ],
+          "closed": [
+            true
+          ],
+          "style": {
+            "fill": "#f8f8f9",
+            "stroke": "#d2d3d4",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          }
+        },
+        {
+          "subpaths": [],
+          "closed": [],
+          "style": {
+            "fill": "#1f2328",
+            "stroke": "none",
+            "strokeWidth": 0.009999999999999998,
+            "fillOpacity": 1,
+            "strokeOpacity": 1,
+            "opacity": 1,
+            "lineCap": "butt",
+            "lineJoin": "miter",
+            "fillRule": "nonzero",
+            "miterLimit": 4,
+            "paintOrder": "normal"
+          },
+          "text": "Attacker",
+          "fontSize": 0.12999999999999998,
+          "textRun": {
+            "text": "Attacker",
+            "x": 420.71400000000006,
+            "y": 54.55,
+            "size": 13,
+            "anchor": "middle",
+            "matrix": [
+              0.9999999999999999,
+              0,
+              0,
+              0.9999999999999999,
+              0,
+              -4.336808689942018e-19
+            ],
+            "width": 52.338
+          }
+        }
+      ],
+      "channels": {
+        "category": "X"
+      }
+    }
+  ],
+  "findings": {
+    "ok": true,
+    "warnings": [],
+    "layout": {
+      "version": 1,
+      "kind": "sequence",
+      "nodes": [
+        {
+          "id": "C",
+          "x": 30,
+          "y": 30,
+          "w": 80,
+          "h": 40,
+          "shape": "rectangle",
+          "label": "Client",
+          "role": "box"
+        },
+        {
+          "id": "S",
+          "x": 207,
+          "y": 30,
+          "w": 104,
+          "h": 40,
+          "shape": "rectangle",
+          "label": "Auth server",
+          "role": "box"
+        },
+        {
+          "id": "X",
+          "x": 379,
+          "y": 30,
+          "w": 84,
+          "h": 40,
+          "shape": "rectangle",
+          "label": "Attacker",
+          "role": "box"
+        }
+      ],
+      "edges": [
+        {
+          "id": "msg#0:C->S",
+          "from": "C",
+          "to": "S",
+          "path": [
+            [
+              70,
+              96
+            ],
+            [
+              259,
+              96
+            ]
+          ],
+          "label": {
+            "x": 164,
+            "y": 86,
+            "text": "Authorize request + code_challenge"
+          }
+        },
+        {
+          "id": "msg#1:S->C",
+          "from": "S",
+          "to": "C",
+          "path": [
+            [
+              259,
+              136
+            ],
+            [
+              70,
+              136
+            ]
+          ],
+          "label": {
+            "x": 164,
+            "y": 126,
+            "text": "Redirect with code"
+          }
+        },
+        {
+          "id": "msg#2:S->X",
+          "from": "S",
+          "to": "X",
+          "path": [
+            [
+              259,
+              176
+            ],
+            [
+              421,
+              176
+            ]
+          ],
+          "label": {
+            "x": 340,
+            "y": 166,
+            "text": "Same redirect, intercepted"
+          }
+        },
+        {
+          "id": "msg#3:X->S",
+          "from": "X",
+          "to": "S",
+          "path": [
+            [
+              421,
+              216
+            ],
+            [
+              259,
+              216
+            ]
+          ],
+          "label": {
+            "x": 340,
+            "y": 206,
+            "text": "Token request: code + a guess"
+          }
+        },
+        {
+          "id": "msg#4:S->X",
+          "from": "S",
+          "to": "X",
+          "path": [
+            [
+              259,
+              256
+            ],
+            [
+              421,
+              256
+            ]
+          ],
+          "label": {
+            "x": 340,
+            "y": 246,
+            "text": "invalid_grant"
+          }
+        },
+        {
+          "id": "msg#5:C->S",
+          "from": "C",
+          "to": "S",
+          "path": [
+            [
+              70,
+              296
+            ],
+            [
+              259,
+              296
+            ]
+          ],
+          "label": {
+            "x": 164,
+            "y": 286,
+            "text": "Token request: code + code_verifier"
+          }
+        },
+        {
+          "id": "msg#6:S->C",
+          "from": "S",
+          "to": "C",
+          "path": [
+            [
+              259,
+              336
+            ],
+            [
+              70,
+              336
+            ]
+          ],
+          "label": {
+            "x": 164,
+            "y": 326,
+            "text": "Access token"
+          }
+        }
+      ],
+      "groups": [],
+      "bounds": {
+        "w": 493,
+        "h": 406
+      }
+    }
+  }
+}

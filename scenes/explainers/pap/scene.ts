@@ -38,7 +38,6 @@ const METHOD = {
 };
 /** The session's own small state machine, as the stateDiagram draws it. */
 const SESSION = { SignedOut: { signIn: 'SignedIn' }, SignedIn: { signOut: 'SignedOutAgain' } } as const;
-const SAY: Record<string, string> = { SignedOut: 'signed out', SignedIn: 'signed in', SignedOutAgain: 'signed out again' };
 export default class PAPExplainer extends Scene {
   static meta = {
     id: 'pap',
@@ -61,7 +60,6 @@ export default class PAPExplainer extends Scene {
     const method = settingsOf(this).signin as keyof typeof SIGNIN,
       how = METHOD[method],
       s = stage(this, { palette: palette('nord') });
-    const Method = method[0]!.toUpperCase() + method.slice(1);
 
     await this.step('map', {
       title: 'Discovery comes first, then a session',
@@ -73,16 +71,7 @@ export default class PAPExplainer extends Scene {
         source: 'mindmap\n root((Company))\n  Discovery\n  Sessions\n  APIs\n  Web\n  Conversations',
         style: STYLE,
       },
-      { box: 'main' },
-    );
-    await s.card(
-      [
-        ['Acts for', 'the user'],
-        ['Works with', 'one company'],
-        ['Protocol', 'PAP draft 0.2'],
-        ['Sign-in here', Method],
-      ],
-      { at: 'side', title: 'Personal Agent', fontSize: 0.27 },
+      { box: 'full' },
     );
     await map.mark(['Discovery', 'Sessions'], { color: HOT });
     await map.note('Discovery', 'first', { side: 'right', color: HOT });
@@ -116,13 +105,11 @@ export default class PAPExplainer extends Scene {
     await discovery.note('Verify', 'same owner?', { side: 'right', color: HOT });
     const found = await s.card(
       [
-        ['OAuth issuer', 'must match domain'],
         ['Sign-in methods', 'advertised'],
-        ['This run uses', Method],
         ['Endpoints', 'where each goes'],
         ['Not granted', 'licence to send secrets'],
       ],
-      { at: [-1.2, -4.25, 7.55, 2.6], title: 'What poppy.json tells the agent', fontSize: 0.28 },
+      { at: [0.2, 0.85], fontSize: 0.28 },
     );
     await found.mark('Not granted');
 
@@ -145,19 +132,17 @@ export default class PAPExplainer extends Scene {
     const session = await s.card(
       [
         ['session_id', 'issued before sign-in'],
-        ['State', SAY[state]],
         ['Account', 'none yet'],
       ],
-      { at: [-7.55, -4.25, 7.55, -1.0], title: 'This session', fontSize: 0.28 },
+      { at: [-7.55, -4.25, 7.55, -1.0], fontSize: 0.28 },
     );
     await states.mark(['SignedOut']);
     await states.walk([['SignedOut', 'SignedIn']], { trail: true });
     state = SESSION.SignedOut.signIn;
     await states.unmark(['SignedOut']);
     await states.mark(['SignedIn']);
-    await session.set({ State: SAY[state], Account: 'the user’s account' });
+    await session.set({ Account: 'the user’s account' });
     await session.mark('Account');
-    await states.note('SignedOutAgain', 'never a different account', { side: 'above' });
     this.state.session = state;
 
     await this.step('sign-in', {
@@ -177,15 +162,13 @@ export default class PAPExplainer extends Scene {
     await s.clearOverlays();
     await states.hide();
     const seq = await s.show({ source: SIGNIN[method], style: STYLE }, { box: 'main', build: 'frame' });
-    const messages = SIGNIN[method].split('\n').filter((l) => l.includes('>>')).length;
     const signin = await s.card(
       [
         ['Signs in on', how.where],
         ['Password', how.password],
         ['Proof', how.proof],
-        ['Messages', messages],
       ],
-      { at: 'side', title: `${Method} sign-in`, fontSize: 0.26 },
+      { at: 'side', fontSize: 0.26 },
     );
     await seq.reveal(2);
     await seq.reveal('rest');
@@ -202,7 +185,6 @@ export default class PAPExplainer extends Scene {
     const last = `message:C->A#1`;
     await seq.dim([last]);
     await seq.mark([last], { color: HOT });
-    await seq.note(last, 'two tokens arrive together', { side: 'below', color: HOT });
     const sessionCard = await s.card(
       [
         ['Kind', 'access token'],
@@ -215,7 +197,6 @@ export default class PAPExplainer extends Scene {
       [
         ['Kind', 'refresh token'],
         ['Kept', 'outside model context'],
-        ['Sign-in used', Method],
       ],
       { at: [2.65, -4.25, 7.55, -0.6], title: 'Account Token', fontSize: 0.25 },
     );
@@ -253,7 +234,7 @@ export default class PAPExplainer extends Scene {
         ['Audience', 'each resource’s own'],
         ['Intent', 'the user’s task'],
       ],
-      { at: 'side', title: 'Every call still checks', fontSize: 0.24 },
+      { at: 'side', fontSize: 0.24 },
     );
     await limits.mark('Scopes');
 
@@ -270,7 +251,7 @@ export default class PAPExplainer extends Scene {
           'graph TB\nUser[User] --> Agent[Personal Agent]\nA[Company A reply] -.-> Agent\nAgent --> B[Action at Company B]\nAgent --> Store[Chosen credential store]',
         style: STYLE,
       },
-      { box: 'main' },
+      { box: 'full' },
     );
     await trust.walk([['User', 'Agent']], { trail: true });
     await trust.walk([['A', 'Agent']], { trail: RED });
@@ -279,16 +260,6 @@ export default class PAPExplainer extends Scene {
     await trust.note('A', 'untrusted data', { side: 'above', color: RED });
     await trust.note('B', 'needs the user’s approval', { side: 'below' });
     await trust.note('Store', 'secrets stay here', { side: 'below' });
-    const rules = await s.card(
-      [
-        ['Authority', 'the user’s task'],
-        ['Untrusted', 'company replies'],
-        ['Secrets', 'chosen store'],
-        ['Sign-in used', Method],
-      ],
-      { at: 'side', title: 'Keep these apart', fontSize: 0.25 },
-    );
-    await rules.mark('Untrusted');
     this.state.signin = method;
   }
 }

@@ -6,7 +6,7 @@ An explanation is an ordinary Lantern `Scene`, exported as the default from a Ty
 
 ```sh
 explain init lesson
-explain preview lesson/scene.ts
+explain preview lesson/scene.ts --watch
 explain snapshots lesson/scene.ts --refresh
 explain check lesson/scene.ts
 explain build lesson/scene.ts --out public/lesson.html
@@ -30,7 +30,7 @@ await this.play(new Transform(gauge, nextGauge));
 
 Names are stable URL identifiers. Captions also determine video reading holds at Lantern's inherited 160 words/minute. The web reader waits for the reader instead of auto-advancing. Keep captions short enough for three footer lines; the video exporter measures embedded glyph advances and rejects overflow.
 
-**Write what the picture shows.** Titles, captions and on-stage notes follow [anti-slop-writing](https://github.com/adewale/anti-slop-writing). A step title is a claim the frame can prove, such as "A stolen code fails without the verifier". A caption names the value, part or mechanism on screen. It explains a contrast with because, although or so, unless both sides are already visible.
+**Write what the picture shows.** Titles, captions and on-stage notes follow [anti-slop-writing](https://github.com/adewale/anti-slop-writing). A step title is a claim the frame can prove, such as "A stolen code fails without the verifier". A caption names the value, part or mechanism on screen. It explains a contrast with because, although or so, unless both sides are already visible. Panel titles, chips and small asides are secondary labels: leave them out when the heading, the caption or the values already say it, and move a panel next to the part it describes before reaching for a title.
 
 **Ask the program.** Compute the model's result, then animate that result. Test the model independently and compare step states with its results. `test/lib/explainer-state.ts` provides the repository's small `assertStepState` pattern; `test/explain-fidelity.test.ts` applies it to every authored case. The demo models explicitly describe their scope; they do not claim to execute an entire external interpreter or protocol.
 
@@ -47,12 +47,14 @@ const s = stage(this);              // palette from the first diagram; heading f
 // stage(this, { palette: palette('dusk') })   native-only scenes choose a palette
 // stage(this, { heading: 'Fixed' | false })    a fixed heading, or none
 
-const card = await s.card([['Balance', 3], ['Rate', '2 / second']], { at: 'side', title: 'Bucket' });
+const card = await s.card([['Balance', 3], ['Rate', '2 / second']], { at: 'side' });
 await card.set({ Balance: 2 });     // crossfades changed values; a card sizes to its first
                                     // values, so pass `width` if later ones are longer
 await card.mark('Balance');         // a bar that stays on the row
-const code = await s.code(lines, { at: 'bottom', title: 'users.ts', diff: true });
+const code = await s.code(lines, { at: 'bottom' });
 await code.focus([2, 3]);           // a bar that stays on lines 2–3
+await code.morph(next, { markAdded: true }); // lines pair by text: survivors move, added lines arrive marked
+await code.clearMarks();
 await s.chip('Checking the cache');
 await s.note('not to scale', { at: [0, -3.9] });
 s.keep(nativeGroup);                // include your own objects in clearOverlays/clear
@@ -117,13 +119,13 @@ A setting changes the lesson, not its palette. It may change diagrams, captions,
 
 ## Snapshots and checks
 
-`scene.snapshots.json` is an author-side cache, not a new lesson format. The scene requests diagrams naturally while running. The cache retains original SVG, per-mark SVG, palette, ids, roles, routes, data channels, verifier findings, resolved geometry and compact text placements. Missing diagrams are captured; unused ones are pruned. Commit the cache beside the scene. Use `--refresh` after importer changes.
+`scene.snapshots/` is an author-side cache, not a new lesson format: `index.json` maps each diagram's key to a file, and each diagram has its own file, so changing one diagram changes one file in review. An older single `scene.snapshots.json` is read and migrated on the next write. The scene requests diagrams naturally while running. The cache retains original SVG, per-mark SVG, palette, ids, roles, routes, data channels, verifier findings, resolved geometry and compact text placements. Missing diagrams are captured; unused ones are pruned. Commit the cache beside the scene. Use `--refresh` after importer changes.
 
 Capture delegates to the real default/rough/hybrid backend and asserts byte equality with `renderMermaidSVG`. Chromium resolves the complete document's CSS, transforms and markers **at build time**, with external requests blocked. The browser artifact only needs resolved geometry and text runs; raw SVG is stripped from its runtime payload. Embedded fonts supply outlines in both environments.
 
 Unsupported imported paint/clipping resources, masks, filters and unread drawing elements fail the build rather than silently disappear. Native diagram focus uses a fixed rectangular `Mobject.clipBox` viewport, so enlarged artwork cannot paint over the heading or neighbouring native content. This clips paint, not geometry; nested viewports intersect. The tested release portfolio covers flowchart, state, sequence, class, mind map, xy chart, git graph and Gantt. Other families are not a compatibility promise. Style-specific lettering remains a known difference.
 
-`check` runs every case and writes `report.json` under `out/checks/`, including each case's full step-boundary trace (captions, timings, before/after program state and real-link walk evidence):
+`check` runs every case and writes `report.json` under `out/checks/`, including each case's full step-boundary trace (captions, timings, before/after program state and real-link walk evidence), each step's resting frame as text (`restingFrames`, readable without a browser), and the smallest label size at a 1280 px stage and on a 390 px phone before zooming (`legibility`). It checks:
 - played versus seeked SVG at two frames per step;
 - full versus skipped state traces;
 - every-frame motion analysis (pops, cuts, jumps and flicker);

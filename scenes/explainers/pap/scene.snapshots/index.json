@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "importer": 4,
+  "renderer": "agentic-mermaid@0.4.1",
+  "sourceHash": "94e8ac5f8a3b4a9858f66b44452f4033ce19813b389cab1dbfe87ffad5bbf5c8",
+  "diagrams": {
+    "[\"graph LR\\nSession[Authorized Session] --> API[API calls]\\nSession --> Web[Web browsing]\\nSession --> Conversation[Company Agent]\\nConversation --> Human[Human handoff]\",\"nord\",null]": "e8622edfbb453cd9.json",
+    "[\"graph TB\\nDomain[Company domain] --> Poppy[poppy.json]\\nPoppy --> Issuer[OAuth issuer]\\nIssuer --> Verify[Verify domain link]\\nVerify --> Session[Start Session]\",\"nord\",null]": "4901a3292cd61bc7.json",
+    "[\"graph TB\\nUser[User] --> Agent[Personal Agent]\\nA[Company A reply] -.-> Agent\\nAgent --> B[Action at Company B]\\nAgent --> Store[Chosen credential store]\",\"nord\",null]": "475ec418842ce5eb.json",
+    "[\"mindmap\\n root((Company))\\n  Discovery\\n  Sessions\\n  APIs\\n  Web\\n  Conversations\",\"nord\",null]": "ff4afc2cfe61f978.json",
+    "[\"sequenceDiagram\\n participant U as User\\n participant A as Personal Agent\\n participant C as Company\\n A->>C: Open authorization with PKCE\\n U->>C: Sign in and approve scopes\\n C-->>A: Authorization code\\n A->>C: Code, verifier and session_id\\n C-->>A: Account and Session Tokens\",\"nord\",null]": "8e4f71d3c1fab94c.json",
+    "[\"sequenceDiagram\\n participant U as User\\n participant A as Personal Agent\\n participant C as Company\\n A->>C: Request device authorization\\n C-->>A: Link, user code and private device code\\n A-->>U: Show company, link and user code\\n U->>C: Sign in and approve on another device\\n A->>C: Poll with device code and session_id\\n C-->>A: Account and Session Tokens\",\"nord\",null]": "948ade52e1d6208b.json",
+    "[\"sequenceDiagram\\n participant U as User\\n participant A as Personal Agent\\n participant C as Company\\n U->>A: Supply credentials for this issuer\\n A->>C: Credentials to mediated endpoint\\n C-->>A: Optional verification challenge\\n U->>A: Supply requested code\\n A->>C: Complete sign-in for session_id\\n C-->>A: Account and Session Tokens\",\"nord\",null]": "f14eca4ea59a5324.json",
+    "[\"stateDiagram-v2\\n direction LR\\n state \\\"Signed out\\\" as SignedOut\\n state \\\"Signed in\\\" as SignedIn\\n state \\\"Signed out again\\\" as SignedOutAgain\\n SignedOut --> SignedIn: Sign in\\n SignedIn --> SignedOutAgain: Sign out\\n SignedOutAgain --> SignedIn: Same account only\",\"nord\",null]": "2bc058a14e37e5a5.json"
+  }
+}
