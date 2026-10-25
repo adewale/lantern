@@ -1,5 +1,5 @@
 import { Scene } from '../../../src/index.ts';
-import { stage, settingsOf } from '../../../explain/index.ts';
+import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
 import { pkceChallenge, sha256 } from '../lib/models.ts';
 const STYLE = 'github-light';
 // RFC 7636 appendix B's example verifier; everything derived from it is computed below.
@@ -35,10 +35,10 @@ export default class OAuthExplainer extends Scene {
     {
       id: 'attacker',
       label: 'Show an attacker',
-      default: 'no',
+      default: 'yes',
       options: [
-        { value: 'no', label: 'No' },
         { value: 'yes', label: 'Yes' },
+        { value: 'no', label: 'No' },
       ],
     },
   ];
@@ -58,7 +58,7 @@ export default class OAuthExplainer extends Scene {
         source:
           'graph LR\nV[code_verifier] -->|SHA-256| H[32-byte digest]\nH -->|base64url| C[code_challenge]',
       },
-      { box: [-7.55, 0.0, 7.55, 3.15] },
+      { box: regionBox('full', { bottom: 0, top: 3.15 }) },
     );
     const values = await s.card(
       [
@@ -66,7 +66,7 @@ export default class OAuthExplainer extends Scene {
         ['SHA-256 (hex)', hex(digest)],
         ['code_challenge', challenge],
       ],
-      { at: [-7.55, -3.9, 7.55, -0.4], fontSize: 0.27 },
+      { at: regionBox('full', { bottom: -3.9, top: -0.4 }), fontSize: 0.27 },
     );
     await derive.walk(
       [
@@ -95,7 +95,7 @@ export default class OAuthExplainer extends Scene {
       { at: 'side', fontSize: 0.26 },
     );
     await seq.reveal(['message:C->S#0']);
-    await seq.mark(['message:C->S#0'], { color: CHALLENGE });
+    await seq.mark(['message:C->S#0'], { color: CHALLENGE, as: 'carries the challenge' });
     await request.mark('code_challenge');
 
     await this.step('code', {
@@ -104,9 +104,8 @@ export default class OAuthExplainer extends Scene {
         'The server stores the challenge with a short-lived code and redirects the browser back to the client. Because the verifier never travelled, anyone who intercepts this redirect gets only the code, which must still be exchanged for an access token.',
     });
     await s.clearOverlays();
-    await seq.clearNotes();
     await seq.reveal(['message:S->C#0']);
-    await seq.mark(['message:S->C#0'], { color: CODE });
+    await seq.mark(['message:S->C#0'], { color: CODE, as: 'carries the code' });
     const redirect = await s.card(
       [
         ['bound challenge', short(challenge)],
@@ -126,9 +125,8 @@ export default class OAuthExplainer extends Scene {
       this.state.attackerChallenge = bad;
       this.state.attackerAccepted = bad === challenge;
       await s.clearOverlays();
-      await seq.clearNotes();
       await seq.reveal(['message:S->X#0', 'message:X->S#0', 'message:S->X#1']);
-      await seq.mark(['message:S->X#0', 'message:X->S#0', 'message:S->X#1'], { color: s.bad });
+      await seq.mark(['message:S->X#0', 'message:X->S#0', 'message:S->X#1'], { color: s.bad, as: 'attack' });
       const check = await s.card(
         [
           ['guessed verifier', short(GUESS)],
@@ -147,9 +145,8 @@ export default class OAuthExplainer extends Scene {
         'The real client sends the code with the original verifier. The server computes S256 of the verifier, finds that it matches the challenge stored with the code, and returns an access token once its usual code and client checks also pass.',
     });
     await s.clearOverlays();
-    await seq.clearNotes();
     await seq.reveal(['message:C->S#1', 'message:S->C#1']);
-    await seq.mark(['message:C->S#1', 'message:S->C#1'], { color: s.good });
+    await seq.mark(['message:C->S#1', 'message:S->C#1'], { color: s.good, as: 'accepted' });
     const recomputed = pkceChallenge(VERIFIER);
     const accepted = recomputed === challenge;
     const verify = await s.card(
@@ -164,29 +161,26 @@ export default class OAuthExplainer extends Scene {
     await verify.mark('match');
     this.state.accepted = accepted;
 
-    await this.step('limits', {
-      title: 'PKCE adds one check: does the exchanger hold the verifier?',
+    await this.step('channels', {
+      title: 'The verifier never travels where the code does',
       caption:
-        'A token still depends on TLS, exact redirect matching and OAuth’s code and client checks, drawn before it in the chain. PKCE asks only whether this exchanger holds the verifier bound to the code, so a stolen verifier gets past it.',
+        'The challenge and the code pass through the browser and the operating system, where another app can read them. The verifier, 32 random bytes, goes only in the client’s own TLS request to the token endpoint. S256 cannot be reversed, so the challenge and the code alone cannot be exchanged.',
     });
-    await s.clear();
-    const checks = await s.show(
-      {
-        source:
-          'graph LR\nTLS[TLS] --> Redirect[Exact redirect]\nRedirect --> Client[Code + client checks]\nClient --> PKCE[PKCE: S256 match]\nPKCE --> Token[Token]',
-      },
-      { box: 'full' },
-    );
-    await checks.walk(
+    await s.clearOverlays();
+    await seq.unmark();
+    await seq.mark(['message:C->S#0', 'message:S->C#0', ...(attacker ? ['message:S->X#0'] : [])], {
+      color: s.bad,
+      as: 'readable on the device',
+    });
+    await seq.mark(['message:C->S#1'], { color: s.good, as: 'direct TLS' });
+    const paths = await s.card(
       [
-        ['TLS', 'Redirect'],
-        ['Redirect', 'Client'],
-        ['Client', 'PKCE'],
-        ['PKCE', 'Token'],
+        ['Via browser', 'challenge, code'],
+        ['Direct, TLS', 'verifier'],
+        ['Verifier', '32 random bytes'],
       ],
-      { trail: true },
+      { at: 'side', fontSize: 0.26 },
     );
-    await checks.mark(['PKCE'], { color: s.good });
-    await checks.note('PKCE', 'a stolen verifier passes', { side: 'below', color: s.bad });
+    await paths.mark('Direct, TLS');
   }
 }

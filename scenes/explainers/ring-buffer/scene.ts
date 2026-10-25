@@ -1,6 +1,6 @@
 import { Scene, Circle, Text, Group, Arrow, FadeIn, FadeOut, Transform } from '../../../src/index.ts';
 import type { Vec, Mobject } from '../../../src/index.ts';
-import { stage, settingsOf } from '../../../explain/index.ts';
+import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
 import { ringStory } from '../lib/models.ts';
 
 type Snapshot = ReturnType<typeof ringStory>[number]['result'];
@@ -98,7 +98,7 @@ export default class RingBufferExplainer extends Scene {
     await this.play(...circles.map((c) => new FadeIn(c)), ...indices.map((t) => new FadeIn(t)));
     await this.play(new FadeIn(headPtr), new FadeIn(tailPtr), new FadeIn(count));
     // The ring already shows head, tail and count; the code beside it is the only panel.
-    const code = await s.code(CODE, { at: [-0.25, -4.25, 7.55, 3.25], fontSize: 0.22 });
+    const code = await s.code(CODE, { at: regionBox('full', { left: -0.25 }), fontSize: 0.22 });
 
     /** Animate the ring from `now` to `next`: slot values, cursors and count. */
     const show = async (next: Snapshot, runTime = 0.45, fresh = false): Promise<void> => {

@@ -1,8 +1,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import type { Server } from 'node:http';
-import { mkdtemp, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Browser, Page, Frame } from 'playwright-core';
@@ -10,66 +9,48 @@ import { launch } from '../tools/lib/browser.ts';
 import { collectProject } from '../tools/lib/explain-project.ts';
 import type { Project } from '../tools/lib/explain-project.ts';
 import { buildExplainer, buildLoader } from '../tools/lib/explain-build.ts';
-import fc from 'fast-check';
+import { serve } from '../tools/lib/explain-serve.ts';
+import { fc, params } from './lib/pbt.ts';
 import { resolveSettings } from '../explain/index.ts';
 import type { Settings } from '../explain/index.ts';
-import { pictureHtml } from '../explain/trace.ts';
+import { pictureHtml, pictureSummary } from '../explain/trace.ts';
 import { zoomAt, ZOOM_MAX } from '../app/embed-zoom.ts';
 
 const enabled = !!process.env.EXPLAIN_BROWSER,
   options = { skip: enabled ? false : 'set EXPLAIN_BROWSER=1 for real cross-origin browser checks' };
 let browser: Browser, folder: string, host: string, embed: string;
-const servers: Server[] = [],
-  assets = new Map<string, { body: string; headers?: Record<string, string> }>();
+// The host page is whatever a test sets; the explainers are served as published, with their header recipe.
 let hostBody = '';
+const hostServer = createServer((_, res) => {
+  res.setHeader('content-type', 'text/html');
+  res.end(hostBody);
+});
+let embedServer: { url: string; close(): void } | undefined;
 const projects = new Map<string, Project>();
-async function serve(isHost: boolean): Promise<string> {
-  const server = createServer((req, res) => {
-    if (isHost) {
-      res.setHeader('content-type', 'text/html');
-      res.end(hostBody);
-      return;
-    }
-    const asset = assets.get(req.url!.split('?')[0]!);
-    if (!asset) {
-      res.writeHead(404);
-      res.end();
-      return;
-    }
-    res.setHeader('content-type', req.url!.startsWith('/loader') ? 'text/javascript' : 'text/html');
-    for (const [k, v] of Object.entries(asset.headers ?? {})) res.setHeader(k, v);
-    res.end(asset.body);
-  });
-  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
-  servers.push(server);
-  return `http://127.0.0.1:${(server.address() as { port: number }).port}`;
-}
 before(async () => {
   if (!enabled) return;
   folder = await mkdtemp(join(tmpdir(), 'lantern-embed-test-'));
   browser = await launch();
-  host = await serve(true);
-  embed = await serve(false);
-  for (const name of ['mr-cache', 'oauth-pkce', 'pap']) {
+  await new Promise<void>((r) => hostServer.listen(0, '127.0.0.1', r));
+  host = `http://127.0.0.1:${(hostServer.address() as { port: number }).port}`;
+  for (const name of ['mr-cache', 'oauth-pkce', 'exgit']) {
     const project = await collectProject(`scenes/explainers/${name}`);
     projects.set(name, project);
-    const built = await buildExplainer(project, join(folder, name + '.html'));
-    assets.set('/' + name, {
-      body: built.html,
-      headers: (built.receipt as { headers: Record<string, string> }).headers,
-    });
+    await buildExplainer(project, join(folder, name + '.html'));
   }
   await buildLoader(join(folder, 'loader.js'));
-  assets.set('/loader.js', { body: await readFile(join(folder, 'loader.js'), 'utf8') });
+  embedServer = await serve(folder, 0, 'mr-cache.html');
+  embed = embedServer.url;
 });
 after(async () => {
   if (!enabled) return;
   await browser?.close();
-  for (const s of servers) await new Promise<void>((r) => s.close(() => r()));
+  hostServer.close();
+  embedServer?.close();
   if (folder) await rm(folder, { recursive: true, force: true });
 });
 function loader(id: string, scene: string) {
-  return `<div id="${id}"></div><script src="${embed}/loader.js" data-src="${embed}/${scene}" data-target="${id}" data-title="${scene}"></script>`;
+  return `<div id="${id}"></div><script src="${embed}/loader.js" data-src="${embed}/${scene}.html" data-target="${id}" data-title="${scene}"></script>`;
 }
 async function readyFrame(page: Page, scene: string): Promise<Frame> {
   await page.waitForFunction(() => document.querySelectorAll('iframe').length > 0);
@@ -161,7 +142,7 @@ test(
     });
     const page = await context.newPage();
     try {
-      await page.goto(embed + '/oauth-pkce?attacker=yes&step=attack&theme=dark');
+      await page.goto(embed + '/oauth-pkce.html?attacker=yes&step=attack&theme=dark');
       await page.waitForSelector('[data-ready=true]');
       assert.match(await page.locator('.caption').innerText(), /has to guess the verifier/);
       assert.equal(await page.locator('input[name=attacker]:checked').inputValue(), 'yes');
@@ -186,13 +167,13 @@ test(
       assert.equal(new URL(copied).searchParams.get('parentOrigin'), null);
       await page.getByRole('button', { name: 'Replay step', exact: true }).click();
       assert.match(await page.locator('[role=status]').innerText(), /Reduced motion/);
-      await page.goto(embed + '/oauth-pkce?theme=light');
+      await page.goto(embed + '/oauth-pkce.html?theme=light');
       await page.waitForSelector('[data-ready=true]');
       assert.equal(
         await page.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor),
         'rgb(246, 247, 249)',
       );
-      await page.goto(embed + '/oauth-pkce?theme=auto');
+      await page.goto(embed + '/oauth-pkce.html?theme=auto');
       await page.waitForSelector('[data-ready=true]');
       assert.equal(
         await page.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor),
@@ -225,9 +206,12 @@ test(
         });
     });
     try {
-      await page.goto(embed + '/mr-cache?request=miss&step=request');
+      await page.goto(embed + '/mr-cache.html?request=miss&step=request');
       await page.waitForSelector('[data-ready=true]');
       assert.match(await page.locator('.caption').innerText(), /KV has no entry/);
+      // The first Tab stop is the case picker; the page's main region is not one (WCAG 2.4.7).
+      await page.keyboard.press('Tab');
+      assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('type')), 'radio');
       const viewport = await page.locator('.stage svg').evaluate((svg) => {
         const clips = [...svg.querySelectorAll('clipPath')];
         return {
@@ -311,11 +295,11 @@ test(
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
     try {
-      await page.goto(embed + '/mr-cache');
+      await page.goto(embed + '/mr-cache.html');
       assert.ok((await page.locator('.poster path').count()) > 10);
       assert.match(await page.locator('.transcript').innerText(), /Follow a request: Cache hit/);
       assert.match(await page.locator('.transcript').innerText(), /Follow a request: Cache miss/);
-      hostBody = `<!doctype html><iframe title="Raw explanation" src="${embed}/mr-cache" style="width:390px;height:640px"></iframe><a href="${embed}/mr-cache">Open standalone</a>`;
+      hostBody = `<!doctype html><iframe title="Raw explanation" src="${embed}/mr-cache.html" style="width:390px;height:640px"></iframe><a href="${embed}/mr-cache.html">Open standalone</a>`;
       await page.goto(host);
       const frame = page.frames().find((f) => f.url().startsWith(embed));
       assert.ok(frame);
@@ -330,10 +314,9 @@ test(
 // Property tests. The player is a state machine: fast-check generates command
 // sequences (fc.commands), runs them against a real page, and after every
 // command compares the page with a model built in Node from each case's trace.
-// Browser runs are expensive, so counts are modest: FC_RUNS overrides the run
-// count, FULL=1 multiplies it by 10. A failure prints seed, path and the
-// commands' replayPath; replay with FC_SEED=<seed> FC_PATH=<path>
-// FC_REPLAY_PATH=<replayPath>.
+// Browser runs are expensive, so counts are modest (test/lib/pbt.ts; FC_RUNS
+// sets them all). A failure prints seed, path and the commands' replayPath;
+// replay with FC_SEED=<seed> FC_PATH=<path> FC_REPLAY_PATH=<replayPath>.
 //
 // Reduced motion: the model runs under prefers-reduced-motion: reduce, where
 // Next and Replay show the finished step at once. With motion on, Next plays an
@@ -342,11 +325,6 @@ test(
 // property further down (Next ends on the step's resting picture), which waits
 // for each animation to settle. Commands that land while a case is still loading
 // are covered by the racing property, which checks consistency, not a model.
-const fcRuns = (n: number) => ({
-  numRuns: Number(process.env.FC_RUNS ?? n) * (process.env.FULL ? 10 : 1),
-  ...(process.env.FC_SEED ? { seed: Number(process.env.FC_SEED) } : {}),
-  ...(process.env.FC_PATH ? { path: process.env.FC_PATH } : {}),
-});
 // size 'max' spreads sequence lengths up to maxCommands (the default size keeps them under ~10).
 const commandOptions = (maxCommands: number) => ({
   maxCommands,
@@ -358,6 +336,7 @@ interface StepSpec {
   step: string;
   caption: string;
   title: string;
+  summary: string;
   picture: string;
 }
 interface Entry {
@@ -390,6 +369,7 @@ function stepsOf(p: Project, values: Settings): StepSpec[] {
     step: s.step,
     caption: String(s.meta.caption ?? ''),
     title: String(s.meta.title ?? s.step),
+    summary: pictureSummary(s.after),
     picture: pictureHtml(s.after),
   }));
 }
@@ -443,8 +423,9 @@ function observe(ids: string[]) {
     list: [...document.querySelectorAll<HTMLElement>('.steps button')].map((b) => b.dataset.step),
     caption: document.querySelector('.caption')!.textContent,
     stageLabel: stage.getAttribute('aria-label'),
-    // The resting picture in words, as the stage's description.
-    picture: document.getElementById(stage.getAttribute('aria-describedby') ?? '')?.innerHTML,
+    // The resting picture in words: a summary as the stage's description, the full list under a disclosure.
+    summary: document.getElementById(stage.getAttribute('aria-describedby') ?? '')?.textContent,
+    picture: document.querySelector('.described > div')?.innerHTML,
     title: document.querySelector('h1')!.textContent,
     prevDisabled: button('Previous step')!.disabled,
     nextDisabled: button('Next step')!.disabled,
@@ -461,8 +442,20 @@ function observe(ids: string[]) {
     zoomInDisabled: button('Zoom in')!.disabled,
     fitHidden: button('Fit stage')!.hidden,
     transcriptOpen: (document.querySelector('details.transcript') as HTMLDetailsElement).open,
-    transcriptLinks: [...document.querySelectorAll<HTMLAnchorElement>('.transcript ol a')].map((a) => a.href),
+    transcriptLinks: [...document.querySelectorAll<HTMLAnchorElement>('.transcript section:not([hidden]) a')].map((a) => a.href),
   };
+}
+/** The stage's accessible description as Chromium computes it for assistive technology. */
+async function stageDescription(page: Page): Promise<string> {
+  const cdp = await page.context().newCDPSession(page);
+  try {
+    const { root } = await cdp.send('DOM.getDocument', { depth: 0 });
+    const { nodeId } = await cdp.send('DOM.querySelector', { nodeId: root.nodeId, selector: '.stage' });
+    const { nodes } = await cdp.send('Accessibility.getPartialAXTree', { nodeId, fetchRelatives: false });
+    return String(nodes[0]?.description?.value ?? '');
+  } finally {
+    await cdp.detach();
+  }
 }
 const twoFrames = (page: Page) =>
   page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
@@ -511,7 +504,11 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   eq('aria-current', seen.current, [entry.step]);
   eq('caption', seen.caption, spec.caption);
   eq('stage label', seen.stageLabel, `${seen.title}: ${spec.title}`);
-  eq('stage description', seen.picture, spec.picture);
+  eq('stage description', seen.summary, spec.summary);
+  eq('computed stage description', await stageDescription(r.page), spec.summary.replace(/\s+/g, ' ').trim());
+  // Compared as the browser serializes it, which writes &quot; in text as a plain quote.
+  const parsed = await r.page.evaluate((html) => Object.assign(document.createElement('div'), { innerHTML: html }).innerHTML, spec.picture);
+  eq('picture disclosure', seen.picture, parsed);
   eq('Previous disabled', seen.prevDisabled, i === 0);
   eq('Next disabled', seen.nextDisabled, i === list.length - 1);
   eq('notice', seen.notice, m.notice);
@@ -603,7 +600,7 @@ const TranscriptLink = (i: number) =>
     `TranscriptLink(${i})`,
     (m) => m.transcript && i < steps(m).length,
     async (m, r) => {
-      await r.page.locator('.transcript ol a').nth(i).click();
+      await r.page.locator('.transcript section:not([hidden]) a').nth(i).click();
       goTo(m, i);
     },
   );
@@ -824,7 +821,7 @@ async function openPlayer(name: string, initial: { values: (string | undefined)[
   const page = await context.newPage();
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto(`${embed}/${name}${query.size ? '?' + query : ''}`);
+  await page.goto(`${embed}/${name}.html${query.size ? '?' + query : ''}`);
   await page.waitForSelector('[data-ready=true]');
   const base = (await page.evaluate(() => history.length)) - 1;
   const parsed = (await page.evaluate(() => (window as unknown as { __attaches: number }).__attaches)) - 1;
@@ -835,7 +832,7 @@ async function openPlayer(name: string, initial: { values: (string | undefined)[
 }
 for (const [name, runs, maxCommands] of [
   ['oauth-pkce', 10, 40],
-  ['pap', 6, 40],
+  ['exgit', 6, 40],
 ] as const)
   test(
     `player (${name}): any sequence of reader actions keeps the URL, step list, caption, controls, zoom and history in step with the model`,
@@ -851,7 +848,7 @@ for (const [name, runs, maxCommands] of [
             await context.close();
           }
         }),
-        fcRuns(runs),
+        params(runs),
       );
     },
   );
@@ -906,7 +903,7 @@ test(
   'player, motion on: after Next settles, the stage shows exactly the picture a link to that step shows',
   options,
   async () => {
-    const all = ['oauth-pkce', 'pap', 'mr-cache'].flatMap((name) =>
+    const all = ['oauth-pkce', 'exgit', 'mr-cache'].flatMap((name) =>
       projects.get(name)!.variants.flatMap((v) =>
         v.trace.steps.slice(0, -1).map((_, i) => ({ name, values: v.values, i })),
       ),
@@ -917,13 +914,13 @@ test(
           list = stepsOf(p, values);
         const context = await browser.newContext({ reducedMotion: 'no-preference' });
         try {
-          const a = await counted(context, `${embed}/${name}?${caseQuery(p, values, list[i]!.step)}`);
+          const a = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i]!.step)}`);
           await a.page.locator('button[aria-label="Next step"]').click();
           await a.page.waitForFunction(() => (window as unknown as { __settles: number }).__settles >= 2, undefined, {
             timeout: 30_000,
           });
           await quiet(a.page);
-          const b = await counted(context, `${embed}/${name}?${caseQuery(p, values, list[i + 1]!.step)}`);
+          const b = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i + 1]!.step)}`);
           assert.equal(new URL(a.page.url()).searchParams.get('step'), list[i + 1]!.step);
           assert.equal(await stagePicture(a.page), await stagePicture(b.page), `${name} ${JSON.stringify(values)} ${list[i]!.step} → Next`);
           assert.deepEqual([...a.errors, ...b.errors], []);
@@ -931,7 +928,7 @@ test(
           await context.close();
         }
       }),
-      fcRuns(5),
+      params(5),
     );
   },
 );
@@ -952,7 +949,7 @@ const burstArb = (p: Project) =>
     }),
     { minLength: 1, maxLength: 12 },
   );
-for (const name of ['oauth-pkce', 'pap'] as const)
+for (const name of ['oauth-pkce', 'exgit'] as const)
   test(
     `player (${name}): any burst of case changes and navigation, unawaited, ends with the URL, choice, list, caption and picture all on one case and step`,
     options,
@@ -963,7 +960,7 @@ for (const name of ['oauth-pkce', 'pap'] as const)
         fc.asyncProperty(burstArb(p), async (burst) => {
           const context = await browser.newContext({ reducedMotion: 'reduce' });
           try {
-            const { page, errors } = await counted(context, `${embed}/${name}`);
+            const { page, errors } = await counted(context, `${embed}/${name}.html`);
             await page.evaluate(
               async ({ burst, settings }) => {
                 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -1025,13 +1022,13 @@ for (const name of ['oauth-pkce', 'pap'] as const)
               },
             );
             // The picture is that step's resting frame: what a fresh link to it shows.
-            const fresh = await counted(context, `${embed}/${name}?${caseQuery(p, values, seen.urlStep!)}`);
+            const fresh = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, seen.urlStep!)}`);
             assert.equal(await stagePicture(page), await stagePicture(fresh.page), 'stage picture');
           } finally {
             await context.close();
           }
         }),
-        fcRuns(12),
+        params(12),
       );
     },
   );
@@ -1067,7 +1064,7 @@ test(
           await context.close();
         }
       }),
-      fcRuns(6),
+      params(6),
     );
   },
 );
@@ -1102,7 +1099,7 @@ test(
             });
             observer.observe(document, { childList: true, subtree: true });
           }, actions);
-          const { page, errors } = await counted(context, `${embed}/${name}?step=${step}`);
+          const { page, errors } = await counted(context, `${embed}/${name}.html?step=${step}`);
           await quiet(page);
           assert.equal(await page.evaluate(() => (window as unknown as { __early: number }).__early), actions.length);
           assert.deepEqual(errors, []);
@@ -1112,7 +1109,7 @@ test(
           await context.close();
         }
       }),
-      fcRuns(10),
+      params(10),
     );
   },
 );
@@ -1213,7 +1210,7 @@ test(
           await context.close();
         }
       }),
-      fcRuns(10),
+      params(10),
     );
   },
 );
@@ -1254,7 +1251,7 @@ test(
     const { exactHttpOrigin } = await import('../app/embed-protocol.ts');
     await fc.assert(
       fc.asyncProperty(parentOriginArb(host), fc.boolean(), async (parentOrigin, toggle) => {
-        const src = `${embed}/oauth-pkce?${new URLSearchParams({ parentOrigin })}`;
+        const src = `${embed}/oauth-pkce.html?${new URLSearchParams({ parentOrigin })}`;
         hostBody = `<!doctype html><iframe title="t" src="${src.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" style="width:600px;height:640px;border:0"></iframe>`;
         const context = await browser.newContext({ reducedMotion: 'reduce' });
         try {
@@ -1276,7 +1273,7 @@ test(
           await context.close();
         }
       }),
-      fcRuns(16),
+      params(16),
     );
   },
 );
@@ -1304,7 +1301,7 @@ test(
           await context.close();
         }
       }),
-      fcRuns(10),
+      params(10),
     );
   },
 );
@@ -1330,7 +1327,7 @@ test(
           await context.close();
         }
       }),
-      fcRuns(10),
+      params(10),
     );
   },
 );
@@ -1340,7 +1337,7 @@ test(
   async () => {
     await fc.assert(
       fc.asyncProperty(fc.option(parentOriginArb(host), { nil: undefined }), async (parentOrigin) => {
-        const src = `${embed}/mr-cache${parentOrigin === undefined ? '' : '?' + new URLSearchParams({ parentOrigin })}`;
+        const src = `${embed}/mr-cache.html${parentOrigin === undefined ? '' : '?' + new URLSearchParams({ parentOrigin })}`;
         hostBody = `<!doctype html><iframe title="t" src="${src.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" style="width:600px;height:640px;border:0"></iframe>`;
         const page = await browser.newPage();
         try {
@@ -1352,7 +1349,7 @@ test(
           await page.close();
         }
       }),
-      fcRuns(12),
+      params(12),
     );
   },
 );

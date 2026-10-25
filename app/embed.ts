@@ -1,9 +1,9 @@
 import { DomSink, renderAt, traceScene, SeekSink } from '../src/index.ts';
 import type { Trace } from '../src/index.ts';
 import { StopScene } from '../src/index.ts';
-import { bindSnapshots, withSettings, resolveSettings, caseName } from '../explain/index.ts';
+import { bindSnapshots, withSettings, resolveSettings } from '../explain/index.ts';
 import type { ExplainerClass, Settings, SnapshotStore } from '../explain/index.ts';
-import { restingTime, pictureHtml } from '../explain/trace.ts';
+import { restingTime, pictureHtml, pictureSummary } from '../explain/trace.ts';
 import { reportHeight } from './embed-protocol.ts';
 import { icon } from './embed-icons.ts';
 import type { IconName } from './embed-icons.ts';
@@ -78,7 +78,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
 
   // The player: the picture, what it says, and how to move on. Enlarge shows all three.
   const player = el('section', undefined, 'player');
-  player.setAttribute('aria-label', 'Explanation');
+  player.setAttribute('aria-label', 'Explainer');
   const stage = el('div', undefined, 'stage');
   stage.setAttribute('role', 'img');
   stage.setAttribute('aria-label', title.textContent!);
@@ -87,12 +87,16 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   stage.tabIndex = 0;
   const caption = el('p', undefined, 'caption');
   caption.setAttribute('aria-live', 'polite');
-  // The resting picture in words, for readers who cannot see it or cannot read its labels.
-  const described = el('details', undefined, 'described'),
+  // The resting picture in words, for readers who cannot see it or cannot read its labels:
+  // a sentence or two as the stage's description, the full list under a disclosure. A
+  // description must come from a hidden element, not a closed <details>, which computes empty.
+  const summary = el('p'),
+    described = el('details', undefined, 'described'),
     picture = el('div');
-  picture.id = 'picture';
+  summary.id = 'picture-summary';
+  summary.hidden = true;
   described.append(el('summary', 'What the picture shows'), picture);
-  stage.setAttribute('aria-describedby', picture.id);
+  stage.setAttribute('aria-describedby', summary.id);
   const controls = el('nav', undefined, 'controls');
   controls.setAttribute('aria-label', 'Steps');
   const prev = button('Previous step', 'previous'),
@@ -110,12 +114,20 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   controls.append(prev, next, tools);
   const notice = el('p', undefined, 'notice');
   notice.setAttribute('role', 'status');
-  player.append(stage, caption, described, controls, notice);
+  player.append(stage, summary, caption, described, controls, notice);
 
   const steps = el('ol', undefined, 'steps');
-  steps.setAttribute('aria-label', 'Steps in this explanation');
-  const transcript = root.querySelector<HTMLElement>('.transcript') ?? el('details', undefined, 'transcript');
-  if (transcript instanceof HTMLDetailsElement) transcript.open = false;
+  steps.setAttribute('aria-label', 'Steps in this explainer');
+  // The page's transcript holds every case; the player shows the current one, and its links move the player.
+  const transcript = root.querySelector<HTMLDetailsElement>('.transcript')!;
+  transcript.open = false;
+  transcript.addEventListener('click', (e) => {
+    const a = (e.target as Element).closest<HTMLAnchorElement>('section a'),
+      step = a && new URLSearchParams(a.search).get('step');
+    if (!step || !trace) return;
+    e.preventDefault();
+    void show(trace.steps.findIndex((s) => s.step === step));
+  });
   // Inside a frame, a way out to the full page; a standalone page needs none, and the
   // loader (which sets parentOrigin) already puts this link beside the frame.
   const standalone = el('a', 'Open in a new tab', 'standalone');
@@ -136,7 +148,6 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
 
   function urlFor(): URL {
     const url = new URL(location.href);
-    url.searchParams.delete('t');
     for (const [key, value] of Object.entries(values)) url.searchParams.set(key, value);
     url.searchParams.set('step', trace.steps[selected]!.step);
     return url;
@@ -157,6 +168,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     for (const b of steps.querySelectorAll('button'))
       b.setAttribute('aria-current', b.dataset.step === step.step ? 'step' : 'false');
     stage.setAttribute('aria-label', `${title.textContent}: ${String(step.meta.title ?? step.step)}`);
+    summary.textContent = pictureSummary(step.after);
     picture.innerHTML = pictureHtml(step.after);
     described.hidden = !picture.innerHTML;
     setIcon(replay, playing ? 'Stop animation' : 'Replay step', playing ? 'stop' : 'replay');
@@ -232,41 +244,6 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     // where the caption hold begins, before anything the step adds after its last play().
     await show(selected, false);
   }
-  function updateTranscript() {
-    const list = el('ol');
-    for (const s of trace.steps) {
-      const li = el('li'),
-        a = el('a', String(s.meta.title ?? s.step));
-      const url = urlFor();
-      url.searchParams.set('step', s.step);
-      a.href = url.href;
-      a.addEventListener('click', (e) => {
-        e.preventDefault();
-        void show(trace.steps.indexOf(s));
-      });
-      const words = el('div');
-      words.innerHTML = pictureHtml(s.after);
-      li.append(a, el('p', String(s.meta.caption ?? '')), ...(words.innerHTML ? [words] : []));
-      list.append(li);
-    }
-    const sources = el('ul');
-    for (const source of Source.meta?.sources ?? []) {
-      const li = el('li'),
-        a = el('a', source);
-      a.href = source;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      li.append(a);
-      sources.append(li);
-    }
-    const name = caseName(Source, values);
-    transcript.replaceChildren(
-      el('summary', 'Transcript'),
-      ...(name ? [el('h2', name)] : []),
-      list,
-      ...(sources.children.length ? [el('h2', 'Sources'), sources] : []),
-    );
-  }
   /**
    * Show a case. Until its trace is ready the player keeps showing (and linking to) the
    * case it has, so navigation meanwhile stays consistent; a newer load supersedes this one.
@@ -293,7 +270,6 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       cache.set(key, entry);
     }
     if (token !== loads) return;
-    if (!entry.trace.steps.length) throw new Error('Explainer has no named steps');
     const name = typeof step === 'function' ? step() : step;
     // Zoom keeps its place across steps, including Back and Forward within a case.
     const changed = !values || JSON.stringify(values) !== key;
@@ -321,7 +297,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
         return li;
       }),
     );
-    updateTranscript();
+    const shown = new URLSearchParams(values).toString();
+    for (const section of transcript.querySelectorAll<HTMLElement>('section')) section.hidden = section.dataset.case !== shown;
     await show(selected, push);
   }
   prev.onclick = () => void show(selected - 1);
@@ -380,7 +357,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     e.preventDefault();
     action();
   });
-  root.tabIndex = 0;
+  // Focusable for the arrow keys once clicked, but not a Tab stop: its focus is not drawn.
+  root.tabIndex = -1;
   const fromURL = () => {
     const q = new URLSearchParams(location.search);
     const request: Record<string, string> = {};

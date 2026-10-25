@@ -1,5 +1,4 @@
 import { Scene } from '../../../src/index.ts';
-import type { Box } from '../../../src/index.ts';
 import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
 import { reduceSession, sessionAttempt } from '../lib/models.ts';
 const SOURCE =
@@ -20,8 +19,8 @@ const REDUCER = [
 ];
 const LINE: Record<string, number> = { CONNECT: 1, OPENED: 2, ERROR: 3, CLOSE: 4 };
 const DIAGRAM = regionBox('top', { bottom: 0.2 }),
-  CODE: Box = [-7.55, -4.25, 2.05, -0.05],
-  CARD: Box = [2.35, -4.25, 7.55, -0.05];
+  CODE = regionBox('full', { right: 2.05, top: -0.05 }),
+  CARD = regionBox('full', { left: 2.35, top: -0.05 });
 export default class StateMachineExplainer extends Scene {
   static meta = {
     id: 'state-machine',

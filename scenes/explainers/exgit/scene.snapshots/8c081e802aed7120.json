@@ -14,13 +14,11 @@
     "accent": "#cba6f7",
     "muted": "#6c7086"
   },
-  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"613.071\" height=\"235.0666666666667\" viewBox=\"0 0 613.071 235.0666666666667\" style=\"--bg:#1e1e2e;--fg:#cdd6f4;--line:#585b70;--accent:#cba6f7;--muted:#6c7086;--font:Inter;background:#1e1e2e\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #cdd6f4;\n    --_text-sec:      #6c7086;\n    --_text-muted:    #6c7086;\n    --_text-faint:    #7d8199;\n    --_line:          #585b70;\n    --_arrow:         #cba6f7;\n    --_node-fill:     #232434;\n    --_node-stroke:   #414356;\n    --_group-fill:    #1e1e2e;\n    --_group-hdr:     #272738;\n    --_inner-stroke:  #333446;\n    --_key-badge:     #303042;\n  }\n</style>\n<rect width=\"613.071\" height=\"235.0666666666667\" fill=\"#1e1e2e\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#cba6f7\" stroke=\"#cba6f7\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#cba6f7\" stroke=\"#cba6f7\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline class=\"edge\" data-from=\"C1\" data-to=\"T1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"262.899,67.41666666666667 315.942,67.41666666666667\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C1-&gt;T1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C1 to T1\" />\n<polyline class=\"edge\" data-from=\"T1\" data-to=\"Hello\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"435.697,87.86666666666666 483.697,87.86666666666666\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T1-&gt;Hello#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T1 to Hello\" />\n<polyline class=\"edge\" data-from=\"C2\" data-to=\"C1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"129.374,149.21666666666667 155.89550000000003,149.21666666666667 155.89550000000003,67.41666666666667 182.41700000000003,67.41666666666667\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C2-&gt;C1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C2 to C1\" />\n<polyline class=\"edge\" data-from=\"C2\" data-to=\"T2\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"129.374,149.21666666666667 182.41700000000003,149.21666666666667\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C2-&gt;T2#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C2 to T2\" />\n<polyline class=\"edge\" data-from=\"T2\" data-to=\"Hello\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"322.9200000000001,149.21666666666667 344.39850000000007,149.21666666666667 344.39850000000007,108.31666666666666 483.697,108.31666666666666\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T2-&gt;Hello#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T2 to Hello\" />\n<polyline class=\"edge\" data-from=\"T2\" data-to=\"New\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"322.9200000000001,149.21666666666667 344.39850000000007,149.21666666666667 344.39850000000007,168.16666666666669 365.87700000000007,168.16666666666669\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T2-&gt;New#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T2 to New\" />\n<polyline class=\"edge\" data-from=\"Main\" data-to=\"C1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"139.46000000000004,67.41666666666667 182.41700000000003,67.41666666666667\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Main-&gt;C1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Main to C1\" />\n<g class=\"node\" data-id=\"Main\" data-label=\"main\" data-shape=\"stadium\" data-role=\"node\">\n  <rect x=\"70.83400000000003\" y=\"48.96666666666667\" width=\"68.626\" height=\"36.900000000000006\" rx=\"18.450000000000003\" ry=\"18.450000000000003\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:Main\" data-role=\"node\" />\n  <text x=\"105.14700000000003\" y=\"67.41666666666667\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\" dy=\"4.55\" textLength=\"28.626\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">main</text>\n</g>\n<g class=\"node\" data-id=\"C2\" data-label=\"commit\n7edf38a\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"122.31666666666668\" width=\"89.374\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:C2\" data-role=\"node\" />\n  <text x=\"84.687\" y=\"149.21666666666667\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\"><tspan x=\"84.687\" dy=\"-3.9000000000000012\" textLength=\"40.482\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">commit</tspan><tspan x=\"84.687\" dy=\"16.900000000000002\" textLength=\"49.374\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">7edf38a</tspan></text>\n</g>\n<g class=\"node\" data-id=\"C1\" data-label=\"commit\n161f392\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"182.41700000000003\" y=\"40.516666666666666\" width=\"80.482\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:C1\" data-role=\"node\" />\n  <text x=\"222.65800000000002\" y=\"67.41666666666667\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\"><tspan x=\"222.65800000000002\" dy=\"-3.9000000000000012\" textLength=\"40.482\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">commit</tspan><tspan x=\"222.65800000000002\" dy=\"16.900000000000002\" textLength=\"40.482\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">161f392</tspan></text>\n</g>\n<g class=\"node\" data-id=\"T2\" data-label=\"tree 88e3870\nhello.txt, world.txt\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"182.41700000000003\" y=\"122.31666666666668\" width=\"140.50300000000004\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:T2\" data-role=\"node\" />\n  <text x=\"252.66850000000005\" y=\"149.21666666666667\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\"><tspan x=\"252.66850000000005\" dy=\"-3.9000000000000012\" textLength=\"79.755\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">tree 88e3870</tspan><tspan x=\"252.66850000000005\" dy=\"16.900000000000002\" textLength=\"100.503\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">hello.txt, world.txt</tspan></text>\n</g>\n<g class=\"node\" data-id=\"T1\" data-label=\"tree aaa96ce\nhello.txt\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"315.942\" y=\"40.516666666666666\" width=\"119.755\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:T1\" data-role=\"node\" />\n  <text x=\"375.8195\" y=\"67.41666666666667\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\"><tspan x=\"375.8195\" dy=\"-3.9000000000000012\" textLength=\"79.755\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">tree aaa96ce</tspan><tspan x=\"375.8195\" dy=\"16.900000000000002\" textLength=\"46.41\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">hello.txt</tspan></text>\n</g>\n<g class=\"node\" data-id=\"New\" data-label=\"blob\ncc628cc\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"365.87700000000007\" y=\"141.26666666666668\" width=\"93.82\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:New\" data-role=\"node\" />\n  <text x=\"412.78700000000003\" y=\"168.16666666666669\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\"><tspan x=\"412.78700000000003\" dy=\"-3.9000000000000012\" textLength=\"27.144\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">blob</tspan><tspan x=\"412.78700000000003\" dy=\"16.900000000000002\" textLength=\"53.82\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">cc628cc</tspan></text>\n</g>\n<g class=\"node\" data-id=\"Hello\" data-label=\"blob\nce01362\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"483.697\" y=\"81.41666666666666\" width=\"89.374\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:Hello\" data-role=\"node\" />\n  <text x=\"528.384\" y=\"108.31666666666666\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\"><tspan x=\"528.384\" dy=\"-3.9000000000000012\" textLength=\"27.144\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">blob</tspan><tspan x=\"528.384\" dy=\"16.900000000000002\" textLength=\"49.374\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">ce01362</tspan></text>\n</g>\n</svg>",
   "parts": [
     {
       "id": "__frame",
       "role": "frame",
       "kind": "shape",
-      "svg": "",
       "shapes": [
         {
           "subpaths": [
@@ -76,7 +74,6 @@
       "id": "edge:C1->T1#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"C1\" data-to=\"T1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"262.899,67.41666666666667 315.942,67.41666666666667\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C1-&gt;T1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C1 to T1\" />",
       "shapes": [
         {
           "subpaths": [
@@ -168,7 +165,6 @@
       "id": "edge:T1->Hello#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"T1\" data-to=\"Hello\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"435.697,87.86666666666666 483.697,87.86666666666666\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T1-&gt;Hello#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T1 to Hello\" />",
       "shapes": [
         {
           "subpaths": [
@@ -260,7 +256,6 @@
       "id": "edge:C2->C1#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"C2\" data-to=\"C1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"129.374,149.21666666666667 155.89550000000003,149.21666666666667 155.89550000000003,67.41666666666667 182.41700000000003,67.41666666666667\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C2-&gt;C1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C2 to C1\" />",
       "shapes": [
         {
           "subpaths": [
@@ -372,7 +367,6 @@
       "id": "edge:C2->T2#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"C2\" data-to=\"T2\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"129.374,149.21666666666667 182.41700000000003,149.21666666666667\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:C2-&gt;T2#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C2 to T2\" />",
       "shapes": [
         {
           "subpaths": [
@@ -464,7 +458,6 @@
       "id": "edge:T2->Hello#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"T2\" data-to=\"Hello\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"322.9200000000001,149.21666666666667 344.39850000000007,149.21666666666667 344.39850000000007,108.31666666666666 483.697,108.31666666666666\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T2-&gt;Hello#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T2 to Hello\" />",
       "shapes": [
         {
           "subpaths": [
@@ -576,7 +569,6 @@
       "id": "edge:T2->New#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"T2\" data-to=\"New\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"322.9200000000001,149.21666666666667 344.39850000000007,149.21666666666667 344.39850000000007,168.16666666666669 365.87700000000007,168.16666666666669\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T2-&gt;New#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T2 to New\" />",
       "shapes": [
         {
           "subpaths": [
@@ -688,7 +680,6 @@
       "id": "edge:Main->C1#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"Main\" data-to=\"C1\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"139.46000000000004,67.41666666666667 182.41700000000003,67.41666666666667\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Main-&gt;C1#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Main to C1\" />",
       "shapes": [
         {
           "subpaths": [
@@ -780,7 +771,6 @@
       "id": "Main",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"Main\" data-label=\"main\" data-shape=\"stadium\" data-role=\"node\">\n  <rect x=\"70.83400000000003\" y=\"48.96666666666667\" width=\"68.626\" height=\"36.900000000000006\" rx=\"18.450000000000003\" ry=\"18.450000000000003\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Main\" data-role=\"node\" />\n  <text x=\"105.14700000000003\" y=\"67.41666666666667\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">main</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -919,7 +909,6 @@
       "id": "C2",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"C2\" data-label=\"commit\n7edf38a\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"122.31666666666668\" width=\"89.374\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:C2\" data-role=\"node\" />\n  <text x=\"84.687\" y=\"149.21666666666667\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\"><tspan x=\"84.687\" dy=\"-3.9000000000000012\">commit</tspan><tspan x=\"84.687\" dy=\"16.900000000000002\">7edf38a</tspan></text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -1045,7 +1034,6 @@
       "id": "C1",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"C1\" data-label=\"commit\n161f392\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"182.41700000000003\" y=\"40.516666666666666\" width=\"80.482\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:C1\" data-role=\"node\" />\n  <text x=\"222.65800000000002\" y=\"67.41666666666667\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\"><tspan x=\"222.65800000000002\" dy=\"-3.9000000000000012\">commit</tspan><tspan x=\"222.65800000000002\" dy=\"16.900000000000002\">161f392</tspan></text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -1171,7 +1159,6 @@
       "id": "T2",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"T2\" data-label=\"tree 88e3870\nhello.txt, world.txt\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"182.41700000000003\" y=\"122.31666666666668\" width=\"140.50300000000004\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:T2\" data-role=\"node\" />\n  <text x=\"252.66850000000005\" y=\"149.21666666666667\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\"><tspan x=\"252.66850000000005\" dy=\"-3.9000000000000012\">tree 88e3870</tspan><tspan x=\"252.66850000000005\" dy=\"16.900000000000002\">hello.txt, world.txt</tspan></text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -1297,7 +1284,6 @@
       "id": "T1",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"T1\" data-label=\"tree aaa96ce\nhello.txt\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"315.942\" y=\"40.516666666666666\" width=\"119.755\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:T1\" data-role=\"node\" />\n  <text x=\"375.8195\" y=\"67.41666666666667\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\"><tspan x=\"375.8195\" dy=\"-3.9000000000000012\">tree aaa96ce</tspan><tspan x=\"375.8195\" dy=\"16.900000000000002\">hello.txt</tspan></text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -1423,7 +1409,6 @@
       "id": "New",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"New\" data-label=\"blob\ncc628cc\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"365.87700000000007\" y=\"141.26666666666668\" width=\"93.82\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:New\" data-role=\"node\" />\n  <text x=\"412.78700000000003\" y=\"168.16666666666669\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\"><tspan x=\"412.78700000000003\" dy=\"-3.9000000000000012\">blob</tspan><tspan x=\"412.78700000000003\" dy=\"16.900000000000002\">cc628cc</tspan></text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -1549,7 +1534,6 @@
       "id": "Hello",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"Hello\" data-label=\"blob\nce01362\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"483.697\" y=\"81.41666666666666\" width=\"89.374\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Hello\" data-role=\"node\" />\n  <text x=\"528.384\" y=\"108.31666666666666\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\"><tspan x=\"528.384\" dy=\"-3.9000000000000012\">blob</tspan><tspan x=\"528.384\" dy=\"16.900000000000002\">ce01362</tspan></text>\n</g>",
       "shapes": [
         {
           "subpaths": [

@@ -16,7 +16,8 @@ import {
 } from '../../src/index.ts';
 import { ROOT, engineAlias, sceneSlug } from './explain-project.ts';
 import { caseName } from '../../explain/index.ts';
-import { restingFrame } from '../../explain/trace.ts';
+import { restingFrame, undescribed } from '../../explain/trace.ts';
+import { labelOf } from '../../explain/diagrams.ts';
 import type { Box, Mobject } from '../../src/index.ts';
 import type { Project } from './explain-project.ts';
 
@@ -141,10 +142,8 @@ function legibilityReport(px: number[]) {
   };
 }
 
-export async function checkProject(
-  project: Project,
-  out = join(ROOT, 'out/checks', sceneSlug(project)),
-): Promise<Record<string, unknown>> {
+/** Run every check on every case; write the report to `out`/report.json and return it. */
+export async function checkProject(project: Project, out: string): Promise<Record<string, unknown>> {
   const lint = lintConstruct(await readFile(project.file, 'utf8'));
   assert.deepEqual(lint, [], lint.join('\n'));
   await mkdir(out, { recursive: true });
@@ -159,7 +158,8 @@ export async function checkProject(
         Math.max(s.frame0 + 1, (s.frame1 ?? s.frame0 + 1) - 1),
       ]),
     );
-    const labels = new Map<string, number>();
+    // Native labels by object, so a small label is not excused by a larger one with the same words.
+    const labels = new Map<Mobject, { text: string; px: number }>();
     const completedFrames = new Set(v.trace.steps.map(restingFrame));
     const staticLabels = new Map<string, { text: string; px: number }>();
     const resting = new Map<number, string>();
@@ -179,15 +179,11 @@ export async function checkProject(
           collisions.push(...restingTextProblems(scene).map((p) => `${scene.currentStep?.name}: ${p}`));
         }
         for (const m of scene.familyMembers()) {
-          const text = (m as unknown as { text?: string }).text;
-          if (!text?.trim()) continue;
-          const ratio =
-            m instanceof Text
-              ? m.run.fontSize / (m.run.ascent + m.run.descent)
-              : (m as unknown as { emRatio?: number }).emRatio;
-          if (!ratio) continue;
+          const label = labelOf(m);
+          if (!label?.text.trim()) continue;
+          const { text } = label;
           const viewport: Box = [...FRAME],
-            px = m.height() * ratio * STAGE_PX_PER_UNIT;
+            px = m.height() * label.emRatio * STAGE_PX_PER_UNIT;
           for (let ancestor: Mobject | null = m; ancestor; ancestor = ancestor.parent)
             if (ancestor.clipBox) {
               const clip = ancestor.clipBox;
@@ -201,15 +197,15 @@ export async function checkProject(
           if (!(m instanceof Text)) {
             let owner = m.parent;
             while (owner && !owner.key) owner = owner.parent;
-            const size = (m as unknown as { fontSize: number }).fontSize;
-            const key = `${owner?.key ?? text}@${Number(size).toPrecision(5)}`;
+            const key = `${owner?.key ?? text}@${label.fontSize.toPrecision(5)}`;
             if (!staticLabels.has(key)) staticLabels.set(key, { text, px: 0 });
             const record = staticLabels.get(key)!;
             if (completedFrames.has(scene.frameCount) && readable(m, (owner ?? m).box(), viewport))
               record.px = Math.max(record.px, px);
+          } else {
+            if (!labels.has(m)) labels.set(m, { text, px: 0 });
+            if (readable(m, m.box(), viewport)) labels.get(m)!.px = Math.max(labels.get(m)!.px, px);
           }
-          if (!labels.has(text)) labels.set(text, 0);
-          if (readable(m, m.box(), viewport)) labels.set(text, Math.max(labels.get(text)!, px));
         }
       },
     }).run();
@@ -245,8 +241,10 @@ export async function checkProject(
       [],
       `Imported labels need a readable completed-step view at 1280px ${where}: ${JSON.stringify(staticSmall)}`,
     );
-    const small = [...labels].filter(([, px]) => px < MIN_PX);
+    const small = [...labels.values()].filter((label) => label.px < MIN_PX);
     assert.deepEqual(small, [], `Labels never reach ${MIN_PX}px at 1280px stage ${where}: ${JSON.stringify(small)}`);
+    const blank = v.trace.steps.flatMap((s) => undescribed(s.after).map((m) => `${s.step}: ${m}`));
+    assert.deepEqual(blank, [], `Every drawing needs words for readers who cannot see it ${where}`);
     const contents = `import * as author from ${JSON.stringify(project.file)};import{bindSnapshots,withSettings}from ${JSON.stringify(join(ROOT, 'explain/index.ts'))};import{Scene,NullSink,toSvgString}from ${JSON.stringify(join(ROOT, 'src/index.ts'))};const Source=author[${JSON.stringify(project.exportName)}];export async function run(){const C=withSettings(bindSnapshots(Source,${JSON.stringify(project.store)}),${JSON.stringify(v.values)});const s=await new C(new NullSink(),{skipUntil:Infinity}).run();return{steps:s.steps.map(s=>s.name),state:s.describe(),svg:toSvgString(s)}}`;
     const b = await build({
       stdin: { contents, resolveDir: ROOT, loader: 'ts' },
@@ -276,7 +274,7 @@ export async function checkProject(
       labels: labels.size,
       completedStepLabels: staticLabels.size,
       // What a reader sees before zooming: the same labels on a 390 px phone.
-      legibility: legibilityReport([...labels.values(), ...[...staticLabels.values()].map((l) => l.px)]),
+      legibility: legibilityReport([...labels.values(), ...staticLabels.values()].map((l) => l.px)),
       // Each step's resting frame as text, so an author can read it without a browser.
       restingFrames: Object.fromEntries(v.trace.steps.map((step) => [step.step, restingText.get(restingFrame(step)) ?? ''])),
     });

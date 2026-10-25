@@ -1,24 +1,29 @@
 #!/usr/bin/env node
 import { mkdir, writeFile } from 'node:fs/promises';
-import { realpathSync, existsSync } from 'node:fs';
+import { realpathSync, existsSync, readFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { serve } from './lib/explain-serve.ts';
-import { collectProject, defaultVariant, sceneSlug } from './lib/explain-project.ts';
+import { collectProject, defaultVariant, sceneSlug, ROOT } from './lib/explain-project.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
 
+// Optional peer packages, by what needs them; package.json pins their versions.
+const CAPTURE = ['agentic-mermaid', 'playwright-core', 'svgpath'],
+  RASTER = ['@resvg/resvg-js'];
+const peers: Record<string, string> = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).peerDependencies;
+const install = (names: string[]) => 'npm i ' + names.map((n) => `${n}@${peers[n]}`).join(' ');
 const HELP = `Lantern Explainers (Node 26+)
 
 Usage: explain <command> <scene.ts | directory> [options]
 
 Commands:
-  init <directory>    Create a native Scene with helpers and a meaningful setting
+  init <directory>    Write a scene with one setting
   preview <scene>     Build, print step contact sheet, serve on localhost
   snapshots <scene>   Run every case, capture/verify diagrams and replay morph edits
-  check <scene>       Every case: seek, motion, bare runtime, step change, text
-                      collision, legibility, catch lint
-  build <scene>       Self-contained stepper-first HTML, transcript, poster, receipts
+  check <scene>       Every case: seek, motion, skipped trace, bare runtime, step
+                      change, text collision, legibility, catch lint
+  build <scene>       HTML, receipt, header recipe, loader.js
   render <scene>      Silent MP4 (or .webm), captions, chapters and receipt
   shots <scene>       Step contact sheet as SVG and PNG
 
@@ -29,14 +34,17 @@ Options:
   --refresh           Re-render snapshots instead of using the pinned cache
   --footer            1280 × 960 caption-footer video preset
   --width <even>      Stage-only video width (default 1280)
-  --fps <integer>     Video frame rate (default 30)
+  --fps <1–120>       Video frame rate (default 30)
   --all               Export videos for every declared case
   --case id=value     Export (render) or show (shots) one case; repeat for multiple settings
   --port <integer>    Preview server port (default 5174)
   --watch             Preview: rebuild the page and contact sheet on save
 
-Diagram capture requires Chromium: npx playwright-core install chromium,
-or set CHROMIUM_EXECUTABLE_PATH. explain render needs ffmpeg on PATH.
+A default install leaves out what diagrams, PNGs and video need:
+  Diagram capture     ${install(CAPTURE)}
+                      and Chromium: npx playwright-core install chromium,
+                      or set CHROMIUM_EXECUTABLE_PATH
+  PNG and video       ${install(RASTER)}; render also needs ffmpeg on PATH
 `;
 export async function main(args = process.argv.slice(2)): Promise<void> {
   if (!args.length || args.includes('--help') || args[0] === 'help') {
@@ -74,7 +82,7 @@ const PATH = {
   miss: [['Request', 'Cache'], ['Cache', 'Store'], ['Store', 'Reply']],
 } as const;
 
-export default class MyExplanation extends Scene {
+export default class MyExplainer extends Scene {
   static meta = { id: 'my-explainer', title: 'Why a cache changes the request path' };
   static settings = [{ id: 'request', label: 'Follow a request', default: 'hit', options: [{ value: 'hit', label: 'Cache hit' }, { value: 'miss', label: 'Cache miss' }] }];
   override async construct() {
@@ -90,16 +98,12 @@ export default class MyExplanation extends Scene {
     const reads = which === 'hit' ? 0 : 1;
     await d.dim([...new Set(PATH[which].flat())]);
     await d.walk(PATH[which], { trail: true });
-    await s.card([['Database reads', reads], ['Path', which]], { at: 'bottom' });
+    await s.card([['Database reads', reads]], { at: 'bottom' });
     this.state.reads = reads;
   }
 }
 `;
     await writeFile(join(dir, 'scene.ts'), template);
-    await writeFile(
-      join(dir, 'README.md'),
-      '# My explainer\n\nRun `explain preview scene.ts`, `explain check scene.ts`, then `explain build scene.ts --out explainer.html`.\n',
-    );
     console.log(`Created ${join(dir, 'scene.ts')}`);
     return;
   }
@@ -129,24 +133,19 @@ export default class MyExplanation extends Scene {
     );
     return;
   }
-  /** The default case, or the cases matching every --case id=value. */
-  function selectedVariants() {
-    if (!flags.case) return [defaultVariant(project)];
-    const values = { ...defaultVariant(project).values };
-    for (const assignment of flags.case) {
+  /** The case every --case id=value chooses, other settings at their defaults. */
+  function selectedVariant() {
+    const values: Record<string, string> = {};
+    for (const assignment of flags.case ?? []) {
       const at = assignment.indexOf('=');
       if (at < 1) throw new Error('--case requires id=value');
       values[assignment.slice(0, at)] = assignment.slice(at + 1);
     }
-    const variants = project.variants.filter((v) =>
-      Object.entries(values).every(([k, value]) => v.values[k] === value),
-    );
-    if (!variants.length) throw new Error('No case matches --case');
-    return variants;
+    return defaultVariant(project, values);
   }
   if (command === 'render') {
     const { renderVideo } = await import('./lib/explain-video.ts');
-    const variants = flags.all ? project.variants : selectedVariants();
+    const variants = flags.all ? project.variants : [selectedVariant()];
     const output = flags.out ?? resolve('out/videos', slug + '.mp4');
     for (const v of variants) {
       const suffix = Object.entries(v.values)
@@ -170,7 +169,7 @@ export default class MyExplanation extends Scene {
   if (command === 'shots') {
     const { contactSheet } = await import('./lib/explain-shots.ts');
     console.log(
-      await contactSheet(project, flags.out ?? resolve('out/shots', slug + '.png'), selectedVariants()[0]),
+      await contactSheet(project, flags.out ?? resolve('out/shots', slug + '.png'), selectedVariant()),
     );
     return;
   }
@@ -222,8 +221,13 @@ if (
   import.meta.url === pathToFileURL(realpathSync(resolve(process.argv[1]))).href
 )
   main().catch((error) => {
-    // Capture, video and contact sheets use optional packages; name the one that is missing.
+    // Capture uses optional packages a default install leaves out; name what to install.
     const missing = error.code === 'ERR_MODULE_NOT_FOUND' && /Cannot find package '([^']+)'/.exec(error.message)?.[1];
-    console.error(missing ? `explain: this command needs the optional package ${missing}: npm i ${missing}` : `explain: ${error.message}`);
+    const group = missing && [CAPTURE, RASTER].find((g) => g.includes(missing));
+    console.error(
+      missing
+        ? `explain: this command needs ${missing}${group ? `. Install: ${install(group)}` : ''}`
+        : `explain: ${error.message}`,
+    );
     process.exitCode = 1;
   });

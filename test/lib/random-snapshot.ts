@@ -88,18 +88,18 @@ export const snapshotPlan: fc.Arbitrary<SnapshotPlan> = fc
 export function buildSnapshot(plan: SnapshotPlan, source = 'graph'): DiagramSnapshot {
   const parts: SnapshotPart[] = [];
   if (plan.frame)
-    parts.push({ id: '__frame', role: 'frame', kind: 'shape', svg: '', shapes: [rect(plan.width / 200, -plan.height / 200, plan.width / 100, plan.height / 100, plan.frame)] });
+    parts.push({ id: '__frame', role: 'frame', kind: 'shape', shapes: [rect(plan.width / 200, -plan.height / 200, plan.width / 100, plan.height / 100, plan.frame)] });
   if (plan.lifeline)
-    parts.push({ id: 'lifeline:0', role: 'lifeline', kind: 'shape', svg: '', shapes: [rect(0.5, -plan.height / 200, 0.02, plan.height / 100, plan.lifeline)] });
+    parts.push({ id: 'lifeline:0', role: 'lifeline', kind: 'shape', shapes: [rect(0.5, -plan.height / 200, 0.02, plan.height / 100, plan.lifeline)] });
   for (const n of plan.nodes) {
-    parts.push({ id: n.id, role: 'node', kind: 'shape', svg: '', shapes: [rect(n.x, n.y, n.w, n.h, n.style)] });
+    parts.push({ id: n.id, role: 'node', kind: 'shape', shapes: [rect(n.x, n.y, n.w, n.h, n.style)] });
     if (n.label)
       parts.push({
         id: 'label:' + n.id,
         owner: n.id,
         role: 'node-label',
         kind: 'text',
-        svg: '',
+       
         shapes: [{ ...rect(n.x, n.y, n.w / 2, n.h / 3, n.label), text: n.id, fontSize: n.h / 3 }],
       });
   }
@@ -118,7 +118,7 @@ export function buildSnapshot(plan: SnapshotPlan, source = 'graph'): DiagramSnap
       [x1, y1] = route.at(-1)!;
     const shapes = [rect((x0 + x1) / 2, (y0 + y1) / 2, Math.max(0.02, Math.abs(x1 - x0)), 0.02, l.line)];
     if (l.head) shapes.push(rect(x1, y1, 0.1, 0.1, l.head));
-    parts.push({ id: `edge:${pair}#${k}`, role: l.role, kind: 'connector', svg: '', shapes, from: a.id, to: b.id, route });
+    parts.push({ id: `edge:${pair}#${k}`, role: l.role, kind: 'connector', shapes, from: a.id, to: b.id, route });
   }
   return fixedSnapshot({ source, style: 'nord' }, parts, plan);
 }
@@ -129,7 +129,7 @@ export function fixedSnapshot(
   parts: SnapshotPart[],
   { family = 'flowchart', width = 400, height = 200, palette }: { family?: string; width?: number; height?: number; palette: DiagramSnapshot['palette'] },
 ): DiagramSnapshot {
-  return { version: 1, renderer: RENDERER, spec, family, width, height, palette, svg: '', findings: { ok: true, warnings: [] }, parts };
+  return { version: 1, renderer: RENDERER, spec, family, width, height, palette, findings: { ok: true, warnings: [] }, parts };
 }
 /** A half-unit square at (x, 0), as an imported shape. */
 export function square(x: number, style: Style): SnapshotShape {

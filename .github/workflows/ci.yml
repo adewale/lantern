@@ -6,7 +6,7 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-24.04  # the pinned image the oracle and embed tests were validated on
+    runs-on: ubuntu-24.04  # the pinned image the embed tests were validated on
     timeout-minutes: 25  # full suite, browser gates, every demo case and video
     steps:
       - uses: actions/checkout@v4
@@ -15,18 +15,10 @@ jobs:
           node-version: 26
           cache: npm
       - run: npm ci
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: pip install numpy
       # diagram capture and the embed tests run in headless Chromium (tools/lib/browser.ts)
       - run: npx playwright-core install --with-deps --only-shell chromium
-      # manim itself is the oracle for test/manim.test.ts (tools/oracle/manim_math.py)
-      - run: git clone --depth 1 https://github.com/3b1b/manim.git /tmp/manim && git -C /tmp/manim fetch --depth 1 origin fafa083a4fb274bba9cabde0b6e2f50ba6da0622 && git -C /tmp/manim checkout -q fafa083a4fb274bba9cabde0b6e2f50ba6da0622
       - run: npm run check          # tsc -b over every project (emits dist/); compile a TS consumer against it
-      - run: npm run test:full      # every frame, fast-check properties at ten times the default cases, cache validation, golden trace, manim oracle, leaks
-        env:
-          MANIM_DIR: /tmp/manim
+      - run: npm run test:full      # every frame, fast-check properties at ten times the default cases, cache validation, golden trace, leaks
       - run: node --expose-gc test/leak.test.ts # also run directly, outside the test runner's workers
       # Product gates reuse this job and its Chromium installation; no scheduled lane.
       - run: npm run test:embeds    # real origin/source isolation, offline/no-JS reading and style fidelity

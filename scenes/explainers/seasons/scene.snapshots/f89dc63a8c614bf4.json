@@ -14,13 +14,11 @@
     "accent": "#7aa2f7",
     "muted": "#565f89"
   },
-  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100%\" height=\"100%\" viewBox=\"0 0 700 500\" style=\"--bg:#1a1b26;--fg:#a9b1d6;--line:#3d59a1;--accent:#7aa2f7;--muted:#565f89;--font:Inter;background:#1a1b26;max-width:700px\" aria-roledescription=\"xychart\" class=\"xychart\" data-xychart-colors=\"3\" id=\"mermaid-1xdy24j\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #a9b1d6;\n    --_text-sec:      #565f89;\n    --_text-muted:    #565f89;\n    --_text-faint:    #676c85;\n    --_line:          #3d59a1;\n    --_arrow:         #7aa2f7;\n    --_node-fill:     #1e1f2b;\n    --_node-stroke:   #373949;\n    --_group-fill:    #1a1b26;\n    --_group-hdr:     #21232f;\n    --_inner-stroke:  #2b2d3b;\n    --_key-badge:     #282a38;\n  }\n</style>\n<style>\n  .xychart-grid { stroke: #2e303f; stroke-width: 1; }\n  .xychart-axis-line { fill: none; }\n  .xychart-tick { fill: none; }\n  .xychart-x-axis-line { stroke: #8088af; }\n  .xychart-y-axis-line { stroke: #8088af; }\n  .xychart-x-tick { stroke: #8088af; }\n  .xychart-y-tick { stroke: #8088af; }\n  .xychart-bar { stroke: none; }\n  .xychart-line { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }\n  .xychart-dot { stroke: #1a1b26; stroke-width: 2; }\n  .xychart-label { fill: #a9b1d6; }\n  .xychart-x-label { fill: #a9b1d6; }\n  .xychart-y-label { fill: #a9b1d6; }\n  .xychart-axis-title { fill: #a9b1d6; }\n  .xychart-x-axis-title { fill: #a9b1d6; }\n  .xychart-y-axis-title { fill: #a9b1d6; }\n  .xychart-title { fill: #a9b1d6; }\n  .xychart-data-label { fill: #a9b1d6; pointer-events: none; }\n  .xychart-legend-label { fill: #a9b1d6; }\n  svg {\n    --xychart-color-0: #7aa2f7;\n    --xychart-color-1: #5f70f2;\n    --xychart-color-2: #0d52a5;\n    --xychart-color-3: #9a92f6;\n  }\n  .xychart-bar.xychart-color-0 { fill: #7aa2f7; }\n  path.xychart-color-0, line.xychart-color-0 { stroke: #7aa2f7; }\n  circle.xychart-color-0 { fill: #7aa2f7; }\n  .xychart-bar.xychart-color-1 { fill: #5f70f2; }\n  path.xychart-color-1, line.xychart-color-1 { stroke: #5f70f2; }\n  circle.xychart-color-1 { fill: #5f70f2; }\n  .xychart-bar.xychart-color-2 { fill: #0d52a5; }\n  path.xychart-color-2, line.xychart-color-2 { stroke: #0d52a5; }\n  circle.xychart-color-2 { fill: #0d52a5; }\n  .xychart-bar.xychart-color-3 { fill: #9a92f6; }\n  path.xychart-color-3, line.xychart-color-3 { stroke: #9a92f6; }\n  circle.xychart-color-3 { fill: #9a92f6; }\n</style>\n<rect width=\"700\" height=\"500\" fill=\"#1a1b26\" data-backdrop=\"page\" />\n<line x1=\"60.22\" y1=\"469\" x2=\"632\" y2=\"469\" class=\"xychart-grid\"/>\n<line x1=\"60.22\" y1=\"429.92\" x2=\"632\" y2=\"429.92\" class=\"xychart-grid\"/>\n<line x1=\"60.22\" y1=\"390.83\" x2=\"632\" y2=\"390.83\" class=\"xychart-grid\"/>\n<line x1=\"60.22\" y1=\"351.75\" x2=\"632\" y2=\"351.75\" class=\"xychart-grid\"/>\n<line x1=\"60.22\" y1=\"312.67\" x2=\"632\" y2=\"312.67\" class=\"xychart-grid\"/>\n<line x1=\"60.22\" y1=\"273.58\" x2=\"632\" y2=\"273.58\" class=\"xychart-grid\"/>\n<line x1=\"60.22\" y1=\"234.5\" x2=\"632\" y2=\"234.5\" class=\"xychart-grid\"/>\n<line x1=\"60.22\" y1=\"195.42\" x2=\"632\" y2=\"195.42\" class=\"xychart-grid\"/>\n<line x1=\"60.22\" y1=\"156.33\" x2=\"632\" y2=\"156.33\" class=\"xychart-grid\"/>\n<line x1=\"60.22\" y1=\"117.25\" x2=\"632\" y2=\"117.25\" class=\"xychart-grid\"/>\n<line x1=\"60.22\" y1=\"78.17\" x2=\"632\" y2=\"78.17\" class=\"xychart-grid\"/>\n<line x1=\"60.22\" y1=\"39.08\" x2=\"632\" y2=\"39.08\" class=\"xychart-grid\"/>\n<line x1=\"60.22\" y1=\"0\" x2=\"632\" y2=\"0\" class=\"xychart-grid\"/>\n<line x1=\"60.22\" y1=\"470\" x2=\"632\" y2=\"470\" class=\"xychart-axis-line xychart-x-axis-line\" stroke-width=\"2\"/>\n<line x1=\"84.04\" y1=\"471\" x2=\"84.04\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"131.69\" y1=\"471\" x2=\"131.69\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"179.34\" y1=\"471\" x2=\"179.34\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"226.99\" y1=\"471\" x2=\"226.99\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"274.64\" y1=\"471\" x2=\"274.64\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"322.29\" y1=\"471\" x2=\"322.29\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"369.93\" y1=\"471\" x2=\"369.93\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"417.58\" y1=\"471\" x2=\"417.58\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"465.23\" y1=\"471\" x2=\"465.23\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"512.88\" y1=\"471\" x2=\"512.88\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"560.53\" y1=\"471\" x2=\"560.53\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"608.18\" y1=\"471\" x2=\"608.18\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"59.22\" y1=\"0\" x2=\"59.22\" y2=\"469\" class=\"xychart-axis-line xychart-y-axis-line\" stroke-width=\"2\"/>\n<line x1=\"58.22\" y1=\"469\" x2=\"53.22\" y2=\"469\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"58.22\" y1=\"429.92\" x2=\"53.22\" y2=\"429.92\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"58.22\" y1=\"390.83\" x2=\"53.22\" y2=\"390.83\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"58.22\" y1=\"351.75\" x2=\"53.22\" y2=\"351.75\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"58.22\" y1=\"312.67\" x2=\"53.22\" y2=\"312.67\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"58.22\" y1=\"273.58\" x2=\"53.22\" y2=\"273.58\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"58.22\" y1=\"234.5\" x2=\"53.22\" y2=\"234.5\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"58.22\" y1=\"195.42\" x2=\"53.22\" y2=\"195.42\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"58.22\" y1=\"156.33\" x2=\"53.22\" y2=\"156.33\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"58.22\" y1=\"117.25\" x2=\"53.22\" y2=\"117.25\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"58.22\" y1=\"78.17\" x2=\"53.22\" y2=\"78.17\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"58.22\" y1=\"39.08\" x2=\"53.22\" y2=\"39.08\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"58.22\" y1=\"0\" x2=\"53.22\" y2=\"0\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<path d=\"M84.04,469 L131.69,341.98 L179.34,257.95 L226.99,170.01 L274.64,66.44 L322.29,0 L369.93,0 L417.58,123.11 L465.23,214.96 L512.88,300.94 L560.53,408.42 L608.18,469\" class=\"xychart-line xychart-color-0\" data-relationship=\"series\" data-direction=\"undirected\" data-id=\"series:line-0\" data-role=\"series\" />\n<path d=\"M84.04,312.67 L131.69,281.4 L179.34,246.23 L226.99,205.19 L274.64,170.01 L322.29,148.52 L369.93,156.33 L417.58,185.65 L465.23,224.73 L512.88,265.77 L560.53,300.94 L608.18,320.48\" class=\"xychart-line xychart-color-1\" data-relationship=\"series\" data-direction=\"undirected\" data-id=\"series:line-1\" data-role=\"series\" />\n<path d=\"M84.04,234.5 L131.69,234.5 L179.34,234.5 L226.99,234.5 L274.64,234.5 L322.29,234.5 L369.93,234.5 L417.58,234.5 L465.23,234.5 L512.88,234.5 L560.53,234.5 L608.18,234.5\" class=\"xychart-line xychart-color-2\" data-relationship=\"series\" data-direction=\"undirected\" data-id=\"series:line-2\" data-role=\"series\" />\n<path d=\"M84.04,195.42 L131.69,209.1 L179.34,228.64 L226.99,250.13 L274.64,267.72 L322.29,277.49 L369.93,275.54 L417.58,259.9 L465.23,238.41 L512.88,218.87 L560.53,199.33 L608.18,191.51\" class=\"xychart-line xychart-color-3\" data-relationship=\"series\" data-direction=\"undirected\" data-id=\"series:line-3\" data-role=\"series\" />\n<text x=\"84.0441666666667\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"26.292\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Jan</text>\n<text x=\"131.69250000000002\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"26.292\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Feb</text>\n<text x=\"179.34083333333336\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"27.048\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Mar</text>\n<text x=\"226.9891666666667\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"24.78\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Apr</text>\n<text x=\"274.63750000000005\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"28.56\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">May</text>\n<text x=\"322.28583333333336\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"26.292\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Jun</text>\n<text x=\"369.93416666666667\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"21.756\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Jul</text>\n<text x=\"417.58250000000004\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"26.292\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Aug</text>\n<text x=\"465.23083333333335\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"26.292\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Sep</text>\n<text x=\"512.8791666666667\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"21.756\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Oct</text>\n<text x=\"560.5275\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"26.292\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Nov</text>\n<text x=\"608.1758333333333\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"26.292\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Dec</text>\n<text x=\"48.22000000000003\" y=\"469\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"9.66\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">0</text>\n<text x=\"48.22000000000003\" y=\"429.9166666666667\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"9.66\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">2</text>\n<text x=\"48.22000000000003\" y=\"390.83333333333337\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"9.66\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">4</text>\n<text x=\"48.22000000000003\" y=\"351.75\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"9.66\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">6</text>\n<text x=\"48.22000000000003\" y=\"312.6666666666667\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"9.66\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">8</text>\n<text x=\"48.22000000000003\" y=\"273.5833333333333\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"12.684\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">10</text>\n<text x=\"48.22000000000003\" y=\"234.5\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"12.684\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">12</text>\n<text x=\"48.22000000000003\" y=\"195.41666666666663\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"12.684\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">14</text>\n<text x=\"48.22000000000003\" y=\"156.33333333333337\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"12.684\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">16</text>\n<text x=\"48.22000000000003\" y=\"117.25\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"12.684\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">18</text>\n<text x=\"48.22000000000003\" y=\"78.16666666666663\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"17.22\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">20</text>\n<text x=\"48.22000000000003\" y=\"39.08333333333337\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"17.22\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">22</text>\n<text x=\"48.22000000000003\" y=\"0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"17.22\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">24</text>\n<text x=\"17.8\" y=\"234.5\" text-anchor=\"middle\" transform=\"rotate(-90,17.8,234.5)\" font-size=\"16\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-axis-title xychart-y-axis-title\" textLength=\"101.76\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Daylight hours</text>\n<g class=\"xychart-legend\">\n  <line x1=\"637\" y1=\"11\" x2=\"649\" y2=\"11\" class=\"xychart-legend-swatch\" stroke=\"#7aa2f7\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n  <circle cx=\"643\" cy=\"11\" r=\"2.5\" class=\"xychart-legend-dot\" fill=\"#7aa2f7\" stroke=\"#1a1b26\" stroke-width=\"1\"/>\n  <text x=\"655\" y=\"11\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-legend-label\" textLength=\"34.608\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Line 1</text>\n  <line x1=\"637\" y1=\"30\" x2=\"649\" y2=\"30\" class=\"xychart-legend-swatch\" stroke=\"#5f70f2\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n  <circle cx=\"643\" cy=\"30\" r=\"2.5\" class=\"xychart-legend-dot\" fill=\"#5f70f2\" stroke=\"#1a1b26\" stroke-width=\"1\"/>\n  <text x=\"655\" y=\"30\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-legend-label\" textLength=\"39.144\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Line 2</text>\n  <line x1=\"637\" y1=\"49\" x2=\"649\" y2=\"49\" class=\"xychart-legend-swatch\" stroke=\"#0d52a5\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n  <circle cx=\"643\" cy=\"49\" r=\"2.5\" class=\"xychart-legend-dot\" fill=\"#0d52a5\" stroke=\"#1a1b26\" stroke-width=\"1\"/>\n  <text x=\"655\" y=\"49\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-legend-label\" textLength=\"39.144\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Line 3</text>\n  <line x1=\"637\" y1=\"68\" x2=\"649\" y2=\"68\" class=\"xychart-legend-swatch\" stroke=\"#9a92f6\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n  <circle cx=\"643\" cy=\"68\" r=\"2.5\" class=\"xychart-legend-dot\" fill=\"#9a92f6\" stroke=\"#1a1b26\" stroke-width=\"1\"/>\n  <text x=\"655\" y=\"68\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-legend-label\" textLength=\"39.144\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Line 4</text>\n</g>\n</svg>",
   "parts": [
     {
       "id": "__frame",
       "role": "frame",
       "kind": "shape",
-      "svg": "",
       "shapes": [
         {
           "subpaths": [
@@ -76,7 +74,6 @@
       "id": "grid:y:0",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"60.22\" y1=\"469\" x2=\"632\" y2=\"469\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -114,7 +111,6 @@
       "id": "grid:y:1",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"60.22\" y1=\"429.92\" x2=\"632\" y2=\"429.92\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -152,7 +148,6 @@
       "id": "grid:y:2",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"60.22\" y1=\"390.83\" x2=\"632\" y2=\"390.83\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -190,7 +185,6 @@
       "id": "grid:y:3",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"60.22\" y1=\"351.75\" x2=\"632\" y2=\"351.75\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -228,7 +222,6 @@
       "id": "grid:y:4",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"60.22\" y1=\"312.67\" x2=\"632\" y2=\"312.67\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -266,7 +259,6 @@
       "id": "grid:y:5",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"60.22\" y1=\"273.58\" x2=\"632\" y2=\"273.58\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -304,7 +296,6 @@
       "id": "grid:y:6",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"60.22\" y1=\"234.5\" x2=\"632\" y2=\"234.5\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -342,7 +333,6 @@
       "id": "grid:y:7",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"60.22\" y1=\"195.42\" x2=\"632\" y2=\"195.42\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -380,7 +370,6 @@
       "id": "grid:y:8",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"60.22\" y1=\"156.33\" x2=\"632\" y2=\"156.33\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -418,7 +407,6 @@
       "id": "grid:y:9",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"60.22\" y1=\"117.25\" x2=\"632\" y2=\"117.25\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -456,7 +444,6 @@
       "id": "grid:y:10",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"60.22\" y1=\"78.17\" x2=\"632\" y2=\"78.17\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -494,7 +481,6 @@
       "id": "grid:y:11",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"60.22\" y1=\"39.08\" x2=\"632\" y2=\"39.08\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -532,7 +518,6 @@
       "id": "grid:y:12",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"60.22\" y1=\"0\" x2=\"632\" y2=\"0\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -570,7 +555,6 @@
       "id": "axis:x:line",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"60.22\" y1=\"470\" x2=\"632\" y2=\"470\" class=\"xychart-axis-line xychart-x-axis-line\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -608,7 +592,6 @@
       "id": "axis:x:tick:Jan",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"84.04\" y1=\"471\" x2=\"84.04\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -646,7 +629,6 @@
       "id": "axis:x:tick:Feb",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"131.69\" y1=\"471\" x2=\"131.69\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -684,7 +666,6 @@
       "id": "axis:x:tick:Mar",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"179.34\" y1=\"471\" x2=\"179.34\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -722,7 +703,6 @@
       "id": "axis:x:tick:Apr",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"226.99\" y1=\"471\" x2=\"226.99\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -760,7 +740,6 @@
       "id": "axis:x:tick:May",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"274.64\" y1=\"471\" x2=\"274.64\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -798,7 +777,6 @@
       "id": "axis:x:tick:Jun",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"322.29\" y1=\"471\" x2=\"322.29\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -836,7 +814,6 @@
       "id": "axis:x:tick:Jul",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"369.93\" y1=\"471\" x2=\"369.93\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -874,7 +851,6 @@
       "id": "axis:x:tick:Aug",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"417.58\" y1=\"471\" x2=\"417.58\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -912,7 +888,6 @@
       "id": "axis:x:tick:Sep",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"465.23\" y1=\"471\" x2=\"465.23\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -950,7 +925,6 @@
       "id": "axis:x:tick:Oct",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"512.88\" y1=\"471\" x2=\"512.88\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -988,7 +962,6 @@
       "id": "axis:x:tick:Nov",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"560.53\" y1=\"471\" x2=\"560.53\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1026,7 +999,6 @@
       "id": "axis:x:tick:Dec",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"608.18\" y1=\"471\" x2=\"608.18\" y2=\"476\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1064,7 +1036,6 @@
       "id": "axis:y:line",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"59.22\" y1=\"0\" x2=\"59.22\" y2=\"469\" class=\"xychart-axis-line xychart-y-axis-line\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1102,7 +1073,6 @@
       "id": "axis:y:tick:0",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"58.22\" y1=\"469\" x2=\"53.22\" y2=\"469\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1140,7 +1110,6 @@
       "id": "axis:y:tick:2",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"58.22\" y1=\"429.92\" x2=\"53.22\" y2=\"429.92\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1178,7 +1147,6 @@
       "id": "axis:y:tick:4",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"58.22\" y1=\"390.83\" x2=\"53.22\" y2=\"390.83\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1216,7 +1184,6 @@
       "id": "axis:y:tick:6",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"58.22\" y1=\"351.75\" x2=\"53.22\" y2=\"351.75\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1254,7 +1221,6 @@
       "id": "axis:y:tick:8",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"58.22\" y1=\"312.67\" x2=\"53.22\" y2=\"312.67\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1292,7 +1258,6 @@
       "id": "axis:y:tick:10",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"58.22\" y1=\"273.58\" x2=\"53.22\" y2=\"273.58\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1330,7 +1295,6 @@
       "id": "axis:y:tick:12",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"58.22\" y1=\"234.5\" x2=\"53.22\" y2=\"234.5\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1368,7 +1332,6 @@
       "id": "axis:y:tick:14",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"58.22\" y1=\"195.42\" x2=\"53.22\" y2=\"195.42\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1406,7 +1369,6 @@
       "id": "axis:y:tick:16",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"58.22\" y1=\"156.33\" x2=\"53.22\" y2=\"156.33\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1444,7 +1406,6 @@
       "id": "axis:y:tick:18",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"58.22\" y1=\"117.25\" x2=\"53.22\" y2=\"117.25\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1482,7 +1443,6 @@
       "id": "axis:y:tick:20",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"58.22\" y1=\"78.17\" x2=\"53.22\" y2=\"78.17\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1520,7 +1480,6 @@
       "id": "axis:y:tick:22",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"58.22\" y1=\"39.08\" x2=\"53.22\" y2=\"39.08\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1558,7 +1517,6 @@
       "id": "axis:y:tick:24",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"58.22\" y1=\"0\" x2=\"53.22\" y2=\"0\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1596,7 +1554,6 @@
       "id": "series:line-0",
       "role": "series",
       "kind": "connector",
-      "svg": "<path d=\"M84.04,469 L131.69,341.98 L179.34,257.95 L226.99,170.01 L274.64,66.44 L322.29,0 L369.93,0 L417.58,123.11 L465.23,214.96 L512.88,300.94 L560.53,408.42 L608.18,469\" class=\"xychart-line xychart-color-0\" data-relationship=\"series\" data-direction=\"undirected\" data-id=\"series:line-0\" data-role=\"series\" />",
       "shapes": [
         {
           "subpaths": [
@@ -1747,7 +1704,6 @@
       "id": "series:line-1",
       "role": "series",
       "kind": "connector",
-      "svg": "<path d=\"M84.04,312.67 L131.69,281.4 L179.34,246.23 L226.99,205.19 L274.64,170.01 L322.29,148.52 L369.93,156.33 L417.58,185.65 L465.23,224.73 L512.88,265.77 L560.53,300.94 L608.18,320.48\" class=\"xychart-line xychart-color-1\" data-relationship=\"series\" data-direction=\"undirected\" data-id=\"series:line-1\" data-role=\"series\" />",
       "shapes": [
         {
           "subpaths": [
@@ -1898,7 +1854,6 @@
       "id": "series:line-2",
       "role": "series",
       "kind": "connector",
-      "svg": "<path d=\"M84.04,234.5 L131.69,234.5 L179.34,234.5 L226.99,234.5 L274.64,234.5 L322.29,234.5 L369.93,234.5 L417.58,234.5 L465.23,234.5 L512.88,234.5 L560.53,234.5 L608.18,234.5\" class=\"xychart-line xychart-color-2\" data-relationship=\"series\" data-direction=\"undirected\" data-id=\"series:line-2\" data-role=\"series\" />",
       "shapes": [
         {
           "subpaths": [
@@ -2049,7 +2004,6 @@
       "id": "series:line-3",
       "role": "series",
       "kind": "connector",
-      "svg": "<path d=\"M84.04,195.42 L131.69,209.1 L179.34,228.64 L226.99,250.13 L274.64,267.72 L322.29,277.49 L369.93,275.54 L417.58,259.9 L465.23,238.41 L512.88,218.87 L560.53,199.33 L608.18,191.51\" class=\"xychart-line xychart-color-3\" data-relationship=\"series\" data-direction=\"undirected\" data-id=\"series:line-3\" data-role=\"series\" />",
       "shapes": [
         {
           "subpaths": [
@@ -2200,7 +2154,6 @@
       "id": "axis:x:label:Jan",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"84.0441666666667\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">Jan</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2243,7 +2196,6 @@
       "id": "axis:x:label:Feb",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"131.69250000000002\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">Feb</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2286,7 +2238,6 @@
       "id": "axis:x:label:Mar",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"179.34083333333336\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">Mar</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2329,7 +2280,6 @@
       "id": "axis:x:label:Apr",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"226.9891666666667\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">Apr</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2372,7 +2322,6 @@
       "id": "axis:x:label:May",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"274.63750000000005\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">May</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2415,7 +2364,6 @@
       "id": "axis:x:label:Jun",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"322.28583333333336\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">Jun</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2458,7 +2406,6 @@
       "id": "axis:x:label:Jul",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"369.93416666666667\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">Jul</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2501,7 +2448,6 @@
       "id": "axis:x:label:Aug",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"417.58250000000004\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">Aug</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2544,7 +2490,6 @@
       "id": "axis:x:label:Sep",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"465.23083333333335\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">Sep</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2587,7 +2532,6 @@
       "id": "axis:x:label:Oct",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"512.8791666666667\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">Oct</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2630,7 +2574,6 @@
       "id": "axis:x:label:Nov",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"560.5275\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">Nov</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2673,7 +2616,6 @@
       "id": "axis:x:label:Dec",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"608.1758333333333\" y=\"486.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">Dec</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2716,7 +2658,6 @@
       "id": "axis:y:label:0",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"48.22000000000003\" y=\"469\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">0</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2760,7 +2701,6 @@
       "id": "axis:y:label:2",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"48.22000000000003\" y=\"429.9166666666667\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">2</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2804,7 +2744,6 @@
       "id": "axis:y:label:4",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"48.22000000000003\" y=\"390.83333333333337\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">4</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2848,7 +2787,6 @@
       "id": "axis:y:label:6",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"48.22000000000003\" y=\"351.75\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">6</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2892,7 +2830,6 @@
       "id": "axis:y:label:8",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"48.22000000000003\" y=\"312.6666666666667\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">8</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2936,7 +2873,6 @@
       "id": "axis:y:label:10",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"48.22000000000003\" y=\"273.5833333333333\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">10</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2980,7 +2916,6 @@
       "id": "axis:y:label:12",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"48.22000000000003\" y=\"234.5\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">12</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -3024,7 +2959,6 @@
       "id": "axis:y:label:14",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"48.22000000000003\" y=\"195.41666666666663\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">14</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -3068,7 +3002,6 @@
       "id": "axis:y:label:16",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"48.22000000000003\" y=\"156.33333333333337\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">16</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -3112,7 +3045,6 @@
       "id": "axis:y:label:18",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"48.22000000000003\" y=\"117.25\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">18</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -3156,7 +3088,6 @@
       "id": "axis:y:label:20",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"48.22000000000003\" y=\"78.16666666666663\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">20</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -3200,7 +3131,6 @@
       "id": "axis:y:label:22",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"48.22000000000003\" y=\"39.08333333333337\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">22</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -3244,7 +3174,6 @@
       "id": "axis:y:label:24",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"48.22000000000003\" y=\"0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">24</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -3288,7 +3217,6 @@
       "id": "axis:y:title",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"17.8\" y=\"234.5\" text-anchor=\"middle\" transform=\"rotate(-90,17.8,234.5)\" font-size=\"16\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-axis-title xychart-y-axis-title\">Daylight hours</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -3331,7 +3259,6 @@
       "id": "legend",
       "role": "legend",
       "kind": "group",
-      "svg": "<g class=\"xychart-legend\">\n  <line x1=\"637\" y1=\"11\" x2=\"649\" y2=\"11\" class=\"xychart-legend-swatch\" stroke=\"var(--xychart-color-0)\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n  <circle cx=\"643\" cy=\"11\" r=\"2.5\" class=\"xychart-legend-dot\" fill=\"var(--xychart-color-0)\" stroke=\"var(--bg)\" stroke-width=\"1\"/>\n  <text x=\"655\" y=\"11\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-legend-label\">Line 1</text>\n  <line x1=\"637\" y1=\"30\" x2=\"649\" y2=\"30\" class=\"xychart-legend-swatch\" stroke=\"var(--xychart-color-1)\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n  <circle cx=\"643\" cy=\"30\" r=\"2.5\" class=\"xychart-legend-dot\" fill=\"var(--xychart-color-1)\" stroke=\"var(--bg)\" stroke-width=\"1\"/>\n  <text x=\"655\" y=\"30\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-legend-label\">Line 2</text>\n  <line x1=\"637\" y1=\"49\" x2=\"649\" y2=\"49\" class=\"xychart-legend-swatch\" stroke=\"var(--xychart-color-2)\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n  <circle cx=\"643\" cy=\"49\" r=\"2.5\" class=\"xychart-legend-dot\" fill=\"var(--xychart-color-2)\" stroke=\"var(--bg)\" stroke-width=\"1\"/>\n  <text x=\"655\" y=\"49\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-legend-label\">Line 3</text>\n  <line x1=\"637\" y1=\"68\" x2=\"649\" y2=\"68\" class=\"xychart-legend-swatch\" stroke=\"var(--xychart-color-3)\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n  <circle cx=\"643\" cy=\"68\" r=\"2.5\" class=\"xychart-legend-dot\" fill=\"var(--xychart-color-3)\" stroke=\"var(--bg)\" stroke-width=\"1\"/>\n  <text x=\"655\" y=\"68\" text-anchor=\"start\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-legend-label\">Line 4</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -4345,5 +4272,91 @@
         "h": 500
       }
     }
+  },
+  "chart": {
+    "categories": [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ],
+    "series": [
+      {
+        "kind": "line",
+        "values": [
+          0,
+          6.5,
+          10.8,
+          15.3,
+          20.6,
+          24,
+          24,
+          17.7,
+          13,
+          8.6,
+          3.1,
+          0
+        ]
+      },
+      {
+        "kind": "line",
+        "values": [
+          8,
+          9.6,
+          11.4,
+          13.5,
+          15.3,
+          16.4,
+          16,
+          14.5,
+          12.5,
+          10.4,
+          8.6,
+          7.6
+        ]
+      },
+      {
+        "kind": "line",
+        "values": [
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12
+        ]
+      },
+      {
+        "kind": "line",
+        "values": [
+          14,
+          13.3,
+          12.3,
+          11.2,
+          10.3,
+          9.8,
+          9.9,
+          10.7,
+          11.8,
+          12.8,
+          13.8,
+          14.2
+        ]
+      }
+    ]
   }
 }

@@ -14,13 +14,11 @@
     "accent": "#cba6f7",
     "muted": "#6c7086"
   },
-  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"337.129\" height=\"133.8\" viewBox=\"0 0 337.129 133.8\" style=\"--bg:#1e1e2e;--fg:#cdd6f4;--line:#585b70;--accent:#cba6f7;--muted:#6c7086;--font:Inter;background:#1e1e2e\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #cdd6f4;\n    --_text-sec:      #6c7086;\n    --_text-muted:    #6c7086;\n    --_text-faint:    #7d8199;\n    --_line:          #585b70;\n    --_arrow:         #cba6f7;\n    --_node-fill:     #232434;\n    --_node-stroke:   #414356;\n    --_group-fill:    #1e1e2e;\n    --_group-hdr:     #272738;\n    --_inner-stroke:  #333446;\n    --_key-badge:     #303042;\n  }\n</style>\n<rect width=\"337.129\" height=\"133.8\" fill=\"#1e1e2e\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#cba6f7\" stroke=\"#cba6f7\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#cba6f7\" stroke=\"#cba6f7\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline class=\"edge\" data-from=\"T1\" data-to=\"Hello\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"159.755,66.9 207.755,66.9\" fill=\"none\" stroke=\"#65697f\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T1-&gt;Hello#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T1 to Hello\" />\n<g class=\"node\" data-id=\"T1\" data-label=\"tree aaa96ce\nhello.txt\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"40\" width=\"119.755\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:T1\" data-role=\"node\" />\n  <text x=\"99.8775\" y=\"66.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\"><tspan x=\"99.8775\" dy=\"-3.9000000000000012\" textLength=\"79.755\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">tree aaa96ce</tspan><tspan x=\"99.8775\" dy=\"16.900000000000002\" textLength=\"46.41\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">hello.txt</tspan></text>\n</g>\n<g class=\"node\" data-id=\"Hello\" data-label=\"blob\nce01362\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"207.755\" y=\"40\" width=\"89.374\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"#232434\" stroke=\"#414356\" stroke-width=\"0.75\" data-id=\"node-shape:Hello\" data-role=\"node\" />\n  <text x=\"252.442\" y=\"66.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#cdd6f4\"><tspan x=\"252.442\" dy=\"-3.9000000000000012\" textLength=\"27.144\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">blob</tspan><tspan x=\"252.442\" dy=\"16.900000000000002\" textLength=\"49.374\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">ce01362</tspan></text>\n</g>\n</svg>",
   "parts": [
     {
       "id": "__frame",
       "role": "frame",
       "kind": "shape",
-      "svg": "",
       "shapes": [
         {
           "subpaths": [
@@ -76,7 +74,6 @@
       "id": "edge:T1->Hello#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"T1\" data-to=\"Hello\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"159.755,66.9 207.755,66.9\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:T1-&gt;Hello#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"T1 to Hello\" />",
       "shapes": [
         {
           "subpaths": [
@@ -168,7 +165,6 @@
       "id": "T1",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"T1\" data-label=\"tree aaa96ce\nhello.txt\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"40\" width=\"119.755\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:T1\" data-role=\"node\" />\n  <text x=\"99.8775\" y=\"66.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\"><tspan x=\"99.8775\" dy=\"-3.9000000000000012\">tree aaa96ce</tspan><tspan x=\"99.8775\" dy=\"16.900000000000002\">hello.txt</tspan></text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -294,7 +290,6 @@
       "id": "Hello",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"Hello\" data-label=\"blob\nce01362\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"207.755\" y=\"40\" width=\"89.374\" height=\"53.800000000000004\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Hello\" data-role=\"node\" />\n  <text x=\"252.442\" y=\"66.9\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\"><tspan x=\"252.442\" dy=\"-3.9000000000000012\">blob</tspan><tspan x=\"252.442\" dy=\"16.900000000000002\">ce01362</tspan></text>\n</g>",
       "shapes": [
         {
           "subpaths": [

@@ -12,9 +12,9 @@ import {
   sunlight,
   daylightYear,
 } from '../scenes/explainers/lib/models.ts';
-import { find, run } from '../scenes/explainers/2password/model.ts';
+import { find, run } from '../scenes/explainers/lib/2password.ts';
 import { Text, loadFonts } from '../src/index.ts';
-import { Repo, AUTHOR } from '../scenes/lib/gitmodel.ts';
+import { Repo, AUTHOR } from '../scenes/explainers/lib/git.ts';
 
 for (const entry of EXPLAINERS)
   test(`${entry.id}: every authored case exposes the program's answers at step boundaries`, async () => {
@@ -33,12 +33,6 @@ for (const entry of EXPLAINERS)
           `Trace invents link ${walk.from}->${walk.to}`,
         );
       switch (entry.id) {
-        case 'pap': {
-          assertStepState(trace, 'boundary', { signin: values.signin });
-          const messages = walks.filter((w) => w.step === 'sign-in');
-          assert.equal(messages.length, values.signin === 'direct' ? 5 : 6);
-          break;
-        }
         case 'seasons': {
           const lat = ({ tromso: 69.65, london: 51.5, quito: 0, sydney: -33.87 } as Record<string, number>)[
             values.place!

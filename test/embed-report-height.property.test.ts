@@ -1,17 +1,12 @@
 // Property tests for reportHeight (app/embed-protocol.ts) in Node, on fake
 // browser globals: which heights it sends, to whom, and when it stops. The
 // real cross-origin behaviour is tested in test/explain-embed.test.ts.
-// Runs: 1000 per property by default, FULL=1 for 10x; replay with FC_SEED/FC_PATH.
+// Counts: test/lib/pbt.ts (FULL=1 is 10x).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fc from 'fast-check';
+import { fc, params } from './lib/pbt.ts';
 import { reportHeight, exactHttpOrigin, resizeHeight, RESIZE_TYPE } from '../app/embed-protocol.ts';
 
-const runs = (n = 1000) => ({
-  numRuns: n * (process.env.FULL ? 10 : 1),
-  ...(process.env.FC_SEED ? { seed: Number(process.env.FC_SEED) } : {}),
-  ...(process.env.FC_PATH ? { path: process.env.FC_PATH } : {}),
-});
 
 type Listener = () => void;
 /** Install a fake framed (or top-level) window; returns the triggers and the recorded posts. */
@@ -73,7 +68,7 @@ test('reportHeight: posts exactly the measured heights rounded up, within 1..100
       }
       assert.deepEqual(w.posts.map((p) => p.msg.height), expected);
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -91,7 +86,7 @@ test('reportHeight: every message targets exactly the parentOrigin', () => {
         assert.equal(p.origin, o);
       }
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -111,7 +106,7 @@ test('reportHeight: every message is one the host-side check accepts, carrying t
         assert.equal(resizeHeight({ origin: o, source, data: p.msg }, o, source), p.msg.height);
       }
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -132,7 +127,7 @@ test('reportHeight: sends nothing when not framed, or when parentOrigin is missi
       }
       assert.equal(w.posts.length, 0);
     }),
-    { ...runs(), maxSkipsPerRun: 100 },
+    { ...params(), maxSkipsPerRun: 100 },
   );
 });
 
@@ -154,6 +149,6 @@ test('reportHeight: after the returned dispose, no resize, step or load sends an
       }
       assert.equal(w.posts.length, sent);
     }),
-    runs(),
+    params(),
   );
 });

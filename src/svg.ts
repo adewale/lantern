@@ -78,6 +78,12 @@ function renderElementsImpl(scene: Scene, relative: boolean): ElementRecord[] {
       const merged = mergedRecord(m);
       if (merged !== undefined) { if (merged) emit(merged); return; }
     }
+    // A leaf wholly outside its clip draws nothing, so it is not written. Some rasterizers
+    // (resvg 2.6) abort on a translucent element whose clip leaves it no area at all.
+    if (clip && !m.children.length) {
+      const b = m.box(), w = m.style.strokeWidth, c = clip.box;
+      if (b && (b[2] + w < c[0] || b[0] - w > c[2] || b[3] + w < c[1] || b[1] - w > c[3])) return;
+    }
     // A translated path would translate its userSpaceOnUse clip as well.
     const rec = elementFor(m, clip ? false : relative);
     if (rec) emit(rec);

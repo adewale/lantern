@@ -14,13 +14,11 @@
     "accent": "#c678dd",
     "muted": "#5c6370"
   },
-  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"596.768\" height=\"246.70000000000002\" viewBox=\"0 0 596.768 246.70000000000002\" style=\"--bg:#282c34;--fg:#abb2bf;--line:#4b5263;--accent:#c678dd;--muted:#5c6370;--font:Inter;background:#282c34\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #abb2bf;\n    --_text-sec:      #5c6370;\n    --_text-muted:    #5c6370;\n    --_text-faint:    #6f747f;\n    --_line:          #4b5263;\n    --_arrow:         #c678dd;\n    --_node-fill:     #2c3038;\n    --_node-stroke:   #424750;\n    --_group-fill:    #282c34;\n    --_group-hdr:     #2f333b;\n    --_inner-stroke:  #383c45;\n    --_key-badge:     #353942;\n  }\n</style>\n<rect width=\"596.768\" height=\"246.70000000000002\" fill=\"#282c34\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#c678dd\" stroke=\"#c678dd\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#c678dd\" stroke=\"#c678dd\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline class=\"edge\" data-from=\"Statement\" data-to=\"Check\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"187.83050000000003,58.45 213.72425,58.45 213.72425,123.35000000000001 221.09300000000002,123.35000000000001\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Statement-&gt;Check#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Statement to Check\" />\n<polyline class=\"edge\" data-from=\"Loop\" data-to=\"Check\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"173.09300000000002,123.35000000000001 221.09300000000002,123.35000000000001\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Loop-&gt;Check#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Loop to Check\" />\n<polyline class=\"edge\" data-from=\"Call\" data-to=\"Check\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"206.3555,188.25 213.72425,188.25 213.72425,123.35000000000001 221.09300000000002,123.35000000000001\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Call-&gt;Check#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Call to Check\" />\n<polyline class=\"edge\" data-from=\"Check\" data-to=\"Result\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"332.697,123.35000000000001 380.697,123.35000000000001\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Check-&gt;Result#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Check to Result\" />\n<g class=\"node\" data-id=\"Statement\" data-label=\"Statement\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"89.56450000000001\" y=\"40\" width=\"98.266\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Statement\" data-role=\"node\" />\n  <text x=\"138.69750000000002\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"58.266\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Statement</text>\n</g>\n<g class=\"node\" data-id=\"Loop\" data-label=\"Loop boundary\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"104.9\" width=\"133.09300000000002\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Loop\" data-role=\"node\" />\n  <text x=\"106.54650000000001\" y=\"123.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"93.093\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Loop boundary</text>\n</g>\n<g class=\"node\" data-id=\"Call\" data-label=\"Function call\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"89.56450000000001\" y=\"169.8\" width=\"116.791\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Call\" data-role=\"node\" />\n  <text x=\"147.96\" y=\"188.25\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"76.791\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Function call</text>\n</g>\n<g class=\"node\" data-id=\"Check\" data-label=\"check_step\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"221.09300000000002\" y=\"104.9\" width=\"111.604\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Check\" data-role=\"node\" />\n  <text x=\"276.89500000000004\" y=\"123.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"71.604\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">check_step</text>\n</g>\n<g class=\"node\" data-id=\"Result\" data-label=\"Result and next context\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"380.697\" y=\"104.9\" width=\"176.07099999999997\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Result\" data-role=\"node\" />\n  <text x=\"468.73249999999996\" y=\"123.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"136.071\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Result and next context</text>\n</g>\n</svg>",
   "parts": [
     {
       "id": "__frame",
       "role": "frame",
       "kind": "shape",
-      "svg": "",
       "shapes": [
         {
           "subpaths": [
@@ -76,7 +74,6 @@
       "id": "edge:Statement->Check#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"Statement\" data-to=\"Check\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"187.83050000000003,58.45 213.72425,58.45 213.72425,123.35000000000001 221.09300000000002,123.35000000000001\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Statement-&gt;Check#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Statement to Check\" />",
       "shapes": [
         {
           "subpaths": [
@@ -188,7 +185,6 @@
       "id": "edge:Loop->Check#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"Loop\" data-to=\"Check\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"173.09300000000002,123.35000000000001 221.09300000000002,123.35000000000001\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Loop-&gt;Check#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Loop to Check\" />",
       "shapes": [
         {
           "subpaths": [
@@ -280,7 +276,6 @@
       "id": "edge:Call->Check#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"Call\" data-to=\"Check\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"206.3555,188.25 213.72425,188.25 213.72425,123.35000000000001 221.09300000000002,123.35000000000001\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Call-&gt;Check#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Call to Check\" />",
       "shapes": [
         {
           "subpaths": [
@@ -392,7 +387,6 @@
       "id": "edge:Check->Result#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"Check\" data-to=\"Result\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"332.697,123.35000000000001 380.697,123.35000000000001\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Check-&gt;Result#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Check to Result\" />",
       "shapes": [
         {
           "subpaths": [
@@ -484,7 +478,6 @@
       "id": "Statement",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"Statement\" data-label=\"Statement\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"89.56450000000001\" y=\"40\" width=\"98.266\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Statement\" data-role=\"node\" />\n  <text x=\"138.69750000000002\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Statement</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -575,7 +568,6 @@
       "id": "Loop",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"Loop\" data-label=\"Loop boundary\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"104.9\" width=\"133.09300000000002\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Loop\" data-role=\"node\" />\n  <text x=\"106.54650000000001\" y=\"123.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Loop boundary</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -666,7 +658,6 @@
       "id": "Call",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"Call\" data-label=\"Function call\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"89.56450000000001\" y=\"169.8\" width=\"116.791\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Call\" data-role=\"node\" />\n  <text x=\"147.96\" y=\"188.25\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Function call</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -757,7 +748,6 @@
       "id": "Check",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"Check\" data-label=\"check_step\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"221.09300000000002\" y=\"104.9\" width=\"111.604\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Check\" data-role=\"node\" />\n  <text x=\"276.89500000000004\" y=\"123.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">check_step</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -848,7 +838,6 @@
       "id": "Result",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"Result\" data-label=\"Result and next context\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"380.697\" y=\"104.9\" width=\"176.07099999999997\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Result\" data-role=\"node\" />\n  <text x=\"468.73249999999996\" y=\"123.35000000000001\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Result and next context</text>\n</g>",
       "shapes": [
         {
           "subpaths": [

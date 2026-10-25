@@ -14,13 +14,11 @@
     "accent": "#4493f8",
     "muted": "#9198a1"
   },
-  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100%\" height=\"100%\" viewBox=\"0 0 1100 420\" style=\"--bg:#0d1117;--fg:#e6edf3;--line:#3d444d;--accent:#4493f8;--muted:#9198a1;--font:Inter;background:#0d1117;max-width:1100px\" aria-roledescription=\"xychart\" class=\"xychart\" data-xychart-colors=\"0\" id=\"mermaid-skya6a\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #e6edf3;\n    --_text-sec:      #9198a1;\n    --_text-muted:    #9198a1;\n    --_text-faint:    #82888e;\n    --_line:          #3d444d;\n    --_arrow:         #4493f8;\n    --_node-fill:     #14181e;\n    --_node-stroke:   #383d43;\n    --_group-fill:    #0d1117;\n    --_group-hdr:     #181c22;\n    --_inner-stroke:  #272b31;\n    --_key-badge:     #23272d;\n  }\n</style>\n<style>\n  .xychart-grid { stroke: #2b3036; stroke-width: 1; }\n  .xychart-axis-line { fill: none; }\n  .xychart-tick { fill: none; }\n  .xychart-x-axis-line { stroke: #9198a1; }\n  .xychart-y-axis-line { stroke: #9198a1; }\n  .xychart-x-tick { stroke: #9198a1; }\n  .xychart-y-tick { stroke: #9198a1; }\n  .xychart-bar { stroke: none; }\n  .xychart-line { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }\n  .xychart-dot { stroke: #0d1117; stroke-width: 2; }\n  .xychart-label { fill: #e6edf3; }\n  .xychart-x-label { fill: #e6edf3; }\n  .xychart-y-label { fill: #e6edf3; }\n  .xychart-axis-title { fill: #e6edf3; }\n  .xychart-x-axis-title { fill: #e6edf3; }\n  .xychart-y-axis-title { fill: #e6edf3; }\n  .xychart-title { fill: #e6edf3; }\n  .xychart-data-label { fill: #e6edf3; pointer-events: none; }\n  svg {\n    --xychart-color-0: #4493f8;\n  }\n  .xychart-bar.xychart-color-0 { fill: #4493f8; }\n  path.xychart-color-0, line.xychart-color-0 { stroke: #4493f8; }\n  circle.xychart-color-0 { fill: #4493f8; }\n</style>\n<rect width=\"1100\" height=\"420\" fill=\"#0d1117\" data-backdrop=\"page\" />\n<line x1=\"63.24\" y1=\"389\" x2=\"1100\" y2=\"389\" class=\"xychart-grid\"/>\n<line x1=\"63.24\" y1=\"350.1\" x2=\"1100\" y2=\"350.1\" class=\"xychart-grid\"/>\n<line x1=\"63.24\" y1=\"311.2\" x2=\"1100\" y2=\"311.2\" class=\"xychart-grid\"/>\n<line x1=\"63.24\" y1=\"272.3\" x2=\"1100\" y2=\"272.3\" class=\"xychart-grid\"/>\n<line x1=\"63.24\" y1=\"233.4\" x2=\"1100\" y2=\"233.4\" class=\"xychart-grid\"/>\n<line x1=\"63.24\" y1=\"194.5\" x2=\"1100\" y2=\"194.5\" class=\"xychart-grid\"/>\n<line x1=\"63.24\" y1=\"155.6\" x2=\"1100\" y2=\"155.6\" class=\"xychart-grid\"/>\n<line x1=\"63.24\" y1=\"116.7\" x2=\"1100\" y2=\"116.7\" class=\"xychart-grid\"/>\n<line x1=\"63.24\" y1=\"77.8\" x2=\"1100\" y2=\"77.8\" class=\"xychart-grid\"/>\n<line x1=\"63.24\" y1=\"38.9\" x2=\"1100\" y2=\"38.9\" class=\"xychart-grid\"/>\n<line x1=\"63.24\" y1=\"0\" x2=\"1100\" y2=\"0\" class=\"xychart-grid\"/>\n<line x1=\"63.24\" y1=\"390\" x2=\"1100\" y2=\"390\" class=\"xychart-axis-line xychart-x-axis-line\" stroke-width=\"2\"/>\n<line x1=\"115.08\" y1=\"391\" x2=\"115.08\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"218.76\" y1=\"391\" x2=\"218.76\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"322.43\" y1=\"391\" x2=\"322.43\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"426.11\" y1=\"391\" x2=\"426.11\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"529.78\" y1=\"391\" x2=\"529.78\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"633.46\" y1=\"391\" x2=\"633.46\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"737.14\" y1=\"391\" x2=\"737.14\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"840.81\" y1=\"391\" x2=\"840.81\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"944.49\" y1=\"391\" x2=\"944.49\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"1048.16\" y1=\"391\" x2=\"1048.16\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>\n<line x1=\"62.24\" y1=\"0\" x2=\"62.24\" y2=\"389\" class=\"xychart-axis-line xychart-y-axis-line\" stroke-width=\"2\"/>\n<line x1=\"61.24\" y1=\"389\" x2=\"56.24\" y2=\"389\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"61.24\" y1=\"350.1\" x2=\"56.24\" y2=\"350.1\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"61.24\" y1=\"311.2\" x2=\"56.24\" y2=\"311.2\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"61.24\" y1=\"272.3\" x2=\"56.24\" y2=\"272.3\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"61.24\" y1=\"233.4\" x2=\"56.24\" y2=\"233.4\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"61.24\" y1=\"194.5\" x2=\"56.24\" y2=\"194.5\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"61.24\" y1=\"155.6\" x2=\"56.24\" y2=\"155.6\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"61.24\" y1=\"116.7\" x2=\"56.24\" y2=\"116.7\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"61.24\" y1=\"77.8\" x2=\"56.24\" y2=\"77.8\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"61.24\" y1=\"38.9\" x2=\"56.24\" y2=\"38.9\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<line x1=\"61.24\" y1=\"0\" x2=\"56.24\" y2=\"0\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>\n<rect x=\"65.84\" y=\"77.8\" width=\"98.49\" height=\"311.2\" class=\"xychart-bar xychart-color-0\" data-value=\"4\" data-label=\"R1\" data-id=\"bar:0:R1\" data-role=\"bar\" />\n<rect x=\"169.51\" y=\"155.6\" width=\"98.49\" height=\"233.4\" class=\"xychart-bar xychart-color-0\" data-value=\"3\" data-label=\"R2\" data-id=\"bar:0:R2\" data-role=\"bar\" />\n<rect x=\"273.19\" y=\"233.4\" width=\"98.49\" height=\"155.6\" class=\"xychart-bar xychart-color-0\" data-value=\"2\" data-label=\"R3\" data-id=\"bar:0:R3\" data-role=\"bar\" />\n<rect x=\"376.86\" y=\"311.2\" width=\"98.49\" height=\"77.8\" class=\"xychart-bar xychart-color-0\" data-value=\"1\" data-label=\"R4\" data-id=\"bar:0:R4\" data-role=\"bar\" />\n<rect x=\"480.54\" y=\"389\" width=\"98.49\" height=\"0\" class=\"xychart-bar xychart-color-0\" data-value=\"0\" data-label=\"R5\" data-id=\"bar:0:R5\" data-role=\"bar\" />\n<rect x=\"584.21\" y=\"389\" width=\"98.49\" height=\"0\" class=\"xychart-bar xychart-color-0\" data-value=\"0\" data-label=\"R6\" data-id=\"bar:0:R6\" data-role=\"bar\" />\n<rect x=\"687.89\" y=\"389\" width=\"98.49\" height=\"0\" class=\"xychart-bar xychart-color-0\" data-value=\"0\" data-label=\"R7\" data-id=\"bar:0:R7\" data-role=\"bar\" />\n<rect x=\"791.57\" y=\"389\" width=\"98.49\" height=\"0\" class=\"xychart-bar xychart-color-0\" data-value=\"0\" data-label=\"R8\" data-id=\"bar:0:R8\" data-role=\"bar\" />\n<rect x=\"895.24\" y=\"389\" width=\"98.49\" height=\"0\" class=\"xychart-bar xychart-color-0\" data-value=\"0\" data-label=\"R9\" data-id=\"bar:0:R9\" data-role=\"bar\" />\n<rect x=\"998.92\" y=\"311.2\" width=\"98.49\" height=\"77.8\" class=\"xychart-bar xychart-color-0\" data-value=\"1\" data-label=\"R10\" data-id=\"bar:0:R10\" data-role=\"bar\" />\n<text x=\"115.08180000000002\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"14.196\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">R1</text>\n<text x=\"218.75740000000002\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"18.732\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">R2</text>\n<text x=\"322.433\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"18.732\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">R3</text>\n<text x=\"426.10859999999997\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"18.732\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">R4</text>\n<text x=\"529.7842\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"18.732\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">R5</text>\n<text x=\"633.4598\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"18.732\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">R6</text>\n<text x=\"737.1354\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"18.732\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">R7</text>\n<text x=\"840.8109999999999\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"18.732\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">R8</text>\n<text x=\"944.4866\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"18.732\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">R9</text>\n<text x=\"1048.1621999999998\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\" textLength=\"21.756\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">R10</text>\n<text x=\"51.24400000000003\" y=\"389\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"9.66\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">0</text>\n<text x=\"51.24400000000003\" y=\"350.1\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"20.244\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">0.5</text>\n<text x=\"51.24400000000003\" y=\"311.2\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"5.124\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">1</text>\n<text x=\"51.24400000000003\" y=\"272.3\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"15.708\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">1.5</text>\n<text x=\"51.24400000000003\" y=\"233.39999999999998\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"9.66\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">2</text>\n<text x=\"51.24400000000003\" y=\"194.5\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"20.244\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">2.5</text>\n<text x=\"51.24400000000003\" y=\"155.60000000000002\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"9.66\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">3</text>\n<text x=\"51.24400000000003\" y=\"116.70000000000005\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"20.244\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">3.5</text>\n<text x=\"51.24400000000003\" y=\"77.79999999999995\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"9.66\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">4</text>\n<text x=\"51.24400000000003\" y=\"38.89999999999998\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"20.244\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">4.5</text>\n<text x=\"51.24400000000003\" y=\"0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\" textLength=\"9.66\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">5</text>\n<text x=\"17.8\" y=\"194.5\" text-anchor=\"middle\" transform=\"rotate(-90,17.8,194.5)\" font-size=\"16\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-axis-title xychart-y-axis-title\" textLength=\"125.952\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Tokens remaining</text>\n</svg>",
   "parts": [
     {
       "id": "__frame",
       "role": "frame",
       "kind": "shape",
-      "svg": "",
       "shapes": [
         {
           "subpaths": [
@@ -76,7 +74,6 @@
       "id": "grid:y:0",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"63.24\" y1=\"389\" x2=\"1100\" y2=\"389\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -114,7 +111,6 @@
       "id": "grid:y:1",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"63.24\" y1=\"350.1\" x2=\"1100\" y2=\"350.1\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -152,7 +148,6 @@
       "id": "grid:y:2",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"63.24\" y1=\"311.2\" x2=\"1100\" y2=\"311.2\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -190,7 +185,6 @@
       "id": "grid:y:3",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"63.24\" y1=\"272.3\" x2=\"1100\" y2=\"272.3\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -228,7 +222,6 @@
       "id": "grid:y:4",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"63.24\" y1=\"233.4\" x2=\"1100\" y2=\"233.4\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -266,7 +259,6 @@
       "id": "grid:y:5",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"63.24\" y1=\"194.5\" x2=\"1100\" y2=\"194.5\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -304,7 +296,6 @@
       "id": "grid:y:6",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"63.24\" y1=\"155.6\" x2=\"1100\" y2=\"155.6\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -342,7 +333,6 @@
       "id": "grid:y:7",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"63.24\" y1=\"116.7\" x2=\"1100\" y2=\"116.7\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -380,7 +370,6 @@
       "id": "grid:y:8",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"63.24\" y1=\"77.8\" x2=\"1100\" y2=\"77.8\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -418,7 +407,6 @@
       "id": "grid:y:9",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"63.24\" y1=\"38.9\" x2=\"1100\" y2=\"38.9\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -456,7 +444,6 @@
       "id": "grid:y:10",
       "role": "grid",
       "kind": "shape",
-      "svg": "<line x1=\"63.24\" y1=\"0\" x2=\"1100\" y2=\"0\" class=\"xychart-grid\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -494,7 +481,6 @@
       "id": "axis:x:line",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"63.24\" y1=\"390\" x2=\"1100\" y2=\"390\" class=\"xychart-axis-line xychart-x-axis-line\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -532,7 +518,6 @@
       "id": "axis:x:tick:R1",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"115.08\" y1=\"391\" x2=\"115.08\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -570,7 +555,6 @@
       "id": "axis:x:tick:R2",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"218.76\" y1=\"391\" x2=\"218.76\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -608,7 +592,6 @@
       "id": "axis:x:tick:R3",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"322.43\" y1=\"391\" x2=\"322.43\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -646,7 +629,6 @@
       "id": "axis:x:tick:R4",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"426.11\" y1=\"391\" x2=\"426.11\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -684,7 +666,6 @@
       "id": "axis:x:tick:R5",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"529.78\" y1=\"391\" x2=\"529.78\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -722,7 +703,6 @@
       "id": "axis:x:tick:R6",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"633.46\" y1=\"391\" x2=\"633.46\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -760,7 +740,6 @@
       "id": "axis:x:tick:R7",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"737.14\" y1=\"391\" x2=\"737.14\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -798,7 +777,6 @@
       "id": "axis:x:tick:R8",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"840.81\" y1=\"391\" x2=\"840.81\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -836,7 +814,6 @@
       "id": "axis:x:tick:R9",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"944.49\" y1=\"391\" x2=\"944.49\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -874,7 +851,6 @@
       "id": "axis:x:tick:R10",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"1048.16\" y1=\"391\" x2=\"1048.16\" y2=\"396\" class=\"xychart-tick xychart-x-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -912,7 +888,6 @@
       "id": "axis:y:line",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"62.24\" y1=\"0\" x2=\"62.24\" y2=\"389\" class=\"xychart-axis-line xychart-y-axis-line\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -950,7 +925,6 @@
       "id": "axis:y:tick:0",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"61.24\" y1=\"389\" x2=\"56.24\" y2=\"389\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -988,7 +962,6 @@
       "id": "axis:y:tick:0.5",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"61.24\" y1=\"350.1\" x2=\"56.24\" y2=\"350.1\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1026,7 +999,6 @@
       "id": "axis:y:tick:1",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"61.24\" y1=\"311.2\" x2=\"56.24\" y2=\"311.2\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1064,7 +1036,6 @@
       "id": "axis:y:tick:1.5",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"61.24\" y1=\"272.3\" x2=\"56.24\" y2=\"272.3\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1102,7 +1073,6 @@
       "id": "axis:y:tick:2",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"61.24\" y1=\"233.4\" x2=\"56.24\" y2=\"233.4\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1140,7 +1110,6 @@
       "id": "axis:y:tick:2.5",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"61.24\" y1=\"194.5\" x2=\"56.24\" y2=\"194.5\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1178,7 +1147,6 @@
       "id": "axis:y:tick:3",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"61.24\" y1=\"155.6\" x2=\"56.24\" y2=\"155.6\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1216,7 +1184,6 @@
       "id": "axis:y:tick:3.5",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"61.24\" y1=\"116.7\" x2=\"56.24\" y2=\"116.7\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1254,7 +1221,6 @@
       "id": "axis:y:tick:4",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"61.24\" y1=\"77.8\" x2=\"56.24\" y2=\"77.8\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1292,7 +1258,6 @@
       "id": "axis:y:tick:4.5",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"61.24\" y1=\"38.9\" x2=\"56.24\" y2=\"38.9\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1330,7 +1295,6 @@
       "id": "axis:y:tick:5",
       "role": "axis",
       "kind": "shape",
-      "svg": "<line x1=\"61.24\" y1=\"0\" x2=\"56.24\" y2=\"0\" class=\"xychart-tick xychart-y-tick\" stroke-width=\"2\"/>",
       "shapes": [
         {
           "subpaths": [
@@ -1368,7 +1332,6 @@
       "id": "bar:0:R1",
       "role": "bar",
       "kind": "shape",
-      "svg": "<rect x=\"65.84\" y=\"77.8\" width=\"98.49\" height=\"311.2\" class=\"xychart-bar xychart-color-0\" data-value=\"4\" data-label=\"R1\" data-id=\"bar:0:R1\" data-role=\"bar\" />",
       "shapes": [
         {
           "subpaths": [
@@ -1428,7 +1391,6 @@
       "id": "bar:0:R2",
       "role": "bar",
       "kind": "shape",
-      "svg": "<rect x=\"169.51\" y=\"155.6\" width=\"98.49\" height=\"233.4\" class=\"xychart-bar xychart-color-0\" data-value=\"3\" data-label=\"R2\" data-id=\"bar:0:R2\" data-role=\"bar\" />",
       "shapes": [
         {
           "subpaths": [
@@ -1488,7 +1450,6 @@
       "id": "bar:0:R3",
       "role": "bar",
       "kind": "shape",
-      "svg": "<rect x=\"273.19\" y=\"233.4\" width=\"98.49\" height=\"155.6\" class=\"xychart-bar xychart-color-0\" data-value=\"2\" data-label=\"R3\" data-id=\"bar:0:R3\" data-role=\"bar\" />",
       "shapes": [
         {
           "subpaths": [
@@ -1548,7 +1509,6 @@
       "id": "bar:0:R4",
       "role": "bar",
       "kind": "shape",
-      "svg": "<rect x=\"376.86\" y=\"311.2\" width=\"98.49\" height=\"77.8\" class=\"xychart-bar xychart-color-0\" data-value=\"1\" data-label=\"R4\" data-id=\"bar:0:R4\" data-role=\"bar\" />",
       "shapes": [
         {
           "subpaths": [
@@ -1608,7 +1568,6 @@
       "id": "bar:0:R5",
       "role": "bar",
       "kind": "shape",
-      "svg": "<rect x=\"480.54\" y=\"389\" width=\"98.49\" height=\"0\" class=\"xychart-bar xychart-color-0\" data-value=\"0\" data-label=\"R5\" data-id=\"bar:0:R5\" data-role=\"bar\" />",
       "shapes": [
         {
           "subpaths": [
@@ -1662,7 +1621,6 @@
       "id": "bar:0:R6",
       "role": "bar",
       "kind": "shape",
-      "svg": "<rect x=\"584.21\" y=\"389\" width=\"98.49\" height=\"0\" class=\"xychart-bar xychart-color-0\" data-value=\"0\" data-label=\"R6\" data-id=\"bar:0:R6\" data-role=\"bar\" />",
       "shapes": [
         {
           "subpaths": [
@@ -1716,7 +1674,6 @@
       "id": "bar:0:R7",
       "role": "bar",
       "kind": "shape",
-      "svg": "<rect x=\"687.89\" y=\"389\" width=\"98.49\" height=\"0\" class=\"xychart-bar xychart-color-0\" data-value=\"0\" data-label=\"R7\" data-id=\"bar:0:R7\" data-role=\"bar\" />",
       "shapes": [
         {
           "subpaths": [
@@ -1770,7 +1727,6 @@
       "id": "bar:0:R8",
       "role": "bar",
       "kind": "shape",
-      "svg": "<rect x=\"791.57\" y=\"389\" width=\"98.49\" height=\"0\" class=\"xychart-bar xychart-color-0\" data-value=\"0\" data-label=\"R8\" data-id=\"bar:0:R8\" data-role=\"bar\" />",
       "shapes": [
         {
           "subpaths": [
@@ -1824,7 +1780,6 @@
       "id": "bar:0:R9",
       "role": "bar",
       "kind": "shape",
-      "svg": "<rect x=\"895.24\" y=\"389\" width=\"98.49\" height=\"0\" class=\"xychart-bar xychart-color-0\" data-value=\"0\" data-label=\"R9\" data-id=\"bar:0:R9\" data-role=\"bar\" />",
       "shapes": [
         {
           "subpaths": [
@@ -1878,7 +1833,6 @@
       "id": "bar:0:R10",
       "role": "bar",
       "kind": "shape",
-      "svg": "<rect x=\"998.92\" y=\"311.2\" width=\"98.49\" height=\"77.8\" class=\"xychart-bar xychart-color-0\" data-value=\"1\" data-label=\"R10\" data-id=\"bar:0:R10\" data-role=\"bar\" />",
       "shapes": [
         {
           "subpaths": [
@@ -1938,7 +1892,6 @@
       "id": "axis:x:label:R1",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"115.08180000000002\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">R1</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -1981,7 +1934,6 @@
       "id": "axis:x:label:R2",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"218.75740000000002\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">R2</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2024,7 +1976,6 @@
       "id": "axis:x:label:R3",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"322.433\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">R3</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2067,7 +2018,6 @@
       "id": "axis:x:label:R4",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"426.10859999999997\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">R4</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2110,7 +2060,6 @@
       "id": "axis:x:label:R5",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"529.7842\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">R5</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2153,7 +2102,6 @@
       "id": "axis:x:label:R6",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"633.4598\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">R6</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2196,7 +2144,6 @@
       "id": "axis:x:label:R7",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"737.1354\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">R7</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2239,7 +2186,6 @@
       "id": "axis:x:label:R8",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"840.8109999999999\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">R8</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2282,7 +2228,6 @@
       "id": "axis:x:label:R9",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"944.4866\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">R9</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2325,7 +2270,6 @@
       "id": "axis:x:label:R10",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"1048.1621999999998\" y=\"406.6\" text-anchor=\"middle\" font-size=\"14\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-label xychart-x-label\">R10</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2368,7 +2312,6 @@
       "id": "axis:y:label:0",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"51.24400000000003\" y=\"389\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">0</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2412,7 +2355,6 @@
       "id": "axis:y:label:0.5",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"51.24400000000003\" y=\"350.1\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">0.5</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2456,7 +2398,6 @@
       "id": "axis:y:label:1",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"51.24400000000003\" y=\"311.2\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">1</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2500,7 +2441,6 @@
       "id": "axis:y:label:1.5",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"51.24400000000003\" y=\"272.3\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">1.5</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2544,7 +2484,6 @@
       "id": "axis:y:label:2",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"51.24400000000003\" y=\"233.39999999999998\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">2</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2588,7 +2527,6 @@
       "id": "axis:y:label:2.5",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"51.24400000000003\" y=\"194.5\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">2.5</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2632,7 +2570,6 @@
       "id": "axis:y:label:3",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"51.24400000000003\" y=\"155.60000000000002\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">3</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2676,7 +2613,6 @@
       "id": "axis:y:label:3.5",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"51.24400000000003\" y=\"116.70000000000005\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">3.5</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2720,7 +2656,6 @@
       "id": "axis:y:label:4",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"51.24400000000003\" y=\"77.79999999999995\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">4</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2764,7 +2699,6 @@
       "id": "axis:y:label:4.5",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"51.24400000000003\" y=\"38.89999999999998\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">4.5</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2808,7 +2742,6 @@
       "id": "axis:y:label:5",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"51.24400000000003\" y=\"0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"400\" class=\"xychart-label xychart-y-label\">5</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -2852,7 +2785,6 @@
       "id": "axis:y:title",
       "role": "axis",
       "kind": "text",
-      "svg": "<text x=\"17.8\" y=\"194.5\" text-anchor=\"middle\" transform=\"rotate(-90,17.8,194.5)\" font-size=\"16\" font-weight=\"400\" dy=\"0.35em\" class=\"xychart-axis-title xychart-y-axis-title\">Tokens remaining</text>",
       "shapes": [
         {
           "subpaths": [],
@@ -3027,5 +2959,36 @@
         "h": 420
       }
     }
+  },
+  "chart": {
+    "categories": [
+      "R1",
+      "R2",
+      "R3",
+      "R4",
+      "R5",
+      "R6",
+      "R7",
+      "R8",
+      "R9",
+      "R10"
+    ],
+    "series": [
+      {
+        "kind": "bar",
+        "values": [
+          4,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    ]
   }
 }

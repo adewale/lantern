@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "importer": "263673d5bf9b15ed",
+  "importer": "8ac25d9f9eb41b38",
   "renderer": "agentic-mermaid@0.4.1",
-  "sourceHash": "f0cbb87f4156904352d127fc3deea17ecb1634cd92988059b12d664910754935",
+  "sourceHash": "bc3366b2c19e9aaef46b4dc949e20b70d4e98c21478f6749786fdc2a72dcd217",
   "diagrams": {
     "[\"graph LR\\nInput[empty stdin] --> Echo[echo hello]\\nEcho --> Tr[tr a-z A-Z]\\nTr --> File[shout.txt]\",\"chalkboard\",null]": "e7f87d3a5df71e2b.json",
     "[\"graph LR\\nInput[empty stdin] --> Echo[echo hello]\\nEcho --> Tr[tr a-z A-Z]\\nTr --> Output[stdout]\",\"chalkboard\",null]": "43f5aa38660d65fd.json",

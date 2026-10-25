@@ -3,14 +3,13 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { spawn } from 'node:child_process';
-import { execFileSync } from 'node:child_process';
 import { SnapshotSink, renderAt } from '../src/index.ts';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
-import { collectProject, defaultVariant, ROOT, hash, baseReceipt } from './lib/explain-project.ts';
+import { collectProject, defaultVariant, ROOT, baseReceipt } from './lib/explain-project.ts';
 import { restingTime, htmlEscape } from '../explain/trace.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
 import { contactSheet } from './lib/explain-shots.ts';
-import { rasterize } from './lib/explain-video.ts';
+import { rasterize, exporterHash, probeVideo } from './lib/explain-video.ts';
 import { checkProject } from './lib/explain-check.ts';
 
 const directory = join(ROOT, 'out/explainers');
@@ -18,69 +17,64 @@ await mkdir(directory, { recursive: true });
 const { check, render, force } = parseArgs({
   options: { check: { type: 'boolean' }, render: { type: 'boolean' }, force: { type: 'boolean' } },
 }).values;
+// What the gallery and docs point at, plus the hashes that say whether a video is current.
 const evidence: {
   id: string;
   title: string;
-  variants: number;
+  cases: Record<string, string>[];
   diagrams: number;
   styles: string[];
   families: string[];
-  bytes: number;
   sourceHash: string;
   engineHash: string;
   snapshotHashes: string[];
-  checks?: unknown;
 }[] = [];
 for (const item of EXPLAINERS) {
   const project = await collectProject(join(ROOT, 'scenes/explainers', item.id));
-  const built = await buildExplainer(project, join(directory, item.id + '.html'));
-  const query = new URLSearchParams(item.query ?? '');
-  // No query means the default case, which the tile's link opens; not the first case declared.
-  const variant =
-      (query.size ? project.variants.find((v) => [...query].every(([k, value]) => v.values[k] === value)) : undefined) ??
-      defaultVariant(project),
+  await buildExplainer(project, join(directory, item.id + '.html'));
+  // The tile links to the default case, so it shows that case's picture.
+  const variant = defaultVariant(project),
     step = variant.trace.steps.find((s) => s.step === item.step) ?? variant.trace.steps[0]!;
   const sink = new SnapshotSink({ width: 960 });
   await renderAt(variant.Scene, restingTime(step, variant.trace.fps), sink);
   await writeFile(join(directory, item.id + '.png'), (await rasterize(sink.svg)).asPng());
   await contactSheet(project, join(directory, item.id + '.steps.png'));
-  const checks = check ? await checkProject(project) : undefined;
+  if (check) await checkProject(project, join(ROOT, 'out/checks', item.id));
   evidence.push({
     id: item.id,
     title: project.Scene.meta?.title ?? item.id,
-    variants: project.variants.length,
+    cases: project.variants.map((v) => v.values),
     diagrams: Object.keys(project.store).length,
     styles: [...new Set(Object.values(project.store).map((s) => s.spec.style ?? 'default'))],
     families: [...new Set(Object.values(project.store).map((s) => s.family))],
-    bytes: Buffer.byteLength(built.html),
     sourceHash: project.sourceHash,
     engineHash: project.engineHash,
     snapshotHashes: baseReceipt(project).snapshotHashes,
-    ...(checks ? { checks } : {}),
   });
   console.log(
     `${item.id}: ${project.variants.length} cases · ${Object.keys(project.store).length} diagrams${check ? ' · checks passed' : ''}`,
   );
 }
 await buildLoader(join(directory, 'loader.js'));
-const variants = evidence.reduce((n, s) => n + s.variants, 0),
+const cases = evidence.reduce((n, s) => n + s.cases.length, 0),
   diagrams = evidence.reduce((n, s) => n + s.diagrams, 0),
   styles = new Set(evidence.flatMap((s) => s.styles)),
   families = new Set(evidence.flatMap((s) => s.families));
 const totals = {
   explainers: evidence.length,
-  variants,
+  cases,
   diagrams,
   styles: styles.size,
   families: families.size,
 };
 await writeFile(
   join(directory, 'evidence.json'),
-  JSON.stringify({ version: 1, totals, scenes: evidence }, null, 2) + '\n',
+  // A failing check throws before this is written, so `checked` means every case passed.
+  JSON.stringify({ version: 2, checked: !!check, totals, scenes: evidence }, null, 2) + '\n',
 );
 const tile = (item: (typeof EXPLAINERS)[number], lead = false) => {
   const data = evidence.find((s) => s.id === item.id)!;
-  const href = `${item.id}.html?step=${item.step}${item.query ? '&' + item.query : ''}`;
+  const href = `${item.id}.html?step=${item.step}`;
   return `<li${lead ? ' class="lead"' : ''}><a href="${htmlEscape(href)}"><img src="${item.id}.png" width="960" height="540" alt="" loading="${lead ? 'eager' : 'lazy'}"><span>${htmlEscape(data.title)}</span></a></li>`;
 };
 const topics = EXPLAINERS.filter((e) => e.group === 'topic'),
@@ -115,12 +109,12 @@ footer a{color:inherit}
 await writeFile(join(directory, 'index.html'), html);
 await writeFile(
   join(directory, 'embed-lab.html'),
-  `<!doctype html><html lang="en" data-theme="light"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two embeds on one host page</title><style>${tokens}body{max-width:1200px;margin:0 auto;padding:32px 16px 64px;background:#eceff3;color:var(--fg)}h1{font-size:1.5rem;font-weight:650;letter-spacing:-.015em;margin:0 0 8px;text-wrap:balance}a{color:var(--accent);text-underline-offset:.2em}main{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;align-items:start}section{min-width:0;background:#fff;border-radius:12px;box-shadow:0 1px 2px rgb(0 0 0/.06),0 0 0 1px rgb(0 0 0/.06);overflow:hidden}@media(max-width:850px){main{grid-template-columns:1fr}}</style><h1>Two embeds, each sized to its own content</h1><a href="index.html">All explainers</a><main><section id="protocol"></section><section id="cache"></section></main><script src="loader.js" data-src="pap.html?step=sign-in" data-target="protocol" data-title="Personal Agent Protocol"></script><script src="loader.js" data-src="mr-cache.html?request=miss&step=request" data-target="cache" data-title="Cache request"></script></html>`,
+  `<!doctype html><html lang="en" data-theme="light"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two embeds on one host page</title><style>${tokens}body{max-width:1200px;margin:0 auto;padding:32px 16px 64px;background:#eceff3;color:var(--fg)}h1{font-size:1.5rem;font-weight:650;letter-spacing:-.015em;margin:0 0 8px;text-wrap:balance}a{color:var(--accent);text-underline-offset:.2em}main{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;align-items:start}section{min-width:0;background:#fff;border-radius:12px;box-shadow:0 1px 2px rgb(0 0 0/.06),0 0 0 1px rgb(0 0 0/.06);overflow:hidden}@media(max-width:850px){main{grid-template-columns:1fr}}</style><h1>Two embeds, each sized to its own content</h1><a href="index.html">All explainers</a><main><section id="git"></section><section id="cache"></section></main><script src="loader.js" data-src="exgit.html?step=change" data-target="git" data-title="Git object ids"></script><script src="loader.js" data-src="mr-cache.html?request=miss&step=request" data-target="cache" data-title="Cache request"></script></html>`,
 );
 console.log(`Gallery: ${join(directory, 'index.html')}\n${JSON.stringify(totals)}`);
 
 if (render) {
-  const exporterHash = hash(await readFile(new URL('./lib/explain-video.ts', import.meta.url)));
+  const exporter = await exporterHash();
   const queue = [...EXPLAINERS];
   let failed = false;
   async function worker() {
@@ -134,7 +128,7 @@ if (render) {
           const receipt = JSON.parse(await readFile(out + '.receipt.json', 'utf8'));
           fresh =
             receipt.sourceHash === entry.sourceHash &&
-            receipt.exporterHash === exporterHash &&
+            receipt.exporterHash === exporter &&
             receipt.engineHash === entry.engineHash &&
             JSON.stringify(receipt.snapshotHashes) === JSON.stringify(entry.snapshotHashes) &&
             receipt.fps === 30 &&
@@ -177,19 +171,15 @@ if (render) {
         failed = true;
         continue;
       }
-      const probe = JSON.parse(
-        execFileSync('ffprobe', ['-v', 'error', '-show_streams', '-show_chapters', '-of', 'json', out], {
-          encoding: 'utf8',
-        }),
-      );
+      const probe = probeVideo(out);
       if (
-        probe.streams.some((s: { codec_type: string }) => s.codec_type === 'audio') ||
-        !probe.streams.some((s: { codec_name: string }) => s.codec_name === 'h264') ||
-        !probe.streams.some((s: { codec_name: string }) => s.codec_name === 'mov_text')
+        probe.streams.some((s) => s.codec_type === 'audio') ||
+        !probe.streams.some((s) => s.codec_name === 'h264') ||
+        !probe.streams.some((s) => s.codec_name === 'mov_text')
       )
         throw new Error(`Invalid streams: ${item.id}`);
       const receipt = JSON.parse(await readFile(out + '.receipt.json', 'utf8'));
-      const video = probe.streams.find((s: { codec_type: string }) => s.codec_type === 'video');
+      const video = probe.streams.find((s) => s.codec_type === 'video')!;
       if (
         video.width !== 1280 ||
         video.height !== 960 ||
@@ -197,7 +187,6 @@ if (render) {
         probe.chapters.length !== receipt.chapters.length
       )
         throw new Error(`Video metadata mismatch: ${item.id}`);
-      execFileSync('ffmpeg', ['-v', 'error', '-i', out, '-f', 'null', '-'], { stdio: 'pipe' });
       console.log(`Video verified: ${item.id} · ${receipt.frames} frames`);
     }
   }

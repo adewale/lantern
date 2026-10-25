@@ -9,9 +9,9 @@ import { join } from 'node:path';
 import { Text, Group, Rectangle, loadFonts } from '../src/index.ts';
 import type { Mobject } from '../src/index.ts';
 import { wrapCaption, FOOTER_TEXT_WIDTH } from '../tools/lib/explain-video.ts';
-import { restingTextProblems, checkProject } from '../tools/lib/explain-check.ts';
+import { restingTextProblems } from '../tools/lib/explain-check.ts';
 import { readSnapshots, writeSnapshots, snapshotFileName, collectProject, IMPORTER } from '../tools/lib/explain-project.ts';
-import { diagramKey } from '../explain/index.ts';
+import { diagramKey } from '../integrations/agentic-mermaid/snapshot.ts';
 import type { SnapshotStore } from '../explain/index.ts';
 import { fc, params } from './lib/pbt.ts';
 

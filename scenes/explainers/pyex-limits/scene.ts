@@ -1,5 +1,4 @@
 import { Scene, FadeIn, FadeOut } from '../../../src/index.ts';
-import type { Box } from '../../../src/index.ts';
 import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
 import { checkStep } from '../lib/models.ts';
 const STYLE = 'one-dark';
@@ -31,8 +30,8 @@ const CALLER = [
   '    replan(budget_hint=str(e))',
 ];
 // Diagrams across the top; the code and the counters it reads below.
-const CODE: Box = [-7.55, -4.25, 1.95, -0.6],
-  CARD: Box = [2.25, -4.25, 7.55, -0.6];
+const CODE = regionBox('bottom', { right: 1.95, top: -0.6 }),
+  CARD = regionBox('bottom', { left: 2.25, top: -0.6 });
 const CLAUSE: Record<string, { line: number; node: string; row: string }> = {
   'step limit': { line: 2, node: 'Steps', row: 'steps' },
   'memory limit': { line: 3, node: 'Memory', row: 'memory' },
@@ -177,7 +176,7 @@ export default class LimitsExplainer extends Scene {
     ) as [string, string][];
     await d.dim([...new Set(['Steps', fired.node, ...path.flat()])]);
     if (path.length) await d.walk(path, { trail: true });
-    await d.mark([fired.node], { color: s.bad });
+    await d.mark([fired.node], { color: s.bad, as: 'matched' });
     await code.focus(fired.line);
     await card.mark(fired.row);
     await d.note(

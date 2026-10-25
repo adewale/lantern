@@ -144,7 +144,7 @@ export default class TokenBucketExplainer extends Scene {
     await this.play(new FadeIn(gauge), new FadeIn(level), new FadeIn(number));
     await this.play(...chips.map((c) => new FadeIn(c, { runTime: 0.4 })), ...times.map((t) => new FadeIn(t)));
     const code = await s.code(CODE, {
-      at: [-2.75, -2.0, 7.55, 1.6],
+      at: regionBox('full', { left: -2.75, bottom: -2.0, top: 1.6 }),
       fontSize: 0.25,
     });
     const card = await s.card(
@@ -154,7 +154,7 @@ export default class TokenBucketExplainer extends Scene {
         ['Refill on arrival', '—'],
       ],
       // Same width and centre as the code above, so the two share both edges.
-      { at: [-2.75, -4.25, 7.55, -2.2], width: code.width(), fontSize: 0.24 },
+      { at: regionBox('full', { left: -2.75, top: -2.2 }), width: code.width(), fontSize: 0.24 },
     );
     await code.focus(1);
 
@@ -227,7 +227,7 @@ export default class TokenBucketExplainer extends Scene {
     // --------------------------------------------------------------- trace
     await this.step('trace', {
       title: 'The balance after each call, with 429s in red',
-      caption: `Each bar is the balance left after one allow call, and the red columns are the requests that got 429.${
+      caption: `Each bar is the balance left after one allow call, and the red notes sit on the requests that got 429.${
         leftover
           ? ` R${plan.indexOf(leftover) + 1} got 429 yet left ${fmt(leftover.after)} tokens, because a request needs a whole token.`
           : ''
@@ -248,26 +248,8 @@ export default class TokenBucketExplainer extends Scene {
       ...times.map((t, i) => t.animate.moveTo([columnX(i), CHIP_Y + 0.72])),
       { runTime: 0.6 },
     );
-    const rejected = responses.flatMap((r, i) => (r === 429 ? [i] : []));
-    const y0 = chart.get('axis:y:tick:0').center()[1],
-      y5 = chart.get('axis:y:tick:5').center()[1];
-    const pitch = columnX(1) - columnX(0);
-    const bands = new Group(
-      ...rejected.map((i) =>
-        new Rectangle({
-          width: pitch * 0.92,
-          height: y5 - y0,
-          stroke: s.bad,
-          strokeWidth: 0.02,
-          fill: s.bad,
-          fillOpacity: 0.12,
-        }).moveTo([columnX(i), (y0 + y5) / 2]),
-      ),
-    );
-    await s.enter(bands);
-    await chart.mark(
-      rejected.map((i) => 'bar:0:R' + (i + 1)),
-      { color: s.bad },
-    );
+    // A rejected call often leaves no tokens, and a bar of height zero shows no mark, so each gets a note.
+    for (const [i, r] of responses.entries())
+      if (r === 429) await chart.note('bar:0:R' + (i + 1), '429', { side: 'above', color: s.bad });
   }
 }

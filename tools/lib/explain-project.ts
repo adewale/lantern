@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { Scene, NullSink, traceScene, takeMissingGlyphs } from '../../src/index.ts';
 import type { Trace } from '../../src/index.ts';
-import { variantsOf, withSettings, bindSnapshots, caseName } from '../../explain/index.ts';
+import { variantsOf, withSettings, bindSnapshots, caseName, resolveSettings } from '../../explain/index.ts';
 import type { ExplainerClass, SnapshotStore, Settings } from '../../explain/index.ts';
 import type { DiagramResolver } from '../../integrations/agentic-mermaid/snapshot.ts';
 import { diagramKey, RENDERER } from '../../integrations/agentic-mermaid/snapshot.ts';
@@ -273,11 +273,10 @@ export async function collectProject(
     await builder?.close();
   }
 }
-export function defaultVariant(project: Project) {
-  const defaults = Object.fromEntries((project.Scene.settings ?? []).map((s) => [s.id, s.default]));
-  return project.variants.find((v) =>
-    Object.entries(defaults).every(([key, value]) => v.values[key] === value),
-  )!;
+/** The default case, or the case these values choose with every other setting at its default, as a URL does. */
+export function defaultVariant(project: Project, values: Settings = {}) {
+  const want = resolveSettings(project.Scene, values);
+  return project.variants.find((v) => Object.keys(want).every((key) => v.values[key] === want[key]))!;
 }
 export const sceneSlug = (p: Project) => p.Scene.meta?.id ?? basename(p.file).replace(/\.[^.]+$/, '');
 /** The fields every receipt (page or video) carries: what was built, from which sources. */

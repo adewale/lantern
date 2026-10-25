@@ -12,6 +12,7 @@ import type {
   DiagramSpec,
   SnapshotStore,
   SnapshotPart,
+  ChartData,
 } from '../snapshot.ts';
 
 export function replayMorph(
@@ -30,6 +31,22 @@ export function replayMorph(
   }
   if (serializeMermaid(model) !== serializeMermaid(target.value))
     throw new Error('Morph ops do not produce the next diagram');
+}
+
+/** An XY chart's series and categories as written, for descriptions that state its values. */
+function chartOf(spec: DiagramSpec): { chart?: ChartData } {
+  const parsed = parseRegisteredMermaid(spec.source);
+  if (!parsed.ok || parsed.value.body.kind !== 'xychart') return {};
+  const { series, xAxis } = parsed.value.body as {
+    series: { kind: string; values: number[] }[];
+    xAxis?: { categories?: string[] };
+  };
+  return {
+    chart: {
+      ...(xAxis?.categories ? { categories: xAxis.categories } : {}),
+      series: series.map(({ kind, values }) => ({ kind, values })),
+    },
+  };
 }
 
 export async function snapshotBuilder(
@@ -53,7 +70,7 @@ export async function snapshotBuilder(
         if (!findings.ok) throw new Error(`Diagram verification failed: ${JSON.stringify(findings)}`);
         const r = capture(spec);
         const lowered = await readSvg(page, r.marked);
-        const parts: SnapshotPart[] = r.parts.map(({ node, svg }, i) => {
+        const parts: SnapshotPart[] = r.parts.map(({ node }, i) => {
           const connector = (n: SceneNode): Extract<SceneNode, { kind: 'connector' }> | undefined =>
             n.kind === 'connector'
               ? n
@@ -76,7 +93,6 @@ export async function snapshotBuilder(
             id,
             role: node.role,
             kind: node.kind,
-            svg,
             shapes: lowered.get(i) ?? [],
             ...(edge?.endpoints.from ? { from: edge.endpoints.from } : {}),
             ...(edge?.endpoints.to ? { to: edge.endpoints.to } : {}),
@@ -97,7 +113,7 @@ export async function snapshotBuilder(
           if (owner && ids.has(owner)) p.owner = owner;
         }
         if (lowered.has(-1))
-          parts.unshift({ id: '__frame', role: 'frame', kind: 'shape', svg: '', shapes: lowered.get(-1)! });
+          parts.unshift({ id: '__frame', role: 'frame', kind: 'shape', shapes: lowered.get(-1)! });
         const value: DiagramSnapshot = {
           version: 1,
           renderer: RENDERER,
@@ -106,9 +122,9 @@ export async function snapshotBuilder(
           width: r.doc.width,
           height: r.doc.height,
           palette: r.palette,
-          svg: r.svg,
           parts,
           findings,
+          ...chartOf(spec),
         };
         store[key] = value;
         return value;

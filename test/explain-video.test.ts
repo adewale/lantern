@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
-import { renderVideo, vttTime, wrapCaption, captionsVtt } from '../tools/lib/explain-video.ts';
+import { renderVideo, vttTime, wrapCaption, captionsVtt, probeVideo } from '../tools/lib/explain-video.ts';
 import { Scene, Dot, FadeIn, loadFonts } from '../src/index.ts';
 
 test('caption timestamps and wrapping use real glyph advances', async () => {
@@ -37,37 +37,36 @@ test(
       const project = await collectProject(file);
       const out = join(folder, 'test.mp4');
       const receipt = await renderVideo(project, project.variants[0]!, out, { footer: true, fps: 4 });
-      const probe = JSON.parse(
-        execFileSync('ffprobe', ['-v', 'error', '-show_streams', '-show_chapters', '-of', 'json', out], {
-          encoding: 'utf8',
-        }),
-      );
-      const video = probe.streams.find((s: { codec_type: string }) => s.codec_type === 'video');
+      const probe = probeVideo(out);
+      const video = probe.streams.find((s) => s.codec_type === 'video')!;
       assert.equal(video.codec_name, 'h264');
       assert.equal(video.width, 1280);
       assert.equal(video.height, 960);
       assert.equal(Number(video.nb_frames), receipt.frames);
       assert.equal(receipt.systemFonts, false);
       assert.ok(Number(receipt.rasterizedFrames) < Number(receipt.frames));
-      assert.equal(probe.streams.filter((s: { codec_type: string }) => s.codec_type === 'audio').length, 0);
-      const subtitles = probe.streams.find((s: { codec_name: string }) => s.codec_name === 'mov_text');
-      assert.equal(subtitles.tags.language, 'eng');
-      // Chapters carry step titles. A step reads its caption over the previous picture (3 words at
-      // 238 wpm: 4 frames at 4 fps), plays its 0.5 s of motion (2 frames) and settles for 0.4 s
-      // (2 frames); the scene's caption hold is skipped. The first step, with nothing before it,
-      // reads after its motion instead. So each step lasts 8 frames, 2 s.
+      assert.ok(!probe.streams.some((s) => s.codec_type === 'audio'));
+      assert.equal(probe.streams.find((s) => s.codec_name === 'mov_text')!.tags!.language, 'eng');
+      // Chapters carry step titles and start at the motion. Step one plays 0.5 s of motion (2 frames
+      // at 4 fps) under its title, then holds its resting picture under its caption for the reading
+      // time (3 words at 160 wpm: 5 frames); the scene's own hold is skipped. Step two's 0.5 s wait
+      // plays the same way.
       assert.deepEqual(
-        probe.chapters.map((c: { tags: { title: string }; start_time: string }) => [c.tags.title, Number(c.start_time)]),
-        [['First', 0], ['Second', 2]],
+        probe.chapters.map((c) => [c.tags.title, Number(c.start_time)]),
+        [['First', 0], ['Second', 1.75]],
       );
-      assert.equal(receipt.frames, 16);
+      assert.equal(receipt.frames, 14);
+      assert.deepEqual(receipt.chapters, [{ step: 'one', captionHold: 1.25 }, { step: 'two', captionHold: 1.25 }]);
       assert.equal(receipt.language, 'en');
       assert.equal(
         await readFile(out.replace('.mp4', '.vtt'), 'utf8'),
-        'WEBVTT\nLanguage: en\n\n1\n00:00:00.000 --> 00:00:02.000\nA dot arrives.\n\n2\n00:00:02.000 --> 00:00:04.000\nThe dot stays.\n',
+        'WEBVTT\nLanguage: en\n\n1\n00:00:00.500 --> 00:00:01.750\nA dot arrives.\n\n2\n00:00:02.250 --> 00:00:03.500\nThe dot stays.\n',
+      );
+      assert.match(
+        await readFile(join(folder, receipt.transcript as string), 'utf8'),
+        /<h1>Video test · First: One · Second: One<\/h1><ol><li><h2>First<\/h2><p>A dot arrives\.<\/p>.*<li><h2>Second<\/h2><p>The dot stays\.<\/p>/,
       );
       assert.equal(JSON.parse(await readFile(out + '.receipt.json', 'utf8')).frames, receipt.frames);
-      execFileSync('ffmpeg', ['-v', 'error', '-i', out, '-f', 'null', '-'], { stdio: 'pipe' });
       const before = await readFile(out),
         beforeReceipt = await readFile(out + '.receipt.json');
       class TooLong extends Scene {
@@ -99,13 +98,11 @@ test(
       assert.deepEqual(await readFile(out + '.receipt.json'), beforeReceipt);
       const webm = join(folder, 'test.webm');
       await renderVideo(project, project.variants[0]!, webm, { width: 320, fps: 4 });
-      const wp = JSON.parse(
-        execFileSync('ffprobe', ['-v', 'error', '-show_streams', '-of', 'json', webm], { encoding: 'utf8' }),
-      );
-      assert.equal(wp.streams[0].codec_name, 'vp9');
-      assert.equal(wp.streams[0].width, 320);
-      assert.equal(wp.streams[0].height, 180);
-      assert.ok(!wp.streams.some((s: { codec_type: string }) => s.codec_type === 'audio'));
+      const wp = probeVideo(webm);
+      assert.equal(wp.streams[0]!.codec_name, 'vp9');
+      assert.equal(wp.streams[0]!.width, 320);
+      assert.equal(wp.streams[0]!.height, 180);
+      assert.ok(!wp.streams.some((s) => s.codec_type === 'audio'));
       execFileSync(
         process.execPath,
         [
@@ -124,13 +121,9 @@ test(
       );
       const arbitrary = join(folder, 'even-width.mp4');
       await renderVideo(project, project.variants[0]!, arbitrary, { width: 514, fps: 4 });
-      const arbitraryProbe = JSON.parse(
-        execFileSync('ffprobe', ['-v', 'error', '-show_streams', '-of', 'json', arbitrary], {
-          encoding: 'utf8',
-        }),
-      );
-      assert.equal(arbitraryProbe.streams[0].width, 514);
-      assert.equal(arbitraryProbe.streams[0].height, 290);
+      const { streams } = probeVideo(arbitrary);
+      assert.equal(streams[0]!.width, 514);
+      assert.equal(streams[0]!.height, 290);
       const cases = (await readdir(folder)).filter(
         (name) => name.startsWith('case-') && name.endsWith('.mp4'),
       );

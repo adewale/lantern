@@ -14,13 +14,11 @@
     "accent": "#0969da",
     "muted": "#59636e"
   },
-  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"529.8280000000001\" height=\"406\" viewBox=\"0 0 529.8280000000001 406\" style=\"--bg:#ffffff;--fg:#1f2328;--line:#d1d9e0;--accent:#0969da;--muted:#59636e;--font:Inter;background:#ffffff\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #1f2328;\n    --_text-sec:      #59636e;\n    --_text-muted:    #59636e;\n    --_text-faint:    #86888b;\n    --_line:          #d1d9e0;\n    --_arrow:         #0969da;\n    --_node-fill:     #f8f8f9;\n    --_node-stroke:   #d2d3d4;\n    --_group-fill:    #ffffff;\n    --_group-hdr:     #f4f4f4;\n    --_inner-stroke:  #e4e5e5;\n    --_key-badge:     #e9e9ea;\n  }\n</style>\n<rect width=\"529.8280000000001\" height=\"406\" fill=\"#ffffff\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"seq-arrow\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#0969da\" />\n  </marker>\n  <marker id=\"seq-arrow-open\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <polyline points=\"0 0, 8 2.5, 0 5\" fill=\"none\" stroke=\"#0969da\" stroke-width=\"1\" />\n  </marker>\n  <marker id=\"seq-arrow-cross\" markerWidth=\"8\" markerHeight=\"5\" refX=\"4\" refY=\"2.5\" orient=\"auto\">\n    <path d=\"M1 1 L7 4 M1 4 L7 1\" fill=\"none\" stroke=\"#0969da\" stroke-width=\"1.5\" />\n  </marker>\n  <marker id=\"seq-arrow-half-top\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <path d=\"M0 0 L8 2.5\" fill=\"none\" stroke=\"#0969da\" stroke-width=\"1\" />\n  </marker>\n  <marker id=\"seq-arrow-half-bottom\" markerWidth=\"8\" markerHeight=\"5\" refX=\"8\" refY=\"2.5\" orient=\"auto-start-reverse\">\n    <path d=\"M0 5 L8 2.5\" fill=\"none\" stroke=\"#0969da\" stroke-width=\"1\" />\n  </marker>\n</defs>\n<line class=\"lifeline\" data-actor=\"C\" x1=\"70\" y1=\"70\" x2=\"70\" y2=\"376\" stroke=\"#8f959c\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />\n<line class=\"lifeline\" data-actor=\"S\" x1=\"258.72200000000004\" y1=\"70\" x2=\"258.72200000000004\" y2=\"376\" stroke=\"#8f959c\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />\n<line class=\"lifeline\" data-actor=\"X\" x1=\"442.09800000000007\" y1=\"70\" x2=\"442.09800000000007\" y2=\"376\" stroke=\"#8f959c\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />\n<g class=\"message\" data-label=\"Authorize request + code_challenge\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:C-&gt;S#0\" data-role=\"message\">\n  <line x1=\"70\" y1=\"96\" x2=\"258.72200000000004\" y2=\"96\" stroke=\"#8f959c\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:C-&gt;S#0:line\" data-role=\"message\" data-from=\"C\" data-to=\"S\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C to S: Authorize request + code_challenge\" />\n  <text x=\"164.36100000000002\" y=\"86\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"172.128\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Authorize request + code_challenge</text>\n</g>\n<g class=\"message\" data-label=\"Redirect with code\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;C#0\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"136\" x2=\"70\" y2=\"136\" stroke=\"#8f959c\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;C#0:line\" data-role=\"message\" data-from=\"S\" data-to=\"C\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to C: Redirect with code\" />\n  <text x=\"164.36100000000002\" y=\"126\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"87.186\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Redirect with code</text>\n</g>\n<g class=\"message\" data-label=\"Redirect via the shared URI scheme\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;X#0\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"176\" x2=\"442.09800000000007\" y2=\"176\" stroke=\"#8f959c\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;X#0:line\" data-role=\"message\" data-from=\"S\" data-to=\"X\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to X: Redirect via the shared URI scheme\" />\n  <text x=\"350.4100000000001\" y=\"166\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"167.376\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Redirect via the shared URI scheme</text>\n</g>\n<g class=\"message\" data-label=\"Token request: code + a guess\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:X-&gt;S#0\" data-role=\"message\">\n  <line x1=\"442.09800000000007\" y1=\"216\" x2=\"258.72200000000004\" y2=\"216\" stroke=\"#8f959c\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:X-&gt;S#0:line\" data-role=\"message\" data-from=\"X\" data-to=\"S\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"X to S: Token request: code + a guess\" />\n  <text x=\"350.4100000000001\" y=\"206\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"145.992\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Token request: code + a guess</text>\n</g>\n<g class=\"message\" data-label=\"invalid_grant\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;X#1\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"256\" x2=\"442.09800000000007\" y2=\"256\" stroke=\"#8f959c\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;X#1:line\" data-role=\"message\" data-from=\"S\" data-to=\"X\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to X: invalid_grant\" />\n  <text x=\"350.4100000000001\" y=\"246\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"63.426\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">invalid_grant</text>\n</g>\n<g class=\"message\" data-label=\"Token request: code + code_verifier\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:C-&gt;S#1\" data-role=\"message\">\n  <line x1=\"70\" y1=\"296\" x2=\"258.72200000000004\" y2=\"296\" stroke=\"#8f959c\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:C-&gt;S#1:line\" data-role=\"message\" data-from=\"C\" data-to=\"S\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C to S: Token request: code + code_verifier\" />\n  <text x=\"164.36100000000002\" y=\"286\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"172.722\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Token request: code + code_verifier</text>\n</g>\n<g class=\"message\" data-label=\"Access token\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;C#1\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"336\" x2=\"70\" y2=\"336\" stroke=\"#8f959c\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;C#1:line\" data-role=\"message\" data-from=\"S\" data-to=\"C\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to C: Access token\" />\n  <text x=\"164.36100000000002\" y=\"326\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"66.396\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Access token</text>\n</g>\n<g class=\"actor\" data-id=\"C\" data-label=\"Client\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"30\" y=\"30\" width=\"80\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"1\" data-id=\"actor:C:box\" data-role=\"actor\" />\n  <text x=\"70\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"34.554\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Client</text>\n</g>\n<g class=\"actor\" data-id=\"S\" data-label=\"Auth server\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"206.54950000000002\" y=\"30\" width=\"104.345\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"1\" data-id=\"actor:S:box\" data-role=\"actor\" />\n  <text x=\"258.72200000000004\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"72.345\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Auth server</text>\n</g>\n<g class=\"actor\" data-id=\"X\" data-label=\"Malicious app\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"384.36800000000005\" y=\"30\" width=\"115.46\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"1\" data-id=\"actor:X:box\" data-role=\"actor\" />\n  <text x=\"442.09800000000007\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"83.46\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">Malicious app</text>\n</g>\n</svg>",
   "parts": [
     {
       "id": "__frame",
       "role": "frame",
       "kind": "shape",
-      "svg": "",
       "shapes": [
         {
           "subpaths": [
@@ -76,7 +74,6 @@
       "id": "lifeline:C",
       "role": "lifeline",
       "kind": "connector",
-      "svg": "<line class=\"lifeline\" data-actor=\"C\" x1=\"70\" y1=\"70\" x2=\"70\" y2=\"376\" stroke=\"var(--_line)\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />",
       "shapes": [
         {
           "subpaths": [
@@ -126,7 +123,6 @@
       "id": "lifeline:S",
       "role": "lifeline",
       "kind": "connector",
-      "svg": "<line class=\"lifeline\" data-actor=\"S\" x1=\"258.72200000000004\" y1=\"70\" x2=\"258.72200000000004\" y2=\"376\" stroke=\"var(--_line)\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />",
       "shapes": [
         {
           "subpaths": [
@@ -176,7 +172,6 @@
       "id": "lifeline:X",
       "role": "lifeline",
       "kind": "connector",
-      "svg": "<line class=\"lifeline\" data-actor=\"X\" x1=\"442.09800000000007\" y1=\"70\" x2=\"442.09800000000007\" y2=\"376\" stroke=\"var(--_line)\" stroke-width=\"0.75\" stroke-dasharray=\"6 4\" data-relationship=\"lifeline\" data-direction=\"undirected\" />",
       "shapes": [
         {
           "subpaths": [
@@ -226,7 +221,6 @@
       "id": "message:C->S#0",
       "role": "message",
       "kind": "group",
-      "svg": "<g class=\"message\" data-label=\"Authorize request + code_challenge\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:C-&gt;S#0\" data-role=\"message\">\n  <line x1=\"70\" y1=\"96\" x2=\"258.72200000000004\" y2=\"96\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:C-&gt;S#0:line\" data-role=\"message\" data-from=\"C\" data-to=\"S\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C to S: Authorize request + code_challenge\" />\n  <text x=\"164.36100000000002\" y=\"86\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Authorize request + code_challenge</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -353,7 +347,6 @@
       "id": "message:S->C#0",
       "role": "message",
       "kind": "group",
-      "svg": "<g class=\"message\" data-label=\"Redirect with code\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;C#0\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"136\" x2=\"70\" y2=\"136\" stroke=\"var(--_line)\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;C#0:line\" data-role=\"message\" data-from=\"S\" data-to=\"C\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to C: Redirect with code\" />\n  <text x=\"164.36100000000002\" y=\"126\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Redirect with code</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -482,7 +475,6 @@
       "id": "message:S->X#0",
       "role": "message",
       "kind": "group",
-      "svg": "<g class=\"message\" data-label=\"Redirect via the shared URI scheme\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;X#0\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"176\" x2=\"442.09800000000007\" y2=\"176\" stroke=\"var(--_line)\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;X#0:line\" data-role=\"message\" data-from=\"S\" data-to=\"X\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to X: Redirect via the shared URI scheme\" />\n  <text x=\"350.4100000000001\" y=\"166\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Redirect via the shared URI scheme</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -611,7 +603,6 @@
       "id": "message:X->S#0",
       "role": "message",
       "kind": "group",
-      "svg": "<g class=\"message\" data-label=\"Token request: code + a guess\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:X-&gt;S#0\" data-role=\"message\">\n  <line x1=\"442.09800000000007\" y1=\"216\" x2=\"258.72200000000004\" y2=\"216\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:X-&gt;S#0:line\" data-role=\"message\" data-from=\"X\" data-to=\"S\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"X to S: Token request: code + a guess\" />\n  <text x=\"350.4100000000001\" y=\"206\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Token request: code + a guess</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -738,7 +729,6 @@
       "id": "message:S->X#1",
       "role": "message",
       "kind": "group",
-      "svg": "<g class=\"message\" data-label=\"invalid_grant\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;X#1\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"256\" x2=\"442.09800000000007\" y2=\"256\" stroke=\"var(--_line)\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;X#1:line\" data-role=\"message\" data-from=\"S\" data-to=\"X\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to X: invalid_grant\" />\n  <text x=\"350.4100000000001\" y=\"246\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">invalid_grant</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -867,7 +857,6 @@
       "id": "message:C->S#1",
       "role": "message",
       "kind": "group",
-      "svg": "<g class=\"message\" data-label=\"Token request: code + code_verifier\" data-line-style=\"solid\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:C-&gt;S#1\" data-role=\"message\">\n  <line x1=\"70\" y1=\"296\" x2=\"258.72200000000004\" y2=\"296\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:C-&gt;S#1:line\" data-role=\"message\" data-from=\"C\" data-to=\"S\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"C to S: Token request: code + code_verifier\" />\n  <text x=\"164.36100000000002\" y=\"286\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Token request: code + code_verifier</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -994,7 +983,6 @@
       "id": "message:S->C#1",
       "role": "message",
       "kind": "group",
-      "svg": "<g class=\"message\" data-label=\"Access token\" data-line-style=\"dashed\" data-start-head=\"none\" data-end-head=\"filled\" data-central-start=\"false\" data-central-end=\"false\" data-self=\"false\" data-id=\"message:S-&gt;C#1\" data-role=\"message\">\n  <line x1=\"258.72200000000004\" y1=\"336\" x2=\"70\" y2=\"336\" stroke=\"var(--_line)\" stroke-width=\"1\" stroke-dasharray=\"6 4\" marker-end=\"url(#seq-arrow)\" data-relationship=\"sequence-message\" data-direction=\"forward\" data-id=\"message:S-&gt;C#1:line\" data-role=\"message\" data-from=\"S\" data-to=\"C\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"S to C: Access token\" />\n  <text x=\"164.36100000000002\" y=\"326\" font-size=\"11\" text-anchor=\"middle\" font-weight=\"400\" fill=\"var(--_text-muted)\" dy=\"3.8499999999999996\">Access token</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -1123,7 +1111,6 @@
       "id": "actor:C",
       "role": "actor",
       "kind": "group",
-      "svg": "<g class=\"actor\" data-id=\"C\" data-label=\"Client\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"30\" y=\"30\" width=\"80\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" data-id=\"actor:C:box\" data-role=\"actor\" />\n  <text x=\"70\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Client</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -1241,7 +1228,6 @@
       "id": "actor:S",
       "role": "actor",
       "kind": "group",
-      "svg": "<g class=\"actor\" data-id=\"S\" data-label=\"Auth server\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"206.54950000000002\" y=\"30\" width=\"104.345\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" data-id=\"actor:S:box\" data-role=\"actor\" />\n  <text x=\"258.72200000000004\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Auth server</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -1359,7 +1345,6 @@
       "id": "actor:X",
       "role": "actor",
       "kind": "group",
-      "svg": "<g class=\"actor\" data-id=\"X\" data-label=\"Malicious app\" data-type=\"participant\" data-role=\"actor\">\n  <rect x=\"384.36800000000005\" y=\"30\" width=\"115.46\" height=\"40\" rx=\"4\" ry=\"4\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" data-id=\"actor:X:box\" data-role=\"actor\" />\n  <text x=\"442.09800000000007\" y=\"50\" font-size=\"13\" text-anchor=\"middle\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">Malicious app</text>\n</g>",
       "shapes": [
         {
           "subpaths": [

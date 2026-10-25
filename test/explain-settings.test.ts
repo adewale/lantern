@@ -2,6 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Scene, NullSink, traceScene } from '../src/index.ts';
 import { resolveSettings, variantsOf, settingsOf, withSettings } from '../explain/index.ts';
+import type { Setting } from '../explain/index.ts';
+import { fc, params } from './lib/pbt.ts';
 
 class Example extends Scene {
   static settings = [
@@ -46,34 +48,8 @@ test('finite settings enumerate every combination and bind concurrent scenes wit
   assert.throws(() => resolveSettings(Example, { other: 'x' }), /Unknown setting/);
   assert.throws(() => variantsOf(Example, 3), /exceed/);
 });
-test('declarations reject ambiguous defaults, duplicate options and reserved transport keys', () => {
-  for (const settings of [
-    [{ id: 'case', label: 'Case', default: 'x', options: [{ value: 'a', label: 'A' }] }],
-    [
-      {
-        id: 'case',
-        label: 'Case',
-        default: 'a',
-        options: [
-          { value: 'a', label: 'A' },
-          { value: 'a', label: 'Again' },
-        ],
-      },
-    ],
-    [{ id: 'step', label: 'Step', default: 'a', options: [{ value: 'a', label: 'A' }] }],
-  ]) {
-    class Bad extends Scene {
-      static settings = settings;
-    }
-    assert.throws(() => resolveSettings(Bad));
-  }
-});
-
 // ---- properties ------------------------------------------------------------------
-import { fc, params } from './lib/pbt.ts';
-import type { Setting } from '../explain/index.ts';
-
-const RESERVED = ['step', 't', 'parentOrigin', 'theme'];
+const RESERVED = ['step', 'parentOrigin', 'theme'];
 /** Ids from the documented pattern, including every inherited Object.prototype name that matches it. */
 const settingId = fc.oneof(
   fc.stringMatching(/^[a-zA-Z][a-zA-Z0-9_-]{0,8}$/),

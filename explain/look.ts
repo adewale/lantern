@@ -32,6 +32,15 @@ export function emphasis(p: Palette): string {
 /** Success and failure colours that read on the paper, for outcomes such as accepted and rejected. */
 export const good = (p: Palette) => onPaper(p, '#3fb950', '#1a7f37');
 export const bad = (p: Palette) => onPaper(p, '#f85149', '#cf222e');
+/**
+ * How opaque a dimmed part stays: the least opacity at which ink on this paper
+ * still reaches 3:1 (WCAG 1.4.11), so dimmed labels stay legible.
+ */
+export function dimOpacity(p: Palette): number {
+  let a = 0.2;
+  while (a < 1 && contrast(p, lerpColor(p.paper, p.ink, a)) < 3) a = Math.round((a + 0.01) * 100) / 100;
+  return a;
+}
 /** A panel surface one shade off the paper. */
 export const raised = (p: Palette) => lerpColor(p.paper, p.ink, 0.07);
 /** A hairline that separates without shouting. */
@@ -52,11 +61,15 @@ export const REGIONS = {
   bottom: [-7.55, -4.25, 7.55, -0.65],
 } as const satisfies Record<string, Box>;
 export type Region = keyof typeof REGIONS;
-/** A region (or box) as a fresh box; `top` and `bottom` move its upper and lower edges, so `regionBox('top', { bottom: 1 })` is a shorter top. */
-export function regionBox(r: Region | Box, { top, bottom }: { top?: number; bottom?: number } = {}): Box {
+/**
+ * A region (or box) as a fresh box, with any edge moved: `regionBox('top', { bottom: 1 })`
+ * is a shorter top, `regionBox('full', { left: -2.75 })` a column on the right.
+ */
+export function regionBox(
+  r: Region | Box,
+  { left, bottom, right, top }: { left?: number; bottom?: number; right?: number; top?: number } = {},
+): Box {
   const b: Box = typeof r === 'string' ? [...REGIONS[r]] : [...r];
-  if (bottom != null) b[1] = bottom;
-  if (top != null) b[3] = top;
-  return b;
+  return [left ?? b[0], bottom ?? b[1], right ?? b[2], top ?? b[3]];
 }
 export const boxCenter = (b: Box): [number, number] => [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];

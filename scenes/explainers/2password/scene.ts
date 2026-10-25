@@ -11,7 +11,7 @@ import {
   distance,
   matches,
   terms,
-} from './model.ts';
+} from '../lib/2password.ts';
 
 const STYLE = 'excalidraw';
 const QUERIES = ['cloud api', 'databse'] as const;
@@ -100,7 +100,7 @@ export default class PasswordExplainer extends Scene {
       longer = Math.max(missQuery.length, word.length);
     await this.step('suggest', {
       title: `A miss returns titles that score at least ${SUGGESTION_THRESHOLD}`,
-      caption: `For a query with no match, find scores each title word as 1 − edit distance ÷ the longer word’s length, and a title takes its best word. ${near.title} is ${edits} edit${edits === 1 ? '' : 's'} from ${missQuery}, so it scores 1 − ${edits}/${longer} = ${closeness(terms(missQuery), near.title)} and comes back as a suggestion.`,
+      caption: `For a query with no match, find scores each query word against each title word: 1 if one contains the other, otherwise 1 − edit distance ÷ the longer word’s length. A title scores the average of each query word’s best. ${near.title} is ${edits} edit${edits === 1 ? '' : 's'} from ${missQuery}, so it scores 1 − ${edits}/${longer} = ${closeness(terms(missQuery), near.title)} and comes back as a suggestion.`,
     });
     await listing.morph([
       pad('title', W) + pad(`closeness to ${missQuery}`, 24) + `≥ ${SUGGESTION_THRESHOLD}`,
@@ -196,7 +196,7 @@ export default class PasswordExplainer extends Scene {
         : 'op run starts the app with the secret',
       caption: service
         ? 'run hands op the reference, and op puts the secret into the app’s environment. With a service-account token, 2password has op start env -u OP_SERVICE_ACCOUNT_TOKEN app, so the app gets the secret and not the token.'
-        : 'run hands op the reference, and op puts the secret into the app’s environment. With desktop approval op holds no token, so it starts the app directly; the app gets the secret and PATH.',
+        : 'run hands op the reference, and op puts the secret into the app’s environment. With desktop approval op holds no token, so it starts the app directly. The app inherits the environment 2password started with, shown here as PATH, plus the secret.',
     });
     await s.clear();
     const command = await s.code(
@@ -205,11 +205,11 @@ export default class PasswordExplainer extends Scene {
     );
     const before = await s.code(
       Object.entries(launched.opEnv).map(([k, v]) => (k === TOKEN ? '- ' : '  ') + `${k}=${v}`),
-      { at: [-7.55, -4.25, -0.75, 0.7], title: "op's environment", fontSize: 0.26, diff: true, enter: false },
+      { at: regionBox('full', { right: -0.75, top: 0.7 }), title: "op's environment", fontSize: 0.26, diff: true, enter: false },
     );
     const child = await s.code(
       Object.entries(launched.childEnv).map(([k, v]) => `${k}=${v}`),
-      { at: [0.75, -4.25, 7.55, 0.7], title: "app's environment", fontSize: 0.26, enter: false },
+      { at: regionBox('full', { left: 0.75, top: 0.7 }), title: "app's environment", fontSize: 0.26, enter: false },
     );
     const yArrow = (before.panel.box()![1] + before.panel.box()![3]) / 2;
     const pass = new Arrow([before.panel.box()![2] + 0.1, yArrow], [child.panel.box()![0] - 0.1, yArrow], {
@@ -219,7 +219,7 @@ export default class PasswordExplainer extends Scene {
       tipWidth: 0.18,
     });
     await s.enter(before);
-    await this.play(new Create(s.keep(pass)), new FadeIn(child));
+    await this.play(new Create(s.keep(pass, { describe: 'An arrow from op’s environment to the app’s' })), new FadeIn(child));
     await command.focus(1);
     this.state.argv = launched.argv;
     this.state.childEnv = launched.childEnv;

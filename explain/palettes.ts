@@ -1,4 +1,5 @@
-// Generated from Agentic Mermaid 0.4.1 public style specs; no runtime dependency.
+// Agentic Mermaid 0.4.1's style colours, copied so the page needs no Agentic Mermaid;
+// test/explain-capture.test.ts checks them against the installed styles.
 import type { Palette } from '../integrations/agentic-mermaid/snapshot.ts';
 export const PALETTES: Record<string, Palette> = {
   'hand-drawn': {
@@ -82,6 +83,6 @@ export const PALETTES: Record<string, Palette> = {
 };
 export function palette(name: string): Palette {
   const p = PALETTES[name];
-  if (!p) throw new Error('Unknown palette: ' + name);
+  if (!p) throw new Error(`Unknown style ${name}. Styles: ${Object.keys(PALETTES).join(', ')}`);
   return { ...p };
 }

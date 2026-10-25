@@ -8,9 +8,10 @@ import assert from 'node:assert/strict';
 import { Scene, NullSink, Dot, Group, VMobject, loadFonts } from '../src/index.ts';
 import type { Box } from '../src/index.ts';
 import { Diagram, scaleArtwork } from '../explain/diagrams.ts';
-import { REGIONS, emphasis } from '../explain/look.ts';
+import { REGIONS, emphasis, dimOpacity } from '../explain/look.ts';
 import type { Region } from '../explain/look.ts';
-import { diagramKey, findingsOf, snapshotResolver, useDiagrams } from '../explain/index.ts';
+import { findingsOf } from '../explain/index.ts';
+import { diagramKey, snapshotResolver, useDiagrams } from '../integrations/agentic-mermaid/snapshot.ts';
 import type { DiagramSnapshot } from '../explain/index.ts';
 import { fc, params } from './lib/pbt.ts';
 import { snapshot, hexColor, buildSnapshot, snapshotPlan, uniqueIds } from './lib/random-snapshot.ts';
@@ -46,9 +47,11 @@ const union = (boxes: Box[]): Box =>
 const links = (d: Diagram) => [...d.parts.values()].filter((p) => !p.info.owner && p.info.from && p.info.to);
 const isScaffold = (id: string, role: string) =>
   id === '__frame' || /axis|lifeline|lane|grid|participant|actor|section/.test(role) || id.startsWith('branch:');
-/** The top-level part an id names, as the docs define it: an owned label belongs to its owner. */
+/** The part an id names, as the docs define it: its own id, or a participant's or class's bare name. */
+const named = (d: Diagram, id: string) => [id, 'actor:' + id, 'class:' + id].find((n) => d.parts.has(n));
+/** The top-level part an id names: an owned label belongs to its owner. */
 const topOf = (d: Diagram, id: string) => {
-  let p = d.parts.get(id)!;
+  let p = d.parts.get(named(d, id)!)!;
   while (p.info.owner) p = d.parts.get(p.info.owner)!;
   return p.info.id;
 };
@@ -222,12 +225,12 @@ test('dim fades exactly the parts outside the kept set, the links between kept p
         await d.dim(keep);
         const kept = new Set(keep.map((id) => topOf(d, id)));
         for (const l of links(d))
-          if ([l.info.from!, l.info.to!].every((n) => d.parts.has(n) && kept.has(topOf(d, n)))) kept.add(l.info.id);
+          if ([l.info.from!, l.info.to!].every((n) => named(d, n) && kept.has(topOf(d, n)))) kept.add(l.info.id);
         for (const id of tops(d)) {
           const p = d.parts.get(id)!;
           const faded = !kept.has(id) && !isScaffold(id, p.info.role);
           p.mob.family().forEach((m, i) =>
-            assert.equal(m.style.opacity, faded ? base.get(id)![i]! * 0.2 : base.get(id)![i]!, `${id} faded=${faded}`),
+            assert.equal(m.style.opacity, faded ? base.get(id)![i]! * dimOpacity(s.palette) : base.get(id)![i]!, `${id} faded=${faded}`),
           );
         }
       },
@@ -548,13 +551,12 @@ test('findings() are the snapshot findings with their parts', async () => {
   );
 });
 
-test("get resolves a node through the 'node:' prefix and rejects names that are not parts", async () => {
+test('get finds every part by its id and rejects names that are not parts', async () => {
   await fc.assert(
     fc.asyncProperty(snapshot(), fc.string(), async (s, name) => {
       const { d } = await shown(s, 'full', null);
-      for (const p of s.parts) if (!p.id.startsWith('node:')) assert.equal(d.get('node:' + p.id), d.get(p.id));
-      const known = [name, name.replace(/^node:/, ''), 'class:' + name, 'state:' + name].some((n) => d.parts.has(n));
-      if (!known) assert.throws(() => d.get(name), /No diagram mark/);
+      for (const p of s.parts) assert.equal(d.get(p.id), d.parts.get(p.id)!.mob);
+      if (!named(d, name)) assert.throws(() => d.get(name), /No diagram mark/);
     }),
     params(),
   );
@@ -613,19 +615,6 @@ test('morph hands over to the next diagram: every part shown, at its fresh place
       },
     ),
     params(300),
-  );
-});
-
-test("walk resolves endpoints as get() does: 'node:' names walk the same link", async () => {
-  await fc.assert(
-    fc.asyncProperty(walkSnapshot, async ([s, path]) => {
-      const { scene, d } = await shown(s);
-      const built = walks(scene).length;
-      await d.walk(path.map(([a, b]) => ['node:' + a, 'node:' + b] as [string, string]));
-      const first = (from: string, to: string) => s.parts.find((p) => p.from === from && p.to === to)!.id;
-      assert.deepEqual(walks(scene).slice(built).map((w) => w.edge), path.map(([a, b]) => first(a, b)));
-    }),
-    params(),
   );
 });
 
@@ -690,7 +679,7 @@ test('mark and dim refuse an unknown part and change nothing', async () => {
   await fc.assert(
     fc.asyncProperty(withPicks((ids) => fc.subarray(ids)), fc.string(), fc.boolean(), async ([s, ids], name, dim) => {
       const { d } = await shown(s);
-      fc.pre(![name, name.replace(/^node:/, ''), 'class:' + name, 'state:' + name].some((n) => d.parts.has(n)));
+      fc.pre(!named(d, name));
       const before = looks(d);
       const bad = [...ids, name];
       await assert.rejects(dim ? d.dim(bad) : d.mark(bad), /No diagram mark/);

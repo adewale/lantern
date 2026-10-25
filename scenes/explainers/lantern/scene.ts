@@ -104,13 +104,14 @@ export default class LanternExplainer extends Scene {
       new Rectangle({ width: 4.6, height: 2.5875, stroke: s.soft, strokeWidth: 0.02, cornerRadius: 0.06 }).moveTo([
         5.1, 1.55,
       ]),
+      { describe: 'A small stage beside the code, running the same program' },
     );
     const stepLabel = new Text("step 'before'", { fontSize: 0.22, font: 'mono', color: ink }).moveTo([3.0, 0.5], [-1, 0]);
     await code.focus(3);
     await s.enter(stepLabel);
     const dot = new Circle({ radius: 0.6, stroke: ink, strokeWidth: 0.03 }).moveTo([5.1, 1.7]);
     await code.focus(4);
-    await s.enter(dot);
+    await s.enter(dot, { describe: 'On the small stage, the circle the program drew, turned into a square by its last play' });
     await code.focus(5);
     const after = new Text("step 'after'", { fontSize: 0.22, font: 'mono', color: ink }).moveTo([3.0, 0.5], [-1, 0]);
     await this.play(new FadeOut(stepLabel), new FadeIn(s.keep(after)));
@@ -160,7 +161,6 @@ export default class LanternExplainer extends Scene {
         'Every shape, glyph and imported diagram is stored as cubic Bézier points, like the anchors and handles drawn on this circle. The engine has no separate camera, so the zoom onto Mobject in this step is the diagram moving those points.',
     });
     await s.clearOverlays();
-    await classes.clearNotes();
     await classes.unmark();
     await classes.focus(['Mobject'], { zoom: 0.85 });
     await classes.note('Mobject', 'points: Float32Array', { side: 'below' });
@@ -176,7 +176,9 @@ export default class LanternExplainer extends Scene {
         handles.add(new Dot({ radius: 0.055, color: s.soft }).moveTo(at(p)));
       }
     });
-    await s.enter(new Group(circle, handles, anchors));
+    await s.enter(new Group(circle, handles, anchors), {
+      describe: `A circle of radius ${R} as ${(pts.length - 1) / 3} cubic Béziers: anchors as large dots, handles as small dots joined to their anchors`,
+    });
     const f = (n: number) => (n >= 0 ? ' ' : '') + n.toFixed(2);
     const first = pts
       .slice(0, 4)
@@ -231,7 +233,6 @@ export default class LanternExplainer extends Scene {
         'renderAt seeks by running the scene again and skipping every frame before the target. Because each animation fixes its endpoints when it begins, the frame seeked straight to t has the same SVG fingerprint as the frame played there.',
     });
     await s.clearOverlays();
-    await flow.clearNotes();
     await flow.unmark();
     await flow.dim(['Author', 'Clock', 'SVG']);
     await flow.walk(
@@ -298,7 +299,6 @@ export default class LanternExplainer extends Scene {
         'Each walk records the edges it travelled, and trace.json lists this scene’s own clock and seek walks. explain check runs the card’s four tests on every case, so a frame that jumps or text under 14 px fails the check.',
     });
     await s.clearOverlays();
-    await flow.clearNotes();
     await flow.note('Page', 'trace + checks ship with it', { side: 'above' });
     // The trace this very scene has recorded so far.
     const walks = (this.state.walks ?? []) as { step: string; from: string; to: string }[];
@@ -311,7 +311,7 @@ export default class LanternExplainer extends Scene {
         '  …',
         ']',
       ],
-      { at: [-7.55, -4.25, 1.6, -0.85], fontSize: 0.21 },
+      { at: regionBox('bottom', { right: 1.6, top: -0.85 }), fontSize: 0.21 },
     );
     await s.card(
       [
@@ -320,7 +320,7 @@ export default class LanternExplainer extends Scene {
         ['legibility', 'text ≥ 14 px'],
         ['bare runtime', 'no renderer'],
       ],
-      { at: [1.9, -4.25, 7.55, -0.85] },
+      { at: regionBox('bottom', { left: 1.9, top: -0.85 }) },
     );
   }
 }

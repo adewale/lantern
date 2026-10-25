@@ -42,7 +42,7 @@ if (script?.dataset.src) {
     : script.parentElement;
   if (target)
     mountExplainer(target, script.dataset.src, {
-      title: script.dataset.title ?? 'Interactive explanation',
+      title: script.dataset.title ?? 'Interactive explainer',
       theme: (script.dataset.theme ?? 'auto') as 'auto',
     });
 }

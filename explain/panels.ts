@@ -1,8 +1,9 @@
 import { Group, Rectangle, Text, Code, FadeIn, FadeOut, Transform } from '../src/index.ts';
 import type { Scene, Vec, Box } from '../src/index.ts';
 import type { Palette } from '../integrations/agentic-mermaid/snapshot.ts';
-import { soft, raised, rule, boxCenter, emphasis, regionBox, REGIONS } from './look.ts';
+import { soft, raised, rule, boxCenter, emphasis, good, bad, regionBox, REGIONS } from './look.ts';
 import type { Region } from './look.ts';
+import type { Seen } from './trace.ts';
 
 export type CardRow = readonly [label: string, value: unknown];
 export interface CardOptions {
@@ -37,6 +38,25 @@ const PAD = 0.28;
 /** The raised, ruled panel cards and code sit on. */
 const panelRect = (colors: Palette, width: number, height: number) =>
   new Rectangle({ width, height, cornerRadius: 0.1, fill: raised(colors), stroke: rule(colors), strokeWidth: 0.016 });
+/** A tinted bar behind a row or lines: the one shape for card marks, code focus and diff lines. */
+const tint = (color: string, width: number, height: number) =>
+  new Rectangle({ width, height, cornerRadius: 0.05, fill: color, fillOpacity: 0.2, stroke: 'none' });
+/**
+ * Move a panel's highlight bar onto `to`'s place, fading it in if it is hidden;
+ * `null` fades it out. The bar stays, so a step's resting frame shows it.
+ */
+async function moveBar(scene: Scene, bar: Rectangle, to: Rectangle | null, runTime: number): Promise<void> {
+  const shown = (bar.style.opacity ?? 1) > 0;
+  if (!to) {
+    if (shown) await scene.play(bar.animate.setOpacity(0), { runTime });
+  } else if (shown) await scene.play(new Transform(bar, to.setStyle({ ...bar.style }), { runTime }));
+  else {
+    bar.subpaths = to.subpaths.map((a) => a.slice());
+    bar.closed = [...to.closed];
+    bar.invalidateBox();
+    await scene.play(new FadeIn(bar.setOpacity(1), { runTime }));
+  }
+}
 /**
  * Put a panel `height` tall at a point, or centred in a box (`align: 'top'` sets
  * it on the box's top, so panels side by side align), never above the box's top.
@@ -66,8 +86,8 @@ export class Card extends Group {
   bar: Rectangle;
   private valueEdge: number;
   private maxValue: number;
-  /** The row `mark` lit, for the description. */
-  private lit: string | null = null;
+  /** The row `mark` lit and its word, for the description. */
+  private lit: { label: string; as: string } | null = null;
   private repeated: Set<string>;
   private readonly title: string | undefined;
   /** Rows in order (labels may repeat), for the description. */
@@ -101,15 +121,7 @@ export class Card extends Group {
     const pitch = size * ROW;
     const height = (rows.length + (titleText ? 1.15 : 0)) * pitch + 2 * PAD - size * 0.55;
     this.panel = panelRect(colors, width, height);
-    this.bar = new Rectangle({
-      width: width - 0.12,
-      height: pitch * 0.92,
-      cornerRadius: 0.06,
-      fill: emphasis(colors),
-      fillOpacity: 0.2,
-      stroke: 'none',
-      opacity: 0,
-    });
+    this.bar = tint(emphasis(colors), width - 0.12, pitch * 0.92).setOpacity(0);
     this.add(this.panel, this.bar);
     const left = -width / 2 + PAD;
     this.valueEdge = width / 2 - PAD;
@@ -138,11 +150,15 @@ export class Card extends Group {
     place(this, at, height, options.align);
   }
 
-  /** The rows as a reader sees them, the lit one marked. */
-  describe(): { what: string; items: string[] } {
+  /** The rows as a reader sees them, the lit one with its word. */
+  describe(): Seen {
+    const n = `${this.rows.length} labelled value${this.rows.length === 1 ? '' : 's'}`;
     return {
-      what: this.title ?? 'Card',
-      items: this.rows.map((r) => `${r.label}: ${r.value.text}${r.label === this.lit ? ' (marked)' : ''}`),
+      what: this.title ? `“${this.title}”, ${n}` : n,
+      parts: this.rows.map((r) => ({
+        name: `${r.label}: ${r.value.text}`,
+        ...(r.label === this.lit?.label ? { mark: this.lit.as } : {}),
+      })),
     };
   }
 
@@ -182,21 +198,14 @@ export class Card extends Group {
     if (anims.length) await this.scene.play(...anims);
   }
 
-  /** Light one row (null clears). The bar stays until moved, so it shows in the step's resting frame. */
-  async mark(label: string | null, { runTime = 0.4 } = {}): Promise<void> {
-    if (label == null) {
-      this.lit = null;
-      if (this.bar.style.opacity) await this.scene.play(this.bar.animate.setOpacity(0), { runTime });
-      return;
-    }
-    const y = this.row(label).anchorPoint()[1];
-    this.lit = label;
-    const target = this.bar.copy().setOpacity(1);
-    target.moveTo([this.panel.center()[0], y]);
-    if (!this.bar.style.opacity) {
-      this.bar.moveTo([this.panel.center()[0], y]);
-      await this.scene.play(new FadeIn(this.bar.setOpacity(1), { runTime }));
-    } else await this.scene.play(new Transform(this.bar, target, { runTime }));
+  /**
+   * Light one row (null clears). The bar stays until moved, so it shows in the step's
+   * resting frame. `as` is the word the description gives it (default "marked").
+   */
+  async mark(label: string | null, { as = 'marked', runTime = 0.4 } = {}): Promise<void> {
+    const y = label == null ? 0 : this.row(label).anchorPoint()[1];
+    this.lit = label == null ? null : { label, as };
+    await moveBar(this.scene, this.bar, label == null ? null : this.bar.copy().moveTo([this.panel.center()[0], y]), runTime);
   }
 }
 
@@ -209,8 +218,6 @@ export interface CodeOptions {
   /** Lines beginning `+ ` or `- ` get added/removed bars (the marker is kept). */
   diff?: boolean;
 }
-const ADDED = '#2ea043',
-  REMOVED = '#e5534b';
 /** A bar behind an added or removed line. */
 interface LineMark {
   line: number;
@@ -230,7 +237,7 @@ export class CodeBlock extends Group {
   readonly colors: Palette;
   /** Added/removed bars behind lines (from `diff`, or from `morph` with `markAdded`). */
   marks: LineMark[] = [];
-  private focused: readonly [number, number] | null = null;
+  private focused: { lines: readonly [number, number]; as: string } | null = null;
   private fontSize: number;
   private scaled = 1;
   /** The box the block was placed in; `morph` grows only within it (the stage, if placed at a point). */
@@ -268,15 +275,7 @@ export class CodeBlock extends Group {
     // A title wider than the panel shrinks to fit it, as a card's does.
     if (head && head.width() > width - 2 * pad) head.scale((width - 2 * pad) / head.width());
     if (head) head.moveTo([-width / 2 + pad, height / 2 - 0.3], [-1, 0]);
-    this.bar = new Rectangle({
-      width: width - 0.14,
-      height: 0.1,
-      cornerRadius: 0.05,
-      fill: emphasis(colors),
-      fillOpacity: 0.22,
-      stroke: 'none',
-      opacity: 0,
-    });
+    this.bar = tint(emphasis(colors), width - 0.14, 0.1).setOpacity(0);
     this.add(this.panel);
     if (options.diff)
       lines.forEach((line, i) => {
@@ -291,16 +290,15 @@ export class CodeBlock extends Group {
   }
 
   /** The lines as a reader sees them, with the focused, added and removed ones named. */
-  describe(): { what: string; items: string[] } {
+  describe(): Seen {
     const kinds = new Map(this.marks.map((m) => [m.line, m.kind]));
+    const f = this.focused;
+    const n = this.code.lines.length;
     return {
-      what: this.title ?? 'Code',
-      items: this.code.lines.map((l, i) => {
-        const notes = [
-          ...(this.focused && i >= this.focused[0] && i <= this.focused[1] ? ['focused'] : []),
-          ...(kinds.has(i) ? [kinds.get(i)!] : []),
-        ];
-        return `${i + 1}: ${l.text}${notes.length ? ` (${notes.join(', ')})` : ''}`;
+      what: `Code${this.title ? ` “${this.title}”` : ''}, ${n} line${n === 1 ? '' : 's'}`,
+      parts: this.code.lines.map((l, i) => {
+        const words = [...(f && i >= f.lines[0] && i <= f.lines[1] ? [f.as] : []), ...(kinds.has(i) ? [kinds.get(i)!] : [])];
+        return { name: `${i + 1}: ${l.text}`, ...(words.length ? { mark: words.join(', ') } : {}) };
       }),
     };
   }
@@ -319,14 +317,7 @@ export class CodeBlock extends Group {
     const pitch = this.pitch;
     const y0 = lines[a]!.anchorPoint()[1] + pitch / 2,
       y1 = lines[b]!.anchorPoint()[1] - pitch / 2;
-    return new Rectangle({
-      width: panel.width() - 0.14,
-      height: Math.abs(y0 - y1),
-      cornerRadius: 0.05,
-      fill: emphasis(this.colors),
-      fillOpacity: 0.22,
-      stroke: 'none',
-    }).moveTo([panel.center()[0], (y0 + y1) / 2]);
+    return tint(emphasis(this.colors), panel.width() - 0.14, Math.abs(y0 - y1)).moveTo([panel.center()[0], (y0 + y1) / 2]);
   }
 
   /**
@@ -334,37 +325,27 @@ export class CodeBlock extends Group {
    * the line by shape as well as by colour.
    */
   private lineMark(i: number, kind: LineMark['kind'], lines?: readonly Text[], panel?: Rectangle): LineMark {
-    const color = kind === 'added' ? ADDED : REMOVED;
-    const tint = this.lineBar(i, i, lines, panel).setStyle({ fill: color, fillOpacity: 0.2 });
-    const [x0, y0, , y1] = tint.box()!;
+    const color = kind === 'added' ? good(this.colors) : bad(this.colors);
+    const back = this.lineBar(i, i, lines, panel).setStyle({ fill: color });
+    const [x0, y0, , y1] = back.box()!;
     const edge = new Rectangle({ width: 0.06, height: y1 - y0, fill: color, stroke: 'none' }).moveTo([x0 + 0.03, (y0 + y1) / 2]);
-    return { line: i, kind, mob: new Group(tint, edge) };
+    return { line: i, kind, mob: new Group(back, edge) };
   }
 
-  /** Put the focus bar on line i, or lines [a, b] inclusive; null hides it. */
-  async focus(lines: number | readonly [number, number] | null, { runTime = 0.4 } = {}): Promise<void> {
+  /**
+   * Put the focus bar on line i, or lines [a, b] inclusive; null hides it. `as` is the
+   * word the description gives the lines (default "focused").
+   */
+  async focus(lines: number | readonly [number, number] | null, { as = 'focused', runTime = 0.4 } = {}): Promise<void> {
     if (lines == null) {
-      if (this.focused) await this.scene.play(this.bar.animate.setOpacity(0), { runTime });
       this.focused = null;
-      return;
+      return moveBar(this.scene, this.bar, null, runTime);
     }
     const [a, b] = typeof lines === 'number' ? [lines, lines] : lines;
     if (!Number.isInteger(a) || !Number.isInteger(b) || a < 0 || b >= this.code.lines.length || a > b)
       throw new Error(`No code lines ${a}..${b}`);
-    const target = this.lineBar(a, b);
-    target.style.fill = emphasis(this.colors);
-    target.style.fillOpacity = 0.22;
-    if (!this.focused) {
-      this.bar.subpaths = target.subpaths.map((a) => a.slice());
-      this.bar.closed = [...target.closed];
-      this.bar.invalidateBox();
-      this.bar.setOpacity(1);
-      this.focused = [a, b];
-      await this.scene.play(new FadeIn(this.bar, { runTime }));
-    } else {
-      this.focused = [a, b];
-      await this.scene.play(new Transform(this.bar, target, { runTime }));
-    }
+    this.focused = { lines: [a, b], as };
+    await moveBar(this.scene, this.bar, this.lineBar(a, b), runTime);
   }
 
   /**

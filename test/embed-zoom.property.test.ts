@@ -1,19 +1,13 @@
 // Property tests for the stage zoom arithmetic (app/embed-zoom.ts), in Node.
 // The player's StageZoom only reads the stage size and paints; every number it
 // paints comes from these pure functions, so their contracts are the zoom's.
-// Runs: 1000 per property by default, FULL=1 for 10x. A failure prints its seed
-// and path; replay one with FC_SEED=<seed> FC_PATH=<path>.
+// Counts: test/lib/pbt.ts (FULL=1 is 10x).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fc from 'fast-check';
+import { fc, params } from './lib/pbt.ts';
 import { clampZoom, zoomAt, panBy, zoomTransform, IDENTITY, ZOOM_MAX } from '../app/embed-zoom.ts';
 import type { Zoom } from '../app/embed-zoom.ts';
 
-const runs = (n = 1000) => ({
-  numRuns: n * (process.env.FULL ? 10 : 1),
-  ...(process.env.FC_SEED ? { seed: Number(process.env.FC_SEED) } : {}),
-  ...(process.env.FC_PATH ? { path: process.env.FC_PATH } : {}),
-});
 const EPS = Number.EPSILON;
 
 // Stage sizes are clientWidth/clientHeight: non-negative integers, zero included.
@@ -70,7 +64,7 @@ test('zoom: after any gesture sequence the drawing covers the stage (no gap at a
       assert.ok(z.x + W * z.k >= W && z.y + H * z.k >= H, `right/bottom gap: ${JSON.stringify({ z, W, H })}`);
     }),
     {
-      ...runs(),
+      ...params(),
       // Ledger Z1 (NaN pan) and Z3 (w - w·k rounding a hair short at large w·k).
       examples: [
         [{ ops: [{ op: 'pan', dx: NaN, dy: 0 }], w: 0, h: 0, max: 1 }],
@@ -87,7 +81,7 @@ test('zoom: the scale stays within [1, max] after any gesture sequence', () => {
       const { z } = play(ops, w, h, max);
       assert.ok(z.k >= 1 && z.k <= max, `k=${z.k} max=${max}`);
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -98,7 +92,7 @@ test('zoom: hostile numbers (NaN, ±Infinity, 0, negative factors, zero-size sta
       assert.ok(Number.isFinite(z.k) && Number.isFinite(z.x) && Number.isFinite(z.y), JSON.stringify(z));
       assert.doesNotMatch(zoomTransform(z), /NaN|Infinity/);
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -136,7 +130,7 @@ test('zoom: zoomAt keeps the given stage point over the same drawing point when 
       assert.ok(Math.abs(u2 - u) <= ex, `x drift ${u2 - u} > ${ex}`);
       assert.ok(Math.abs(v2 - v) <= ey, `y drift ${v2 - v} > ${ey}`);
     }),
-    { ...runs(), maxSkipsPerRun: 1000 },
+    { ...params(), maxSkipsPerRun: 1000 },
   );
 });
 
@@ -160,7 +154,7 @@ test('zoom: zoomAt(f) then zoomAt(1/f) about the same point returns to the start
       assert.ok(Math.abs(back.x - z.x) <= ex, `x ${z.x} -> ${back.x} (> ${ex})`);
       assert.ok(Math.abs(back.y - z.y) <= ey, `y ${z.y} -> ${back.y} (> ${ey})`);
     }),
-    { ...runs(), maxSkipsPerRun: 1000 },
+    { ...params(), maxSkipsPerRun: 1000 },
   );
 });
 
@@ -171,7 +165,7 @@ test('zoom: reset from any state and any stage is exactly the identity, painted 
       assert.ok(z.k === 1 && z.x === 0 && z.y === 0, JSON.stringify(z));
       assert.equal(zoomTransform(z), '');
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -182,7 +176,7 @@ test('zoom: zooming all the way out (any factor at or below 1/k) is exactly the 
       assert.ok(out.k === 1 && out.x === 0 && out.y === 0, JSON.stringify(out));
       assert.equal(zoomTransform(out), '');
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -192,7 +186,7 @@ test('zoom: zooming by a factor of exactly 1 leaves any reachable state unchange
       const after = zoomAt(z, 1, px, py, w, h, max);
       assert.ok(after.k === z.k && after.x === z.x && after.y === z.y, `${JSON.stringify(z)} -> ${JSON.stringify(after)}`);
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -204,7 +198,7 @@ test('zoom: zooming further in at the cap leaves the view unchanged', () => {
       const after = zoomAt(atCap, factor, px, py, w, h, max);
       assert.ok(after.k === atCap.k && after.x === atCap.x && after.y === atCap.y, `${JSON.stringify(atCap)} -> ${JSON.stringify(after)}`);
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -214,7 +208,7 @@ test('zoom: panning by (0, 0) leaves any reachable state unchanged', () => {
       const still = panBy(z, 0, 0, w, h, max);
       assert.ok(still.k === z.k && still.x === z.x && still.y === z.y, JSON.stringify({ z, still }));
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -223,7 +217,7 @@ test('zoom: a pan by any amount never changes the scale', () => {
     fc.property(reachableWith(cap), any, any, ({ z, w, h, max }, dx, dy) => {
       assert.equal(panBy(z, dx, dy, w, h, max).k, z.k);
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -236,7 +230,7 @@ test('zoom: a NaN factor or a point at infinity leaves the view exactly unchange
       const after = zoomAt(z, f, px, py, w, h, max);
       assert.ok(after.k === z.k && after.x === z.x && after.y === z.y, `${JSON.stringify(z)} -> ${JSON.stringify(after)}`);
     }),
-    { ...runs(), maxSkipsPerRun: 100 },
+    { ...params(), maxSkipsPerRun: 100 },
   );
 });
 
@@ -246,7 +240,7 @@ test('zoom: a NaN pan delta leaves that axis exactly where it was', () => {
       const after = panBy(z, NaN, dy, w, h, max);
       assert.equal(after.x, z.x);
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -259,7 +253,7 @@ test('zoom: the painted transform reads back as exactly the zoom it paints', () 
       assert.ok(m, t);
       assert.ok(Number(m[1]) === z.x && Number(m[2]) === z.y && Number(m[3]) === z.k, t);
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -270,7 +264,7 @@ test('zoom: clamping is idempotent (re-clamping on a resize to the same size cha
       const again = clampZoom(z, W, H, max);
       assert.ok(again.k === z.k && again.x === z.x && again.y === z.y, JSON.stringify({ z, again }));
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -351,7 +345,7 @@ test('StageZoom: after any pointer, wheel, double-click and button sequence the 
       assert.ok(Number.isFinite(z.k) && Number.isFinite(z.x) && Number.isFinite(z.y), JSON.stringify(z));
       assert.ok(z.k >= 1 && z.k <= 6 && z.x <= 0 && z.y <= 0 && z.x + w * z.k >= w && z.y + h * z.k >= h, JSON.stringify({ k: z.k, x: z.x, y: z.y, w, h }));
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -370,7 +364,7 @@ test('StageZoom: what it paints, the zoomed class and the callback always descri
         assert.equal(classes.has('zoomed'), z.k > 1);
       }
     }),
-    runs(),
+    params(),
   );
 });
 
@@ -396,6 +390,6 @@ test('StageZoom: a motionless move while exactly two pointers are down never cha
       perform(z, fire, { kind: 'move', id, ...at }, down);
       assert.deepEqual({ k: z.k, x: z.x, y: z.y }, before);
     }),
-    runs(),
+    params(),
   );
 });

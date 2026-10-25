@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "importer": "263673d5bf9b15ed",
+  "importer": "8ac25d9f9eb41b38",
   "renderer": "agentic-mermaid@0.4.1",
-  "sourceHash": "1dbd348bb364542c800db9f5eed4f5ad5435e49733e914afe62f8db6dc4ad5c8",
+  "sourceHash": "6e1d5d12a74571f029e56c73c5a4a63c26de5117df1547d4f1abf71cf6d12aa3",
   "diagrams": {
     "[\"graph TB\\nFont[Inter] --> Shape[Shape text]\\nShape --> Paths[Cubic paths]\\nPaths --> SVG[SVG player]\\nPaths --> Video[Video frames]\",\"pen-and-ink\",null]": "81eb5e73d6387e21.json",
     "[\"graph TB\\nFont[JetBrains Mono] --> Shape[Shape text]\\nShape --> Paths[Cubic paths]\\nPaths --> SVG[SVG player]\\nPaths --> Video[Video frames]\",\"pen-and-ink\",null]": "5bb3720e9396a0e9.json"

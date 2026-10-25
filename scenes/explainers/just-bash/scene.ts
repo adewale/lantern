@@ -154,7 +154,6 @@ export default class BashExplainer extends Scene {
       caption:
         'The redirect stores HELLO in shout.txt and empties stdout. Exec copies the filesystem into a new shell value and returns it, so the original shell on the left still has no files.',
     });
-    await flow.clearNotes();
     await s.clearOverlays();
     await flow.morph({
       source: `graph LR\nInput[empty stdin] --> Echo[echo hello]\nEcho --> Tr[tr a-z A-Z]\nTr --> File[${FILE}]`,

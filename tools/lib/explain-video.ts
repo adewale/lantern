@@ -5,17 +5,13 @@ import { createRequire } from 'node:module';
 import { dirname, resolve, join, basename } from 'node:path';
 import { Scene, Text, Rectangle, NullSink, toSvgString, loadFonts, traceScene, takeMissingGlyphs } from '../../src/index.ts';
 import type { Trace } from '../../src/index.ts';
+import { FRAME } from '../../src/svg.ts';
+import { caseName } from '../../explain/index.ts';
 import type { ExplainerClass, Settings } from '../../explain/index.ts';
+import { pictureHtml, htmlEscape } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
 import { ROOT, hash, baseReceipt } from './explain-project.ts';
 
-/**
- * Pace of the caption pre-roll: adult silent reading of English non-fiction (Brysbaert 2019).
- * The caption stays up through the motion and the settle, so a slower reader still finishes.
- */
-const READ_WPM = 238;
-/** Seconds the resting picture holds after the motion, before the next caption replaces this one. */
-const SETTLE = 0.4;
 /** Footer caption type in scene units (80 px each at 1280): 27 px text on 40 px lines, about 80 characters a line. */
 const CAPTION = { size: 0.34, leading: 0.5, lines: 4 };
 export const FOOTER_TEXT_WIDTH = 13.6;
@@ -56,12 +52,11 @@ export async function rasterize(svg: string) {
   return new resvg.Resvg(svg, { font: { loadSystemFonts: false } }).render();
 }
 
-/** An SVG of the horizontal band `height` units tall around y = 0, `width` pixels wide, on `background`. */
-export function band(scene: Scene, width: number, height: number, background: string): string {
-  return toSvgString(scene, { width, background }).replace(
-    /height="\d+" viewBox="[^"]+"/,
-    `height="${(width * height) / 16}" viewBox="-8000 ${-height * 500} 16000 ${height * 1000}"`,
-  );
+/** The horizontal band `height` units tall around y = 0, `width` pixels wide: a window onto the scene's SVG. */
+export function band(scene: Scene, width: number, height: number, background?: string): string {
+  const full = Math.round((width * FRAME.h) / FRAME.w),
+    px = Math.round((width * height) / FRAME.w);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${px}" viewBox="0 ${(full - px) / 2} ${width} ${px}">${toSvgString(scene, { width, background })}</svg>`;
 }
 
 export function vttTime(seconds: number): string {
@@ -86,26 +81,38 @@ export function captionsVtt(trace: Trace, lang = 'en'): string {
 }
 
 /**
- * The film's order for each step: its caption over the previous resting picture for the reading
- * time, then the motion up to the scene's caption hold, then a short settle on the resting
- * picture. The scene's hold is skipped; the pre-roll does its job. The first step has no picture
- * before it, so it plays first and holds for reading after. Times are the film's.
+ * The film's order for each step: the motion under the step's title, then the resting picture
+ * under the full caption for its whole reading time at Scene.captionWpm. The scene's own hold is
+ * skipped: it counts the motion as reading time, and in the film the caption waits for the rest.
+ * Times are the film's; `rest` is when the caption appears.
  */
 function filmSteps(trace: Trace) {
   const { fps } = trace;
   let start = 0;
-  return trace.steps.map((s, i) => {
+  return trace.steps.map((s) => {
     const caption = typeof s.meta.caption === 'string' ? s.meta.caption.trim() : '';
-    const read = Math.ceil(((caption ? caption.split(/\s+/).length : 0) / READ_WPM) * 60 * fps - 1e-6);
-    const pre = i ? read : 0,
-      settle = Math.round(SETTLE * fps) + read - pre;
+    const read = Math.ceil(((caption ? caption.split(/\s+/).length : 0) / Scene.captionWpm) * 60 * fps - 1e-6);
     const last = s.frame1 ?? trace.frames,
       moveEnd = s.hold == null ? last : Math.round(s.hold * fps);
-    const length = pre + moveEnd - s.frame0 + settle,
-      t0 = start / fps;
-    start += length;
-    return { ...s, pre, settle, last, moveEnd, t0, t1: start / fps };
+    const t0 = start / fps,
+      rest = (start += moveEnd - s.frame0) / fps;
+    start += read;
+    return { ...s, read, last, moveEnd, t0, rest, t1: start / fps };
   });
+}
+
+/** The hash of this file, which decides how a video is made; a receipt with another is stale. */
+export const exporterHash = async () => hash(await readFile(new URL(import.meta.url)));
+
+/** FFprobe's streams and chapters for a video, once FFmpeg has decoded every frame of it without error. */
+export function probeVideo(file: string): {
+  streams: { codec_type: string; codec_name: string; width?: number; height?: number; nb_frames?: string; tags?: Record<string, string> }[];
+  chapters: { start_time: string; tags: { title: string } }[];
+} {
+  execFileSync('ffmpeg', ['-v', 'error', '-i', file, '-f', 'null', '-'], { stdio: 'pipe' });
+  return JSON.parse(
+    execFileSync('ffprobe', ['-v', 'error', '-show_streams', '-show_chapters', '-of', 'json', file], { encoding: 'utf8' }),
+  );
 }
 
 /** The embed's light or dark --bg, --fg and --line, so the footer looks like the page's caption under its stage. */
@@ -135,7 +142,7 @@ async function footer(lines: string[], width: number, colours: { bg: string; fg:
 
 export async function renderVideo(
   project: Project,
-  variant: { Scene: ExplainerClass; trace: Trace; values: Settings },
+  variant: { Scene: ExplainerClass; values: Settings },
   out: string,
   {
     width = 1280,
@@ -168,14 +175,14 @@ export async function renderVideo(
   const trace = await traceScene(variant.Scene, { fps });
   const steps = filmSteps(trace);
   if (!steps.length) throw new Error('A video needs at least one step');
-  // The footer must hold every caption; fail before FFmpeg starts, naming the step and case.
+  // The footer must hold every title and caption; fail before FFmpeg starts, naming the step and case.
   takeMissingGlyphs();
-  const captions = steps.map((s) => {
+  const footerText = steps.map((s) => {
     try {
-      const lines = withFooter ? wrapCaption(String(s.meta.caption ?? ''), FOOTER_TEXT_WIDTH) : [];
-      // Footer captions are drawn as outlines too, so a character the fonts lack would be blank.
+      const lines = withFooter ? [s.meta.title ?? s.step, s.meta.caption ?? ''].map((t) => wrapCaption(String(t), FOOTER_TEXT_WIDTH)) : [[], []];
+      // Footer text is drawn as outlines too, so a character the fonts lack would be blank.
       const lost = [...takeMissingGlyphs().values()].join('');
-      if (lost) throw new Error(`the caption has characters the fonts cannot draw: ${[...new Set(lost)].join(' ')}`);
+      if (lost) throw new Error(`the title or caption has characters the fonts cannot draw: ${[...new Set(lost)].join(' ')}`);
       return lines;
     } catch (error) {
       throw new Error(`${s.step} ${JSON.stringify(variant.values)}: ${(error as Error).message}`);
@@ -187,8 +194,8 @@ export async function renderVideo(
   const temporaryVideo = join(temp, basename(out));
   const vtt = temporaryVideo.replace(/\.[^.]+$/, '.vtt'),
     metadata = temporaryVideo + '.chapters.ffmeta';
-  const film = { ...trace, steps, duration: steps.at(-1)!.t1 };
-  await writeFile(vtt, captionsVtt(film, lang));
+  // Subtitle cues match the footer's captions: from the resting picture to the step's end.
+  await writeFile(vtt, captionsVtt({ ...trace, steps: steps.map((s) => ({ ...s, t0: s.rest })) }, lang));
   const escape = (v: string) => v.replace(/([\\=;#\n])/g, '\\$1');
   await writeFile(
     metadata,
@@ -240,18 +247,18 @@ export async function renderVideo(
     }
     return pixels;
   }
-  const footers: Uint8Array[] = [];
+  const footers: Uint8Array[][] = steps.map(() => []);
   let colours: Awaited<ReturnType<typeof footerColours>> | undefined;
-  /** `count` frames of the current picture over `step`'s caption. */
-  async function write(step: number, count: number) {
+  /** `count` frames of the current picture over `step`'s title (part 0) or caption (part 1). */
+  async function write(step: number, part: 0 | 1, count: number) {
     if (!count) return;
     const stage = await picture();
     let frame = stage;
     if (withFooter) {
       // Light or dark tokens to match the stage, judged by its top-left pixel.
       colours ??= await footerColours(0.2126 * stage[0]! + 0.7152 * stage[1]! + 0.0722 * stage[2]! < 128);
-      footers[step] ??= await footer(captions[step]!, width, colours);
-      frame = Buffer.concat([stage, footers[step]]);
+      const pixels = (footers[step]![part] ??= await footer(footerText[step]![part]!, width, colours));
+      frame = Buffer.concat([stage, pixels]);
     }
     for (let i = 0; i < count; i++) {
       if (!child.stdin.write(frame))
@@ -264,15 +271,10 @@ export async function renderVideo(
       frames++;
     }
   }
-  let current = -1,
-    hold = '';
-  /** Settle each step before `index` and open the next with its caption over the current picture. */
-  async function reach(index: number) {
-    while (current < index) {
-      if (current >= 0) await write(current, steps[current]!.settle);
-      current++;
-      await write(current, steps[current]!.pre);
-    }
+  let current = 0;
+  /** Hold the resting picture of each step before `index` under its caption. */
+  async function rest(index: number) {
+    for (; current < index; current++) await write(current, 1, steps[current]!.read);
   }
   try {
     await new variant.Scene(
@@ -281,17 +283,18 @@ export async function renderVideo(
           if (dt === 0) return;
           const n = scene.frameCount,
             index = steps.findIndex((s) => n <= s.last);
-          const next = toSvgString(scene, { width }).replace(/height="\d+" viewBox=/, `height="${stageHeight}" viewBox=`);
-          // A step opens over the frame before this one: the resting picture of the steps this frame
-          // closes (or, for a step with no frames before the first, the first frame).
-          if (!svg) svg = next;
-          await reach(index < 0 ? steps.length - 1 : index);
-          svg = next;
-          const step = steps[current]!;
-          if (n <= step.moveEnd) return write(current, 1);
-          // The scene's caption hold, which the film skips: the picture must already be at rest.
-          if (n === step.moveEnd + 1) hold = svg;
-          else if (svg !== hold)
+          await rest(index < 0 ? steps.length - 1 : index);
+          const next = band(scene, width, (stageHeight * FRAME.w) / width),
+            step = steps[current]!;
+          if (n <= step.moveEnd) {
+            svg = next;
+            return write(current, 0, 1);
+          }
+          // The scene's caption hold, which the film skips. Its first frame is the resting picture
+          // the caption is held over: a play lands (a morph gets its paths' own structure back)
+          // only after its last frame is drawn. After that the picture must stay at rest.
+          if (n === step.moveEnd + 1) svg = next;
+          else if (next !== svg)
             throw new Error(
               `${step.step} ${JSON.stringify(variant.values)}: the picture changes after the caption hold begins, and the film and the player both skip the hold. Finish every change before the step's last play() ends.`,
             );
@@ -299,8 +302,7 @@ export async function renderVideo(
       },
       { fps },
     ).run();
-    await reach(steps.length - 1);
-    await write(current, steps[current]!.settle);
+    await rest(steps.length);
     child.stdin.end();
     await done;
   } catch (error) {
@@ -310,10 +312,13 @@ export async function renderVideo(
     await rm(temp, { recursive: true, force: true });
     throw error;
   }
+  // The text alternative to the video (WCAG 1.2.1): each step's title, caption and what its picture shows.
+  const title = [project.Scene.meta?.title ?? basename(out), caseName(project.Scene, variant.values)].filter(Boolean).join(' · '),
+    transcript = out.replace(/\.[^.]+$/, '.transcript.html');
   const receipt = {
     ...baseReceipt(project),
     settings: variant.values,
-    exporterHash: hash(await readFile(new URL(import.meta.url))),
+    exporterHash: await exporterHash(),
     fps,
     width,
     height,
@@ -326,11 +331,19 @@ export async function renderVideo(
     audio: false,
     language: lang,
     preset: withFooter ? 'caption-footer' : 'stage-only',
-    chapters: steps.map((s) => s.step),
+    // Each chapter starts at its motion; its caption then holds over its resting picture this many seconds.
+    chapters: steps.map((s) => ({ step: s.step, captionHold: Math.round((s.read / fps) * 1000) / 1000 })),
+    transcript: basename(transcript),
   };
   // Commit the receipt last; interrupted renders never replace a complete video with a partial file.
   await rename(temporaryVideo, out);
   await rename(vtt, out.replace(/\.[^.]+$/, '.vtt'));
+  await writeFile(
+    transcript,
+    `<!doctype html><html lang="${htmlEscape(lang)}"><meta charset="utf-8"><title>${htmlEscape(title)}</title><h1>${htmlEscape(title)}</h1><ol>${trace.steps
+      .map((s) => `<li><h2>${htmlEscape(s.meta.title ?? s.step)}</h2><p>${htmlEscape(s.meta.caption ?? '')}</p>${pictureHtml(s.after)}</li>`)
+      .join('')}</ol></html>\n`,
+  );
   await rename(metadata, out + '.chapters.ffmeta');
   await writeFile(out + '.receipt.json', JSON.stringify(receipt, null, 2) + '\n');
   await rm(temp, { recursive: true, force: true });

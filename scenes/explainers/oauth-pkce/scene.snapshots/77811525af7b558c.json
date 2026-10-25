@@ -14,13 +14,11 @@
     "accent": "#0969da",
     "muted": "#59636e"
   },
-  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"764.418\" height=\"117.6\" viewBox=\"0 0 764.418 117.6\" style=\"--bg:#ffffff;--fg:#1f2328;--line:#d1d9e0;--accent:#0969da;--muted:#59636e;--font:Inter;background:#ffffff\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #1f2328;\n    --_text-sec:      #59636e;\n    --_text-muted:    #59636e;\n    --_text-faint:    #86888b;\n    --_line:          #d1d9e0;\n    --_arrow:         #0969da;\n    --_node-fill:     #f8f8f9;\n    --_node-stroke:   #d2d3d4;\n    --_group-fill:    #ffffff;\n    --_group-hdr:     #f4f4f4;\n    --_inner-stroke:  #e4e5e5;\n    --_key-badge:     #e9e9ea;\n  }\n</style>\n<rect width=\"764.418\" height=\"117.6\" fill=\"#ffffff\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#0969da\" stroke=\"#0969da\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#0969da\" stroke=\"#0969da\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline class=\"edge\" data-from=\"V\" data-to=\"H\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"SHA-256\" points=\"161.978,58.45 309.802,58.45\" fill=\"none\" stroke=\"#8f959c\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:V-&gt;H#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"V to H: SHA-256\" />\n<polyline class=\"edge\" data-from=\"H\" data-to=\"C\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"base64url\" points=\"433.26200000000006,58.45 587.62,58.45\" fill=\"none\" stroke=\"#8f959c\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:H-&gt;C#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"H to C: base64url\" />\n<g class=\"edge-label\" data-from=\"V\" data-to=\"H\" data-label=\"SHA-256\">\n  <rect class=\"edge-label-halo\" x=\"201.978\" y=\"38.45\" width=\"67.824\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"#ffffff\" stroke=\"none\" />\n  <rect x=\"205.978\" y=\"42.45\" width=\"59.824\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"#ffffff\" stroke=\"#e4e5e5\" stroke-width=\"1\" />\n  <text x=\"235.89000000000001\" y=\"57.6\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"43.824\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">SHA-256</text>\n</g>\n<g class=\"edge-label\" data-from=\"H\" data-to=\"C\" data-label=\"base64url\">\n  <rect class=\"edge-label-halo\" x=\"473.26199999999994\" y=\"38.45\" width=\"74.358\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"#ffffff\" stroke=\"none\" />\n  <rect x=\"477.26199999999994\" y=\"42.45\" width=\"66.358\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"#ffffff\" stroke=\"#e4e5e5\" stroke-width=\"1\" />\n  <text x=\"510.441\" y=\"57.6\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"#59636e\" dy=\"3.8499999999999996\" textLength=\"50.358\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">base64url</text>\n</g>\n<g class=\"node\" data-id=\"V\" data-label=\"code_verifier\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"40\" width=\"121.978\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"0.75\" data-id=\"node-shape:V\" data-role=\"node\" />\n  <text x=\"100.989\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"81.978\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">code_verifier</text>\n</g>\n<g class=\"node\" data-id=\"H\" data-label=\"32-byte digest\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"309.802\" y=\"40\" width=\"123.46000000000001\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"0.75\" data-id=\"node-shape:H\" data-role=\"node\" />\n  <text x=\"371.53200000000004\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"83.46\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">32-byte digest</text>\n</g>\n<g class=\"node\" data-id=\"C\" data-label=\"code_challenge\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"587.62\" y=\"40\" width=\"136.798\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#f8f8f9\" stroke=\"#d2d3d4\" stroke-width=\"0.75\" data-id=\"node-shape:C\" data-role=\"node\" />\n  <text x=\"656.019\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#1f2328\" dy=\"4.55\" textLength=\"96.798\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">code_challenge</text>\n</g>\n</svg>",
   "parts": [
     {
       "id": "__frame",
       "role": "frame",
       "kind": "shape",
-      "svg": "",
       "shapes": [
         {
           "subpaths": [
@@ -76,7 +74,6 @@
       "id": "edge:V->H#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"V\" data-to=\"H\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"SHA-256\" points=\"161.978,58.45 309.802,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:V-&gt;H#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"V to H: SHA-256\" />",
       "shapes": [
         {
           "subpaths": [
@@ -168,7 +165,6 @@
       "id": "edge:H->C#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"H\" data-to=\"C\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" data-label=\"base64url\" points=\"433.26200000000006,58.45 587.62,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:H-&gt;C#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"H to C: base64url\" />",
       "shapes": [
         {
           "subpaths": [
@@ -260,7 +256,6 @@
       "id": "edge-label:V->H#0",
       "role": "edge-label",
       "kind": "group",
-      "svg": "<g class=\"edge-label\" data-from=\"V\" data-to=\"H\" data-label=\"SHA-256\">\n  <rect class=\"edge-label-halo\" x=\"201.978\" y=\"38.45\" width=\"67.824\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"var(--bg)\" stroke=\"none\" />\n  <rect x=\"205.978\" y=\"42.45\" width=\"59.824\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"var(--bg)\" stroke=\"var(--_inner-stroke)\" stroke-width=\"1\" />\n  <text x=\"235.89000000000001\" y=\"57.6\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"var(--_text-sec)\" dy=\"3.8499999999999996\">SHA-256</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -448,7 +443,6 @@
       "id": "edge-label:H->C#0",
       "role": "edge-label",
       "kind": "group",
-      "svg": "<g class=\"edge-label\" data-from=\"H\" data-to=\"C\" data-label=\"base64url\">\n  <rect class=\"edge-label-halo\" x=\"473.26199999999994\" y=\"38.45\" width=\"74.358\" height=\"38.3\" rx=\"4\" ry=\"4\" fill=\"var(--bg)\" stroke=\"none\" />\n  <rect x=\"477.26199999999994\" y=\"42.45\" width=\"66.358\" height=\"30.3\" rx=\"2\" ry=\"2\" fill=\"var(--bg)\" stroke=\"var(--_inner-stroke)\" stroke-width=\"1\" />\n  <text x=\"510.441\" y=\"57.6\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"400\" fill=\"var(--_text-sec)\" dy=\"3.8499999999999996\">base64url</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -636,7 +630,6 @@
       "id": "V",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"V\" data-label=\"code_verifier\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"40\" width=\"121.978\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:V\" data-role=\"node\" />\n  <text x=\"100.989\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">code_verifier</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -727,7 +720,6 @@
       "id": "H",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"H\" data-label=\"32-byte digest\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"309.802\" y=\"40\" width=\"123.46000000000001\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:H\" data-role=\"node\" />\n  <text x=\"371.53200000000004\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">32-byte digest</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -818,7 +810,6 @@
       "id": "C",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"C\" data-label=\"code_challenge\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"587.62\" y=\"40\" width=\"136.798\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:C\" data-role=\"node\" />\n  <text x=\"656.019\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">code_challenge</text>\n</g>",
       "shapes": [
         {
           "subpaths": [

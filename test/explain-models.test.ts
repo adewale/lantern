@@ -16,8 +16,8 @@ import {
   daylightYear,
   declination,
 } from '../scenes/explainers/lib/models.ts';
-import { find, closeness, distance, run } from '../scenes/explainers/2password/model.ts';
-import { Repo, AUTHOR } from '../scenes/lib/gitmodel.ts';
+import { find, closeness, distance, run } from '../scenes/explainers/lib/2password.ts';
+import { Repo, AUTHOR } from '../scenes/explainers/lib/git.ts';
 
 test('SHA-256 and PKCE agree with independent crypto and the RFC 7636 vector', () => {
   for (let n = 0; n < 180; n++) {

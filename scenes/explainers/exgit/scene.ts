@@ -1,6 +1,6 @@
 import { Scene, Text, Rectangle, Arrow, Group, FadeIn, FadeOut } from '../../../src/index.ts';
 import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
-import { Repo, AUTHOR, parseTree } from '../../lib/gitmodel.ts';
+import { Repo, AUTHOR, parseTree } from '../lib/git.ts';
 
 const STYLE = 'catppuccin-mocha';
 const short = (id: string) => id.slice(0, 7);
@@ -96,8 +96,15 @@ export default class GitExplainer extends Scene {
     };
     const bodyLabel = span(bodyCells, 'content', ink),
       headLabel = span(headCells, 'header', accent);
-    await s.enter(bodyCells, bodyLabel, { runTime: 0.5 });
-    await s.enter(headCells, headLabel, { runTime: 0.6, shift: [0.6, 0] });
+    await s.enter(bodyCells, bodyLabel, {
+      runTime: 0.5,
+      describe: `The content bytes ${JSON.stringify(new TextDecoder().decode(object.bytes))}, one cell each with its hex value`,
+    });
+    await s.enter(headCells, headLabel, {
+      runTime: 0.6,
+      shift: [0.6, 0],
+      describe: `The header bytes “${object.type} ${object.bytes.length}” and a zero byte, in front of the content`,
+    });
     const arrow = new Arrow([0, cellY - 1.1], [0, cellY - 2.05], { stroke: s.soft, strokeWidth: 0.03, tipLength: 0.2 });
     const how = new Text('SHA-1', { fontSize: 0.24, color: s.soft, anchor: 'start' }).moveTo([0.3, cellY - 1.57], [-1, 0]);
     const idHead = new Text(short(hello), { fontSize: 0.42, font: 'mono', color: accent, weight: 'bold' }),
@@ -105,8 +112,8 @@ export default class GitExplainer extends Scene {
     const idRow = new Group(idHead, idTail);
     idTail.nextTo(idHead, [1, 0], 0.02);
     idRow.moveTo([0, cellY - 2.65]);
-    await s.enter(arrow, how, { runTime: 0.4 });
-    await s.enter(idRow, { runTime: 0.6 });
+    await s.enter(arrow, how, { runTime: 0.4, describe: 'An arrow labelled SHA-1 from the bytes to their id' });
+    await s.enter(idRow, { runTime: 0.6, describe: `The blob id ${hello}, its first seven digits highlighted` });
 
     // ── tree: names live in the tree ────────────────────────────────────
     await this.step('tree', {
@@ -151,7 +158,7 @@ export default class GitExplainer extends Scene {
     await this.step('change', {
       title: add ? 'Add a file: the old blob is reused' : 'Edit a file: new blob, new tree, new commit',
       caption: add
-        ? 'Tree two keeps tree one’s hello.txt entry byte for byte and adds world.txt; the marked lines are new. The world.txt blob, tree two and commit two are new objects, and main still points at commit one.'
+        ? 'Tree two keeps tree one’s hello.txt entry byte for byte and adds world.txt. The marked lines changed: the header’s byte length, the new entry and the tree’s own id. The world.txt blob, tree two and commit two are new objects, and main still points at commit one.'
         : 'New bytes hash to a new blob id. Tree two’s entry holds that id, so the tree’s own id changes too (the marked lines), and so does the commit’s. Commit one and its objects are untouched.',
     });
     const nextBlob = repo.blob(add ? 'world\n' : 'hello again\n');
@@ -176,7 +183,7 @@ export default class GitExplainer extends Scene {
     await d.morph({ source: CHANGE });
     await d.note('edge:C2->C1#0', 'parent', { side: 'below' });
     // Tree one's bytes, as in the tree step, turn into tree two's: a line that
-    // survives is unchanged, and a marked line is new.
+    // survives is unchanged, and a marked line changed.
     const treeDiff = await s.code(treeLines(repo, t1), { at: BOTTOM });
     await treeDiff.morph(treeLines(repo, t2), { markAdded: true });
     if (add) {
@@ -227,7 +234,6 @@ export default class GitExplainer extends Scene {
     });
     await s.clearOverlays();
     const body = await s.code(objectLines(repo, c2), { at: BOTTOM });
-    await d.clearNotes();
     await d.unmark();
     await d.mark(['C2', 'T2', 'C1', 'edge:C2->T2#0', 'edge:C2->C1#0']);
     await d.note('edge:C2->C1#0', 'parent', { side: 'below' });

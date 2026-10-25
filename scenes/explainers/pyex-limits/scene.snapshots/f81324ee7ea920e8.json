@@ -14,13 +14,11 @@
     "accent": "#c678dd",
     "muted": "#5c6370"
   },
-  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"841.876\" height=\"116.9\" viewBox=\"0 0 841.876 116.9\" style=\"--bg:#282c34;--fg:#abb2bf;--line:#4b5263;--accent:#c678dd;--muted:#5c6370;--font:Inter;background:#282c34\">\n<style>\n  text { font-family: var(--font, 'Inter'), system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          #abb2bf;\n    --_text-sec:      #5c6370;\n    --_text-muted:    #5c6370;\n    --_text-faint:    #6f747f;\n    --_line:          #4b5263;\n    --_arrow:         #c678dd;\n    --_node-fill:     #2c3038;\n    --_node-stroke:   #424750;\n    --_group-fill:    #282c34;\n    --_group-hdr:     #2f333b;\n    --_inner-stroke:  #383c45;\n    --_key-badge:     #353942;\n  }\n</style>\n<rect width=\"841.876\" height=\"116.9\" fill=\"#282c34\" data-backdrop=\"page\" />\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.5, 0 5\" fill=\"#c678dd\" stroke=\"#c678dd\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"5\" refX=\"1\" refY=\"2.5\" orient=\"auto\">\n    <polygon points=\"8 0, 0 2.5, 8 5\" fill=\"#c678dd\" stroke=\"#c678dd\" stroke-width=\"0.75\" stroke-linejoin=\"round\" />\n  </marker>\n</defs>\n<polyline class=\"edge\" data-from=\"Steps\" data-to=\"Memory\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"152.345,58.45 200.345,58.45\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Steps-&gt;Memory#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Steps to Memory\" />\n<polyline class=\"edge\" data-from=\"Memory\" data-to=\"Output\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"326.028,58.45 374.028,58.45\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Memory-&gt;Output#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Memory to Output\" />\n<polyline class=\"edge\" data-from=\"Output\" data-to=\"Deadline\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"489.337,58.45 537.337,58.45\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Output-&gt;Deadline#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Output to Deadline\" />\n<polyline class=\"edge\" data-from=\"Deadline\" data-to=\"Next\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"664.502,58.45 712.502,58.45\" fill=\"none\" stroke=\"#6e7584\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Deadline-&gt;Next#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Deadline to Next\" />\n<g class=\"node\" data-id=\"Steps\" data-label=\"steps over?\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"40\" width=\"112.345\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Steps\" data-role=\"node\" />\n  <text x=\"96.1725\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"72.345\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">steps over?</text>\n</g>\n<g class=\"node\" data-id=\"Memory\" data-label=\"memory over?\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"200.345\" y=\"40\" width=\"125.68299999999999\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Memory\" data-role=\"node\" />\n  <text x=\"263.1865\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"85.683\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">memory over?</text>\n</g>\n<g class=\"node\" data-id=\"Output\" data-label=\"output over?\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"374.028\" y=\"40\" width=\"115.30900000000001\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Output\" data-role=\"node\" />\n  <text x=\"431.6825\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"75.309\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">output over?</text>\n</g>\n<g class=\"node\" data-id=\"Deadline\" data-label=\"past deadline?\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"537.337\" y=\"40\" width=\"127.16499999999999\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Deadline\" data-role=\"node\" />\n  <text x=\"600.9195\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"87.165\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">past deadline?</text>\n</g>\n<g class=\"node\" data-id=\"Next\" data-label=\"steps + 1\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"712.502\" y=\"40\" width=\"89.374\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"#2c3038\" stroke=\"#424750\" stroke-width=\"0.75\" data-id=\"node-shape:Next\" data-role=\"node\" />\n  <text x=\"757.189\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"#abb2bf\" dy=\"4.55\" textLength=\"49.374\" lengthAdjust=\"spacingAndGlyphs\" data-font-metrics=\"deterministic-fit\">steps + 1</text>\n</g>\n</svg>",
   "parts": [
     {
       "id": "__frame",
       "role": "frame",
       "kind": "shape",
-      "svg": "",
       "shapes": [
         {
           "subpaths": [
@@ -76,7 +74,6 @@
       "id": "edge:Steps->Memory#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"Steps\" data-to=\"Memory\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"152.345,58.45 200.345,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Steps-&gt;Memory#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Steps to Memory\" />",
       "shapes": [
         {
           "subpaths": [
@@ -168,7 +165,6 @@
       "id": "edge:Memory->Output#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"Memory\" data-to=\"Output\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"326.028,58.45 374.028,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Memory-&gt;Output#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Memory to Output\" />",
       "shapes": [
         {
           "subpaths": [
@@ -260,7 +256,6 @@
       "id": "edge:Output->Deadline#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"Output\" data-to=\"Deadline\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"489.337,58.45 537.337,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Output-&gt;Deadline#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Output to Deadline\" />",
       "shapes": [
         {
           "subpaths": [
@@ -352,7 +347,6 @@
       "id": "edge:Deadline->Next#0",
       "role": "edge",
       "kind": "connector",
-      "svg": "<polyline class=\"edge\" data-from=\"Deadline\" data-to=\"Next\" data-style=\"solid\" data-arrow-start=\"false\" data-arrow-end=\"true\" data-marker-end=\"arrow\" points=\"664.502,58.45 712.502,58.45\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"1\" marker-end=\"url(#arrowhead)\" data-relationship=\"flowchart-edge\" data-direction=\"forward\" data-id=\"edge:Deadline-&gt;Next#0\" data-role=\"edge\" role=\"graphics-symbol\" aria-roledescription=\"relation\" aria-label=\"Deadline to Next\" />",
       "shapes": [
         {
           "subpaths": [
@@ -444,7 +438,6 @@
       "id": "Steps",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"Steps\" data-label=\"steps over?\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"40\" y=\"40\" width=\"112.345\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Steps\" data-role=\"node\" />\n  <text x=\"96.1725\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">steps over?</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -535,7 +528,6 @@
       "id": "Memory",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"Memory\" data-label=\"memory over?\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"200.345\" y=\"40\" width=\"125.68299999999999\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Memory\" data-role=\"node\" />\n  <text x=\"263.1865\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">memory over?</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -626,7 +618,6 @@
       "id": "Output",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"Output\" data-label=\"output over?\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"374.028\" y=\"40\" width=\"115.30900000000001\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Output\" data-role=\"node\" />\n  <text x=\"431.6825\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">output over?</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -717,7 +708,6 @@
       "id": "Deadline",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"Deadline\" data-label=\"past deadline?\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"537.337\" y=\"40\" width=\"127.16499999999999\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Deadline\" data-role=\"node\" />\n  <text x=\"600.9195\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">past deadline?</text>\n</g>",
       "shapes": [
         {
           "subpaths": [
@@ -808,7 +798,6 @@
       "id": "Next",
       "role": "node",
       "kind": "group",
-      "svg": "<g class=\"node\" data-id=\"Next\" data-label=\"steps + 1\" data-shape=\"rectangle\" data-role=\"node\">\n  <rect x=\"712.502\" y=\"40\" width=\"89.374\" height=\"36.900000000000006\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" data-id=\"node-shape:Next\" data-role=\"node\" />\n  <text x=\"757.189\" y=\"58.45\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\" dy=\"4.55\">steps + 1</text>\n</g>",
       "shapes": [
         {
           "subpaths": [

@@ -124,6 +124,7 @@ export function find(queries: readonly string[], items: readonly Item[] = ITEMS)
  * `2password run --env NAME=op://… -- command`. With a service-account token, op runs
  * `env -u OP_SERVICE_ACCOUNT_TOKEN command`, so the token stops at op. `opEnv` is what op starts
  * with; `childEnv` is what the command gets once op has resolved each reference and run the argv.
+ * op.ts spawns op with extendEnv, so both carry the whole parent environment; PATH stands in for it.
  */
 export function run(
   auth: 'desktop' | 'service',

@@ -34,7 +34,6 @@ export interface SnapshotPart {
   id: string;
   role: string;
   kind: string;
-  svg: string;
   shapes: SnapshotShape[];
   owner?: string;
   from?: string;
@@ -56,9 +55,21 @@ export interface DiagramSnapshot {
   width: number;
   height: number;
   palette: Palette;
-  svg: string;
   parts: SnapshotPart[];
-  findings: unknown;
+  findings: Findings;
+  /** An XY chart's series as written: the renderer's channels hold them normalised. */
+  chart?: ChartData;
+}
+export interface ChartData {
+  categories?: string[];
+  series: { kind: string; values: number[] }[];
+}
+/** Agentic Mermaid's verifier result. */
+export interface Findings {
+  ok: boolean;
+  warnings: Finding[];
+  /** The verifier's layout; its `edges` are every edge in source order, the order a warning's `edge` counts in. */
+  layout?: { edges?: { from: string; to: string }[] };
 }
 export type SnapshotStore = Record<string, DiagramSnapshot>;
 export type MutationOp = Readonly<Record<string, unknown>>;
@@ -86,7 +97,10 @@ export function diagramsOf(scene: Scene): DiagramResolver {
     throw new Error('No diagram snapshots are bound to this scene: run it through the explain CLI, or bind them with bindSnapshots().');
   return resolver;
 }
+/** Snapshots already validated: a store is checked once, not on every resolve. */
+const valid = new WeakSet<DiagramSnapshot>();
 function validateSnapshot(value: DiagramSnapshot): void {
+  if (valid.has(value)) return;
   const invalid = () => {
     throw new Error(`Invalid diagram snapshot. ${RECAPTURE}`);
   };
@@ -109,6 +123,24 @@ function validateSnapshot(value: DiagramSnapshot): void {
     !value.palette ||
     ![value.palette.paper, value.palette.ink, value.palette.accent, value.palette.muted].every(color) ||
     !Array.isArray(value.parts)
+  )
+    invalid();
+  const { findings, chart } = value;
+  const text = (v: unknown) => typeof v === 'string';
+  if (
+    !findings ||
+    typeof findings.ok !== 'boolean' ||
+    !Array.isArray(findings.warnings) ||
+    !findings.warnings.every((w) => w && text(w.code) && (w.edge == null || text(w.edge))) ||
+    (findings.layout?.edges != null &&
+      (!Array.isArray(findings.layout.edges) || !findings.layout.edges.every((e) => e && text(e.from) && text(e.to))))
+  )
+    invalid();
+  if (
+    chart != null &&
+    (!Array.isArray(chart.series) ||
+      !chart.series.every((s) => s && text(s.kind) && Array.isArray(s.values) && s.values.every(finite)) ||
+      (chart.categories != null && (!Array.isArray(chart.categories) || !chart.categories.every(text))))
   )
     invalid();
   const ids = new Map(value.parts.map((p) => [p?.id, p]));
@@ -178,6 +210,7 @@ function validateSnapshot(value: DiagramSnapshot): void {
       }
     }
   }
+  valid.add(value);
 }
 export function snapshotResolver(store: SnapshotStore): DiagramResolver {
   return {
@@ -213,28 +246,21 @@ export function edgePartOf(snapshot: DiagramSnapshot, globalEdge: string): strin
   const named = /^(.*)#(\d+)$/s.exec(globalEdge);
   if (!named) return undefined;
   const index = Number(named[2]);
-  const findings = snapshot.findings as { layout?: { edges?: unknown } } | null;
-  const edges = typeof findings === 'object' ? findings?.layout?.edges : undefined;
-  const order: unknown[] = Array.isArray(edges)
-    ? edges
-    : snapshot.parts.filter((p) => p.from && p.to && !p.owner).map((p) => ({ from: p.from!, to: p.to! }));
-  const isEdge = (e: unknown): e is { from: string; to: string } =>
-    !!e && typeof (e as { from?: unknown }).from === 'string' && typeof (e as { to?: unknown }).to === 'string';
+  const order =
+    snapshot.findings.layout?.edges ??
+    snapshot.parts.filter((p) => p.from && p.to && !p.owner).map((p) => ({ from: p.from!, to: p.to! }));
   const edge = order[index];
   // The name carries the edge's endpoints: an index that points at a different edge is not this one.
-  if (!isEdge(edge) || named[1] !== `${edge.from}->${edge.to}`) return undefined;
-  const nth = order.slice(0, index).filter((e) => isEdge(e) && e.from === edge.from && e.to === edge.to).length;
+  if (!edge || named[1] !== `${edge.from}->${edge.to}`) return undefined;
+  const nth = order.slice(0, index).filter((e) => e.from === edge.from && e.to === edge.to).length;
   const part = `edge:${edge.from}->${edge.to}#${nth}`;
   return snapshot.parts.some((p) => p.id === part) ? part : undefined;
 }
 /** The snapshot's verifier warnings, each with the `part` its edge names (see `edgePartOf`). */
 export function findingsOf(snapshot: DiagramSnapshot): Finding[] {
-  const findings = snapshot.findings as { warnings?: unknown } | null;
-  const warnings = typeof findings === 'object' && Array.isArray(findings?.warnings) ? findings.warnings : [];
-  // Malformed entries are not warnings; `part` is always derived here, never carried over.
-  return (warnings.filter((w) => !!w && typeof w === 'object' && !Array.isArray(w)) as Finding[]).map((warning) => {
-    const { part: _stale, ...rest } = warning;
-    const part = typeof warning.edge === 'string' ? edgePartOf(snapshot, warning.edge) : undefined;
-    return part ? { ...rest, part } : rest;
+  // `part` is always derived here, never carried over.
+  return snapshot.findings.warnings.map(({ part: _stale, ...warning }) => {
+    const part = warning.edge != null ? edgePartOf(snapshot, warning.edge) : undefined;
+    return part ? { ...warning, part } : warning;
   });
 }

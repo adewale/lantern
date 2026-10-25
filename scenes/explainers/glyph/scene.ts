@@ -127,11 +127,14 @@ export default class GlyphExplainer extends Scene {
     big.setStyle({ fill: ink, fillOpacity: 0 });
     big.setStroke(hot, 0.022);
     const net = controlNet(big, hot, soft);
-    s.keep(big);
     const ob = text.children[oIndex]!.box()!;
-    const underline = s.keep(new Line([ob[0], ob[1] - 0.12], [ob[2], ob[1] - 0.12], { stroke: hot, strokeWidth: 0.04 }));
+    const underline = new Line([ob[0], ob[1] - 0.12], [ob[2], ob[1] - 0.12], { stroke: hot, strokeWidth: 0.04 });
+    s.keep(big, underline, { describe: `“${WORD}” traced as outlines, its first “o” underlined and drawn large below` });
     await this.play(new Create(big, { runTime: 1.2 }), new Create(underline, { runTime: 0.6 }));
-    await s.enter(net, { runTime: 0.6 });
+    await s.enter(net, {
+      runTime: 0.6,
+      describe: 'The large “o” with its control net: points on the outline as large dots, handles as small dots on thin lines',
+    });
 
     await this.step('measure', {
       title: 'Inter and JetBrains Mono give the same words different widths',
@@ -155,9 +158,7 @@ export default class GlyphExplainer extends Scene {
       `${NAME[f]} · ${run.width.toFixed(4)} units · advances ${spread(run.advances)}`;
     const mineRule = ruler(measured, mine.stops, label(font, mine), hot);
     const theirRule = ruler(compare, theirs.stops, label(other, theirs), soft);
-    s.keep(compare);
-    s.keep(mineRule);
-    s.keep(theirRule);
+    s.keep(compare, mineRule, theirRule);
     await this.play(new Create(mineRule, { runTime: 0.9, lagRatio: 0 }));
     await this.play(new FadeIn(compare, { runTime: 0.5 }), new Create(theirRule, { runTime: 0.9, lagRatio: 0 }));
     // Measured on a fresh run: moving the drawn copy re-rounds its float32 box.
@@ -170,7 +171,7 @@ export default class GlyphExplainer extends Scene {
         'The font stores quadratic curves and lines, as the note beside it counts. Lantern raises every segment to a cubic, so one kind of path feeds both the SVG player and offline video frames.',
     });
     await s.clear();
-    const d = await s.show({ source: pipeline(NAME[font]) }, { box: [-7.55, -4.25, -0.4, 3.25] });
+    const d = await s.show({ source: pipeline(NAME[font]) }, { box: regionBox('full', { right: -0.4 }) });
     await d.walk(
       [
         ['Font', 'Shape'],
@@ -199,7 +200,7 @@ export default class GlyphExplainer extends Scene {
       lines.push(`  … ${curves - (c === 0 ? 2 : 1)} more C … Z`);
     });
     lines.push('"/>');
-    await s.enter(solid, { runTime: 0.5 });
+    await s.enter(solid, { runTime: 0.5, describe: 'A solid “o”, the glyph whose path the code shows' });
     await s.code(lines, { at: regionBox('right', { top: 0.7 }), fontSize: 0.22 });
 
     await this.step('morph', {
@@ -213,7 +214,7 @@ export default class GlyphExplainer extends Scene {
     await s.enter(before, { runTime: 0.5 });
     await s.code(['- cache miss', '+ cache hit'], {
       // Level with the gap between the two words, beside the pairing lines.
-      at: [3.0, -1.6, 7.55, 1.9],
+      at: regionBox('full', { left: 3.0, bottom: -1.6, top: 1.9 }),
       fontSize: 0.3,
       diff: true,
     });
@@ -235,10 +236,11 @@ export default class GlyphExplainer extends Scene {
       );
     });
     const ghost = before.copy().setFill(soft);
-    s.keep(ghost);
-    s.keep(after);
+    s.keep(ghost, after);
     await this.play(new Transform(before, after, { replace: true, runTime: 1.4 }), new FadeIn(ghost, { runTime: 1.4 }));
-    s.keep(pairs);
+    s.keep(pairs, {
+      describe: 'Lines pair each letter of “cache miss” with the letter it becomes, the reshaped pairs highlighted and the last s dashed',
+    });
     await this.play(new Create(pairs, { runTime: 0.8, lagRatio: 0 }));
 
     await this.step('tradeoff', {
@@ -247,7 +249,7 @@ export default class GlyphExplainer extends Scene {
         'The pen-and-ink style asks for EB Garamond, but Lantern draws labels in embedded Inter, stretched to the width agentic-mermaid wrote into each label’s textLength. Box shapes and strokes come from the style; only the letterforms differ.',
     });
     await s.clear();
-    const again = await s.show({ source: pipeline(NAME[font]) }, { box: [-7.55, -4.25, -1.4, 3.25] });
+    const again = await s.show({ source: pipeline(NAME[font]) }, { box: regionBox('full', { right: -1.4 }) });
     const run = again.snapshot.parts
       .flatMap((p) => p.shapes)
       .find((sh) => sh.textRun?.text === 'Video frames')!.textRun!;
@@ -263,10 +265,7 @@ export default class GlyphExplainer extends Scene {
       w1 = w0 * k;
     const plainRule = ruler(plain, [0], `Inter's own advance: ${w0.toFixed(3)}`, soft, 0.22);
     const fitRule = ruler(fitted, [0], `textLength width: ${w1.toFixed(3)}`, hot, 0.22);
-    s.keep(plain);
-    s.keep(fitted);
-    s.keep(plainRule);
-    s.keep(fitRule);
+    s.keep(plain, fitted, plainRule, fitRule);
     await this.play(new FadeIn(plain), new Create(plainRule, { lagRatio: 0 }));
     await this.play(new FadeIn(fitted), new Create(fitRule, { lagRatio: 0 }));
   }

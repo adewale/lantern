@@ -40,9 +40,8 @@ try {
     const project = await collectProject(join(ROOT, 'scenes/explainers', entry.id), { write: false }),
       defaults = defaultVariant(project);
     for (const variant of project.variants) {
-      const step =
-        variant.trace.steps.find((s) => s.step === entry.step) ??
-        variant.trace.steps[Math.floor(variant.trace.steps.length / 2)]!;
+      // The gallery tile's step, or the first, as the player falls back.
+      const step = variant.trace.steps.find((s) => s.step === entry.step) ?? variant.trace.steps[0]!;
       const query = new URLSearchParams({ ...variant.values, step: step.step });
       await page.goto(`${base}/explainers/${entry.id}.html?${query}`);
       await page.waitForSelector('[data-ready=true]').catch((error: Error) => {
@@ -76,20 +75,13 @@ try {
             animations: 'disabled',
           });
       }
-      cases.push({
-        scene: entry.id,
-        settings: variant.values,
-        step: step.step,
-        caption: true,
-        paths: true,
-        mobileOverflow: false,
-      });
+      cases.push({ scene: entry.id, settings: variant.values, step: step.step });
     }
   }
-  const headers = await fetch(base + '/explainers/pap.html', { method: 'HEAD' });
+  const headers = await fetch(base + '/explainers/exgit.html', { method: 'HEAD' });
   assert.match(headers.headers.get('content-security-policy') ?? '', /connect-src 'none'/);
   assert.equal(headers.headers.get('x-frame-options'), null);
-  const range = await fetch(base + '/videos/pap.mp4', { headers: { range: 'bytes=0-31' } });
+  const range = await fetch(base + '/videos/exgit.mp4', { headers: { range: 'bytes=0-31' } });
   assert.equal(range.status, 206, 'Run npm run demos:render before reviewing video delivery');
   assert.equal((await range.arrayBuffer()).byteLength, 32);
   await page.goto(base + '/explainers/embed-lab.html');
@@ -112,8 +104,6 @@ try {
         results: cases,
         consoleErrors: errors,
         runtimeConnections: connections,
-        headers: true,
-        videoByteRanges: true,
       },
       null,
       2,

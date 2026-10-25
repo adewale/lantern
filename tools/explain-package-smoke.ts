@@ -3,6 +3,7 @@
 import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { existsSync } from 'node:fs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import assert from 'node:assert/strict';
@@ -27,7 +28,14 @@ try {
   const bin = join(folder, 'node_modules/.bin/explain');
   assert.match((await run(bin, ['--help'], { cwd: folder })).stdout, /Lantern Explainers/);
   await run(process.execPath, [cli, 'init', 'first'], { cwd: folder });
+  // A default install leaves the optional peers out; the template's diagram then names what to install.
+  const peers = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8')).peerDependencies;
+  for (const name of Object.keys(peers)) assert.ok(!existsSync(join(folder, 'node_modules', name)), `${name} installed by default`);
+  const refused: string = await run(bin, ['snapshots', 'first'], { cwd: folder }).then(() => '', (e) => e.stderr);
+  const install = /Install: npm (i .+)/.exec(refused)?.[1];
+  assert.ok(install, refused);
   if (process.env.EXPLAIN_BROWSER) {
+    await run('npm', [...install.split(' '), '--no-audit', '--no-fund'], { cwd: folder, maxBuffer: 4 * 1024 * 1024 });
     await run(bin, ['snapshots', 'first', '--refresh'], { cwd: folder });
     const cache = JSON.parse(await readFile(join(folder, 'first/scene.snapshots/index.json'), 'utf8'));
     assert.equal(Object.keys(cache.diagrams).length, 1);
@@ -53,12 +61,14 @@ try {
     { cwd: folder },
   );
   assert.equal(result.stdout.trim(), '2');
-  if (process.env.EXPLAIN_VIDEO)
+  if (process.env.EXPLAIN_VIDEO) {
+    await run('npm', ['i', `@resvg/resvg-js@${peers['@resvg/resvg-js']}`, '--no-audit', '--no-fund'], { cwd: folder });
     await run(bin, ['render', 'first', '--out', 'public/outside.mp4', '--footer', '--fps', '4'], {
       cwd: folder,
     });
+  }
   console.log(
-    'Package gate passed: archive install, executable JS bin, external native author, settings, checks, build, notices, one compiled engine' +
+    'Package gate passed: archive install without optional peers, executable JS bin, install hint, external native author, settings, checks, build, notices, one compiled engine' +
       (process.env.EXPLAIN_VIDEO ? ', installed video export' : '') +
       (process.env.EXPLAIN_BROWSER ? ', installed diagram capture' : '') +
       '.',

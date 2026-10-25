@@ -1,7 +1,7 @@
 import { Scene, FadeOut } from '../../../src/index.ts';
 import type { Mobject } from '../../../src/index.ts';
-import { stage, settingsOf, edgePartOf, REGIONS } from '../../../explain/index.ts';
-import type { CardRow, DiagramSnapshot } from '../../../explain/index.ts';
+import { stage, settingsOf, REGIONS } from '../../../explain/index.ts';
+import type { CardRow, Diagram } from '../../../explain/index.ts';
 const STYLE = 'blueprint';
 const BAD = 'graph LR\nA{Cached} --> B[Reply]\nA --> C[Database]';
 const GOOD = 'graph LR\nA{Cached} -->|yes| B[Reply]\nA -->|no| C[Database]';
@@ -9,17 +9,6 @@ const OPS = [
   { kind: 'set_label', target: 'A->B#0', label: 'yes' },
   { kind: 'set_label', target: 'A->C#0', label: 'no' },
 ];
-interface Warning {
-  code: string;
-  node: string;
-  edge: string;
-}
-interface Findings {
-  ok: boolean;
-  warnings: Warning[];
-  layout: { edges: { id: string; label?: { text: string } }[] };
-}
-const findingsOf = (snap: DiagramSnapshot) => snap.findings as Findings;
 const SIDE = REGIONS.side,
   GAP = 0.3;
 
@@ -79,25 +68,26 @@ export default class MermaidExplainer extends Scene {
         : 'Both edges out of Cached carry labels, yes and no, so verify(flow) returns no warnings and this case skips the repair step.',
     });
     await this.play(new FadeOut(ids, { runTime: 0.3 }));
-    const findings = findingsOf(d.snapshot);
-    this.state.warnings = findings.warnings;
-    if (findings.warnings.length) {
-      const flagged = d.findings().map((w) => {
-        if (!w.part) throw new Error(`Warning ${w.edge} names no edge part`);
-        return w.part;
-      });
-      await d.mark(['A', ...flagged]);
-    } else {
-      await d.mark(
-        findings.layout.edges.flatMap((e, i) => (e.label ? [edgePartOf(d.snapshot, `${e.id}#${i}`)!] : [])),
-      );
-    }
+    const warnings = d.findings();
+    this.state.warnings = warnings;
+    await d.mark(
+      warnings.length
+        ? [
+            'A',
+            ...warnings.map((w) => {
+              if (!w.part) throw new Error(`Warning ${w.edge} names no edge part`);
+              return w.part;
+            }),
+          ]
+        : d.snapshot.parts.filter((p) => p.role === 'edge' && p.from === 'A').map((p) => p.id),
+      { as: warnings.length ? 'flagged' : 'checked' },
+    );
     // The verifier's report sits under the source it checked.
     const report = await code(
       [
-        `verify(flow).ok: ${findings.ok}`,
-        `warnings: ${findings.warnings.length}`,
-        ...findings.warnings.flatMap((w) => [`  ${w.code}`, `    node ${w.node}, edge ${w.edge}`]),
+        `verify(flow).ok: ${d.snapshot.findings.ok}`,
+        `warnings: ${warnings.length}`,
+        ...warnings.flatMap((w) => [`  ${w.code}`, `    node ${w.node}, edge ${w.edge}`]),
       ],
       0.22,
     );
@@ -118,10 +108,9 @@ export default class MermaidExplainer extends Scene {
       await s.enter(ops, { runTime: 0.35 });
       await ops.focus([0, OPS.length * 3 - 1]);
       await d.morph({ source: GOOD }, { ops: OPS });
-      const after = findingsOf(d.snapshot);
       await d.mark(OPS.map((op) => `edge:${op.target}`));
       // The same report, rerun on the repaired diagram.
-      await report.morph([`verify(flow).ok: ${after.ok}`, `warnings: ${after.warnings.length}`]);
+      await report.morph([`verify(flow).ok: ${d.snapshot.findings.ok}`, `warnings: ${d.findings().length}`]);
     }
 
     await this.step('walk', {
@@ -159,8 +148,8 @@ export default class MermaidExplainer extends Scene {
         'The scene.snapshots folder stores each diagram’s marks, ids, routes and verifier findings. The bars count the warnings stored for the first edit and for the final diagram.',
     });
     const final = d.snapshot;
-    const count = findings.warnings.length,
-      finalCount = findingsOf(final).warnings.length;
+    const count = warnings.length,
+      finalCount = d.findings().length;
     await s.clear();
     const chart = await s.show(
       { source: `xychart-beta\n x-axis ["First edit", "Final"]\n y-axis "Warnings" 0 --> 3\n bar [${count},${finalCount}]` },

@@ -2,11 +2,58 @@
 // bytes) and a ref store (a map from name to id or symbolic target). The
 // encodings are exgit's (Exgit.Object.{Blob,Tree,Commit}.encode/1) and the
 // ids are what compute_sha/2 gives: sha1("<type> <size>\0" + content).
-// test/fidelity.test.ts rebuilds the same repository with the real git CLI
-// and requires identical ids.
-import { objectId, bytes, unhex } from './sha1.ts';
+// SHA-1 is written out so a scene hashes the same way in Node and in the
+// browser; it is for object ids, not security. test/explain-models.test.ts
+// checks every id against `git hash-object`.
+const enc = new TextEncoder(),
+  dec = new TextDecoder();
 
-const dec = new TextDecoder();
+/** 40 hex chars. */
+function sha1(input: Uint8Array | string): string {
+  const msg = typeof input === 'string' ? enc.encode(input) : input;
+  const ml = msg.length;
+  const withOne = ml + 1, total = Math.ceil((withOne + 8) / 64) * 64;
+  const buf = new Uint8Array(total);
+  buf.set(msg); buf[ml] = 0x80;
+  const dv = new DataView(buf.buffer);
+  dv.setUint32(total - 4, (ml * 8) >>> 0); dv.setUint32(total - 8, Math.floor(ml * 8 / 2 ** 32));
+  let h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476, h4 = 0xc3d2e1f0;
+  const w = new Uint32Array(80);
+  const rotl = (x: number, n: number): number => (x << n) | (x >>> (32 - n));
+  for (let off = 0; off < total; off += 64) {
+    for (let i = 0; i < 16; i++) w[i] = dv.getUint32(off + i * 4);
+    for (let i = 16; i < 80; i++) w[i] = rotl(w[i - 3]! ^ w[i - 8]! ^ w[i - 14]! ^ w[i - 16]!, 1);
+    let a = h0, b = h1, c = h2, d = h3, e = h4;
+    for (let i = 0; i < 80; i++) {
+      const [f, k] = i < 20 ? [(b & c) | (~b & d), 0x5a827999] : i < 40 ? [b ^ c ^ d, 0x6ed9eba1]
+        : i < 60 ? [(b & c) | (b & d) | (c & d), 0x8f1bbcdc] : [b ^ c ^ d, 0xca62c1d6];
+      const t = (rotl(a, 5) + f + e + k + w[i]!) >>> 0;
+      e = d; d = c; c = rotl(b, 30) >>> 0; b = a; a = t;
+    }
+    h0 = (h0 + a) >>> 0; h1 = (h1 + b) >>> 0; h2 = (h2 + c) >>> 0; h3 = (h3 + d) >>> 0; h4 = (h4 + e) >>> 0;
+  }
+  return [h0, h1, h2, h3, h4].map((x) => x.toString(16).padStart(8, '0')).join('');
+}
+
+/** Concatenate byte chunks (strings are UTF-8). */
+function bytes(...parts: Array<Uint8Array | string>): Uint8Array {
+  const chunks = parts.map((p) => (typeof p === 'string' ? enc.encode(p) : p));
+  const out = new Uint8Array(chunks.reduce((n, c) => n + c.length, 0));
+  let o = 0; for (const c of chunks) { out.set(c, o); o += c.length; }
+  return out;
+}
+
+/** 40 hex chars -> 20 bytes. */
+function unhex(hex: string): Uint8Array { return Uint8Array.from(hex.match(/../g)!.map((h) => parseInt(h, 16))); }
+
+/**
+ * Git's object id, as exgit computes it (Exgit.Object.compute_sha/2):
+ * sha1("<type> <size>\0" + content).
+ */
+function objectId(type: string, content: Uint8Array | string): string {
+  const body = typeof content === 'string' ? enc.encode(content) : content;
+  return sha1(bytes(`${type} ${body.length}\0`, body));
+}
 
 /** A tree entry: [mode, name, idHex]. */
 export type TreeEntry = [mode: string, name: string, id: string];
@@ -46,26 +93,6 @@ export class Repo {
   }
   /** The object's content as text (for showing commits and trees). */
   text(id: string): string { return dec.decode(this.objects[id]!.bytes); }
-  /** Every object reachable from a commit: what a clone has to fetch. */
-  reachable(commitId: string): string[] {
-    const seen = new Set<string>();
-    const walk = (id: string): void => {
-      if (seen.has(id)) return;
-      seen.add(id);
-      const o = this.objects[id]!;
-      if (o.type === 'commit') {
-        for (const line of this.text(id).split('\n')) {
-          const [k, v] = line.split(' ');
-          if (k === 'tree' || k === 'parent') walk(v!);
-          if (line === '') break;
-        }
-      } else if (o.type === 'tree') {
-        for (const [, , id] of parseTree(o.bytes)) walk(id);
-      }
-    };
-    walk(commitId);
-    return [...seen];
-  }
 }
 
 /** The entries of an encoded tree: [[mode, name, idHex], ...]. */
@@ -83,17 +110,3 @@ export function parseTree(b: Uint8Array): TreeEntry[] {
 }
 
 export const AUTHOR = 'Ada <ada@example.com> 1700000000 +0000';
-
-/** The story the explainer tells: two commits, one file kept, one added. */
-export function story() {
-  const repo = new Repo();
-  const hello = repo.blob('hello\n');
-  const t1 = repo.tree([['100644', 'hello.txt', hello]]);
-  const c1 = repo.commit({ tree: t1, author: AUTHOR, message: 'add hello\n' });
-  const world = repo.blob('world\n');
-  const t2 = repo.tree([['100644', 'hello.txt', hello], ['100644', 'world.txt', world]]);
-  const c2 = repo.commit({ tree: t2, parents: [c1], author: AUTHOR, message: 'add world\n' });
-  repo.refs['refs/heads/main'] = c2;
-  repo.refs['HEAD'] = { symbolic: 'refs/heads/main' };
-  return { repo, hello, world, t1, t2, c1, c2 };
-}

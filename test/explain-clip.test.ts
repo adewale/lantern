@@ -5,6 +5,7 @@ import {
   Scene,
   Group,
   Rectangle,
+  Line,
   NullSink,
   StringSink,
   SnapshotSink,
@@ -67,4 +68,17 @@ test('seeking through a fixed viewport is byte-identical to playing it', async (
   await renderAt(Moving, 0.5, seek, { fps: 20 });
   assert.equal(seek.svg, played.frames[10]);
   assert.deepEqual(pixel(seek.svg, 80, 45), [255, 0, 0, 255]);
+});
+
+test('a translucent leaf wholly outside its clip is not written, and the frame still rasterizes', () => {
+  // Minimised from a lantern frame that aborted resvg 2.6.2: a clipped paper rectangle plus a
+  // faint ruled line that the clip leaves no area at all.
+  const paper = new Rectangle({ width: 4, height: 4, fill: '#f7f5ef', stroke: 'none' });
+  const ruled = new Line([-3, 3], [3, 3], { stroke: '#26262b', strokeWidth: 0.025 });
+  ruled.style.opacity = 0.14;
+  const scene = new Scene(new NullSink());
+  scene.add(clipped(new Group(paper, ruled), [-1, -1, 1, 1]));
+  const ids = renderElements(scene).map((r) => r.id);
+  assert.ok(ids.includes(paper.id) && !ids.includes(ruled.id));
+  assert.equal(pixel(toSvgString(scene, { width: 160 }), 80, 45)[0], 0xf7);
 });

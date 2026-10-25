@@ -7,7 +7,7 @@ import { Resvg } from '@resvg/resvg-js';
 import { outlineText } from '../integrations/agentic-mermaid/text.ts';
 import { lostLabelWarnings } from '../tools/lib/explain-warnings.ts';
 import { Scene, NullSink, VMobject, toSvgString } from '../src/index.ts';
-import { PALETTES } from '../explain/index.ts';
+import { PALETTES } from '../explain/palettes.ts';
 
 test('capture delegates the real backend without changing its output', () => {
   const spec = { source: 'graph LR\nA[Client] --> B[Server]', style: 'hand-drawn' };
@@ -18,6 +18,10 @@ test('capture delegates the real backend without changing its output', () => {
     ['edge:A->B#0', 'node:A', 'node:B'],
   );
   assert.match(result.marked, /data-lantern-part="0"/);
+});
+test('the palettes copied from Agentic Mermaid match its styles', () => {
+  for (const [style, palette] of Object.entries(PALETTES))
+    assert.deepEqual(capture({ source: 'graph LR\nA --> B', style }).palette, palette, style);
 });
 test(
   'SVG lowering preserves finite glyph geometry for em-relative baselines',
@@ -68,7 +72,7 @@ test(
             path.closed = shape.closed;
             scene.add(path);
           }
-        const original = snapshot.svg.replace(/<text\b[^>]*>[\s\S]*?<\/text>/g, '');
+        const original = renderMermaidSVG(snapshot.spec.source, { style }).replace(/<text\b[^>]*>[\s\S]*?<\/text>/g, '');
         const imported = toSvgString(scene)
           .replace(
             /width="1280" height="720" viewBox="[^"]+"/,

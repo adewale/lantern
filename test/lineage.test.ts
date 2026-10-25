@@ -1,11 +1,10 @@
 // Lineage tests: bugs and design mistakes reported against this project's
 // ancestors (3b1b/manim, ManimCommunity/manim, maloyan/manim-web), each turned
 // into a test against Lantern. Every test names the upstream issue or pull
-// request it comes from. Properties use fast-check; FULL=1 runs ten times as
-// many cases, and FC_SEED=<seed> FC_PATH=<path> replays a failure.
+// request it comes from. Properties use fast-check; counts: test/lib/pbt.ts.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fc from 'fast-check';
+import { fc, params } from './lib/pbt.ts';
 import {
   Scene, StringSink, NullSink, Group, VMobject, Rectangle, Circle, Square, Line, Dot, Arc, Polygon, Text, Code, DecimalNumber,
   Transform, FadeIn, FadeOut, Create, Write, Indicate, MoveAlongPath, AnimationGroup, LaggedStart,
@@ -21,11 +20,6 @@ import { pathFromSvgD } from '../integrations/agentic-mermaid/build/read-svg.ts'
 
 await loadFonts();
 
-const runs = (n: number) => ({
-  numRuns: n * (process.env.FULL ? 10 : 1),
-  ...(process.env.FC_SEED ? { seed: Number(process.env.FC_SEED) } : {}),
-  ...(process.env.FC_PATH ? { path: process.env.FC_PATH } : {}),
-});
 
 // ---- helpers ---------------------------------------------------------------
 
@@ -69,7 +63,7 @@ test('rate: points follow a rate function past its ends, as easeOutBack and wigg
     m.interpolate(a, b, alpha);
     const c = m.center();
     assert.ok(near(c[0], at[0] + d[0] * alpha, 2e-4) && near(c[1], at[1] + d[1] * alpha, 2e-4), `alpha ${alpha}: ${c} vs ${[at[0] + d[0] * alpha, at[1] + d[1] * alpha]}`);
-  }), runs(300));
+  }), params(300));
 });
 
 test('rate: style blended at any alpha, overshoot included, keeps opacities in [0, 1] and colours parseable (manim #2524)', () => {
@@ -81,7 +75,7 @@ test('rate: style blended at any alpha, overshoot included, keeps opacities in [
     for (const k of ['opacity', 'fillOpacity', 'strokeOpacity'] as const) assert.ok(m.style[k] >= 0 && m.style[k] <= 1, `${k} = ${m.style[k]}`);
     assert.match(m.style.fill, /^#[0-9a-f]{6}$/);
     assert.match(m.style.stroke, /^#[0-9a-f]{6}$/);
-  }), runs(500));
+  }), params(500));
 });
 
 test('rate: every exported rate function is exact at its ends and finite in between (manim-web #50, #58)', () => {
@@ -93,7 +87,7 @@ test('rate: every exported rate function is exact at its ends and finite in betw
   fc.assert(fc.property(rate, fc.double({ min: 0, max: 1, noNaN: true }), ([name, f], t) => {
     assert.ok(Number.isFinite(f(t)), `${name}(${t})`);
     if (name === 'wiggle') assert.ok(near(wiggle(1 - t), -wiggle(t), 1e-12), 'wiggle is odd about t = 0.5, as manim\'s is');
-  }), runs(500));
+  }), params(500));
 });
 
 // ===========================================================================
@@ -108,7 +102,7 @@ test('group: an AnimationGroup of one animation plays exactly like that animatio
     const alone = await film(async (s) => { const { r, t } = make(); s.add(r); await s.play(t); });
     const grouped = await film(async (s) => { const { r, t } = make(); s.add(r); await s.play(new AnimationGroup([t])); });
     assert.deepEqual(grouped.frames, alone.frames);
-  }), runs(40));
+  }), params(40));
 });
 
 test('group: a rate function given to play() for a group decides where the members land (ManimCommunity #3542)', async () => {
@@ -119,7 +113,7 @@ test('group: a rate function given to play() for a group decides where the membe
     // The member's own rate is smooth; the group's alpha at the end is f(1)
     const want = dx * smooth(Math.min(Math.max(f(1), 0), 1));
     assert.ok(near(r.center()[0], want, 1e-4), `${name}: ended at ${r.center()[0]}, want ${want}`);
-  }), runs(30));
+  }), params(30));
 });
 
 test('group: a lagRatio given to play() staggers a group the way one given to its constructor does (ManimCommunity #2563, #2913)', async () => {
@@ -132,7 +126,7 @@ test('group: a lagRatio given to play() staggers a group the way one given to it
     const byPlay = await film(async (s) => { const ms = members(); s.add(...ms); await s.play(new AnimationGroup(anims(ms)), { lagRatio: lag }); });
     assert.equal(byPlay.scene.time, byCtor.scene.time);
     assert.deepEqual(byPlay.frames, byCtor.frames);
-  }), runs(30));
+  }), params(30));
 });
 
 test('group: inside a LaggedStart, a later FadeIn stays invisible until its own start (ManimCommunity #709, #888; manim-web #861)', async () => {
@@ -148,7 +142,7 @@ test('group: inside a LaggedStart, a later FadeIn stays invisible until its own 
     await new S(sink, { fps: 30 }).run();
     assert.equal(violations, 0);
     for (const d of dots) assert.equal(d.style.opacity, 1);
-  }), runs(30));
+  }), params(30));
 });
 
 test('group: finishing a nested group finishes every member, so Create leaves no temporary border (ManimCommunity #3951)', async () => {
@@ -169,7 +163,7 @@ test('group: an instant member (runTime 0) of a group lands on its end, and an e
     const g = new AnimationGroup([new FadeIn(new Dot(), { runTime: 1 }), new FadeIn(new Dot(), { runTime: 2 })], { runTime: 2 });
     g.setOptions({ lagRatio: lag });
     assert.equal(g.runTime, 2);
-  }), runs(30));
+  }), params(30));
 });
 
 // ===========================================================================
@@ -198,7 +192,7 @@ test('play: the last frame of a play shows the finished animation, whatever runT
       await s.play(new Transform(r, r.copy().shift([3, 0])), { runTime, rateFunc: linear });
     });
     assert.equal(frames.at(-1), toSvgString(scene), `runTime ${runTime}: last frame is not the finished state`);
-  }), runs(40));
+  }), params(40));
 });
 
 test('play: a play emits round(runTime·fps) frames and the first already moves (ManimCommunity #4912, #3005)', async () => {
@@ -211,7 +205,7 @@ test('play: a play emits round(runTime·fps) frames and the first already moves 
     }, { fps });
     assert.equal(frames.length - 1, Math.max(1, Math.round(runTime * fps)));
     assert.notEqual(frames[1], frames[0], 'the first frame of the play has moved');
-  }), runs(30));
+  }), params(30));
 });
 
 test('updaters: the dt an updater receives adds up to the scene clock across plays and waits (ManimCommunity #4611, manim #2481)', async () => {
@@ -228,7 +222,7 @@ test('updaters: the dt an updater receives adds up to the scene clock across pla
     });
     assert.ok(near(sum, scene.time, 1e-9), `${sum} vs ${scene.time}`);
     assert.equal(calls, frames.length - 1);
-  }), runs(30));
+  }), params(30));
 });
 
 test('time: seeking to k/fps lands on frame k in a 40-minute scene (manim #1000, #1189)', async () => {
@@ -272,7 +266,7 @@ test('transform: Text(a) morphed into Text(b) draws exactly what Text(b) draws (
     const src = new Text(a, { weight, font }), dst = new Text(b, { weight, font });
     await film(async (s) => { s.add(src); await s.play(new Transform(src, dst)); });
     assert.equal(drawn(src), drawn(dst), `${JSON.stringify(a)} -> ${JSON.stringify(b)}`);
-  }), runs(60));
+  }), params(60));
 });
 
 /** A path of `n` separate unit squares, stroked. */
@@ -291,7 +285,7 @@ test('transform: a morph between paths with different contour counts lands on on
     const end = f(1) === 1 ? b : contours(na, -3);
     assert.equal(degenerate(a), 0);
     assert.equal(a.toPathD(), end.toPathD());
-  }), runs(40));
+  }), params(40));
 });
 
 test('transform: a path paired with something that draws nothing (a group, a Text) leaves no stray dot (manim-web #102)', async () => {
@@ -305,7 +299,7 @@ test('transform: a path paired with something that draws nothing (a group, a Tex
       const nums = (el.attrs.d ?? '').split(/[^-\d]+/).filter(Boolean);
       assert.ok(new Set(nums).size > 2 || el.attrs.stroke === 'none' || el.attrs['stroke-width'] === '0', `zero-extent stroked path ${el.attrs.d}`);
     }
-  }), runs(40));
+  }), params(40));
 });
 
 test('transform: from an empty path into a circle and back out stays finite and lands each time (ManimCommunity #4020, #4320)', async () => {
@@ -361,7 +355,7 @@ test('play: every .animate builder given to play() animates, the last one too (M
     const { scene } = await film(async (s) => { s.add(...ms); await s.play(...ms.map((m) => m.animate.shift(d))); });
     ms.forEach((m, i) => assert.ok(near(m.center()[0], i + d[0], 1e-4) && near(m.center()[1], d[1], 1e-4), `square ${i} of ${n}`));
     assert.ok(near(scene.time, 1, 1e-9), 'the play ran for the default second');
-  }), runs(30));
+  }), params(30));
 });
 
 test('play: playing never reorders what is already on screen; what it brings in is drawn on top (ManimCommunity #843, #3110, #1001)', async () => {
@@ -382,7 +376,7 @@ test('play: playing never reorders what is already on screen; what it brings in 
       }
     });
     assert.deepEqual(scene.mobjects, [...kids, ...added]);
-  }), runs(50));
+  }), params(50));
 });
 
 test('play: two animations of one family in one play() are refused rather than one silently winning (ManimCommunity #4865, #1129)', async () => {
@@ -399,7 +393,7 @@ test('animate: chained .animate calls accumulate and the target is built when pl
     await film(async (s) => { s.add(r); const b = r.animate.shift(d1).shift(d2); r.shift(moved); await s.play(b); });
     const c = r.center();
     assert.ok(near(c[0], d1[0] + d2[0] + moved[0], 1e-4) && near(c[1], d1[1] + d2[1] + moved[1], 1e-4));
-  }), runs(30));
+  }), params(30));
 });
 
 // ===========================================================================
@@ -416,7 +410,7 @@ test('fade: FadeOut with a shift or scale, then FadeIn, shows the mobject where 
     await film(async (s) => { s.add(r); await s.play(new FadeOut(r, { shift, scale })); await s.play(new FadeIn(r)); });
     pointsOf(r).forEach((x, i) => assert.ok(near(x, before[i]!, 1e-5), `point ${i}: ${x} vs ${before[i]}`));
     assert.equal(r.style.opacity, opacity);
-  }), runs(30));
+  }), params(30));
 });
 
 test('fade: FadeIn and FadeOut keep each family member\'s own opacity, 0 included (manim-web #467, #502)', async () => {
@@ -426,7 +420,7 @@ test('fade: FadeIn and FadeOut keep each family member\'s own opacity, 0 include
     const g = new Group(...kids);
     await film(async (s) => { await s.play(new FadeIn(g)); await s.play(new FadeOut(g)); await s.play(new FadeIn(g)); });
     assert.deepEqual(kids.map((k) => k.style.opacity), ops);
-  }), runs(30));
+  }), params(30));
 });
 
 const paint: fc.Arbitrary<Style> = fc.record({
@@ -444,7 +438,7 @@ test('create: Create and Write leave every member\'s style and points as they we
     await film(async (s) => { await s.play(write ? new Write(g) : new Create(g)); });
     assert.deepEqual(g.family().map((m) => ({ ...m.style })), before);
     assert.deepEqual(pointsOf(g), pts);
-  }), runs(40));
+  }), params(40));
 });
 
 test('create: Create\'s stagger does not depend on how the drawn shapes are grouped (manim-web #544)', async () => {
@@ -460,7 +454,7 @@ test('create: Create\'s stagger does not depend on how the drawn shapes are grou
     const word = await film(async (s) => { await s.play(new Write(new Text('lag'))); });
     const wrapped = await film(async (s) => { await s.play(new Write(new Group(new Text('lag')))); });
     assert.deepEqual(wrapped.frames, word.frames);
-  }), runs(20));
+  }), params(20));
 });
 
 test('create: the temporary outline Write draws on text scales with the text (ManimCommunity #4220, #4222)', () => {
@@ -472,7 +466,7 @@ test('create: the temporary outline Write draws on text scales with the text (Ma
     assert.ok(near(built, scaled, 1e-6 * size * k), `${built} vs ${scaled}`);
     // Text sizes are read back from Float32 points: equal to about 1e-7, relatively
     assert.ok(near(built / (size * k) / (border(new Text('Hi')) / 0.4), 1, 1e-5), 'proportional to the font size');
-  }), runs(200));
+  }), params(200));
 });
 
 test('indicate: Indicate on a group of differently coloured children returns each child to its own colour (manim-web #856)', async () => {
@@ -482,7 +476,7 @@ test('indicate: Indicate on a group of differently coloured children returns eac
     const g = new Group(...kids);
     await film(async (s) => { s.add(g); await s.play(new Indicate(g)); });
     assert.deepEqual(kids.map((k) => [k.style.fill, k.style.stroke]), cs);
-  }), runs(30));
+  }), params(30));
 });
 
 // ===========================================================================
@@ -533,7 +527,7 @@ test('seek: a seeked frame equals the played frame across nested groups, Indicat
       const scene = await renderAt(S, u * (full.frames.length - 1) / 20, snap, { fps: 20 });
       assert.equal(snap.svg, full.frames[scene.frameCount], `seek to ${u} of the run`);
     }
-  }), runs(100));
+  }), params(100));
 });
 
 test('seek: a dry-run index puts every step on the frame the full run puts it on (ManimCommunity #2152, #2236, #2449)', async () => {
@@ -546,7 +540,7 @@ test('seek: a dry-run index puts every step on the frame the full run puts it on
     await live.run();
     assert.deepEqual(ix.steps.map((s) => [s.name, s.frame0, s.frame1]), live.steps.map((s) => [s.name, s.frame0, s.frame1]));
     assert.equal(ix.frames, live.frameCount);
-  }), runs(100));
+  }), params(100));
 });
 
 // ===========================================================================
@@ -564,7 +558,7 @@ test('path: pointFromProportion(u) is u of the way along the path by length (Man
     for (const l of lengths) { x += l; p.addLineTo([x, 0]); }
     const got = p.pointFromProportion(u);
     assert.ok(near(got[0], u * x, 1e-4 * Math.max(1, x)) && near(got[1], 0), `${got} vs ${u * x}`);
-  }), runs(500));
+  }), params(500));
 });
 
 test('path: inside one curve, pointFromProportion follows length too, so it meets the tip Create reveals (ManimCommunity #1274)', () => {
@@ -575,7 +569,7 @@ test('path: inside one curve, pointFromProportion follows length too, so it meet
     const p = new VMobject();
     p.startNewPath([0, 0]); p.addCubic([lo * len, 0], [hi * len, 0], [len, 0]);
     assert.ok(near(p.pointFromProportion(u)[0], u * p.arcLength(), 0.03 * len), `x ${p.pointFromProportion(u)[0]} vs ${u * p.arcLength()}`);
-  }), runs(300));
+  }), params(300));
 });
 
 test('path: MoveAlongPath keeps a token on the tip of the stroke Create is drawing (ManimCommunity #1274)', async () => {
@@ -605,7 +599,7 @@ test('path: pointFromProportion stays finite and exact at its ends on degenerate
       assert.deepEqual(p.pointFromProportion(0), [a[0], a[1]]);
       assert.deepEqual(p.pointFromProportion(1), [z[z.length - 2], z[z.length - 1]]);
     }
-  }), runs(500));
+  }), params(500));
 });
 
 test('box: no transform leaves a bounding box inside out, negative stretches included (manim #2496)', () => {
@@ -617,7 +611,7 @@ test('box: no transform leaves a bounding box inside out, negative stretches inc
     const b = g.box()!;
     assert.ok(b[0] <= b[2] && b[1] <= b[3] && g.width() >= 0 && g.height() >= 0, `${b}`);
     assert.ok(g.left()[0] <= g.right()[0]);
-  }), runs(300));
+  }), params(300));
 });
 
 test('box: a path\'s box contains every point it draws (ManimCommunity #3265, #3619, #4943)', () => {
@@ -631,7 +625,7 @@ test('box: a path\'s box contains every point it draws (ManimCommunity #3265, #3
       const p = arc.pointFromProportion(i / 200);
       assert.ok(p[0] >= b[0] - 1e-6 && p[0] <= b[2] + 1e-6 && p[1] >= b[1] - 1e-6 && p[1] <= b[3] + 1e-6);
     }
-  }), runs(200));
+  }), params(200));
 });
 
 // ===========================================================================
@@ -645,7 +639,7 @@ test('text: a monospace line is exactly one advance per character, spaces includ
   const one = new Text('x', { font: 'mono' }).advance();
   fc.assert(fc.property(ascii, (s) => {
     assert.ok(near(new Text(s, { font: 'mono' }).advance(), s.length * one, 1e-5), JSON.stringify(s));
-  }), runs(300));
+  }), params(300));
 });
 
 test('code: consecutive Code lines sit one pitch apart whatever their ascenders and descenders (ManimCommunity #4692, #4626)', () => {
@@ -654,7 +648,7 @@ test('code: consecutive Code lines sit one pitch apart whatever their ascenders 
     const c = new Code(lines, { fontSize, lineHeight: 1.5 });
     const base = c.lines.map((l) => l.frameBox[1]! + l.run.descent);
     for (let i = 1; i < base.length; i++) assert.ok(near(base[i - 1]! - base[i]!, fontSize * 1.5, 1e-5), `line ${i}`);
-  }), runs(200));
+  }), params(200));
 });
 
 test('code: a tab advances to the next tab stop, as source editors draw it (manim #1316, #1036)', () => {
@@ -667,7 +661,7 @@ test('code: a tab advances to the next tab stop, as source editors draw it (mani
     const cols = expandTabs(line, tabWidth).length;
     assert.ok(near(z.box()![0] - left, cols * col + (new Text('Z', { font: 'mono', fontSize: 0.26 }).children[0]!.box()![0] - new Text('Z', { font: 'mono', fontSize: 0.26 }).frameBox[0]!), 1e-4), JSON.stringify(line));
     assert.equal(c.lines[0]!.text, line + 'Z', 'the line keeps its source text');
-  }), runs(200));
+  }), params(200));
 });
 
 test('code: a Code line re-set to its own text keeps its tab stops; bad tab widths are refused (manim #1316)', () => {
@@ -677,7 +671,7 @@ test('code: a Code line re-set to its own text keeps its tab stops; bad tab widt
     const l = c.lines[0]!, before = pointsOf(l);
     l.setText(l.text);
     pointsOf(l).forEach((x, i) => assert.ok(near(x, before[i]!, 1e-5)));
-  }), runs(200));
+  }), params(200));
   assert.equal(expandTabs('é\t', 4), 'é   ', 'an accent combined with its letter is one column');
   for (const w of [0, -1, 2.5, NaN]) assert.throws(() => new Code(['\tx'], { tabWidth: w }), RangeError);
 });
@@ -697,7 +691,7 @@ test('text: empty, blank and unsupported-script strings shape, Write and morph w
     });
     assert.ok(frames.every(finiteFrame));
     assert.ok(Number.isFinite(new Text(a).advance()));
-  }), runs(60));
+  }), params(60));
 });
 
 test('text: each glyph\'s cluster indexes the visible character it draws, so string ranges map to glyphs (ManimCommunity #4864)', () => {
@@ -711,7 +705,7 @@ test('text: each glyph\'s cluster indexes the visible character it draws, so str
       assert.ok(!/\s/.test(s[c]!), `glyph at ${c} draws whitespace`);
       prev = c;
     }
-  }), runs(300));
+  }), params(300));
 });
 
 test('text: layout is scale-free, so letter spacing does not drift with font size (ManimCommunity #2844; manim #1813)', () => {
@@ -720,7 +714,7 @@ test('text: layout is scale-free, so letter spacing does not drift with font siz
     const a = new Text(s, { fontSize: size, anchor: 'start' }), b = new Text(s, { fontSize: 1, anchor: 'start' });
     assert.ok(near(a.advance() / size, b.advance(), 1e-5), `${a.advance() / size} vs ${b.advance()}`);
     a.children.forEach((g, i) => assert.ok(near((g.box()![0] - a.frameBox[0]!) / size, b.children[i]!.box()![0] - b.frameBox[0]!, 1e-4)));
-  }), runs(300));
+  }), params(300));
 });
 
 test('decimal: a DecimalNumber never shows a negative zero (manim-web #869, #870)', () => {
@@ -730,7 +724,7 @@ test('decimal: a DecimalNumber never shows a negative zero (manim-web #869, #870
     const s = DecimalNumber.format(v, d, '', '');
     assert.doesNotMatch(s, /^-0(\.0*)?$/);
     assert.ok(near(Number(s), v, 0.5 * 10 ** -d + 1e-12));
-  }), runs(1000));
+  }), params(1000));
 });
 
 test('decimal: setValue keeps a rotated, scaled number\'s angle and size (ManimCommunity #4843, #4830)', () => {
@@ -745,7 +739,7 @@ test('decimal: setValue keeps a rotated, scaled number\'s angle and size (ManimC
     assert.ok(near(d.anchorPoint()[0], at[0], 1e-4) && near(d.anchorPoint()[1], at[1], 1e-4), 'anchor kept');
     const diag = (t: Text) => Math.hypot(t.frameBox[2]! - t.frameBox[0]!, t.frameBox[3]! - t.frameBox[1]!);
     assert.ok(near(diag(d), diag(fresh), 1e-4), 'the same advance box as the number freshly made at that size');
-  }), runs(300));
+  }), params(300));
 });
 
 test('text: setText with the same string changes no glyph, whatever the text has been turned, mirrored, stretched or sheared by (ManimCommunity #4843)', () => {
@@ -760,7 +754,7 @@ test('text: setText with the same string changes no glyph, whatever the text has
     assert.equal(after.length, before.length);
     after.forEach((x, i) => assert.ok(near(x, before[i]!, 1e-4), `${JSON.stringify(str)} [${a}, ${b}, ${c}, ${d}]: point ${i} ${x} vs ${before[i]}`));
     assert.ok(t.textSize() > 0);
-  }), runs(300));
+  }), params(300));
 });
 
 test('fonts: the shaping memo stays bounded however many distinct strings are shaped (ManimCommunity #1959; manim-web #82)', () => {
@@ -811,7 +805,7 @@ test('svg: a dashed stroke keeps its dashes while Create draws it, and shows not
     const want = painted(dash, offset, total).map(([a, b]) => [a, Math.min(b, drawnTo)] as [number, number]).filter(([a, b]) => b > a);
     const per = dash.length * 2 + 2; // each boundary rounds to 1/1000 of a unit
     assert.ok(disagreement(got, want, total) < 1e-3 * per * (1 + total / dash.reduce((a, b) => a + b, 0)), `dash ${dash} offset ${offset} f ${f}`);
-  }), runs(300));
+  }), params(300));
 });
 
 test('svg: dash lists with stray separators, commas, odd lengths or "none" serialise as valid patterns (SVG 1.1 §11.4; explain/diagrams.ts scaleStyle)', () => {
@@ -821,7 +815,7 @@ test('svg: dash lists with stray separators, commas, odd lengths or "none" seria
     const list = (pad ? ' ' : '') + nums.join(sep) + (pad ? ', ' : '');
     const el = renderElements((() => { const s = new Scene(new NullSink()); s.add(new Line([0, 0], [3, 0], { dashArray: list })); return s; })())[0]!;
     assert.deepEqual(el.attrs['stroke-dasharray']!.split(' ').map(Number), nums.map((v) => Math.round(v * 1000)));
-  }), runs(300));
+  }), params(300));
   for (const none of ['none', '', '0 0', '-1 2', 'NaN']) {
     const el = renderElements((() => { const s = new Scene(new NullSink()); s.add(new Line([0, 0], [3, 0], { dashArray: none })); return s; })())[0]!;
     assert.equal(el.attrs['stroke-dasharray'], undefined, `${JSON.stringify(none)} is a solid stroke`);
@@ -839,7 +833,7 @@ test('svg import: after Z, a drawing command starts a new subpath at the closed 
     assert.equal(v.closed[0], true);
     const s = v.subpaths[1]!;
     assert.ok(near(s[0]!, p0![0], 1e-4) && near(s[1]!, p0![1], 1e-4) && near(s[s.length - 2]!, next[0], 1e-4) && near(s[s.length - 1]!, next[1], 1e-4), d);
-  }), runs(300));
+  }), params(300));
 });
 
 // ===========================================================================
@@ -856,7 +850,7 @@ test('captions: a caption with a blank line or "-->" stays one WebVTT cue (Manim
     const blocks = vtt.trim().split(/\n\s*\n/).slice(1); // after the WEBVTT header
     assert.equal(blocks.length, caps.filter((c) => c).length, vtt);
     for (const b of blocks) assert.match(b, /^\d+\n\d\d:\d\d:\d\d\.\d{3} --> \d\d:\d\d:\d\d\.\d{3}(\n|$)/);
-  }), runs(300));
+  }), params(300));
 });
 
 test('zoom: after a resize the drawing point at the stage centre stays at the centre (manim-web #389, #838, #871)', () => {
@@ -879,5 +873,5 @@ test('zoom: after a resize the drawing point at the stage centre stays at the ce
     z.apply(); // what the ResizeObserver callback does
     const after = [centre(stage.clientWidth, z.x), centre(stage.clientHeight, z.y)];
     assert.ok(near(after[0]!, before[0]!, 1e-6) && near(after[1]!, before[1]!, 1e-6), `centre moved from ${before} to ${after}`);
-  }), runs(300));
+  }), params(300));
 });

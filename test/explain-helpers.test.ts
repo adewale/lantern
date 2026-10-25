@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Scene, NullSink, Rectangle, traceScene } from '../src/index.ts';
-import { stage, bindSnapshots, diagramKey, snapshotResolver } from '../explain/index.ts';
+import { stage, bindSnapshots } from '../explain/index.ts';
+import { diagramKey, snapshotResolver, useDiagrams } from '../integrations/agentic-mermaid/snapshot.ts';
 import type { DiagramSnapshot } from '../explain/index.ts';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -16,14 +17,14 @@ function fixture(): DiagramSnapshot {
   return fixedSnapshot(
     spec,
     [
-      { id: '__frame', role: 'frame', kind: 'shape', svg: '', shapes: [shape(0)] },
-      { id: 'A', role: 'node', kind: 'shape', svg: '', shapes: [shape(0)] },
-      { id: 'B', role: 'node', kind: 'shape', svg: '', shapes: [shape(3)] },
+      { id: '__frame', role: 'frame', kind: 'shape', shapes: [shape(0)] },
+      { id: 'A', role: 'node', kind: 'shape', shapes: [shape(0)] },
+      { id: 'B', role: 'node', kind: 'shape', shapes: [shape(3)] },
       {
         id: 'edge:A->B#0',
         role: 'edge',
         kind: 'connector',
-        svg: '',
+       
         shapes: [shape(1)],
         from: 'A',
         to: 'B',
@@ -37,7 +38,7 @@ function fixture(): DiagramSnapshot {
         owner: 'edge:A->B#0',
         role: 'edge-label',
         kind: 'text',
-        svg: '',
+       
         shapes: [shape(1.5)],
       },
     ],
@@ -85,6 +86,18 @@ test('snapshot JSON rejects corrupt points, paint, ownership and source identity
     },
     (s: DiagramSnapshot) => {
       s.width = Infinity;
+    },
+    (s: DiagramSnapshot) => {
+      s.findings = { warnings: [] } as unknown as DiagramSnapshot['findings'];
+    },
+    (s: DiagramSnapshot) => {
+      s.findings.warnings = [{ edge: 'A->B#0' } as unknown as DiagramSnapshot['findings']['warnings'][number]];
+    },
+    (s: DiagramSnapshot) => {
+      s.findings.layout = { edges: [{ from: 'A' } as { from: string; to: string }] };
+    },
+    (s: DiagramSnapshot) => {
+      s.chart = { series: [{ kind: 'bar', values: [1, null as unknown as number] }] };
     },
   ];
   for (const corrupt of corruptions) {
@@ -196,7 +209,7 @@ test('inline script escaping neutralises </script without changing what the code
 });
 test('verifier warnings resolve to snapshot parts even when global and per-pair edge numbers differ', async () => {
   const { findingsOf, edgePartOf } = await import('../explain/index.ts');
-  const part = (id: string, from: string, to: string) => ({ id, role: 'edge', kind: 'connector', svg: '', shapes: [], from, to });
+  const part = (id: string, from: string, to: string) => ({ id, role: 'edge', kind: 'connector', shapes: [], from, to });
   // Edges in source order: A->B, A->C, A->B (parallel). Globally the second A->B is #2; per pair it is #1.
   const snapshot = {
     ...fixture(),
@@ -222,14 +235,15 @@ test('verifier warnings resolve to snapshot parts even when global and per-pair 
 import { fc, params } from './lib/pbt.ts';
 import { snapshot as randomSnapshot, hexColor, fixedSnapshot, square } from './lib/random-snapshot.ts';
 import { diagramsOf } from '../integrations/agentic-mermaid/snapshot.ts';
-import { useDiagrams, findingsOf as findingsOfP, edgePartOf as edgePartOfP, emphasis, soft, regionBox, REGIONS, PALETTES } from '../explain/index.ts';
-import { raised, rule } from '../explain/look.ts';
+import { findingsOf as findingsOfP, edgePartOf as edgePartOfP, regionBox, REGIONS } from '../explain/index.ts';
+import { raised, rule, emphasis, soft, dimOpacity } from '../explain/look.ts';
+import { PALETTES } from '../explain/palettes.ts';
 import { Diagram } from '../explain/diagrams.ts';
 import { scriptEscape, snapshotFileName, hash } from '../tools/lib/explain-project.ts';
 import { htmlEscape } from '../explain/trace.ts';
 import { transformSync } from 'esbuild';
 import vm from 'node:vm';
-import { parseColor } from '../src/color.ts';
+import { parseColor, lerpColor } from '../src/color.ts';
 
 // ---- app/embed-protocol.ts -------------------------------------------------------
 
@@ -629,8 +643,8 @@ const multigraph = fc
       seen.set(k, n + 1);
       return `edge:${k}#${n}`;
     });
-    const parts = edges.map((e, i) => ({ id: ids[i]!, role: 'edge', kind: 'connector', svg: '', shapes: [], from: e.from, to: e.to }));
-    const s = { parts, findings: layout ? { layout: { edges } } : { ok: true } } as unknown as DiagramSnapshot;
+    const parts = edges.map((e, i) => ({ id: ids[i]!, role: 'edge', kind: 'connector', shapes: [], from: e.from, to: e.to }));
+    const s = { parts, findings: { ok: true, warnings: [], ...(layout ? { layout: { edges } } : {}) } } as unknown as DiagramSnapshot;
     return { s, edges, ids };
   });
 
@@ -678,27 +692,20 @@ test('findingsOf keeps each warning, adds the part its edge names, and copies ra
   );
 });
 
-test('findingsOf reads malformed findings as no warnings, and keeps only the object entries of a list', () => {
-  fc.assert(
-    fc.property(fc.anything(), fc.anything(), (warnings, layout) => {
-      const out = findingsOfP({ parts: [], findings: { warnings, layout } } as unknown as DiagramSnapshot);
-      const objects = Array.isArray(warnings) ? warnings.filter((w) => !!w && typeof w === 'object' && !Array.isArray(w)) : [];
-      assert.equal(out.length, objects.length);
-      for (const f of out) assert.ok(f && typeof f === 'object' && !('part' in f && f.part === undefined));
-    }),
-    params(),
-  );
+test('dimmed ink reaches 3:1 on the paper of every built-in style, at the least opacity that does', () => {
+  for (const [name, p] of Object.entries(PALETTES)) {
+    const at = (a: number) => contrast(lerpColor(p.paper, p.ink, a), p.paper);
+    const a = dimOpacity(p);
+    assert.ok(at(a) >= 3, `${name}: ${at(a).toFixed(2)}:1 at ${a}`);
+    assert.ok(a === 0.2 || at(a - 0.01) < 3, `${name}: ${a} is more than needed`);
+  }
 });
-
-test('findingsOf reads a findings value that is not an object as no warnings', () => {
-  fc.assert(
-    fc.property(fc.oneof(fc.constant(null), fc.constant(undefined), fc.string(), fc.double(), fc.boolean(), fc.array(fc.anything())), (findings) => {
-      assert.deepEqual(findingsOfP({ parts: [], findings } as unknown as DiagramSnapshot), []);
-    }),
-    params(),
-  );
+test('the explain entry point exports exactly its documented names', async () => {
+  assert.deepEqual(Object.keys(await import('../explain/index.ts')).sort(), [
+    'Diagram', 'REGIONS', 'bindSnapshots', 'caseName', 'edgePartOf', 'findingsOf', 'palette', 'regionBox',
+    'resolveSettings', 'settingsOf', 'stage', 'variantsOf', 'withSettings',
+  ]);
 });
-
 test('the fallback emphasis is the warm orange that contrasts more with the paper', () => {
   fc.assert(
     fc.property(hexColor, fc.integer({ min: 0, max: 255 }), (paper, v) => {
@@ -878,7 +885,7 @@ test('scale probe: escaping, keys, validation, edge lookup and the lint on very 
   assert.equal(diagramKey({ source: source.replace(/\n/g, '\r\n') }), diagramKey({ source }));
   const s = fc.sample(randomSnapshot(), { numRuns: 1, seed: 1 })[0]!;
   const huge = JSON.parse(JSON.stringify(s)) as DiagramSnapshot;
-  huge.parts.push({ id: 'big', role: 'node', kind: 'shape', svg: '', shapes: [{ subpaths: [Array.from({ length: 6 * 100_000 + 2 }, (_, i) => i % 7)], closed: [false], style: { fill: '#000000', stroke: '#ffffff', strokeWidth: 0.01, fillOpacity: 1, strokeOpacity: 1, opacity: 1 } }] });
+  huge.parts.push({ id: 'big', role: 'node', kind: 'shape', shapes: [{ subpaths: [Array.from({ length: 6 * 100_000 + 2 }, (_, i) => i % 7)], closed: [false], style: { fill: '#000000', stroke: '#ffffff', strokeWidth: 0.01, fillOpacity: 1, strokeOpacity: 1, opacity: 1 } }] });
   assert.equal(await snapshotResolver({ [diagramKey(huge.spec)]: huge }).diagram(huge.spec), huge);
   const edges = Array.from({ length: 100_000 }, (_, i) => ({ from: 'n' + (i % 100), to: 'n' + ((i * 7) % 100) }));
   const g = { parts: [], findings: { layout: { edges }, warnings: Array.from({ length: 200 }, (_, i) => ({ code: 'W', edge: `${edges[i * 400]!.from}->${edges[i * 400]!.to}#${i * 400}` })) } } as unknown as DiagramSnapshot;

@@ -16,14 +16,7 @@ export async function buildExplainer(
     first = v.trace.steps[0]!;
   const sink = new SnapshotSink();
   await renderAt(v.Scene, restingTime(first, v.trace.fps), sink);
-  // Raw per-mark SVG stays in the author cache; the page only needs resolved artwork.
-  const runtimeStore = Object.fromEntries(
-    Object.entries(project.store).map(([key, s]) => [
-      key,
-      { ...s, svg: '', parts: s.parts.map((p) => ({ ...p, svg: '' })) },
-    ]),
-  );
-  const entry = `import Source from 'virtual:author';import{mountEmbed}from ${JSON.stringify(join(ROOT, 'app/embed.ts'))};const root=document.getElementById('content');mountEmbed(root,Source,${JSON.stringify(runtimeStore)}).then(()=>{root.dataset.ready='true'}).catch(error=>{console.error(error);const p=document.createElement('p');p.setAttribute('role','alert');p.textContent='The interactive player could not start. The transcript is available below.';root.append(p)});`;
+  const entry = `import Source from 'virtual:author';import{mountEmbed}from ${JSON.stringify(join(ROOT, 'app/embed.ts'))};const root=document.getElementById('content');mountEmbed(root,Source,${JSON.stringify(project.store)}).then(()=>{root.dataset.ready='true'}).catch(error=>{console.error(error);const p=document.createElement('p');p.setAttribute('role','alert');p.textContent='The interactive player could not start. The transcript is available below.';root.append(p)});`;
   const bundled = await build({
     stdin: { contents: entry, resolveDir: ROOT, sourcefile: 'explainer-entry.ts', loader: 'ts' },
     bundle: true,
@@ -59,20 +52,22 @@ export async function buildExplainer(
     css = await readFile(join(ROOT, 'app/embed.css'), 'utf8');
   const title = project.Scene.meta?.title ?? sceneSlug(project),
     lang = project.Scene.meta?.lang ?? 'en';
-  // Every case, every step: its title, caption and what its resting picture shows.
+  // Every case, every step: a link to it, its caption and what its resting picture shows.
+  // The player shows the current case's section; without JavaScript every case shows.
   const transcript = project.variants
-    .map(
-      (variant) =>
-        `<section><h2>${htmlEscape(caseName(project.Scene, variant.values) || title)}</h2><ol>${variant.trace.steps
-          .map((s) => {
-            const shows = pictureHtml(s.after);
-            return `<li id="${htmlEscape(hash(JSON.stringify(variant.values)).slice(0, 8) + '-' + s.step)}"><strong>${htmlEscape(s.meta.title ?? s.step)}</strong><p>${htmlEscape(s.meta.caption ?? '')}</p>${shows ? `<div>${shows}</div>` : ''}</li>`;
-          })
-          .join('')}</ol></section>`,
-    )
+    .map(({ values, trace }) => {
+      const key = new URLSearchParams(values).toString(),
+        name = caseName(project.Scene, values);
+      const steps = trace.steps.map((s, i) => {
+        const href = `?${key ? key + '&' : ''}${new URLSearchParams({ step: s.step })}`,
+          shows = pictureHtml(s.after, trace.steps[i - 1]?.after);
+        return `<li><a href="${htmlEscape(href)}">${htmlEscape(s.meta.title ?? s.step)}</a><p>${htmlEscape(s.meta.caption ?? '')}</p>${shows ? `<div>${shows}</div>` : ''}</li>`;
+      });
+      return `<section data-case="${htmlEscape(key)}">${name ? `<h2>${htmlEscape(name)}</h2>` : ''}<ol>${steps.join('')}</ol></section>`;
+    })
     .join('');
   const sources = (project.Scene.meta?.sources ?? [])
-    .map((url) => `<li><a href="${htmlEscape(url)}" rel="noopener">${htmlEscape(url)}</a></li>`)
+    .map((url) => `<li><a href="${htmlEscape(url)}" target="_blank" rel="noopener">${htmlEscape(url)}</a></li>`)
     .join('');
   const licenses = (
     await Promise.all(
