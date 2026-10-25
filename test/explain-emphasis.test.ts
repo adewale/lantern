@@ -4,11 +4,13 @@
 // descriptions of the shipped explainers are in explain-real.test.ts.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Scene, NullSink, Rectangle, Text, FadeIn, SnapshotSink, renderAt, toSvgString, traceScene } from '../src/index.ts';
+import { Scene, NullSink, Rectangle, Text, FadeIn, SnapshotSink, renderAt, toSvgString, traceScene, loadFonts } from '../src/index.ts';
 import { stage, bindSnapshots } from '../explain/index.ts';
+import { Diagram } from '../explain/diagrams.ts';
 import { dimOpacity } from '../explain/look.ts';
 import { diagramKey } from '../integrations/agentic-mermaid/snapshot.ts';
 import type { DiagramSnapshot } from '../explain/index.ts';
+import type { SnapshotPart } from '../integrations/agentic-mermaid/snapshot.ts';
 import { fixedSnapshot, square } from './lib/random-snapshot.ts';
 import { pictureSummary, pictureHtml, undescribed, picture, shownNames, restingTime, restingFrame } from '../explain/trace.ts';
 
@@ -224,4 +226,97 @@ test('a description separates its items and sentences once, even when an item en
     pictureSummary({ picture: picture([code([1, 2])], new Set()) }),
     "Code, 4 lines. Focused: 2: 'idle:CONNECT': 'connecting'; 3: 'connecting:OPENED': 'open'.",
   );
+});
+
+test('a summary counts the emphasised parts it leaves out once, at the end, in either language', () => {
+  const marked = (n: number, mark: string) => Array.from({ length: n }, (_, i) => ({ name: `${mark} ${i + 1}`, mark }));
+  const summary = (parts: { name: string; mark: string }[], lang?: string) =>
+    pictureSummary({ picture: picture([{ what: 'Code, 9 lines', parts }], new Set(), lang) });
+  // At most three under one word and four in all; the rest are one count, never one per word.
+  assert.equal(summary(marked(5, 'focused')), 'Code, 9 lines. Focused: focused 1; focused 2; focused 3; and 2 more.');
+  assert.equal(
+    summary([...marked(4, 'travelled'), ...marked(2, 'marked')]),
+    'Code, 9 lines. Travelled: travelled 1; travelled 2; travelled 3; marked: marked 1; and 2 more.',
+  );
+  assert.equal(summary(marked(4, 'focused')), 'Code, 9 lines. Focused: focused 1; focused 2; focused 3; and 1 more.');
+  const NB = '\u202f';
+  assert.equal(
+    summary([...marked(4, 'sur le trajet'), ...marked(3, 'en évidence')], 'fr'),
+    `Code, 9 lines. Sur le trajet${NB}: sur le trajet 1${NB}; sur le trajet 2${NB}; sur le trajet 3${NB}; ` +
+      `en évidence${NB}: en évidence 1${NB}; et 3 autres.`,
+  );
+});
+
+test('a link names its ends by their labels: a service by its label, a class or entity by its name, an end with none by its id', async () => {
+  await loadFonts();
+  const palette = { paper: PAPER, ink: INK, accent: ACCENT, muted: '#aaaaaa' };
+  // A box and its lines of text, one shape each, as capture records compartments.
+  const box = (x: number, ...texts: string[]) =>
+    texts.length ? texts.map((text) => ({ ...square(x, { fill: '#334455' }), text, fontSize: 0.2 })) : [square(x, { fill: '#334455' })];
+  const link = (id: string, role: string, from: string, to: string, x: number): SnapshotPart => ({
+    id,
+    role,
+    kind: 'connector',
+    shapes: [square(x, { fill: 'none', stroke: '#aabbcc' })],
+    from,
+    to,
+    route: [
+      [x - 1, 0],
+      [x + 1, 0],
+    ],
+  });
+  const describe = async (source: string, family: string, parts: SnapshotPart[], act?: (d: Diagram) => Promise<void>) => {
+    const spec = { source, style: 'nord' };
+    const d = new Diagram(new Scene(new NullSink(), { skipUntil: Infinity }), spec, fixedSnapshot(spec, parts, { family, palette }), {});
+    await d.build();
+    await act?.(d);
+    return d.describe().parts.map((p) => (p.mark ? `${p.name} (${p.mark})` : p.name));
+  };
+  // Architecture links name services by bare id; an unlabelled group and a junction have no label.
+  const architecture = await describe(
+    'architecture-beta',
+    'architecture',
+    [
+      { id: 'group:net', role: 'group', kind: 'shape', shapes: box(-2, ' ') },
+      { id: 'service:lb', role: 'service', kind: 'shape', shapes: box(0, 'Load balancer') },
+      { id: 'service:api', role: 'service', kind: 'shape', shapes: box(3, 'API') },
+      { id: 'junction:j', role: 'junction', kind: 'shape', shapes: box(6) },
+      link('edge:lb->api#0', 'edge', 'lb', 'api', 1.5),
+      link('edge:api->j#0', 'edge', 'api', 'j', 4.5),
+      link('edge:api->net#0', 'edge', 'api', 'net', 2),
+    ],
+    (d) => d.walk([['lb', 'api']]),
+  );
+  assert.deepEqual(architecture, [
+    'Load balancer → API (path)',
+    // Scaffolding first: a junction is named by its id.
+    'junction j',
+    'Load balancer',
+    'Load balancer → API',
+    'API',
+    'API → junction j',
+    'API → net',
+  ]);
+  // A class is read before the relationships that leave it, which name it without its members.
+  const classes = await describe('classDiagram', 'class', [
+    { id: 'class:Mobject', role: 'class-box', kind: 'shape', shapes: box(3, 'Mobject', 'points') },
+    { id: 'class:Scene', role: 'class-box', kind: 'shape', shapes: box(0, 'Scene', 'play()') },
+    link('rel:Scene-Mobject#0', 'relationship', 'Scene', 'Mobject', 1.5),
+    { id: 'rel-label:Scene-Mobject#0', role: 'label', kind: 'text', owner: 'rel:Scene-Mobject#0', shapes: box(1.5, 'owns') },
+  ]);
+  assert.deepEqual(classes, ['Scene play()', 'Scene → Mobject: owns', 'Mobject points']);
+  // An ER entity declared with an alias is called by its label, as its box shows it.
+  const er = await describe('erDiagram\n  p["Person"] {\n    string name\n  }\n  p ||--o{ CAR : drives', 'er', [
+    link('rel:p-CAR#0', 'relationship', 'p', 'CAR', 1.5),
+    { id: 'rel-label:p-CAR#0', role: 'label', kind: 'text', owner: 'rel:p-CAR#0', shapes: box(1.5, 'drives') },
+    { id: 'entity:p', role: 'entity', kind: 'shape', shapes: box(0, 'Person', 'string', 'name') },
+    { id: 'entity:CAR', role: 'entity', kind: 'shape', shapes: box(3, 'CAR') },
+    { id: 'card:p-CAR#0:1', role: 'cardinality', kind: 'shape', shapes: box(0.5), channels: { category: 'one' } },
+    { id: 'card:p-CAR#0:2', role: 'cardinality', kind: 'shape', shapes: box(2.5), channels: { category: 'zero-many' } },
+  ]);
+  assert.deepEqual(er, [
+    'Person → CAR: drives (each Person has zero or more CAR, each CAR has exactly one Person)',
+    'Person: name (string)',
+    'CAR',
+  ]);
 });

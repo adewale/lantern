@@ -1,8 +1,8 @@
 # Upstream
 
-This repository is a fork of [ivarvong/lantern](https://github.com/ivarvong/lantern) at `2c7bad533be25fbd56d26a9a2b6c5651743f011e`. Lantern's README and its engine notes (verification, performance, flowcharts, the JSON document format) are at that commit: [README](https://github.com/ivarvong/lantern/blob/2c7bad533be25fbd56d26a9a2b6c5651743f011e/README.md), [docs](https://github.com/ivarvong/lantern/tree/2c7bad533be25fbd56d26a9a2b6c5651743f011e/docs). Some of what they describe was deleted here: the development player, the Worker site, the nine original scenes, `DocScene` and the JSON format, Lantern's own Mermaid parser and layout, and the tools that served them. The explainers in `scenes/explainers/` rebuild Lantern's examples.
+This repository is a fork of [ivarvong/lantern](https://github.com/ivarvong/lantern) at `2c7bad533be25fbd56d26a9a2b6c5651743f011e`. Lantern's README and its engine notes (verification, performance, flowcharts, the JSON document format) are at that commit: [README](https://github.com/ivarvong/lantern/blob/2c7bad533be25fbd56d26a9a2b6c5651743f011e/README.md), [docs](https://github.com/ivarvong/lantern/tree/2c7bad533be25fbd56d26a9a2b6c5651743f011e/docs). Some of what they describe was deleted here: the development player, the Worker site, the nine original scenes, `DocScene` and the JSON format, Lantern's own Mermaid parser and layout, the `title`, `CodePanel` and `StateReadout` panels, and the tools that served them. The explainers in `scenes/explainers/` rebuild Lantern's examples.
 
-From Lantern, with the changes below: `src/` (the engine), `tools/fonts.sh`, `tools/vendor-glyph.ts`, `tools/oracle/` and `tools/lib/browser.ts`. The rest is the fork's: `explain/`, `integrations/agentic-mermaid/`, `app/`, the other tools and `scenes/explainers/`. The MIT notice in `LICENSE` is Lantern's.
+From Lantern, with the changes below: `src/` (the engine), `tools/fonts.sh`, `tools/vendor-glyph.ts`, `tools/oracle/` (now only `manim_math.py`) and `tools/lib/browser.ts` (now only Chromium discovery and launch). The rest is the fork's: `explain/`, `integrations/agentic-mermaid/`, `app/`, the other tools and `scenes/explainers/`. The MIT notice in `LICENSE` is Lantern's.
 
 ## Merging
 
@@ -34,8 +34,9 @@ Each change is general (it is not about explainers) and has a regression test. N
 | `parseColor` reads `#rgba` and `#rrggbbaa` and returns `null` for anything else | Interpolation produced `#NaNNaNNaN` | `test/explain-helpers.test.ts` |
 | Fixes from Manim's and manim-web's issue history: `runTime: 0` shows the end state, the clock comes from the frame count, `replace()` leaves no ghost, groups do not ease twice, dashed strokes keep their dashes while drawn, `Code` expands tabs, the shaping memo is bounded, and others | Each test names the upstream issue it comes from | `test/lineage.test.ts` |
 | `takeMissingGlyphs()` reports characters the embedded fonts drew as nothing; `shaperFor` and `StopScene` are exported | Text outside the fonts was blank with no error | `test/explain-gates.test.ts`, `test/api.test.ts` |
+| Fallback faces in `src/fonts.ts`: each character takes the first face that has it (mono, then sans, then Noto Sans Arabic, Devanagari and SC numeral subsets that `tools/fonts.sh` adds); a fallback face that fails to load is skipped | Numerals outside Latin could not be drawn | `test/fonts.test.ts` (the chain); the skip has no test, since forcing a face to fail needs a test hook `src/` does not have |
 
-Removed from the engine as unused: `TextSink`, the `DomSink` frame-log hooks, `VMobject.validateCaches` and `Mobject.alignWith`.
+Removed from the engine as unused: `TextSink`, the `DomSink` frame-log hooks, `VMobject.validateCaches`, `Mobject.alignWith` and `summarizeMotion`.
 
 ## Agentic Mermaid
 

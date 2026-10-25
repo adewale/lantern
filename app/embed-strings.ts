@@ -129,7 +129,8 @@ export const CHROME: Readonly<Record<string, Chrome>> = { en: EN, fr: FR };
 
 /** The words for `lang`, or English when there is no table for it. */
 export function chromeFor(lang = 'en'): Chrome {
-  return CHROME[primaryLanguage(lang)] ?? EN;
+  const primary = primaryLanguage(lang);
+  return Object.hasOwn(CHROME, primary) ? CHROME[primary]! : EN;
 }
 /**
  * The lang attribute an element holding generated descriptions needs on a page in `lang`:

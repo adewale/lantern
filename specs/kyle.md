@@ -83,7 +83,7 @@ A diagram therefore looks as it does in Agentic Mermaid's own renderer, and is m
 
 **Known limits.**
 
-- Some families come out narrow or tall in a 16:9 stage, and their text gets small. Authors choose a direction (`LR` or `TB`) per diagram and use `focus()` to move the camera; `check` fails labels too small to read at a 1280 px stage.
+- Some families come out narrow or tall in a 16:9 stage, and their text gets small. Authors choose a direction (`LR` or `TB`) per diagram and use `focus()` to move the camera; `check` fails labels too small to read at a 1280 px stage. A 390 px phone draws the whole stage at 28% of that size, so the player opens each step there on a close-up of what changed, and `check` reports label sizes in those close-ups.
 - The capture relies on `drawNode`, which is reachable but undocumented. [Upstream](../docs/UPSTREAM.md#agentic-mermaid) lists the Agentic Mermaid release that would replace it.
 
 ## The helper library
@@ -185,13 +185,13 @@ To reduce the split, each step in the video plays its motion under the step's ti
 | The helpers grow into a second language | Helpers stay functions a scene calls. No interpreter, no config-driven steps. A helper earns its place by being used in two examples |
 | Agentic Mermaid's output changes | It changes when its owner releases it: pin versions, keep one snapshot file per diagram so a release's effect is a reviewable diff |
 | Styles drift from the real renderer | Capture asserts byte equality with `renderMermaidSVG` and fails on unread SVG |
-| Small text in tall or wide diagrams | Direction per diagram, `focus()`, the legibility check, and zoom on phones |
+| Small text in tall or wide diagrams | Direction per diagram, `focus()`, the legibility check, and close-ups on phones |
 | Settings multiply cases | Keep settings few and meaningful; the build runs every combination, so cost shows in CI time; 64 is the limit |
 | An explainer that looks right but is wrong | Walks travel real links; morph ops are replayed; scenes ask the real program; cite sources; have an expert read it |
 | Duplicate engine copies | Resolve scenes, helpers and player to one engine instance; the package smoke test checks it |
 | No maintainer | Do not promise a public release without one |
 
-**Out of scope for the first release:** a JSON format or scene language; a new engine; pasted or typed diagrams, which would need Agentic Mermaid in the browser; continuous numeric inputs (typing a latitude) for scenes that draw only native geometry from a model, a later candidate once sampled checks exist; a visual editor; a hosted service that runs other people's scenes; narration; Mermaid families the examples do not use; framework components.
+**Out of scope for the first release:** a JSON format or scene language; a new engine; pasted or typed diagrams, which would need Agentic Mermaid in the browser; continuous numeric inputs (typing a latitude) for scenes that draw only native geometry from a model, a later candidate once sampled checks exist; a visual editor; a hosted service that runs other people's scenes; narration; framework components.
 
 ## Sources
 

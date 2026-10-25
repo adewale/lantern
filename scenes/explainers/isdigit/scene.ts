@@ -26,7 +26,10 @@ const UCD = 'https://www.unicode.org/Public/17.0.0/ucd/';
 
 // Sizes are for a 390 px page, whose stage is 358 px wide: native text at 0.54 units is 12 px there,
 // 43 px on a 1280 px stage. A code line takes about 1.5 × SIZE, so a panel of n lines is about 0.81 n + 0.6 tall.
+// At SIZE, text reads at 12 px on a phone without a close-up. A code panel shrinks its lines to fit its box, so the two with the longest lines
+// (46 and 47 characters, up to 14.9 units wide at SIZE) get the full width the stage allows, WIDE, and keep SIZE.
 const SIZE = 0.54;
+const WIDE = 7.8;
 const STYLE = 'hand-drawn';
 const TOP = 3.05;
 const BOTTOM = -4.25;
@@ -201,7 +204,7 @@ export default class IsDigitExplainer extends Scene {
       id === 'han'
         ? [`# UnicodeData.txt:${c.ucdLine}, 4E00 to 9FFF`, c.ucd, `# Unihan_NumericValues.txt:${c.unihan!.line}`, `U+4E09  ${c.unihan!.tag}  ${c.unihan!.value}`]
         : [`# UnicodeData.txt:${c.ucdLine}`, ...rowLines(c)],
-      { at: [-7.55, -0.05, 7.55, TOP], fontSize: SIZE },
+      { at: [-WIDE, -0.05, WIDE, TOP], fontSize: SIZE },
     );
     await row.focus(id === 'han' ? 3 : 2, { as: id === 'han' ? 'the numeric value' : 'the numeric fields' });
     const blank = (v: string) => v || 'empty';
@@ -291,7 +294,7 @@ export default class IsDigitExplainer extends Scene {
         "    if (decimal < 0) { out[i] = '?'; break; }",
         "    out[i] = '0' + decimal; }",
       ],
-      { at: [-7.55, -2.75, 7.55, TOP], fontSize: SIZE },
+      { at: [-WIDE, -2.75, WIDE, TOP], fontSize: SIZE },
     );
     await transform.focus(parsed ? 6 : 5, { as: 'the branch this character takes' });
     await s.note(`int(${q(c)})  ${parsed ? `returns ${int.value}` : 'raises ValueError'}`, { at: [0, -3.55], size: SIZE });

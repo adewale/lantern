@@ -67,14 +67,21 @@ test('reading order lists every top-level part exactly once', async () => {
   );
 });
 
-test('in graph families a node is read before the links that leave it', async () => {
+test('in graph families a node is read just before the links that leave it', async () => {
   await fc.assert(
     fc.asyncProperty(snapshot(), async (s) => {
       fc.pre(['flowchart', 'state', 'mindmap', 'class'].includes(s.family));
       const { d } = await shown(s, 'full', null);
-      for (const l of links(d))
-        if (d.parts.has(l.info.from!))
-          assert.ok(d.order.indexOf(l.info.from!) < d.order.indexOf(l.info.id), `${l.info.from} before ${l.info.id}`);
+      // A link may name its source by a bare name (a class's 'A' for 'class:A').
+      const source = (id: string) => named(s, d.parts.get(id)!.info.from!);
+      for (const l of links(d)) {
+        const from = source(l.info.id);
+        if (!from || !d.parts.has(from)) continue;
+        const [at, link] = [d.order.indexOf(from), d.order.indexOf(l.info.id)];
+        assert.ok(at < link, `${from} before ${l.info.id}`);
+        // Only its other links come between them.
+        for (const id of d.order.slice(at + 1, link)) assert.equal(source(id), from, `${id} between ${from} and ${l.info.id}`);
+      }
     }),
     params(),
   );

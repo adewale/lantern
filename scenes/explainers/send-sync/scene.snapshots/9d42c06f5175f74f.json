@@ -2,7 +2,7 @@
   "version": 1,
   "renderer": "agentic-mermaid@0.4.1",
   "spec": {
-    "source": "---\nconfig:\n  quadrantChart:\n    chartWidth: 696\n    chartHeight: 680\n    pointLabelFontSize: 20\n    quadrantLabelFontSize: 32\n    xAxisLabelFontSize: 48\n    yAxisLabelFontSize: 48\n    yAxisLabelPadding: 12\n---\nquadrantChart\n  x-axis Not Send --> Send\n  y-axis Not Sync --> Sync\n  quadrant-1 Send and Sync\n  quadrant-2 Sync only\n  quadrant-3 Neither\n  quadrant-4 Send only\n  x is Arc<i32>: [0.52, 0.625]\n",
+    "source": "---\nconfig:\n  quadrantChart:\n    chartWidth: 696\n    chartHeight: 680\n    pointLabelFontSize: 20.3\n    quadrantLabelFontSize: 32\n    xAxisLabelFontSize: 48\n    yAxisLabelFontSize: 48\n    yAxisLabelPadding: 12\n---\nquadrantChart\n  x-axis Not Send --> Send\n  y-axis Not Sync --> Sync\n  quadrant-1 Send and Sync\n  quadrant-2 Sync only\n  quadrant-3 Neither\n  quadrant-4 Send only\n  x is Arc<i32>: [0.52, 0.625]\n",
     "style": "hand-drawn"
   },
   "family": "quadrant",
@@ -1472,12 +1472,12 @@
             "paintOrder": "stroke"
           },
           "text": "x is Arc<i32>",
-          "fontSize": 0.2,
+          "fontSize": 0.203,
           "textRun": {
             "text": "x is Arc<i32>",
             "x": 408.88,
-            "y": 244.38,
-            "size": 20,
+            "y": 244.48499999999999,
+            "size": 20.3,
             "anchor": "start",
             "baseline": "middle",
             "matrix": [
@@ -1488,7 +1488,7 @@
               0,
               0
             ],
-            "width": 121.56
+            "width": 123.383
           }
         }
       ]

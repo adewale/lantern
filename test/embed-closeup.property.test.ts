@@ -10,7 +10,6 @@ import { Group, Rectangle, Scene, Text } from '../src/index.ts';
 import type { Box } from '../src/index.ts';
 import { clampZoom, ZOOM_MAX } from '../app/embed-zoom.ts';
 import {
-  MIN_GAIN,
   NARROW_PX,
   partsOf,
   READ_PX,
@@ -72,7 +71,7 @@ test('every close-up of a step is clamped (the drawing covers the stage) and the
   );
 });
 
-test('on a narrow stage every label near the changes reads at READ_PX, by the least zoom that does it (or near enough whole)', () => {
+test('on a narrow stage every label near the changes reads at READ_PX whenever the zoom cap allows, by the least zoom that does it', () => {
   fc.assert(
     fc.property(layoutArb, stageArb, (layout, { w, h }) => {
       fc.pre(w < NARROW_PX);
@@ -81,14 +80,29 @@ test('on a narrow stage every label near the changes reads at READ_PX, by the le
         read = labelsToRead(layout);
       if (!read.length) return void assert.equal(k, 1);
       const drawn = read.map((l) => l.size * s * k);
-      // Readable unless the zoom is at its cap; the whole picture only when it misses by under MIN_GAIN.
-      const floor = k === 1 ? READ_PX / MIN_GAIN : READ_PX;
-      if (k < ZOOM_MAX) for (const px of drawn) assert.ok(px >= floor - 1e-9, `${px} px at k=${k}`);
+      // No nearby label under READ_PX after the close-up when the cap leaves room to reach it.
+      const possible = READ_PX / (Math.min(...read.map((l) => l.size)) * s) <= ZOOM_MAX;
+      if (possible) for (const px of drawn) assert.ok(px >= READ_PX - 1e-9, `${px} px at k=${k}`);
       // Least: no zoom at all, the cap, or the smallest label lands exactly on READ_PX.
       assert.ok(k === 1 || k === ZOOM_MAX || Math.abs(Math.min(...drawn) - READ_PX) < 1e-9, `k=${k} is more than reading needs`);
     }),
     params(500),
   );
+});
+
+test('a label a few percent under READ_PX is enlarged, not left on the whole picture', () => {
+  // A phone's stage, 358 × 201: a 0.5-unit label draws at 11.2 px and needs 1.07×.
+  const [w, h] = [358, 201],
+    { s } = stageScale(w, h);
+  for (const size of [0.488, 0.5, 0.536]) {
+    const layout: StepLayout = { parts: [[-1, -0.5, 1, 0.5]], lead: 0, labels: [{ box: [-0.8, -0.2, 0.8, 0.2], size }] };
+    const { k } = closeUp(layout, w, h);
+    assert.ok(k > 1, `${size}: k=${k}`);
+    assert.ok(size * s * k >= READ_PX - 1e-9, `${size}: ${size * s * k} px`);
+  }
+  // One already at READ_PX keeps the whole picture.
+  const read: StepLayout = { parts: [[-1, -0.5, 1, 0.5]], lead: 0, labels: [{ box: [-0.8, -0.2, 0.8, 0.2], size: READ_PX / s }] };
+  assert.deepEqual(closeUps(read, w, h), [{ k: 1, x: 0, y: 0 }]);
 });
 
 test('the tour of close-ups covers every changed part: each point of a change is inside some close-up', () => {
@@ -110,6 +124,15 @@ test('the tour of close-ups covers every changed part: each point of a change is
     }),
     params(500),
   );
+});
+
+test('a part padded to exactly one view wide gets one view, not none', () => {
+  // fast-check found it: the padding makes the span a rounding wider than the view, which split it into one view over 0.
+  const layout: StepLayout = { parts: [[0, 0, 2.4018880411591708, 0], [0, 0, 0, 0]], lead: 0, labels: [{ box: [0, 0, 0, 0], size: 0.05 }] };
+  const tour = closeUps(layout, 120, 66);
+  for (const z of tour) assert.ok(Number.isFinite(z.x) && Number.isFinite(z.y), JSON.stringify(z));
+  const views = tour.map((z) => viewBox(z, 120, 66));
+  assert.ok(views.some((v) => v[0] <= 1e-6 && v[2] >= 2.4018880411591708 - 1e-6), JSON.stringify(views));
 });
 
 test('a step opens on its lead part: whole when it fits the view, else from its top-left corner', () => {

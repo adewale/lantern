@@ -44,7 +44,7 @@ How to put a built page on a website, and how to export the same scene as a vide
            data-title="Why a cache changes the request path"></script>
    ```
 
-   The loader starts the iframe at 640 px, then follows the page's height messages, accepting them only from that iframe's window and the page's origin, so several embeds on one page size independently. It adds the "Open in a new tab" link beside the iframe. `data-theme="light"` or `"dark"` fixes the player's colours. An application can mount and remove embeds itself:
+   The loader starts the iframe at 640 px, then follows the page's height messages, accepting them only from that iframe's window and the page's origin, so several embeds on one page size independently. It adds the "Open in a new tab" link beside the iframe, in English or French: `data-lang`, or the `lang` option of `mountExplainer`, sets the language, which is otherwise the host page's `lang`. `data-theme="light"` or `"dark"` fixes the player's colours. An application can mount and remove embeds itself:
 
    ```js
    const dispose = LanternEmbed.mountExplainer(target, '/explainers/cache.html', { title: 'Cache', height: 640, theme: 'auto' });
@@ -72,11 +72,11 @@ explain render scene.ts --out cache.mp4 --footer --all                # one file
 explain render scene.ts --out cache.webm --width 1920                 # stage only, VP9
 ```
 
-Each step plays its motion under its title, then holds its resting picture under the caption for as long as the caption takes to read. Reading time sets the length, so most of a video is a still picture ([the reference](REFERENCE.md#video-files) has the measure); shorter captions make a shorter video.
+Each step plays its motion under its title, then holds its resting picture under the caption for the caption's reading time, so shorter captions make a shorter video.
 
 Publish `cache.transcript.html` beside the video: it is the text alternative, with each step's title, caption and what its picture shows.
 
-`render` stops with an error, naming the step and case, when a footer title or caption needs more than four lines, when it has a character the fonts cannot draw, or when the picture changes after a step's caption hold begins. Shorten the caption, or finish every change before the step's last `play()` ends.
+`render` stops with an error, naming the step and case, when a footer title or caption needs more than four lines or has a character the fonts cannot draw, or when the picture changes during a caption hold. Shorten the caption, or finish every change before the step's last `play()` ends.
 
 Check a file before publishing it:
 

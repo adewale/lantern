@@ -7,8 +7,8 @@
  * The reader can still pan, zoom, or go back to the whole picture.
  *
  * `stepLayouts` runs a scene once and records, for each step, where its picture
- * changed and every visible label's size; `closeUp` turns one step's layout into a
- * zoom for a stage of a given size. `explain check` uses both, so its phone number
+ * changed and every visible label's size; `closeUps` turns one step's layout into the
+ * zooms for a stage of a given size. `explain check` uses both, so its phone number
  * is the size the player draws.
  */
 import type { Box, Mobject, Scene, SceneClass, Sink } from '../src/index.ts';
@@ -20,11 +20,6 @@ import type { Zoom } from './embed-zoom.ts';
 export const READ_PX = 12;
 /** Stages narrower than this get close-ups; wider ones (a tablet, a laptop) keep the whole picture. */
 export const NARROW_PX = 600;
-/**
- * A close-up enlarges by at least this much, or not at all: cropping the picture to gain
- * under a tenth (an 11 px label made 12) costs more context than it buys in reading.
- */
-export const MIN_GAIN = 1.1;
 /** Room left around the changed region, in stage units, so a mark's outline is not cut. */
 const PAD = 0.2;
 const FRAME: Box = [-8, -4.5, 8, 4.5];
@@ -246,8 +241,9 @@ export function tourRegions(parts: readonly Box[], vw: number, vh: number): Box[
   const views: Box[] = [];
   // Starts of views across a span: one centred view if it fits, else evenly overlapping ones from edge to edge.
   const starts = (lo: number, hi: number, size: number) => {
-    if (hi - lo <= size) return [(lo + hi) / 2 - size / 2];
+    // A span over by a rounding (a part padded to exactly a view's width) is one view, not n = 1 over 0.
     const n = Math.ceil((hi - lo) / size - 1e-9);
+    if (n < 2) return [(lo + hi) / 2 - size / 2];
     return Array.from({ length: n }, (_, i) => lo + (i * (hi - lo - size)) / (n - 1));
   };
   for (const g of groups)
@@ -263,7 +259,9 @@ export function tourRegions(parts: readonly Box[], vw: number, vh: number): Box[
  * NARROW_PX wide, or with nothing to read, there is one: the whole picture. Otherwise
  * every close-up has one scale, the least that draws every label near the step's
  * changes at READ_PX (up to `max`), so a label read in one close-up, or found by
- * panning, reads the same in any other; a scale under MIN_GAIN keeps the whole picture.
+ * panning, reads the same in any other. When every such label already reads at
+ * READ_PX, there is one: the whole picture. Any label under it is enlarged, however
+ * little it needs: a label at 11 px is still under the floor `explain check` measures.
  */
 export function closeUps(layout: StepLayout | undefined, w: number, h: number, max = ZOOM_MAX): Zoom[] {
   const whole = [clampZoom(IDENTITY, w, h, max)];
@@ -273,7 +271,7 @@ export function closeUps(layout: StepLayout | undefined, w: number, h: number, m
   const { s, ox, oy } = stageScale(w, h);
   const smallest = Math.min(...read.map((l) => l.size));
   const k = Math.min(max, Math.max(1, READ_PX / (smallest * s)));
-  if (k < MIN_GAIN) return whole;
+  if (k < 1 + 1e-9) return whole;
   const vw = w / (k * s),
     vh = h / (k * s);
   const regions = tourRegions(layout.parts, vw, vh);

@@ -30,7 +30,7 @@ Open http://127.0.0.1:5175/explainers/. Three to start with:
 - **Why June brings polar day to Tromsø and winter to Sydney**: switch the place, and the daylight chart is recomputed from the model.
 - **Five added lines put a KV cache in front of D1**: the diff, then the same edit replayed on the architecture diagram, then a cache hit or miss.
 
-`out/explainers/evidence.json` lists each explainer's cases, diagrams, styles and Mermaid families, with totals.
+The collection has 26 explainers with 140 cases between them, and uses all 15 Agentic Mermaid diagram families in 10 of its styles; `out/explainers/evidence.json` lists them per explainer. Twenty have a video; six are pages only (`video: false` in `scenes/explainers/catalog.ts`).
 
 ## Write one
 
@@ -43,7 +43,7 @@ npm run explain -- build my-explainer/scene.ts --out public/my-explainer.html
 
 `init` writes a working scene with one setting. `preview` serves the page and rebuilds it on save. `check` runs every case through [the checks](docs/REFERENCE.md#checks). `build` writes the page and the response headers it needs; [publishing](docs/PUBLISHING.md) shows how to embed it.
 
-Limits: lettering is the embedded Inter or JetBrains Mono, so styles lose their own fonts; beyond Latin, only numerals draw (Arabic-Indic, Devanagari and Chinese, from small Noto subsets), and other scripts fail the build; on a phone each step opens on a close-up of what it changed, so a reader pans for the rest; only the Mermaid families in `evidence.json` are tested; the models are small and cited, and no subject expert has reviewed the explainers.
+Limits: lettering is the embedded Inter or JetBrains Mono, so styles lose their own fonts; beyond Latin, only numerals draw (Arabic-Indic, Devanagari and Chinese, from small Noto subsets), and other scripts fail the build; descriptions of the pictures are generated in English or French only; on a phone each step opens on a close-up of what it changed, so a reader pans for the rest; the models are small and cited, and no subject expert has reviewed the explainers.
 
 ## Documents
 

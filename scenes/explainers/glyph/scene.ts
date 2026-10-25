@@ -16,6 +16,10 @@ import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
 
 const WORD = 'Hello, outlines';
 const SIZE = 0.9; // the size the fidelity test measures
+// The heading at 0.54 units is 12 px on a 390 px phone, whose stage is 358 px wide. The first step's
+// close-up frames the large lettering it writes, which needs no enlarging, so the heading above it is
+// read at its own size there; at the stage's default 0.36 it would be 8 px.
+const HEADING = 0.54;
 const STYLE = 'pen-and-ink';
 const NAME: Record<FontName, string> = { sans: 'Inter', mono: 'JetBrains Mono' };
 const pipeline = (font: string) =>
@@ -105,7 +109,7 @@ export default class GlyphExplainer extends Scene {
   override async construct() {
     const font = settingsOf(this).font as FontName,
       other: FontName = font === 'sans' ? 'mono' : 'sans',
-      s = stage(this, { style: STYLE }),
+      s = stage(this, { style: STYLE, headingSize: HEADING }),
       ink = s.palette.ink,
       hot = s.emphasis,
       soft = s.soft;

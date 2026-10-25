@@ -10,7 +10,7 @@ export function mountExplainer(
   src: string,
   options: { title: string; height?: number; theme?: 'light' | 'dark' | 'auto'; lang?: string },
 ): () => void {
-  const t = chromeFor(options.lang || document.documentElement.lang || 'en');
+  const t = chromeFor(hostLang(options.lang));
   const url = new URL(src, document.baseURI);
   const origin = exactHttpOrigin(url.origin);
   if (!origin) throw new Error('Auto-sizing requires an HTTP(S) artifact URL');
@@ -40,6 +40,9 @@ export function mountExplainer(
   };
 }
 
+/** The language the loader's words are in: the one given, else the host page's. */
+const hostLang = (lang?: string) => lang || document.documentElement.lang || 'en';
+
 const script = document.currentScript as HTMLScriptElement | null;
 if (script?.dataset.src) {
   const target = script.dataset.target
@@ -47,7 +50,7 @@ if (script?.dataset.src) {
     : script.parentElement;
   if (target)
     mountExplainer(target, script.dataset.src, {
-      title: script.dataset.title ?? chromeFor(script.dataset.lang || document.documentElement.lang || 'en').frame,
+      title: script.dataset.title ?? chromeFor(hostLang(script.dataset.lang)).frame,
       theme: (script.dataset.theme ?? 'auto') as 'auto',
       lang: script.dataset.lang,
     });

@@ -2,7 +2,7 @@
   "version": 1,
   "renderer": "agentic-mermaid@0.4.1",
   "spec": {
-    "source": "---\nconfig:\n  quadrantChart:\n    chartWidth: 696\n    chartHeight: 680\n    pointLabelFontSize: 20\n    quadrantLabelFontSize: 32\n    xAxisLabelFontSize: 48\n    yAxisLabelFontSize: 48\n    yAxisLabelPadding: 12\n---\nquadrantChart\n  x-axis Not Send --> Send\n  y-axis Not Sync --> Sync\n  quadrant-1 Send and Sync\n  quadrant-2 Sync only\n  quadrant-3 Neither\n  quadrant-4 Send only\n  Rc<i32>: [0.02, 0.125]\n",
+    "source": "---\nconfig:\n  quadrantChart:\n    chartWidth: 696\n    chartHeight: 680\n    pointLabelFontSize: 20.3\n    quadrantLabelFontSize: 32\n    xAxisLabelFontSize: 48\n    yAxisLabelFontSize: 48\n    yAxisLabelPadding: 12\n---\nquadrantChart\n  x-axis Not Send --> Send\n  y-axis Not Sync --> Sync\n  quadrant-1 Send and Sync\n  quadrant-2 Sync only\n  quadrant-3 Neither\n  quadrant-4 Send only\n  x is Arc<Cell<i32>>: [0.52, 0.125]\n",
     "style": "hand-drawn"
   },
   "family": "quadrant",
@@ -1396,38 +1396,38 @@
       }
     },
     {
-      "id": "point:Rc<i32>",
+      "id": "point:x is Arc<Cell<i32>>",
       "role": "point",
       "kind": "shape",
       "shapes": [
         {
           "subpaths": [
             [
-              1.083799958229065,
+              3.928800106048584,
               -5.218800067901611,
-              1.083799958229065,
+              3.928800106048584,
               -5.251937389373779,
-              1.1106629371643066,
+              3.955662727355957,
               -5.278800010681152,
-              1.1438000202178955,
+              3.988800048828125,
               -5.278800010681152,
-              1.1769371032714844,
+              4.021936893463135,
               -5.278800010681152,
-              1.2037999629974365,
+              4.048799991607666,
               -5.251937389373779,
-              1.2037999629974365,
+              4.048799991607666,
               -5.218800067901611,
-              1.2037999629974365,
+              4.048799991607666,
               -5.185662746429443,
-              1.1769371032714844,
+              4.021936893463135,
               -5.15880012512207,
-              1.1438000202178955,
+              3.988800048828125,
               -5.15880012512207,
-              1.1106629371643066,
+              3.955662727355957,
               -5.15880012512207,
-              1.083799958229065,
+              3.928800106048584,
               -5.185662746429443,
-              1.083799958229065,
+              3.928800106048584,
               -5.218800067901611
             ]
           ],
@@ -1451,7 +1451,7 @@
       ]
     },
     {
-      "id": "point:Rc<i32>:label",
+      "id": "point:x is Arc<Cell<i32>>:label",
       "role": "label",
       "kind": "text",
       "shapes": [
@@ -1471,13 +1471,13 @@
             "miterLimit": 4,
             "paintOrder": "stroke"
           },
-          "text": "Rc<i32>",
-          "fontSize": 0.2,
+          "text": "x is Arc<Cell<i32>>",
+          "fontSize": 0.203,
           "textRun": {
-            "text": "Rc<i32>",
-            "x": 124.38,
-            "y": 528.88,
-            "size": 20,
+            "text": "x is Arc<Cell<i32>>",
+            "x": 408.88,
+            "y": 528.985,
+            "size": 20.3,
             "anchor": "start",
             "baseline": "middle",
             "matrix": [
@@ -1488,7 +1488,7 @@
               0,
               0
             ],
-            "width": 78.24
+            "width": 181.238
           }
         }
       ]
@@ -1670,13 +1670,13 @@
       "kind": "quadrant",
       "nodes": [
         {
-          "id": "point#0:Rc<i32>",
-          "x": 108,
+          "id": "point#0:x is Arc<Cell<i32>>",
+          "x": 393,
           "y": 516,
           "w": 12,
           "h": 12,
           "shape": "circle",
-          "label": "Rc<i32>",
+          "label": "x is Arc<Cell<i32>>",
           "role": "labelled-mark"
         }
       ],
@@ -1706,9 +1706,7 @@
           "y": 309,
           "w": 285,
           "h": 285,
-          "members": [
-            "point#0:Rc<i32>"
-          ],
+          "members": [],
           "label": "Neither"
         },
         {
@@ -1717,7 +1715,9 @@
           "y": 309,
           "w": 285,
           "h": 285,
-          "members": [],
+          "members": [
+            "point#0:x is Arc<Cell<i32>>"
+          ],
           "label": "Send only"
         }
       ],

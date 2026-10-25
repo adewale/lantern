@@ -11,10 +11,11 @@ import { trackLanguage, videoTranscript } from '../tools/lib/explain-video.ts';
 import { chromeFor, caseNameIn, CHROME, descriptionLang, descriptionsLang, settingsProblem } from '../app/embed-strings.ts';
 import type { SettingsProblem } from '../app/embed-strings.ts';
 import { caseName, resolveSettings } from '../explain/index.ts';
-import { FAMILIES } from '../explain/diagrams.ts';
 import { pictureSummary, pictureHtml, picture } from '../explain/trace.ts';
 import { VOCABULARY, wordsFor, describedIn, familyNames, markHeading } from '../explain/words.ts';
 import type { Words } from '../explain/words.ts';
+
+const FAMILIES = wordsFor('en').families;
 import { launch } from '../tools/lib/browser.ts';
 
 const NB = ' ';
@@ -82,7 +83,7 @@ const text = (html: string) =>
 const wordsIn = (t: string) => t.toLowerCase().match(/\p{L}{2,}/gu) ?? [];
 /**
  * Every English word the generated descriptions can say: each English entry, each pattern
- * applied to a placeholder, each noun's plural, and the family names in explain/diagrams.ts.
+ * applied to a placeholder, each noun's plural, and the English family names.
  * Words French spells the same way (code, note, message, point…) are left out.
  */
 const ENGLISH = (() => {
@@ -116,6 +117,8 @@ test('page words come from a table by primary language, English when there is no
   assert.equal(chromeFor('fr-BE').next, 'Suivant');
   assert.equal(chromeFor('de'), CHROME.en);
   assert.equal(chromeFor(), CHROME.en);
+  // A tag that names an Object property is a language with no table, not that property.
+  for (const tag of ['constructor', '__proto__']) assert.equal(chromeFor(tag), CHROME.en, tag);
   // Every language names every piece of chrome.
   for (const [lang, words] of Object.entries(CHROME)) assert.deepEqual(Object.keys(words).sort(), Object.keys(CHROME.en!).sort(), lang);
 });
@@ -197,19 +200,20 @@ test('every family has French words: its own, or the generic ones, never English
   const fr = wordsFor('fr'),
     en = wordsFor('en');
   const missing = Object.keys(FAMILIES).filter((f) => !Object.hasOwn(fr.families, f));
-  // Families added to explain/diagrams.ts without a French entry in explain/words.ts.
+  // Families with English names but no French entry in explain/words.ts.
   t.diagnostic(`families without French names: ${missing.join(', ') || 'none'}`);
   for (const family of Object.keys(FAMILIES)) {
-    const names = familyNames(fr, family, FAMILIES[family]);
+    const names = familyNames(fr, family);
     assert.deepEqual(englishIn(names.join(' ')), [], `${family}: ${names.join(', ')}`);
     if (missing.includes(family)) assert.deepEqual(names, [`Diagramme ${family}`, 'élément', 'lien']);
   }
   // A family neither table knows.
-  assert.deepEqual(familyNames(fr, 'sankey', undefined), ['Diagramme sankey', 'élément', 'lien']);
-  assert.deepEqual(familyNames(en, 'sankey', undefined), ['sankey diagram', 'part', 'link']);
-  assert.deepEqual(familyNames(en, 'flowchart', FAMILIES.flowchart), ['Flowchart', 'node', 'link']);
-  assert.deepEqual(familyNames(fr, 'flowchart', FAMILIES.flowchart), ['Logigramme', 'nœud', 'lien']);
-  assert.deepEqual(familyNames(en, 'xychart', FAMILIES.xychart), ['XY chart', 'part', 'link']);
+  assert.deepEqual(familyNames(fr, 'sankey'), ['Diagramme sankey', 'élément', 'lien']);
+  assert.deepEqual(familyNames(en, 'sankey'), ['sankey diagram', 'part', 'link']);
+  assert.deepEqual(familyNames(en, 'flowchart'), ['Flowchart', 'node', 'link']);
+  assert.deepEqual(familyNames(fr, 'flowchart'), ['Logigramme', 'nœud', 'lien']);
+  assert.deepEqual(familyNames(en, 'xychart'), ['XY chart', 'part', 'link']);
+  assert.deepEqual(familyNames(en, 'constructor'), ['constructor diagram', 'part', 'link']);
 });
 
 test('French counts, plurals and agreement: 0 and 1 singular, regular and irregular plurals, elision', () => {

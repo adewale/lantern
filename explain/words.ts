@@ -33,7 +33,7 @@ export interface Words {
   values: string;
   /** The family name of a diagram whose family has no name in this language. */
   diagram: (family: string) => string;
-  /** Names for diagram families, by snapshot family id; English names live in explain/diagrams.ts. */
+  /** Names for diagram families, by snapshot family id. */
   families: Readonly<Record<string, FamilyNames>>;
   /** Between items of a list in a sentence. */
   separator: string;
@@ -42,6 +42,8 @@ export interface Words {
   semicolon: string;
   /** "label: value", a link and its label, an emphasis word and its parts. */
   pair: (a: string, b: string) => string;
+  /** A link by its ends: "Client → Load balancer". */
+  arrow: (from: string, to: string) => string;
   /** A title as quoted in a description. */
   quote: (text: string) => string;
   count: (n: number, noun: Noun) => string;
@@ -106,11 +108,28 @@ const EN: Words = {
   code: 'Code',
   values: 'values',
   diagram: (family) => `${family} diagram`,
-  families: {},
+  families: {
+    flowchart: ['Flowchart', 'node', 'link'],
+    sequence: ['Sequence diagram', 'participant', 'message'],
+    state: ['State diagram', 'state', 'transition'],
+    class: ['Class diagram', 'class', 'relationship'],
+    mindmap: ['Mind map', 'topic', 'branch'],
+    gitgraph: ['Git graph', 'commit', 'link'],
+    er: ['ER diagram', 'entity', 'relationship'],
+    xychart: ['XY chart'],
+    timeline: ['Timeline', 'period'],
+    gantt: ['Gantt chart', 'task'],
+    quadrant: ['Quadrant chart', 'point'],
+    pie: ['Pie chart', 'slice'],
+    architecture: ['Architecture diagram', 'service', 'edge'],
+    journey: ['User journey', 'task'],
+    radar: ['Radar chart', 'curve'],
+  },
   separator: '; ',
   colon: ':',
   semicolon: ';',
   pair: (a, b) => `${a}: ${b}`,
+  arrow: (from, to) => `${from} → ${to}`,
   quote: (text) => `“${text}”`,
   count: (n, noun) =>
     `${n} ${n === 1 ? one(noun) : typeof noun === 'string' ? noun.replace(/(s|ch)$/, '$1e').replace(/y$/, 'ie') + 's' : noun[1]}`,
@@ -195,10 +214,11 @@ const FR: Partial<Words> = {
     // LibreOffice's French name for the chart type; "radar" reads as English to test/explain-lang.test.ts.
     radar: ['Graphique en toile', 'courbe'],
   },
-  separator: '\u202f; ',
-  colon: '\u202f:',
-  semicolon: '\u202f;',
+  separator: `${NB}; `,
+  colon: `${NB}:`,
+  semicolon: `${NB};`,
   pair: (x, y) => `${x}${NB}: ${y}`,
+  arrow: (from, to) => `${from} → ${to}`,
   quote: (text) => `«${NB}${text}${NB}»`,
   // French counts 0 and 1 in the singular: 0 enfant, 1 lien, 2 liens.
   count: (n, noun) => `${nombre(n)} ${n < 2 ? one(noun) : typeof noun === 'string' ? pluriel(noun) : noun[1]}`,
@@ -248,12 +268,11 @@ export const langOf = (scene: object): string | undefined => (scene.constructor 
 /** The description words for a scene, by its class's `meta.lang`. */
 export const wordsOf = (scene: object): Words => wordsFor(langOf(scene));
 /**
- * A family's name and nouns in `words`' language. `english` is the family's entry in
- * explain/diagrams.ts; a family with no entry in this language takes the language's generic
- * name and nouns, never English words.
+ * A family's name and nouns in `words`' language. A family with no entry in this language
+ * takes the language's generic name and nouns, never English words.
  */
-export function familyNames(words: Words, family: string, english: FamilyNames | undefined): [string, string, string] {
-  const own = words === EN ? english : words.families[family];
+export function familyNames(words: Words, family: string): [string, string, string] {
+  const own = Object.hasOwn(words.families, family) ? words.families[family] : undefined;
   return [own?.[0] ?? words.diagram(family), own?.[1] ?? one(words.part), own?.[2] ?? one(words.link)];
 }
 /** An emphasis word as a heading over `n` parts: plural where the language has a form for it. */

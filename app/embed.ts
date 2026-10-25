@@ -260,13 +260,16 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
    * them. The step's other close-ups wait behind the overview, close-ups on or off.
    */
   async function framing(step: Trace['steps'][number]): Promise<Zoom | null> {
-    const at = current;
+    const at = current,
+      gen = generation;
     shownLayout = undefined;
     tour = [];
     stop = 0;
     if (!at || !narrow()) return null;
     at.layouts ??= stepLayouts(at.Scene);
     const layout = (await at.layouts).get(step.step);
+    // A case or step shown while the layouts were worked out owns the overview now.
+    if (gen !== generation || at !== current) return null;
     shownLayout = layout;
     tour = closeUps(layout, stage.clientWidth, stage.clientHeight, zoom.max);
     return follow ? tour[0]! : null;

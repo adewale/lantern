@@ -71,7 +71,7 @@ Make the step leave something on screen that its caption talks about. Replace th
     await d.mark(['Reply']);
 ```
 
-Run `check` again. It passes and prints a report, also saved to `out/checks/my-explainer/report.json`. Its `restingFrames` field draws each step's resting picture roughly in text, and `legibility` gives the smallest label size at a 1280 px stage and in each step's phone close-up. [The reference](REFERENCE.md#checks) lists every check.
+Run `check` again. It passes and prints a report, also saved to `out/checks/my-explainer/report.json`. Its `restingFrames` field draws each step's resting picture roughly in text, and `legibility` gives label sizes on a laptop and a phone. [The reference](REFERENCE.md#checks) lists every check.
 
 ## 5. Build the page
 

@@ -122,8 +122,9 @@ export function pictureSummary(state: unknown): string {
   const w = wordsFor(p.lang);
   const words: Record<string, string[]> = {};
   for (const e of p.entries) for (const [word, names] of Object.entries(e.marked ?? {})) (words[word] ??= []).push(...names);
-  // At most four emphasised parts in all, those new in this step first, so the description
-  // stays short and says what this step did; the full list has the rest.
+  // At most four emphasised parts in all and three under one word, those new in this step
+  // first, so the description stays short and says what this step did; one count at the end
+  // says how many it leaves to the full list.
   const fresh = new Set(p.changed);
   const first = (names: string[]) => names.filter((n) => fresh.has(n)).length;
   const groups = Object.entries(words)
@@ -132,14 +133,15 @@ export function pictureSummary(state: unknown): string {
   const named = groups.flatMap(([, names]) => names);
   let room = 4;
   const marked = groups.flatMap(([word, names]) => {
-    const shown = names.slice(0, Math.max(0, room));
+    const shown = names.slice(0, Math.min(3, room));
     room -= shown.length;
     return shown.length ? [w.pair(markHeading(w, word, names.length), some(w, shown))] : [];
   });
+  const left = named.length - (4 - room);
   const changed = (p.changed ?? []).filter((c) => !named.includes(c));
   return [
     p.entries.map((e) => e.what).join(w.separator),
-    ...(marked.length ? [marked.join(w.separator) + (named.length > 4 ? w.separator + w.more(named.length - 4) : '')] : []),
+    ...(marked.length ? [marked.join(w.separator) + (left ? w.separator + w.more(left) : '')] : []),
     ...(changed.length ? [w.pair(w.newInStep, some(w, changed))] : []),
   ]
     .map(sentence)

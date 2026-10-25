@@ -15,12 +15,13 @@ await this.step('stable-name', { title: 'A claim the picture can prove', caption
 this.state.reads = reads;   // program state, recorded at each step boundary
 ```
 
-- `meta.id` names the output files; `meta.title` is the page title; `meta.lang` (BCP 47, default `en`) is the language of the page, the transcripts and the subtitles; the player's and page's own words, and the generated picture descriptions (`explain/words.ts`), are in English or French; on a page in another language the descriptions are English and marked `lang="en"`; the loader's link follows its `data-lang`, else the host page's `lang`; `meta.sources` are listed under the transcript.
+- `meta.id` names the output files, `meta.title` is the page title, and `meta.sources` are listed under the transcript.
+- `meta.lang` (BCP 47, default `en`) is the language of the page, the transcripts and the subtitles. The player's own words (`app/embed-strings.ts`) and the generated picture descriptions (`explain/words.ts`, whose `families` name each diagram family and its parts) exist in English and French. On a page in any other language both are English, and the descriptions are marked `lang="en"`; `Picture.lang` in the trace records a description's language when it is not English.
 - Step names are URL identifiers. They must be unique and non-empty in every case.
 - `this.state` is recorded before and after each step. Compute values with a model, show its result, and test that each step's state equals the model's (`assertStepState` in `test/lib/explainer-state.ts`).
-- A captioned step holds until its caption could be read at 160 words a minute (`Scene.captionWpm`), counting the step's motion as reading time. The page ignores the hold and stops when the picture stops; the video holds each caption for its full reading time (see [Video files](#video-files)). The picture must not change once the hold begins.
+- A captioned step holds until its caption could be read at 160 words a minute (`Scene.captionWpm`), counting the step's motion as reading time. The page stops when the picture stops; the [video](#video-files) holds the caption. The picture must not change once the hold begins.
 - Do not put awaited animations inside `try`/`catch` or `.catch()` in `construct()`. Seeking stops a scene by throwing `StopScene`, and a broad catch swallows it, so a jump to a step would show a different picture from playing to it. Handle a known model error in plain code before animating.
-- All lettering is the embedded fonts, drawn as outlines: Inter and JetBrains Mono, each falling back to Noto Sans Arabic, Devanagari and SC subsets that hold numerals only (Arabic-Indic and Devanagari digits, Chinese numerals, fullwidth digits). Diagram labels are Inter stretched to each label's width, so styles with their own fonts differ in letterforms. Every command fails on a character these fonts cannot draw and names the case, the step and the code point.
+- All lettering is the embedded fonts, drawn as outlines. JetBrains Mono falls back to Inter, and both fall back to Noto Sans Arabic, Devanagari and SC subsets that hold numerals only (Arabic-Indic and Devanagari digits, Chinese numerals, fullwidth digits). Diagram labels are Inter stretched to each label's width, so styles with their own fonts differ in letterforms. Every command fails on a character these fonts cannot draw and names the case, the step and the code point.
 
 ## Stage
 
@@ -107,12 +108,13 @@ const d = await s.show({ source: 'graph LR\nA --> B', style: 'nord' }, { box: 'm
 | `d.get(id)` | A part as a native `Group` |
 | `d.findings()` | The verifier's warnings, each with the `part` it names |
 
-- Parts have semantic ids. Graph nodes use their Mermaid id. A bare name also finds a sequence participant (`actor:A`) or a class (`class:Name`). Other ids look like `edge:A->B#0`, `bar:0:Jan` or `message:A->B#0`; read `d.parts` or the snapshot to find them.
+- Parts have semantic ids. Graph nodes use their Mermaid id. A bare name also finds a sequence participant (`actor:A`), a class (`class:Name`), an ER entity (`entity:Name`), or an architecture service, junction or group. Other ids look like `edge:A->B#0`, `bar:0:Jan` or `message:A->B#0`; read `d.parts` or the snapshot to find them.
 - Reading order: graphs read nodes with their outgoing links, sequence messages keep source order and carry a token, git commits read left to right, bars grow from the baseline. Scaffolding builds first. Labels travel with their owners.
 - `walk` throws on a hop the diagram does not have, requires the link to be revealed, follows its captured route, and records `{ step, from, to, edge }` in `state.walks`.
 - With `ops`, `morph` replays the edits through Agentic Mermaid's `mutate` at build time and fails unless the result serializes to `next`. Without `ops` it is a visual transition only.
 - One scene owns one clock: never call `Scene.play()` concurrently. Use `{ parallel: true }` or one native `play` for simultaneous tokens.
-- The collection exercises the families and styles listed in `out/explainers/evidence.json`; other families are untested.
+- Descriptions name a link by the labels at its ends ("Attacker → Load balancer"), and a class or ER entity by its name.
+- The collection uses all 15 families and the 10 styles listed in `out/explainers/evidence.json`; other styles are untested.
 
 ## Settings
 
@@ -130,7 +132,7 @@ Other exports: `withSettings(Scene, values)` binds a case without mutating the c
 
 ## Snapshots
 
-Every command except `init` runs every case, captures any diagram missing from `scene.snapshots/` beside the scene, and deletes unused ones; `explain snapshots` stops there. Commit the folder; `index.json` maps each diagram's key to its own file. A change to the capture code invalidates the whole cache; `--refresh` recaptures everything. Capture needs Chromium and the optional packages `agentic-mermaid`, `playwright-core` and `svgpath`; building from committed snapshots needs none of them.
+Every command except `init` runs every case, captures any diagram missing from `scene.snapshots/` beside the scene, and deletes unused ones; `explain snapshots` stops there. Commit the folder; `index.json` maps each diagram's key to its own file. A change to the capture code invalidates the whole cache; `--refresh` recaptures everything. Capture needs Chromium and the optional packages in [the README](../README.md#requirements).
 
 Capture asserts that its output equals Agentic Mermaid's `renderMermaidSVG` byte for byte, and fails on SVG it cannot convert (unsupported paint, masks, filters). Chromium resolves CSS, transforms and markers at build time with network requests blocked. The page receives resolved geometry and text runs; it never runs Agentic Mermaid.
 
@@ -152,9 +154,16 @@ Capture asserts that its output equals Agentic Mermaid's `renderMermaidSVG` byte
 | Bare runtime | The scene, bundled, gives different steps or state in a context with no DOM, Node, timers or console |
 | Glyphs | Any text the embedded fonts cannot draw (every command checks this) |
 
-On a phone the player opens each step on a close-up (see [controls](#controls-and-accessibility)), and `check` measures labels the same way: `minLabelPx390` and `labelsUnder12PxAt390` are sizes in each step's close-up on a 390 px page, whose stage is 358 px wide. They are reported, not gated.
+The report goes to `out/checks/<id>/report.json`. For each case it holds the full step trace, each step's resting picture as a rough text drawing (`restingFrames`: boxes and lines, with diagram labels as bars), and label sizes (`legibility`):
 
-The report goes to `out/checks/<id>/report.json`. For each case it holds the full step trace, each step's resting picture as a rough text drawing (`restingFrames`: boxes and lines, with diagram labels as bars), and label sizes (`legibility`): `minLabelPx1280`; `minLabelPx390` and `labelsUnder12PxAt390` in each step's close-up on a 390 px page; `labelsOutsideCloseUpsAt390`, the labels no close-up shows whole, which a reader reaches by panning; and `minLabelPx390WholeStage`, the size without close-ups.
+| Field | Measure |
+| --- | --- |
+| `minLabelPx1280` | Smallest label on a 1280 px stage |
+| `minLabelPx390`, `labelsUnder12PxAt390` | Smallest label, and labels under 12 px, in each step's phone close-up (see [controls](#controls-and-accessibility)) on a 390 px page, whose stage is 358 px wide |
+| `labelsOutsideCloseUpsAt390` | Labels no close-up shows whole, which a reader reaches by panning |
+| `minLabelPx390WholeStage` | Smallest label on that phone without close-ups |
+
+The phone sizes are reported, not gated; every demo case reports no label under 12 px.
 
 These checks establish deterministic behaviour and readable pictures. They do not establish that a caption is true: test each model against its source.
 
@@ -209,7 +218,7 @@ An unknown setting or value resets every setting to its default, and a notice na
 
 The stage's accessible description is a one-sentence summary of the picture. "What the picture shows", under the caption, opens the full description: each diagram, card, code panel and described drawing, with what is marked, dimmed or changed in this step.
 
-The stage takes focus from Tab or a click. With the stage focused, `+`, `-` and `0` zoom and reset, and arrow keys pan when zoomed. Otherwise left and right arrows change step, except on a button, link or field. Pinch, Ctrl-scroll and double-click zoom; when zoomed, drag pans and a click recentres on the point clicked. Zoom goes up to 6×, keeps its place across steps, and resets when the case changes. On a stage under 600 px wide, each step opens on a close-up of what it changed, zoomed so labels near the change read at 12 px; a small map in the corner shows the whole frame and steps through the step's other close-ups, Fit keeps the whole picture for later steps, and the crosshair button brings close-ups back. A vertical swipe scrolls the page; a sideways drag or a pinch moves the view. With reduced motion, the previous picture crossfades into the step's resting picture instead of playing.
+The stage takes focus from Tab or a click. With the stage focused, `+`, `-` and `0` zoom and reset, and arrow keys pan when zoomed. Otherwise left and right arrows change step, except on a button, link or field. Pinch, Ctrl-scroll and double-click zoom; when zoomed, drag pans and a click recentres on the point clicked. Zoom goes up to 6×, keeps its place across steps, and resets when the case changes. On a stage under 600 px wide, each step opens on a close-up of what it changed, zoomed whenever a label near the change is under 12 px so that it reads at 12 px; a small map in the corner shows the whole frame and steps through the step's other close-ups, Fit keeps the whole picture for later steps, and the crosshair button brings close-ups back. A vertical swipe scrolls the page; a sideways drag or a pinch moves the view. With reduced motion, the previous picture crossfades into the step's resting picture instead of playing.
 
 Inside an iframe without `parentOrigin` (a raw iframe), the page adds its own "Open in a new tab" link.
 
@@ -231,7 +240,7 @@ Inside an iframe without `parentOrigin` (a raw iframe), the page adds its own "O
 
 `explain render` runs the scene at a fixed frame rate, rasterises each frame with resvg and the embedded fonts, and pipes it to FFmpeg.
 
-Each step plays its motion with the step's title in the footer, then holds its resting picture under the full caption for the caption's reading time at 160 words a minute. Chapters start at each step's motion; subtitle cues cover the caption holds. Reading time sets the length, so most of a video is a still picture: over the demo collection's default cases, 76% of frames repeat the stage picture before them (1 − `rasterizedFrames` / `frames` in the receipts), up from 69% when each caption came before its motion.
+Each step plays its motion with the step's title in the footer, then holds its resting picture under the full caption for the caption's reading time at 160 words a minute. Chapters start at each step's motion; subtitle cues cover the caption holds. Reading time sets the length, so most of a video is a still picture: over the 20 demo videos, 82% of frames repeat the stage picture before them (1 − `rasterizedFrames` / `frames` in the receipts); on the earlier collection, the order that put each caption before its motion gave 69%.
 
 | File | Contents |
 | --- | --- |
@@ -254,7 +263,7 @@ With `--footer`, `render` fails before FFmpeg starts on a title or caption that 
 | Script | What it does |
 | --- | --- |
 | `npm run check` | TypeScript over every project, then a consumer compile against `dist/` |
-| `npm test` | The test suite; browser, video and live Manim tests skip unless enabled |
+| `npm test` | The test suite; browser, video and live tests skip unless enabled |
 | `npm run test:full` | `FULL=1`: every frame and ten times as many property cases |
 | `npm run test:embeds` | Real Chromium: capture fidelity, cross-origin embeds, history, phone layout, offline, no JavaScript |
 | `npm run test:video` | Real FFmpeg: H.264 and VP9 exports, subtitles, chapters, decode, receipts |
@@ -268,4 +277,14 @@ With `--footer`, `render` fails before FFmpeg starts on a title or caption that 
 | `npm run build:lib` | Compile `dist/` (runs on `npm pack`) |
 | `npm run fonts` | Regenerate `src/font-data.ts` from Inter, JetBrains Mono and the Noto numeral subsets, reproducibly (needs `fonttools` and `brotli`) |
 
-Test environment: `FC_RUNS=n` sets the property cases, and `FC_SEED` with `FC_PATH` replays a fast-check failure. `UPDATE_GOLDEN=1` rewrites `test/golden-traces.json` after a deliberate change. Manim parity runs from the frozen answers in `test/manim-oracle.json`; `MANIM_DIR=<checkout of 3b1b/manim>` (with `python3` and numpy) also checks them against live Manim, and `UPDATE_ORACLE=1` rewrites them. `EXPLAIN_BROWSER=1` and `EXPLAIN_VIDEO=1` enable the browser and video tests. `test/explain-gates.test.ts` gives each check one seeded defect.
+Test environment: `FC_RUNS=n` sets the property cases, and `FC_SEED` with `FC_PATH` replays a fast-check failure. `UPDATE_GOLDEN=1` rewrites `test/golden-traces.json` after a deliberate change. `EXPLAIN_BROWSER=1` and `EXPLAIN_VIDEO=1` enable the browser and video tests. `test/explain-gates.test.ts` gives each check one seeded defect.
+
+Tests that hold a model to an outside tool compare against frozen answers, and also run the tool when it is present:
+
+| Tool | Runs when | Test |
+| --- | --- | --- |
+| rustc | `rustc` is on `PATH`, or `RUSTC` names one | `test/explain-send-sync.test.ts` |
+| Python's `unicodedata` at Unicode 17.0.0 | `python3` on `PATH`, or `PYTHON`, has it | `test/explain-isdigit.test.ts` |
+| sabre/vobject 4.5.7 in Docker | `SABRE_DOCKER=1` | `test/explain-ical-recurrence.test.ts` |
+| A checkout of w3c/wcag | `WCAG_REPO=<checkout>` | `test/explain-wcag-map.test.ts` |
+| Manim | `MANIM_DIR=<checkout of 3b1b/manim>`, with `python3` and numpy; `UPDATE_ORACLE=1` rewrites `test/manim-oracle.json` | `test/manim.test.ts` |

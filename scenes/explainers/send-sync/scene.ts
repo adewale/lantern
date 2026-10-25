@@ -12,14 +12,20 @@ const REFERENCE = 'https://github.com/rust-lang/reference/blob/d9d9ed57a120e3c87
 const NOMICON = 'https://github.com/rust-lang/nomicon/blob/60ed8f3bb9d22a60865197a0ac74911436703430/src/send-and-sync.md';
 
 // Phone legibility sets every size here. On a 390 px page the stage is 358 px wide, so a label needs
-// 0.54 units (43 px on a 1280 px stage) to be 12 px there; native text is 0.54 units. The chart's labels are 20 px in a 696 px chart and
-// reach that size when the camera frames one quadrant; the axis labels are 48 px of a 696 px chart, so
-// they read in the whole chart, and stand 16 px further off the plot than usual so that none of them
-// shows at the edge of a framed quadrant. The plot is 569 px, so a quadrant (284 px) holds the longest name,
-// "x is Arc<Mutex<Cell<i32>>>", to the right of its point.
+// 0.536 units (43 px on a 1280 px stage) to be 12 px there; native text is 0.54 units, so it reads
+// at 12 px without a close-up.
+// The camera frames one quadrant at 0.975 of the chart's box, and the plot is square (569 px), so a
+// quadrant is 284.5 px across and the box's shorter side sets the scale. The box is 7.8 units square,
+// the most the stage has room for under the heading, so a quadrant is 7.6 units and a point label of
+// 20.3 px is 0.543 units (20 px would be 0.535). That size still fits the longest name,
+// "x is Arc<Mutex<Cell<i32>>>", inside its quadrant, to the right of its point, with 0.1 units to spare.
+// The axis labels are 48 px of a 696 px chart, so they read in the whole chart, and stand 16 px further
+// off the plot than usual so that none of them shows at the edge of a framed quadrant.
+// The code block runs from -7.8 to 7.8: its longest line at 0.54 units needs a box 15.6 units wide,
+// and a narrower box shrinks every line below 0.536.
 const SIZE = 0.54;
 const HEAD =
-  '---\nconfig:\n  quadrantChart:\n    chartWidth: 696\n    chartHeight: 680\n    pointLabelFontSize: 20\n    quadrantLabelFontSize: 32\n    xAxisLabelFontSize: 48\n    yAxisLabelFontSize: 48\n    yAxisLabelPadding: 12\n---\n';
+  '---\nconfig:\n  quadrantChart:\n    chartWidth: 696\n    chartHeight: 680\n    pointLabelFontSize: 20.3\n    quadrantLabelFontSize: 32\n    xAxisLabelFontSize: 48\n    yAxisLabelFontSize: 48\n    yAxisLabelPadding: 12\n---\n';
 // Every point sits at one fixed spot per quadrant: at the left edge, so its name fits to its right, and
 // below the quadrant's own name, which Mermaid centres in it.
 // Mermaid's quadrant numbers, with x = Send and y = Sync: 1 both, 2 Sync only, 3 neither, 4 Send only.
@@ -32,7 +38,7 @@ const chart = (points: readonly { name: string; q: Quadrant }[]) =>
   points.map((p) => `  ${p.name}: [${SPOT[p.q][0]}, ${SPOT[p.q][1]}]\n`).join('');
 
 // The chart takes the left half; words take the right.
-const LEFT: Box = [-7.55, -4.25, -0.05, 3.25];
+const LEFT: Box = [-7.85, -4.42, -0.05, 3.38];
 const RIGHT: Box = [0.45, -4.25, 7.55, 3.05];
 const ZOOM = 1.25;
 
@@ -229,7 +235,7 @@ export default class SendSyncExplainer extends Scene {
         'unsafe impl<T: Send> Send for Mutex<T> {}',
         'unsafe impl<T: Send> Sync for Mutex<T> {}',
       ],
-      { at: [-7.55, -2.6, 7.55, 3.05], fontSize: SIZE },
+      { at: [-7.8, -2.6, 7.8, 3.05], fontSize: SIZE },
     );
     await code.focus(wrapper === 'arc' ? [1, 2] : wrapper === 'mutex' ? [4, 5] : [1, 5], {
       as: wrapper === 'arc-mutex' ? 'both wrappers' : 'this wrapper',

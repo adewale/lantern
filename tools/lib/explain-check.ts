@@ -66,6 +66,18 @@ const MIN_PX = 14;
 /** Reader CSS pixels per scene unit on a 1280-pixel stage. */
 const STAGE_PX_PER_UNIT = 1280 / 16;
 const FRAME: Box = [-8, -4.5, 8, 4.5];
+/** `box` cut down to every clip around `m`: the part of it that is drawn (a diagram's camera clips to its frame). */
+function clipped(m: Mobject, box: Box): Box {
+  const out: Box = [...box];
+  for (let a: Mobject | null = m; a; a = a.parent)
+    if (a.clipBox) {
+      out[0] = Math.max(out[0], a.clipBox[0]);
+      out[1] = Math.max(out[1], a.clipBox[1]);
+      out[2] = Math.min(out[2], a.clipBox[2]);
+      out[3] = Math.min(out[3], a.clipBox[3]);
+    }
+  return out;
+}
 /** Fully drawn and inside the viewport: a label a reader can see at its size. */
 const readable = (m: Mobject, box: Box | null, viewport: Box) =>
   !!box &&
@@ -106,15 +118,7 @@ export function restingTextProblems(scene: { familyMembers(): Mobject[] }): stri
     if (nested) continue;
     const drawn = m.box();
     if (!drawn) continue;
-    const box: Box = [...drawn];
-    // Only the part inside every clip around it is drawn (a diagram's camera clips to its frame).
-    for (let a: Mobject | null = m; a; a = a.parent)
-      if (a.clipBox) {
-        box[0] = Math.max(box[0], a.clipBox[0]);
-        box[1] = Math.max(box[1], a.clipBox[1]);
-        box[2] = Math.min(box[2], a.clipBox[2]);
-        box[3] = Math.min(box[3], a.clipBox[3]);
-      }
+    const box = clipped(m, drawn);
     if (box[2] > box[0] && box[3] > box[1]) texts.push({ m, box, native: m instanceof Text, text });
   }
   const problems: string[] = [];
@@ -253,16 +257,8 @@ export async function checkProject(project: Project, out: string): Promise<Recor
           const label = labelOf(m);
           if (!label?.text.trim()) continue;
           const { text } = label;
-          const viewport: Box = [...FRAME],
+          const viewport = clipped(m, FRAME),
             px = m.height() * label.emRatio * STAGE_PX_PER_UNIT;
-          for (let ancestor: Mobject | null = m; ancestor; ancestor = ancestor.parent)
-            if (ancestor.clipBox) {
-              const clip = ancestor.clipBox;
-              viewport[0] = Math.max(viewport[0], clip[0]);
-              viewport[1] = Math.max(viewport[1], clip[1]);
-              viewport[2] = Math.min(viewport[2], clip[2]);
-              viewport[3] = Math.min(viewport[3], clip[3]);
-            }
           // Imported semantic labels must be readable in a completed step, not
           // merely flash past at a readable size halfway through a camera move.
           if (!(m instanceof Text)) {

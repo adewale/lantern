@@ -33,8 +33,7 @@ const GUIDE =
 const STYLE = 'pen-and-ink';
 
 /**
- * The two ways in. Service ids are words a reader can follow, because link descriptions name them
- * ("attacker → balancer"). Labels stay short and addresses stay in cards, so the labels reach 14 px
+ * The two ways in. Link descriptions name each end by its label ("Attacker → Load balancer"). Labels stay short and addresses stay in cards, so the labels reach 14 px
  * at a 1280 px stage; every link runs left to right except the attacker's two.
  */
 const NETWORK = [

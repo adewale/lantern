@@ -883,18 +883,24 @@ async function openPlayer(name: string, initial: { values: (string | undefined)[
         if ((r.target as Element).classList?.contains('stage') && r.addedNodes.length) w.__attaches++;
     }).observe(document, { childList: true, subtree: true });
   });
-  const page = await context.newPage();
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto(`${embed}/${name}.html${query.size ? '?' + query : ''}`);
-  await page.waitForSelector('[data-ready=true]');
-  const base = (await page.evaluate(() => history.length)) - 1;
-  const parsed = (await page.evaluate(() => (window as unknown as { __attaches: number }).__attaches)) - 1;
-  const model: PlayerModel = { project: p, entries: [entry], index: 0, notice, k: 1, transcript: false, settles: 1, follow: true, tourK: null };
-  const real: PlayerReal = { page, errors, base, parsed };
-  await reframe(model, real);
-  await verify(model, real, `opening ${page.url()}`);
-  return { context, model, real };
+  // A failed opening closes its context too: shrinking reruns failing cases, and each would leave one open.
+  try {
+    const page = await context.newPage();
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    await page.goto(`${embed}/${name}.html${query.size ? '?' + query : ''}`);
+    await page.waitForSelector('[data-ready=true]');
+    const base = (await page.evaluate(() => history.length)) - 1;
+    const parsed = (await page.evaluate(() => (window as unknown as { __attaches: number }).__attaches)) - 1;
+    const model: PlayerModel = { project: p, entries: [entry], index: 0, notice, k: 1, transcript: false, settles: 1, follow: true, tourK: null };
+    const real: PlayerReal = { page, errors, base, parsed };
+    await reframe(model, real);
+    await verify(model, real, `opening ${page.url()}`);
+    return { context, model, real };
+  } catch (error) {
+    await context.close();
+    throw error;
+  }
 }
 // oauth-pkce's cases have different step lists (only "yes" has an attack), the case the player finds hardest.
 for (const [name, runs, maxCommands] of [['oauth-pkce', 10, 40]] as const)
@@ -911,6 +917,8 @@ for (const [name, runs, maxCommands] of [['oauth-pkce', 10, 40]] as const)
           } finally {
             await context.close();
           }
+          // Each case leaves the browser as it found it, so a leak fails here rather than crashing a later case.
+          assert.equal(browser.contexts().length, 0, 'browser contexts left open after a case');
         }),
         params(runs),
       );
