@@ -73,7 +73,7 @@ test('declarations reject ambiguous defaults, duplicate options and reserved tra
 import { fc, params } from './lib/pbt.ts';
 import type { Setting } from '../explain/index.ts';
 
-const RESERVED = ['scene', 'step', 't', 'perf', 'embed', 'parentOrigin', 'theme'];
+const RESERVED = ['step', 't', 'parentOrigin', 'theme'];
 /** Ids from the documented pattern, including every inherited Object.prototype name that matches it. */
 const settingId = fc.oneof(
   fc.stringMatching(/^[a-zA-Z][a-zA-Z0-9_-]{0,8}$/),

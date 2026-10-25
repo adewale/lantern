@@ -1,6 +1,6 @@
 import { Scene } from '../../../src/index.ts';
-import { stage, palette, settingsOf } from '../../../explain/index.ts';
 import type { Box } from '../../../src/index.ts';
+import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
 import { reduceSession, sessionAttempt } from '../lib/models.ts';
 const SOURCE =
   'stateDiagram-v2\n direction LR\n idle --> connecting: CONNECT\n connecting --> open: OPENED\n connecting --> closed: ERROR\n open --> closed: CLOSE';
@@ -19,7 +19,7 @@ const REDUCER = [
   '}',
 ];
 const LINE: Record<string, number> = { CONNECT: 1, OPENED: 2, ERROR: 3, CLOSE: 4 };
-const DIAGRAM: Box = [-7.55, 0.2, 7.55, 3.25],
+const DIAGRAM = regionBox('top', { bottom: 0.2 }),
   CODE: Box = [-7.55, -4.25, 2.05, -0.05],
   CARD: Box = [2.35, -4.25, 7.55, -0.05];
 export default class StateMachineExplainer extends Scene {
@@ -41,13 +41,13 @@ export default class StateMachineExplainer extends Scene {
   ];
   override async construct() {
     const which = settingsOf(this).events,
-      s = stage(this, { palette: palette('dracula') });
+      s = stage(this, { style: 'dracula' });
     await this.step('machine', {
       title: 'Four reducer rows, one per arrow',
       caption:
         'A session starts idle. Each arrow in the diagram is one row of the table named next in reducer.js, and reduceSession throws for any state and event pair without a row.',
     });
-    const d = await s.show({ source: SOURCE, style: 'dracula' }, { box: DIAGRAM });
+    const d = await s.show({ source: SOURCE }, { box: DIAGRAM });
     const code = await s.code(REDUCER, { at: CODE, fontSize: 0.195 });
     let state = 'idle';
     const card = await s.card(

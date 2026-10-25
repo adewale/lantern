@@ -1,6 +1,6 @@
 import { Scene, Circle, Text, Group, Arrow, FadeIn, FadeOut, Transform } from '../../../src/index.ts';
 import type { Vec, Mobject } from '../../../src/index.ts';
-import { stage, palette, settingsOf } from '../../../explain/index.ts';
+import { stage, settingsOf } from '../../../explain/index.ts';
 import { ringStory } from '../lib/models.ts';
 
 type Snapshot = ReturnType<typeof ringStory>[number]['result'];
@@ -8,8 +8,7 @@ const SLOTS = 5,
   C: Vec = [-4.15, -0.45],
   R = 2.05,
   SLOT = 0.56;
-const TAIL = '#7fc8b8',
-  ERROR = '#ff6b6b';
+const TAIL = '#7fc8b8';
 // RingBuffer from scenes/explainers/lib/models.ts, without the `this.`s.
 const CODE = [
   'push(v) {',
@@ -50,7 +49,7 @@ export default class RingBufferExplainer extends Scene {
   override async construct() {
     const which = settingsOf(this).operations!,
       events = ringStory(which),
-      s = stage(this, { palette: palette('dusk') }),
+      s = stage(this, { style: 'dusk' }),
       ink = s.palette.ink,
       soft = s.soft,
       head = s.emphasis;
@@ -135,7 +134,7 @@ export default class RingBufferExplainer extends Scene {
       await this.play(new FadeIn(t));
     };
     const token = (v: number, refused: boolean) => {
-      const color = refused ? ERROR : soft;
+      const color = refused ? s.bad : soft;
       const ring = new Circle({
         radius: 0.32,
         fill: s.palette.paper,
@@ -145,7 +144,7 @@ export default class RingBufferExplainer extends Scene {
       });
       const g = new Group(
         ring,
-        new Text(String(v), { fontSize: 0.28, color: refused ? ERROR : ink }).moveTo(ring.center()),
+        new Text(String(v), { fontSize: 0.28, color: refused ? s.bad : ink }).moveTo(ring.center()),
       );
       return g;
     };
@@ -186,7 +185,7 @@ export default class RingBufferExplainer extends Scene {
           const slot = polar(angle(r.tail), R + SLOT + 0.35);
           await this.play(t.animate.moveTo(slot), { runTime: 0.45 });
           if (!marker) {
-            marker = new Circle({ radius: SLOT + 0.12, fill: 'none', stroke: ERROR, strokeWidth: 0.04 }).moveTo(
+            marker = new Circle({ radius: SLOT + 0.12, fill: 'none', stroke: s.bad, strokeWidth: 0.04 }).moveTo(
               polar(angle(r.tail), R),
             );
             await this.play(new FadeIn(marker, { runTime: 0.3 }));

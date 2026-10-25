@@ -1,15 +1,13 @@
 import { Scene } from '../../../src/index.ts';
-import { stage, palette, settingsOf } from '../../../explain/index.ts';
+import { stage, settingsOf } from '../../../explain/index.ts';
 import { pkceChallenge, sha256 } from '../lib/models.ts';
 const STYLE = 'github-light';
 // RFC 7636 appendix B's example verifier; everything derived from it is computed below.
 const VERIFIER = 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk';
 const GUESS = 'attacker-does-not-know-the-original-verifier';
-// One colour per value, so the reader can follow each across the flow.
+// One colour per value, so the reader can follow each across the flow (outcomes use the stage's good and bad).
 const CHALLENGE = '#0969da',
-  CODE = '#bc4c00',
-  VERIFIED = '#1a7f37',
-  ATTACK = '#cf222e';
+  CODE = '#bc4c00';
 const hex = (bytes: Uint8Array) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 const short = (s: string, n = 12) => (s.length > n ? s.slice(0, n) + '…' : s);
 function sequence(attacker: boolean): string {
@@ -17,11 +15,11 @@ function sequence(attacker: boolean): string {
     'sequenceDiagram',
     ' participant C as Client',
     ' participant S as Auth server',
-    ...(attacker ? [' participant X as Attacker'] : []),
+    ...(attacker ? [' participant X as Malicious app'] : []),
     ' C->>S: Authorize request + code_challenge',
     ' S-->>C: Redirect with code',
     ...(attacker
-      ? [' S-->>X: Same redirect, intercepted', ' X->>S: Token request: code + a guess', ' S-->>X: invalid_grant']
+      ? [' S-->>X: Redirect via the shared URI scheme', ' X->>S: Token request: code + a guess', ' S-->>X: invalid_grant']
       : []),
     ' C->>S: Token request: code + code_verifier',
     ' S-->>C: Access token',
@@ -31,7 +29,7 @@ export default class OAuthExplainer extends Scene {
   static meta = {
     id: 'oauth-pkce',
     title: 'Why stealing an authorization code is not enough',
-    sources: ['https://www.rfc-editor.org/rfc/rfc7636#appendix-B', 'https://www.rfc-editor.org/rfc/rfc6749'],
+    sources: ['https://www.rfc-editor.org/rfc/rfc7636', 'https://www.rfc-editor.org/rfc/rfc6749'],
   };
   static settings = [
     {
@@ -48,18 +46,17 @@ export default class OAuthExplainer extends Scene {
     const attacker = settingsOf(this).attacker === 'yes';
     const digest = sha256(VERIFIER),
       challenge = pkceChallenge(VERIFIER),
-      s = stage(this, { palette: palette('github-light') });
+      s = stage(this, { style: STYLE });
 
     await this.step('secret', {
       title: 'The client keeps the verifier and sends only its challenge',
       caption:
-        'The client generates a high-entropy verifier; with the S256 method, the challenge is the base64url encoding of its SHA-256 digest. The card starts from RFC 7636’s example verifier, and the scene computes the other two rows.',
+        'PKCE protects public clients, such as mobile and desktop apps, which cannot keep a client secret. The client generates a random verifier, and the S256 challenge is the base64url SHA-256 of it. The card starts from RFC 7636’s example verifier.',
     });
     const derive = await s.show(
       {
         source:
           'graph LR\nV[code_verifier] -->|SHA-256| H[32-byte digest]\nH -->|base64url| C[code_challenge]',
-        style: STYLE,
       },
       { box: [-7.55, 0.0, 7.55, 3.15] },
     );
@@ -87,9 +84,8 @@ export default class OAuthExplainer extends Scene {
       caption:
         'The client sends the challenge and the S256 method in the authorization request, through the user’s browser, while the verifier stays with the client, as the card’s last row shows. The user then signs in and consents at the auth server.',
     });
-    await s.clearOverlays();
-    await derive.hide();
-    const seq = await s.show({ source: sequence(attacker), style: STYLE }, { box: 'main', build: 'frame' });
+    await s.clear();
+    const seq = await s.show({ source: sequence(attacker) }, { box: 'main', build: 'frame' });
     const request = await s.card(
       [
         ['code_challenge', short(challenge)],
@@ -124,7 +120,7 @@ export default class OAuthExplainer extends Scene {
       await this.step('attack', {
         title: 'A stolen code fails without the verifier',
         caption:
-          'The attacker has the code but has to guess a verifier. S256 of the guess does not match the challenge bound to the code, so the server answers invalid_grant. If the verifier were stolen as well, this check would pass.',
+          'Another app on the device registered the client’s custom URI scheme, so the operating system handed it the redirect and its code (RFC 7636 §1). It has to guess the verifier; S256 of the guess does not match the bound challenge, so the server answers invalid_grant.',
       });
       const bad = pkceChallenge(GUESS);
       this.state.attackerChallenge = bad;
@@ -132,7 +128,7 @@ export default class OAuthExplainer extends Scene {
       await s.clearOverlays();
       await seq.clearNotes();
       await seq.reveal(['message:S->X#0', 'message:X->S#0', 'message:S->X#1']);
-      await seq.mark(['message:S->X#0', 'message:X->S#0', 'message:S->X#1'], { color: ATTACK });
+      await seq.mark(['message:S->X#0', 'message:X->S#0', 'message:S->X#1'], { color: s.bad });
       const check = await s.card(
         [
           ['guessed verifier', short(GUESS)],
@@ -153,7 +149,7 @@ export default class OAuthExplainer extends Scene {
     await s.clearOverlays();
     await seq.clearNotes();
     await seq.reveal(['message:C->S#1', 'message:S->C#1']);
-    await seq.mark(['message:C->S#1', 'message:S->C#1'], { color: VERIFIED });
+    await seq.mark(['message:C->S#1', 'message:S->C#1'], { color: s.good });
     const recomputed = pkceChallenge(VERIFIER);
     const accepted = recomputed === challenge;
     const verify = await s.card(
@@ -168,36 +164,16 @@ export default class OAuthExplainer extends Scene {
     await verify.mark('match');
     this.state.accepted = accepted;
 
-    await this.step('lifetime', {
-      title: 'The access token outlives the verifier and the code',
-      caption:
-        'The client holds the verifier for the authorization transaction, the code is brief and single-use, and the access token can outlive both. The minutes on the chart are illustrative; real expiry is set by the server’s policy.',
-    });
-    await s.clearOverlays();
-    await seq.hide();
-    const time = await s.show(
-      {
-        source:
-          'gantt\n dateFormat HH:mm\n axisFormat %H:%M\n tickInterval 2minute\n section Client\n code_verifier held :v, 00:00, 4m\n section Auth server\n challenge stored :ch, 00:01, 3m\n code valid :c, 00:02, 2m\n section API\n access token :t, 00:04, 8m',
-        style: STYLE,
-      },
-      { box: 'full' },
-    );
-    await time.mark(['task:t'], { color: VERIFIED });
-    await time.note('task:c', 'single use', { side: 'right', color: CODE });
-
     await this.step('limits', {
       title: 'PKCE adds one check: does the exchanger hold the verifier?',
       caption:
         'A token still depends on TLS, exact redirect matching and OAuth’s code and client checks, drawn before it in the chain. PKCE asks only whether this exchanger holds the verifier bound to the code, so a stolen verifier gets past it.',
     });
-    await s.clearOverlays();
-    await time.hide();
+    await s.clear();
     const checks = await s.show(
       {
         source:
           'graph LR\nTLS[TLS] --> Redirect[Exact redirect]\nRedirect --> Client[Code + client checks]\nClient --> PKCE[PKCE: S256 match]\nPKCE --> Token[Token]',
-        style: STYLE,
       },
       { box: 'full' },
     );
@@ -210,7 +186,7 @@ export default class OAuthExplainer extends Scene {
       ],
       { trail: true },
     );
-    await checks.mark(['PKCE'], { color: VERIFIED });
-    await checks.note('PKCE', 'a stolen verifier passes', { side: 'below', color: ATTACK });
+    await checks.mark(['PKCE'], { color: s.good });
+    await checks.note('PKCE', 'a stolen verifier passes', { side: 'below', color: s.bad });
   }
 }

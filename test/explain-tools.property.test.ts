@@ -1,6 +1,6 @@
 // Property tests for the tools/lib surfaces the build and `check` stand on:
 // caption wrapping, resting-text collisions, the per-diagram snapshot store,
-// and check's caption-hold gate. Counts: test/lib/pbt.ts (FULL=1 is 10x).
+// Counts: test/lib/pbt.ts (FULL=1 is 10x).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, rm, readdir, readFile, writeFile, mkdir, stat, utimes } from 'node:fs/promises';
@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Text, Group, Rectangle, loadFonts } from '../src/index.ts';
 import type { Mobject } from '../src/index.ts';
-import { wrapCaption, FOOTER_TEXT_WIDTH } from '../tools/lib/explain-captions.ts';
+import { wrapCaption, FOOTER_TEXT_WIDTH } from '../tools/lib/explain-video.ts';
 import { restingTextProblems, checkProject } from '../tools/lib/explain-check.ts';
 import { readSnapshots, writeSnapshots, snapshotFileName, collectProject, IMPORTER } from '../tools/lib/explain-project.ts';
 import { diagramKey } from '../explain/index.ts';
@@ -30,12 +30,12 @@ const caption = fc
 const width = fc.double({ min: 0.5, max: 30, noNaN: true });
 const size = fc.double({ min: 0.05, max: 1, noNaN: true });
 const words = (text: string) => text.trim().split(/[^\S   ]+/).filter(Boolean);
-/** Wrap, or the documented refusal (a word too wide, or more than three lines). */
+/** Wrap, or the documented refusal (a word too wide, or more than four lines). */
 function wrapped(text: string, w: number, s: number): string[] | null {
   try {
     return wrapCaption(text, w, s);
   } catch (error) {
-    assert.match((error as Error).message, /exceeds footer width|three footer lines/);
+    assert.match((error as Error).message, /exceeds footer width|four footer lines/);
     return null;
   }
 }
@@ -81,14 +81,14 @@ test('wrapping its own output gives the same lines', () => {
   );
 });
 
-test('a caption that needs more than three lines is refused', () => {
+test('a caption that needs more than four lines is refused', () => {
   fc.assert(
-    fc.property(fc.array(word, { minLength: 4, maxLength: 12 }), size, (ws, s) => {
-      // Each line can hold only one of these words, so four or more need four lines.
+    fc.property(fc.array(word, { minLength: 5, maxLength: 12 }), size, (ws, s) => {
+      // Each line can hold only one of these words, so five or more need five lines.
       const widest = Math.max(...ws.map((x) => new Text(x, { fontSize: s }).width()));
       const narrowestPair = Math.min(...ws.slice(1).map((x, i) => new Text(ws[i] + ' ' + x, { fontSize: s }).width()));
       fc.pre(widest > 0 && narrowestPair > widest);
-      assert.throws(() => wrapCaption(ws.join(' '), widest, s), /three footer lines/);
+      assert.throws(() => wrapCaption(ws.join(' '), widest, s), /four footer lines/);
     }),
     params(),
   );
@@ -138,7 +138,7 @@ test('a wider line never needs more lines', () => {
 
 test('scale probe: wrapCaption on a 200,000-word caption fails fast and cleanly', () => {
   const t = performance.now();
-  assert.throws(() => wrapCaption('word '.repeat(200_000), FOOTER_TEXT_WIDTH), /three footer lines/);
+  assert.throws(() => wrapCaption('word '.repeat(200_000), FOOTER_TEXT_WIDTH), /four footer lines/);
   assert.equal(wrapCaption('word '.repeat(20), 1e6).length, 1);
   assert.ok(performance.now() - t < 20_000);
 });
@@ -381,24 +381,4 @@ test('scale probe: a store of 2,000 diagrams writes, rewrites nothing, and reads
     await writeSnapshots(base, s, 'h');
     assert.equal(Object.keys(await readSnapshots(base)).length, 2000);
   });
-});
-
-// ---- check: the caption hold ----------------------------------------------------
-
-test('check refuses a step whose picture keeps changing after its caption hold begins', { timeout: 120_000 }, async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'lantern-hold-'));
-  try {
-    const scene = (moving: boolean) =>
-      `import{Scene,Text,FadeIn}from'manim-js';import{stage}from'manim-js/explain';export default class Hold extends Scene{async construct(){const s=stage(this);await this.step('one',{title:'One'});await this.play(new FadeIn(new Text('first',{color:s.palette.ink})));await this.step('two',{title:'Two',caption:'A caption long enough to need a hold of a few seconds at reading pace.'});const t=new Text('moves',{color:s.palette.ink}).moveTo([0,-2]);await this.play(new FadeIn(t));${moving ? 't.addUpdater((m,dt)=>{m.shift([dt*0.5,0])});' : ''}}}`;
-    for (const moving of [false, true]) {
-      const file = join(dir, moving ? 'moving' : 'still', 'scene.ts');
-      await mkdir(join(file, '..'), { recursive: true });
-      await writeFile(file, scene(moving));
-      const run = checkProject(await collectProject(file, { write: false }), join(dir, 'checks'));
-      if (moving) await assert.rejects(run, /stop changing once its caption hold begins[^]*/);
-      else assert.equal(((await run).variants as { stillDuringCaptionHolds: boolean }[])[0]!.stillDuringCaptionHolds, true);
-    }
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
 });

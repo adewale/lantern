@@ -42,9 +42,15 @@ export interface SnapshotPart {
   route?: [number, number][];
   channels?: unknown;
 }
+/** Agentic Mermaid's SVG pixels per scene unit: imported geometry and text divide by this. */
+export const SVG_PX_PER_UNIT = 100;
+/** The renderer every snapshot was captured with; receipts and indexes name it from here. */
+export const RENDERER = 'agentic-mermaid@0.4.1';
+/** The one remedy for a missing, stale or damaged snapshot. */
+const RECAPTURE = 'Run `explain snapshots <scene> --refresh`.';
 export interface DiagramSnapshot {
   version: 1;
-  renderer: 'agentic-mermaid@0.4.1';
+  renderer: typeof RENDERER;
   spec: DiagramSpec;
   family: string;
   width: number;
@@ -77,12 +83,12 @@ export function useDiagrams(scene: Scene, resolver: DiagramResolver): void {
 export function diagramsOf(scene: Scene): DiagramResolver {
   const resolver = resolvers.get(scene);
   if (!resolver)
-    throw new Error('No diagram snapshots. Run explain snapshots/build, or bindSnapshots() first.');
+    throw new Error('No diagram snapshots are bound to this scene: run it through the explain CLI, or bind them with bindSnapshots().');
   return resolver;
 }
 function validateSnapshot(value: DiagramSnapshot): void {
   const invalid = () => {
-    throw new Error('Invalid diagram snapshot. Rebuild with explain snapshots --refresh.');
+    throw new Error(`Invalid diagram snapshot. ${RECAPTURE}`);
   };
   const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
   // Points are stored as float32: a coordinate must stay finite there too.
@@ -93,7 +99,7 @@ function validateSnapshot(value: DiagramSnapshot): void {
   if (
     !value ||
     value.version !== 1 ||
-    value.renderer !== 'agentic-mermaid@0.4.1' ||
+    value.renderer !== RENDERER ||
     !finite(value.width) ||
     !finite(value.height) ||
     value.width <= 0 ||
@@ -178,10 +184,12 @@ export function snapshotResolver(store: SnapshotStore): DiagramResolver {
     async diagram(spec) {
       const value = store[diagramKey(spec)];
       if (!value)
-        throw new Error(`Missing diagram snapshot (${spec.style ?? 'default'}). Rebuild snapshots.`);
+        throw new Error(
+          `Missing diagram snapshot for "${spec.source.trim().split('\n')[0]}" (${spec.style ?? 'default'}). ${RECAPTURE}`,
+        );
       validateSnapshot(value);
       if (diagramKey(value.spec) !== diagramKey(spec))
-        throw new Error('Snapshot source does not match its key; rebuild snapshots.');
+        throw new Error(`Snapshot source does not match its key. ${RECAPTURE}`);
       return value;
     },
   };

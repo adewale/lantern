@@ -52,6 +52,13 @@ test('external source and compiled ESM scenes share the CLI engine; source hashe
       `import{Scene}from'manim-js';export default class Bad extends Scene{async construct(){await this.step('same');await this.wait(.5);await this.step('same');await this.wait(.5);}}`,
     );
     await assert.rejects(collectProject(duplicate, { write: false }), /Duplicate step names/);
+    // Text the embedded fonts cannot draw fails the build, named by case, step and string.
+    const blank = join(folder, 'blank.ts');
+    await writeFile(
+      blank,
+      `import{Scene,Text,FadeIn}from'manim-js';import{settingsOf}from'manim-js/explain';export default class Blank extends Scene{static settings=[{id:'k',label:'Kind',default:'a',options:[{value:'a',label:'Plain'},{value:'b',label:'Han'}]}];async construct(){await this.step('one');await this.play(new FadeIn(new Text('ok')));await this.step('two');await this.play(new FadeIn(new Text(settingsOf(this).k==='b'?'a中b':'ab')));}}`,
+    );
+    await assert.rejects(collectProject(blank, { write: false }), /Kind: Han, step two: "a中b" has 中 \(U\+4E2D\)/);
     assert.throws(
       () => execFileSync(process.execPath, [cli, 'not-a-command', a], { stdio: 'pipe' }),
       /Command failed/,

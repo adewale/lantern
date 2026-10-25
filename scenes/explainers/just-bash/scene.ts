@@ -1,6 +1,6 @@
-import { Scene, Text, Group, Rectangle, FadeIn, Transform } from '../../../src/index.ts';
+import { Scene, Text, Group, Rectangle, Transform } from '../../../src/index.ts';
 import type { Box } from '../../../src/index.ts';
-import { stage, palette, settingsOf } from '../../../explain/index.ts';
+import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
 import { exec } from '../lib/models.ts';
 import type { Shell } from '../lib/models.ts';
 
@@ -22,10 +22,10 @@ function lookup(name: string): 'builtin' | 'unsupported' {
     throw error;
   }
 }
-const TOP: Box = [-7.55, -0.2, 7.55, 3.25],
-  BOTTOM: Box = [-7.55, -4.25, 7.55, -0.5],
-  BOTTOM_LEFT: Box = [-7.55, -4.25, -0.15, -0.5],
-  BOTTOM_RIGHT: Box = [0.15, -4.25, 7.55, -0.5];
+const TOP = regionBox('top', { bottom: -0.2 }),
+  BOTTOM = regionBox('bottom', { top: -0.5 }),
+  BOTTOM_LEFT = regionBox('left', { top: -0.5 }),
+  BOTTOM_RIGHT = regionBox('right', { top: -0.5 });
 
 export default class BashExplainer extends Scene {
   static meta = {
@@ -49,7 +49,7 @@ export default class BashExplainer extends Scene {
   ];
   override async construct() {
     const which = settingsOf(this).shell,
-      s = stage(this, { palette: palette(STYLE) }),
+      s = stage(this, { style: STYLE }),
       ink = s.palette.ink,
       accent = s.emphasis;
     const old: Shell = { fs: {}, steps: 0 };
@@ -82,10 +82,8 @@ export default class BashExplainer extends Scene {
       const label = new Text(role, { fontSize: 0.24, color: isOp ? accent : s.soft }).moveTo([(a + b) / 2, 1.05]);
       return new Group(bar, label);
     });
-    s.keep(line);
-    await this.play(new FadeIn(line, { runTime: 0.5 }));
-    const legend = s.keep(new Group(...roles));
-    await this.play(new FadeIn(legend, { runTime: 0.5 }));
+    await s.enter(line, { runTime: 0.5 });
+    await s.enter(new Group(...roles), { runTime: 0.5 });
     const api = await s.code(
       [`shell = { fs: ${JSON.stringify(old.fs)}, steps: ${old.steps} }`, 'exec(shell, pipeline, redirect)', '  → { shell, stdout }'],
       { at: BOTTOM, fontSize: 0.3 },
@@ -103,7 +101,6 @@ export default class BashExplainer extends Scene {
       {
         source:
           'graph TD\nScript[Script] --> Pipeline[Pipeline]\nPipeline --> Echo[echo hello]\nPipeline --> Tr[tr a-z A-Z]\nScript --> Redirect[redirect to shout.txt]',
-        style: STYLE,
       },
       { box: 'main' },
     );
@@ -127,7 +124,6 @@ export default class BashExplainer extends Scene {
     const flow = await s.show(
       {
         source: `graph LR\nInput[empty stdin] --> Echo[echo hello]\nEcho --> Tr[tr a-z A-Z]\nTr --> Output[stdout]`,
-        style: STYLE,
       },
       { box: TOP },
     );
@@ -162,7 +158,6 @@ export default class BashExplainer extends Scene {
     await s.clearOverlays();
     await flow.morph({
       source: `graph LR\nInput[empty stdin] --> Echo[echo hello]\nEcho --> Tr[tr a-z A-Z]\nTr --> File[${FILE}]`,
-      style: STYLE,
     });
     await flow.note('File', q(run.shell.fs[FILE]!), { side: 'below' });
     const before = await s.card(
@@ -203,7 +198,6 @@ export default class BashExplainer extends Scene {
       {
         source:
           'graph LR\nName[command name] --> Builtin[look up the builtin]\nBuiltin --> Run[found: run on values]\nBuiltin --> Error[missing: refuse]',
-        style: STYLE,
       },
       { box: TOP },
     );
@@ -231,7 +225,7 @@ export default class BashExplainer extends Scene {
         .join(' · '),
       { side: 'above' },
     );
-    await policy.walk([['Builtin', 'Error']], { trail: '#ff8a80' });
+    await policy.walk([['Builtin', 'Error']], { trail: s.bad });
     await policy.note(
       'Error',
       found
@@ -255,7 +249,7 @@ export default class BashExplainer extends Scene {
     });
     await s.clear();
     await s.code([`exec(${which === 'new' ? 'returned' : 'original'}, [["cat", "${FILE}"]])`], {
-      at: [-7.55, 1.6, 7.55, 3.25],
+      at: regionBox('top', { bottom: 1.6 }),
       fontSize: 0.4,
     });
     const shellCard = (sh: Shell, out: string, title: string, at: Box) =>
@@ -269,10 +263,8 @@ export default class BashExplainer extends Scene {
       );
     const oldResult = which === 'old' ? result.stdout : other.stdout,
       newResult = which === 'new' ? result.stdout : other.stdout;
-    const L: Box = [-7.55, -4.25, -0.15, 1.3],
-      R: Box = [0.15, -4.25, 7.55, 1.3];
-    const oldCard = await shellCard(old, oldResult, 'Original shell', L),
-      newCard = await shellCard(run.shell, newResult, 'Returned shell', R);
+    const oldCard = await shellCard(old, oldResult, 'Original shell', regionBox('left', { top: 1.3 })),
+      newCard = await shellCard(run.shell, newResult, 'Returned shell', regionBox('right', { top: 1.3 }));
     const [picked, unpicked] = which === 'new' ? [newCard, oldCard] : [oldCard, newCard];
     const faded = unpicked.copy();
     faded.family().forEach((m, i) => {
@@ -298,7 +290,6 @@ export default class BashExplainer extends Scene {
           `graph LR\nS0["original shell<br/>files: ${files(old)}"]\nS1["returned shell<br/>files: ${files(run.shell)}"]\n` +
           `Out1["${prints(viaNew)}"]\nOut0["${prints(viaOld)}"]\n` +
           `S0 -->|echo, tr, redirect| S1\nS1 -->|cat| Out1\nS0 -->|cat| Out0`,
-        style: STYLE,
       },
       { box: TOP },
     );

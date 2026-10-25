@@ -15,7 +15,7 @@ import {
   StringSink,
 } from '../../../src/index.ts';
 import type { Mobject, Vec } from '../../../src/index.ts';
-import { stage, palette } from '../../../explain/index.ts';
+import { stage, regionBox } from '../../../explain/index.ts';
 const STYLE = 'hand-drawn';
 const DEMO = [
   'class Demo extends Scene {',
@@ -89,7 +89,7 @@ export default class LanternExplainer extends Scene {
     ],
   };
   override async construct() {
-    const s = stage(this, { palette: palette(STYLE) });
+    const s = stage(this, { style: STYLE });
     const ink = s.palette.ink,
       accent = s.emphasis;
 
@@ -100,21 +100,20 @@ export default class LanternExplainer extends Scene {
     });
     const code = await s.code(DEMO, { at: 'main', fontSize: 0.26 });
     // The same program, running on a small stage beside it.
-    const mini = s.keep(
-      new Rectangle({ width: 4.6, height: 2.5875, stroke: s.soft, strokeWidth: 0.02, cornerRadius: 0.06 }),
-    ).moveTo([5.1, 1.55]);
-    await this.play(new FadeIn(mini));
-    let stepLabel = s.keep(new Text("step 'before'", { fontSize: 0.22, font: 'mono', color: ink }));
-    stepLabel.moveTo([3.0, 0.5], [-1, 0]);
+    await s.enter(
+      new Rectangle({ width: 4.6, height: 2.5875, stroke: s.soft, strokeWidth: 0.02, cornerRadius: 0.06 }).moveTo([
+        5.1, 1.55,
+      ]),
+    );
+    const stepLabel = new Text("step 'before'", { fontSize: 0.22, font: 'mono', color: ink }).moveTo([3.0, 0.5], [-1, 0]);
     await code.focus(3);
-    await this.play(new FadeIn(stepLabel));
-    const dot = s.keep(new Circle({ radius: 0.6, stroke: ink, strokeWidth: 0.03 })).moveTo([5.1, 1.7]);
+    await s.enter(stepLabel);
+    const dot = new Circle({ radius: 0.6, stroke: ink, strokeWidth: 0.03 }).moveTo([5.1, 1.7]);
     await code.focus(4);
-    await this.play(new FadeIn(dot));
+    await s.enter(dot);
     await code.focus(5);
     const after = new Text("step 'after'", { fontSize: 0.22, font: 'mono', color: ink }).moveTo([3.0, 0.5], [-1, 0]);
-    await this.play(new FadeOut(stepLabel), new FadeIn(after));
-    stepLabel = s.keep(after);
+    await this.play(new FadeOut(stepLabel), new FadeIn(s.keep(after)));
     await code.focus(6);
     const square = new Square({ side: 1.1, stroke: ink, strokeWidth: 0.03 }).moveTo([5.1, 1.7]);
     await this.play(new Transform(dot, square));
@@ -125,7 +124,7 @@ export default class LanternExplainer extends Scene {
         ['plays', count('this.play(')],
         ['lesson interpreter', 'none'],
       ],
-      { at: [2.65, -4.25, 7.55, -0.3] },
+      { at: regionBox('side', { top: -0.3 }) },
     );
 
     await this.step('objects', {
@@ -134,7 +133,7 @@ export default class LanternExplainer extends Scene {
         'Each walked edge is one relation: a Scene owns mobjects, plays animations between endpoints fixed when they begin, and emits frames to a sink. The card’s three sinks turn the same frames into a browser view, an SVG string or an inspection trace.',
     });
     await s.clear();
-    const classes = await s.show({ source: CLASSES, style: STYLE }, { box: 'main' });
+    const classes = await s.show({ source: CLASSES }, { box: 'main' });
     await classes.walk([['Scene', 'Mobject']], { trail: true });
     await classes.walk([['Scene', 'Animation']], { trail: true });
     await classes.walk([['Scene', 'Sink']], { trail: true });
@@ -177,15 +176,14 @@ export default class LanternExplainer extends Scene {
         handles.add(new Dot({ radius: 0.055, color: s.soft }).moveTo(at(p)));
       }
     });
-    const figure = s.keep(new Group(circle, handles, anchors));
-    await this.play(new FadeIn(figure));
+    await s.enter(new Group(circle, handles, anchors));
     const f = (n: number) => (n >= 0 ? ' ' : '') + n.toFixed(2);
     const first = pts
       .slice(0, 4)
       .map((p, i) => `[${f(p[0])}, ${f(p[1])}]  ${i === 0 || i === 3 ? 'anchor' : 'handle'}`);
     await s.code(
       [`circle.subpaths[0]  // radius ${R}`, ...first, '…'],
-      { at: [2.65, -4.25, 7.55, 0.2], fontSize: 0.22 },
+      { at: regionBox('side', { top: 0.2 }), fontSize: 0.22 },
     );
 
     await this.step('clock', {
@@ -194,7 +192,7 @@ export default class LanternExplainer extends Scene {
         'Scene time advances by a fixed dt per frame, whichever sink is attached. The browser sink waits for a display tick before each frame while the trace sink takes them all at once, so both see the same scene times on the ruler.',
     });
     await s.clear();
-    const flow = await s.show({ source: FLOW, style: STYLE }, { box: [-7.55, -0.55, 7.55, 3.25] });
+    const flow = await s.show({ source: FLOW }, { box: regionBox('top', { bottom: -0.55 }) });
     await flow.walk(
       [
         ['Clock', 'Browser'],
@@ -225,8 +223,7 @@ export default class LanternExplainer extends Scene {
         new Dot({ radius: 0.09, color: accent }).moveTo([x0 + n * 0.28, -3.6]),
       );
     }
-    s.keep(ruler);
-    await this.play(new FadeIn(ruler));
+    await s.enter(ruler);
 
     await this.step('seek', {
       title: 'Seeking replays the same program',
@@ -261,15 +258,12 @@ export default class LanternExplainer extends Scene {
         font: 'mono',
         color: s.soft,
       }).moveTo([cx, -4.0]);
-      return s.keep(new Group(g, title, print));
+      return new Group(g, title, print);
     };
     const left = thumb(run.playedFrame, -3.4, `played from 0 to t = ${SEEK_T.toFixed(2)} s`, run.played);
     const right = thumb(run.seekedFrame, 3.4, `seeked straight to t = ${SEEK_T.toFixed(2)} s`, run.seeked);
-    const verdict = s.keep(
-      new Text(same ? '=' : '≠', { fontSize: 0.7, color: accent, weight: 'bold' }).moveTo([0, -2.35]),
-    );
-    await this.play(new FadeIn(left), new FadeIn(right));
-    await this.play(new FadeIn(verdict));
+    await s.enter(left, right);
+    await s.enter(new Text(same ? '=' : '≠', { fontSize: 0.7, color: accent, weight: 'bold' }).moveTo([0, -2.35]));
     this.state.seekContract = 'played SVG equals seeked SVG';
 
     await this.step('publish', {
@@ -278,7 +272,7 @@ export default class LanternExplainer extends Scene {
         'explain build captures each diagram once and writes lantern.html with the steps, cases, poster and transcript. Because the layouts are already captured, reader controls change only the pace and the page never calls a layout service.',
     });
     await s.clearOverlays();
-    await flow.morph({ source: PUBLISH, style: STYLE });
+    await flow.morph({ source: PUBLISH });
     await flow.walk(
       [
         ['Author', 'Build'],
@@ -295,7 +289,7 @@ export default class LanternExplainer extends Scene {
         '$ explain render scenes/explainers/lantern --footer',
         '  captioned video, chapters from the same steps',
       ],
-      { at: [-7.55, -4.25, 7.55, -0.85], fontSize: 0.24 },
+      { at: regionBox('bottom', { top: -0.85 }), fontSize: 0.24 },
     );
 
     await this.step('inspect', {

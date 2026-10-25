@@ -7,6 +7,7 @@ import { Resvg } from '@resvg/resvg-js';
 import { outlineText } from '../integrations/agentic-mermaid/text.ts';
 import { lostLabelWarnings } from '../tools/lib/explain-warnings.ts';
 import { Scene, NullSink, VMobject, toSvgString } from '../src/index.ts';
+import { PALETTES } from '../explain/index.ts';
 
 test('capture delegates the real backend without changing its output', () => {
   const spec = { source: 'graph LR\nA[Client] --> B[Server]', style: 'hand-drawn' };
@@ -48,26 +49,12 @@ test(
 );
 
 test(
-  'all twelve authored styles retain non-text artwork against the real SVG renderer',
+  'every authored style keeps its non-text artwork against the real SVG renderer',
   { skip: !process.env.EXPLAIN_BROWSER ? 'set EXPLAIN_BROWSER=1 for real style fidelity checks' : false },
   async () => {
     const builder = await snapshotBuilder();
     try {
-      const styles = [
-        'nord',
-        'hand-drawn',
-        'blueprint',
-        'github-light',
-        'tokyo-night',
-        'excalidraw',
-        'dracula',
-        'github-dark',
-        'catppuccin-mocha',
-        'chalkboard',
-        'one-dark',
-        'pen-and-ink',
-      ];
-      for (const style of styles) {
+      for (const style of Object.keys(PALETTES)) {
         const snapshot = await builder.diagram({
           source: 'graph LR\nA[Client] -->|request| B[Server]',
           style,

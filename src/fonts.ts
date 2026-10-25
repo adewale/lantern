@@ -29,6 +29,25 @@ const memos: Array<Map<string, Run>> = [];
 export function shapeMemoSize(): number { return memos.reduce((n, m) => n + m.size, 0); }
 let shapers: Record<FontName, Shaper> | null = null;
 
+/** Characters the embedded faces cannot draw (glyph 0), by the string that held them. */
+const missing = new Map<string, string>();
+/** What was shaped since the last call that the fonts could not draw; clears the record. */
+export function takeMissingGlyphs(): Map<string, string> {
+  const out = new Map(missing);
+  missing.clear();
+  return out;
+}
+/** A run's undrawable clusters. Control characters have no glyph in any face, so they are not missing. */
+function undrawable(text: string, r: Run): string {
+  const chars = [...text],
+    starts = [...new Set(r.glyphs.map((g) => g.cluster))].sort((a, b) => a - b);
+  return r.glyphs
+    .filter((g) => g.gid === 0)
+    .map((g) => chars.slice(g.cluster, starts.find((s) => s > g.cluster) ?? chars.length).join(''))
+    .join('')
+    .replace(/\p{Cc}/gu, '');
+}
+
 /**
  * Decode the embedded fonts (once; concurrent callers share one decode).
  * Scene.run() calls this, so scenes never need to.
@@ -59,16 +78,21 @@ async function buildShapers(): Promise<Record<FontName, Shaper>> {
     // The memo is bounded, least recently used out first: a DecimalNumber shapes a new
     // string every frame, so a long count (or a Worker serving many scenes) would
     // otherwise keep every one of them.
-    const memo = new Map<string, Run>();
+    const memo = new Map<string, Run & { missing?: string }>();
     memos.push(memo);
     out[key] = (text, size) => {
       const k = size + '\u0000' + text;
       let r = memo.get(k);
-      if (r) { memo.delete(k); memo.set(k, r); return r; }
-      const ru = run(font, key, text, size);
-      if (ru.tag !== 'Ok') throw new Error('shape: ' + JSON.stringify(ru.error));
-      memo.set(k, (r = ru.value));
-      if (memo.size > SHAPE_MEMO_MAX) memo.delete(memo.keys().next().value!);
+      if (r) { memo.delete(k); memo.set(k, r); }
+      else {
+        const ru = run(font, key, text, size);
+        if (ru.tag !== 'Ok') throw new Error('shape: ' + JSON.stringify(ru.error));
+        memo.set(k, (r = ru.value));
+        r.missing = undrawable(text, r);
+        if (memo.size > SHAPE_MEMO_MAX) memo.delete(memo.keys().next().value!);
+      }
+      // Recorded on every call, memoized or not: a check needs to see each string it draws.
+      if (r.missing) missing.set(text, r.missing);
       return r;
     };
   }

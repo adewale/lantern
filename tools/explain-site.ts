@@ -5,14 +5,17 @@
 // block for those files to out/site-headers.txt (each page's CSP pins its own inline script and style).
 import { copyFile, mkdir, readFile, writeFile, access } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import { parseArgs } from 'node:util';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
 import { ROOT } from './lib/explain-project.ts';
 
-const args = process.argv.slice(2);
-const root = args.find((a) => !a.startsWith('--'));
+const { values, positionals } = parseArgs({
+  allowPositionals: true,
+  options: { path: { type: 'string', default: '/projects/lantern-explainers' } },
+});
+const root = positionals[0];
 if (!root) throw new Error('usage: npm run site:export -- <site-root> [--path /projects/lantern-explainers]');
-const at = args.indexOf('--path');
-const path = (at >= 0 ? args[at + 1]! : '/projects/lantern-explainers').replace(/\/$/, '');
+const path = values.path.replace(/\/$/, '');
 const target = join(resolve(root), path);
 const built = join(ROOT, 'out/explainers'),
   videos = join(ROOT, 'out/videos');

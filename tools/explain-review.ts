@@ -1,46 +1,17 @@
 // Review the built collection as served, not just its source. Run demos:render first.
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { once } from 'node:events';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Browser } from 'playwright-core';
 import { launch } from './lib/browser.ts';
 import { collectProject, defaultVariant, ROOT } from './lib/explain-project.ts';
+import { serve } from './lib/explain-serve.ts';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
 
-const server = spawn(process.execPath, [join(ROOT, 'tools/explain-serve.ts')], {
-  cwd: ROOT,
-  env: { ...process.env, PORT: '0' },
-  stdio: ['ignore', 'pipe', 'pipe'],
-});
+const server = await serve(join(ROOT, 'out'), 0, 'explainers/'),
+  base = server.url;
 let browser: Browser | undefined;
 try {
-  const base = await new Promise<string>((resolve, reject) => {
-    let output = '',
-      errors = '';
-    const timer = setTimeout(() => reject(new Error(`Demo server did not become ready: ${errors}`)), 15000);
-    timer.unref();
-    server.stderr.on('data', (chunk) => {
-      errors += chunk;
-    });
-    server.stdout.on('data', (chunk) => {
-      output += chunk;
-      const match = output.match(/http:\/\/127\.0\.0\.1:\d+/);
-      if (match) {
-        clearTimeout(timer);
-        resolve(match[0]);
-      }
-    });
-    server.once('error', (error) => {
-      clearTimeout(timer);
-      reject(error);
-    });
-    server.once('exit', (code) => {
-      clearTimeout(timer);
-      reject(new Error(`Demo server exited ${code}: ${errors}`));
-    });
-  });
   browser = await launch();
   const page = await browser.newPage({ viewport: { width: 1180, height: 980 } });
   const errors: string[] = [],
@@ -155,9 +126,5 @@ try {
   );
 } finally {
   await browser?.close();
-  if (server.pid && server.exitCode === null && server.signalCode === null) {
-    const closed = once(server, 'exit');
-    server.kill('SIGTERM');
-    await closed;
-  }
+  server.close();
 }

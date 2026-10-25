@@ -14,8 +14,9 @@ import {
   checkStep,
   sunlight,
   daylightYear,
+  declination,
 } from '../scenes/explainers/lib/models.ts';
-import { rankMetadata, secretWorkflow } from '../scenes/explainers/2password/model.ts';
+import { find, closeness, distance, run } from '../scenes/explainers/2password/model.ts';
 import { Repo, AUTHOR } from '../scenes/lib/gitmodel.ts';
 
 test('SHA-256 and PKCE agree with independent crypto and the RFC 7636 vector', () => {
@@ -125,6 +126,9 @@ test('sunlight is bounded, hemisphere-symmetric, and predicts polar extremes', (
   assert.equal(sunlight(69.65, 23.44).daylight, 24);
   assert.equal(sunlight(69.65, -23.44).daylight, 0);
   assert.deepEqual(daylightYear(0), Array(12).fill(12));
+  // Solstices fall near days 171 and 355; the 15th of June and December sit a week short of them.
+  assert.ok(Math.abs(declination(171) - 23.44) < 0.01 && Math.abs(declination(355) + 23.44) < 0.01);
+  assert.ok(Math.abs(declination(165) - 23.3) < 0.1 && Math.abs(declination(348) + 23.3) < 0.1);
   assert.ok(sunlight(-33.87, 23.44).daylight < 12);
 });
 test('both git cases hash the exact typed bytes used by the Git CLI', () => {
@@ -153,19 +157,42 @@ test('both git cases hash the exact typed bytes used by the Git CLI', () => {
       );
   }
 });
-test('secret fixture searches metadata and strips only the child auth credential', () => {
-  assert.deepEqual(
-    rankMetadata('production api').map((r) => r.id),
-    ['prod'],
-  );
-  assert.deepEqual(rankMetadata('nonexistent'), []);
-  for (const result of rankMetadata('api'))
-    assert.deepEqual(Object.keys(result).sort(), ['id', 'score', 'tags', 'title', 'username']);
-  for (const auth of ['desktop', 'service']) {
-    const run = secretWorkflow(auth);
-    assert.ok(!('OP_SERVICE_ACCOUNT_TOKEN' in run.childEnv));
-    assert.equal(run.childEnv.APP_MODE, 'production');
-    assert.equal(run.approvals, auth === 'service' ? 0 : 3);
-    assert.equal(run.commands.at(-1), 'op run -- env -u OP_SERVICE_ACCOUNT_TOKEN app');
-  }
+// Expected values are the assertions in 2password's test/find.test.ts, which uses the same three items.
+test('2password find port gives upstream test answers', () => {
+  assert.deepEqual(find(['database', 'cloud api', 'cloud']).matches, [
+    {
+      ref: 'op://Personal/Cloud API/credential',
+      title: 'Cloud API',
+      kind: 'api-credential',
+      queries: ['cloud api', 'cloud'],
+    },
+    { ref: 'op://Work/Cloud Login/password', title: 'Cloud Login', kind: 'login', queries: ['cloud'] },
+    { ref: 'op://Work/Database/password', title: 'Database', kind: 'database', queries: ['database'] },
+  ]);
+  const miss = find(['databse', 'nothing like this']);
+  assert.deepEqual(miss.fetched, ['Database']);
+  assert.deepEqual(miss.matches, []);
+  assert.deepEqual(miss.suggestions, [
+    { query: 'databse', ref: 'op://Work/Database/password', title: 'Database', kind: 'database' },
+  ]);
+  assert.deepEqual(find(['database']).matches, [
+    { ref: 'op://Work/Database/password', title: 'Database', kind: 'database' },
+  ]);
+  // By hand: one insertion turns databse into database (1 − 1/8); Cloud API's best word, api, is 6 edits away (1 − 6/7).
+  assert.equal(distance('databse', 'database'), 1);
+  assert.equal(closeness(['databse'], 'Database'), 0.875);
+  assert.equal(closeness(['databse'], 'Cloud API'), 1 - 6 / 7);
+  assert.equal(closeness(['databse'], 'Cloud Login'), 0);
+  assert.equal(closeness(['opnai', 'key'], 'OpenAI API Key'), (1 - 1 / 6 + 1) / 2);
+  assert.ok(!JSON.stringify(find(['cloud', 'databse'])).includes('secret-'));
+});
+test('2password run strips the service token only when op holds one', () => {
+  const ref = { API_KEY: 'op://Personal/Cloud API/credential' };
+  const service = run('service', ref, ['app']),
+    desktop = run('desktop', ref, ['app']);
+  assert.deepEqual(service.argv, ['op', 'run', '--', 'env', '-u', 'OP_SERVICE_ACCOUNT_TOKEN', 'app']);
+  assert.deepEqual(desktop.argv, ['op', 'run', '--', 'app']);
+  assert.ok('OP_SERVICE_ACCOUNT_TOKEN' in service.opEnv);
+  for (const r of [service, desktop])
+    assert.deepEqual(r.childEnv, { PATH: '/usr/bin', API_KEY: 'secret-cloud-api' });
 });

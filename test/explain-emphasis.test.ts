@@ -4,8 +4,9 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Scene, NullSink, Rectangle, Text, Dot, FadeIn, SnapshotSink, renderAt, toSvgString, traceScene } from '../src/index.ts';
-import { stage, bindSnapshots, diagramKey, emphasis } from '../explain/index.ts';
+import { stage, bindSnapshots, diagramKey, emphasis, REGIONS } from '../explain/index.ts';
 import type { DiagramSnapshot } from '../explain/index.ts';
+import { fixedSnapshot, square } from './lib/random-snapshot.ts';
 import { collectProject } from '../tools/lib/explain-project.ts';
 import { checkProject, restingTextProblems } from '../tools/lib/explain-check.ts';
 
@@ -14,10 +15,7 @@ const PAPER = '#123456',
   INK = '#ffffff',
   ACCENT = '#ff8800';
 function fixture(): DiagramSnapshot {
-  const shape = (x: number, extra: Record<string, unknown> = {}) => {
-    const m = new Rectangle({ width: 0.5, height: 0.5, fill: '#334455', stroke: '#aabbcc' }).moveTo([x, 0]);
-    return { subpaths: m.subpaths.map((a) => Array.from(a)), closed: m.closed, style: { ...m.style, ...extra } };
-  };
+  const shape = (x: number, extra: Record<string, unknown> = {}) => square(x, { fill: '#334455', stroke: '#aabbcc', ...extra });
   const edge = (from: string, to: string, x: number) => ({
     id: `edge:${from}->${to}#0`,
     role: 'edge',
@@ -32,24 +30,17 @@ function fixture(): DiagramSnapshot {
       [x + 1, 0],
     ] as [number, number][],
   });
-  return {
-    version: 1,
-    renderer: 'agentic-mermaid@0.4.1',
+  return fixedSnapshot(
     spec,
-    family: 'flowchart',
-    width: 800,
-    height: 200,
-    palette: { paper: PAPER, ink: INK, accent: ACCENT, muted: '#aaaaaa' },
-    svg: '',
-    findings: { ok: true, warnings: [] },
-    parts: [
+    [
       { id: 'A', role: 'node', kind: 'shape', svg: '', shapes: [shape(0)] },
       { id: 'B', role: 'node', kind: 'shape', svg: '', shapes: [shape(3)] },
       { id: 'C', role: 'node', kind: 'shape', svg: '', shapes: [shape(6)] },
       edge('A', 'B', 1.5),
       edge('B', 'C', 4.5),
     ],
-  };
+    { width: 800, palette: { paper: PAPER, ink: INK, accent: ACCENT, muted: '#aaaaaa' } },
+  );
 }
 const bound = (S: typeof Scene) => bindSnapshots(S, { [diagramKey(spec)]: fixture() });
 const strokes = (m: { family(): { style: { stroke?: string } }[] }) =>
@@ -180,7 +171,7 @@ test('cards update and mark rows; code keeps a focus bar on the chosen lines', a
       await code.focus([1, 2]);
       const middle = (code.code.lines[1]!.anchorPoint()[1] + code.code.lines[2]!.anchorPoint()[1]) / 2;
       assert.ok(Math.abs(code.bar.center()[1] - middle) < 1e-6);
-      assert.ok(card.box()![0] >= s.regions.side[0] - 1e-6, 'region placement');
+      assert.ok(card.box()![0] >= REGIONS.side[0] - 1e-6, 'region placement');
     }
   }
   await new Panels(new NullSink()).run();
@@ -251,13 +242,8 @@ test('helper fixes: near-black accents get a real emphasis hue, notes avoid thei
       const note = await d.note('C', 'a long note that cannot fit on the right', { side: 'right' });
       const [nb, cb] = [note.box()!, d.get('C').box()!];
       assert.ok(nb[2] <= cb[0] || nb[0] >= cb[2] || nb[3] <= cb[1] || nb[1] >= cb[3], 'note clear of its part');
-      const card = await s.card([['Rows', 1]], { at: 'side' });
-      await card.fade(0.3);
-      assert.equal(card.bar.style.opacity, 0, 'hidden bar stays hidden');
-      assert.equal(card.panel.style.opacity, 0.3);
-      await card.fade(1);
       const code = await s.code(['x'], { at: 'bottom' });
-      assert.ok(code.box()![1] >= s.regions.bottom[1] - 1e-6);
+      assert.ok(code.box()![1] >= REGIONS.bottom[1] - 1e-6);
     }
   }
   await new (bound(Fixes))(new NullSink()).run();
@@ -300,7 +286,7 @@ test('code morphs by line identity: surviving lines move, others fade, added lin
       );
       assert.equal(code.marks.length, 2);
       assert.ok(!this.familyMembers().some((m) => m instanceof Text && m.text === '  return a;'));
-      assert.ok(code.box()![1] >= s.regions.full[1] - 1e-6, 'the grown block stays on stage');
+      assert.ok(code.box()![1] >= REGIONS.full[1] - 1e-6, 'the grown block stays on stage');
       await code.clearMarks();
       assert.equal(code.marks.length, 0);
     }

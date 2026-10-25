@@ -325,7 +325,9 @@ test('diff marks one bar per +/- line, green for added and red for removed', () 
     fc.property(palette, fc.array(fc.oneof(line, line.map((l) => '+ ' + l), line.map((l) => '- ' + l)), { minLength: 1, maxLength: 10 }), (colors, code) => {
       const block = new CodeBlock(scene(), colors, code, { diff: true });
       const marked = code.filter((l) => /^[+-] /.test(l));
-      assert.deepEqual(block.marks.map((m) => m.style.fill), marked.map((l) => (l[0] === '+' ? '#2ea043' : '#e5534b')));
+      assert.deepEqual(block.marks.map((m) => m.kind), marked.map((l) => (l[0] === '+' ? 'added' : 'removed')));
+      // A solid gutter edge marks the line by shape, not only by its tint.
+      for (const m of block.marks) assert.equal(m.mob.children.length, 2);
     }),
     params(),
   );
@@ -340,21 +342,7 @@ test('clearMarks removes every mark from the block', async () => {
       const marks = [...block.marks];
       await block.clearMarks();
       assert.equal(block.marks.length, 0);
-      assert.ok(marks.every((m) => !block.children.includes(m)));
-    }),
-    params(),
-  );
-});
-
-test('fade sets every part of a block to the opacity, a lit focus bar too, a hidden one stays hidden', async () => {
-  await fc.assert(
-    fc.asyncProperty(palette, lines(1), fc.double({ min: 0, max: 1, noNaN: true }), fc.boolean(), async (colors, code, o, lit) => {
-      const s = scene();
-      const block = new CodeBlock(s, colors, code);
-      s.add(block);
-      if (lit) await block.focus(0);
-      await block.fade(o);
-      for (const m of block.family()) assert.equal(m.style.opacity, m === block.bar && !lit ? 0 : o);
+      assert.ok(marks.every((m) => !block.children.includes(m.mob)));
     }),
     params(),
   );
@@ -540,7 +528,7 @@ test('a faded card stays faded when a value changes', async () => {
     fc.asyncProperty(cardCase.chain((c) => fc.tuple(fc.constant(c), changesFor(c.rows))), fc.double({ min: 0, max: 1, noNaN: true }), async ([c, changes], o) => {
       const made = tryCard(c);
       if (!made) return;
-      await made.k.fade(o);
+      for (const m of made.k.family()) m.style.opacity = o;
       await made.k.set(changes);
       for (const v of made.k.values.values()) assert.equal(v.style.opacity, o);
     }),
@@ -568,18 +556,3 @@ test('mark lights the row and stays; mark(null) hides the bar', async () => {
   );
 });
 
-test('fade sets every part of a card to the opacity, a lit bar too, and fade(1) restores', async () => {
-  await fc.assert(
-    fc.asyncProperty(cardCase, fc.double({ min: 0, max: 1, noNaN: true }), fc.boolean(), async (c, o, lit) => {
-      const made = tryCard(c);
-      if (!made) return;
-      const { k } = made;
-      if (lit) await k.mark(c.rows[0]![0]);
-      await k.fade(o);
-      for (const m of k.family()) assert.equal(m.style.opacity, m === k.bar && !lit ? 0 : o);
-      await k.fade(1);
-      for (const m of k.family()) assert.equal(m.style.opacity, m === k.bar && !lit ? 0 : 1);
-    }),
-    params(300),
-  );
-});

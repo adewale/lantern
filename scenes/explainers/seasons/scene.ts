@@ -13,7 +13,7 @@ import {
   Create,
 } from '../../../src/index.ts';
 import type { Vec } from '../../../src/index.ts';
-import { stage, palette, settingsOf } from '../../../explain/index.ts';
+import { stage, settingsOf } from '../../../explain/index.ts';
 import type { Diagram } from '../../../explain/index.ts';
 import { sunlight, daylightYear } from '../lib/models.ts';
 
@@ -82,6 +82,7 @@ export default class SeasonsExplainer extends Scene {
     sources: [
       'https://spaceplace.nasa.gov/seasons/en/',
       'https://gml.noaa.gov/grad/solcalc/calcdetails.html',
+      'https://en.wikipedia.org/wiki/Position_of_the_Sun#Declination_of_the_Sun_as_seen_from_Earth',
     ],
   };
   static settings = [
@@ -100,7 +101,7 @@ export default class SeasonsExplainer extends Scene {
   override async construct() {
     const key = settingsOf(this).place!,
       place = PLACES[key]!,
-      s = stage(this, { palette: palette('tokyo-night') });
+      s = stage(this, { style: 'tokyo-night' });
     const ink = s.palette.ink,
       soft = s.soft;
     const label = (text: string, at: Vec, opts: { size?: number; color?: string; edge?: Vec } = {}) =>
@@ -158,11 +159,8 @@ export default class SeasonsExplainer extends Scene {
         december = earth(c[0] - rx, c[1], 'December', true, true),
         september = earth(c[0], c[1] + ry, 'September', false, false),
         march = earth(c[0], c[1] - ry, 'March', true, false);
-      s.keep(orbit);
-      s.keep(sun);
-      for (const m of [june, december, september, march]) s.keep(m);
-      await this.play(new Create(orbit), new FadeIn(sun));
-      await this.play(new FadeIn(june), new FadeIn(december), new FadeIn(september), new FadeIn(march));
+      await this.play(new Create(s.keep(orbit)), new FadeIn(s.keep(sun)));
+      await s.enter(june, december, september, march);
     }
 
     // ---------------------------------------------------------------- june
@@ -309,11 +307,8 @@ export default class SeasonsExplainer extends Scene {
     });
     await s.clear();
     const J = season(JUNE_C, -1, june);
-    await this.play(new FadeIn(sun), new FadeIn(J.drawing));
-    await this.play(new FadeIn(J.ray));
-    s.keep(sun);
-    s.keep(J.drawing);
-    s.keep(J.ray);
+    await s.enter(sun, J.drawing);
+    await s.enter(J.ray);
     const juneCard = await seasonCard('June', june, RIGHT_CARD);
     this.state = { place: place.name, latitude: place.lat, june };
 
@@ -327,10 +322,8 @@ export default class SeasonsExplainer extends Scene {
           : `${place.name}’s noon Sun stands at the same ${degrees(december.altitude)}, now to the south, and its daylight stays at ${hours(december.daylight)}.`),
     });
     const D = season(DEC_C, 1, december);
-    await this.play(new FadeIn(D.drawing));
-    await this.play(new FadeIn(D.ray));
-    s.keep(D.drawing);
-    s.keep(D.ray);
+    await s.enter(D.drawing);
+    await s.enter(D.ray);
     const decCard = await seasonCard('December', december, LEFT_CARD);
     await (Math.abs(june.daylight - december.daylight) > 0.05
       ? decCard.mark('Daylight')
@@ -341,7 +334,7 @@ export default class SeasonsExplainer extends Scene {
     await this.step('latitude', {
       title: 'Latitude sets how much of each circle is lit',
       caption:
-        'Each line is one place’s latitude circle, yellow where it is in daylight. Tromsø’s circle is all day in June and all night in December, while the equator’s is always cut in half. The model computes day length as 24 h × acos(−tan latitude × tan declination) / π.',
+        'Each line is one place’s latitude circle, yellow where it is in daylight. Tromsø’s circle is all day in June and all night in December, while the equator’s is always cut in half. The model’s day length in hours is acos(−tan latitude × tan declination) in degrees, divided by 7.5.',
     });
     await this.play(...[juneCard, decCard].map((c) => new FadeOut(c, { runTime: 0.3 })));
     const others = ORDER.filter((k) => k !== key);
@@ -378,8 +371,7 @@ export default class SeasonsExplainer extends Scene {
           );
         }
     }
-    await this.play(new FadeIn(extra));
-    s.keep(extra);
+    await s.enter(extra);
     const table = (title: string, decl: number, box: [number, number, number, number]) =>
       s.card(
         ORDER.map((k) => [PLACES[k]!.name, hours(sunlight(PLACES[k]!.lat, decl).daylight)] as const),
@@ -395,12 +387,12 @@ export default class SeasonsExplainer extends Scene {
     await this.step('year', {
       title: `A computed year of daylight in ${place.name}`,
       caption:
-        'The chart runs the same model once per month while the Sun’s declination moves through its yearly range. The two dots are the June and December days from the side views, and the card marks the gap between the longest and shortest day.',
+        'The chart runs the same model on the 15th of each month, with the Sun’s declination for that day. The two dots are mid-June and mid-December, within a week of the solstices in the side views, and the card marks the gap between the longest and shortest.',
     });
     await s.clear();
     this.state.daylight = year;
     const CHART: [number, number, number, number] = [-7.55, -4.25, 1.6, 3.25];
-    const chart = await s.show({ source: chartSource([year]), style: 'tokyo-night' }, { box: CHART });
+    const chart = await s.show({ source: chartSource([year]) }, { box: CHART });
     const plot = (d: Diagram, month: number, value: number): Vec => {
       const x = d.get('axis:x:tick:' + MONTHS[month]).center()[0];
       const y0 = d.get('axis:y:tick:0').center()[1],
@@ -416,7 +408,6 @@ export default class SeasonsExplainer extends Scene {
           color,
         }),
       );
-      s.keep(g);
       return g;
     };
     const juneHigh = year[5]! >= year[11]!;
@@ -424,7 +415,7 @@ export default class SeasonsExplainer extends Scene {
       pin(5, year[5]!, SUN, juneHigh || year[5]! < 2),
       pin(11, year[11]!, '#7dcfff', !juneHigh || year[11]! < 2),
     ];
-    await this.play(...pins.map((p) => new FadeIn(p)));
+    await s.enter(...pins);
     const yearCard = await s.card(
       [
         ['Latitude', degrees(place.lat)],
@@ -440,7 +431,7 @@ export default class SeasonsExplainer extends Scene {
       title: 'Earth is nearest the Sun in January, during the northern winter',
       caption:
         place.lat !== 0
-          ? `Earth is nearest the Sun in early January, when ${place.name} gets ${hours(year[0]!)} of daylight and the card’s last row, latitude ${degrees(-place.lat)}, gets ${hours(mirror[0]!)}. Both are the same distance from the Sun that day, so the opposite seasons must come from the tilt.`
+          ? `Earth is nearest the Sun in early January. On 15 January ${place.name} gets ${hours(year[0]!)} of daylight and the card’s last row, latitude ${degrees(-place.lat)}, gets ${hours(mirror[0]!)}. Both are the same distance from the Sun that day, so the opposite seasons must come from the tilt.`
           : `Earth is nearest the Sun in early January, yet the card shows Quito with ${hours(year[0]!)} of daylight in January and in July. The model has no distance term: day length depends only on latitude and the Sun’s declination, which the tilt sets.`,
     });
     await this.play(new FadeOut(yearCard, { runTime: 0.3 }));
@@ -454,8 +445,7 @@ export default class SeasonsExplainer extends Scene {
       }),
       new Dot({ radius: 0.1, color: SUN }).moveTo(jan),
     );
-    s.keep(marker);
-    await this.play(new FadeIn(marker));
+    await s.enter(marker);
     // Exaggerated eccentric orbit: Sun off-centre, Earth nearest at one end.
     {
       const oc: Vec = [5.1, 1.35],
@@ -492,8 +482,7 @@ export default class SeasonsExplainer extends Scene {
         near,
         far,
       );
-      s.keep(sketch);
-      await this.play(new FadeIn(sketch));
+      await s.enter(sketch);
     }
     const distanceCard = await s.card(
       [
@@ -518,10 +507,7 @@ export default class SeasonsExplainer extends Scene {
     const all = ORDER.map((k) => daylightYear(PLACES[k]!.lat));
     const CMP: [number, number, number, number] = [-5.7, -4.25, 6.3, 3.25];
     // Build without the renderer's legend: the native labels at each line's end name the lines.
-    const cmp = await s.show(
-      { source: chartSource(all), style: 'tokyo-night' },
-      { box: CMP, build: 'frame' },
-    );
+    const cmp = await s.show({ source: chartSource(all) }, { box: CMP, build: 'frame' });
     await cmp.reveal(cmp.order.filter((id) => id !== 'legend' && !cmp.visible.has(id)));
     const mine = 'series:line-' + ORDER.indexOf(key as (typeof ORDER)[number]);
     await cmp.dim([mine]);
@@ -537,7 +523,6 @@ export default class SeasonsExplainer extends Scene {
         }),
       );
     });
-    s.keep(ends);
-    await this.play(new FadeIn(ends));
+    await s.enter(ends);
   }
 }

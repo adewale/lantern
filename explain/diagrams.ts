@@ -5,19 +5,20 @@ import {
   FadeOut,
   Create,
   Transform,
-  Indicate,
   Dot,
   MoveAlongPath,
   AnimationGroup,
   linear,
+  Rectangle,
+  Text,
 } from '../src/index.ts';
 import type { Scene, Mobject, Box, Vec, Style } from '../src/index.ts';
-import { Rectangle, Text } from '../src/index.ts';
-import { regionBox, raised, emphasis } from './look.ts';
+import { regionBox, boxCenter, raised, emphasis } from './look.ts';
 import type { Region } from './look.ts';
-import { diagramsOf, findingsOf } from '../integrations/agentic-mermaid/snapshot.ts';
+import { diagramsOf, findingsOf, SVG_PX_PER_UNIT } from '../integrations/agentic-mermaid/snapshot.ts';
 import { outlineText } from '../integrations/agentic-mermaid/text.ts';
 import { recordWalk } from './trace.ts';
+import type { PictureEntry } from './trace.ts';
 import { lerpColor } from '../src/color.ts';
 import type {
   DiagramSpec,
@@ -41,9 +42,15 @@ export type NoteSide = 'above' | 'below' | 'left' | 'right';
 interface Note {
   id: string;
   side: NoteSide;
+  text: string;
   mob: Group;
 }
 const DIM = 0.2;
+/** Route tokens: the dot that travels a link, and how fast it appears and goes. */
+const TOKEN = { radius: 0.08, fade: 0.18 };
+/** Parts that frame a family (axes, lifelines, lanes, branches) rather than say something. */
+const isScaffold = (info: SnapshotPart) =>
+  info.id === '__frame' || /axis|lifeline|lane|grid|participant|actor|section/.test(info.role) || info.id.startsWith('branch:');
 const OPPOSITE: Record<NoteSide, NoteSide> = { above: 'below', below: 'above', left: 'right', right: 'left' };
 /**
  * Where a note sits beside a box. If the frame would push it back onto the
@@ -105,6 +112,13 @@ export function scaleArtwork(mob: Mobject, k: number, at: Vec = [0, 0]): void {
   mob.scale(k, { aboutPoint: at });
   for (const m of mob.family()) scaleStyle(m.style, k);
 }
+/** A copy of `m` scaled by k about `from`, then moved so `from` lands on `to`: one camera move. */
+function moved(m: Group, k: number, from: Vec, to: Vec): Group {
+  const target = m.copy();
+  scaleArtwork(target, k, from);
+  target.shift([to[0] - from[0], to[1] - from[1]]);
+  return target;
+}
 
 export class Diagram {
   readonly scene: Scene;
@@ -123,6 +137,8 @@ export class Diagram {
   private zoom = 1;
   private marks = new Map<string, string>();
   private kept: Set<string> | null = null;
+  /** The last walk, by step name, for the description. */
+  private walked: { step: string | undefined; hops: string[] } | null = null;
   notes: Note[] = [];
 
   constructor(
@@ -179,11 +195,12 @@ export class Diagram {
     }
     // Some renderer labels overhang the declared SVG canvas (notably XY ticks).
     // Fit all artwork as well as that canvas, rather than clipping those labels.
-    const artwork = this.root.box() ?? [0, -snapshot.height / 100, snapshot.width / 100, 0];
+    const [w, h] = [snapshot.width / SVG_PX_PER_UNIT, snapshot.height / SVG_PX_PER_UNIT];
+    const artwork = this.root.box() ?? [0, -h, w, 0];
     const bounds: Box = [
       Math.min(0, artwork[0]),
-      Math.min(-snapshot.height / 100, artwork[1]),
-      Math.max(snapshot.width / 100, artwork[2]),
+      Math.min(-h, artwork[1]),
+      Math.max(w, artwork[2]),
       Math.max(0, artwork[3]),
     ];
     const inset = Math.min(0.12, (box[2] - box[0]) / 20, (box[3] - box[1]) / 20);
@@ -244,16 +261,19 @@ export class Diagram {
     if (!part) throw new Error(`No diagram mark ${id}. Available: ${[...this.parts.keys()].join(', ')}`);
     return part.mob;
   }
-  async build(mode: 'all' | 'frame' = 'all', runTime = 0.65): Promise<this> {
-    // Do not add hidden marks: opacity on a Group does not mask its descendants in Lantern.
+  /** Put the root on stage. Hidden marks are never added: opacity on a Group does not mask its descendants in Lantern. */
+  private attach(): void {
     if (!this.scene.mobjects.includes(this.root)) this.scene.add(this.root);
-    const frame = this.order.filter(
-      (id) =>
-        id === '__frame' ||
-        /axis|lifeline|lane|grid|participant|actor|section/.test(this.parts.get(id)!.info.role) ||
-        id.startsWith('branch:'),
-    );
-    await this.reveal(frame, { runTime });
+  }
+  /** A route token at the start of a link. */
+  private token(route: VMobject, color: string): Dot {
+    const dot = new Dot({ radius: TOKEN.radius, color }).moveTo(route.pointFromProportion(0));
+    this.root.add(dot);
+    return dot;
+  }
+  async build(mode: 'all' | 'frame' = 'all', runTime = 0.65): Promise<this> {
+    this.attach();
+    await this.reveal(this.order.filter((id) => isScaffold(this.parts.get(id)!.info)), { runTime });
     if (mode === 'all') await this.reveal('rest', { runTime });
     return this;
   }
@@ -281,12 +301,11 @@ export class Diagram {
       .map((id) => {
         const p = this.parts.get(id)!;
         this.visible.add(id);
-        if (!this.scene.mobjects.includes(this.root)) this.scene.add(this.root);
+        this.attach();
         for (const child of this.parts.values()) if (child.info.owner === id) this.visible.add(child.info.id);
         this.root.add(p.mob);
         if (p.info.role === 'message' && p.info.from && p.info.to && p.route) {
-          const token = new Dot({ radius: 0.075, color: this.accent }).moveTo(p.route.pointFromProportion(0));
-          this.root.add(token);
+          const token = this.token(p.route, this.accent);
           messages.push(p);
           return new AnimationGroup(
             [
@@ -326,12 +345,50 @@ export class Diagram {
     while (part.info.owner) part = this.parts.get(part.info.owner)!;
     return part.info.id;
   }
-  private isScaffold(p: Part): boolean {
-    return (
-      p.info.id === '__frame' ||
-      /axis|lifeline|lane|grid|participant|actor|section/.test(p.info.role) ||
-      p.info.id.startsWith('branch:')
-    );
+  /** A part's words: its own text and its labels' (an edge's label is a part it owns). */
+  private label(id: string): string {
+    const words = [...this.parts.values()]
+      .filter((p) => p.info.id === id || p.info.owner === id)
+      .flatMap((p) => p.info.shapes.map((s) => s.text?.trim()).filter((t): t is string => !!t));
+    return words.join(' ');
+  }
+  /** An endpoint by its words: a link's `from`/`to` may name a node or a participant. */
+  private nameOf(id: string): string {
+    for (const key of [id, 'actor:' + id, 'node:' + id, 'class:' + id, 'state:' + id])
+      if (this.parts.has(key)) return this.label(key) || id;
+    return id;
+  }
+  /**
+   * What a reader sees of this diagram: each shown part in reading order by its
+   * words (a link as "from → to: label"), marked and dimmed parts named, then notes.
+   */
+  describe(): PictureEntry[] {
+    const items: string[] = [];
+    // Participants, lanes and branches first: they say what the rest is about.
+    const order = [...this.order].sort((a, b) => +!isScaffold(this.parts.get(a)!.info) - +!isScaffold(this.parts.get(b)!.info));
+    for (const id of order) {
+      const p = this.parts.get(id)!;
+      if (!this.visible.has(id) || /axis|grid|lifeline|frame/.test(p.info.role)) continue;
+      const words = this.label(id);
+      const value = (p.info.channels as { value?: unknown } | undefined)?.value;
+      const name =
+        p.info.from && p.info.to
+          ? `${this.nameOf(p.info.from)} → ${this.nameOf(p.info.to)}${words ? ': ' + words : ''}`
+          : words || (value != null ? `${id.split(':').pop()}: ${value}` : '');
+      if (!name) continue;
+      const state = [
+        ...(this.marks.has(id) ? ['marked'] : []),
+        ...(this.kept && !this.kept.has(id) && !isScaffold(p.info) ? ['dimmed'] : []),
+      ];
+      items.push(name + (state.length ? ` (${state.join(', ')})` : ''));
+    }
+    const step = this.scene.steps.at(-1)?.name;
+    if (this.walked && this.walked.step === step) items.push('Path: ' + this.walked.hops.join(', '));
+    const family = this.snapshot.family === 'flowchart' ? 'Flowchart' : `${this.snapshot.family[0]!.toUpperCase()}${this.snapshot.family.slice(1)} diagram`;
+    return [
+      { what: family, items },
+      ...this.notes.map((n) => ({ what: `Note on ${this.nameOf(n.id)}`, items: [n.text] })),
+    ];
   }
   /**
    * Animations that bring each part to its current look: base style, then the
@@ -344,7 +401,7 @@ export class Diagram {
       const fam = p.mob.family();
       const base = this.base.get(id)!;
       const color = this.marks.get(id);
-      const dim = this.kept != null && !this.kept.has(id) && !this.isScaffold(p);
+      const dim = this.kept != null && !this.kept.has(id) && !isScaffold(p.info);
       const connector = !!(p.info.from && p.info.to);
       const within = (m: Mobject, test: (a: Mobject) => boolean) => {
         for (let a: Mobject | null = m; a && a !== p.mob; a = a.parent) if (test(a)) return true;
@@ -361,8 +418,13 @@ export class Diagram {
             st.stroke = color;
             st.strokeWidth = (st.strokeWidth ?? 0) * 1.8;
           }
-          if (st.fill && st.fill !== 'none' && (st.fillOpacity ?? 1) > 0)
+          if (st.fill && st.fill !== 'none' && (st.fillOpacity ?? 1) > 0) {
             st.fill = connector ? color : lerpColor(st.fill, color, 0.2);
+            // A shape drawn by fill alone (a bar, a task) gains an outline: the mark shows by shape, not only hue.
+            if (!connector && !(st.stroke && st.stroke !== 'none' && (st.strokeWidth ?? 0) > 0)) {
+              Object.assign(st, { stroke: color, strokeOpacity: 1, strokeWidth: 0.04 * this.zoom });
+            }
+          }
         }
         if (dim) st.opacity = (b.opacity ?? 1) * DIM;
         return st;
@@ -376,7 +438,7 @@ export class Diagram {
     }
     return anims;
   }
-  /** Colour parts (and links' arrowheads) until unmarked. Labels keep their ink. */
+  /** Colour parts (and links' arrowheads) and thicken their outlines until unmarked. Labels keep their ink. */
   async mark(ids: readonly string[], { color = this.accent, runTime = 0.45 } = {}): Promise<void> {
     const tops = ids.map((id) => this.top(id));
     for (const id of tops) this.marks.set(id, color);
@@ -439,8 +501,8 @@ export class Diagram {
     const g = new Group(bg, label);
     g.moveTo(notePosition(g, anchor.box()!, side, this.frameBox));
     this.root.add(g);
-    if (!this.scene.mobjects.includes(this.root)) this.scene.add(this.root);
-    this.notes.push({ id, side, mob: g });
+    this.attach();
+    this.notes.push({ id, side, text, mob: g });
     await this.scene.play(new FadeIn(g, { runTime: 0.35, shift: [0, -0.06] }));
     return g;
   }
@@ -489,12 +551,13 @@ export class Diagram {
     };
     const record = ({ edge, from, to }: (typeof path)[number]) =>
       recordWalk(this.scene, { step: this.scene.currentStep?.name, from, to, edge: edge.info.id });
+    this.walked = {
+      step: this.scene.currentStep?.name,
+      hops: path.map(({ edge }) => `${this.nameOf(edge.info.from!)} → ${this.nameOf(edge.info.to!)}`),
+    };
     if (parallel && path.length) {
-      const tokens = path.map(({ edge }) =>
-        new Dot({ radius: 0.08, color }).moveTo(edge.route!.pointFromProportion(0)),
-      );
-      this.root.add(...tokens);
-      await this.scene.play(...tokens.map((token) => new FadeIn(token, { runTime: 0.18 })));
+      const tokens = path.map(({ edge }) => this.token(edge.route!, color));
+      await this.scene.play(...tokens.map((token) => new FadeIn(token, { runTime: TOKEN.fade })));
       await this.scene.play(
         ...tokens.map(
           (token, i) => new MoveAlongPath(token, path[i]!.edge.route!, { runTime, rateFunc: linear }),
@@ -502,16 +565,15 @@ export class Diagram {
         ...lay(path.map((p) => p.edge.info.id)),
       );
       path.forEach(record);
-      await this.scene.play(...tokens.map((token) => new FadeOut(token, { runTime: 0.18 })));
+      await this.scene.play(...tokens.map((token) => new FadeOut(token, { runTime: TOKEN.fade })));
       return;
     }
     let token: Dot | null = null;
     for (let i = 0; i < path.length; i++) {
       const hop = path[i]!;
       if (!token) {
-        token = new Dot({ radius: 0.08, color }).moveTo(hop.edge.route!.pointFromProportion(0));
-        this.root.add(token);
-        await this.scene.play(new FadeIn(token, { runTime: 0.18 }));
+        token = this.token(hop.edge.route!, color);
+        await this.scene.play(new FadeIn(token, { runTime: TOKEN.fade }));
       }
       await this.scene.play(
         new MoveAlongPath(token, hop.edge.route!, { runTime, rateFunc: linear }),
@@ -519,16 +581,10 @@ export class Diagram {
       );
       record(hop);
       if (path[i + 1]?.a !== hop.b) {
-        await this.scene.play(new FadeOut(token, { runTime: 0.18 }));
+        await this.scene.play(new FadeOut(token, { runTime: TOKEN.fade }));
         token = null;
       }
     }
-  }
-  /** A brief pulse. For emphasis that should stay, use `mark`. */
-  async highlight(ids: readonly string[], { color = this.accent, runTime = 0.7 } = {}): Promise<void> {
-    await this.scene.play(
-      ...ids.map((id) => new Indicate(this.get(id), { color, runTime, scaleFactor: 1.025 })),
-    );
   }
   private async moveParts(mobs: Group[], targetFor: (m: Group) => Group, runTime: number): Promise<void> {
     const shown: Transform[] = [];
@@ -571,16 +627,7 @@ export class Diagram {
       const k = wide ? (home[2] - home[0]) / (now[2] - now[0]) : (home[3] - home[1]) / (now[3] - now[1]);
       const a: Vec = [(now[0] + now[2]) / 2, (now[1] + now[3]) / 2],
         b: Vec = [(home[0] + home[2]) / 2, (home[1] + home[3]) / 2];
-      await this.moveParts(
-        mobs,
-        (m) => {
-          const target = m.copy();
-          scaleArtwork(target, k, a);
-          target.shift([b[0] - a[0], b[1] - a[1]]);
-          return target;
-        },
-        runTime,
-      );
+      await this.moveParts(mobs, (m) => moved(m, k, a, b), runTime);
       this.rezoom(1);
       return;
     }
@@ -595,17 +642,7 @@ export class Diagram {
       ) *
       0.78 *
       zoom;
-    const at: Vec = [(box[0] + box[2]) / 2, (box[1] + box[3]) / 2];
-    await this.moveParts(
-      mobs,
-      (m) => {
-        const target = m.copy();
-        scaleArtwork(target, k, center);
-        target.shift([at[0] - center[0], at[1] - center[1]]);
-        return target;
-      },
-      runTime,
-    );
+    await this.moveParts(mobs, (m) => moved(m, k, center, boxCenter(box)), runTime);
     this.rezoom(this.zoom * k);
   }
   /**
@@ -620,11 +657,13 @@ export class Diagram {
   /**
    * Same-id marks glide to their next place; arrivals fade in, departures fade
    * out. Marks, dimming and notes are reset: the next diagram starts plain.
+   * The next diagram keeps this one's style unless it names its own.
    */
   async morph(
     next: DiagramSpec,
     { ops, runTime = 1.1 }: { ops?: readonly MutationOp[]; runTime?: number } = {},
   ): Promise<void> {
+    if (next.style == null && this.spec.style != null) next = { ...next, style: this.spec.style };
     const resolver = diagramsOf(this.scene);
     if (ops && resolver.morph) await resolver.morph(this.spec, next, ops);
     const snapshot = await resolver.diagram(next);
@@ -661,6 +700,7 @@ export class Diagram {
     this.zoom = 1;
     this.marks.clear();
     this.kept = null;
+    this.walked = null;
   }
   /** Fade the whole diagram (and its notes) out. `reveal` can bring parts back. */
   async hide(): Promise<void> {
@@ -676,6 +716,7 @@ export class Diagram {
   forget(): void {
     this.marks.clear();
     this.kept = null;
+    this.walked = null;
     this.looks(this.base.keys(), 0, false);
     this.notes = [];
     this.visible.clear();

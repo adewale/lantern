@@ -1,6 +1,6 @@
 import { Scene, Rectangle, Text, Group, FadeIn, FadeOut, Transform } from '../../../src/index.ts';
 import type { Vec } from '../../../src/index.ts';
-import { stage, palette, settingsOf } from '../../../explain/index.ts';
+import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
 import { TokenBucket } from '../lib/models.ts';
 
 const TIMES = [0, 0, 0, 0, 0, 0, 0.5, 1, 1, 2];
@@ -9,8 +9,6 @@ const GROUPS = [
   [6, 9],
   [9, 10],
 ] as const;
-const OK = '#3fb950',
-  NO = '#f85149';
 const CODE = [
   'function allow(now) {',
   '  tokens = min(5, tokens + (now - lastRefill) * rate)',
@@ -44,7 +42,7 @@ export default class TokenBucketExplainer extends Scene {
   override async construct() {
     const rate = Number(settingsOf(this).rate),
       bucket = new TokenBucket(rate),
-      s = stage(this, { palette: palette('github-dark') });
+      s = stage(this, { style: 'github-dark' });
     const ink = s.palette.ink,
       soft = s.soft;
 
@@ -71,7 +69,7 @@ export default class TokenBucketExplainer extends Scene {
       CHIP_Y = 2.3;
     const chipX = (i: number) => (i - 4.5) * PITCH;
     const chip = (i: number, result: boolean | null) => {
-      const color = result == null ? s.palette.muted : result ? OK : NO;
+      const color = result == null ? s.palette.muted : result ? s.good : s.bad;
       const box = new Rectangle({
         width: 1.22,
         height: 0.95,
@@ -242,7 +240,7 @@ export default class TokenBucketExplainer extends Scene {
       'xychart-beta\n x-axis [R1,R2,R3,R4,R5,R6,R7,R8,R9,R10]\n y-axis "Tokens remaining" 0 --> 5\n bar [' +
       balances.join(',') +
       ']';
-    const chart = await s.show({ source, style: 'github-dark' }, { box: [-7.55, -4.25, 7.55, 1.55] });
+    const chart = await s.show({ source }, { box: regionBox('full', { top: 1.55 }) });
     // Line the answer chips up over their own columns.
     const columnX = (i: number) => chart.get('axis:x:tick:R' + (i + 1)).center()[0];
     await this.play(
@@ -259,18 +257,17 @@ export default class TokenBucketExplainer extends Scene {
         new Rectangle({
           width: pitch * 0.92,
           height: y5 - y0,
-          stroke: NO,
+          stroke: s.bad,
           strokeWidth: 0.02,
-          fill: NO,
+          fill: s.bad,
           fillOpacity: 0.12,
         }).moveTo([columnX(i), (y0 + y5) / 2]),
       ),
     );
-    s.keep(bands);
-    await this.play(new FadeIn(bands));
+    await s.enter(bands);
     await chart.mark(
       rejected.map((i) => 'bar:0:R' + (i + 1)),
-      { color: NO },
+      { color: s.bad },
     );
   }
 }

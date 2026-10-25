@@ -13,6 +13,7 @@ import { buildExplainer, buildLoader } from '../tools/lib/explain-build.ts';
 import fc from 'fast-check';
 import { resolveSettings } from '../explain/index.ts';
 import type { Settings } from '../explain/index.ts';
+import { pictureHtml } from '../explain/trace.ts';
 import { zoomAt, ZOOM_MAX } from '../app/embed-zoom.ts';
 
 const enabled = !!process.env.EXPLAIN_BROWSER,
@@ -119,11 +120,11 @@ test(
         b = await readyFrame(page, 'oauth-pkce');
       const ah = await assertHeight(page, 'a', a),
         bh = await assertHeight(page, 'b', b);
-      await a.locator('summary').click();
+      await a.locator('.transcript > summary').click();
       const grown = await assertHeight(page, 'a', a);
       assert.ok(grown > ah);
       await assertHeight(page, 'b', b);
-      await a.locator('summary').click();
+      await a.locator('.transcript > summary').click();
       assert.equal(await assertHeight(page, 'a', a), ah);
       // Same origin, wrong window: a's valid message must never resize b.
       await deliver(page, a, 7777);
@@ -132,7 +133,7 @@ test(
         bh + 'px',
       );
       // Restore a through a genuine content change.
-      await a.locator('summary').click();
+      await a.locator('.transcript > summary').click();
       await assertHeight(page, 'a', a);
       // Correct WindowProxy after navigation, wrong origin: origin check remains necessary.
       await page.route('http://localhost:43219/**', (r) =>
@@ -162,7 +163,7 @@ test(
     try {
       await page.goto(embed + '/oauth-pkce?attacker=yes&step=attack&theme=dark');
       await page.waitForSelector('[data-ready=true]');
-      assert.match(await page.locator('.caption').innerText(), /has the code but has to guess a verifier/);
+      assert.match(await page.locator('.caption').innerText(), /has to guess the verifier/);
       assert.equal(await page.locator('input[name=attacker]:checked').inputValue(), 'yes');
       assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
       assert.equal(
@@ -278,7 +279,7 @@ test(
         fit,
       );
       assert.equal(await page.getByRole('button', { name: 'Fit stage' }).isHidden(), true, 'Fit appears only when zoomed');
-      await page.locator('summary').click();
+      await page.locator('.transcript > summary').click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
       await page.locator('#content').focus();
       await page.keyboard.press('ArrowLeft');
@@ -357,6 +358,7 @@ interface StepSpec {
   step: string;
   caption: string;
   title: string;
+  picture: string;
 }
 interface Entry {
   values: Settings;
@@ -388,6 +390,7 @@ function stepsOf(p: Project, values: Settings): StepSpec[] {
     step: s.step,
     caption: String(s.meta.caption ?? ''),
     title: String(s.meta.title ?? s.step),
+    picture: pictureHtml(s.after),
   }));
 }
 const current = (m: PlayerModel) => m.entries[m.index]!;
@@ -440,6 +443,8 @@ function observe(ids: string[]) {
     list: [...document.querySelectorAll<HTMLElement>('.steps button')].map((b) => b.dataset.step),
     caption: document.querySelector('.caption')!.textContent,
     stageLabel: stage.getAttribute('aria-label'),
+    // The resting picture in words, as the stage's description.
+    picture: document.getElementById(stage.getAttribute('aria-describedby') ?? '')?.innerHTML,
     title: document.querySelector('h1')!.textContent,
     prevDisabled: button('Previous step')!.disabled,
     nextDisabled: button('Next step')!.disabled,
@@ -506,6 +511,7 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   eq('aria-current', seen.current, [entry.step]);
   eq('caption', seen.caption, spec.caption);
   eq('stage label', seen.stageLabel, `${seen.title}: ${spec.title}`);
+  eq('stage description', seen.picture, spec.picture);
   eq('Previous disabled', seen.prevDisabled, i === 0);
   eq('Next disabled', seen.nextDisabled, i === list.length - 1);
   eq('notice', seen.notice, m.notice);
@@ -676,14 +682,17 @@ const CopyLink: Cmd = {
   },
   toString: () => 'CopyLink',
 };
-const Key = (key: string) =>
-  command(`Key(${JSON.stringify(key)})`, always, async (m, r) => {
-    await r.page.locator('#content').focus();
+/** A key pressed on the page, or on the focused stage: only the stage takes zoom keys, and once zoomed its arrows pan. */
+const Key = (key: string, onStage = false) =>
+  command(`Key(${JSON.stringify(key)}${onStage ? ', stage' : ''})`, always, async (m, r) => {
+    await r.page.locator(onStage ? '.stage' : '#content').focus();
     await r.page.keyboard.press(key);
-    const i = selected(m);
-    if (key === 'ArrowRight' && i < steps(m).length - 1) goTo(m, i + 1);
+    const i = selected(m),
+      stepping = !(onStage && m.k > 1);
+    if (stepping && key === 'ArrowRight' && i < steps(m).length - 1) goTo(m, i + 1);
     // ArrowLeft mirrors Previous, which is disabled on the first step.
-    if (key === 'ArrowLeft' && i > 0) goTo(m, i - 1);
+    if (stepping && key === 'ArrowLeft' && i > 0) goTo(m, i - 1);
+    if (!onStage) return;
     if (key === '+' || key === '=') m.k = kAfter(m.k, 1.6);
     if (key === '-') m.k = kAfter(m.k, 1 / 1.6);
     if (key === '0') m.k = 1;
@@ -770,7 +779,7 @@ function commandArbs(p: Project): fc.Arbitrary<Cmd>[] {
     fc.constantFrom('Zoom in', 'Zoom out', 'Fit stage').map((w) => ZoomButton(w as 'Zoom in')),
     fc.constant(Replay),
     fc.constant(CopyLink),
-    fc.constantFrom('ArrowRight', 'ArrowLeft', '+', '=', '-', '0').map(Key),
+    fc.tuple(fc.constantFrom('ArrowRight', 'ArrowLeft', 'ArrowUp', '+', '=', '-', '0'), fc.boolean()).map(([k, onStage]) => Key(k, onStage)),
     fc.tuple(fc.double({ min: 0, max: 1, noNaN: true }), fc.double({ min: 0, max: 1, noNaN: true })).map(
       ([u, v]) => DoubleClick(u, v),
     ),
@@ -881,7 +890,8 @@ async function quiet(page: Page, ms = 300) {
     if ((await page.evaluate(() => (window as unknown as { __settles: number }).__settles)) === n) return;
   }
 }
-const stagePicture = (page: Page) => page.locator('.stage').evaluate((s) => s.innerHTML);
+// The picture on the stage, not one still fading out under reduced motion.
+const stagePicture = (page: Page) => page.locator('.stage').evaluate((s) => s.querySelector('svg:not(.leaving)')?.outerHTML);
 const caseQuery = (p: Project, values: Settings, step: string) => {
   const q = new URLSearchParams();
   for (const s of settingsOfProject(p)) q.set(s.id, values[s.id]!);

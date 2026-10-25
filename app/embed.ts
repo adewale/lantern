@@ -1,8 +1,9 @@
 import { DomSink, renderAt, traceScene, SeekSink } from '../src/index.ts';
-import { StopScene } from '../src/scene.ts';
-import type { Trace } from '../src/trace.ts';
-import { bindSnapshots, withSettings, resolveSettings } from '../explain/index.ts';
+import type { Trace } from '../src/index.ts';
+import { StopScene } from '../src/index.ts';
+import { bindSnapshots, withSettings, resolveSettings, caseName } from '../explain/index.ts';
 import type { ExplainerClass, Settings, SnapshotStore } from '../explain/index.ts';
+import { restingTime, pictureHtml } from '../explain/trace.ts';
 import { reportHeight } from './embed-protocol.ts';
 import { icon } from './embed-icons.ts';
 import type { IconName } from './embed-icons.ts';
@@ -47,7 +48,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const cache = new Map<string, { Scene: ExplainerClass; trace: Trace }>();
 
   // Title, then the cases it can show: the choice sits next to what it changes.
-  const title = el('h1', Source.meta?.title ?? 'An explanation');
+  // The built page's heading is the title, so the live page says what the static one did.
+  const title = el('h1', root.querySelector('h1')?.textContent ?? Source.meta?.title ?? '');
   const head = el('header', undefined, 'head');
   head.append(title);
   const choices = new Map<string, HTMLInputElement[]>();
@@ -82,8 +84,15 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   stage.setAttribute('aria-label', title.textContent!);
   const poster = root.querySelector('svg');
   if (poster) stage.append(poster);
+  stage.tabIndex = 0;
   const caption = el('p', undefined, 'caption');
   caption.setAttribute('aria-live', 'polite');
+  // The resting picture in words, for readers who cannot see it or cannot read its labels.
+  const described = el('details', undefined, 'described'),
+    picture = el('div');
+  picture.id = 'picture';
+  described.append(el('summary', 'What the picture shows'), picture);
+  stage.setAttribute('aria-describedby', picture.id);
   const controls = el('nav', undefined, 'controls');
   controls.setAttribute('aria-label', 'Steps');
   const prev = button('Previous step', 'previous'),
@@ -101,7 +110,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   controls.append(prev, next, tools);
   const notice = el('p', undefined, 'notice');
   notice.setAttribute('role', 'status');
-  player.append(stage, caption, controls, notice);
+  player.append(stage, caption, described, controls, notice);
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', 'Steps in this explanation');
@@ -148,6 +157,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     for (const b of steps.querySelectorAll('button'))
       b.setAttribute('aria-current', b.dataset.step === step.step ? 'step' : 'false');
     stage.setAttribute('aria-label', `${title.textContent}: ${String(step.meta.title ?? step.step)}`);
+    picture.innerHTML = pictureHtml(step.after);
+    described.hidden = !picture.innerHTML;
     setIcon(replay, playing ? 'Stop animation' : 'Replay step', playing ? 'stop' : 'replay');
   }
   function settle(step: Trace['steps'][number]) {
@@ -163,13 +174,15 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     chrome();
     link(push);
     const step = trace.steps[selected]!;
-    // A step's last frame: what the reader looks at while reading its caption.
-    const at = Math.max(step.t0, (step.t1 ?? step.t0) - 0.5 / trace.fps);
     const container = el('div'),
       sink = new DomSink(container, { realtime: false });
-    await renderAt(Active, at, sink);
+    await renderAt(Active, restingTime(step, trace.fps), sink);
     if (gen !== generation) return;
-    stage.replaceChildren(...container.childNodes);
+    // Reduced motion: no animation, but the old picture fades out over the new one, so the change is still seen.
+    const old = reduced() ? stage.querySelector('svg') : null;
+    old?.classList.add('leaving');
+    old?.addEventListener('animationend', () => old.remove());
+    stage.replaceChildren(...container.childNodes, ...(old ? [old] : []));
     settle(step);
   }
   const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -219,11 +232,6 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     // where the caption hold begins, before anything the step adds after its last play().
     await show(selected, false);
   }
-  function caseName(values: Settings): string {
-    return (Source.settings ?? [])
-      .map((s) => `${s.label}: ${s.options.find((o) => o.value === values[s.id])?.label ?? values[s.id]}`)
-      .join(' · ');
-  }
   function updateTranscript() {
     const list = el('ol');
     for (const s of trace.steps) {
@@ -236,7 +244,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
         e.preventDefault();
         void show(trace.steps.indexOf(s));
       });
-      li.append(a, el('p', String(s.meta.caption ?? '')));
+      const words = el('div');
+      words.innerHTML = pictureHtml(s.after);
+      li.append(a, el('p', String(s.meta.caption ?? '')), ...(words.innerHTML ? [words] : []));
       list.append(li);
     }
     const sources = el('ul');
@@ -249,7 +259,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       li.append(a);
       sources.append(li);
     }
-    const name = caseName(values);
+    const name = caseName(Source, values);
     transcript.replaceChildren(
       el('summary', 'Transcript'),
       ...(name ? [el('h2', name)] : []),
@@ -346,15 +356,25 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   root.addEventListener('keydown', (e) => {
     const tag = (e.target as HTMLElement).tagName;
     if (['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON', 'A', 'SUMMARY'].includes(tag) || e.ctrlKey || e.metaKey) return;
-    const keys: Record<string, () => void> = {
-      ArrowRight: () => void advance(),
-      // Like the Previous button, which is disabled on the first step.
-      ArrowLeft: () => void (selected > 0 && show(selected - 1)),
-      '+': () => zoom.zoomAt(1.6),
-      '=': () => zoom.zoomAt(1.6),
-      '-': () => zoom.zoomAt(1 / 1.6),
-      '0': () => zoom.reset(),
-    };
+    // Zoom keys act only on the focused stage, so they never take a key from the page; once
+    // zoomed, the focused stage's arrows pan, a tenth of the stage at a time.
+    const onStage = e.target === stage,
+      pan = (dx: number, dy: number) => () => zoom.pan((dx * stage.clientWidth) / 10, (dy * stage.clientHeight) / 10);
+    const keys: Record<string, () => void> =
+      onStage && zoom.k > 1
+        ? { ArrowLeft: pan(1, 0), ArrowRight: pan(-1, 0), ArrowUp: pan(0, 1), ArrowDown: pan(0, -1) }
+        : {
+            ArrowRight: () => void advance(),
+            // Like the Previous button, which is disabled on the first step.
+            ArrowLeft: () => void (selected > 0 && show(selected - 1)),
+          };
+    if (onStage)
+      Object.assign(keys, {
+        '+': () => zoom.zoomAt(1.6),
+        '=': () => zoom.zoomAt(1.6),
+        '-': () => zoom.zoomAt(1 / 1.6),
+        '0': () => zoom.reset(),
+      });
     const action = keys[e.key];
     if (!action) return;
     e.preventDefault();

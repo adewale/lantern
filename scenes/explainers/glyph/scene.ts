@@ -9,11 +9,10 @@ import {
   Group,
   Line,
   Dot,
+  shaperFor,
 } from '../../../src/index.ts';
-import type { Mobject, Vec } from '../../../src/index.ts';
-import { shaperFor } from '../../../src/fonts.ts';
-import type { FontName } from '../../../src/fonts.ts';
-import { stage, palette, settingsOf, CodeBlock } from '../../../explain/index.ts';
+import type { Mobject, Vec, FontName } from '../../../src/index.ts';
+import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
 
 const WORD = 'Hello, outlines';
 const SIZE = 0.9; // the size the fidelity test measures
@@ -106,10 +105,9 @@ export default class GlyphExplainer extends Scene {
   override async construct() {
     const font = settingsOf(this).font as FontName,
       other: FontName = font === 'sans' ? 'mono' : 'sans',
-      s = stage(this, { palette: palette(STYLE) }),
+      s = stage(this, { style: STYLE }),
       ink = s.palette.ink,
-      // emphasis() reads pen-and-ink's near-black accent as a hue; use the warm mark it intends.
-      hot = '#d9480f',
+      hot = s.emphasis,
       soft = s.soft;
     const mine = shape(font, WORD),
       theirs = shape(other, WORD);
@@ -130,11 +128,10 @@ export default class GlyphExplainer extends Scene {
     big.setStroke(hot, 0.022);
     const net = controlNet(big, hot, soft);
     s.keep(big);
-    s.keep(net);
     const ob = text.children[oIndex]!.box()!;
     const underline = s.keep(new Line([ob[0], ob[1] - 0.12], [ob[2], ob[1] - 0.12], { stroke: hot, strokeWidth: 0.04 }));
     await this.play(new Create(big, { runTime: 1.2 }), new Create(underline, { runTime: 0.6 }));
-    await this.play(new FadeIn(net, { runTime: 0.6 }));
+    await s.enter(net, { runTime: 0.6 });
 
     await this.step('measure', {
       title: 'Inter and JetBrains Mono give the same words different widths',
@@ -173,7 +170,7 @@ export default class GlyphExplainer extends Scene {
         'The font stores quadratic curves and lines, as the note beside it counts. Lantern raises every segment to a cubic, so one kind of path feeds both the SVG player and offline video frames.',
     });
     await s.clear();
-    const d = await s.show({ source: pipeline(NAME[font]), style: STYLE }, { box: [-7.55, -4.25, -0.4, 3.25] });
+    const d = await s.show({ source: pipeline(NAME[font]) }, { box: [-7.55, -4.25, -0.4, 3.25] });
     await d.walk(
       [
         ['Font', 'Shape'],
@@ -202,9 +199,8 @@ export default class GlyphExplainer extends Scene {
       lines.push(`  … ${curves - (c === 0 ? 2 : 1)} more C … Z`);
     });
     lines.push('"/>');
-    s.keep(solid);
-    await this.play(new FadeIn(solid, { runTime: 0.5 }));
-    await s.code(lines, { at: [0.15, -4.25, 7.55, 0.7], fontSize: 0.22 });
+    await s.enter(solid, { runTime: 0.5 });
+    await s.code(lines, { at: regionBox('right', { top: 0.7 }), fontSize: 0.22 });
 
     await this.step('morph', {
       title: 'A text diff becomes a glyph morph',
@@ -214,16 +210,13 @@ export default class GlyphExplainer extends Scene {
     await s.clear();
     const before = new Text('cache miss', { font, fontSize: 1.1, color: ink }).moveTo([-2.7, 1.9]);
     const after = new Text('cache hit', { font, fontSize: 1.1, color: hot }).moveTo([-2.7, -1.6]);
-    s.keep(before);
-    await this.play(new FadeIn(before, { runTime: 0.5 }));
-    const diff = new CodeBlock(this, s.palette, ['- cache miss', '+ cache hit'], {
+    await s.enter(before, { runTime: 0.5 });
+    await s.code(['- cache miss', '+ cache hit'], {
       // Level with the gap between the two words, beside the pairing lines.
       at: [3.0, -1.6, 7.55, 1.9],
       fontSize: 0.3,
       diff: true,
     });
-    s.keep(diff);
-    await this.play(new FadeIn(diff, { runTime: 0.4 }));
     const charOf = (t: Text, g: Mobject) => t.text[(g as unknown as { cluster: number }).cluster]!;
     const pairs = new Group();
     before.children.forEach((g, i) => {
@@ -254,7 +247,7 @@ export default class GlyphExplainer extends Scene {
         'The pen-and-ink style asks for EB Garamond, but Lantern draws labels in embedded Inter, stretched to the width agentic-mermaid wrote into each label’s textLength. Box shapes and strokes come from the style; only the letterforms differ.',
     });
     await s.clear();
-    const again = await s.show({ source: pipeline(NAME[font]), style: STYLE }, { box: [-7.55, -4.25, -1.4, 3.25] });
+    const again = await s.show({ source: pipeline(NAME[font]) }, { box: [-7.55, -4.25, -1.4, 3.25] });
     const run = again.snapshot.parts
       .flatMap((p) => p.shapes)
       .find((sh) => sh.textRun?.text === 'Video frames')!.textRun!;

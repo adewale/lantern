@@ -9,22 +9,21 @@ const EXPECTED = [
   // model
   'Mobject', 'Group', 'VMobject',
   'Arc', 'ArcBetweenPoints', 'Arrow', 'Circle', 'CurvedArrow', 'Dot', 'Labeled', 'Line', 'Polygon', 'Rectangle', 'Square',
-  'Text', 'DecimalNumber', 'Code', 'title', 'CodePanel', 'StateReadout',
-  'Flowchart', 'flowchart', 'FLOWCHART_THEME', 'parseMermaid', 'layoutGraph',
+  'Text', 'DecimalNumber', 'Code',
   // motion
   'Animation', 'Transform', 'FadeIn', 'FadeOut', 'Create', 'Write', 'Indicate', 'Flash', 'MoveAlongPath', 'AnimationGroup', 'LaggedStart',
   'linear', 'smooth', 'rushInto', 'rushFrom', 'thereAndBack', 'easeInQuad', 'easeOutQuad', 'easeOutBack', 'wiggle',
-  'Scene', 'DocScene', 'sceneFromDoc',
+  'Scene', 'StopScene',
   // vocabulary
   'ORIGIN', 'UP', 'DOWN', 'LEFT', 'RIGHT', 'UL', 'UR', 'DL', 'DR', 'add', 'sub', 'mul', 'dot', 'norm', 'normalize', 'lerp', 'rotate', 'angleOf',
   'WHITE', 'BLACK', 'GREY', 'GREY_D', 'BLUE', 'BLUE_D', 'TEAL', 'GREEN', 'YELLOW', 'GOLD', 'RED', 'MAROON', 'PURPLE', 'ORANGE',
-  'loadFonts',
+  'loadFonts', 'shaperFor', 'takeMissingGlyphs',
   // output
   'toSvgString', 'renderElements', 'StringSink', 'SnapshotSink', 'DomSink', 'renderText',
   // time
   'NullSink', 'SeekSink', 'indexScene', 'stepTime', 'renderAt', 'TraceSink', 'traceScene',
   // diagnostics
-  'perf', 'MotionSink', 'analyzeMotion', 'summarizeMotion',
+  'perf', 'MotionSink', 'analyzeMotion',
 ].sort();
 
 test('the public API is exactly the documented set of names', () => {

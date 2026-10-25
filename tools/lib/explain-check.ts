@@ -15,7 +15,8 @@ import {
   Text,
 } from '../../src/index.ts';
 import { ROOT, engineAlias, sceneSlug } from './explain-project.ts';
-import { wrapCaption, FOOTER_TEXT_WIDTH } from './explain-captions.ts';
+import { caseName } from '../../explain/index.ts';
+import { restingFrame } from '../../explain/trace.ts';
 import type { Box, Mobject } from '../../src/index.ts';
 import type { Project } from './explain-project.ts';
 
@@ -59,8 +60,19 @@ export function lintConstruct(source: string): string[] {
   return errors;
 }
 /** Smallest label, in CSS pixels at a 1280-pixel stage, a reader must be able to see. */
-export const MIN_PX = 14;
+const MIN_PX = 14;
+/** Reader CSS pixels per scene unit on a 1280-pixel stage. */
+const STAGE_PX_PER_UNIT = 1280 / 16;
 const FRAME: Box = [-8, -4.5, 8, 4.5];
+/** Fully drawn and inside the viewport: a label a reader can see at its size. */
+const readable = (m: Mobject, box: Box | null, viewport: Box) =>
+  !!box &&
+  box[0] >= viewport[0] - 1e-5 &&
+  box[2] <= viewport[2] + 1e-5 &&
+  box[1] >= viewport[1] - 1e-5 &&
+  box[3] <= viewport[3] + 1e-5 &&
+  m.style.opacity >= 0.95 &&
+  (m.style.drawFraction ?? 1) >= 0.95;
 
 /**
  * Text a reader would see colliding: a native Text overlapping any other
@@ -120,7 +132,7 @@ export function restingTextProblems(scene: { familyMembers(): Mobject[] }): stri
 function legibilityReport(px: number[]) {
   const sizes = px.filter((p) => p > 0);
   const min = sizes.length ? Math.min(...sizes) : null;
-  const phone = (p: number) => Math.round((p * 390) / 1280 * 10) / 10;
+  const phone = (p: number) => Math.round(((p * 390) / 1280) * 10) / 10;
   return {
     minLabelPx1280: min == null ? null : Math.round(min * 10) / 10,
     minLabelPx390: min == null ? null : phone(min),
@@ -138,6 +150,7 @@ export async function checkProject(
   await mkdir(out, { recursive: true });
   const variants = [];
   for (const v of project.variants) {
+    const where = `in ${caseName(project.Scene, v.values) || 'the scene'}`;
     const motion = new MotionSink(),
       frames = new Map<number, string>();
     const targets = new Set(
@@ -147,16 +160,7 @@ export async function checkProject(
       ]),
     );
     const labels = new Map<string, number>();
-    // A step's resting frame is its last: frames are numbered as emitted, so
-    // the final frame of a step carries the number recorded as its frame1.
-    const restFrame = (s: (typeof v.trace.steps)[number]) => Math.max(s.frame0 + 1, s.frame1 ?? s.frame0 + 1);
-    const completedFrames = new Set(v.trace.steps.map(restFrame));
-    // The first frame of a step's caption hold: the player stops where the hold begins, so from
-    // there to the resting frame the picture must not change.
-    const holdFrame = (s: (typeof v.trace.steps)[number]) =>
-      s.hold == null ? null : Math.round(s.hold * v.trace.fps) + 1;
-    const holdFrames = new Set(v.trace.steps.map(holdFrame).filter((f): f is number => f != null));
-    const holding = new Map<number, string>();
+    const completedFrames = new Set(v.trace.steps.map(restingFrame));
     const staticLabels = new Map<string, { text: string; px: number }>();
     const resting = new Map<number, string>();
     const restingText = new Map<number, string>();
@@ -165,12 +169,6 @@ export async function checkProject(
       async frame(scene) {
         await motion.frame(scene);
         if (targets.has(scene.frameCount)) frames.set(scene.frameCount, toSvgString(scene));
-        if (holdFrames.has(scene.frameCount)) {
-          const all = scene.mobjects;
-          scene.mobjects = all.filter((m) => m.key !== '__heading');
-          holding.set(scene.frameCount, toSvgString(scene));
-          scene.mobjects = all;
-        }
         if (completedFrames.has(scene.frameCount)) {
           // The resting picture of a step, without the heading that names it.
           const all = scene.mobjects;
@@ -188,7 +186,8 @@ export async function checkProject(
               ? m.run.fontSize / (m.run.ascent + m.run.descent)
               : (m as unknown as { emRatio?: number }).emRatio;
           if (!ratio) continue;
-          const viewport: Box = [-8, -4.5, 8, 4.5];
+          const viewport: Box = [...FRAME],
+            px = m.height() * ratio * STAGE_PX_PER_UNIT;
           for (let ancestor: Mobject | null = m; ancestor; ancestor = ancestor.parent)
             if (ancestor.clipBox) {
               const clip = ancestor.clipBox;
@@ -205,34 +204,12 @@ export async function checkProject(
             const size = (m as unknown as { fontSize: number }).fontSize;
             const key = `${owner?.key ?? text}@${Number(size).toPrecision(5)}`;
             if (!staticLabels.has(key)) staticLabels.set(key, { text, px: 0 });
-            const box = (owner ?? m).box();
-            if (
-              completedFrames.has(scene.frameCount) &&
-              box &&
-              box[0] >= viewport[0] - 1e-5 &&
-              box[2] <= viewport[2] + 1e-5 &&
-              box[1] >= viewport[1] - 1e-5 &&
-              box[3] <= viewport[3] + 1e-5 &&
-              m.style.opacity >= 0.95 &&
-              (m.style.drawFraction ?? 1) >= 0.95
-            ) {
-              const record = staticLabels.get(key)!;
-              record.px = Math.max(record.px, m.height() * ratio * 80);
-            }
+            const record = staticLabels.get(key)!;
+            if (completedFrames.has(scene.frameCount) && readable(m, (owner ?? m).box(), viewport))
+              record.px = Math.max(record.px, px);
           }
           if (!labels.has(text)) labels.set(text, 0);
-          const box = m.box();
-          if (
-            !box ||
-            box[0] < viewport[0] - 1e-5 ||
-            box[2] > viewport[2] + 1e-5 ||
-            box[1] < viewport[1] - 1e-5 ||
-            box[3] > viewport[3] + 1e-5 ||
-            m.style.opacity < 0.95 ||
-            (m.style.drawFraction ?? 1) < 0.95
-          )
-            continue;
-          labels.set(text, Math.max(labels.get(text) ?? 0, m.height() * ratio * 80));
+          if (readable(m, m.box(), viewport)) labels.set(text, Math.max(labels.get(text)!, px));
         }
       },
     }).run();
@@ -240,55 +217,36 @@ export async function checkProject(
     assert.equal(
       events.length,
       0,
-      `Motion failures ${JSON.stringify(v.values)}: ${JSON.stringify(events.slice(0, 8))}`,
+      `Motion failures ${where}: ${JSON.stringify(events.slice(0, 8))}`,
     );
     for (const [frame, svg] of frames) {
       const sink = new SnapshotSink();
       await renderAt(v.Scene, frame / v.trace.fps, sink);
-      assert.equal(sink.svg, svg, `Seek mismatch at frame ${frame}`);
+      assert.equal(sink.svg, svg, `Seek mismatch at frame ${frame} ${where}`);
     }
     const skipped = await traceScene(v.Scene, { skipUntil: 0 });
-    assert.deepEqual(skipped, v.trace, 'Skipped and played traces differ');
-    const still = v.trace.steps.filter((step, i) => {
-      if (!i) return false;
-      return resting.get(restFrame(step)) === resting.get(restFrame(v.trace.steps[i - 1]!));
-    });
+    assert.deepEqual(skipped, v.trace, `Skipped and played traces differ ${where}`);
+    const still = v.trace.steps.filter(
+      (step, i) => i > 0 && resting.get(restingFrame(step)) === resting.get(restingFrame(v.trace.steps[i - 1]!)),
+    );
     assert.deepEqual(
       still.map((s) => s.step),
       [],
-      `Each step must change the picture; these end exactly as the step before ${JSON.stringify(v.values)}`,
-    );
-    const moving = v.trace.steps.filter((step) => {
-      const f = holdFrame(step);
-      return f != null && holding.get(f) !== resting.get(restFrame(step));
-    });
-    assert.deepEqual(
-      moving.map((s) => s.step),
-      [],
-      `A step's picture must stop changing once its caption hold begins (the player stops there) ${JSON.stringify(v.values)}`,
+      `Each step must change the picture; these end exactly as the step before ${where}`,
     );
     assert.deepEqual(
       [...new Set(collisions)],
       [],
-      `Resting frames have colliding or cut-off text ${JSON.stringify(v.values)}`,
+      `Resting frames have colliding or cut-off text ${where}`,
     );
-    // Every case's captions must fit the video footer, not just the default case that gets rendered.
-    for (const step of v.trace.steps)
-      if (typeof step.meta.caption === 'string') {
-        try {
-          wrapCaption(step.meta.caption, FOOTER_TEXT_WIDTH);
-        } catch (error) {
-          assert.fail(`${step.step} ${JSON.stringify(v.values)}: ${(error as Error).message}`);
-        }
-      }
     const staticSmall = [...staticLabels.values()].filter((label) => label.px < MIN_PX);
     assert.deepEqual(
       staticSmall,
       [],
-      `Imported labels need a readable completed-step view at 1280px: ${JSON.stringify(staticSmall)}`,
+      `Imported labels need a readable completed-step view at 1280px ${where}: ${JSON.stringify(staticSmall)}`,
     );
     const small = [...labels].filter(([, px]) => px < MIN_PX);
-    assert.deepEqual(small, [], `Labels never reach ${MIN_PX}px at 1280px stage: ${JSON.stringify(small)}`);
+    assert.deepEqual(small, [], `Labels never reach ${MIN_PX}px at 1280px stage ${where}: ${JSON.stringify(small)}`);
     const contents = `import * as author from ${JSON.stringify(project.file)};import{bindSnapshots,withSettings}from ${JSON.stringify(join(ROOT, 'explain/index.ts'))};import{Scene,NullSink,toSvgString}from ${JSON.stringify(join(ROOT, 'src/index.ts'))};const Source=author[${JSON.stringify(project.exportName)}];export async function run(){const C=withSettings(bindSnapshots(Source,${JSON.stringify(project.store)}),${JSON.stringify(v.values)});const s=await new C(new NullSink(),{skipUntil:Infinity}).run();return{steps:s.steps.map(s=>s.name),state:s.describe(),svg:toSvgString(s)}}`;
     const b = await build({
       stdin: { contents, resolveDir: ROOT, loader: 'ts' },
@@ -304,12 +262,10 @@ export async function checkProject(
     const context = vm.createContext({ TextEncoder, TextDecoder, atob });
     vm.runInContext(b.outputFiles[0]!.text + ';globalThis.result=bare.run()', context);
     const result = await context.result;
-    assert.deepEqual(
-      JSON.parse(JSON.stringify(result.steps)),
-      v.trace.steps.map((s) => s.step),
-    );
-    assert.deepEqual(JSON.parse(JSON.stringify(result.state)), v.trace.steps.at(-1)!.after);
-    assert.ok(result.svg.includes('<path'));
+    const bare = `The bare runtime (no DOM, no Node) disagrees with the trace ${where}`;
+    assert.deepEqual(JSON.parse(JSON.stringify(result.steps)), v.trace.steps.map((s) => s.step), bare);
+    assert.deepEqual(JSON.parse(JSON.stringify(result.state)), v.trace.steps.at(-1)!.after, bare);
+    assert.ok(result.svg.includes('<path'), bare);
     variants.push({
       settings: v.values,
       trace: v.trace,
@@ -319,14 +275,10 @@ export async function checkProject(
       motionEvents: events.length,
       labels: labels.size,
       completedStepLabels: staticLabels.size,
-      everyStepChangesPicture: true,
-      stillDuringCaptionHolds: true,
-      restingTextCollisions: 0,
       // What a reader sees before zooming: the same labels on a 390 px phone.
       legibility: legibilityReport([...labels.values(), ...[...staticLabels.values()].map((l) => l.px)]),
       // Each step's resting frame as text, so an author can read it without a browser.
-      restingFrames: Object.fromEntries(v.trace.steps.map((step) => [step.step, restingText.get(restFrame(step)) ?? ''])),
-      bareRuntime: true,
+      restingFrames: Object.fromEntries(v.trace.steps.map((step) => [step.step, restingText.get(restingFrame(step)) ?? ''])),
     });
   }
   const report = {

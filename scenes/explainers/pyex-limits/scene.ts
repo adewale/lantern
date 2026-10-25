@@ -1,6 +1,6 @@
 import { Scene, FadeIn, FadeOut } from '../../../src/index.ts';
 import type { Box } from '../../../src/index.ts';
-import { stage, palette, settingsOf, CodeBlock } from '../../../explain/index.ts';
+import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
 import { checkStep } from '../lib/models.ts';
 const STYLE = 'one-dark';
 const MEMORY = 30000,
@@ -31,8 +31,7 @@ const CALLER = [
   '    replan(budget_hint=str(e))',
 ];
 // Diagrams across the top; the code and the counters it reads below.
-const DIAGRAM: Box = [-7.55, -0.35, 7.55, 3.25],
-  CODE: Box = [-7.55, -4.25, 1.95, -0.6],
+const CODE: Box = [-7.55, -4.25, 1.95, -0.6],
   CARD: Box = [2.25, -4.25, 7.55, -0.6];
 const CLAUSE: Record<string, { line: number; node: string; row: string }> = {
   'step limit': { line: 2, node: 'Steps', row: 'steps' },
@@ -62,7 +61,7 @@ export default class LimitsExplainer extends Scene {
   override async construct() {
     const max = Number(settingsOf(this).limit),
       limits = { steps: max, memory: MEMORY, output: Infinity },
-      s = stage(this, { palette: palette('one-dark') });
+      s = stage(this, { style: STYLE });
 
     await this.step('context', {
       title: 'check_step compares ctx counters with fixed limits',
@@ -75,7 +74,7 @@ export default class LimitsExplainer extends Scene {
         ['memory', limits.memory],
         ['output', '∞'],
       ],
-      { at: [-7.55, -0.35, -0.15, 3.25], title: 'limits', fontSize: 0.3, width: 6 },
+      { at: regionBox('left', { bottom: -0.35 }), title: 'limits', fontSize: 0.3, width: 6 },
     );
     const ctxCard = await s.card(
       [
@@ -83,10 +82,10 @@ export default class LimitsExplainer extends Scene {
         ['memory', 0],
         ['output', 0],
       ],
-      { at: [0.15, -0.35, 7.55, 3.25], title: 'ctx', fontSize: 0.3, width: 6 },
+      { at: regionBox('right', { bottom: -0.35 }), title: 'ctx', fontSize: 0.3, width: 6 },
     );
     await ctxCard.mark('steps');
-    const wide = await s.code(CHECK, { at: s.regions.bottom, fontSize: 0.21 });
+    const wide = await s.code(CHECK, { at: 'bottom', fontSize: 0.21 });
     await wide.focus(0);
 
     await this.step('boundaries', {
@@ -94,8 +93,7 @@ export default class LimitsExplainer extends Scene {
       caption:
         'Because every boundary calls the same function, ctx.steps counts all three kinds of work and a single cond decides which error comes back.',
     });
-    const code = new CodeBlock(this, s.palette, CHECK, { at: CODE, fontSize: 0.2 });
-    s.keep(code);
+    const code = await s.code(CHECK, { at: CODE, fontSize: 0.2, enter: false });
     await this.play(new FadeOut(limitsCard), new FadeOut(ctxCard), new FadeOut(wide), new FadeIn(code));
     const fmt = (c: { steps: number; memory: number; output: number }) => ({
       steps: `${c.steps} / ${limits.steps}`,
@@ -109,7 +107,7 @@ export default class LimitsExplainer extends Scene {
       fontSize: 0.28,
       width: 5.2,
     });
-    const hub = await s.show({ source: HUB, style: STYLE }, { box: [-7.55, -0.85, 7.55, 3.25] });
+    const hub = await s.show({ source: HUB }, { box: regionBox('top', { bottom: -0.85 }) });
     await hub.walk(
       [
         ['Statement', 'Check'],
@@ -127,7 +125,7 @@ export default class LimitsExplainer extends Scene {
         'cond tries steps, then memory, then output, then the deadline. Several limits can be over at once; the earliest clause decides the error.',
     });
     await hub.hide();
-    const d = await s.show({ source: CHAIN, style: STYLE }, { box: DIAGRAM });
+    const d = await s.show({ source: CHAIN }, { box: 'top' });
     await code.focus([2, 5]);
 
     await this.step('run', {
@@ -179,7 +177,7 @@ export default class LimitsExplainer extends Scene {
     ) as [string, string][];
     await d.dim([...new Set(['Steps', fired.node, ...path.flat()])]);
     if (path.length) await d.walk(path, { trail: true });
-    await d.mark([fired.node], { color: '#e06c75' });
+    await d.mark([fired.node], { color: s.bad });
     await code.focus(fired.line);
     await card.mark(fired.row);
     await d.note(
@@ -187,7 +185,7 @@ export default class LimitsExplainer extends Scene {
       status === 'step limit'
         ? `yes: ${ctx.steps} ≥ ${max} → step limit`
         : `yes: ${ctx.memory} ≥ ${MEMORY} → memory limit`,
-      { side: 'below', color: '#e06c75' },
+      { side: 'below', color: s.bad },
     );
     if (path.length) await d.note('Steps', `no: ${ctx.steps} < ${max}`, { side: 'above' });
 
@@ -201,8 +199,7 @@ export default class LimitsExplainer extends Scene {
         ? `LimitError: step limit exceeded (${max} steps)`
         : `LimitError: memory limit exceeded (${MEMORY} bytes)`;
     // The message the agent's except clause reads, as a comment under the code that reads it.
-    const caller = new CodeBlock(this, s.palette, [...CALLER, `# str(e) == "${message}"`], { at: CODE });
-    s.keep(caller);
+    const caller = await s.code([...CALLER, `# str(e) == "${message}"`], { at: CODE, enter: false });
     await this.play(new FadeOut(code), new FadeIn(caller));
     await caller.focus([2, 4]);
   }

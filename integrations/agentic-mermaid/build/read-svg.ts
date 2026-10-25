@@ -3,7 +3,8 @@
 import svgpath from 'svgpath';
 import type { Page } from 'playwright-core';
 import { loadFonts, VMobject } from '../../../src/index.ts';
-import type { Style } from '../../../src/mobject.ts';
+import type { Style } from '../../../src/index.ts';
+import { SVG_PX_PER_UNIT } from '../snapshot.ts';
 import type { SnapshotShape, SnapshotTextRun } from '../snapshot.ts';
 import { outlineText } from '../text.ts';
 
@@ -198,8 +199,6 @@ export async function readSvg(page: Page, svg: string): Promise<Map<number, Snap
   });
   const out = new Map<number, SnapshotShape[]>();
   for (const r of raw) {
-    let mob: VMobject;
-    let paths: VMobject[];
     if (r.text != null) {
       const run: SnapshotTextRun = {
         text: r.text,
@@ -220,34 +219,21 @@ export async function readSvg(page: Page, svg: string): Promise<Map<number, Snap
         closed: [],
         style: r.style,
         text: r.text,
-        fontSize: (r.size! * Math.sqrt(Math.abs(a * d - b * c))) / 100,
+        fontSize: (r.size! * Math.sqrt(Math.abs(a * d - b * c))) / SVG_PX_PER_UNIT,
         textRun: run,
       };
       const list = out.get(r.owner) ?? [];
       list.push(shape);
       out.set(r.owner, list);
       continue;
-    } else {
-      mob = pathFromSvgD(r.d!, r.style);
-      paths = [mob];
     }
-    const [a, b, c, d, e, f] = r.matrix as [number, number, number, number, number, number];
-    for (const path of paths) {
-      path.applyAffine(a / 100, -b / 100, c / 100, -d / 100, e / 100, -f / 100, { aboutPoint: [0, 0] });
-      if (path.subpaths.some((p) => !p.every(Number.isFinite)))
-        throw new Error(`Non-finite imported geometry: ${r.text ?? r.d}`);
-      const shape: SnapshotShape = {
-        subpaths: path.subpaths.map((p) => Array.from(p)),
-        closed: [...path.closed],
-        style: { ...r.style },
-        ...(r.text != null
-          ? { text: r.text, fontSize: (r.size! * Math.sqrt(Math.abs(a * d - b * c))) / 100 }
-          : {}),
-      };
-      const list = out.get(r.owner) ?? [];
-      list.push(shape);
-      out.set(r.owner, list);
-    }
+    const path = pathFromSvgD(r.d!, r.style);
+    const [a, b, c, d, e, f] = r.matrix.map((v) => v / SVG_PX_PER_UNIT) as [number, number, number, number, number, number];
+    path.applyAffine(a, -b, c, -d, e, -f, { aboutPoint: [0, 0] });
+    if (path.subpaths.some((p) => !p.every(Number.isFinite))) throw new Error(`Non-finite imported geometry: ${r.d}`);
+    const list = out.get(r.owner) ?? [];
+    list.push({ subpaths: path.subpaths.map((p) => Array.from(p)), closed: [...path.closed], style: { ...r.style } });
+    out.set(r.owner, list);
   }
   return out;
 }

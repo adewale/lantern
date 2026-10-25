@@ -1,5 +1,5 @@
 {
-  // Node code: tools/ and test/, run as .ts by Node 24 (type stripping). Checked only.
+  // Node code: tools/ and test/, run as .ts by Node 26 (type stripping). Checked only.
   // lib.dom too: tools drive Chromium and type what runs in the page.
   "extends": "./tsconfig.base.json",
   "compilerOptions": {

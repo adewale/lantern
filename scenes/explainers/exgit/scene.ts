@@ -1,12 +1,11 @@
-import type { Box } from '../../../src/index.ts';
 import { Scene, Text, Rectangle, Arrow, Group, FadeIn, FadeOut } from '../../../src/index.ts';
-import { stage, palette, settingsOf, CodeBlock } from '../../../explain/index.ts';
+import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
 import { Repo, AUTHOR, parseTree } from '../../lib/gitmodel.ts';
 
 const STYLE = 'catppuccin-mocha';
 const short = (id: string) => id.slice(0, 7);
-const DIAGRAM: Box = [-7.55, -0.85, 7.55, 3.25],
-  BOTTOM: Box = [-7.55, -4.25, 7.55, -1.1];
+const DIAGRAM = regionBox('top', { bottom: -0.85 }),
+  BOTTOM = regionBox('bottom', { top: -1.1 });
 /** "<type> <length>\0", the header Git hashes in front of an object's bytes. */
 const objectHeader = (repo: Repo, id: string) => `${repo.objects[id]!.type} ${repo.objects[id]!.bytes.length}\\0`;
 /** A tree's entries as stored: mode, name, a zero byte, then the 20-byte id (shown as hex). */
@@ -45,7 +44,7 @@ export default class GitExplainer extends Scene {
     const which = settingsOf(this).change,
       add = which === 'add',
       repo = new Repo(),
-      s = stage(this, { palette: palette(STYLE) }),
+      s = stage(this, { style: STYLE }),
       ink = s.palette.ink,
       accent = s.emphasis;
 
@@ -97,29 +96,17 @@ export default class GitExplainer extends Scene {
     };
     const bodyLabel = span(bodyCells, 'content', ink),
       headLabel = span(headCells, 'header', accent);
-    s.keep(bodyCells);
-    s.keep(bodyLabel);
-    await this.play(new FadeIn(bodyCells, { runTime: 0.5 }), new FadeIn(bodyLabel, { runTime: 0.5 }));
-    s.keep(headCells);
-    s.keep(headLabel);
-    await this.play(
-      new FadeIn(headCells, { runTime: 0.6, shift: [0.6, 0] }),
-      new FadeIn(headLabel, { runTime: 0.6, shift: [0.6, 0] }),
-    );
-    const arrow = s.keep(
-      new Arrow([0, cellY - 1.1], [0, cellY - 2.05], { stroke: s.soft, strokeWidth: 0.03, tipLength: 0.2 }),
-    );
-    const how = s.keep(
-      new Text('SHA-1', { fontSize: 0.24, color: s.soft, anchor: 'start' }).moveTo([0.3, cellY - 1.57], [-1, 0]),
-    );
+    await s.enter(bodyCells, bodyLabel, { runTime: 0.5 });
+    await s.enter(headCells, headLabel, { runTime: 0.6, shift: [0.6, 0] });
+    const arrow = new Arrow([0, cellY - 1.1], [0, cellY - 2.05], { stroke: s.soft, strokeWidth: 0.03, tipLength: 0.2 });
+    const how = new Text('SHA-1', { fontSize: 0.24, color: s.soft, anchor: 'start' }).moveTo([0.3, cellY - 1.57], [-1, 0]);
     const idHead = new Text(short(hello), { fontSize: 0.42, font: 'mono', color: accent, weight: 'bold' }),
       idTail = new Text(hello.slice(7), { fontSize: 0.42, font: 'mono', color: ink });
     const idRow = new Group(idHead, idTail);
     idTail.nextTo(idHead, [1, 0], 0.02);
     idRow.moveTo([0, cellY - 2.65]);
-    s.keep(idRow);
-    await this.play(new FadeIn(arrow, { runTime: 0.4 }), new FadeIn(how, { runTime: 0.4 }));
-    await this.play(new FadeIn(idRow, { runTime: 0.6 }));
+    await s.enter(arrow, how, { runTime: 0.4 });
+    await s.enter(idRow, { runTime: 0.6 });
 
     // ── tree: names live in the tree ────────────────────────────────────
     await this.step('tree', {
@@ -132,7 +119,7 @@ export default class GitExplainer extends Scene {
     const B1 = `Hello["blob<br/>${short(hello)}"]`;
     const T1 = `T1["tree ${short(t1)}<br/>hello.txt"]`;
     const TREE = `graph LR\n${T1}\n${B1}\nT1 --> Hello`;
-    const d = await s.show({ source: TREE, style: STYLE }, { box: DIAGRAM });
+    const d = await s.show({ source: TREE }, { box: DIAGRAM });
     const treeCode = await s.code(treeLines(repo, t1), { at: BOTTOM });
     await treeCode.focus(1);
 
@@ -146,10 +133,9 @@ export default class GitExplainer extends Scene {
     repo.refs['refs/heads/main'] = c1;
     const C1 = `C1["commit<br/>${short(c1)}"]`;
     const COMMIT = `graph LR\nMain([main])\n${C1}\n${T1}\n${B1}\nMain --> C1\nC1 --> T1\nT1 --> Hello`;
-    const commitCode = new CodeBlock(this, s.palette, objectLines(repo, c1), { at: BOTTOM });
-    s.keep(commitCode);
+    const commitCode = await s.code(objectLines(repo, c1), { at: BOTTOM, enter: false });
     await this.play(new FadeOut(treeCode), new FadeIn(commitCode));
-    await d.morph({ source: COMMIT, style: STYLE });
+    await d.morph({ source: COMMIT });
     await d.walk(
       [
         ['Main', 'C1'],
@@ -187,7 +173,7 @@ export default class GitExplainer extends Scene {
       (add ? `T2 --> Hello\nT2 --> New` : `T2 --> New`);
     const CHANGE = `graph LR\nMain([main])\n${objects}\nMain --> C1`;
     await s.clearOverlays();
-    await d.morph({ source: CHANGE, style: STYLE });
+    await d.morph({ source: CHANGE });
     await d.note('edge:C2->C1#0', 'parent', { side: 'below' });
     // Tree one's bytes, as in the tree step, turn into tree two's: a line that
     // survives is unchanged, and a marked line is new.
@@ -219,7 +205,7 @@ export default class GitExplainer extends Scene {
     repo.refs.HEAD = { symbolic: 'refs/heads/main' };
     this.state.head = repo.resolve('HEAD');
     const HEADS = `graph LR\nHEAD([HEAD])\nMain([main])\n${objects}\nHEAD --> Main\nMain --> C2`;
-    await d.morph({ source: HEADS, style: STYLE });
+    await d.morph({ source: HEADS });
     await refs.set({ 'refs/heads/main': c2 });
     await refs.mark('refs/heads/main');
     await d.walk(

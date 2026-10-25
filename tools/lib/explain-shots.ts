@@ -1,8 +1,9 @@
 import { writeFile, mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import { Resvg } from '@resvg/resvg-js';
-import { Scene, Text, NullSink, SnapshotSink, renderAt, toSvgString } from '../../src/index.ts';
+import { Scene, Text, NullSink, SnapshotSink, renderAt } from '../../src/index.ts';
+import { rasterize, band } from './explain-video.ts';
 import { defaultVariant } from './explain-project.ts';
+import { restingTime } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
 
 export async function contactSheet(
@@ -20,8 +21,8 @@ export async function contactSheet(
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i]!,
       sink = new SnapshotSink({ width: w });
-    await renderAt(v.Scene, Math.max(step.t0, (step.t1 ?? step.t0) - 0.5 / v.trace.fps), sink);
-    const png = new Resvg(sink.svg, { font: { loadSystemFonts: false } }).render().asPng();
+    await renderAt(v.Scene, restingTime(step, v.trace.fps), sink);
+    const png = (await rasterize(sink.svg)).asPng();
     const labelScene = new Scene(new NullSink()),
       label = new Text(`${i + 1}. ${String(step.meta.title ?? step.step)}`, {
         fontSize: 0.36,
@@ -31,10 +32,8 @@ export async function contactSheet(
     if (label.width() > 15.2) label.setWidth(15.2);
     label.moveTo([-7.6, 0], [-1, 0]);
     labelScene.add(label);
-    const labelSvg = toSvgString(labelScene, { width: w, background: '#101820' }).replace(
-      /height="360" viewBox="[^"]+"/,
-      'height="40" viewBox="-8000 -500 16000 1000"',
-    );
+    // A 40-pixel band: one scene unit at 640 pixels wide.
+    const labelSvg = band(labelScene, w, 1, '#101820');
     tiles.push(
       `<g transform="translate(${(i % cols) * w} ${Math.floor(i / cols) * h})"><image width="${w}" height="360" href="data:image/png;base64,${png.toString('base64')}"/><g transform="translate(0 360)">${labelSvg}</g></g>`,
     );
@@ -43,6 +42,6 @@ export async function contactSheet(
   out = resolve(out);
   await mkdir(dirname(out), { recursive: true });
   await writeFile(out.replace(/\.[^.]+$/, '.svg'), svg);
-  await writeFile(out, new Resvg(svg, { font: { loadSystemFonts: false } }).render().asPng());
+  await writeFile(out, (await rasterize(svg)).asPng());
   return out;
 }

@@ -1,6 +1,6 @@
-import { Text } from '../../src/text.ts';
-import type { VMobject } from '../../src/vmobject.ts';
-import type { Style } from '../../src/mobject.ts';
+import { Text } from '../../src/index.ts';
+import type { VMobject, Style } from '../../src/index.ts';
+import { SVG_PX_PER_UNIT as PX } from './snapshot.ts';
 import type { SnapshotTextRun } from './snapshot.ts';
 
 let xHeightEm: number | undefined;
@@ -9,7 +9,7 @@ let xHeightEm: number | undefined;
  * Store text/placement once, not thousands of repeated font control points. */
 export function outlineText(run: SnapshotTextRun, style: Style): VMobject[] {
   const text = new Text(run.text, { fontSize: run.size, color: style.fill });
-  text.build(run.text, run.size, { ...style, strokeWidth: (style.strokeWidth ?? 0) * 100 });
+  text.build(run.text, run.size, { ...style, strokeWidth: (style.strokeWidth ?? 0) * PX });
   if (run.width != null && text.advance())
     text.stretch(run.width / text.advance(), 0, { aboutPoint: [0, 0] });
   const advance = text.advance();
@@ -42,7 +42,7 @@ export function outlineText(run: SnapshotTextRun, style: Style): VMobject[] {
   text.applyAffine(1, 0, 0, -1, 0, 2 * baseline, { aboutPoint: [0, 0] });
   const [a, b, c, d, e, f] = run.matrix as [number, number, number, number, number, number];
   for (const path of text.children) {
-    path.applyAffine(a / 100, -b / 100, c / 100, -d / 100, e / 100, -f / 100, { aboutPoint: [0, 0] });
+    path.applyAffine(a / PX, -b / PX, c / PX, -d / PX, e / PX, -f / PX, { aboutPoint: [0, 0] });
     path.style = { ...path.style, ...style };
   }
   return text.children as VMobject[];

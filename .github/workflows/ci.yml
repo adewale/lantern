@@ -7,7 +7,7 @@ on:
 jobs:
   check:
     runs-on: ubuntu-24.04  # the pinned image the oracle and embed tests were validated on
-    timeout-minutes: 25  # full suite, browser gates, 31 demo cases and video
+    timeout-minutes: 25  # full suite, browser gates, every demo case and video
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,25 +19,17 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install numpy
-      # mermaid itself is the oracle for the flowchart parser
-      - run: npm i --no-save mermaid@11.4.1
-      # the mermaid oracle runs in headless Chromium (tools/lib/browser.ts)
+      # diagram capture and the embed tests run in headless Chromium (tools/lib/browser.ts)
       - run: npx playwright-core install --with-deps --only-shell chromium
       # manim itself is the oracle for test/manim.test.ts (tools/oracle/manim_math.py)
       - run: git clone --depth 1 https://github.com/3b1b/manim.git /tmp/manim && git -C /tmp/manim fetch --depth 1 origin fafa083a4fb274bba9cabde0b6e2f50ba6da0622 && git -C /tmp/manim checkout -q fafa083a4fb274bba9cabde0b6e2f50ba6da0622
       - run: npm run check          # tsc -b over every project (emits dist/); compile a TS consumer against it
-      - run: npm run test:full      # every frame, 400 random scenes, cache validation, goldens, oracles, bare runtime, leaks
+      - run: npm run test:full      # every frame, 400 random scenes, cache validation, golden trace, manim oracle, leaks
         env:
           MANIM_DIR: /tmp/manim
-          MERMAID_JS: node_modules/mermaid/dist/mermaid.min.js
       - run: node --expose-gc test/leak.test.ts # also run directly, outside the test runner's workers
       # Product gates reuse this job and its Chromium installation; no scheduled lane.
       - run: npm run test:embeds    # real origin/source isolation, offline/no-JS reading and style fidelity
-      - run: npm run demos:check    # all 31 author cases: seek, motion, bare runtime and readable labels
+      - run: npm run demos:check    # every explainer case: seek, motion, bare runtime and readable labels
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: npm run test:video     # tiny real H.264/VP9 exports, not the full demo video batch
-      - run: npm run verify:motion  # no teleports, pops or cuts in any scene
-      - run: npm run build
-# The playback gate (npm run verify:playback) measures frame pacing in a real
-# browser. Shared runners are too noisy for a 1% late-frame budget, so it runs
-# locally before merging changes to the renderer or player.

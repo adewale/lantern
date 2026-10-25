@@ -12,21 +12,10 @@ import { resizeHeight, exactHttpOrigin } from '../app/embed-protocol.ts';
 
 const spec = { source: 'graph LR\nA -->|hello| B', style: 'nord' };
 function fixture(): DiagramSnapshot {
-  const shape = (x: number) => {
-    const m = new Rectangle({ width: 0.5, height: 0.5, fill: '#fff', stroke: '#000' }).moveTo([x, 0]);
-    return { subpaths: m.subpaths.map((a) => Array.from(a)), closed: m.closed, style: m.style };
-  };
-  return {
-    version: 1,
-    renderer: 'agentic-mermaid@0.4.1',
+  const shape = (x: number) => square(x, { fill: '#fff', stroke: '#000' });
+  return fixedSnapshot(
     spec,
-    family: 'flowchart',
-    width: 400,
-    height: 200,
-    palette: { paper: '#123456', ink: '#fff', accent: '#ff0', muted: '#aaa' },
-    svg: '',
-    findings: { ok: true, warnings: [] },
-    parts: [
+    [
       { id: '__frame', role: 'frame', kind: 'shape', svg: '', shapes: [shape(0)] },
       { id: 'A', role: 'node', kind: 'shape', svg: '', shapes: [shape(0)] },
       { id: 'B', role: 'node', kind: 'shape', svg: '', shapes: [shape(3)] },
@@ -52,7 +41,8 @@ function fixture(): DiagramSnapshot {
         shapes: [shape(1.5)],
       },
     ],
-  };
+    { palette: { paper: '#123456', ink: '#fff', accent: '#ff0', muted: '#aaa' } },
+  );
 }
 test('frame reveal, semantic labels, real-link walks and palette adoption use native objects', async () => {
   class Demo extends Scene {
@@ -230,12 +220,13 @@ test('verifier warnings resolve to snapshot parts even when global and per-pair 
 
 // ---- properties ------------------------------------------------------------------
 import { fc, params } from './lib/pbt.ts';
-import { snapshot as randomSnapshot, hexColor } from './lib/random-snapshot.ts';
+import { snapshot as randomSnapshot, hexColor, fixedSnapshot, square } from './lib/random-snapshot.ts';
 import { diagramsOf } from '../integrations/agentic-mermaid/snapshot.ts';
 import { useDiagrams, findingsOf as findingsOfP, edgePartOf as edgePartOfP, emphasis, soft, regionBox, REGIONS, PALETTES } from '../explain/index.ts';
 import { raised, rule } from '../explain/look.ts';
 import { Diagram } from '../explain/diagrams.ts';
-import { scriptEscape, htmlEscape, snapshotFileName, hash } from '../tools/lib/explain-project.ts';
+import { scriptEscape, snapshotFileName, hash } from '../tools/lib/explain-project.ts';
+import { htmlEscape } from '../explain/trace.ts';
 import { transformSync } from 'esbuild';
 import vm from 'node:vm';
 import { parseColor } from '../src/color.ts';
@@ -430,7 +421,7 @@ test('every region lies in the stage, below the heading line, with positive area
 });
 
 test('the regions meant to sit side by side never overlap', () => {
-  for (const [a, b] of [['left', 'right'], ['main', 'side'], ['aside', 'wide'], ['top', 'bottom']] as const)
+  for (const [a, b] of [['left', 'right'], ['main', 'side'], ['top', 'bottom']] as const)
     assert.ok(REGIONS[a][2] <= REGIONS[b][0] || REGIONS[b][3] <= REGIONS[a][1], `${a} and ${b} overlap`);
 });
 

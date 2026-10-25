@@ -30,9 +30,14 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .stage svg.glide{transition:transform 220ms var(--ease-out)}
 .stage.zoomed{touch-action:none;cursor:grab}
 .stage.zoomed:active{cursor:grabbing}
+.stage svg.leaving{position:absolute;inset:0;animation:leave 200ms ease-out forwards}
+@keyframes leave{to{opacity:0}}
 .caption{margin:16px 0 0;max-width:68ch;min-height:3.2em;font-size:1.125rem;line-height:1.6;text-wrap:pretty}
 .controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:16px}
 .tools{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:2px;margin-left:auto}
+.described{margin:8px 0 0;max-width:68ch;font-size:.9375rem;color:var(--muted)}
+.described summary{padding:6px 0;cursor:pointer}
+.described ul,.transcript li ul{margin:4px 0;padding-left:1.25rem;overflow-wrap:anywhere}
 .notice{margin:8px 0 0;font-size:.875rem;color:var(--muted)}
 .notice:empty{display:none}
 
@@ -65,6 +70,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .transcript summary{padding:11px 0;font-weight:600;cursor:pointer}
 .transcript ol{padding-left:1.25rem;max-width:68ch}
 .transcript li{padding:6px 0}
+.transcript li li{padding:0}
 .transcript p{margin:4px 0 0;text-wrap:pretty}
 .transcript a{overflow-wrap:anywhere}
 .standalone{display:inline-block;margin-top:16px;font-size:.875rem}
@@ -76,7 +82,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 /* Enlarge: the player alone, sized to the screen. */
 .player:fullscreen{display:flex;flex-direction:column;justify-content:center;padding:16px;background:var(--bg);overflow:auto}
 .player:fullscreen .stage{width:min(100%,calc((100dvh - 180px)*16/9));margin:0 auto;border-radius:0}
-.player:fullscreen .caption,.player:fullscreen .controls,.player:fullscreen .notice{width:min(100%,calc((100dvh - 180px)*16/9));margin-left:auto;margin-right:auto}
+.player:fullscreen .caption,.player:fullscreen .described,.player:fullscreen .controls,.player:fullscreen .notice{width:min(100%,calc((100dvh - 180px)*16/9));margin-left:auto;margin-right:auto}
 
 @media(max-width:480px){.caption{font-size:1.0625rem}.controls{gap:6px}}
 @media(prefers-reduced-motion:reduce){.button,.stage svg.glide,.segments label,.steps button{transition:none}.button:active:not(:disabled){transform:none}}

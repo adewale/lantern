@@ -1,13 +1,13 @@
 {
   "version": 2,
-  "importer": "acfe610e690150ef",
+  "importer": "263673d5bf9b15ed",
   "renderer": "agentic-mermaid@0.4.1",
-  "sourceHash": "2b431812869a5f62bcecc885cc39cda826ce4b0f48a22cd19c5a0640c8cb2f89",
+  "sourceHash": "c07371c2cbe94bc5d207df634b56192483a068945aa3b055b62e8f94492af228",
   "diagrams": {
-    "[\"xychart-beta\\n x-axis [Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec]\\n y-axis \\\"Daylight hours\\\" 0 --> 24\\n line [0.6,7.5,12,16.5,23.4,24,23.4,16.5,12,7.5,0.6,0]\",\"tokyo-night\",null]": "7b25d05f7153fd0c.json",
-    "[\"xychart-beta\\n x-axis [Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec]\\n y-axis \\\"Daylight hours\\\" 0 --> 24\\n line [0.6,7.5,12,16.5,23.4,24,23.4,16.5,12,7.5,0.6,0]\\n line [8.3,10,12,14,15.7,16.4,15.7,14,12,10,8.3,7.6]\\n line [12,12,12,12,12,12,12,12,12,12,12,12]\\n line [13.9,13.1,12,10.9,10.1,9.7,10.1,10.9,12,13.1,13.9,14.3]\",\"tokyo-night\",null]": "892ee018d62bbb72.json",
+    "[\"xychart-beta\\n x-axis [Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec]\\n y-axis \\\"Daylight hours\\\" 0 --> 24\\n line [0,6.5,10.8,15.3,20.6,24,24,17.7,13,8.6,3.1,0]\",\"tokyo-night\",null]": "890bde5a15ff752f.json",
+    "[\"xychart-beta\\n x-axis [Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec]\\n y-axis \\\"Daylight hours\\\" 0 --> 24\\n line [0,6.5,10.8,15.3,20.6,24,24,17.7,13,8.6,3.1,0]\\n line [8,9.6,11.4,13.5,15.3,16.4,16,14.5,12.5,10.4,8.6,7.6]\\n line [12,12,12,12,12,12,12,12,12,12,12,12]\\n line [14,13.3,12.3,11.2,10.3,9.8,9.9,10.7,11.8,12.8,13.8,14.2]\",\"tokyo-night\",null]": "f89dc63a8c614bf4.json",
     "[\"xychart-beta\\n x-axis [Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec]\\n y-axis \\\"Daylight hours\\\" 0 --> 24\\n line [12,12,12,12,12,12,12,12,12,12,12,12]\",\"tokyo-night\",null]": "f691a6d6e6dfa3d5.json",
-    "[\"xychart-beta\\n x-axis [Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec]\\n y-axis \\\"Daylight hours\\\" 0 --> 24\\n line [13.9,13.1,12,10.9,10.1,9.7,10.1,10.9,12,13.1,13.9,14.3]\",\"tokyo-night\",null]": "665fe5b768c0a827.json",
-    "[\"xychart-beta\\n x-axis [Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec]\\n y-axis \\\"Daylight hours\\\" 0 --> 24\\n line [8.3,10,12,14,15.7,16.4,15.7,14,12,10,8.3,7.6]\",\"tokyo-night\",null]": "2a13ed5e085c51a6.json"
+    "[\"xychart-beta\\n x-axis [Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec]\\n y-axis \\\"Daylight hours\\\" 0 --> 24\\n line [14,13.3,12.3,11.2,10.3,9.8,9.9,10.7,11.8,12.8,13.8,14.2]\",\"tokyo-night\",null]": "a9cc2227b8a1608a.json",
+    "[\"xychart-beta\\n x-axis [Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec]\\n y-axis \\\"Daylight hours\\\" 0 --> 24\\n line [8,9.6,11.4,13.5,15.3,16.4,16,14.5,12.5,10.4,8.6,7.6]\",\"tokyo-night\",null]": "e0dcd09c6b6ffb5f.json"
   }
 }

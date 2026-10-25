@@ -1,33 +1,14 @@
 {
   "name": "manim-js",
-  "version": "0.1.0",
+  "version": "0.2.0-explainers.0",
   "type": "module",
   "scripts": {
-    "dev": "node tools/dev.ts",
-    "build": "node tools/build.ts",
     "build:lib": "rm -rf dist && tsc -p tsconfig.lib.json && node tools/copy-vendor.ts && node tools/build-cli.ts",
     "test": "node --expose-gc --test test/*.test.ts",
     "test:full": "FULL=1 node --expose-gc --test test/*.test.ts",
-    "see": "node tools/see.ts",
-    "shot": "node tools/shot.ts",
-    "render": "node tools/render.ts",
-    "trace": "node tools/trace.ts",
-    "profile": "node tools/profile.ts",
-    "seek": "node tools/seek.ts",
-    "ab": "node tools/ab.ts",
-    "hitch": "npm run build && node tools/hitch.ts",
-    "verify:motion": "node tools/motion.ts",
-    "verify:playback": "npm run build && node tools/playback.ts",
-    "verify": "npm run verify:motion && npm run verify:playback && npm run verify:layout",
-    "deploy": "npm run build && npx wrangler deploy",
     "fonts": "tools/fonts.sh",
-    "typecheck": "tsc -b",
     "check": "tsc -b && node tools/copy-vendor.ts && tsc -p test/consumer/tsconfig.json",
-    "transcript": "node tools/transcript.ts",
-    "bench": "node tools/bench.ts",
-    "types": "npm run build:lib",
     "prepack": "npm run build:lib",
-    "verify:layout": "npm run build && node tools/layout.ts",
     "explain": "node tools/explain.ts",
     "demos:build": "node tools/explain-demos.ts",
     "demos:check": "node tools/explain-demos.ts --check",
@@ -40,10 +21,10 @@
     "test:video": "EXPLAIN_VIDEO=1 node --test test/explain-video.test.ts"
   },
   "devDependencies": {
-    "@types/node": "24.19.2",
+    "@types/node": "26.6.5",
     "fast-check": "4.10.2"
   },
-  "description": "Animated, steppable code explainers. Zero-dependency JS engine, SVG output, browser and Cloudflare Workers.",
+  "description": "Step-through code explainers from one TypeScript scene, with build-time Agentic Mermaid diagrams and optional captioned video. The browser runtime has no dependencies.",
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
@@ -67,13 +48,10 @@
     "integrations",
     "app/embed*",
     "app/loader.ts",
-    "tools",
     "skills",
     "vendor/glyph.js",
     "vendor/glyph.d.ts",
     "vendor/licenses",
-    "README.md",
-    "docs",
     "LICENSE"
   ],
   "engines": {
@@ -88,16 +66,19 @@
     "svg",
     "manim",
     "explainer",
-    "cloudflare-workers"
+    "stepper",
+    "embed",
+    "mermaid",
+    "video"
   ],
   "dependencies": {
     "esbuild": "0.25.12",
-    "playwright-core": "1.64.1",
-    "svgpath": "2.6.0",
     "typescript": "5.9.3"
   },
   "optionalDependencies": {
     "@resvg/resvg-js": "2.6.2",
-    "agentic-mermaid": "0.4.1"
+    "agentic-mermaid": "0.4.1",
+    "playwright-core": "1.64.1",
+    "svgpath": "2.6.0"
   }
 }

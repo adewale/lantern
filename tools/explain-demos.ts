@@ -1,21 +1,23 @@
 #!/usr/bin/env node
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { parseArgs } from 'node:util';
 import { spawn } from 'node:child_process';
 import { execFileSync } from 'node:child_process';
-import { Resvg } from '@resvg/resvg-js';
 import { SnapshotSink, renderAt } from '../src/index.ts';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
-import { collectProject, defaultVariant, ROOT, htmlEscape, hash } from './lib/explain-project.ts';
+import { collectProject, defaultVariant, ROOT, hash, baseReceipt } from './lib/explain-project.ts';
+import { restingTime, htmlEscape } from '../explain/trace.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
 import { contactSheet } from './lib/explain-shots.ts';
+import { rasterize } from './lib/explain-video.ts';
 import { checkProject } from './lib/explain-check.ts';
 
 const directory = join(ROOT, 'out/explainers');
 await mkdir(directory, { recursive: true });
-const check = process.argv.includes('--check'),
-  render = process.argv.includes('--render'),
-  force = process.argv.includes('--force');
+const { check, render, force } = parseArgs({
+  options: { check: { type: 'boolean' }, render: { type: 'boolean' }, force: { type: 'boolean' } },
+}).values;
 const evidence: {
   id: string;
   title: string;
@@ -38,8 +40,8 @@ for (const item of EXPLAINERS) {
       defaultVariant(project),
     step = variant.trace.steps.find((s) => s.step === item.step) ?? variant.trace.steps[0]!;
   const sink = new SnapshotSink({ width: 960 });
-  await renderAt(variant.Scene, Math.max(step.t0, (step.t1 ?? step.t0) - 0.5 / variant.trace.fps), sink);
-  await writeFile(join(directory, item.id + '.png'), new Resvg(sink.svg,{font:{loadSystemFonts:false}}).render().asPng());
+  await renderAt(variant.Scene, restingTime(step, variant.trace.fps), sink);
+  await writeFile(join(directory, item.id + '.png'), (await rasterize(sink.svg)).asPng());
   await contactSheet(project, join(directory, item.id + '.steps.png'));
   const checks = check ? await checkProject(project) : undefined;
   evidence.push({
@@ -52,7 +54,7 @@ for (const item of EXPLAINERS) {
     bytes: Buffer.byteLength(built.html),
     sourceHash: project.sourceHash,
     engineHash: project.engineHash,
-    snapshotHashes: Object.values(project.store).map((s) => hash(JSON.stringify(s))),
+    snapshotHashes: baseReceipt(project).snapshotHashes,
     ...(checks ? { checks } : {}),
   });
   console.log(
@@ -82,11 +84,14 @@ const tile = (item: (typeof EXPLAINERS)[number], lead = false) => {
 };
 const topics = EXPLAINERS.filter((e) => e.group === 'topic'),
   toolchain = EXPLAINERS.filter((e) => e.group === 'toolchain');
+// The embed's colour tokens, type and resets (everything before its body rule), so the gallery matches the pages.
+const css = await readFile(join(ROOT, 'app/embed.css'), 'utf8'),
+  tokens = css.slice(0, css.indexOf('\nbody{'));
 // Experience surface: the pictures lead, each tile is a picture and the claim it makes.
 const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lantern explainers</title><style>
-:root{color-scheme:light dark;--bg:#f6f7f9;--fg:#14202b;--muted:#536170;--line:#d9dfe6;--accent:#176166;--outline:rgb(0 0 0/.1);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
-@media(prefers-color-scheme:dark){:root{--bg:#0f161d;--fg:#e9eff5;--muted:#9fb0c0;--line:#2a3845;--accent:#86d3c8;--outline:rgb(255 255 255/.1)}}
-*{box-sizing:border-box}::selection{background:color-mix(in srgb,var(--accent) 30%,transparent)}
+${tokens}
+:root{--outline:rgb(0 0 0/.1)}
+@media(prefers-color-scheme:dark){:root{--outline:rgb(255 255 255/.1)}}
 body{margin:0;background:var(--bg);color:var(--fg)}
 main{max-width:1180px;margin:0 auto;padding:40px 16px 64px}
 h1{font-size:clamp(1.75rem,4vw,2.5rem);line-height:1.15;letter-spacing:-.02em;font-weight:650;margin:0 0 32px;text-wrap:balance}
@@ -109,7 +114,7 @@ footer a{color:inherit}
 await writeFile(join(directory, 'index.html'), html);
 await writeFile(
   join(directory, 'embed-lab.html'),
-  `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two embeds on one host page</title><style>:root{color-scheme:light;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}body{max-width:1200px;margin:0 auto;padding:32px 16px 64px;background:#eceff3;color:#14202b}h1{font-size:1.5rem;font-weight:650;letter-spacing:-.015em;margin:0 0 8px;text-wrap:balance}a{color:#176166;text-underline-offset:.2em}main{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;align-items:start}section{min-width:0;background:#fff;border-radius:12px;box-shadow:0 1px 2px rgb(0 0 0/.06),0 0 0 1px rgb(0 0 0/.06);overflow:hidden}@media(max-width:850px){main{grid-template-columns:1fr}}</style><h1>Two embeds, each sized to its own content</h1><a href="index.html">All explainers</a><main><section id="protocol"></section><section id="cache"></section></main><script src="loader.js" data-src="pap.html?step=sign-in" data-target="protocol" data-title="Personal Agent Protocol"></script><script src="loader.js" data-src="mr-cache.html?request=miss&step=request" data-target="cache" data-title="Cache request"></script></html>`,
+  `<!doctype html><html lang="en" data-theme="light"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two embeds on one host page</title><style>${tokens}body{max-width:1200px;margin:0 auto;padding:32px 16px 64px;background:#eceff3;color:var(--fg)}h1{font-size:1.5rem;font-weight:650;letter-spacing:-.015em;margin:0 0 8px;text-wrap:balance}a{color:var(--accent);text-underline-offset:.2em}main{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;align-items:start}section{min-width:0;background:#fff;border-radius:12px;box-shadow:0 1px 2px rgb(0 0 0/.06),0 0 0 1px rgb(0 0 0/.06);overflow:hidden}@media(max-width:850px){main{grid-template-columns:1fr}}</style><h1>Two embeds, each sized to its own content</h1><a href="index.html">All explainers</a><main><section id="protocol"></section><section id="cache"></section></main><script src="loader.js" data-src="pap.html?step=sign-in" data-target="protocol" data-title="Personal Agent Protocol"></script><script src="loader.js" data-src="mr-cache.html?request=miss&step=request" data-target="cache" data-title="Cache request"></script></html>`,
 );
 console.log(`Gallery: ${join(directory, 'index.html')}\n${JSON.stringify(totals)}`);
 
@@ -186,7 +191,7 @@ if (render) {
       const video = probe.streams.find((s: { codec_type: string }) => s.codec_type === 'video');
       if (
         video.width !== 1280 ||
-        video.height !== 880 ||
+        video.height !== 960 ||
         Number(video.nb_frames) !== receipt.frames ||
         probe.chapters.length !== receipt.chapters.length
       )

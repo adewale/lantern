@@ -4,7 +4,8 @@
 // fast-check so failures shrink to the smallest diagram that shows them.
 import { fc } from './pbt.ts';
 import { Rectangle } from '../../src/index.ts';
-import type { DiagramSnapshot, SnapshotPart, SnapshotShape } from '../../integrations/agentic-mermaid/snapshot.ts';
+import { RENDERER } from '../../integrations/agentic-mermaid/snapshot.ts';
+import type { DiagramSnapshot, DiagramSpec, SnapshotPart, SnapshotShape } from '../../integrations/agentic-mermaid/snapshot.ts';
 import type { Style } from '../../src/index.ts';
 
 const HEX = fc
@@ -119,18 +120,20 @@ export function buildSnapshot(plan: SnapshotPlan, source = 'graph'): DiagramSnap
     if (l.head) shapes.push(rect(x1, y1, 0.1, 0.1, l.head));
     parts.push({ id: `edge:${pair}#${k}`, role: l.role, kind: 'connector', svg: '', shapes, from: a.id, to: b.id, route });
   }
-  return {
-    version: 1,
-    renderer: 'agentic-mermaid@0.4.1',
-    spec: { source, style: 'nord' },
-    family: plan.family,
-    width: plan.width,
-    height: plan.height,
-    palette: plan.palette,
-    svg: '',
-    findings: { ok: true, warnings: [] },
-    parts,
-  };
+  return fixedSnapshot({ source, style: 'nord' }, parts, plan);
+}
+
+/** A hand-built snapshot for example tests: these parts, on a canvas `width` × `height` pixels. */
+export function fixedSnapshot(
+  spec: DiagramSpec,
+  parts: SnapshotPart[],
+  { family = 'flowchart', width = 400, height = 200, palette }: { family?: string; width?: number; height?: number; palette: DiagramSnapshot['palette'] },
+): DiagramSnapshot {
+  return { version: 1, renderer: RENDERER, spec, family, width, height, palette, svg: '', findings: { ok: true, warnings: [] }, parts };
+}
+/** A half-unit square at (x, 0), as an imported shape. */
+export function square(x: number, style: Style): SnapshotShape {
+  return rect(x, 0, 0.5, 0.5, { ...new Rectangle({ width: 0.5, height: 0.5 }).style, ...style });
 }
 
 export const uniqueIds = (s: DiagramSnapshot) => new Set(s.parts.map((p) => p.id)).size === s.parts.length;

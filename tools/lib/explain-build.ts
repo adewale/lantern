@@ -3,15 +3,9 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { SnapshotSink, renderAt } from '../../src/index.ts';
-import {
-  ROOT,
-  engineAlias,
-  defaultVariant,
-  hash,
-  scriptEscape,
-  htmlEscape,
-  sceneSlug,
-} from './explain-project.ts';
+import { caseName } from '../../explain/index.ts';
+import { restingTime, pictureHtml, htmlEscape } from '../../explain/trace.ts';
+import { ROOT, engineAlias, defaultVariant, hash, scriptEscape, sceneSlug, baseReceipt } from './explain-project.ts';
 import type { Project } from './explain-project.ts';
 
 export async function buildExplainer(
@@ -19,10 +13,9 @@ export async function buildExplainer(
   out: string,
 ): Promise<{ html: string; receipt: Record<string, unknown> }> {
   const v = defaultVariant(project),
-    first = v.trace.steps[0];
-  if (!first) throw new Error('A published explanation must have at least one named step');
+    first = v.trace.steps[0]!;
   const sink = new SnapshotSink();
-  await renderAt(v.Scene, Math.max(first.t0, (first.t1 ?? first.t0) - 0.5 / v.trace.fps), sink);
+  await renderAt(v.Scene, restingTime(first, v.trace.fps), sink);
   // Raw per-mark SVG stays in the author cache; the page only needs resolved artwork.
   const runtimeStore = Object.fromEntries(
     Object.entries(project.store).map(([key, s]) => [
@@ -64,15 +57,18 @@ export async function buildExplainer(
     throw new Error('Build-time diagram renderer leaked into browser artifact');
   const js = scriptEscape(bundled.outputFiles[0]!.text),
     css = await readFile(join(ROOT, 'app/embed.css'), 'utf8');
-  const title = project.Scene.meta?.title ?? sceneSlug(project);
+  const title = project.Scene.meta?.title ?? sceneSlug(project),
+    lang = project.Scene.meta?.lang ?? 'en';
+  // Every case, every step: its title, caption and what its resting picture shows.
   const transcript = project.variants
     .map(
       (variant) =>
-        `<section><h2>${htmlEscape(
-          (project.Scene.settings ?? [])
-            .map((s) => `${s.label}: ${s.options.find((o) => o.value === variant.values[s.id])?.label ?? variant.values[s.id]}`)
-            .join(' · ') || title,
-        )}</h2><ol>${variant.trace.steps.map((s) => `<li id="${htmlEscape(hash(JSON.stringify(variant.values)).slice(0, 8) + '-' + s.step)}"><strong>${htmlEscape(s.meta.title ?? s.step)}</strong><p>${htmlEscape(s.meta.caption ?? '')}</p></li>`).join('')}</ol></section>`,
+        `<section><h2>${htmlEscape(caseName(project.Scene, variant.values) || title)}</h2><ol>${variant.trace.steps
+          .map((s) => {
+            const shows = pictureHtml(s.after);
+            return `<li id="${htmlEscape(hash(JSON.stringify(variant.values)).slice(0, 8) + '-' + s.step)}"><strong>${htmlEscape(s.meta.title ?? s.step)}</strong><p>${htmlEscape(s.meta.caption ?? '')}</p>${shows ? `<div>${shows}</div>` : ''}</li>`;
+          })
+          .join('')}</ol></section>`,
     )
     .join('');
   const sources = (project.Scene.meta?.sources ?? [])
@@ -85,19 +81,13 @@ export async function buildExplainer(
       ),
     )
   ).join('\n\n');
-  const html = `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${htmlEscape(title)}</title><meta name="generator" content="Lantern Explainers"><style>${css}</style></head><body><main id="content"><h1>${htmlEscape(title)}</h1><div class="stage poster">${sink.svg}</div><p class="caption">${htmlEscape(first.meta.caption ?? '')}</p><details class="transcript" open><summary>Transcript</summary>${transcript}${sources ? `<h2>Sources</h2><ul>${sources}</ul>` : ''}</details></main><template id="licenses"><pre>${htmlEscape(licenses)}</pre></template><script>${js}</script></body></html>\n`;
+  const html = `<!doctype html>\n<html lang="${htmlEscape(lang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${htmlEscape(title)}</title><meta name="generator" content="Lantern Explainers"><style>${css}</style></head><body><main id="content"><h1>${htmlEscape(title)}</h1><div class="stage poster">${sink.svg}</div><p class="caption">${htmlEscape(first.meta.caption ?? '')}</p><details class="transcript" open><summary>Transcript</summary>${transcript}${sources ? `<h2>Sources</h2><ul>${sources}</ul>` : ''}</details></main><template id="licenses"><pre>${htmlEscape(licenses)}</pre></template><script>${js}</script></body></html>\n`;
   const sri = (value: string) => "'sha256-" + createHash('sha256').update(value).digest('base64') + "'";
   const policy = `default-src 'none'; script-src ${sri(js)}; style-src ${sri(css)}; img-src data:; connect-src 'none'; font-src 'none'; base-uri 'none'; object-src 'none'; frame-ancestors *`;
   const receipt = {
-    version: 1,
-    scene: sceneSlug(project),
+    ...baseReceipt(project),
     title,
-    sourceHash: project.sourceHash,
-    engineHash: project.engineHash,
-    engine: 'lantern@2c7bad5+explainer',
-    agenticMermaid: '0.4.1',
     artifactHash: hash(html),
-    snapshotHashes: Object.values(project.store).map((s) => hash(JSON.stringify(s))),
     variants: project.variants.map((v) => ({
       settings: v.values,
       steps: v.trace.steps.length,

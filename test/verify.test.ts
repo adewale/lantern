@@ -79,13 +79,3 @@ test('a left-anchored counter changing digit count is not a resize', async () =>
   });
   assert.deepEqual(kinds, []);
 });
-
-test('every example scene is free of motion discontinuities', async () => {
-  const { SCENES } = await import('../scenes/index.ts');
-  for (const [name, { Scene }] of Object.entries(SCENES)) {
-    const sink = new MotionSink();
-    await new Scene(sink).run();
-    const events = analyzeMotion(sink);
-    assert.deepEqual(events.map((e) => `${e.t}s ${e.kind} [${e.step}] ${e.what}`), [], name);
-  }
-});

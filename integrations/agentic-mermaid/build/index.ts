@@ -5,7 +5,7 @@ import { mutate, serializeMermaid, verifyMermaid } from 'agentic-mermaid/agent';
 import { launch } from '../../../tools/lib/browser.ts';
 import { capture } from './capture.ts';
 import { readSvg } from './read-svg.ts';
-import { diagramKey } from '../snapshot.ts';
+import { diagramKey, RENDERER, SVG_PX_PER_UNIT as PX } from '../snapshot.ts';
 import type {
   DiagramResolver,
   DiagramSnapshot,
@@ -34,15 +34,13 @@ export function replayMorph(
 
 export async function snapshotBuilder(
   store: SnapshotStore = {},
-): Promise<DiagramResolver & { store: SnapshotStore; close(): Promise<void>; edits: number }> {
+): Promise<DiagramResolver & { close(): Promise<void> }> {
   const browser = await launch();
   const page = await browser.newPage();
   await page.route('**/*', (r) => r.abort());
   const pending = new Map<string, Promise<DiagramSnapshot>>();
   let serial: Promise<unknown> = Promise.resolve();
-  const builder = {
-    store,
-    edits: 0,
+  return {
     async close() {
       await browser.close();
     },
@@ -67,10 +65,10 @@ export async function snapshotBuilder(
           const route: [number, number][] | undefined = geometry
             ? geometry.kind === 'line'
               ? [
-                  [geometry.x1 / 100, -geometry.y1 / 100],
-                  [geometry.x2 / 100, -geometry.y2 / 100],
+                  [geometry.x1 / PX, -geometry.y1 / PX],
+                  [geometry.x2 / PX, -geometry.y2 / PX],
                 ]
-              : geometry.points.map((p) => [p.x / 100, -p.y / 100])
+              : geometry.points.map((p) => [p.x / PX, -p.y / PX])
             : undefined;
           // Graph wrappers use node:<id>, but the author's Mermaid ids are the public API.
           const id = node.id.startsWith('node:') ? node.id.slice(5) : node.id;
@@ -102,7 +100,7 @@ export async function snapshotBuilder(
           parts.unshift({ id: '__frame', role: 'frame', kind: 'shape', svg: '', shapes: lowered.get(-1)! });
         const value: DiagramSnapshot = {
           version: 1,
-          renderer: 'agentic-mermaid@0.4.1',
+          renderer: RENDERER,
           spec,
           family: /^\s*stateDiagram/m.test(spec.source) ? 'state' : r.doc.family,
           width: r.doc.width,
@@ -119,10 +117,5 @@ export async function snapshotBuilder(
       pending.set(key, task);
       return task;
     },
-    async morph(before: DiagramSpec, after: DiagramSpec, ops: readonly Readonly<Record<string, unknown>>[]) {
-      replayMorph(before, after, ops);
-      builder.edits++;
-    },
   };
-  return builder;
 }

@@ -3,11 +3,6 @@
 // into a test against Lantern. Every test names the upstream issue or pull
 // request it comes from. Properties use fast-check; FULL=1 runs ten times as
 // many cases, and FC_SEED=<seed> FC_PATH=<path> replays a failure.
-//
-// Some of these fail on purpose: the bug is real here and its fix belongs in a
-// file this suite does not own (src/scene.ts, app/embed-zoom.ts,
-// tools/lib/explain-video.ts). Each such test says so in a comment starting
-// "OUT OF SCOPE", which also names the fix.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fc from 'fast-check';
@@ -183,9 +178,7 @@ test('group: an instant member (runTime 0) of a group lands on its end, and an e
 
 test('play: a runTime of 0 shows the end state, never a collapsed or NaN frame (ManimCommunity #4004, #4017)', async () => {
   // https://github.com/ManimCommunity/manim/issues/4004, https://github.com/ManimCommunity/manim/pull/4017
-  // OUT OF SCOPE (src/scene.ts): play() computes alpha = t / runTime = 0 / 0 = NaN. The NaN
-  // points serialise as 0 (Int32Array), so the one frame draws every path collapsed to the
-  // origin. Fix in Scene.play: `const alpha = a.runTime > 0 ? Math.min(t / a.runTime, 1) : 1;`
+  // play() computed alpha = 0 / 0 = NaN, which serialised as 0 and collapsed every path to the origin.
   const { frames, scene } = await film(async (s) => {
     const r = new Rectangle({ width: 2, height: 1 });
     s.add(r);
@@ -197,10 +190,7 @@ test('play: a runTime of 0 shows the end state, never a collapsed or NaN frame (
 test('play: the last frame of a play shows the finished animation, whatever runTime × fps is (ManimCommunity #183, #698)', async () => {
   // https://github.com/ManimCommunity/manim/issues/183, https://github.com/ManimCommunity/manim/pull/698:
   // the last rendered frame stopped short of alpha = 1.
-  // OUT OF SCOPE (src/scene.ts): play() runs round(runTime·fps) frames at t = f·dt, so when
-  // runTime·fps rounds down the last frame is drawn at alpha < 1 and finish() lands after it.
-  // A scene that ends there never shows its final state (video export, the last still).
-  // Fix in Scene.play: interpolate the last frame at the end, `const t = f === n ? runTime : Math.min(f * dt, runTime);`
+  // When runTime·fps rounded down, the last frame was drawn at alpha < 1 and finish() landed after it.
   await fc.assert(fc.asyncProperty(fc.double({ min: 0.05, max: 2, noNaN: true }), async (runTime) => {
     const { frames, scene } = await film(async (s) => {
       const r = new Rectangle({ width: 1, height: 1 });
@@ -243,10 +233,8 @@ test('updaters: the dt an updater receives adds up to the scene clock across pla
 
 test('time: seeking to k/fps lands on frame k in a 40-minute scene (manim #1000, #1189)', async () => {
   // https://github.com/3b1b/manim/issues/1000, https://github.com/3b1b/manim/pull/1189: frame timing drifted from the nominal rate.
-  // OUT OF SCOPE (src/scene.ts): Scene keeps time as a running sum of dt, which drifts past the
-  // 1e-9 tolerance SeekSink and play() compare with. At 25 fps, renderAt(k / 25) first lands
-  // on the wrong frame at about 29 minutes. Fix: derive the clock from the frame count
-  // (`this.time = this.frameCount / this.fps` wherever a frame is counted).
+  // A clock summed from dt drifted past the seek tolerance at about 29 minutes at 25 fps; it now
+  // comes from the frame count.
   const fps = 25, times: number[] = [];
   const S = class extends Scene { override async construct() { await this.wait(40 * 60); } };
   await new S({ async frame(scene) { times.push(scene.time); } }, { fps }).run();
@@ -336,9 +324,7 @@ test('transform: from an empty path into a circle and back out stays finite and 
 test('transform: replace=true with the target already on screen leaves one copy of it (ManimCommunity #4238, #4242, #4372)', async () => {
   // https://github.com/ManimCommunity/manim/issues/4238, https://github.com/ManimCommunity/manim/pull/4242,
   // https://github.com/ManimCommunity/manim/pull/4372 (chained ReplacementTransforms).
-  // OUT OF SCOPE (src/scene.ts): Scene.replace() splices the target in where the source was
-  // without removing the target's own entry, so it is listed and drawn twice.
-  // Fix in Scene.replace: `this.mobjects = this.mobjects.filter((m) => !replacements.includes(m) || m === old)` before the splice.
+  // replace() used to splice the target in without removing its own entry, so it drew twice.
   const a = new Rectangle(), b = new Circle().shift([3, 0]), c = new Square().shift([-3, 0]);
   const { scene } = await film(async (s) => {
     s.add(a, b, c);
@@ -350,9 +336,7 @@ test('transform: replace=true with the target already on screen leaves one copy 
 
 test('transform: replace=true on a mobject inside an on-screen group leaves no ghost behind (ManimCommunity #2507)', async () => {
   // https://github.com/ManimCommunity/manim/issues/2507: replacing a submobject left the old one drawn.
-  // OUT OF SCOPE (src/scene.ts): Scene.replace() only looks at top-level mobjects; a source
-  // inside a group stays in the group while the target is added at the top level.
-  // Fix in Scene.replace: when `old.parent` is set, swap the target into the parent's children at old's index.
+  // replace() used to look only at top-level mobjects, leaving a grouped source behind.
   const a = new Rectangle(), g = new Group(a, new Square().shift([3, 0])), t = new Circle().shift([-3, 0]);
   const { scene } = await film(async (s) => { s.add(g); await s.play(new Transform(a, t, { replace: true })); });
   assert.equal(renderElements(scene).length, 2, 'the square and the circle, not the old rectangle too');
@@ -360,10 +344,7 @@ test('transform: replace=true on a mobject inside an on-screen group leaves no g
 
 test('play: animating a new Group of mobjects already on screen draws each once, in its place (manim #2500, #2352)', async () => {
   // https://github.com/3b1b/manim/pull/2500, https://github.com/3b1b/manim/issues/2352
-  // OUT OF SCOPE (src/scene.ts): beginAnimations adds the new wrapper group to the scene, so
-  // its children are drawn both as top-level mobjects and again through the wrapper, on top.
-  // Fix in Scene.beginAnimations: skip adding a mobject when every member of its family that
-  // has points is already present (manim's fix), instead of only checking the mobject itself.
+  // A new wrapper group of on-screen mobjects used to be added, drawing its members twice.
   const a = new Rectangle({ fill: '#ff0000', fillOpacity: 1 }), b = new Circle({ fill: '#0000ff', fillOpacity: 1 }), top = new Square({ side: 3 });
   const { scene } = await film(async (s) => { s.add(a, b, top); await s.play(new Indicate(new Group(a, b))); });
   const ids = renderElements(scene).map((e) => e.id);
@@ -868,9 +849,7 @@ test('svg import: after Z, a drawing command starts a new subpath at the closed 
 test('captions: a caption with a blank line or "-->" stays one WebVTT cue (ManimCommunity #2314, #3062, #3243)', () => {
   // https://github.com/ManimCommunity/manim/pull/2314 (subcaptions), https://github.com/ManimCommunity/manim/pull/3062 (encoding),
   // https://github.com/ManimCommunity/manim/issues/3243 (add_subcaption threw).
-  // OUT OF SCOPE (tools/lib/explain-video.ts): captionsVtt writes the caption verbatim apart from
-  // "-->" and angle brackets; a blank line inside it ends the cue, and players drop the rest.
-  // Fix in captionsVtt: collapse runs of blank lines, e.g. `.replace(/\n\s*\n/g, '\n')`.
+  // A blank line inside a caption used to end the cue, and players dropped the rest.
   fc.assert(fc.property(fc.array(fc.string({ unit: fc.constantFrom('a', ' ', '\n', '-', '>', 'é'), minLength: 1, maxLength: 12 }), { minLength: 1, maxLength: 4 }), (caps) => {
     const steps = caps.map((caption, i) => ({ step: `s${i}`, t0: i, t1: i + 1, frame0: i * 30, meta: { caption }, before: {} }));
     const vtt = captionsVtt({ fps: 30, duration: caps.length, frames: caps.length * 30, steps });
@@ -883,10 +862,7 @@ test('captions: a caption with a blank line or "-->" stays one WebVTT cue (Manim
 test('zoom: after a resize the drawing point at the stage centre stays at the centre (manim-web #389, #838, #871)', () => {
   // https://github.com/maloyan/manim-web/pull/389 (re-fit the canvas on resize and rotation),
   // https://github.com/maloyan/manim-web/issues/838 (camera off-centre on mobile), https://github.com/maloyan/manim-web/pull/871.
-  // OUT OF SCOPE (app/embed-zoom.ts): StageZoom.apply() re-clamps the old pixel pan on a resize, so
-  // turning a phone while zoomed slides the view toward the right or bottom. Fix in StageZoom:
-  // remember the last stage size and scale x and y by newWidth/oldWidth and newHeight/oldHeight
-  // before clamping.
+  // Turning a phone while zoomed used to slide the view; the pan now scales with the stage.
   (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver ??= class { observe() {} disconnect() {} };
   fc.assert(fc.property(fc.integer({ min: 200, max: 2000 }), fc.integer({ min: 200, max: 2000 }), fc.double({ min: 1.5, max: 6, noNaN: true }), fc.double({ min: 0.5, max: 2, noNaN: true }), (w, h, k, r) => {
     const svg = { classList: { toggle() {} }, style: { transform: '', transformOrigin: '' } };

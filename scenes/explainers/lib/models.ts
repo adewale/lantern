@@ -1,5 +1,5 @@
 // Small, explicitly scoped executable models. Scenes consume their results, not hand-entered answers.
-export class InvalidTransition extends Error {
+class InvalidTransition extends Error {
   constructor() {
     super('InvalidTransition');
   }
@@ -139,12 +139,13 @@ export function sunlight(latitude: number, declination: number): { altitude: num
     daylight: cos <= -1 ? 24 : cos >= 1 ? 0 : (24 * Math.acos(cos)) / Math.PI,
   };
 }
+/** Day of the year (0 = 1 January) of each month's 15th, in a common year. */
+const MID_MONTH = [14, 45, 73, 104, 134, 165, 195, 226, 257, 287, 318, 348];
+/** The Sun's declination in degrees, from the usual cosine approximation: −23.44° × cos(360° × (day + 10) / 365). */
+export const declination = (day: number) => -23.44 * Math.cos((2 * Math.PI * (day + 10)) / 365);
+/** Daylight hours on the 15th of each month. */
 export function daylightYear(latitude: number): number[] {
-  return Array.from(
-    { length: 12 },
-    (_, m) =>
-      Math.round(sunlight(latitude, 23.44 * Math.sin((2 * Math.PI * (m - 2)) / 12)).daylight * 10) / 10,
-  );
+  return MID_MONTH.map((day) => Math.round(sunlight(latitude, declination(day)).daylight * 10) / 10);
 }
 
 // SHA-256 (FIPS 180-4), used for the RFC 7636 example without host crypto globals.

@@ -5,12 +5,12 @@ import { dirname, resolve, join, basename, relative } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
-import { Scene, NullSink, traceScene } from '../../src/index.ts';
-import { variantsOf, withSettings, bindSnapshots, useDiagrams } from '../../explain/index.ts';
+import { Scene, NullSink, traceScene, takeMissingGlyphs } from '../../src/index.ts';
+import type { Trace } from '../../src/index.ts';
+import { variantsOf, withSettings, bindSnapshots, caseName } from '../../explain/index.ts';
 import type { ExplainerClass, SnapshotStore, Settings } from '../../explain/index.ts';
 import type { DiagramResolver } from '../../integrations/agentic-mermaid/snapshot.ts';
-import { diagramKey } from '../../integrations/agentic-mermaid/snapshot.ts';
-import type { Trace } from '../../src/index.ts';
+import { diagramKey, RENDERER } from '../../integrations/agentic-mermaid/snapshot.ts';
 import { lostLabelWarnings } from './explain-warnings.ts';
 
 export const ROOT = fileURLToPath(new URL('../../', import.meta.url));
@@ -28,12 +28,7 @@ export const scriptEscape = (value: string) =>
     .replace(/<!--/g, '<\\x21--')
     .replace(/\u2028/g, '\\u2028')
     .replace(/\u2029/g, '\\u2029');
-export const htmlEscape = (value: unknown) =>
-  String(value).replace(
-    /[&<>"']/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
-  );
-export async function scenePath(input: string): Promise<string> {
+async function scenePath(input: string): Promise<string> {
   let file = resolve(input);
   if ((await stat(file)).isDirectory()) file = join(file, 'scene.ts');
   return file;
@@ -90,7 +85,7 @@ export async function loadScene(
     bundle: true,
     platform: 'node',
     format: 'esm',
-    target: 'node24',
+    target: 'node26',
     write: false,
     plugins: [engineAlias(true)],
     logLevel: 'silent',
@@ -190,7 +185,7 @@ export async function writeSnapshots(base: string, store: SnapshotStore, sourceH
   const index = json({
     version: 2,
     importer: IMPORTER,
-    renderer: 'agentic-mermaid@0.4.1',
+    renderer: RENDERER,
     sourceHash,
     diagrams: names,
   });
@@ -242,16 +237,25 @@ export async function collectProject(
     },
   };
   const variants: Project['variants'] = [];
+  const undrawable: string[] = [];
   try {
     for (const values of variantsOf(Source)) {
-      const Selected = withSettings(Source, values);
-      class Collect extends Selected {
-        constructor(...args: ConstructorParameters<typeof Scene>) {
-          super(...args);
-          useDiagrams(this, resolver);
-        }
-      }
-      await new Collect(new NullSink(), { skipUntil: Infinity }).run();
+      const collect = new (withSettings(bindSnapshots(Source, resolver), values))(new NullSink(), { skipUntil: Infinity });
+      // Text the embedded fonts cannot draw shows as nothing: name it by case and step, then fail.
+      let step = '(before the first step)';
+      const blanks = () => {
+        for (const [text, chars] of takeMissingGlyphs())
+          undrawable.push(
+            `${caseName(Source, values) || 'The scene'}, step ${step}: "${text}" has ${[...chars].map((c) => `${c} (U+${c.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')})`).join(', ')}`,
+          );
+      };
+      takeMissingGlyphs();
+      collect.onStep((s) => {
+        blanks();
+        step = s.name;
+      });
+      await collect.run();
+      blanks();
       const Bound = withSettings(bindSnapshots(Source, store), values);
       const trace = await traceScene(Bound),
         names = trace.steps.map((s) => s.step);
@@ -261,6 +265,8 @@ export async function collectProject(
         throw new Error(`Duplicate step names prevent stable links: ${JSON.stringify(values)}`);
       variants.push({ values, Scene: Bound, trace });
     }
+    if (undrawable.length)
+      throw new Error(`The embedded fonts cannot draw these characters:\n${[...new Set(undrawable)].join('\n')}`);
     if (write) await writeSnapshots(base, store, loaded.sourceHash);
     return { ...loaded, store, variants, edits };
   } finally {
@@ -274,3 +280,13 @@ export function defaultVariant(project: Project) {
   )!;
 }
 export const sceneSlug = (p: Project) => p.Scene.meta?.id ?? basename(p.file).replace(/\.[^.]+$/, '');
+/** The fields every receipt (page or video) carries: what was built, from which sources. */
+export const baseReceipt = (p: Project) => ({
+  version: 1,
+  scene: sceneSlug(p),
+  sourceHash: p.sourceHash,
+  engineHash: p.engineHash,
+  engine: 'lantern@2c7bad5+explainer',
+  agenticMermaid: RENDERER.split('@')[1],
+  snapshotHashes: Object.values(p.store).map((s) => hash(JSON.stringify(s))),
+});

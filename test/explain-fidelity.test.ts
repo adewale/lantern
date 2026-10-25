@@ -12,7 +12,7 @@ import {
   sunlight,
   daylightYear,
 } from '../scenes/explainers/lib/models.ts';
-import { rankMetadata, secretWorkflow } from '../scenes/explainers/2password/model.ts';
+import { find, run } from '../scenes/explainers/2password/model.ts';
 import { Text, loadFonts } from '../src/index.ts';
 import { Repo, AUTHOR } from '../scenes/lib/gitmodel.ts';
 
@@ -74,9 +74,14 @@ for (const entry of EXPLAINERS)
           break;
         }
         case '2password': {
-          const model = secretWorkflow(values.auth!);
-          assertStepState(trace, 'search', { matches: rankMetadata('production api') });
-          assertStepState(trace, 'scope', { approvals: model.approvals, childEnv: model.childEnv });
+          const launched = run(
+            values.auth as 'desktop' | 'service',
+            { API_KEY: 'op://Personal/Cloud API/credential' },
+            ['app'],
+          );
+          assertStepState(trace, 'match', { matches: { 'cloud api': ['Cloud API'], databse: [] } });
+          assertStepState(trace, 'suggest', { found: find(['cloud api', 'databse']) });
+          assertStepState(trace, 'run', { argv: launched.argv, childEnv: launched.childEnv });
           break;
         }
         case 'state-machine': {

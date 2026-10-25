@@ -1,22 +1,33 @@
 import { Scene, Text, Arrow, Group, Line, FadeIn, Create } from '../../../src/index.ts';
-import { stage, palette, settingsOf, CodeBlock } from '../../../explain/index.ts';
-import { ITEMS, rankMetadata, secretWorkflow } from './model.ts';
+import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
+import {
+  ITEMS,
+  SOURCE,
+  SUGGESTION_THRESHOLD,
+  PROMPTS_PER_COMMAND,
+  find,
+  run,
+  closeness,
+  distance,
+  matches,
+  terms,
+} from './model.ts';
 
 const STYLE = 'excalidraw';
-const QUERY = 'production api';
+const QUERIES = ['cloud api', 'databse'] as const;
 const TOKEN = 'OP_SERVICE_ACCOUNT_TOKEN';
 const BOUNDARY =
-  'graph LR\nAgent[Agent model] --> Tool[Secret tool]\nTool --> Metadata[Search metadata]\nTool --> Op[1Password CLI]\nOp --> Vault[Vault]';
+  'graph LR\nAgent[Agent] --> Find[2password find]\nFind --> Op[op CLI]\nOp --> Vault[1Password vault]';
 const pad = (v: unknown, n: number) => String(v).padEnd(n);
-const lpad = (v: unknown, n: number) => String(v).padStart(n);
-/** A command as it fits on a sequence arrow. */
-const short = (c: string) => (c.includes(' -- ') ? `${c.split(' -- ')[0]} … ${c.split(' ').at(-1)}` : c);
 
 export default class PasswordExplainer extends Scene {
   static meta = {
     id: '2password',
-    title: 'Search 1Password metadata and hand the agent a reference',
+    title: 'How 2password finds a secret without showing it to the agent',
     sources: [
+      `${SOURCE}/src/discover.ts`,
+      `${SOURCE}/src/op.ts`,
+      `${SOURCE}/README.md`,
       'https://developer.1password.com/docs/cli/secret-references/',
       'https://developer.1password.com/docs/service-accounts/use-with-1password-cli/',
     ],
@@ -33,121 +44,120 @@ export default class PasswordExplainer extends Scene {
     },
   ];
   override async construct() {
-    const auth = settingsOf(this).auth!,
+    const auth = settingsOf(this).auth as 'desktop' | 'service',
       service = auth === 'service',
-      model = secretWorkflow(auth),
-      s = stage(this, { palette: palette(STYLE) }),
+      s = stage(this, { style: STYLE }),
       hot = s.emphasis;
-    const results = rankMetadata(QUERY),
-      selected = results[0]!;
+    const found = find(QUERIES),
+      [hitQuery, missQuery] = QUERIES,
+      match = found.matches[0]!,
+      suggestion = found.suggestions![0]!;
 
     await this.step('boundary', {
-      title: 'The secret tool searches metadata before the CLI',
-      caption:
-        'An offline fixture of three made-up items stands in for the vault, and no 2password code is reproduced. The agent calls a secret tool, which searches item metadata before it asks the 1Password CLI for any item.',
+      title: 'find starts by listing item titles',
+      caption: `2password lets a coding agent find and use 1Password secrets without seeing them. Here the agent runs find with two queries, ${hitQuery} and the typo ${missQuery}, against three sample items from 2password’s own tests.`,
     });
-    const boundary = await s.show({ source: BOUNDARY, style: STYLE }, { box: 'top' });
+    const boundary = await s.show({ source: BOUNDARY }, { box: 'top' });
     await boundary.walk(
       [
-        ['Agent', 'Tool'],
-        ['Tool', 'Metadata'],
+        ['Agent', 'Find'],
+        ['Find', 'Op'],
       ],
       { trail: true },
     );
-    const table = [
-      pad('title', 16) + pad('username', 10) + 'tags',
-      ...ITEMS.map((i) => pad(i.title, 16) + pad(i.username, 10) + i.tags.join(', ')),
-    ];
-    const items = await s.code(table, { at: [-5.5, -4.25, 5.5, -0.5], fontSize: 0.3 });
-    await items.focus([1, ITEMS.length]);
+    const W = 14;
+    const listing = await s.code(
+      [
+        pad('title', W) + pad('category', 16) + 'vault',
+        ...ITEMS.map((i) => pad(i.title, W) + pad(i.category, 16) + i.vault),
+      ],
+      { at: [-5.5, -4.25, 5.5, -0.5], fontSize: 0.3 },
+    );
+    await listing.focus([1, ITEMS.length]);
 
-    await this.step('search', {
-      title: 'Only Production API matches both query words',
-      caption:
-        'rankMetadata scores titles, usernames and tags, and drops any item missing a query word. Production API scores 80 and the other two are filtered out. The fixture items have no password field to search.',
+    await this.step('match', {
+      title: 'A title matches when it contains every query word',
+      caption: `find lowercases each query and keeps a title only if it contains every word; tags and fields are not searched. Cloud API matches ${hitQuery}. No title contains ${missQuery}, so that query is a miss.`,
     });
-    await boundary.dim(['Agent', 'Tool', 'Metadata']);
-    const terms = QUERY.split(' ');
-    const termScore = (id: string, term: string) => rankMetadata(term).find((r) => r.id === id)?.score;
-    const scored = [
-      `query "${QUERY}"`,
-      pad('item', 16) + terms.map((t) => lpad(t, 12)).join('') + lpad('score', 10),
+    await boundary.dim(['Agent', 'Find']);
+    const cell = (query: string, title: string) => {
+      if (matches(query, title)) return 'match';
+      const missing = terms(query).filter((t) => !title.toLowerCase().includes(t));
+      return `no ${missing.join(', ')}`;
+    };
+    await listing.morph([
+      pad('title', W) + QUERIES.map((q) => pad(q, 16)).join(''),
+      ...ITEMS.map((i) => pad(i.title, W) + QUERIES.map((q) => pad(cell(q, i.title), 16)).join('')),
+    ]);
+    await listing.focus(1 + ITEMS.findIndex((i) => i.title === match.title));
+    this.state.matches = Object.fromEntries(
+      QUERIES.map((q) => [q, ITEMS.filter((i) => matches(q, i.title)).map((i) => i.title)]),
+    );
+
+    const near = ITEMS.find((i) => i.title === suggestion.title)!;
+    const word = near.title.toLowerCase(),
+      edits = distance(missQuery, word),
+      longer = Math.max(missQuery.length, word.length);
+    await this.step('suggest', {
+      title: `A miss returns titles that score at least ${SUGGESTION_THRESHOLD}`,
+      caption: `For a query with no match, find scores each title word as 1 − edit distance ÷ the longer word’s length, and a title takes its best word. ${near.title} is ${edits} edit${edits === 1 ? '' : 's'} from ${missQuery}, so it scores 1 − ${edits}/${longer} = ${closeness(terms(missQuery), near.title)} and comes back as a suggestion.`,
+    });
+    await listing.morph([
+      pad('title', W) + pad(`closeness to ${missQuery}`, 24) + `≥ ${SUGGESTION_THRESHOLD}`,
       ...ITEMS.map((i) => {
-        const hit = results.find((r) => r.id === i.id);
+        const score = closeness(terms(missQuery), i.title);
         return (
-          pad(i.title, 16) +
-          terms.map((t) => lpad(termScore(i.id, t) != null ? `+${termScore(i.id, t)}` : '–', 12)).join('') +
-          lpad(hit ? hit.score : 'filtered', 10)
+          pad(i.title, W) + pad(score.toFixed(3), 24) + (score >= SUGGESTION_THRESHOLD ? 'suggested' : '–')
         );
       }),
-    ];
-    // The same panel turns from the fixture's items into their scores.
-    const ranking = items;
-    await ranking.morph(scored);
-    await ranking.focus(2 + ITEMS.findIndex((i) => i.id === selected.id));
-    this.state.matches = results;
+    ]);
+    await listing.focus(1 + ITEMS.indexOf(near));
+    this.state.found = found;
 
-    await this.step('select', {
-      title: 'op item get asks for one item: prod',
-      caption:
-        'The top result’s id, prod, is the only item the CLI is asked for, with op item get prod. Retrieval is limited to that one item, so the other items never reach the model.',
-    });
-    await boundary.dim(['Agent', 'Tool', 'Metadata', 'Op']);
-    await boundary.walk([['Tool', 'Op']], { trail: true });
-    await ranking.focus(2 + ITEMS.findIndex((i) => i.id === selected.id));
-
-    await this.step('auth', {
-      title: service ? 'With a service-account token, op never prompts' : 'The fixture counts one approval per op command',
+    await this.step('fetch', {
+      title: 'One op item get fetches the match and the suggestion',
       caption: service
-        ? 'With a service-account token, op authenticates without prompting, so the ledger totals zero approvals. Because op now holds that token, the wrapper has to keep it out of the app’s environment.'
-        : 'In this fixture each of the three op commands asks the desktop app for approval, so the ledger totals 3. Whether the real app reuses an approval depends on policy; the fixture assumes it never does.',
+        ? `find makes two op calls: item list for titles, then one item get for every item a match or suggestion needs, here ${found.fetched.join(' and ')}. With a service-account token in the environment, op asks for no approval.`
+        : `find makes two op calls: item list for titles, then one item get for every item a match or suggestion needs, here ${found.fetched.join(' and ')}. 2password’s README says the whole command costs one desktop approval.`,
     });
     await s.clear();
-    const third = service ? 'V as 1Password service' : 'U as Desktop app';
-    const answer = service ? 'O->>V: token auth' : 'O->>U: approve?';
     const sequence = await s.show(
       {
         source: [
           'sequenceDiagram',
-          ' participant A as Agent tool',
+          ' participant A as Agent',
+          ' participant T as 2password',
           ' participant O as op CLI',
-          ` participant ${third}`,
-          ...model.commands.flatMap((c) => [` A->>O: ${short(c)}`, ` ${answer}`]),
+          ' A->>T: find with two queries',
+          ` T->>O: ${found.opCalls[0]!.split(' --')[0]}`,
+          ' O-->>T: ids and titles',
+          ` T->>O: item get for ${found.fetched.length} items`,
+          ' O-->>T: item details',
+          ' T-->>A: op:// references',
         ].join('\n'),
-        style: STYLE,
       },
       { box: 'main' },
     );
-    const asks = sequence.snapshot.parts.filter((p) => p.role === 'message' && p.from === 'O').map((p) => p.id);
-    if (!service) await sequence.mark(asks);
-    const each = model.approvals / model.commands.length;
-    const ledger = new CodeBlock(
-      this,
-      s.palette,
+    await sequence.mark(['message:T->O#1']);
+    const ledger = await s.card(
       [
-        ...model.commands.flatMap((c) => [
-          short(c),
-          each ? `  + ${each} desktop approval` : '  token, no prompt',
-        ]),
-        '',
-        `approvals: ${model.approvals}`,
+        ['op calls', found.opCalls.length],
+        ['Items fetched', found.fetched.length],
+        ['Approvals', PROMPTS_PER_COMMAND[auth]],
       ],
-      { at: s.regions.side, fontSize: 0.28 },
+      { at: 'side', fontSize: 0.27 },
     );
-    s.keep(ledger);
-    await this.play(new FadeIn(ledger));
-    await ledger.focus(model.commands.length * 2 + 1);
+    await ledger.mark('Approvals');
     this.state.auth = auth;
-    this.state.approvals = model.approvals;
 
     await this.step('reference', {
-      title: 'The transcript holds a secret reference',
+      title: 'find prints references and drops the values',
       caption:
-        'The underlined parts of op://Fixture/prod/credential name the vault, item and field, and the secret itself is not in the string. The transcript keeps the reference; op run resolves it for the app at run time.',
+        'find returns a reference for each match and suggestion, and drops field values while it decodes op’s reply. A reference names a vault, an item and a field: the underlined parts of the Cloud API reference.',
     });
     await s.clear();
-    const ref = `op://Fixture/${selected.id}/credential`;
-    const refText = new Text(ref, { fontSize: 0.62, font: 'mono', color: s.palette.ink }).moveTo([0, 2.1]);
+    const ref = match.ref;
+    const refText = new Text(ref, { fontSize: 0.56, font: 'mono', color: s.palette.ink }).moveTo([0, 2.1]);
     const parts = ['vault', 'item', 'field'],
       segs = ref.slice(5).split('/'),
       per = refText.advance() / ref.length,
@@ -165,43 +175,41 @@ export default class PasswordExplainer extends Scene {
       );
       at += seg.length + 1;
     });
-    s.keep(refText);
-    s.keep(anatomy);
-    await this.play(new FadeIn(refText, { runTime: 0.5 }));
-    await this.play(new Create(anatomy, { lagRatio: 0 }));
-    const where = await s.card(
+    await s.enter(refText, { runTime: 0.5 });
+    await this.play(new Create(s.keep(anatomy), { lagRatio: 0 }));
+    const values = ITEMS.flatMap((i) => i.fields.map((f) => f.value));
+    const printed = JSON.stringify(found);
+    const output = await s.card(
       [
-        ['Secret in transcript', 'none'],
-        ['Resolved by', 'op run, at run time'],
-        ['Delivered to', 'app environment'],
+        [`Match for ${hitQuery}`, match.ref],
+        [`Suggestion for ${missQuery}`, suggestion.ref],
+        ['Secret values printed', values.filter((v) => printed.includes(v)).length || 'none'],
       ],
-      { at: [-4, -1.4, 4, 0.4], fontSize: 0.28 },
+      { at: [-6, -3.6, 6, 0.2], fontSize: 0.27 },
     );
-    await where.mark('Secret in transcript');
+    await output.mark('Secret values printed');
 
-    await this.step('child', {
-      title: service ? 'env -u strips op’s token from the app' : 'Desktop approval leaves no token to strip',
+    const launched = run(auth, { API_KEY: ref }, ['app']);
+    await this.step('run', {
+      title: service
+        ? 'env -u keeps the service token out of the app'
+        : 'op run starts the app with the secret',
       caption: service
-        ? 'op authenticates with OP_SERVICE_ACCOUNT_TOKEN, and env -u removes it before the app starts, so the app’s environment keeps only PATH and APP_MODE.'
-        : 'With desktop approvals op’s environment has no service token, so the same env -u removes nothing and the app still gets only PATH and APP_MODE.',
+        ? 'run hands op the reference, and op puts the secret into the app’s environment. With a service-account token, 2password has op start env -u OP_SERVICE_ACCOUNT_TOKEN app, so the app gets the secret and not the token.'
+        : 'run hands op the reference, and op puts the secret into the app’s environment. With desktop approval op holds no token, so it starts the app directly; the app gets the secret and PATH.',
     });
     await s.clear();
-    const command = await s.code([model.commands[2]!], { at: [-7.55, 1.6, 7.55, 3.25], fontSize: 0.34 });
-    const parent: Record<string, string> = {
-      ...model.childEnv,
-      ...(model.hasServiceTokenBefore ? { [TOKEN]: '<fixture token>' } : {}),
-    };
-    const before = new CodeBlock(
-      this,
-      s.palette,
-      Object.entries(parent).map(([k, v]) => (k === TOKEN ? '- ' : '  ') + `${k}=${v}`),
-      { at: [-7.55, -4.25, -0.75, 1.1], title: "op's environment", fontSize: 0.27, diff: true },
+    const command = await s.code(
+      [`2password run --env "API_KEY=${ref}" -- app`, `→ ${launched.argv.join(' ')}`],
+      { at: regionBox('top', { bottom: 1.2 }), fontSize: 0.3 },
     );
-    const child = new CodeBlock(
-      this,
-      s.palette,
-      Object.entries(model.childEnv).map(([k, v]) => `${k}=${v}`),
-      { at: [0.75, -4.25, 7.55, 1.1], title: "app's environment (childEnv)", fontSize: 0.27 },
+    const before = await s.code(
+      Object.entries(launched.opEnv).map(([k, v]) => (k === TOKEN ? '- ' : '  ') + `${k}=${v}`),
+      { at: [-7.55, -4.25, -0.75, 0.7], title: "op's environment", fontSize: 0.26, diff: true, enter: false },
+    );
+    const child = await s.code(
+      Object.entries(launched.childEnv).map(([k, v]) => `${k}=${v}`),
+      { at: [0.75, -4.25, 7.55, 0.7], title: "app's environment", fontSize: 0.26, enter: false },
     );
     const yArrow = (before.panel.box()![1] + before.panel.box()![3]) / 2;
     const pass = new Arrow([before.panel.box()![2] + 0.1, yArrow], [child.panel.box()![0] - 0.1, yArrow], {
@@ -210,76 +218,10 @@ export default class PasswordExplainer extends Scene {
       tipLength: 0.22,
       tipWidth: 0.18,
     });
-    s.keep(before);
-    s.keep(child);
-    s.keep(pass);
-    await this.play(new FadeIn(before));
-    await this.play(new Create(pass), new FadeIn(child));
-    await command.focus(0);
-    this.state.childEnv = model.childEnv;
-
-    await this.step('invariants', {
-      title: 'Results and childEnv, checked on the model',
-      caption:
-        'Each card row is computed from the model’s output when the scene builds: search results have no secret-like field, and childEnv has no OP_SERVICE_ACCOUNT_TOKEN.',
-    });
-    await s.clear();
-    const credential = service ? 'Service-account token' : 'Desktop approval';
-    const flow = await s.show(
-      {
-        source: `graph LR\nCredential[${credential}] --> Op[op run]\nRefs[Secret reference] --> Op\nOp --> Scrub[env -u token]\nScrub --> Child[app]`,
-        style: STYLE,
-      },
-      { box: 'top' },
-    );
-    await flow.walk(
-      [
-        ['Refs', 'Op'],
-        ['Op', 'Scrub'],
-        ['Scrub', 'Child'],
-      ],
-      { trail: true },
-    );
-    await flow.note('Credential', service ? 'token stops at op' : 'no token variable', { side: 'above' });
-    await flow.note('Child', `${Object.keys(model.childEnv).join(', ')} only`, { side: 'below' });
-    const resultKeys = [...new Set(results.flatMap((r) => Object.keys(r)))];
-    const secretish = resultKeys.filter((k) => /pass|secret|credential|value/i.test(k));
-    const checks = await s.card(
-      [
-        ['Fields in search results', resultKeys.join(', ')],
-        ['Secret-like fields', secretish.length ? secretish.join(', ') : 'none'],
-        [`${TOKEN} in childEnv`, TOKEN in model.childEnv ? 'present' : 'absent'],
-      ],
-      { at: [-5, -4.25, 5, -0.4], fontSize: 0.27 },
-    );
-    await checks.mark(`${TOKEN} in childEnv`);
-
-    await this.step('scope', {
-      title: 'Both authentication cases side by side',
-      caption:
-        'The two cards come from secretWorkflow. Desktop approvals cost 3 prompts and leave op without a token; the service account costs none and gives op the token. Neither case puts the token in the app’s environment.',
-    });
-    await s.clearOverlays();
-    const cards = [];
-    for (const which of ['desktop', 'service'] as const) {
-      const m = secretWorkflow(which);
-      cards.push(
-        await s.card(
-          [
-            ['Approvals', m.approvals],
-            [`Token in op's env`, m.hasServiceTokenBefore ? 'yes' : 'no'],
-            [`Token in app's env`, TOKEN in m.childEnv ? 'yes' : 'no'],
-          ],
-          {
-            at: which === 'desktop' ? [-7.3, -3.5, -0.4, -0.3] : [0.4, -3.5, 7.3, -0.3],
-            // The two titles are the difference this frame shows, so they stay.
-            title: which === 'desktop' ? 'Desktop approvals' : 'Service account',
-            fontSize: 0.27,
-            width: 6.2,
-          },
-        ),
-      );
-    }
-    await cards[service ? 1 : 0]!.mark('Approvals');
+    await s.enter(before);
+    await this.play(new Create(s.keep(pass)), new FadeIn(child));
+    await command.focus(1);
+    this.state.argv = launched.argv;
+    this.state.childEnv = launched.childEnv;
   }
 }

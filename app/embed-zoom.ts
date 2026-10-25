@@ -2,7 +2,8 @@
  * Zoom and pan for the stage. A 16:9 stage on a phone shows a 14 px label at
  * about 4 px, so the reader enlarges the vector drawing itself: buttons and
  * keys zoom about the centre, pinch and Ctrl-scroll about the fingers or
- * pointer, double-click about the point clicked, and a drag pans once zoomed.
+ * pointer, double-click about the point clicked. Once zoomed, a drag pans, and
+ * so does a click or tap, which centres the point under it (no drag needed).
  */
 /** A zoom: scale `k` about the stage's top-left corner, then a pan of (x, y) stage pixels. */
 export interface Zoom {
@@ -80,7 +81,14 @@ export class StageZoom {
       else this.zoomAt(2.5, ...local(e), true);
     });
     const pointers = new Map<number, { x: number; y: number }>();
-    let pinch = 0;
+    let pinch = 0,
+      // How far the pointer has moved since it went down: a click after a drag is the drag's end.
+      travel = 0;
+    stage.addEventListener('click', (e) => {
+      if (this.k <= 1 || travel > 4) return;
+      const [px, py] = local(e);
+      this.pan(stage.clientWidth / 2 - px, stage.clientHeight / 2 - py, true);
+    });
     // A pinch measures from the distance between exactly two fingers when that pair formed;
     // any change to the set of fingers starts a new measurement.
     const regroup = () => {
@@ -88,6 +96,7 @@ export class StageZoom {
       pinch = pointers.size === 2 ? Math.hypot(a!.x - b!.x, a!.y - b!.y) : 0;
     };
     stage.addEventListener('pointerdown', (e) => {
+      travel = 0;
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       regroup();
       // Capture every pointer, so its pointerup arrives here even off the stage; a lost
@@ -97,15 +106,14 @@ export class StageZoom {
     stage.addEventListener('pointermove', (e) => {
       const last = pointers.get(e.pointerId);
       if (!last) return;
+      travel += Math.hypot(e.clientX - last.x, e.clientY - last.y);
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pointers.size === 2) {
         const [a, b] = [...pointers.values()];
         const d = Math.hypot(a!.x - b!.x, a!.y - b!.y);
         if (pinch) this.zoomAt(d / pinch, ...local({ clientX: (a!.x + b!.x) / 2, clientY: (a!.y + b!.y) / 2 }));
         pinch = d;
-      } else if (this.k > 1) {
-        this.set(panBy(this, e.clientX - last.x, e.clientY - last.y, stage.clientWidth, stage.clientHeight, this.max));
-      }
+      } else if (this.k > 1) this.pan(e.clientX - last.x, e.clientY - last.y);
     });
     const release = (e: PointerEvent) => {
       if (pointers.delete(e.pointerId)) regroup();
@@ -149,6 +157,11 @@ export class StageZoom {
   /** Zoom by `factor`, keeping the stage point (px, py) still. */
   zoomAt(factor: number, px = this.stage.clientWidth / 2, py = this.stage.clientHeight / 2, glide = false): void {
     this.set(zoomAt(this, factor, px, py, this.stage.clientWidth, this.stage.clientHeight, this.max), glide);
+  }
+
+  /** Move the drawing by (dx, dy) stage pixels. */
+  pan(dx: number, dy: number, glide = false): void {
+    this.set(panBy(this, dx, dy, this.stage.clientWidth, this.stage.clientHeight, this.max), glide);
   }
 
   reset(glide = false): void {

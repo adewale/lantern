@@ -39,7 +39,6 @@ export interface MotionFrame { t: number; step: string | null; leaves: Map<numbe
 
 export type MotionKind = 'teleport' | 'resize' | 'pop' | 'cut-in' | 'cut-out' | 'flicker' | 'handoff';
 export interface MotionEvent { kind: MotionKind; frame: number; t: number; step: string | null; what: string; magnitude: number; detail: string }
-export interface MotionSummary { kind: MotionKind; step: string | null; frame: number; t: number; count: number; max: number; examples: string[] }
 
 const DEFAULTS: Required<MotionOptions> = {
   minJump: 0.2,      // scene units (frame is 16 wide, so ~1.25% of width, ~16px at 1280)
@@ -178,15 +177,3 @@ export function analyzeMotion(sink: MotionSink, opts: MotionOptions = {}): Motio
   return events;
 }
 
-/** Group events into one line per (kind, step, frame) burst, for reading. */
-export function summarizeMotion(events: readonly MotionEvent[]): MotionSummary[] {
-  const groups = new Map<string, MotionSummary>();
-  for (const e of events) {
-    const k = `${e.kind}|${e.step}|${e.frame}`;
-    const g = groups.get(k) ?? { kind: e.kind, step: e.step, frame: e.frame, t: e.t, count: 0, max: 0, examples: [] };
-    g.count++; g.max = Math.max(g.max, e.magnitude);
-    if (g.examples.length < 2) g.examples.push(`${e.what}: ${e.detail}`);
-    groups.set(k, g);
-  }
-  return [...groups.values()].sort((a, b) => a.frame - b.frame);
-}

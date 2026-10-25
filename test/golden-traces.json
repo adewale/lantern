@@ -1,11 +1,3 @@
 {
-  "lantern": "a55950e01b7e653a",
-  "exgit": "e0ab9d97b83037cf",
-  "just-bash": "700f677b2ff85320",
-  "pyex-limits": "ae1f2853f6e37495",
-  "mr-cache": "e4515ef8a67d3e19",
-  "state-machine": "d751c9900d43b22b",
-  "token-bucket": "ee561ac4ca7e3e86",
-  "glyph-text": "5431b672f0afad85",
-  "ring-buffer": "54d2310c7a930100"
+  "fixture": "a2b5ccfe60b9a926"
 }

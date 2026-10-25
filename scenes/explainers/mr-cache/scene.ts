@@ -57,14 +57,14 @@ export default class CacheMRExplainer extends Scene {
   ];
   override async construct() {
     const which = settingsOf(this).request as 'hit' | 'miss',
-      s = stage(this);
+      s = stage(this, { style: STYLE });
 
     await this.step('before', {
       title: 'Before: every request reads D1',
       caption:
         'getUser is a single D1 query, so the walked request goes from the handler straight to D1, and every lookup is a database read.',
     });
-    const flow = await s.show({ source: BEFORE, style: STYLE }, { box: 'top' });
+    const flow = await s.show({ source: BEFORE }, { box: 'top' });
     const code = await s.code(OLD, { at: 'bottom' });
     await flow.walk(
       [
@@ -91,7 +91,7 @@ export default class CacheMRExplainer extends Scene {
         'The same edit, replayed as diagram operations, removes the handler’s edge to D1 and puts a KV cache between them. A hit goes from KV straight to Reply, while a miss falls through to D1 before replying.',
     });
     await code.clearMarks();
-    await flow.morph({ source: AFTER, style: STYLE }, { ops: OPS });
+    await flow.morph({ source: AFTER }, { ops: OPS });
     await flow.note('KV', 'TTL 300 s', { side: 'above' });
     this.state.databaseReads = 'misses only';
 

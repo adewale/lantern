@@ -3,7 +3,7 @@
 // through package.json "exports", as it would from node_modules. If this stops
 // compiling, the public types broke.
 import { Scene, Rectangle, Text, Labeled, Arrow, FadeIn, Create, Transform, RIGHT, TEAL, StringSink, traceScene, renderAt, SnapshotSink } from 'manim-js';
-import type { Doc, AnimOpts, TextOpts } from 'manim-js';
+import type { AnimOpts, TextOpts } from 'manim-js';
 
 export class Demo extends Scene {
   override async construct() {
@@ -28,6 +28,3 @@ export async function run(): Promise<number> {
   await renderAt(Demo, 0.2, snap);
   return sink.frames.length + tr.steps.length + snap.svg.length;
 }
-
-const doc: Doc = { title: 't', steps: [{ name: 's', ops: [{ focus: 1 }, [{ add: { id: 'a', kind: 'box', label: 'A' } }]] }] };
-export const docOk = doc.steps.length === 1;

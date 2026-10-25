@@ -1,4 +1,4 @@
-import type { Scene, SceneClass } from '../src/scene.ts';
+import type { Scene, SceneClass } from '../src/index.ts';
 
 export interface Setting {
   id: string;
@@ -8,12 +8,14 @@ export interface Setting {
 }
 export type Settings = Readonly<Record<string, string>>;
 export type ExplainerClass = SceneClass & {
-  meta?: { id?: string; title?: string; sources?: readonly string[] };
+  /** `lang` is the BCP 47 language of titles, captions and on-stage text (default `en`). */
+  meta?: { id?: string; title?: string; lang?: string; sources?: readonly string[] };
   settings?: readonly Setting[];
 };
 /** Settings bound by `withSettings`, per bound class: visible from the first line of any constructor. */
 const bound = new WeakMap<object, Settings>();
-const reserved = new Set(['scene', 'step', 't', 'perf', 'embed', 'parentOrigin', 'theme']);
+// Query parameters the embed reads itself.
+const reserved = new Set(['step', 't', 'parentOrigin', 'theme']);
 
 /** Validate declarations and selections once, at the author/URL boundary. */
 export function resolveSettings(Scene: ExplainerClass, values: Settings = {}): Settings {
@@ -49,11 +51,18 @@ export function withSettings(Source: ExplainerClass, values: Settings = {}): Exp
   return Bound;
 }
 
+/** A case as readers see it, "Label: option · Label: option"; empty for a scene without settings. */
+export function caseName(Scene: ExplainerClass, values: Settings): string {
+  return (Scene.settings ?? [])
+    .map((s) => `${s.label}: ${s.options.find((o) => o.value === values[s.id])?.label ?? values[s.id]}`)
+    .join(' · ');
+}
+
 /** Finite cartesian product, in declaration order; refuse accidental build explosions. */
 export function variantsOf(Scene: ExplainerClass, limit = 64): Settings[] {
   resolveSettings(Scene);
   const total = (Scene.settings ?? []).reduce((n, s) => n * s.options.length, 1);
-  if (!(total <= limit)) throw new Error(`Settings exceed ${limit} variants`);
+  if (!(total <= limit)) throw new Error(`Settings exceed ${limit} cases`);
   let variants: Settings[] = [Object.freeze({})];
   for (const s of Scene.settings ?? []) {
     variants = variants.flatMap((v) => s.options.map((o) => Object.freeze({ ...v, [s.id]: o.value })));
