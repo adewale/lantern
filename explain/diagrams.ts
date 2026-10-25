@@ -49,7 +49,9 @@ interface Note {
 const TOKEN = { radius: 0.08, fade: 0.18 };
 /** Parts that frame a family (axes, lifelines, lanes, branches) rather than say something. */
 const isScaffold = (info: SnapshotPart) =>
-  info.id === '__frame' || /axis|lifeline|lane|grid|participant|actor|section/.test(info.role) || info.id.startsWith('branch:');
+  info.id === '__frame' ||
+  /axis|lifeline|lane|grid|participant|actor|section|rail|plate|chrome/.test(info.role) ||
+  info.id.startsWith('branch:');
 /** A reader's name for each family, and for its things and its links. */
 const FAMILIES: Record<string, [string, string?, string?]> = {
   flowchart: ['Flowchart', 'node', 'link'],
@@ -60,6 +62,9 @@ const FAMILIES: Record<string, [string, string?, string?]> = {
   gitgraph: ['Git graph', 'commit', 'link'],
   er: ['ER diagram', 'entity', 'relationship'],
   xychart: ['XY chart'],
+  timeline: ['Timeline', 'period'],
+  gantt: ['Gantt chart', 'task'],
+  quadrant: ['Quadrant chart', 'point'],
 };
 const counted = (n: number, noun: string) =>
   `${n} ${n === 1 ? noun : noun.replace(/(s|ch)$/, '$1e').replace(/y$/, 'ie') + 's'}`;
@@ -360,10 +365,10 @@ export class Diagram {
         edge: p.info.id,
       });
   }
-  /** A part's words: its own text and its labels' (an edge's label is a part it owns). */
+  /** A part's words: its own text and its labels' (an edge's label is a part it owns; a quadrant point's is `<id>:label`). */
   private words(id: string): string {
     return [...this.parts.values()]
-      .filter((p) => p.info.id === id || p.info.owner === id)
+      .filter((p) => p.info.id === id || p.info.owner === id || p.info.id === `${id}:label`)
       .flatMap((p) => p.info.shapes.map((s) => s.text?.trim()).filter((t): t is string => !!t))
       .join(' ');
   }
@@ -380,6 +385,8 @@ export class Diagram {
   private datum(id: string): string {
     const bar = /^bar:(\d+):(.*)$/s.exec(id),
       line = /^series:line-(\d+)$/.exec(id);
+    // A quadrant point too close to another to be labelled is named by its id, the name in the source.
+    if (id.startsWith('point:')) return id.slice(6);
     if (!bar && !line) return '';
     const categories = this.snapshot.chart?.categories ?? [];
     // Bars and lines are numbered within their kind: bar:1:… is the second bar series.
@@ -436,6 +443,8 @@ export class Diagram {
       const info = this.parts.get(id)!.info;
       // Axes, titles and legends are summed up in what the chart is.
       if (!this.visible.has(id) || /axis|title|legend/.test(info.role)) continue;
+      // A point's label is said with its point.
+      if (id.endsWith(':label') && this.visible.has(id.slice(0, -6))) continue;
       const name = this.nameOf(id);
       if (!name) {
         if (!isScaffold(info)) blank.push(`${family} part ${id}`);

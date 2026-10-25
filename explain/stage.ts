@@ -22,6 +22,8 @@ export interface StageOptions {
    * A string fixes it; `false` leaves the whole frame to the scene.
    */
   heading?: 'step' | string | false;
+  /** The heading's font size; at the default 0.36 it is under 12 px on a 390 px phone, at 0.5 about 12. */
+  headingSize?: number;
 }
 /** `enter: false` makes the panel and keeps it without playing, for `s.enter` to bring in with others. */
 type Entry = { enter?: boolean };
@@ -42,7 +44,7 @@ export function stage(scene: Scene, options: StageOptions = {}) {
   paper.key = '__paper';
   scene.add(paper);
   const makeHeading = (text: string) => {
-    const t = new Text(text, { fontSize: 0.36, color: colors.ink, weight: 'bold' });
+    const t = new Text(text, { fontSize: options.headingSize ?? 0.36, color: colors.ink, weight: 'bold' });
     if (t.width() > 14.6) t.setWidth(14.6);
     t.moveTo([0, HEADING_Y]);
     t.key = '__heading';
