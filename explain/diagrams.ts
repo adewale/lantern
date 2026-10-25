@@ -625,6 +625,8 @@ export class Diagram {
       // (a thin diagram's short side is mostly float32 rounding once zoomed).
       const wide = home[2] - home[0] >= home[3] - home[1];
       const k = wide ? (home[2] - home[0]) / (now[2] - now[0]) : (home[3] - home[1]) / (now[3] - now[1]);
+      // A diagram fitted down to a point (an absurd canvas size) has no extent to restore.
+      if (!(Number.isFinite(k) && k > 0)) return;
       const a: Vec = [(now[0] + now[2]) / 2, (now[1] + now[3]) / 2],
         b: Vec = [(home[0] + home[2]) / 2, (home[1] + home[3]) / 2];
       await this.moveParts(mobs, (m) => moved(m, k, a, b), runTime);

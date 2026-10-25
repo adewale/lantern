@@ -35,8 +35,9 @@ for (const item of EXPLAINERS) {
   const project = await collectProject(join(ROOT, 'scenes/explainers', item.id));
   const built = await buildExplainer(project, join(directory, item.id + '.html'));
   const query = new URLSearchParams(item.query ?? '');
+  // No query means the default case, which the tile's link opens; not the first case declared.
   const variant =
-      project.variants.find((v) => [...query].every(([k, value]) => v.values[k] === value)) ??
+      (query.size ? project.variants.find((v) => [...query].every(([k, value]) => v.values[k] === value)) : undefined) ??
       defaultVariant(project),
     step = variant.trace.steps.find((s) => s.step === item.step) ?? variant.trace.steps[0]!;
   const sink = new SnapshotSink({ width: 960 });

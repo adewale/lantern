@@ -540,6 +540,15 @@ test('whatever the validator accepts, a Diagram can draw without a NaN', async (
   );
 });
 
+test('a canvas so large the diagram fits to a point still draws finite points (CI counterexample)', async () => {
+  const s = { ...fixture(), width: 129312739843.01703 };
+  const ok = await snapshotResolver({ [diagramKey(s.spec)]: s }).diagram(s.spec);
+  const d = new Diagram(new Scene(new NullSink(), { skipUntil: Infinity }), ok.spec, ok, { box: 'side' });
+  await d.build();
+  await d.focus('all');
+  for (const p of d.parts.values()) for (const m of p.mob.family()) for (const a of m.pointArrays()) assert.ok(a.every(Number.isFinite));
+});
+
 test('resolving a snapshot never changes it', async () => {
   await fc.assert(
     fc.asyncProperty(randomSnapshot(), async (s) => {
