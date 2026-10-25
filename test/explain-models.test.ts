@@ -16,6 +16,11 @@ import {
 } from '../scenes/explainers/lib/models.ts';
 import { find, closeness, distance, run } from '../scenes/explainers/lib/2password.ts';
 import { Repo, AUTHOR } from '../scenes/explainers/lib/git.ts';
+import { assertViewFollowsState } from './lib/view-fidelity.ts';
+import type { View } from '../src/index.ts';
+import { withSettings } from '../explain/index.ts';
+import { loadFonts } from '../src/index.ts';
+import TokenBucketExplainer from '../scenes/explainers/token-bucket/scene.ts';
 
 test('SHA-256 and PKCE agree with independent crypto and the RFC 7636 vector', () => {
   for (let n = 0; n < 180; n++) {
@@ -52,6 +57,16 @@ test('rate changes alter real decisions while balances stay inside capacity', ()
     successes.push(results.filter(Boolean).length);
   }
   assert.deepEqual(successes, [7, 8, 9]);
+});
+test('token-bucket: the state readout shows scene.state at the end of every step, at every rate', async () => {
+  await loadFonts();
+  for (const rate of ['1', '2', '4']) {
+    const checked = await assertViewFollowsState(
+      withSettings(TokenBucketExplainer, { rate }),
+      (scene) => (scene as unknown as { readout: View | null }).readout,
+    );
+    assert.equal(checked, 5, `rate ${rate}: the readout is checked at all five steps`);
+  }
 });
 test('ring wraps into freed slots and Full changes no state', () => {
   assert.deepEqual(ringStory('wrap').at(-1)!.result, { head: 2, tail: 2, length: 5, data: [6, 7, 3, 4, 5] });
@@ -192,4 +207,36 @@ test('2password run strips the service token only when op holds one', () => {
   assert.ok('OP_SERVICE_ACCOUNT_TOKEN' in service.opEnv);
   for (const r of [service, desktop])
     assert.deepEqual(r.childEnv, { PATH: '/usr/bin', API_KEY: 'secret-cloud-api' });
+});
+
+// Picture side of the fidelity pattern for state-machine and ring-buffer: each View of scene.state
+// (state-machine's Session card; ring-buffer's readout, card values and waiting push argument)
+// shows, at the end of every step of every case, exactly what that step's traced state renders.
+// Imports are aliased so that blocks like this one can sit side by side in this file.
+import { collectProject as collectViewProject } from '../tools/lib/explain-project.ts';
+import { assertViewFollowsState as viewFollowsState } from './lib/view-fidelity.ts';
+import { loadFonts as loadViewFonts } from '../src/index.ts';
+import type { Scene as ViewScene, View as StateView } from '../src/index.ts';
+import { withSettings as viewSettings } from '../explain/index.ts';
+import RingBufferExplainer from '../scenes/explainers/ring-buffer/scene.ts';
+test('state-machine: its Session card shows the traced state at every step, in every case', async () => {
+  const project = await collectViewProject('scenes/explainers/state-machine', { write: false });
+  for (const variant of project.variants) {
+    const checked = await viewFollowsState(
+      variant.Scene,
+      (scene) => (scene as unknown as { readout?: StateView }).readout,
+    );
+    // The card appears in the first step, so every step is checked.
+    assert.equal(checked, variant.trace.steps.length, `${JSON.stringify(variant.values)}: every step checked`);
+  }
+});
+test('ring-buffer views show the traced state at every step, in both cases', async () => {
+  await loadViewFonts();
+  for (const operations of ['wrap', 'full']) {
+    const Ring = viewSettings(RingBufferExplainer, { operations });
+    for (const name of ['readout', 'results', 'incoming'] as const) {
+      const pick = (scene: ViewScene) => (scene as unknown as Record<typeof name, StateView | undefined>)[name];
+      assert.equal(await viewFollowsState(Ring, pick), 4, `${operations}: ${name} checked at all four steps`);
+    }
+  }
 });

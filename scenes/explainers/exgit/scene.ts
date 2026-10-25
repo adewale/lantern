@@ -1,11 +1,27 @@
-import { Scene, Text, Rectangle, Arrow, Group, FadeIn, FadeOut } from '../../../src/index.ts';
+import type { Evidence } from '../../../src/index.ts';
+import {
+  Scene,
+  Text,
+  Rectangle,
+  Arrow,
+  Group,
+  FadeIn,
+  FadeOut,
+  BraceLabel,
+  TransformFromCopy,
+  TransformMatchingShapes,
+  TransformMatchingText,
+  DOWN,
+} from '../../../src/index.ts';
 import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
 import { Repo, AUTHOR, parseTree } from '../lib/git.ts';
 
 const STYLE = 'catppuccin-mocha';
 const short = (id: string) => id.slice(0, 7);
 const DIAGRAM = regionBox('top', { bottom: -0.85 }),
-  BOTTOM = regionBox('bottom', { top: -1.1 });
+  BOTTOM = regionBox('bottom', { top: -1.1 }),
+  LEFT = regionBox('bottom', { top: -1.1, right: -0.15 }),
+  RIGHT = regionBox('bottom', { top: -1.1, left: 0.15 });
 /** "<type> <length>\0", the header Git hashes in front of an object's bytes. */
 const objectHeader = (repo: Repo, id: string) => `${repo.objects[id]!.type} ${repo.objects[id]!.bytes.length}\\0`;
 /** A tree's entries as stored: mode, name, a zero byte, then the 20-byte id (shown as hex). */
@@ -17,6 +33,32 @@ const entryLines = (repo: Repo, id: string, hex: number) =>
 const treeLines = (repo: Repo, id: string) => [`header  ${objectHeader(repo, id)}`, ...entryLines(repo, id, 40), `sha1    ${id}`];
 /** A commit's stored text, one line per row. */
 const objectLines = (repo: Repo, id: string) => repo.text(id).replace(/\n$/, '').split('\n');
+/** Every object a commit reaches through its tree and parent lines: what a clone has to fetch. */
+const reachable = (repo: Repo, from: string): string[] => {
+  const seen = new Set<string>();
+  const walk = (id: string): void => {
+    if (seen.has(id)) return;
+    seen.add(id);
+    const o = repo.objects[id]!;
+    if (o.type === 'commit')
+      for (const line of objectLines(repo, id)) {
+        if (line === '') break;
+        const [k, v] = line.split(' ');
+        if (k === 'tree' || k === 'parent') walk(v!);
+      }
+    else if (o.type === 'tree') for (const [, , child] of parseTree(o.bytes)) walk(child);
+  };
+  walk(from);
+  return [...seen];
+};
+/** What the last `n` matching transforms of the scene recorded (Scene.record): their pairing, as evidence. */
+const lastMatches = (scene: Scene, n: number): Evidence[] => {
+  const found = scene.evidence.filter((e) => e.kind === 'match').slice(-n);
+  if (found.length !== n) throw new Error(`Expected ${n} recorded matches, found ${found.length}`);
+  return found;
+};
+/** In how many of the 40 positions two ids hold the same hex digit. */
+const samePlace = (a: string, b: string) => [...a].filter((c, i) => b[i] === c).length;
 /** How a byte reads in a cell: printable, or its escape. */
 const glyph = (b: number) => (b === 0 ? '\\0' : b === 10 ? '\\n' : b === 32 ? 'sp' : String.fromCharCode(b));
 
@@ -52,7 +94,7 @@ export default class GitExplainer extends Scene {
     await this.step('blob', {
       title: 'A blob id is the SHA-1 of typed bytes',
       caption:
-        'Git hashes a header (the type, the byte length and a zero byte) followed by the content. The id is the SHA-1 of exactly these 13 bytes, and later pictures name it by its first seven digits.',
+        'Git hashes a header (the type, the byte length and a zero byte) followed by the content. The id is the SHA-1 of exactly these 13 bytes, and the brace marks the seven digits that name it in later pictures.',
     });
     const hello = repo.blob('hello\n');
     this.state.hello = hello;
@@ -114,6 +156,17 @@ export default class GitExplainer extends Scene {
     idRow.moveTo([0, cellY - 2.65]);
     await s.enter(arrow, how, { runTime: 0.4, describe: 'An arrow labelled SHA-1 from the bytes to their id' });
     await s.enter(idRow, { runTime: 0.6, describe: `The blob id ${hello}, its first seven digits highlighted` });
+    // The short name every later picture uses is this prefix of the real id.
+    const abbrev = new BraceLabel(idHead, `${short(hello)} names it from here on`, DOWN, {
+      fontSize: 0.26,
+      color: s.soft,
+      buff: 0.06,
+      labelBuff: 0.12,
+    });
+    await s.enter(abbrev, {
+      runTime: 0.4,
+      describe: `A brace under the first seven digits, ${short(hello)}: the name later pictures give the blob`,
+    });
 
     // ── tree: names live in the tree ────────────────────────────────────
     await this.step('tree', {
@@ -155,12 +208,6 @@ export default class GitExplainer extends Scene {
     this.state = { hello, t1, c1, head: repo.resolve('refs/heads/main') };
 
     // ── change: a second commit writes only what is new ────────────────
-    await this.step('change', {
-      title: add ? 'Add a file: the old blob is reused' : 'Edit a file: new blob, new tree, new commit',
-      caption: add
-        ? 'Tree two keeps tree one’s hello.txt entry byte for byte and adds world.txt. The marked lines changed: the header’s byte length, the new entry and the tree’s own id. The world.txt blob, tree two and commit two are new objects, and main still points at commit one.'
-        : 'New bytes hash to a new blob id. Tree two’s entry holds that id, so the tree’s own id changes too (the marked lines), and so does the commit’s. Commit one and its objects are untouched.',
-    });
     const nextBlob = repo.blob(add ? 'world\n' : 'hello again\n');
     const t2 = repo.tree(
       add
@@ -171,6 +218,15 @@ export default class GitExplainer extends Scene {
         : [['100644', 'hello.txt', nextBlob]],
     );
     const c2 = repo.commit({ tree: t2, parents: [c1], author: AUTHOR, message: 'second\n' });
+    // Objects commit two reaches that commit one does not: what the second commit wrote.
+    const before = reachable(repo, c1),
+      written = reachable(repo, c2).filter((id) => !before.includes(id)).length;
+    await this.step('change', {
+      title: add ? 'Add a file: the old blob is reused' : 'Edit a file: new blob, new tree, new commit',
+      caption: add
+        ? `Tree two lists hello.txt with the very same blob id, plus world.txt. Below, commit one’s row stays put, ${written} new objects grow in, and the hello blob moves into tree two as the same object: git does not write it again.`
+        : `New bytes hash to a new blob id. The tree naming it changes, so its id changes, and so does the commit’s. Below, commit one’s row stays put and all ${written} of commit two’s objects grow in new.`,
+    });
     const B2 = `New["blob<br/>${short(nextBlob)}"]`,
       T2 = `T2["tree ${short(t2)}<br/>${add ? 'hello.txt, world.txt' : 'hello.txt'}"]`,
       C2 = `C2["commit<br/>${short(c2)}"]`;
@@ -182,10 +238,105 @@ export default class GitExplainer extends Scene {
     await s.clearOverlays();
     await d.morph({ source: CHANGE });
     await d.note('edge:C2->C1#0', 'parent', { side: 'below' });
-    // Tree one's bytes, as in the tree step, turn into tree two's: a line that
-    // survives is unchanged, and a marked line changed.
-    const treeDiff = await s.code(treeLines(repo, t1), { at: BOTTOM });
-    await treeDiff.morph(treeLines(repo, t2), { markAdded: true });
+    // Below the graph, each commit's row as native boxes with the model's ids:
+    // the commit, then its tree holding each entry's blob, read back from the stored bytes.
+    /** An object as a box: its kind and short id, then lines of what it holds. */
+    const objectBox = (kind: string, id: string, lines: readonly string[], width: number, height: number, stroke: string) => {
+      const rect = new Rectangle({
+        width,
+        height,
+        cornerRadius: 0.08,
+        fill: ink,
+        fillOpacity: 0.06,
+        stroke,
+        strokeWidth: 0.024,
+      });
+      const top = (0.3 + lines.length * 0.28) / 2;
+      const head = new Text(`${kind} ${short(id)}`, { fontSize: 0.21, font: 'mono', color: ink, weight: 'bold' });
+      head.moveTo([0, top - 0.12]);
+      const rows = lines.map((l, i) =>
+        new Text(l, { fontSize: 0.19, font: 'mono', color: s.soft }).moveTo([0, top - 0.42 - i * 0.28]),
+      );
+      return new Group(rect, head, ...rows);
+    };
+    const ROW_H = 1.2,
+      ENTRY_W = 3.62,
+      TREE_LEFT = -1.75;
+    /** One commit's row. `lit` outlines a blob in the emphasis colour; `skip` leaves it out, to arrive by copy. */
+    const commitRow = (label: string, commit: string, y: number, { lit, skip }: { lit?: string; skip?: string } = {}) => {
+      const text = objectLines(repo, commit),
+        tree = text.find((l) => l.startsWith('tree '))!.slice(5),
+        parents = text.filter((l) => l.startsWith('parent ')).map((l) => l.slice(7));
+      const name = new Text(label, { fontSize: 0.22, color: s.soft, anchor: 'end' }).moveTo([TREE_LEFT - 2.9, y], [1, 0]);
+      const commitBox = objectBox(
+        'commit',
+        commit,
+        [`tree ${short(tree)}`, ...parents.map((p) => `parent ${short(p)}`)],
+        2.5,
+        ROW_H,
+        s.soft,
+      ).moveTo([TREE_LEFT - 1.45, y]);
+      const entries = parseTree(repo.objects[tree]!.bytes),
+        width = entries.length * ENTRY_W + 0.15;
+      const treeBox = new Rectangle({
+        width,
+        height: ROW_H,
+        cornerRadius: 0.08,
+        fill: ink,
+        fillOpacity: 0.03,
+        stroke: s.soft,
+        strokeWidth: 0.024,
+      }).moveTo([TREE_LEFT + width / 2, y]);
+      const treeHead = new Text(`tree ${short(tree)}`, {
+        fontSize: 0.21,
+        font: 'mono',
+        color: ink,
+        weight: 'bold',
+        anchor: 'start',
+      }).moveTo([TREE_LEFT + 0.2, y + ROW_H / 2 - 0.25], [-1, 0]);
+      const parts = [name, commitBox, treeBox, treeHead];
+      const blobs = new Map<string, Group>();
+      entries.forEach(([, file, blob], k) => {
+        const x = TREE_LEFT + 0.2 + k * ENTRY_W,
+          by = y - 0.17;
+        parts.push(new Text(file, { fontSize: 0.19, font: 'mono', color: s.soft, anchor: 'start' }).moveTo([x, by], [-1, 0]));
+        const box = objectBox('blob', blob, [JSON.stringify(repo.text(blob))], 2.15, 0.66, file === lit ? accent : s.soft);
+        blobs.set(file, box.moveTo([x + 1.27 + 2.15 / 2, by]));
+        if (file !== skip) parts.push(box);
+      });
+      return { row: new Group(...parts), blobs };
+    };
+    /** A commit's row in words, from the same stored bytes the boxes show. */
+    const rowWords = (label: string, commit: string) => {
+      const tree = objectLines(repo, commit)[0]!.slice(5),
+        entries = parseTree(repo.objects[tree]!.bytes).map(([, file, blob]) => `${file} as blob ${short(blob)}`);
+      return `${label}: commit ${short(commit)} names tree ${short(tree)}, which lists ${entries.join(' and ')}`;
+    };
+    const shared = add ? 'hello.txt' : undefined;
+    const one = commitRow('commit one', c1, -1.7);
+    await s.enter(one.row, { runTime: 0.5, describe: `The row of ${rowWords('commit one', c1)}` });
+    // Redrawn with commit two's row under it, morphed by shape: what is the same stays, the rest grows in.
+    const oneAgain = commitRow('commit one', c1, -1.7, { lit: shared }),
+      two = commitRow('commit two', c2, -3.1, { lit: shared, skip: shared });
+    const bothRows = () =>
+      `Two rows, ${rowWords('commit one', c1)}; under it, ${rowWords('commit two', c2)}` +
+      (shared ? `. The ${shared} blob ${short(hello)} is outlined in both trees: one object, named twice` : '');
+    const rows = s.keep(new Group(oneAgain.row, two.row), { describe: bothRows });
+    await this.play(new TransformMatchingShapes(one.row, rows, { runTime: 1.2 }));
+    const [grown] = lastMatches(this, 1);
+    if (grown!.removed !== 0 || grown!.morphed !== 0) throw new Error('The morph did not keep commit one’s row whole');
+    const morphNote = s.keep(
+      new Text(`The redraw kept all ${grown!.matched} shapes of commit one’s row and grew ${grown!.added} new ones.`, {
+        fontSize: 0.22,
+        color: s.soft,
+      }).moveTo([0, -4.07]),
+    );
+    await this.play(new FadeIn(morphNote, { runTime: 0.4 }));
+    if (shared) {
+      // Tree two names the very object tree one names: the same box moves across, id and all.
+      const same = s.keep(two.blobs.get(shared)!, { describe: bothRows });
+      await this.play(new TransformFromCopy(oneAgain.blobs.get(shared)!, same, { runTime: 0.9 }));
+    }
     if (add) {
       await d.mark(['Hello', 'edge:T1->Hello#0', 'edge:T2->Hello#0']);
       await d.note('Hello', 'one blob, two trees', { side: 'above' });
@@ -227,13 +378,53 @@ export default class GitExplainer extends Scene {
     await d.note('edge:C2->C1#0', 'parent', { side: 'below' });
 
     // ── hashes: every id covers the ids beneath it ──────────────────────
+    const kept = samePlace(t1, t2) + samePlace(c1, c2);
     await this.step('hashes', {
       title: 'Commit two’s id depends on every object it reaches',
-      caption:
-        'Commit two’s bytes contain its tree’s id and its parent’s id, so its own id depends on everything it reaches. These ids came from the model, and a test checks each one against git hash-object.',
+      caption: `Commit two’s bytes hold its tree’s id and its parent’s id, so its id depends on everything it reaches. Morphing the old ids into the new, ${kept} of 80 digits keep their place, about the ${80 / 16} that chance alone gives: SHA-1 changes everywhere. A test checks every id against git hash-object.`,
     });
     await s.clearOverlays();
-    const body = await s.code(objectLines(repo, c2), { at: BOTTOM });
+    const body = await s.code(objectLines(repo, c2), { at: LEFT });
+    // The two ids above the change: each old id stays, and a copy of it morphs, glyph by glyph,
+    // into the new id under it. A digit that drops straight down kept its place.
+    const idX = RIGHT[0] + 0.3,
+      label = (text: string, y: number) =>
+        new Text(text, { fontSize: 0.22, color: s.soft, anchor: 'start' }).moveTo([idX, y], [-1, 0]),
+      /** An id in mono, with the digits it shares, place for place, with `other` in the emphasis colour. */
+      hex = (id: string, other: string, y: number, color: string) => {
+        const t = new Text(id, { fontSize: 0.2, font: 'mono', color, anchor: 'start' }).moveTo([idX + 1.45, y], [-1, 0]);
+        if (t.children.length !== id.length) throw new Error('Expected one glyph per hex digit');
+        t.children.forEach((g, i) => id[i] === other[i] && g.setFill(accent));
+        return t;
+      };
+    const idLabels = [
+      label('Ids that changed, old above new', -1.35),
+      label('tree one', -1.8),
+      label('tree two', -2.1),
+      label('commit one', -2.6),
+      label('commit two', -2.9),
+    ];
+    const treeOld = hex(t1, t2, -1.8, s.soft),
+      commitOld = hex(c1, c2, -2.6, s.soft);
+    await s.enter(...idLabels, treeOld, commitOld, {
+      runTime: 0.4,
+      describe: `Tree one’s id ${t1} and commit one’s id ${c1}, each with a line left under it for the id that replaced it`,
+    });
+    const treeNew = hex(t2, t1, -2.1, ink),
+      commitNew = hex(c2, c1, -2.9, ink);
+    s.keep(treeNew, commitNew, {
+      describe: `Tree two’s id ${t2} under tree one’s, and commit two’s id ${c2} under commit one’s; the digits that kept their place are coloured`,
+    });
+    await this.play(
+      new TransformMatchingText(treeOld.copy(), treeNew, { runTime: 1.5 }),
+      new TransformMatchingText(commitOld.copy(), commitNew, { runTime: 1.5 }),
+    );
+    const [treeMatch, commitMatch] = lastMatches(this, 2);
+    const counts = [
+      label(`Paired with an equal digit anywhere: tree ${treeMatch!.matched}, commit ${commitMatch!.matched} of 40`, -3.4),
+      label(`Same digit in the same place, coloured: tree ${samePlace(t1, t2)}, commit ${samePlace(c1, c2)} of 40`, -3.8),
+    ];
+    await s.enter(...counts, { runTime: 0.4 });
     await d.unmark();
     await d.mark(['C2', 'T2', 'C1', 'edge:C2->T2#0', 'edge:C2->C1#0']);
     await d.note('edge:C2->C1#0', 'parent', { side: 'below' });

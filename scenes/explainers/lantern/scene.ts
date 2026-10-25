@@ -148,9 +148,9 @@ export default class LanternExplainer extends Scene {
       { at: [5.1, 1.9] },
     );
 
-    // A real circle's points, drawn and listed.
-    const R = 1.3,
-      centre: Vec = [5.1, 1.75];
+    // A real circle's points, drawn and listed beside Mobject for the camera to frame.
+    const R = 1,
+      centre: Vec = [3.15, 0.45];
     const circle = new Circle({ radius: R, stroke: ink, strokeWidth: 0.03 });
     const raw = Array.from(circle.subpaths[0]!);
     const pts: Vec[] = [];
@@ -158,11 +158,10 @@ export default class LanternExplainer extends Scene {
     await this.step('points', {
       title: `A circle is ${pts.length} points: ${(pts.length - 1) / 3} cubic Béziers`,
       caption:
-        'Every shape, glyph and imported diagram is stored as cubic Bézier points, like the anchors and handles drawn on this circle. The engine has no separate camera, so the zoom onto Mobject in this step is the diagram moving those points.',
+        'Every shape, glyph and imported diagram is stored as cubic Bézier points, like the anchors and handles drawn on this circle. The zoom onto Mobject is the camera: it changes what the stage shows, and no point in the diagram moves.',
     });
     await s.clearOverlays();
     await classes.unmark();
-    await classes.focus(['Mobject'], { zoom: 0.85 });
     await classes.note('Mobject', 'points: Float32Array', { side: 'below' });
     circle.moveTo(centre);
     const at = (p: Vec): Vec => [p[0] + centre[0], p[1] + centre[1]];
@@ -176,17 +175,20 @@ export default class LanternExplainer extends Scene {
         handles.add(new Dot({ radius: 0.055, color: s.soft }).moveTo(at(p)));
       }
     });
-    await s.enter(new Group(circle, handles, anchors), {
+    const figure = new Group(circle, handles, anchors);
+    await s.enter(figure, {
       describe: `A circle of radius ${R} as ${(pts.length - 1) / 3} cubic Béziers: anchors as large dots, handles as small dots joined to their anchors`,
     });
     const f = (n: number) => (n >= 0 ? ' ' : '') + n.toFixed(2);
     const first = pts
       .slice(0, 4)
       .map((p, i) => `[${f(p[0])}, ${f(p[1])}]  ${i === 0 || i === 3 ? 'anchor' : 'handle'}`);
-    await s.code(
-      [`circle.subpaths[0]  // radius ${R}`, ...first, '…'],
-      { at: regionBox('side', { top: 0.2 }), fontSize: 0.22 },
-    );
+    const listing = await s.code([`circle.subpaths[0]  // radius ${R}`, ...first, '…'], {
+      at: [4.35, -2.3, 7.8, 2.0],
+      fontSize: 0.19,
+    });
+    // The camera frames Mobject, its note, the circle and the listing; nothing is redrawn.
+    await classes.focus(['Mobject'], { camera: true, also: [figure, listing], margin: 1 });
 
     await this.step('clock', {
       title: `Every sink gets the same frames, 1/${this.fps} s apart`,

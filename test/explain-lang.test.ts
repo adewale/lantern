@@ -313,31 +313,32 @@ test('quotient-familial: every English word in its descriptions is one its autho
 // Descriptions of shipped English explainers, as they were before descriptions had a vocabulary.
 const ENGLISH_PINNED = [
   {
-    id: 'seasons',
-    step: 'compare',
+    id: "seasons",
+    step: "compare",
     summary:
-      'XY chart: Daylight hours from 0 to 24, 12 categories from Jan to Dec; 4 labels. Tromsø: Line 1: lowest 0 (Jan, Dec), highest 24 (Jun, Jul).',
-    html: '<ul><li>XY chart: Daylight hours from 0 to 24, 12 categories from Jan to Dec:<ul><li>Line 1: lowest 0 (Jan, Dec), highest 24 (Jun, Jul) (Tromsø);</li><li>Line 2: lowest 7.6 (Dec), highest 16.4 (Jun) (dimmed);</li><li>Line 3: 12 throughout (dimmed);</li><li>Line 4: lowest 9.8 (Jun), highest 14.2 (Dec) (dimmed).</li></ul></li><li>4 labels:<ul><li>Tromsø;</li><li>London;</li><li>Quito;</li><li>Sydney.</li></ul></li></ul>',
+      "A chart of daylight in hours, 0 to 24, through the months January to December; Tromsø’s daylight on every day of the year, from 0.0 h to 24.0 h, flat at 24 h for 60 days and at 0 h for 61; Dashed lines at the March and September equinoxes and the June and December solstices; The same model’s curves for London, Quito, Sydney in grey, each named at its end, with Tromsø’s in red. New in this step: Dashed lines at the March and September equinoxes and the June and December solstices; The same model’s curves for London, Quito, Sydney in grey, each named at its end, with Tromsø’s in red.",
+    html: "<ul><li>A chart of daylight in hours, 0 to 24, through the months January to December;</li><li>Tromsø’s daylight on every day of the year, from 0.0 h to 24.0 h, flat at 24 h for 60 days and at 0 h for 61;</li><li>Dashed lines at the March and September equinoxes and the June and December solstices;</li><li>The same model’s curves for London, Quito, Sydney in grey, each named at its end, with Tromsø’s in red.</li></ul>",
   },
   {
-    id: 'mr-cache',
-    step: 'request',
+    id: "mr-cache",
+    step: "request",
     summary:
-      'Flowchart: 5 nodes, 5 links; Code, 7 lines. Note: “0 reads” beside D1; travelled: Request → Handler; Handler → KV cache; KV cache → Reply: hit; and 2 more.',
-    html: '<ul><li>Flowchart: 5 nodes, 5 links:<ul><li>“0 reads” beside D1 (note);</li><li>Request → Handler (travelled);</li><li>Handler → KV cache (travelled);</li><li>KV cache → Reply: hit (travelled);</li><li>Request;</li><li>Handler;</li><li>KV cache;</li><li>Reply;</li><li>KV cache → D1: miss (dimmed);</li><li>D1 (dimmed);</li><li>D1 → Reply (dimmed).</li></ul></li><li>Code, 7 lines:<ul><li>2:   const hit = await env.KV.get(`user:${id}`, &quot;json&quot;); (focused);</li><li>3:   if (hit) return hit; (focused);</li><li>1: async function getUser(id, env) {;</li><li>4:   const row = await env.DB.prepare(SQL).bind(id).first();</li><li>5:   await env.KV.put(`user:${id}`, JSON.stringify(row), { expirationTtl: 300 });</li><li>6:   return row;</li><li>7: }.</li></ul></li></ul>',
+      "Flowchart: 5 nodes, 5 links; Code “users.ts”, 7 lines: 1: async function getUser(id, env) { · 2: const hit = await env.KV.get(`user:${id}`, \"json\"); · 3: if (hit) return hit; · 4: const row = await env.DB.prepare(SQL).bind(id).first(); · 5: await env.KV.put(`user:${id}`, JSON.stringify(row), { expirationTtl: 300 }); · 6: return row; · 7: }; “What the diff did”, 3 labelled values; Lines 2 to 3, the ones this request runs, outlined. Note: “0 reads” beside D1; travelled: Request → Handler; Handler → KV cache; KV cache → Reply: hit. New in this step: Lines 2 to 3, the ones this request runs, outlined.",
+    html: "<ul><li>Flowchart: 5 nodes, 5 links:<ul><li>“0 reads” beside D1 (note);</li><li>Request → Handler (travelled);</li><li>Handler → KV cache (travelled);</li><li>KV cache → Reply: hit (travelled);</li><li>Request;</li><li>Handler;</li><li>KV cache;</li><li>Reply;</li><li>KV cache → D1: miss (dimmed);</li><li>D1 (dimmed);</li><li>D1 → Reply (dimmed).</li></ul></li><li>Code “users.ts”, 7 lines: 1: async function getUser(id, env) { · 2: const hit = await env.KV.get(`user:${id}`, &quot;json&quot;); · 3: if (hit) return hit; · 4: const row = await env.DB.prepare(SQL).bind(id).first(); · 5: await env.KV.put(`user:${id}`, JSON.stringify(row), { expirationTtl: 300 }); · 6: return row; · 7: };</li><li>“What the diff did”, 3 labelled values:<ul><li>the rest as in the previous step.</li></ul></li><li>Lines 2 to 3, the ones this request runs, outlined.</li></ul>",
   },
   {
-    id: 'glyph',
-    step: 'morph',
+    id: "glyph",
+    step: "morph",
     summary:
-      'Code, 2 lines; Lines pair each letter of “cache miss” with the letter it becomes, the reshaped pairs highlighted and the last s dashed; 2 labels. Removed: 1: - cache miss; added: 2: + cache hit.',
-    html: '<ul><li>Code, 2 lines:<ul><li>1: - cache miss (removed);</li><li>2: + cache hit (added).</li></ul></li><li>Lines pair each letter of “cache miss” with the letter it becomes, the reshaped pairs highlighted and the last s dashed;</li><li>2 labels:<ul><li>cache miss;</li><li>cache hit.</li></ul></li></ul>',
+      "Code “label.txt”, 2 lines; Lines join the 6 paired letters of “cache miss” (c a c h e i) to their places in “cache hit”; the dropped m s s are crossed out and the new h t underlined; “Glyph pairs”, 3 labelled values; 2 labels. Removed: 1: - cache miss; added: 2: + cache hit; marked: Grow in: 2 · h t.",
+    html: "<ul><li>Code “label.txt”, 2 lines:<ul><li>1: - cache miss (removed);</li><li>2: + cache hit (added).</li></ul></li><li>Lines join the 6 paired letters of “cache miss” (c a c h e i) to their places in “cache hit”; the dropped m s s are crossed out and the new h t underlined;</li><li>“Glyph pairs”, 3 labelled values:<ul><li>Grow in: 2 · h t (marked);</li><li>Paired: 6 · c a c h e i;</li><li>Shrink away: 3 · m s s.</li></ul></li><li>2 labels:<ul><li>cache miss;</li><li>cache hit.</li></ul></li></ul>",
   },
   {
-    id: 'exgit',
-    step: 'change',
+    id: "exgit",
+    step: "change",
     summary:
-      'Flowchart: 7 nodes, 7 links; Code, 4 lines. Note: “parent” beside commit 7edf38a → commit 161f392; “one blob, two trees” beside blob ce01362; marked: tree 88e3870 hello.txt, world.txt → blob ce01362; tree aaa96ce hello.txt → blob ce01362; and 4 more. New in this step: commit 7edf38a; commit 7edf38a → commit 161f392; commit 7edf38a → tree 88e3870 hello.txt, world.txt; and 4 more.',
+      "Flowchart: 7 nodes, 7 links; Two rows, commit one: commit 161f392 names tree aaa96ce, which lists hello.txt as blob ce01362; under it, commit two: commit 7edf38a names tree 88e3870, which lists hello.txt as blob ce01362 and world.txt as blob cc628cc. The hello.txt blob ce01362 is outlined in both trees: one object, named twice; 1 label. Note: “parent” beside commit 7edf38a → commit 161f392; “one blob, two trees” beside blob ce01362; marked: tree 88e3870 hello.txt, world.txt → blob ce01362; tree aaa96ce hello.txt → blob ce01362; and 1 more. New in this step: commit 7edf38a; commit 7edf38a → commit 161f392; commit 7edf38a → tree 88e3870 hello.txt, world.txt; and 5 more.",
+    html: "<ul><li>Flowchart: 7 nodes, 7 links:<ul><li>“parent” beside commit 7edf38a → commit 161f392 (note);</li><li>“one blob, two trees” beside blob ce01362 (note);</li><li>tree aaa96ce hello.txt → blob ce01362 (marked);</li><li>tree 88e3870 hello.txt, world.txt → blob ce01362 (marked);</li><li>blob ce01362 (marked);</li><li>main;</li><li>main → commit 161f392;</li><li>commit 7edf38a;</li><li>commit 7edf38a → commit 161f392;</li><li>commit 7edf38a → tree 88e3870 hello.txt, world.txt;</li><li>commit 161f392;</li><li>commit 161f392 → tree aaa96ce hello.txt;</li><li>tree aaa96ce hello.txt;</li><li>tree 88e3870 hello.txt, world.txt;</li><li>tree 88e3870 hello.txt, world.txt → blob cc628cc;</li><li>blob cc628cc.</li></ul></li><li>Two rows, commit one: commit 161f392 names tree aaa96ce, which lists hello.txt as blob ce01362; under it, commit two: commit 7edf38a names tree 88e3870, which lists hello.txt as blob ce01362 and world.txt as blob cc628cc. The hello.txt blob ce01362 is outlined in both trees: one object, named twice;</li><li>1 label:<ul><li>The redraw kept all 76 shapes of commit one’s row and grew 98 new ones.</li></ul></li></ul>",
   },
 ];
 test('English descriptions are byte for byte what they were before the vocabulary', async () => {
