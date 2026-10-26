@@ -273,6 +273,9 @@ export class VMobject extends Mobject {
         const c: Vec = m.hasPoints() ? m.center() : [src[0]!, src[1]!];
         m.subpaths.push(new Float32Array([c[0], c[1]]));
         m.closed.push(o.closed[m.subpaths.length - 1]!);
+        // A container pads at the other side's first point, which can lie outside its box:
+        // the next pad's center() must not read a box cached before this one.
+        m.invalidateBox();
       }
     }
     for (let i = 0; i < this.subpaths.length; i++) {
