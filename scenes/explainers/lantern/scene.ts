@@ -97,7 +97,7 @@ export default class LanternExplainer extends Scene {
       title: 'A scene is an ordinary program',
       line: 'Each this.step names an idea; each this.play runs one.',
       caption:
-        'demo.ts holds one async construct method: each this.step call names an idea and each this.play call runs an animation on the stage beside it. The engine calls that method directly, with no lesson interpreter in between, as the card’s last row records.',
+        'demo.ts holds one async construct method: each this.step call names an idea and each this.play call runs an animation on the stage beside it, as the labels at the lines’ ends count. The engine calls that method directly, with no lesson interpreter in between.',
     });
     const code = await s.code(DEMO, { at: 'main', fontSize: 0.26 });
     // The same program, running on a small stage beside it.
@@ -119,21 +119,26 @@ export default class LanternExplainer extends Scene {
     await code.focus(6);
     const square = new Square({ side: 1.1, stroke: ink, strokeWidth: 0.03 }).moveTo([5.1, 1.7]);
     await this.play(new Transform(dot, square));
-    const count = (needle: string) => DEMO.filter((line) => line.includes(needle)).length;
-    await s.card(
-      [
-        ['steps', count('this.step(')],
-        ['plays', count('this.play(')],
-        ['lesson interpreter', 'none'],
-      ],
-      { at: regionBox('side', { top: -0.3 }) },
-    );
+    // Each call, counted at the end of its line, just outside the panel.
+    const tally = { step: 0, play: 0 };
+    const panelRight = code.panel.box()![2];
+    for (const [i, l] of DEMO.entries()) {
+      const kind = l.includes('this.step(') ? 'step' : l.includes('this.play(') ? 'play' : null;
+      if (!kind) continue;
+      const box = code.code.lines[i]!.box()!;
+      await s.callout([panelRight - 0.1, box[1], panelRight - 0.1, box[3]], `${kind} ${++tally[kind]}`, {
+        side: 'right',
+        gap: 0.25,
+        color: kind === 'step' ? accent : s.soft,
+        size: 0.24,
+      });
+    }
 
     await this.step('objects', {
       title: 'A Scene owns mobjects, plays animations and emits frames to a sink',
       line: 'Three sinks turn the same frames into a view, SVG or a trace.',
       caption:
-        'Each walked edge is one relation: a Scene owns mobjects, plays animations between endpoints fixed when they begin, and emits frames to a sink. The card’s three sinks turn the same frames into a browser view, an SVG string or an inspection trace.',
+        'Each walked edge is one relation: a Scene owns mobjects, plays animations between endpoints fixed when they begin, and emits frames to a sink. The three sinks drawn out of Sink turn the same frames into a browser view, an SVG string or an inspection trace.',
     });
     await s.clear();
     const classes = await s.show({ source: CLASSES }, { box: 'main' });
@@ -141,14 +146,23 @@ export default class LanternExplainer extends Scene {
     await classes.walk([['Scene', 'Animation']], { trail: true });
     await classes.walk([['Scene', 'Sink']], { trail: true });
     await classes.note('Animation', 'endpoints fixed at begin()', { side: 'below' });
-    await s.card(
-      [
-        ['DomSink', 'browser view'],
-        ['StringSink', 'SVG string'],
-        ['TraceSink', 'inspection trace'],
-      ],
-      { at: [5.1, 1.9] },
-    );
+    // Sink fans out to its three kinds, drawn from its right edge, each named with what it makes.
+    const sinkBox = classes.get('Sink').box()!,
+      from: Vec = [sinkBox[2] + 0.05, (sinkBox[1] + sinkBox[3]) / 2];
+    const kinds = [
+      ['DomSink', 'browser view'],
+      ['StringSink', 'SVG string'],
+      ['TraceSink', 'inspection trace'],
+    ] as const;
+    const fan = new Group(),
+      names = new Group();
+    kinds.forEach(([kind, makes], i) => {
+      const to: Vec = [from[0] + 0.9, from[1] + (1 - i) * 0.55];
+      fan.add(new Line(from, to, { stroke: s.soft, strokeWidth: 0.02 }));
+      names.add(new Text(`${kind}: ${makes}`, { fontSize: 0.24, color: ink, anchor: 'start' }).moveTo([to[0] + 0.12, to[1]], [-1, 0]));
+    });
+    await s.draw(fan, { tool: 'pen', runTime: 0.8, describe: 'Three lines fanning out of Sink to its three kinds' });
+    await s.enter(names);
 
     // A real circle's points, drawn and listed beside Mobject for the camera to frame.
     const R = 1,
