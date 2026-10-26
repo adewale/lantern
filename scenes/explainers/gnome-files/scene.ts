@@ -1,5 +1,5 @@
 import { Scene, Group, Rectangle, Text } from '../../../src/index.ts';
-import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
+import { stage, settingsOf } from '../../../explain/index.ts';
 import {
   COLOURS,
   GROUPS,
@@ -218,14 +218,18 @@ export default class GnomeFilesExplainer extends Scene {
         (n) => `${n} ${name(n)}: ${PARTICIPANTS.map((q) => `${q} ${scoreOf(n, q) ?? 'gray'}`).join(', ')}`,
       ).join('; ')}`,
     });
-    await s.card(
-      [
-        ...mine.map((n): [string, string] => [name(n), others(n).length ? `also ${and(others(n))}` : 'no one else']),
-        ['All give-ups', `${all.length}, tasks 1 to 9`],
-        [`Most give-ups, ${most} each`, `tasks ${and(worst.map(String))}`],
-      ],
-      { at: regionBox('full', { left: 1.3, top: 2.6 }), align: 'top', title: `${p} gave up on`, fontSize: 0.3 },
-    );
+    // Who gave up, said at the end of each task's row; rows where this participant gave up in the outline's colour.
+    for (const [r, n] of SESSION.entries()) {
+      const q = quitters(n);
+      if (!q.length) continue;
+      const y = rowY(r);
+      await s.callout([col(0) - CW / 2, y - RH / 2, col(PARTICIPANTS.length - 1) + CW / 2, y + RH / 2], `${and(q)} gave up`, {
+        side: 'right',
+        gap: 0.3,
+        color: q.includes(p) ? s.emphasis : s.soft,
+        size: 0.28,
+      });
+    }
     this.state.giveUps = { mine, others: Object.fromEntries(mine.map((n) => [n, others(n)])), total: all.length };
   }
 }
