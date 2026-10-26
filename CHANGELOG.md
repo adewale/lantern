@@ -4,6 +4,8 @@
 
 Newest first; all on 24–26 October 2026.
 
+- **README: the difference from slides**: the opening no longer names motion between steps or step links as the difference, since reveal.js 6.0.2 does both (auto-animate tweens position, size and colour between slides; `#/2` opens the third slide). It names what a deck cannot do: one program computes every step, a setting reruns it so the numbers, diagram and captions follow the case, and every case is checked before anyone sees it.
+
 - **README**: a tagline in the title; an opening that says how an explainer differs from a slide deck (one program on a clock, linkable steps, settings that rerun it as checked cases); one paragraph on the lineage, saying what the fork keeps from Lantern, what it deletes and what it adds; the scene `explain init` writes, which a test keeps identical to the template; the engine features as a list with their guides; Limits as a list; the platform CI runs on; a clone step; the project's licence; and where to report problems.
 
 - **Steps no longer move the page**: stepping through an explainer moved Next, the steps list and the transcript in 121 of 130 explainer-and-width pairs (26 explainers at 1180, 768, 600, 390 and 320 px); now none move. Three causes, three fixes in `app/embed.ts` and `app/embed.css`: the caption keeps the height its case's longest caption needs at the current width, measured by an unseen copy and remeasured when the width or case changes; Fit keeps its place while unseen, so a step that opens on a close-up no longer wraps the controls onto a second row; and each steps-list item reserves the height of its bold, current-step form. A browser test steps through exgit, mr-cache and send-sync at 1180 and 390 px and fails if any of the three fixes is reverted.
