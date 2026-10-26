@@ -1,5 +1,5 @@
 {
-  "name": "manim-js",
+  "name": "rayner",
   "version": "0.2.0-explainers.0",
   "type": "module",
   "scripts": {
@@ -43,6 +43,7 @@
   "bin": {
     "explain": "dist/tools/explain.js"
   },
+  "author": "Ade Oshineye (https://github.com/adewale)",
   "license": "MIT",
   "sideEffects": false,
   "types": "./dist/src/index.d.ts",

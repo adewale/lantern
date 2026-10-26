@@ -18,7 +18,7 @@ import { fixedSnapshot, square } from './lib/random-snapshot.ts';
 const folder = await mkdtemp(join(tmpdir(), 'lantern-gates-'));
 after(() => rm(folder, { recursive: true, force: true }));
 
-const HEAD = `import{Scene,Text,Dot,Rectangle,FadeIn}from'manim-js';import{stage,settingsOf}from'manim-js/explain';`;
+const HEAD = `import{Scene,Text,Dot,Rectangle,FadeIn}from'rayner';import{stage,settingsOf}from'rayner/explain';`;
 /** A scene module: `pre` at module level, `body` inside construct() after `const s=stage(this)`. */
 const scene = (body: string, pre = '', statics = '') =>
   `${HEAD}${pre}export default class Seeded extends Scene{${statics}async construct(){const s=stage(this);${body}}}`;
@@ -114,7 +114,7 @@ const gates: { gate: string; source: string; message: RegExp; snapshots?: () => 
   },
   {
     gate: 'step change: a step that ends on the same picture',
-    source: `import{Scene,Text,FadeIn}from'manim-js';import{stage}from'manim-js/explain';export default class Same extends Scene{async construct(){const s=stage(this);await this.step('one',{title:'One'});await this.play(new FadeIn(new Text('hello',{color:s.palette.ink})));await this.step('two',{title:'Two',caption:'Nothing new is drawn.'});await this.wait(.5);}}`,
+    source: `import{Scene,Text,FadeIn}from'rayner';import{stage}from'rayner/explain';export default class Same extends Scene{async construct(){const s=stage(this);await this.step('one',{title:'One'});await this.play(new FadeIn(new Text('hello',{color:s.palette.ink})));await this.step('two',{title:'Two',caption:'Nothing new is drawn.'});await this.wait(.5);}}`,
     message: /Each step must change the picture[^]*two/,
   },
   {
@@ -124,7 +124,7 @@ const gates: { gate: string; source: string; message: RegExp; snapshots?: () => 
   },
   {
     gate: 'imported legibility: a label readable only mid-sweep',
-    source: `import{Scene}from'manim-js';import{stage}from'manim-js/explain';export default class Camera extends Scene{async construct(){const s=stage(this);await this.step('one',{caption:'Read the label.'});const d=await s.show(${JSON.stringify(spec)});await d.focus(['B']);await this.wait(.5);await d.focus('all');await this.wait(.5);}}`,
+    source: `import{Scene}from'rayner';import{stage}from'rayner/explain';export default class Camera extends Scene{async construct(){const s=stage(this);await this.step('one',{caption:'Read the label.'});const d=await s.show(${JSON.stringify(spec)});await d.focus(['B']);await this.wait(.5);await d.focus('all');await this.wait(.5);}}`,
     snapshots: () => ({ [diagramKey(spec)]: smallLabel() }),
     message: /Imported labels need a readable completed-step view/,
   },
@@ -156,17 +156,17 @@ const gates: { gate: string; source: string; message: RegExp; snapshots?: () => 
   },
   {
     gate: 'duplicate step names',
-    source: `import{Scene}from'manim-js';export default class Bad extends Scene{async construct(){await this.step('same');await this.wait(.5);await this.step('same');await this.wait(.5);}}`,
+    source: `import{Scene}from'rayner';export default class Bad extends Scene{async construct(){await this.step('same');await this.wait(.5);await this.step('same');await this.wait(.5);}}`,
     message: /Duplicate step names/,
   },
   {
     gate: 'a case with no steps',
-    source: `import{Scene,Dot,FadeIn}from'manim-js';export default class Bad extends Scene{async construct(){await this.play(new FadeIn(new Dot()));}}`,
+    source: `import{Scene,Dot,FadeIn}from'rayner';export default class Bad extends Scene{async construct(){await this.play(new FadeIn(new Dot()));}}`,
     message: /Each case needs non-empty named steps/,
   },
   {
     gate: 'one scene export',
-    source: `import{Scene}from'manim-js';export class A extends Scene{async construct(){await this.step('a');await this.wait(.5)}}export class B extends Scene{async construct(){await this.step('b');await this.wait(.5)}}`,
+    source: `import{Scene}from'rayner';export class A extends Scene{async construct(){await this.step('a');await this.wait(.5)}}export class B extends Scene{async construct(){await this.step('b');await this.wait(.5)}}`,
     message: /Export one Scene subclass/,
   },
 ];

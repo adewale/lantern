@@ -17,7 +17,7 @@ A file this fork deleted (the player, `src/doc.ts`, `src/mermaid.ts` and the res
 
 ## Engine changes
 
-Each change is general (it is not about explainers) and has a regression test. None has been offered upstream; whether to offer them is an open decision in [the design record](../specs/kyle.md#decisions).
+Each change is general (it is not about explainers) and has a regression test. None has been offered upstream; whether to offer them is an open decision in [the design record](../specs/rayner.md#decisions).
 
 | Change | Why | Test |
 | --- | --- | --- |

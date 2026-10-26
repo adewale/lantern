@@ -31,7 +31,7 @@ A good explanation has requirements that cross tool boundaries, and no single pr
 
 Lantern supplies the execution and rendering model. Agentic Mermaid supplies layout, styles and a typed model of every diagram. The fork owns the workflow between them: the helpers, the player, the build, the video export, and the documentation and releases.
 
-**Why a fork, not only upstream changes.** General engine fixes can go upstream, and [upstream](../docs/UPSTREAM.md) lists them with their regression tests; scene registration and video tooling stay in the fork. A fork is justified only by the wider commitment: owning releases of the combined engine, helpers, player and tools, and supporting their users. That cost is real. Divergence should stay in the product and tooling layers, and the engine should change only for demonstrated needs. The project should not start without a named maintainer; it did, and the maintainer is the second open decision below.
+**Why a fork, not only upstream changes.** General engine fixes can go upstream, and [upstream](../docs/UPSTREAM.md) lists them with their regression tests; scene registration and video tooling stay in the fork. A fork is justified only by the wider commitment: owning releases of the combined engine, helpers, player and tools, and supporting their users. That cost is real. Divergence should stay in the product and tooling layers, and the engine should change only for demonstrated needs. The project should not have started without a named maintainer; it did, and Ade Oshineye was named on 25 October 2026.
 
 ## What is inherited, and what changes
 
@@ -170,10 +170,9 @@ To reduce the split, each step in the video plays its motion under the step's ti
 
 | Decision | What it unblocks | Prepared so far |
 | --- | --- | --- |
-| Public name and npm package (the package is still `manim-js`; this file is `kyle.md`) | Publishing the package and the `explain` CLI | Nothing |
-| Accountable maintainer | Every release; this spec's own precondition | Nothing |
+| Publishing the npm package | The `explain` CLI for authors outside this repository | The package is named `rayner` (chosen 25 October 2026) |
 | Upstream relationship: write to Ivar Vong, then offer the engine fixes or declare a hard fork | Merging future upstream work without guesswork | [Upstream](../docs/UPSTREAM.md) lists the fixes with their tests |
-| Which explainer to publish first, where, and after which subject-matter review | Checking the bytes and headers actually served; a first reader | Header recipes and `npm run site:export`; no explainer has been reviewed by an expert in its subject |
+| Subject-matter review of the published explainers, and video delivery on oshineye.dev | Trusting the explainers; videos in Safari | All 26 are live at oshineye.dev since 25 October 2026. No explainer has been reviewed by an expert in its subject. The site answers a byte-range request with the whole video (200, not 206), which Safari needs for video |
 | First outside author, and their topic | Evidence that the docs and skill work for someone other than the owner | A clean-machine trial can run once the topic is chosen |
 | The next Agentic Mermaid release with the four changes | Deleting the undocumented `drawNode` coupling and the label workaround | The four changes are listed in [upstream](../docs/UPSTREAM.md#agentic-mermaid) |
 
@@ -189,7 +188,6 @@ To reduce the split, each step in the video plays its motion under the step's ti
 | Settings multiply cases | Keep settings few and meaningful; the build runs every combination, so cost shows in CI time; 64 is the limit |
 | An explainer that looks right but is wrong | Walks travel real links; morph ops are replayed; scenes ask the real program; cite sources; have an expert read it |
 | Duplicate engine copies | Resolve scenes, helpers and player to one engine instance; the package smoke test checks it |
-| No maintainer | Do not promise a public release without one |
 
 **Out of scope for the first release:** a JSON format or scene language; a new engine; pasted or typed diagrams, which would need Agentic Mermaid in the browser; continuous numeric inputs (typing a latitude) for scenes that draw only native geometry from a model, a later candidate once sampled checks exist; a visual editor; a hosted service that runs other people's scenes; narration; framework components.
 

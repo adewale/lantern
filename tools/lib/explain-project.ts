@@ -41,8 +41,8 @@ export function engineAlias(node = false): Plugin {
     setup(b) {
       b.onResolve({ filter: /.*/ }, (args) => {
         let file: string | undefined;
-        if (args.path === 'manim-js') file = join(ROOT, 'src/index.ts');
-        else if (args.path === 'manim-js/explain') file = join(ROOT, 'explain/index.ts');
+        if (args.path === 'rayner') file = join(ROOT, 'src/index.ts');
+        else if (args.path === 'rayner/explain') file = join(ROOT, 'explain/index.ts');
         else if (args.path.startsWith('.') || args.path.startsWith('/')) {
           const absolute = resolve(args.resolveDir, args.path);
           const compiled = absolute.match(/\/dist\/(src|explain|integrations\/agentic-mermaid)\/(.+)\.js$/);

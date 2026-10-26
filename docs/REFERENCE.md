@@ -26,7 +26,7 @@ this.state.reads = reads;   // program state, recorded at each step boundary
 ## Stage
 
 ```ts
-import { stage } from 'manim-js/explain';
+import { stage } from 'rayner/explain';
 const s = stage(this, { style: 'nord' });
 ```
 

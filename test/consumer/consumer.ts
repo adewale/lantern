@@ -1,9 +1,9 @@
 // A TypeScript consumer of the package, type-checked against the emitted
-// declarations in dist/ (npm run check builds them first). 'manim-js' resolves
+// declarations in dist/ (npm run check builds them first). 'rayner' resolves
 // through package.json "exports", as it would from node_modules. If this stops
 // compiling, the public types broke.
-import { Scene, Rectangle, Text, Labeled, Arrow, FadeIn, Create, Transform, RIGHT, TEAL, StringSink, traceScene, renderAt, SnapshotSink } from 'manim-js';
-import type { AnimOpts, TextOpts } from 'manim-js';
+import { Scene, Rectangle, Text, Labeled, Arrow, FadeIn, Create, Transform, RIGHT, TEAL, StringSink, traceScene, renderAt, SnapshotSink } from 'rayner';
+import type { AnimOpts, TextOpts } from 'rayner';
 
 export class Demo extends Scene {
   override async construct() {

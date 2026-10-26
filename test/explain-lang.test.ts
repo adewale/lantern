@@ -21,11 +21,11 @@ import { launch } from '../tools/lib/browser.ts';
 const NB = ' ';
 // One scene per language: a setting, a card (so each step has a generated description) and a caption.
 const scene = (lang: string, label: string, caption: string) =>
-  `import{Scene}from'manim-js';import{stage,settingsOf}from'manim-js/explain';export default class L extends Scene{static meta={id:'lang-${lang}',title:'${label}',lang:'${lang}',sources:['https://example.com/source']};static settings=[{id:'n',label:'${label}',default:'1',options:[{value:'1',label:'1'},{value:'2',label:'2'}]}];async construct(){const s=stage(this);await this.step('one',{title:'${label}',caption:'${caption}'});await s.card([['${label}',settingsOf(this).n]]);}}`;
+  `import{Scene}from'rayner';import{stage,settingsOf}from'rayner/explain';export default class L extends Scene{static meta={id:'lang-${lang}',title:'${label}',lang:'${lang}',sources:['https://example.com/source']};static settings=[{id:'n',label:'${label}',default:'1',options:[{value:'1',label:'1'},{value:'2',label:'2'}]}];async construct(){const s=stage(this);await this.step('one',{title:'${label}',caption:'${caption}'});await s.card([['${label}',settingsOf(this).n]]);}}`;
 // A French scene that uses every kind of generated words: a flowchart marked, noted, walked with
 // and without a trail and dimmed; a titled card with a lit row; code with a diff and a focus; a
 // chart with two bar series and two lines; kept text with no describe.
-const rich = `import{Scene,Text}from'manim-js';import{stage}from'manim-js/explain';export default class R extends Scene{static meta={id:'riche',title:'Riche',lang:'fr'};async construct(){const s=stage(this);
+const rich = `import{Scene,Text}from'rayner';import{stage}from'rayner/explain';export default class R extends Scene{static meta={id:'riche',title:'Riche',lang:'fr'};async construct(){const s=stage(this);
 await this.step('flux',{title:'Flux',caption:'Le revenu passe par le barème.'});
 const d=await s.show({source:'graph LR\\nA["Revenu"] --> B["Barème"]\\nB --> C["Impôt"]'},{box:[-8,0,8,3.4]});
 await d.mark(['A']);await d.note('C','plafond');
