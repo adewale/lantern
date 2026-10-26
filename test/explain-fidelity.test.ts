@@ -364,7 +364,7 @@ async function mrCacheDiff(trace: { steps: { step: string; evidence?: { kind: st
   assert.equal(recorded.lines.changed + recorded.lines.removed, count('-'));
   assert.equal(recorded.lines.changed + recorded.lines.added, count('+'));
   assert.equal(recorded.lines.unchanged, BEFORE_CODE.length - count('-'));
-  // The title counts the lines as the card beside the code does, from the transform's plan.
+  // The title counts the lines as the callouts beside the code do, from the transform's plan.
   const word = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
   const counted = `${word[recorded.lines.added]} added lines and ${word[recorded.lines.changed]} rewritten`;
   const title = (Bound as unknown as { meta: { title: string } }).meta.title;
