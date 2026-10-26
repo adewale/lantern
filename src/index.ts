@@ -63,3 +63,8 @@ export type { Trace, StepRecord } from './trace.ts';
 export { perf } from './perf.ts';
 export { MotionSink, analyzeMotion } from './verify.ts';
 export type { MotionEvent, MotionOptions } from './verify.ts';
+
+// Optional lettering: tree-shaken from scenes which do not request it.
+export { MathTex, MathTex as Math } from './math.ts';
+export type { LetteringRequest, LetteringSnapshot } from './lettering-outlines.ts';
+// End optional lettering.

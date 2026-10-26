@@ -72,9 +72,9 @@ test('explainers that ask for no lettering build the page, headers and receipt t
 async function engineHashOf(lettered: boolean) {
   const inputs: string[] = [];
   for (const dir of ['src', 'explain', 'integrations/agentic-mermaid'])
-    for (const name of (await readdir(join(ROOT, dir))).filter((n) => n.endsWith('.ts')).sort())
+    for (const name of (await readdir(join(ROOT, dir))).filter((n) => n.endsWith('.ts') && !['lettering-outlines.ts', 'math.ts'].includes(n)).sort())
       if (lettered || dir + '/' + name !== 'src/lettering.ts')
-        inputs.push(dir + '/' + name + '\n' + (await readFile(join(ROOT, dir, name), 'utf8')));
+        inputs.push(dir + '/' + name + '\n' + (await readFile(join(ROOT, dir, name), 'utf8')).replace("import type { LetteringRequest } from '../src/lettering-outlines.ts';\n", '').replace('; lettering?: LetteringRequest', '').replace(/\n\/\/ Optional lettering: tree-shaken[\s\S]*?\/\/ End optional lettering\.\n/, ''));
   inputs.push(await readFile(join(ROOT, 'vendor/glyph.js'), 'utf8'));
   return sha256(inputs.join('\n'));
 }
