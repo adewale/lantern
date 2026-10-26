@@ -38,6 +38,17 @@ type Entry = { enter?: boolean };
  * function for a drawing that changes. Without it, their visible text is listed.
  */
 export type Describe = { describe?: string | (() => string) };
+
+/**
+ * Part of the stage's heading: its title (`__heading`), or its number, line or band
+ * (`__chrome`), or inside one of them. Everything that leaves the heading out of a picture
+ * (the checks, the phone close-ups, the text drawing agents read) asks here, so a part
+ * added to the heading is left out everywhere at once.
+ */
+export function isHeading(m: Mobject): boolean {
+  for (let x: Mobject | null = m; x; x = x.parent) if (x.key === '__heading' || x.key === '__chrome') return true;
+  return false;
+}
 const isOptions = (v: unknown): v is object => !!v && !(v instanceof Mobject);
 const HEADING_Y = 3.8;
 /** With a line under it, the heading moves up to make room. */

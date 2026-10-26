@@ -18,6 +18,7 @@ import {
 import type { ElementRecord } from '../../src/index.ts';
 import { pacing, pacingProblems } from '../../explain/film.ts';
 import { Card } from '../../explain/panels.ts';
+import { isHeading } from '../../explain/stage.ts';
 import { ROOT, engineAlias, sceneSlug } from './explain-project.ts';
 import { caseName } from '../../explain/index.ts';
 import { restingFrame, undescribed } from '../../explain/trace.ts';
@@ -155,8 +156,7 @@ export function restingTextProblems(scene: Viewed): string[] {
     if (zoomed && !shown) continue; // off screen while the camera looks elsewhere
     const native = m instanceof Text;
     // The heading, and its number and line: stage furniture, kept clear of the picture by the stage itself.
-    let heading = false;
-    for (let x: Mobject | null = m; x; x = x.parent) if (x.key === '__heading' || x.key === '__chrome') heading = true;
+    const heading = isHeading(m);
     if (zoomed && (native || heading) && (box[0] < view[0] || box[1] < view[1] || box[2] > view[2] || box[3] > view[3]))
       problems.push(`"${text}" is cut off by the frame`);
     if (!heading) texts.push({ m, box, native, text });
@@ -310,7 +310,7 @@ export async function checkProject(project: Project, out: string): Promise<Recor
         if (completedFrames.has(scene.frameCount)) {
           // The resting picture of a step, without the heading (number, title, line) that names it.
           const all = scene.mobjects;
-          scene.mobjects = all.filter((m) => m.key !== '__heading' && m.key !== '__chrome');
+          scene.mobjects = all.filter((m) => !isHeading(m));
           resting.set(scene.frameCount, toSvgString(scene));
           scene.mobjects = all;
           restingText.set(scene.frameCount, renderText(scene));

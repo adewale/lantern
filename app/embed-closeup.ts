@@ -19,6 +19,7 @@
  */
 import type { Box, Mobject, Scene, SceneClass, Sink } from '../src/index.ts';
 import { labelOf } from '../explain/diagrams.ts';
+import { isHeading } from '../explain/stage.ts';
 import { IDENTITY, ZOOM_MAX, clampZoom } from './embed-zoom.ts';
 import type { Zoom } from './embed-zoom.ts';
 
@@ -73,6 +74,10 @@ interface Leaf {
   top: Mobject;
   /** Part of a label's lettering. */
   text: boolean;
+  /** The object drawn, the same from step to step while it stays on stage. */
+  m: Mobject;
+  /** Its colours and its shape wherever it is and however large: equal when it was only moved or scaled. */
+  form: string;
 }
 /** FNV-1a over the points rounded to a thousandth of a unit: equal shapes in the same place hash equal. */
 function hashPoints(m: Mobject): string {
@@ -80,6 +85,19 @@ function hashPoints(m: Mobject): string {
   for (const a of m.pointArrays())
     for (let i = 0; i < a.length; i++) {
       h ^= Math.round(a[i]! * 1000) | 0;
+      h = Math.imul(h, 0x01000193);
+    }
+  return (h >>> 0).toString(36);
+}
+/** FNV-1a over the points relative to their box, scaled to its longer side: equal for a shape moved or scaled. */
+function hashShape(m: Mobject, box: Box): string {
+  const side = Math.max(box[2] - box[0], box[3] - box[1]) || 1;
+  let h = 0x811c9dc5;
+  for (const a of m.pointArrays())
+    for (let i = 0; i < a.length; i++) {
+      // Points are flat (x, y) pairs.
+      const origin = i % 2 === 0 ? box[0] : box[1];
+      h ^= Math.round(((a[i]! - origin) / side) * 1000) | 0;
       h = Math.imul(h, 0x01000193);
     }
   return (h >>> 0).toString(36);
@@ -92,7 +110,7 @@ const painted = (m: Mobject) =>
  * The paper and the heading (with its number and line) frame every step; the heading changes
  * each step but says nothing about where to look.
  */
-const fixed = (m: Mobject) => m.key === '__paper' || m.key === '__heading' || m.key === '__chrome';
+const fixed = (m: Mobject) => m.key === '__paper' || isHeading(m);
 
 /**
  * A world box in the units of the camera's view `view`: 16 wide, centred on the origin.
@@ -127,7 +145,8 @@ function leavesOf(scene: Scene): Leaf[] {
       if (seen) {
         const s = m.style;
         const key = [s.fill, s.fillOpacity, s.stroke, s.strokeOpacity, s.strokeWidth, s.drawFraction ?? 1, hashPoints(m)].join('|');
-        out.push({ key, opacity: o, box: seen, top, text });
+        const form = [s.fill, s.fillOpacity, s.stroke, s.strokeOpacity, s.drawFraction ?? 1, hashShape(m, b!)].join('|');
+        out.push({ key, opacity: o, box: seen, top, text, m, form });
       }
     }
     for (const child of m.children) walk(child, top, o, c, text);
@@ -155,7 +174,7 @@ function headingBottom(scene: Scene): number | undefined {
     }
     for (const child of m.children) walk(child, o);
   };
-  for (const top of scene.mobjects) if (top.key === '__heading' || top.key === '__chrome') walk(top, 1);
+  for (const top of scene.mobjects) if (isHeading(top)) walk(top, 1);
   return bottom;
 }
 
@@ -184,18 +203,24 @@ function labelsOf(scene: Scene): LayoutLabel[] {
 
 /**
  * What changed since `before` (the previous step's resting picture): every leaf that
- * is new, moved, reshaped, recoloured or brighter. A leaf that only grew fainter was
+ * is new, moved, reshaped, recoloured or brighter. A leaf that is the same object with
+ * the same colours and shape, only somewhere else or another size, is marked `moved`:
+ * it changed, but it is not what the step brought. A leaf that only grew fainter was
  * dimmed, which points away from it; when a step only dims, what it left bright in
  * the drawings it dimmed is what changed. With no change at all, everything drawn.
  */
 export function changed(leaves: readonly Leaf[], before: readonly Leaf[]): Change[] {
-  const was = new Map<string, number>();
-  for (const l of before) was.set(l.key, Math.max(was.get(l.key) ?? 0, l.opacity));
+  const was = new Map<string, number>(),
+    forms = new Map<Mobject, string>();
+  for (const l of before) {
+    was.set(l.key, Math.max(was.get(l.key) ?? 0, l.opacity));
+    forms.set(l.m, l.form);
+  }
   const out: Change[] = [],
     dimmed = new Set<Mobject>();
   for (const l of leaves) {
     const prior = was.get(l.key);
-    if (prior == null || l.opacity > prior + 0.1) out.push({ box: l.box, text: l.text });
+    if (prior == null || l.opacity > prior + 0.1) out.push({ box: l.box, text: l.text, ...(prior == null && forms.get(l.m) === l.form ? { moved: true } : {}) });
     else if (l.opacity < prior - 0.1) dimmed.add(l.top);
   }
   if (out.length) return out;
@@ -203,19 +228,21 @@ export function changed(leaves: readonly Leaf[], before: readonly Leaf[]): Chang
   // Kept or not, nothing here is new lettering: the step opens on the first part.
   return (kept.length ? kept : leaves).map((l) => ({ box: l.box, text: false }));
 }
-/** A changed leaf: where, and whether it is lettering. */
+/** A changed leaf: where, whether it is lettering, and whether it was only moved or scaled. */
 export interface Change {
   box: Box;
   text: boolean;
+  moved?: boolean;
 }
 /**
  * Changes merged into parts (any two within GAP join), in reading order: by rows of a
- * unit, top first, then left to right. The lead is the part with the most changed
- * lettering: a caption usually reads out the new words or numbers, so the step opens
- * there; with no changed lettering, it opens on the first part.
+ * unit, top first, then left to right. The lead is the part with the most new lettering:
+ * a caption usually reads out the new words or numbers, so the step opens there. Lettering
+ * that was only moved counts after it (a block carried aside is not what the step is
+ * about); with no changed lettering, it opens on the first part.
  */
 export function partsOf(changes: readonly Change[]): { parts: Box[]; lead: number } {
-  let parts = changes.map((c) => ({ box: [...c.box] as Box, text: +c.text }));
+  let parts = changes.map((c) => ({ box: [...c.box] as Box, text: +(c.text && !c.moved), moved: +(c.text && !!c.moved) }));
   for (let merged = true; merged; ) {
     merged = false;
     const next: typeof parts = [];
@@ -224,14 +251,17 @@ export function partsOf(changes: readonly Change[]): { parts: Box[]; lead: numbe
       const near = next.findIndex(({ box: n }) => overlaps([n[0] - GAP, n[1] - GAP, n[2] + GAP, n[3] + GAP], b));
       if (near < 0) next.push(p);
       else {
-        next[near] = { box: union(next[near]!.box, b), text: next[near]!.text + p.text };
+        next[near] = { box: union(next[near]!.box, b), text: next[near]!.text + p.text, moved: next[near]!.moved + p.moved };
         merged = true;
       }
     }
     parts = next;
   }
   parts.sort((a, b) => Math.floor(-a.box[3]) - Math.floor(-b.box[3]) || a.box[0] - b.box[0]);
-  const lead = parts.reduce((best, p, i) => (p.text > parts[best]!.text ? i : best), 0);
+  const lead = parts.reduce((best, p, i) => {
+    const b = parts[best]!;
+    return p.text > b.text || (p.text === b.text && p.moved > b.moved) ? i : best;
+  }, 0);
   return { parts: parts.map((p) => p.box), lead: parts.length ? lead : 0 };
 }
 /** All the parts as one box, or null when there are none. */
@@ -361,15 +391,23 @@ export function closeUps(layout: StepLayout | undefined, w: number, h: number, m
   const vw = w / (k * s),
     vh = h / (k * s);
   const regions = tourRegions(layout.parts, vw, vh, bounds);
-  // Open on the lead part: the first region that holds all of it when it fits a view, else the
-  // first that holds its top-left corner, where reading it starts.
+  // Open on the lead part: the first region that holds all of it when it fits a view, else,
+  // of the regions that hold its top-left corner (where reading it starts), the one that
+  // shows most of it: a region framing another part can reach the corner too.
   const lead = layout.parts[layout.lead] ?? layout.parts[0]!,
     inside = (x: number, y: number, r: Box) => x >= r[0] - 1e-9 && x <= r[2] + 1e-9 && y >= r[1] - 1e-9 && y <= r[3] + 1e-9,
     holds = (r: Box) => inside(lead[0], lead[3], r),
     holdsAll = (r: Box) => holds(r) && inside(lead[2], lead[1], r);
   const fits = lead[2] - lead[0] <= vw && lead[3] - lead[1] <= vh;
   let open = fits ? regions.findIndex(holdsAll) : -1;
-  if (open < 0) open = Math.max(0, regions.findIndex(holds));
+  if (open < 0) {
+    const shown = (r: Box) => {
+      const i = intersect(r, lead);
+      return i ? (i[2] - i[0]) * (i[3] - i[1]) : 0;
+    };
+    for (const [i, r] of regions.entries()) if (holds(r) && (open < 0 || shown(r) > shown(regions[open]!) + 1e-9)) open = i;
+    open = Math.max(0, open);
+  }
   const zooms: Zoom[] = [];
   for (const [left, , , top] of [...regions.slice(open), ...regions.slice(0, open)]) {
     // The stage point that shows (left, top) at 1× goes to the stage's top-left corner.

@@ -6,7 +6,8 @@ import { renderAt, renderText, traceScene } from '../src/index.ts';
 import type { Scene, SceneState, Sink } from '../src/index.ts';
 import { variantsOf, withSettings, caseName } from './settings.ts';
 import type { ExplainerClass, Setting, Settings } from './settings.ts';
-import { pictureSummary, restingTime } from './trace.ts';
+import { pictureSummary, restingTime, stepWords } from './trace.ts';
+import { isHeading } from './stage.ts';
 import { bindSnapshots } from './index.ts';
 import type { SnapshotStore, DiagramResolver } from '../integrations/agentic-mermaid/snapshot.ts';
 
@@ -14,6 +15,8 @@ import type { SnapshotStore, DiagramResolver } from '../integrations/agentic-mer
 export interface StepDescription {
   step: string;
   title: string;
+  /** The few words under the title, drawn on the picture; empty when the step has none. */
+  line: string;
   caption: string;
   start: number;
   end: number;
@@ -75,10 +78,12 @@ export async function describeExplainer(Scene: ExplainerClass, options: Describe
       for (const k of new Set([...Object.keys(before), ...Object.keys(after)]))
         if (!same(before[k], after[k]))
           changed[k] = { ...(k in before ? { before: before[k] } : {}), ...(k in after ? { after: after[k] } : {}) };
+      const words = stepWords(s);
       const d: StepDescription = {
         step: s.step,
-        title: String(s.meta.title ?? s.step),
-        caption: String(s.meta.caption ?? ''),
+        title: words.title,
+        line: words.line,
+        caption: words.caption,
         start: s.t0,
         end: s.t1 ?? trace.duration,
         ...(s.hold == null ? {} : { hold: s.hold }),
@@ -106,6 +111,6 @@ export async function describeExplainer(Scene: ExplainerClass, options: Describe
 async function drawing(Bound: ExplainerClass, t: number): Promise<string> {
   const sink: Sink = { async frame() {} };
   const scene: Scene = await renderAt(Bound, t, sink);
-  scene.mobjects = scene.mobjects.filter((m) => m.key !== '__heading');
+  scene.mobjects = scene.mobjects.filter((m) => !isHeading(m));
   return renderText(scene);
 }

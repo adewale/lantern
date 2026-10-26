@@ -155,10 +155,10 @@ test('a step opens on its lead part: whole when it fits the view, else from its 
   );
 });
 
-test('changes merge into parts in reading order, and the part with the most changed lettering leads', () => {
+test('changes merge into parts in reading order, and the part with the most new lettering leads, then the most moved', () => {
   fc.assert(
     fc.property(
-      fc.array(fc.record({ box: boxIn(), text: fc.boolean() }), { minLength: 1, maxLength: 10 }),
+      fc.array(fc.record({ box: boxIn(), text: fc.boolean(), moved: fc.boolean() }), { minLength: 1, maxLength: 10 }),
       (changes) => {
         const { parts, lead } = partsOf(changes);
         // Every change lies in exactly one part, and the parts keep apart.
@@ -166,13 +166,14 @@ test('changes merge into parts in reading order, and the part with the most chan
           const holding = parts.filter((p) => p[0] <= c.box[0] && p[1] <= c.box[1] && p[2] >= c.box[2] && p[3] >= c.box[3]);
           assert.ok(holding.length >= 1);
         }
-        const lettering = parts.map(
-          (p) => changes.filter((c) => c.text && p[0] <= c.box[0] && p[1] <= c.box[1] && p[2] >= c.box[2] && p[3] >= c.box[3]).length,
-        );
+        const count = (p: Box, moved: boolean) =>
+          changes.filter((c) => c.text && c.moved === moved && p[0] <= c.box[0] && p[1] <= c.box[1] && p[2] >= c.box[2] && p[3] >= c.box[3]).length;
+        // New lettering first, moved lettering to break ties: one number that orders both.
+        const rank = parts.map((p) => count(p, false) * 1000 + count(p, true));
         // Parts are disjoint, so a change inside one is counted there alone.
-        assert.equal(lettering.reduce((a, b) => a + b, 0), changes.filter((c) => c.text).length);
-        assert.equal(lettering[lead], Math.max(...lettering));
-        assert.equal(lead, lettering.indexOf(Math.max(...lettering)), 'ties go to the earlier part in reading order');
+        assert.equal(parts.reduce((n, p) => n + count(p, false) + count(p, true), 0), changes.filter((c) => c.text).length);
+        assert.equal(rank[lead], Math.max(...rank));
+        assert.equal(lead, rank.indexOf(Math.max(...rank)), 'ties go to the earlier part in reading order');
       },
     ),
     params(500),
@@ -309,5 +310,30 @@ test('stepLayouts records where the stage heading ends, and a phone close-up of 
     assert.ok(z.k > 1);
     const v = viewBox(z, w, h);
     assert.ok(v[3] <= layout.top! + 1e-6, `view ${v} cuts the heading at ${layout.top}`);
+  }
+});
+
+test('a block of text carried aside is a moved part, and the step opens on what it brought new', async () => {
+  for (const scale of [1, 0.5]) {
+    class Carry extends Scene {
+      override async construct() {
+        const block = new Group(
+          ...['five lines of code that', 'the previous step showed', 'and this step only moves', 'into the corner, out of', 'the way of the new part'].map((t, i) =>
+            new Text(t, { fontSize: 0.3 }).moveTo([0, 1 - i * 0.45]),
+          ),
+        );
+        await this.step('show');
+        this.add(block);
+        await this.wait(0.1);
+        await this.step('carry');
+        await this.play(block.animate.scale(scale).moveTo([-5, 3]));
+        this.add(new Text('2.96 units', { fontSize: 0.25 }).moveTo([3, -3]));
+        await this.wait(0.1);
+      }
+    }
+    const layout = (await stepLayouts(Carry)).get('carry')!;
+    assert.equal(layout.parts.length, 2, JSON.stringify(layout.parts));
+    const lead = layout.parts[layout.lead]!;
+    assert.ok(lead[0] > 2 && lead[3] < -2, `scale ${scale}: opens on the new label, not the carried block: ${JSON.stringify(lead)}`);
   }
 });
