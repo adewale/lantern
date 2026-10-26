@@ -7,7 +7,7 @@ import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
 import { collectProject, defaultVariant, ROOT, baseReceipt } from './lib/explain-project.ts';
 import { restingTime, htmlEscape, pictureSummary } from '../explain/trace.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
-import { contactSheet, stillPng } from './lib/explain-shots.ts';
+import { contactSheet, stillPng, cardPng } from './lib/explain-shots.ts';
 import { exporterHash, probeVideo, footerLines } from './lib/explain-video.ts';
 import { checkProject } from './lib/explain-check.ts';
 import { shareable } from './lib/explain-share.ts';
@@ -42,9 +42,17 @@ for (const item of EXPLAINERS) {
   // Share pages (tools/lib/explain-share.ts): a picture and the words for every step of the default
   // case, so site:export can give each step a URL whose link preview is that step.
   await mkdir(join(directory, item.id), { recursive: true });
-  const share: ShareManifest = { id: item.id, title: project.Scene.meta?.title ?? item.id, lang: project.Scene.meta?.lang ?? 'en', steps: [] };
-  for (const s of variant.trace.steps.filter((x) => shareable(x.step))) {
-    await writeFile(join(directory, item.id, s.step + '.png'), await stillPng(variant.Scene, restingTime(s, variant.trace.fps), 960));
+  const pictured = variant.trace.steps.filter((x) => shareable(x.step));
+  const share: ShareManifest = {
+    id: item.id,
+    title: project.Scene.meta?.title ?? item.id,
+    lang: project.Scene.meta?.lang ?? 'en',
+    // The explainer's own page previews as its gallery tile's step.
+    cover: (pictured.find((x) => x.step === step.step) ?? pictured[0])?.step ?? '',
+    steps: [],
+  };
+  for (const s of pictured) {
+    await writeFile(join(directory, item.id, s.step + '.png'), await cardPng(variant.Scene, restingTime(s, variant.trace.fps)));
     share.steps.push({ step: s.step, title: String(s.meta.title ?? s.step), caption: String(s.meta.caption ?? ''), picture: pictureSummary(s.after) });
   }
   await writeFile(join(directory, item.id, 'steps.json'), JSON.stringify(share, null, 2) + '\n');
