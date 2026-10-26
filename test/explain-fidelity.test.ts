@@ -61,7 +61,7 @@ for (const entry of EXPLAINERS)
           assertStepState(trace, 'june', { latitude: lat, june: sunlight(lat, 23.44) });
           assertStepState(trace, 'december', { december: sunlight(lat, -23.44) });
           assertStepState(trace, 'year', { daylight: daylightYear(lat) });
-          // The chart samples the model through the year, and its card runs it on every day, with
+          // The chart samples the model through the year, and its counts of polar days run it on every day, with
           // daylightYear's own declination, δ = −23.44° × cos(360° × (day + 10) / 365), which the scene restates
           // (lib/models.ts does not export it): on each month's 15th it gives daylightYear's value.
           const declination = (day: number) => -23.44 * Math.cos((2 * Math.PI * (day + 10)) / 365);
@@ -70,7 +70,7 @@ for (const entry of EXPLAINERS)
             fifteenths.map((d) => Math.round(sunlight(lat, declination(d)).daylight * 10) / 10),
             daylightYear(lat),
           );
-          // The card counts the model's days of polar day and night over one year.
+          // The chart counts the model's days of polar day and night over one year.
           const days = Array.from({ length: 365 }, (_, d) => sunlight(lat, declination(d)).daylight);
           assertStepState(trace, 'year', {
             polarDay: days.filter((h) => h === 24).length,
@@ -432,7 +432,7 @@ function gitHunks(before: readonly string[], after: readonly string[]) {
 
 /**
  * seasons' printed arithmetic holds as printed: the noon formula drawn on the close-up, and the
- * year card's "Longest − shortest" against the two solstice rows beside it.
+ * year chart's "longest − shortest" dimension against the two solstice values on the curve.
  */
 async function seasonsArithmetic(
   trace: { steps: { step: string; meta: Record<string, unknown>; after?: unknown }[] },
@@ -453,16 +453,20 @@ async function seasonsArithmetic(
 
   const yearStep = trace.steps.find((s) => s.step === 'year')!,
     year = textOf(pictureHtml(yearStep.after));
+  // The solstice values as the chart labels them at their dots.
   const row = (name: string) => {
-    const r = new RegExp(`${name}: ([\\d.]+) h`).exec(year);
+    const r = new RegExp(`${name} ([\\d.]+) h`).exec(year);
     assert.ok(r, `${name} in ${year}`);
     return Number(r[1]);
   };
-  const june = row('June solstice'),
-    december = row('December solstice'),
-    spread = row('Longest − shortest');
-  assert.equal(spread.toFixed(1), Math.abs(june - december).toFixed(1), year);
-  // Where the caption names the shortest and longest days, they are the card's two rows.
+  const june = row('Jun solstice'),
+    december = row('Dec solstice');
+  // The dimension beside the chart, where the year has one (not at the poles, nor where the
+  // curve is flat), measures the gap between them.
+  const spread = /A dimension line marked “longest − shortest: ([\d.]+) h”/.exec(year);
+  if (spread) assert.equal(Number(spread[1]).toFixed(1), Math.abs(june - december).toFixed(1), year);
+  else assert.ok(/flat at 24 h/.test(year) || june === december, `a year with no gap measured: ${year}`);
+  // Where the caption names the shortest and longest days, they are the chart's two solstice values.
   const caption = String(yearStep.meta.caption);
   const named =
     /from ([\d.]+) h at the December solstice to ([\d.]+) h|shortest day, ([\d.]+) h, .* longest, ([\d.]+) h/.exec(caption);
