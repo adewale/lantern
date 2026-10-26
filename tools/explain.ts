@@ -28,6 +28,8 @@ Commands:
   render <scene>      Silent MP4 (or .webm), captions, chapters and receipt
   shots <scene>       Step contact sheet as SVG and PNG
   filmstrip <scene>   Frames sampled across the video, mid-motion included, as PNG
+  describe <scene>    Every case and step as JSON for agents: words, state, what
+                      changed, the picture in words and drawn as text
 
 Every command fails on text the embedded fonts cannot draw.
 
@@ -110,7 +112,7 @@ export default class MyExplainer extends Scene {
     console.log(`Created ${join(dir, 'scene.ts')}`);
     return;
   }
-  if (!['preview', 'snapshots', 'check', 'build', 'render', 'shots', 'filmstrip'].includes(command!))
+  if (!['preview', 'snapshots', 'check', 'build', 'render', 'shots', 'filmstrip', 'describe'].includes(command!))
     throw new Error(`Unknown command: ${command}`);
   if (flags.footer)
     throw new Error(
@@ -131,6 +133,13 @@ export default class MyExplainer extends Scene {
         2,
       ),
     );
+    return;
+  }
+  if (command === 'describe') {
+    const { describeExplainer } = await import('../explain/describe.ts');
+    const json = JSON.stringify(await describeExplainer(project.Scene, { snapshots: project.store }), null, 2) + '\n';
+    if (flags.out) await writeFile(flags.out, json);
+    else process.stdout.write(json);
     return;
   }
   if (command === 'check') {
