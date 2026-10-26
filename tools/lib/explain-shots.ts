@@ -7,6 +7,7 @@ import { restingTime } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
 import { CARD } from './explain-share.ts';
 import { useProjectLettering } from './explain-lettering.ts';
+import { palettePng } from './explain-palette.ts';
 import { withSceneLettering } from '../../src/lettering-outlines.ts';
 
 /**
@@ -29,21 +30,31 @@ class CardSink extends SnapshotSink {
 }
 
 /**
- * A step's link-preview picture (tools/lib/explain-share.ts): the 16:9 still, CARD.inner pixels
- * wide, centred on a CARD.width × CARD.height (2:1) canvas of the stage's paper colour (or
- * CARD.background for a scene with no stage). X shows a summary_large_image card at 2:1, and
- * Facebook and LinkedIn at 1.91:1; a 16:9 picture cut to 2:1 would lose 30 px top and bottom,
- * where many steps have labels, and cutting the side bands loses nothing.
+ * A step's link-preview picture (tools/lib/explain-share.ts) as drawn: the 16:9 still,
+ * CARD.inner pixels wide, centred on a CARD.width × CARD.height (2:1) canvas of the stage's paper
+ * colour (or CARD.background for a scene with no stage). X shows a summary_large_image card at
+ * 2:1, and Facebook and LinkedIn at 1.91:1; a 16:9 picture cut to 2:1 would lose 30 px top and
+ * bottom, where many steps have labels, and cutting the side bands loses nothing.
  */
-export async function cardPng(Source: Project['Scene'], time: number): Promise<Buffer> {
+export async function cardPicture(Source: Project['Scene'], time: number) {
   const sink = new CardSink({ width: CARD.inner, cull: true, background: CARD.background });
   await renderAt(Source, time, sink);
   const x = (CARD.width - CARD.inner) / 2,
     fill = sink.paper && /^#[0-9a-f]{3,8}$/i.test(sink.paper) ? sink.paper : CARD.background,
     inner = sink.svg.replace(/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" /, `<svg x="${x}" `);
-  if (inner === sink.svg) throw new Error('cardPng: unexpected SVG root');
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${CARD.width}" height="${CARD.height}"><rect width="${CARD.width}" height="${CARD.height}" fill="${fill}"/>${inner}</svg>`;
-  return (await rasterize(svg)).asPng();
+  if (inner === sink.svg) throw new Error('cardPicture: unexpected SVG root');
+  return rasterize(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${CARD.width}" height="${CARD.height}"><rect width="${CARD.width}" height="${CARD.height}" fill="${fill}"/>${inner}</svg>`,
+  );
+}
+
+/**
+ * The link-preview picture as a palette PNG (tools/lib/explain-palette.ts): about a third of the
+ * bytes of a full-colour PNG, each pixel within a few levels of the render.
+ */
+export async function cardPng(Source: Project['Scene'], time: number): Promise<Buffer> {
+  const picture = await cardPicture(Source, time);
+  return palettePng(picture.pixels, picture.width, picture.height);
 }
 
 export async function contactSheet(
