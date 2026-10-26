@@ -113,7 +113,7 @@ function pairLines(pairs: Array<[Mobject, Mobject]>, ghostOf: (m: Mobject) => Mo
 export default class GlyphExplainer extends Scene {
   static meta = {
     id: 'glyph',
-    title: 'Lantern draws text from measured glyph outlines',
+    title: 'Rayner draws text from measured glyph outlines',
     sources: ['https://github.com/ivarvong/lantern/blob/2c7bad5/src/text.ts'],
   };
   static settings = [
@@ -140,7 +140,7 @@ export default class GlyphExplainer extends Scene {
     await this.step('write', {
       title: 'Letters are outlines from an embedded font',
       caption:
-        'Each letter is a vector path from a font bundled with Lantern; no installed font is asked for. Write traces every contour. The close-up shows one glyph’s points and handles.',
+        'Each letter is a vector path from a font bundled with Rayner; no installed font is asked for. Write traces every contour. The close-up shows one glyph’s points and handles.',
     });
     const text = new Text(WORD, { font, fontSize: font === 'sans' ? 1.5 : 1.15, color: ink, fillOpacity: 0 });
     text.setStroke(ink, 0.018);
@@ -281,9 +281,9 @@ export default class GlyphExplainer extends Scene {
     this.state.shapePairs = { sameFont: sameFont.matched, otherFont: otherFont.matched };
 
     await this.step('pipeline', {
-      title: 'Lantern converts every font segment to a cubic',
+      title: 'Rayner converts every font segment to a cubic',
       caption:
-        'The font stores quadratic curves and lines, as the note beside it counts. Lantern raises every segment to a cubic, so one kind of path feeds both the SVG player and offline video frames.',
+        'The font stores quadratic curves and lines, as the note beside it counts. Rayner raises every segment to a cubic, so one kind of path feeds both the SVG player and offline video frames.',
     });
     await s.clear();
     const d = await s.show({ source: pipeline(NAME[font]) }, { box: regionBox('full', { right: -0.4 }) });
@@ -365,7 +365,7 @@ export default class GlyphExplainer extends Scene {
     await this.step('tradeoff', {
       title: 'Diagram labels are Inter outlines stretched to textLength',
       caption:
-        'The pen-and-ink style asks for EB Garamond, but Lantern draws labels in embedded Inter, stretched to the width agentic-mermaid wrote into each label’s textLength. Box shapes and strokes come from the style; only the letterforms differ.',
+        'The pen-and-ink style asks for EB Garamond, but Rayner draws labels in embedded Inter, stretched to the width agentic-mermaid wrote into each label’s textLength. Box shapes and strokes come from the style; only the letterforms differ.',
     });
     await s.clear();
     const again = await s.show({ source: pipeline(NAME[font]) }, { box: regionBox('full', { right: -1.4 }) });

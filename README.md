@@ -1,4 +1,4 @@
-# Lantern Explainers
+# Rayner
 
 Each explainer is one TypeScript `Scene`. A web page steps through it at the reader's pace, and the same scene can render a silent, captioned video. Diagrams come from [Agentic Mermaid](https://github.com/adewale/agentic-mermaid) at build time and are stored beside the scene, so the page runs no diagram renderer and makes no network requests.
 
@@ -56,7 +56,7 @@ Limits: lettering is the embedded Inter or JetBrains Mono, so styles lose their 
 - [Upstream](docs/UPSTREAM.md): the fork base, engine changes and Agentic Mermaid
 - [Design record](specs/rayner.md): why the project is shaped this way, and the open decisions
 - [Changelog](CHANGELOG.md)
-- [Agent skill](skills/lantern-explainers/SKILL.md)
+- [Agent skill](skills/rayner-explainers/SKILL.md)
 
 ## Attribution
 

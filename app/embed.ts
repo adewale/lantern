@@ -287,7 +287,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     if (target) zoom.to(target);
     else zoom.apply();
     root.classList.remove('loading');
-    document.dispatchEvent(new CustomEvent('lantern:step', { detail: { step: step.step, settings: values } }));
+    document.dispatchEvent(new CustomEvent('rayner:step', { detail: { step: step.step, settings: values } }));
     primeNext();
   }
   async function show(index: number, push = true) {

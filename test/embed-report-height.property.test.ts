@@ -38,7 +38,7 @@ function fakeWindow(search: string, framed: boolean) {
   return {
     posts,
     resize: () => observed?.(),
-    step: () => (doc['lantern:step'] ?? []).forEach((f) => f()),
+    step: () => (doc['rayner:step'] ?? []).forEach((f) => f()),
     load: () => (win.load ?? []).forEach((f) => f()),
   };
 }
@@ -183,8 +183,8 @@ const anyHeight = fc.oneof(
   fc.constantFrom('742', 5n, new Number(5), null, undefined, {}, []),
 );
 const resizeData = fc.oneof(
-  fc.record({ type: fc.constantFrom('lantern:resize', 'other', ''), version: fc.constantFrom(1, 2, '1', 0), height: anyHeight }),
-  fc.record({ type: fc.constant('lantern:resize'), version: fc.constant(1), height: anyHeight }),
+  fc.record({ type: fc.constantFrom('rayner:resize', 'other', ''), version: fc.constantFrom(1, 2, '1', 0), height: anyHeight }),
+  fc.record({ type: fc.constant('rayner:resize'), version: fc.constant(1), height: anyHeight }),
   fc.anything(),
 );
 
@@ -203,7 +203,7 @@ test('resizeHeight accepts exactly the documented message from exactly the frame
           s === 'same' &&
           !!d &&
           typeof d === 'object' &&
-          d.type === 'lantern:resize' &&
+          d.type === 'rayner:resize' &&
           d.version === 1 &&
           typeof d.height === 'number' &&
           Number.isInteger(d.height) &&

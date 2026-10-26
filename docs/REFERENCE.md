@@ -249,7 +249,7 @@ Inside an iframe without `parentOrigin` (a raw iframe), the page adds its own "O
 ### Resize protocol v1
 
 ```ts
-{ type: 'lantern:resize', version: 1, height: 742 }
+{ type: 'rayner:resize', version: 1, height: 742 }
 ```
 
 - The page measures its content root, rounds up, and posts only changed heights, only while framed, and only to the exact `parentOrigin`. It measures on load, on each `ResizeObserver` callback, and whenever the player settles on a step, because browsers can stop rendering an offscreen cross-origin iframe.

@@ -85,7 +85,7 @@ async function deliver(page: Page, frame: Frame, height: number) {
     });
   }, height);
   await frame.evaluate(
-    (height) => parent.postMessage({ type: 'lantern:resize', version: 1, height }, '*'),
+    (height) => parent.postMessage({ type: 'rayner:resize', version: 1, height }, '*'),
     height,
   );
   await page.waitForFunction(() => (window as unknown as { received: boolean }).received);
@@ -624,7 +624,7 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   const eq = (label: string, actual: unknown, expected: unknown) =>
     expect(JSON.stringify(actual) === JSON.stringify(expected), label, actual, expected);
   eq('page errors', r.errors, []);
-  eq('settled steps (lantern:step events)', seen.settles, m.settles);
+  eq('settled steps (rayner:step events)', seen.settles, m.settles);
   // Reduced motion: the only pictures ever attached are the resting frames shown on settling.
   eq('pictures attached to the stage', seen.attaches - r.parsed, m.settles);
   eq('URL step', seen.urlStep, entry.step);
@@ -991,7 +991,7 @@ async function openPlayer(name: string, initial: { values: (string | undefined)[
     w.__settles = 0;
     w.__attaches = 0;
     w.__last = null;
-    document.addEventListener('lantern:step', (e) => {
+    document.addEventListener('rayner:step', (e) => {
       w.__settles++;
       w.__last = (e as CustomEvent).detail;
     });
@@ -1067,7 +1067,7 @@ async function counted(context: import('playwright-core').BrowserContext, url: s
     w.__settles = 0;
     w.__attaches = 0;
     w.__last = null;
-    document.addEventListener('lantern:step', (e) => {
+    document.addEventListener('rayner:step', (e) => {
       w.__settles++;
       w.__last = (e as CustomEvent).detail;
     });
