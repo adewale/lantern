@@ -110,7 +110,7 @@ function lineBar(code: Code, rect: Rectangle, i: number, color: string): Rectang
 export default class CacheMRExplainer extends Scene {
   static meta = {
     id: 'mr-cache',
-    title: 'Five added lines put a KV cache in front of D1',
+    title: 'Four added lines and one rewritten put a KV cache in front of D1',
     sources: ['https://github.com/ivarvong/lantern/blob/2c7bad5/scenes/mr-cache.ts'],
   };
   static settings = [
@@ -228,15 +228,16 @@ export default class CacheMRExplainer extends Scene {
       caption:
         which === 'hit'
           ? 'The user is already in KV, so getUser returns on line three, the second outlined line, and the note under D1 shows 0 reads.'
-          : 'KV has no entry, so getUser runs the outlined lines: it reads the row from D1, puts it in KV for 300 seconds and returns it. Lookups for the same user in that window are hits; D1 still serves every miss.',
+          : 'KV has no entry, so past the lookup getUser runs on into the outlined lines, which only a miss reaches: it reads the row from D1, puts it in KV for 300 seconds and returns it. Lookups for the same user in that window are hits; D1 still serves every miss.',
     });
     const path = PATH[which];
     await flow.clearNotes();
     await flow.dim([...new Set(path.flat())]);
     await flow.walk(path, { trail: true });
+    // A hit runs the lookup and returns; a miss runs the lookup too, then the lines outlined here.
     const [a, b] = which === 'hit' ? [1, 2] : [3, 5];
     const ran = s.keep(new SurroundingRectangle(linesBox(after, a, b), outline), {
-      describe: `Lines ${a + 1} to ${b + 1}, the ones this request runs, outlined`,
+      describe: `Lines ${a + 1} to ${b + 1}, ${which === 'hit' ? 'the ones this request runs' : 'the ones only a miss runs'}, outlined`,
     });
     await this.play(new Create(ran, { runTime: 0.5 }));
     await flow.note('D1', which === 'hit' ? '0 reads' : '1 read', {

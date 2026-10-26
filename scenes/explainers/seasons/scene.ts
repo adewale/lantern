@@ -35,6 +35,10 @@ const SUN = '#e0af68',
 const RAD = Math.PI / 180;
 const hours = (h: number) => h.toFixed(1) + ' h';
 const degrees = (d: number) => d.toFixed(1) + '°';
+/** A latitude or angle to the hundredth it is given in, trailing zeros dropped: the noon formula's operands. */
+const exactly = (d: number) => +d.toFixed(2) + '°';
+/** Hours as the year card prints them, rounded to a tenth. */
+const tenths = (h: number) => Math.round(h * 10) / 10;
 /**
  * The Sun's declination on a day of the year (0 = 1 January), as `daylightYear`
  * computes it: −23.44° × cos(360° × (day + 10) / 365). lib/models.ts keeps this
@@ -360,9 +364,12 @@ export default class SeasonsExplainer extends Scene {
     // noon ray and the angle between them fill the stage.
     await this.step('noon', {
       title: `June noon: the Sun stands ${degrees(june.altitude)} above ${place.name}’s horizon`,
-      caption: `Zoomed in on the red dot. The white line is ${place.name}’s horizon, and noon sunlight arrives parallel to the Sun’s direction. The angle between them is 90° minus the gap between the latitude, ${degrees(place.lat)}, and the latitude where the June Sun is overhead, ${degrees(TILT)}.`,
+      caption: `Zoomed in on the red dot. The white line is ${place.name}’s horizon, and noon sunlight arrives parallel to the Sun’s direction. The angle between them is 90° minus the gap between the latitude, ${exactly(place.lat)}, and the latitude where the June Sun is overhead, ${exactly(TILT)}.`,
     });
     const notes = new Group();
+    // The noon altitude as the reader can check it: operands as given, to the hundredth, and
+    // their result, exact to the hundredth too, which the heading rounds to a tenth.
+    const formula = `90° − |${exactly(place.lat)} − ${exactly(TILT)}| = ${exactly(june.altitude)}`;
     {
       const ZOOM = 2,
         w = 16 / ZOOM,
@@ -391,7 +398,7 @@ export default class SeasonsExplainer extends Scene {
           ? label('noon sunlight', [start, p[1] + 0.12], { size: small, color: SUN, edge: [-1, -1] })
           : label('noon sunlight', [start, p[1] - 0.12], { size: small, color: SUN, edge: [-1, 1] }),
         // Bottom left, clear of the globe at every latitude.
-        label(`90° − |${degrees(place.lat)} − ${degrees(TILT)}| = ${degrees(june.altitude)}`, [view[0] + 0.3, view[1] + 0.3], {
+        label(formula, [view[0] + 0.3, view[1] + 0.3], {
           size: small * 1.3,
           color: ink,
           edge: [-1, -1],
@@ -403,7 +410,7 @@ export default class SeasonsExplainer extends Scene {
         { runTime: 1.2 },
       );
       await s.enter(notes, {
-        describe: `Close-up on ${place.name} at noon in June: its horizon, the noon sunlight, and the ${degrees(june.altitude)} angle between them, 90° − |${degrees(place.lat)} − ${degrees(TILT)}|`,
+        describe: `Close-up on ${place.name} at noon in June: its horizon, the noon sunlight, and the ${degrees(june.altitude)} angle between them, ${formula}`,
       });
     }
 
@@ -501,7 +508,7 @@ export default class SeasonsExplainer extends Scene {
     await this.step('year', {
       title: `A computed year of daylight in ${place.name}`,
       caption:
-        'The curve runs the same model on every day of the year, with the Sun’s declination for that day. ' +
+        'The curve samples the same model through the year, with the Sun’s declination on each day; the card’s counts run it on all 365 days. ' +
         (polarDay
           ? `It stays flat at 24 hours for ${polarDay} days around the June solstice, when ${place.name}’s whole circle is lit, and at 0 for ${polarNight} days around December.`
           : flat
@@ -537,7 +544,7 @@ export default class SeasonsExplainer extends Scene {
     const curve = axes.plot(daylightAt(place.lat), { samples: 145, color: CURVE, strokeWidth: 0.05 });
     s.keep(curve, {
       describe:
-        `${place.name}’s daylight on every day of the year, ` +
+        `${place.name}’s daylight through the year, ` +
         (longest - shortest < 0.05 ? `flat at ${hours(longest)}` : `from ${hours(shortest)} to ${hours(longest)}`) +
         (polarDay ? `, flat at 24 h for ${polarDay} days and at 0 h for ${polarNight}` : ''),
     });
@@ -576,7 +583,8 @@ export default class SeasonsExplainer extends Scene {
         ['December solstice', hours(december.daylight)],
         ['Days with 24 h of light', String(polarDay)],
         ['Days with no daylight', String(polarNight)],
-        ['Longest − shortest', hours(longest - shortest)],
+        // From the hours as printed, so the row is the difference the reader can take.
+        ['Longest − shortest', hours(tenths(longest) - tenths(shortest))],
       ],
       { at: [2.2, -2.9, 7.45, 2.8], fontSize: 0.24 },
     );

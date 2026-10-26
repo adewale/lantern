@@ -316,8 +316,8 @@ const ENGLISH_PINNED = [
     id: "seasons",
     step: "compare",
     summary:
-      "A chart of daylight in hours, 0 to 24, through the months January to December; Tromsø’s daylight on every day of the year, from 0.0 h to 24.0 h, flat at 24 h for 60 days and at 0 h for 61; Dashed lines at the March and September equinoxes and the June and December solstices; The same model’s curves for London, Quito, Sydney in grey, each named at its end, with Tromsø’s in red. New in this step: Dashed lines at the March and September equinoxes and the June and December solstices; The same model’s curves for London, Quito, Sydney in grey, each named at its end, with Tromsø’s in red.",
-    html: "<ul><li>A chart of daylight in hours, 0 to 24, through the months January to December;</li><li>Tromsø’s daylight on every day of the year, from 0.0 h to 24.0 h, flat at 24 h for 60 days and at 0 h for 61;</li><li>Dashed lines at the March and September equinoxes and the June and December solstices;</li><li>The same model’s curves for London, Quito, Sydney in grey, each named at its end, with Tromsø’s in red.</li></ul>",
+      "A chart of daylight in hours, 0 to 24, through the months January to December; Tromsø’s daylight through the year, from 0.0 h to 24.0 h, flat at 24 h for 60 days and at 0 h for 61; Dashed lines at the March and September equinoxes and the June and December solstices; The same model’s curves for London, Quito, Sydney in grey, each named at its end, with Tromsø’s in red. New in this step: Dashed lines at the March and September equinoxes and the June and December solstices; The same model’s curves for London, Quito, Sydney in grey, each named at its end, with Tromsø’s in red.",
+    html: "<ul><li>A chart of daylight in hours, 0 to 24, through the months January to December;</li><li>Tromsø’s daylight through the year, from 0.0 h to 24.0 h, flat at 24 h for 60 days and at 0 h for 61;</li><li>Dashed lines at the March and September equinoxes and the June and December solstices;</li><li>The same model’s curves for London, Quito, Sydney in grey, each named at its end, with Tromsø’s in red.</li></ul>",
   },
   {
     id: "mr-cache",

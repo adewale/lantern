@@ -378,15 +378,20 @@ export default class GitExplainer extends Scene {
     await d.note('edge:C2->C1#0', 'parent', { side: 'below' });
 
     // ── hashes: every id covers the ids beneath it ──────────────────────
-    const kept = samePlace(t1, t2) + samePlace(c1, c2);
+    // Positions where the new id holds the old id's digit: the coloured digits, counted place for place.
+    const inPlace = { tree: samePlace(t1, t2), commit: samePlace(c1, c2) },
+      kept = inPlace.tree + inPlace.commit;
     await this.step('hashes', {
       title: 'Commit two’s id depends on every object it reaches',
-      caption: `Commit two’s bytes hold its tree’s id and its parent’s id, so its id depends on everything it reaches. Morphing the old ids into the new, ${kept} of 80 digits keep their place, about the ${80 / 16} that chance alone gives: SHA-1 changes everywhere. A test checks every id against git hash-object.`,
+      caption: `Commit two’s bytes hold its tree’s id and its parent’s id, so its id depends on everything it reaches. Of the 80 digits in the new tree and commit ids, ${kept} are the same digit in the same place as in the old ids, about the ${80 / 16} that chance alone gives: SHA-1 changes everywhere. A test checks every id against git hash-object.`,
     });
+    this.record('samePlace', inPlace);
     await s.clearOverlays();
     const body = await s.code(objectLines(repo, c2), { at: LEFT });
     // The two ids above the change: each old id stays, and a copy of it morphs, glyph by glyph,
-    // into the new id under it. A digit that drops straight down kept its place.
+    // into the new id under it. The morph pairs equal digits wherever they sit, longest runs
+    // first, so a paired digit may fly in from another column; the coloured digits are the
+    // ones equal place for place, which the morph does not single out.
     const idX = RIGHT[0] + 0.3,
       label = (text: string, y: number) =>
         new Text(text, { fontSize: 0.22, color: s.soft, anchor: 'start' }).moveTo([idX, y], [-1, 0]),
@@ -413,7 +418,7 @@ export default class GitExplainer extends Scene {
     const treeNew = hex(t2, t1, -2.1, ink),
       commitNew = hex(c2, c1, -2.9, ink);
     s.keep(treeNew, commitNew, {
-      describe: `Tree two’s id ${t2} under tree one’s, and commit two’s id ${c2} under commit one’s; the digits that kept their place are coloured`,
+      describe: `Tree two’s id ${t2} under tree one’s, and commit two’s id ${c2} under commit one’s; each digit equal to the old id’s in the same place is coloured`,
     });
     await this.play(
       new TransformMatchingText(treeOld.copy(), treeNew, { runTime: 1.5 }),
@@ -422,7 +427,7 @@ export default class GitExplainer extends Scene {
     const [treeMatch, commitMatch] = lastMatches(this, 2);
     const counts = [
       label(`Paired with an equal digit anywhere: tree ${treeMatch!.matched}, commit ${commitMatch!.matched} of 40`, -3.4),
-      label(`Same digit in the same place, coloured: tree ${samePlace(t1, t2)}, commit ${samePlace(c1, c2)} of 40`, -3.8),
+      label(`Same digit in the same place, coloured: tree ${inPlace.tree}, commit ${inPlace.commit} of 40`, -3.8),
     ];
     await s.enter(...counts, { runTime: 0.4 });
     await d.unmark();

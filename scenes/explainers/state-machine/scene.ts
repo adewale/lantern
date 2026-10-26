@@ -82,7 +82,7 @@ export default class StateMachineExplainer extends Scene {
     await this.step('machine', {
       title: 'Four reducer rows, one per arrow',
       caption:
-        'A session starts idle, and the ring shows where it is. Each arrow is one row of the table named next in reducer.js, and reduceSession throws for any state and event pair without a row.',
+        'A session starts idle, and the ring shows where it is. Each arrow is one row of the table named next, and reduceSession throws for any state and event pair without a row.',
     });
     const d = await s.show({ source: SOURCE }, { box: DIAGRAM });
     const code = await s.code(REDUCER, { at: CODE, fontSize: 0.195 });
