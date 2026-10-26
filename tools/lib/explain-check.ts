@@ -1,3 +1,4 @@
+import { letteringWeight } from './lettering.ts';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -361,7 +362,7 @@ export async function checkProject(project: Project, out: string): Promise<Recor
     assert.deepEqual(small, [], `Labels never reach ${MIN_PX}px at 1280px stage ${where}: ${JSON.stringify(small)}`);
     const blank = v.trace.steps.flatMap((s) => undescribed(s.after).map((m) => `${s.step}: ${m}`));
     assert.deepEqual(blank, [], `Every drawing needs words for readers who cannot see it ${where}`);
-    const contents = `import * as author from ${JSON.stringify(project.file)};import{bindSnapshots,withSettings}from ${JSON.stringify(join(ROOT, 'explain/index.ts'))};import{Scene,NullSink,toSvgString}from ${JSON.stringify(join(ROOT, 'src/index.ts'))};const Source=author[${JSON.stringify(project.exportName)}];export async function run(){const C=withSettings(bindSnapshots(Source,${JSON.stringify(project.store)}),${JSON.stringify(v.values)});const s=await new C(new NullSink(),{skipUntil:Infinity}).run();return{steps:s.steps.map(s=>s.name),state:s.describe(),svg:toSvgString(s)}}`;
+    const contents = `${project.lettering ? `import{bindLettering}from ${JSON.stringify(join(ROOT, 'src/lettering.ts'))};` : ''}import * as author from ${JSON.stringify(project.file)};import{bindSnapshots,withSettings}from ${JSON.stringify(join(ROOT, 'explain/index.ts'))};import{Scene,NullSink,toSvgString}from ${JSON.stringify(join(ROOT, 'src/index.ts'))};const Source=author[${JSON.stringify(project.exportName)}];export async function run(){const Lettered=${project.lettering ? `bindLettering(Source,${JSON.stringify(project.lettering)})` : 'Source'};const C=withSettings(bindSnapshots(Lettered,${JSON.stringify(project.store)}),${JSON.stringify(v.values)});const s=await new C(new NullSink(),{skipUntil:Infinity}).run();return{steps:s.steps.map(s=>s.name),state:s.describe(),svg:toSvgString(s)}}`;
     const b = await build({
       stdin: { contents, resolveDir: ROOT, loader: 'ts' },
       bundle: true,
@@ -370,7 +371,7 @@ export async function checkProject(project: Project, out: string): Promise<Recor
       platform: 'neutral',
       target: 'es2022',
       write: false,
-      plugins: [engineAlias()],
+      plugins: [engineAlias(false, !!project.lettering)],
       logLevel: 'silent',
     });
     const context = vm.createContext({ TextEncoder, TextDecoder, atob });
@@ -400,6 +401,7 @@ export async function checkProject(project: Project, out: string): Promise<Recor
     variants,
     diagrams: Object.keys(project.store).length,
     replayedEdits: project.edits,
+    ...(project.lettering ? { lettering: letteringWeight(project.lettering) } : {}),
   };
   await writeFile(join(out, 'report.json'), JSON.stringify(report, null, 2) + '\n');
   return report;

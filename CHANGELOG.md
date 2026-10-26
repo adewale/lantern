@@ -1,3 +1,7 @@
+## Unreleased
+
+- Add opt-in `meta.lettering`: licensed, per-scene font subsets; build-time HarfBuzz and bidi outline snapshots; and `Math`/`MathTex` using glyph's optional TeX/MATH typesetter. Fresh snapshots build offline without those tools. Checks report lettering weight and fail on stale snapshots or unrequested scripts. All 26 existing explainer pages and receipts remain byte-identical.
+
 # Changelog
 
 ## Unreleased: 0.2.0-explainers.0

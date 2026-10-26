@@ -21,7 +21,10 @@ export async function buildExplainer(
     t = chromeFor(lang);
   const sink = new SnapshotSink();
   await renderAt(v.Scene, restingTime(first, v.trace.fps), sink);
-  const entry = `import Source from 'virtual:author';import{mountEmbed}from ${JSON.stringify(join(ROOT, 'app/embed.ts'))};const root=document.getElementById('content');mountEmbed(root,Source,${JSON.stringify(project.store)}).then(()=>{root.dataset.ready='true'}).catch(error=>{console.error(error);const p=document.createElement('p');p.setAttribute('role','alert');p.textContent=${JSON.stringify(t.failed)};root.append(p)});`;
+  const author = project.lettering
+    ? `import Original from 'virtual:author';import{bindLettering}from ${JSON.stringify(join(ROOT, 'src/lettering.ts'))};const Source=bindLettering(Original,${JSON.stringify(project.lettering)});`
+    : `import Source from 'virtual:author';`;
+  const entry = `${author}import{mountEmbed}from ${JSON.stringify(join(ROOT, 'app/embed.ts'))};const root=document.getElementById('content');mountEmbed(root,Source,${JSON.stringify(project.store)}).then(()=>{root.dataset.ready='true'}).catch(error=>{console.error(error);const p=document.createElement('p');p.setAttribute('role','alert');p.textContent=${JSON.stringify(t.failed)};root.append(p)});`;
   const bundled = await build({
     stdin: { contents: entry, resolveDir: ROOT, sourcefile: 'explainer-entry.ts', loader: 'ts' },
     bundle: true,
@@ -43,16 +46,16 @@ export async function buildExplainer(
           }));
         },
       },
-      engineAlias(),
+      engineAlias(false, !!project.lettering),
     ],
     logLevel: 'silent',
   });
   if (
     Object.keys(bundled.metafile!.inputs).some(
-      (p) => p.includes('node_modules/agentic-mermaid') || p.includes('integrations/agentic-mermaid/build/'),
+      (p) => p.includes('node_modules/agentic-mermaid') || p.includes('integrations/agentic-mermaid/build/') || p.includes('vendor/glyph-math.js') || p.includes('tools/lettering'),
     )
   )
-    throw new Error('Build-time diagram renderer leaked into browser artifact');
+    throw new Error('Build-time renderer or lettering tool leaked into browser artifact');
   const js = scriptEscape(bundled.outputFiles[0]!.text),
     css = await readFile(join(ROOT, 'app/embed.css'), 'utf8');
   // Every case, every step: a link to it, its caption and what its resting picture shows.
@@ -78,7 +81,7 @@ export async function buildExplainer(
         readFile(join(ROOT, file), 'utf8'),
       ),
     )
-  ).join('\n\n');
+  ).join('\n\n') + (project.lettering ? '\n\n' + Object.values(project.lettering.faces).map((f) => f.license).join('\n\n') : '');
   const html = `<!doctype html>\n<html lang="${htmlEscape(lang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${htmlEscape(title)}</title><meta name="generator" content="Rayner"><style>${css}</style></head><body><main id="content"><h1>${htmlEscape(title)}</h1><div class="stage poster">${sink.svg}</div><p class="caption">${htmlEscape(first.meta.caption ?? '')}</p><details class="transcript" open><summary>${htmlEscape(t.transcript)}</summary>${transcript}${sources ? `<h2>${htmlEscape(t.sources)}</h2><ul>${sources}</ul>` : ''}</details></main><template id="licenses"><pre>${htmlEscape(licenses)}</pre></template><script>${js}</script></body></html>\n`;
   const sri = (value: string) => "'sha256-" + createHash('sha256').update(value).digest('base64') + "'";
   const policy = `default-src 'none'; script-src ${sri(js)}; style-src ${sri(css)}; img-src data:; connect-src 'none'; font-src 'none'; base-uri 'none'; object-src 'none'; frame-ancestors *`;

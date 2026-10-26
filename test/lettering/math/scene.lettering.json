@@ -1,0 +1,906 @@
+{
+  "version": 1,
+  "sourceHash": "55448a5629a303adbca8f30ca08043cc4a8788eff57d72491bc4428c42f95a97",
+  "builderHash": "7201000a01c61ab6159b3fb0851bc8f49afc6fa77f6886b9af11c9d1b594d78d",
+  "request": {
+    "math": true
+  },
+  "runs": {
+    "[\"math\",\"\\\\frac{1}{2}+x^2\",false]": {
+      "width": 2.7904444444444443,
+      "ascent": 0.8602000000000001,
+      "descent": 0.34500000000000003,
+      "s": 0.001,
+      "glyphs": [
+        {
+          "gid": 18,
+          "cluster": 0,
+          "x": 0.12,
+          "dx": 0,
+          "dy": 0.394,
+          "ax": 0,
+          "s": 0.0007,
+          "path": [
+            {
+              "tag": "MoveTo",
+              "x": 419,
+              "y": 0
+            },
+            {
+              "tag": "LineTo",
+              "x": 419,
+              "y": 31
+            },
+            {
+              "tag": "LineTo",
+              "x": 387,
+              "y": 31
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 297,
+              "y1": 31,
+              "x2": 294,
+              "y2": 42,
+              "x": 294,
+              "y": 79
+            },
+            {
+              "tag": "LineTo",
+              "x": 294,
+              "y": 640
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 294,
+              "y1": 664,
+              "x2": 294,
+              "y2": 666,
+              "x": 271,
+              "y": 666
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 209,
+              "y1": 602,
+              "x2": 121,
+              "y2": 602,
+              "x": 89,
+              "y": 602
+            },
+            {
+              "tag": "LineTo",
+              "x": 89,
+              "y": 571
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 109,
+              "y1": 571,
+              "x2": 168,
+              "y2": 571,
+              "x": 220,
+              "y": 597
+            },
+            {
+              "tag": "LineTo",
+              "x": 220,
+              "y": 79
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 220,
+              "y1": 43,
+              "x2": 217,
+              "y2": 31,
+              "x": 127,
+              "y": 31
+            },
+            {
+              "tag": "LineTo",
+              "x": 95,
+              "y": 31
+            },
+            {
+              "tag": "LineTo",
+              "x": 95,
+              "y": 0
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 130,
+              "y1": 3,
+              "x2": 217,
+              "y2": 3,
+              "x": 257,
+              "y": 3
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 297,
+              "y1": 3,
+              "x2": 384,
+              "y2": 3,
+              "x": 419,
+              "y": 0
+            },
+            {
+              "tag": "Close"
+            }
+          ]
+        },
+        {
+          "gid": 19,
+          "cluster": 0,
+          "x": 0.12,
+          "dx": 0,
+          "dy": -0.34500000000000003,
+          "ax": 0,
+          "s": 0.0007,
+          "path": [
+            {
+              "tag": "MoveTo",
+              "x": 449,
+              "y": 174
+            },
+            {
+              "tag": "LineTo",
+              "x": 424,
+              "y": 174
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 419,
+              "y1": 144,
+              "x2": 412,
+              "y2": 100,
+              "x": 402,
+              "y": 85
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 395,
+              "y1": 77,
+              "x2": 329,
+              "y2": 77,
+              "x": 307,
+              "y": 77
+            },
+            {
+              "tag": "LineTo",
+              "x": 127,
+              "y": 77
+            },
+            {
+              "tag": "LineTo",
+              "x": 233,
+              "y": 180
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 389,
+              "y1": 318,
+              "x2": 449,
+              "y2": 372,
+              "x": 449,
+              "y": 472
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 449,
+              "y1": 586,
+              "x2": 359,
+              "y2": 666,
+              "x": 237,
+              "y": 666
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 124,
+              "y1": 666,
+              "x2": 50,
+              "y2": 574,
+              "x": 50,
+              "y": 485
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 50,
+              "y1": 429,
+              "x2": 100,
+              "y2": 429,
+              "x": 103,
+              "y": 429
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 120,
+              "y1": 429,
+              "x2": 155,
+              "y2": 441,
+              "x": 155,
+              "y": 482
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 155,
+              "y1": 508,
+              "x2": 137,
+              "y2": 534,
+              "x": 102,
+              "y": 534
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 94,
+              "y1": 534,
+              "x2": 92,
+              "y2": 534,
+              "x": 89,
+              "y": 533
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 112,
+              "y1": 598,
+              "x2": 166,
+              "y2": 635,
+              "x": 224,
+              "y": 635
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 315,
+              "y1": 635,
+              "x2": 358,
+              "y2": 554,
+              "x": 358,
+              "y": 472
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 358,
+              "y1": 392,
+              "x2": 308,
+              "y2": 313,
+              "x": 253,
+              "y": 251
+            },
+            {
+              "tag": "LineTo",
+              "x": 61,
+              "y": 37
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 50,
+              "y1": 26,
+              "x2": 50,
+              "y2": 24,
+              "x": 50,
+              "y": 0
+            },
+            {
+              "tag": "LineTo",
+              "x": 421,
+              "y": 0
+            },
+            {
+              "tag": "Close"
+            }
+          ]
+        },
+        {
+          "gid": 12,
+          "cluster": 0,
+          "x": 0.8122222222222222,
+          "dx": 0,
+          "dy": 0,
+          "ax": 0,
+          "s": 0.001,
+          "path": [
+            {
+              "tag": "MoveTo",
+              "x": 722,
+              "y": 250
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 722,
+              "y1": 261,
+              "x2": 713,
+              "y2": 270,
+              "x": 702,
+              "y": 270
+            },
+            {
+              "tag": "LineTo",
+              "x": 409,
+              "y": 270
+            },
+            {
+              "tag": "LineTo",
+              "x": 409,
+              "y": 563
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 409,
+              "y1": 574,
+              "x2": 400,
+              "y2": 583,
+              "x": 389,
+              "y": 583
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 378,
+              "y1": 583,
+              "x2": 369,
+              "y2": 574,
+              "x": 369,
+              "y": 563
+            },
+            {
+              "tag": "LineTo",
+              "x": 369,
+              "y": 270
+            },
+            {
+              "tag": "LineTo",
+              "x": 76,
+              "y": 270
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 65,
+              "y1": 270,
+              "x2": 56,
+              "y2": 261,
+              "x": 56,
+              "y": 250
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 56,
+              "y1": 239,
+              "x2": 65,
+              "y2": 230,
+              "x": 76,
+              "y": 230
+            },
+            {
+              "tag": "LineTo",
+              "x": 369,
+              "y": 230
+            },
+            {
+              "tag": "LineTo",
+              "x": 369,
+              "y": -63
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 369,
+              "y1": -74,
+              "x2": 378,
+              "y2": -83,
+              "x": 389,
+              "y": -83
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 400,
+              "y1": -83,
+              "x2": 409,
+              "y2": -74,
+              "x": 409,
+              "y": -63
+            },
+            {
+              "tag": "LineTo",
+              "x": 409,
+              "y": 230
+            },
+            {
+              "tag": "LineTo",
+              "x": 702,
+              "y": 230
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 713,
+              "y1": 230,
+              "x2": 722,
+              "y2": 239,
+              "x": 722,
+              "y": 250
+            },
+            {
+              "tag": "Close"
+            }
+          ]
+        },
+        {
+          "gid": 1319,
+          "cluster": 0,
+          "x": 1.8124444444444443,
+          "dx": 0,
+          "dy": 0,
+          "ax": 0,
+          "s": 0.001,
+          "path": [
+            {
+              "tag": "MoveTo",
+              "x": 527,
+              "y": 376
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 527,
+              "y1": 428,
+              "x2": 468,
+              "y2": 442,
+              "x": 434,
+              "y": 442
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 376,
+              "y1": 442,
+              "x2": 341,
+              "y2": 389,
+              "x": 329,
+              "y": 366
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 304,
+              "y1": 432,
+              "x2": 250,
+              "y2": 442,
+              "x": 221,
+              "y": 442
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 117,
+              "y1": 442,
+              "x2": 60,
+              "y2": 313,
+              "x": 60,
+              "y": 288
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 60,
+              "y1": 278,
+              "x2": 72,
+              "y2": 278,
+              "x": 72,
+              "y": 278
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 80,
+              "y1": 278,
+              "x2": 83,
+              "y2": 280,
+              "x": 85,
+              "y": 289
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 119,
+              "y1": 395,
+              "x2": 185,
+              "y2": 420,
+              "x": 219,
+              "y": 420
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 238,
+              "y1": 420,
+              "x2": 273,
+              "y2": 411,
+              "x": 273,
+              "y": 353
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 273,
+              "y1": 322,
+              "x2": 256,
+              "y2": 255,
+              "x": 219,
+              "y": 115
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 203,
+              "y1": 53,
+              "x2": 168,
+              "y2": 11,
+              "x": 124,
+              "y": 11
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 118,
+              "y1": 11,
+              "x2": 95,
+              "y2": 11,
+              "x": 74,
+              "y": 24
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 99,
+              "y1": 29,
+              "x2": 121,
+              "y2": 50,
+              "x": 121,
+              "y": 78
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 121,
+              "y1": 105,
+              "x2": 99,
+              "y2": 113,
+              "x": 84,
+              "y": 113
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 54,
+              "y1": 113,
+              "x2": 29,
+              "y2": 87,
+              "x": 29,
+              "y": 55
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 29,
+              "y1": 9,
+              "x2": 79,
+              "y2": -11,
+              "x": 123,
+              "y": -11
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 189,
+              "y1": -11,
+              "x2": 225,
+              "y2": 59,
+              "x": 228,
+              "y": 65
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 240,
+              "y1": 28,
+              "x2": 276,
+              "y2": -11,
+              "x": 336,
+              "y": -11
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 439,
+              "y1": -11,
+              "x2": 496,
+              "y2": 118,
+              "x": 496,
+              "y": 143
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 496,
+              "y1": 153,
+              "x2": 487,
+              "y2": 153,
+              "x": 484,
+              "y": 153
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 475,
+              "y1": 153,
+              "x2": 473,
+              "y2": 149,
+              "x": 471,
+              "y": 142
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 438,
+              "y1": 35,
+              "x2": 370,
+              "y2": 11,
+              "x": 338,
+              "y": 11
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 299,
+              "y1": 11,
+              "x2": 283,
+              "y2": 43,
+              "x": 283,
+              "y": 77
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 283,
+              "y1": 99,
+              "x2": 289,
+              "y2": 121,
+              "x": 300,
+              "y": 165
+            },
+            {
+              "tag": "LineTo",
+              "x": 334,
+              "y": 302
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 340,
+              "y1": 328,
+              "x2": 363,
+              "y2": 420,
+              "x": 433,
+              "y": 420
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 438,
+              "y1": 420,
+              "x2": 462,
+              "y2": 420,
+              "x": 483,
+              "y": 407
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 455,
+              "y1": 402,
+              "x2": 435,
+              "y2": 377,
+              "x": 435,
+              "y": 353
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 435,
+              "y1": 337,
+              "x2": 446,
+              "y2": 318,
+              "x": 473,
+              "y": 318
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 495,
+              "y1": 318,
+              "x2": 527,
+              "y2": 336,
+              "x": 527,
+              "y": 376
+            },
+            {
+              "tag": "Close"
+            }
+          ]
+        },
+        {
+          "gid": 19,
+          "cluster": 0,
+          "x": 2.3844444444444446,
+          "dx": 0,
+          "dy": 0.363,
+          "ax": 0,
+          "s": 0.0007,
+          "path": [
+            {
+              "tag": "MoveTo",
+              "x": 449,
+              "y": 174
+            },
+            {
+              "tag": "LineTo",
+              "x": 424,
+              "y": 174
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 419,
+              "y1": 144,
+              "x2": 412,
+              "y2": 100,
+              "x": 402,
+              "y": 85
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 395,
+              "y1": 77,
+              "x2": 329,
+              "y2": 77,
+              "x": 307,
+              "y": 77
+            },
+            {
+              "tag": "LineTo",
+              "x": 127,
+              "y": 77
+            },
+            {
+              "tag": "LineTo",
+              "x": 233,
+              "y": 180
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 389,
+              "y1": 318,
+              "x2": 449,
+              "y2": 372,
+              "x": 449,
+              "y": 472
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 449,
+              "y1": 586,
+              "x2": 359,
+              "y2": 666,
+              "x": 237,
+              "y": 666
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 124,
+              "y1": 666,
+              "x2": 50,
+              "y2": 574,
+              "x": 50,
+              "y": 485
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 50,
+              "y1": 429,
+              "x2": 100,
+              "y2": 429,
+              "x": 103,
+              "y": 429
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 120,
+              "y1": 429,
+              "x2": 155,
+              "y2": 441,
+              "x": 155,
+              "y": 482
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 155,
+              "y1": 508,
+              "x2": 137,
+              "y2": 534,
+              "x": 102,
+              "y": 534
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 94,
+              "y1": 534,
+              "x2": 92,
+              "y2": 534,
+              "x": 89,
+              "y": 533
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 112,
+              "y1": 598,
+              "x2": 166,
+              "y2": 635,
+              "x": 224,
+              "y": 635
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 315,
+              "y1": 635,
+              "x2": 358,
+              "y2": 554,
+              "x": 358,
+              "y": 472
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 358,
+              "y1": 392,
+              "x2": 308,
+              "y2": 313,
+              "x": 253,
+              "y": 251
+            },
+            {
+              "tag": "LineTo",
+              "x": 61,
+              "y": 37
+            },
+            {
+              "tag": "CubicTo",
+              "x1": 50,
+              "y1": 26,
+              "x2": 50,
+              "y2": 24,
+              "x": 50,
+              "y": 0
+            },
+            {
+              "tag": "LineTo",
+              "x": 421,
+              "y": 0
+            },
+            {
+              "tag": "Close"
+            }
+          ]
+        },
+        {
+          "gid": -1,
+          "cluster": 0,
+          "x": 0,
+          "dx": 0,
+          "dy": 0,
+          "ax": 0,
+          "s": 0.001,
+          "path": [
+            {
+              "tag": "MoveTo",
+              "x": 120,
+              "y": 230
+            },
+            {
+              "tag": "LineTo",
+              "x": 470,
+              "y": 230
+            },
+            {
+              "tag": "LineTo",
+              "x": 470,
+              "y": 270
+            },
+            {
+              "tag": "LineTo",
+              "x": 120,
+              "y": 270
+            },
+            {
+              "tag": "Close"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "faces": {
+    "latin-modern-math": {
+      "hash": "6075562b771f8b82f0c179e363389684f2dd09de30038269e2628e504bd7be0f",
+      "data": "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",
+      "license": "% This is a preliminary version (2006-09-30), barring acceptance from\n% the LaTeX Project Team and other feedback, of the GUST Font License.\n% (GUST is the Polish TeX Users Group, http://www.gust.org.pl)\n%\n% For the most recent version of this license see\n% http://www.gust.org.pl/fonts/licenses/GUST-FONT-LICENSE.txt\n% or\n% http://tug.org/fonts/licenses/GUST-FONT-LICENSE.txt\n%\n% This work may be distributed and/or modified under the conditions\n% of the LaTeX Project Public License, either version 1.3c of this\n% license or (at your option) any later version.\n% \n% Please also observe the following clause:\n% 1) it is requested, but not legally required, that derived works be\n%    distributed only after changing the names of the fonts comprising this\n%    work and given in an accompanying \"manifest\", and that the\n%    files comprising the Work, as listed in the manifest, also be given\n%    new names. Any exceptions to this request are also given in the\n%    manifest.\n%    \n%    We recommend the manifest be given in a separate file named\n%    MANIFEST-<fontid>.txt, where <fontid> is some unique identification\n%    of the font family. If a separate \"readme\" file accompanies the Work, \n%    we recommend a name of the form README-<fontid>.txt.\n%\n% The latest version of the LaTeX Project Public License is in\n% http://www.latex-project.org/lppl.txt and version 1.3c or later\n% is part of all distributions of LaTeX version 2006/05/20 or later.\n\n"
+    }
+  },
+  "shaper": "uharfbuzz+python-bidi/fonttools; glyph-math@6398654"
+}

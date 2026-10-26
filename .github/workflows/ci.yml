@@ -19,6 +19,14 @@ jobs:
       - run: npm ci
       # diagram capture and the embed tests run in headless Chromium (tools/lib/browser.ts)
       - run: npx playwright-core install --with-deps --only-shell chromium
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-lmodern
+          python3 -m venv out/lettering-venv
+          out/lettering-venv/bin/pip install -r tools/lettering-requirements.txt
+          bash tools/lettering-fonts.sh
+          echo "RAYNER_LETTERING_PYTHON=$PWD/out/lettering-venv/bin/python" >> "$GITHUB_ENV"
+      - run: EXPLAIN_LETTERING=1 EXPLAIN_BROWSER=1 node --test test/lettering.test.ts
       - run: npm run check          # tsc -b over every project (emits dist/); compile a TS consumer against it
       - run: npm run test:full      # every frame, fast-check properties at ten times the default cases, cache validation, golden trace, leaks
       # Product gates reuse this job and its Chromium installation; no scheduled lane.
