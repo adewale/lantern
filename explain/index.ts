@@ -7,6 +7,8 @@ export { REGIONS, regionBox } from './look.ts';
 export type { Region } from './look.ts';
 export { palette } from './palettes.ts';
 export { settingsOf, withSettings, resolveSettings, variantsOf, caseName } from './settings.ts';
+export { describeExplainer } from './describe.ts';
+export type { ExplainerDescription, CaseDescription, StepDescription, DescribeOptions } from './describe.ts';
 export type { Setting, Settings, ExplainerClass } from './settings.ts';
 export { findingsOf, edgePartOf } from '../integrations/agentic-mermaid/snapshot.ts';
 export type {

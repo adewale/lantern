@@ -61,6 +61,17 @@ try {
     { cwd: folder },
   );
   assert.equal(result.stdout.trim(), '2');
+  // describeExplainer from the installed package: the outside author's scene, both cases.
+  const described = await run(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      `import{describeExplainer}from'rayner/explain';import S from'./first/scene.ts';const d=await describeExplainer(S);console.log(d.cases.map((c)=>c.values.case+':'+c.steps.map((s)=>s.step).join(',')).join(' '));`,
+    ],
+    { cwd: folder },
+  );
+  assert.equal(described.stdout.trim(), 'a:one b:one');
   if (process.env.EXPLAIN_VIDEO) {
     await run('npm', ['i', `@resvg/resvg-js@${peers['@resvg/resvg-js']}`, '--no-audit', '--no-fund'], { cwd: folder });
     await run(bin, ['render', 'first', '--out', 'public/outside.mp4', '--footer', '--fps', '4'], {
@@ -68,7 +79,7 @@ try {
     });
   }
   console.log(
-    'Package gate passed: archive install without optional peers, executable JS bin, install hint, external native author, settings, checks, build, notices, one compiled engine' +
+    'Package gate passed: archive install without optional peers, executable JS bin, install hint, external native author, settings, checks, build, describeExplainer, notices, one compiled engine' +
       (process.env.EXPLAIN_VIDEO ? ', installed video export' : '') +
       (process.env.EXPLAIN_BROWSER ? ', installed diagram capture' : '') +
       '.',
