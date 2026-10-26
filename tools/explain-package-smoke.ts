@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Explicit distribution gate: pack, install in a fresh author project, run the installed CLI.
-import { mkdtemp, mkdir, writeFile, readFile, copyFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, copyFile, cp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
@@ -70,6 +70,27 @@ try {
   const lettered = JSON.parse(await readFile(join(folder, 'public/greek.html.receipt.json'), 'utf8'));
   assert.deepEqual(lettered.lettering.scripts, ['Grek']);
   assert.ok(!JSON.parse(await readFile(join(folder, 'public/outside.html.receipt.json'), 'utf8')).lettering);
+  // Outline snapshots captured against source .ts must remain fresh against
+  // the archive's compiled .js engine, without Python or source font caches.
+  for (const name of ['arabic', 'devanagari', 'math', 'style']) {
+    const source = join(ROOT, 'test/lettering', name);
+    const target = join(folder, 'outline-' + name);
+    await mkdir(target);
+    await copyFile(join(source, 'scene.ts'), join(target, 'scene.ts'));
+    await copyFile(join(source, 'scene.lettering.json'), join(target, 'scene.lettering.json'));
+    if (name === 'style') {
+      await cp(join(source, 'scene.snapshots'), join(target, 'scene.snapshots'), { recursive: true });
+    }
+    const env = {
+      ...process.env,
+      RAYNER_LETTERING_PYTHON: join(folder, 'no-python-here'),
+      RAYNER_LETTERING_FONTS: join(folder, 'no-source-fonts-here'),
+    };
+    await run(process.execPath, [cli, 'check', target, '--out', join(folder, 'checks', name)], { cwd: folder, env });
+    await run(process.execPath, [cli, 'build', target, '--out', `public/outline-${name}.html`], { cwd: folder, env });
+    const receipt = JSON.parse(await readFile(join(folder, `public/outline-${name}.html.receipt.json`), 'utf8'));
+    assert.ok(receipt.letteringHash, name);
+  }
   const result = await run(
     process.execPath,
     [

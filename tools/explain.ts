@@ -112,7 +112,7 @@ export default class MyExplainer extends Scene {
   }
   if (!['preview', 'snapshots', 'check', 'build', 'render', 'shots', 'describe'].includes(command!))
     throw new Error(`Unknown command: ${command}`);
-  const project = await collectProject(input, { refresh: flags.refresh });
+  const project = await collectProject(input, { refresh: flags.refresh, captureLettering: command === 'snapshots' || command === 'preview' });
   const slug = sceneSlug(project);
   if (command === 'snapshots') {
     console.log(
