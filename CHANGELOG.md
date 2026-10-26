@@ -2,7 +2,9 @@
 
 ## Unreleased: 0.2.0-explainers.0
 
-Newest first; all on 24–25 October 2026.
+Newest first; all on 24–26 October 2026.
+
+- **Published as Rayner**: `site:export` writes to `/projects/rayner` by default, not `/projects/lantern-explainers`, and labels its `_headers` block "Rayner explainers". The README links to oshineye.dev/projects/rayner.
 
 - **Package name and maintainer**: Ade Oshineye maintains this fork (`author` in `package.json`). The npm package is `rayner`, replacing Lantern's `manim-js`; authors import from `rayner` and `rayner/explain`. It is not yet published. The design record moves from `specs/kyle.md` to `specs/rayner.md`. The `fork` explainer no longer says the fork has no named maintainer, and links to `docs/UPSTREAM.md` on `main`, not on the merged branch. `TODO.md` is removed; its one item was the name.
 

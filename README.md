@@ -2,7 +2,7 @@
 
 Each explainer is one TypeScript `Scene`. A web page steps through it at the reader's pace, and the same scene can render a silent, captioned video. Diagrams come from [Agentic Mermaid](https://github.com/adewale/agentic-mermaid) at build time and are stored beside the scene, so the page runs no diagram renderer and makes no network requests.
 
-This is a fork of [Lantern](https://github.com/ivarvong/lantern) by Ivar Vong, maintained by [Ade Oshineye](https://github.com/adewale). The explainers are published at [oshineye.dev/projects/lantern-explainers](https://oshineye.dev/projects/lantern-explainers). The npm package is named `rayner` and has not been published.
+This is a fork of [Lantern](https://github.com/ivarvong/lantern) by Ivar Vong, maintained by [Ade Oshineye](https://github.com/adewale). The explainers are published at [oshineye.dev/projects/rayner](https://oshineye.dev/projects/rayner). The npm package is named `rayner` and has not been published.
 
 ## Requirements
 
