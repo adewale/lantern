@@ -230,7 +230,7 @@ for (const entry of EXPLAINERS)
           wcagMap(trace, values);
           break;
         case 'pen-and-pencil':
-          await penAndPencil(trace);
+          penAndPencil(trace);
           break;
         default:
           assert.fail(`${entry.id} has no fidelity oracle: compare its step state with the program it explains`);
