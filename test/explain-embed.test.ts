@@ -1201,6 +1201,61 @@ test(
   },
 );
 
+// Every scene run draws into an SVG root the page creates, and a kept picture is a copy
+// (cloneNode creates nothing). So when a stage picture was created tells whether the
+// player re-ran the scene for it: Next should play a run prepared while the reader was
+// on the previous step, and a step seen before should come back as a copy.
+test(
+  'player, motion on: Next plays a run prepared before the tap, and a revisited step is a copy, not a re-run',
+  options,
+  async () => {
+    const name = 'oauth-pkce',
+      p = projects.get(name)!,
+      v = p.variants[0]!,
+      list = v.trace.steps;
+    const context = await browser.newContext({ reducedMotion: 'no-preference' });
+    try {
+      await context.addInitScript(() => {
+        const born = new WeakMap<Node, number>(),
+          w = window as unknown as { __shown: Array<{ at: number; born: number | null }> };
+        w.__shown = [];
+        const create = Document.prototype.createElementNS;
+        Document.prototype.createElementNS = function (this: Document, ...args: Parameters<typeof create>) {
+          const node = create.apply(this, args);
+          born.set(node, performance.now());
+          return node;
+        } as typeof create;
+        new MutationObserver((records) => {
+          for (const r of records)
+            if ((r.target as Element).matches?.('.player .stage'))
+              for (const n of r.addedNodes) if (n.nodeName === 'svg') w.__shown.push({ at: performance.now(), born: born.get(n) ?? null });
+        }).observe(document, { childList: true, subtree: true });
+      });
+      const { page, errors } = await counted(context, `${embed}/${name}.html?${caseQuery(p, v.values, list[0]!.step)}`);
+      /** Run `act`, wait for the player to settle, and return the stage pictures shown meanwhile. */
+      const shownDuring = async (act: () => Promise<void>) => {
+        await quiet(page);
+        const [t, n] = await page.evaluate(() => [performance.now(), (window as unknown as { __settles: number }).__settles]);
+        await act();
+        await page.waitForFunction((n) => (window as unknown as { __settles: number }).__settles > n, n, { timeout: 30_000 });
+        const shown = await page.evaluate((t) => (window as unknown as { __shown: Array<{ at: number; born: number | null }> }).__shown.filter((s) => s.at > t), t);
+        return { t, shown };
+      };
+      const next = await shownDuring(() => page.locator('button[aria-label="Next step"]').click());
+      assert.ok(next.shown.length >= 1, 'Next showed a picture');
+      assert.ok(next.shown[0]!.born !== null && next.shown[0]!.born < next.t, `Next's first picture was drawn after the tap: ${JSON.stringify(next)}`);
+      for (const i of [0, 1]) {
+        const back = await shownDuring(() => page.locator('.steps button').nth(i).click());
+        assert.ok(back.shown.length >= 1, `step ${list[i]!.step} showed a picture`);
+        assert.equal(back.shown.at(-1)!.born, null, `step ${list[i]!.step} was drawn again, not copied: ${JSON.stringify(back)}`);
+      }
+      assert.deepEqual(errors, []);
+    } finally {
+      await context.close();
+    }
+  },
+);
+
 // Commands fired in a burst, without waiting for the player: case changes race
 // navigation while a new case's trace is still being computed.
 type Burst = { kind: 'case'; setting: number; option: number } | { kind: 'next' | 'prev' | 'back' | 'forward' | 'left' | 'right' } | { kind: 'step'; i: number };
