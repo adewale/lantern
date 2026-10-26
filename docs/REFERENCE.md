@@ -156,6 +156,28 @@ Other exports: `withSettings(Scene, values)` binds a case without mutating the c
 
 It runs the scene once per case, in Node or a browser, with no Chromium. A scene with diagrams needs its pinned snapshots (`snapshots`, as `explain` reads them from `scene.snapshots/`) or it throws. `explain describe <scene>` prints the same object; `--out file.json` writes it. Diagram labels are outlines, so the text drawing shows them as strokes; their words are in `picture`.
 
+In a script, load the snapshots from `scene.snapshots/` (`index.json` names each diagram's file) and walk the cases and steps. This prints each step's caption and the state keys it changed:
+
+```ts
+import { readFile } from 'node:fs/promises';
+import { describeExplainer } from 'rayner/explain';
+import type { SnapshotStore } from 'rayner/explain';
+import Scene from './my-explainer/scene.ts';
+
+const folder = new URL('./my-explainer/scene.snapshots/', import.meta.url);
+const index = JSON.parse(await readFile(new URL('index.json', folder), 'utf8'));
+const snapshots: SnapshotStore = {};
+for (const [key, file] of Object.entries<string>(index.diagrams))
+  snapshots[key] = JSON.parse(await readFile(new URL(file, folder), 'utf8'));
+
+const d = await describeExplainer(Scene, { snapshots });
+for (const c of d.cases)
+  for (const s of c.steps)
+    console.log(`${c.name || d.title} · ${s.step}: ${s.caption}\n  changed: ${Object.keys(s.changed).join(', ') || 'nothing'}`);
+```
+
+`npm run pack:smoke` runs this block against the packed package. `explain see <scene> [step]` prints one step of the same description for a person at a terminal. `npm run site:export` publishes the description beside each page as `<id>.json`, and lists every explainer in `llms.txt` at the site root.
+
 ## Snapshots
 
 Every command except `init` runs every case, captures any diagram missing from `scene.snapshots/` beside the scene, and deletes unused ones; `explain snapshots` stops there. Commit the folder; `index.json` maps each diagram's key to its own file. A change to the capture code invalidates the whole cache; `--refresh` recaptures everything. Capture needs Chromium and the optional packages in [the README](../README.md#requirements).
@@ -209,7 +231,7 @@ These checks establish deterministic behaviour and readable pictures. They do no
 | `render <scene>` | A video with subtitles, chapters, transcript and receipt |
 | `shots <scene>` | A contact sheet of every step, as SVG and PNG |
 | `describe <scene>` | [`describeExplainer`](#describe) as JSON: every case and step, with words, state, what changed and the picture in words and as text |
-| `see <scene> [step]` | One step's resting picture drawn as text, then its title, caption, the picture in words and what it changed in `scene.state` (`key: before → after`). The last step by default; needs no browser, so an agent can read a scene from a terminal |
+| `see <scene> [step]` | One step of [`describeExplainer`](#describe)'s description: its resting picture drawn as text, then its title, caption, the picture in words and what it changed in `scene.state` (`key: before → after`). The last step by default; needs no browser, so an agent can read a scene from a terminal |
 
 | Option | Applies to | Effect |
 | --- | --- | --- |

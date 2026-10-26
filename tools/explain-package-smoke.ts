@@ -41,10 +41,8 @@ try {
     assert.equal(Object.keys(cache.diagrams).length, 1);
   }
   // Use native objects only, so this distribution smoke needs no browser or optional renderer.
-  await writeFile(
-    join(folder, 'first/scene.ts'),
-    `import{Scene,Text,FadeIn}from'rayner';import{stage,settingsOf}from'rayner/explain';export default class Outside extends Scene{static meta={id:'outside',title:'An outside author'};static settings=[{id:'case',label:'Case',default:'a',options:[{value:'a',label:'A'},{value:'b',label:'B'}]}];async construct(){const s=stage(this);await this.step('one',{title:'First step',caption:'A native scene outside the checkout.'});await this.play(new FadeIn(new Text(settingsOf(this).case,{color:s.palette.ink})));}}`,
-  );
+  const native = `import{Scene,Text,FadeIn}from'rayner';import{stage,settingsOf}from'rayner/explain';export default class Outside extends Scene{static meta={id:'outside',title:'An outside author'};static settings=[{id:'case',label:'Case',default:'a',options:[{value:'a',label:'A'},{value:'b',label:'B'}]}];async construct(){const s=stage(this);await this.step('one',{title:'First step',caption:'A native scene outside the checkout.'});await this.play(new FadeIn(new Text(settingsOf(this).case,{color:s.palette.ink})));}}`;
+  await writeFile(join(folder, 'first/scene.ts'), native);
   await run(process.execPath, [cli, 'check', 'first'], { cwd: folder });
   // `see` reads a step from the terminal with no browser or optional renderer installed.
   const seen = await run(process.execPath, [cli, 'see', 'first', 'one', '--case', 'case=b'], { cwd: folder });
@@ -75,6 +73,20 @@ try {
     { cwd: folder },
   );
   assert.equal(described.stdout.trim(), 'a:one b:one');
+  // The example in REFERENCE "Describe", verbatim: on the `explain init` template and its captured
+  // diagram when capture is installed, else on the native scene with an empty snapshot index.
+  const describeSection = (await readFile(join(ROOT, 'docs/REFERENCE.md'), 'utf8')).split(/^## /m).find((s) => s.startsWith('Describe\n')),
+    example = /^```ts\n([\s\S]*?)^```/m.exec(describeSection ?? '')?.[1];
+  assert.ok(example, 'docs/REFERENCE.md "Describe" has a ts example');
+  await run(process.execPath, [cli, 'init', 'my-explainer'], { cwd: folder });
+  if (!process.env.EXPLAIN_BROWSER) await writeFile(join(folder, 'my-explainer/scene.ts'), native);
+  await run(process.execPath, [cli, 'snapshots', 'my-explainer'], { cwd: folder });
+  await writeFile(join(folder, 'describe.ts'), example);
+  const walked = (await run(process.execPath, ['describe.ts'], { cwd: folder })).stdout;
+  assert.match(
+    walked,
+    process.env.EXPLAIN_BROWSER ? /^Follow a request: Cache miss · request: .+\n  changed: .*\breads\b/m : /^Case: B · one: .+\n  changed: nothing$/m,
+  );
   if (process.env.EXPLAIN_VIDEO) {
     await run('npm', ['i', `@resvg/resvg-js@${peers['@resvg/resvg-js']}`, '--no-audit', '--no-fund'], { cwd: folder });
     await run(bin, ['render', 'first', '--out', 'public/outside.mp4', '--footer', '--fps', '4'], {
@@ -82,7 +94,7 @@ try {
     });
   }
   console.log(
-    'Package gate passed: archive install without optional peers, executable JS bin, install hint, external native author, settings, checks, see, build, describeExplainer, notices, one compiled engine' +
+    'Package gate passed: archive install without optional peers, executable JS bin, install hint, external native author, settings, checks, see, build, describeExplainer and its REFERENCE example, notices, one compiled engine' +
       (process.env.EXPLAIN_VIDEO ? ', installed video export' : '') +
       (process.env.EXPLAIN_BROWSER ? ', installed diagram capture' : '') +
       '.',
