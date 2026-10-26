@@ -73,3 +73,26 @@ test('the README shows the scene `explain init` writes, byte for byte', async ()
     await rm(folder, { recursive: true, force: true });
   }
 });
+
+test('`explain see` prints a step: its resting picture as text, title, caption, picture and state changes', async () => {
+  const folder = await mkdtemp(join(tmpdir(), 'explain-see-'));
+  try {
+    const cli = join(ROOT, 'tools/explain.ts'),
+      scene = join(ROOT, 'scenes/explainers/ring-buffer/scene.ts'),
+      svg = join(folder, 'result.svg');
+    const out = execFileSync(process.execPath, [cli, 'see', scene, 'result', '--out', svg], { encoding: 'utf8' });
+    assert.match(out, /^ring-buffer · step 4 of 4: result/m);
+    assert.match(out, /^Title: \S/m);
+    assert.match(out, /^Caption: \S/m);
+    // What the step changed, from the trace: the model's ring after the last pushes.
+    assert.match(out, /^Changed: .*tail: 0 → 2/m);
+    // The drawing comes before the facts, and the heading is left out of it.
+    assert.match(out.slice(0, out.indexOf('ring-buffer ·')), /[┌─│]/);
+    assert.match(await readFile(svg, 'utf8'), /^<svg /);
+    const missing = failure(() => execFileSync(process.execPath, [cli, 'see', scene, 'nope'], { stdio: 'pipe' }));
+    assert.equal(missing?.status, 1);
+    assert.match(String(missing?.stderr), /No step "nope"\. Steps: .*result/);
+  } finally {
+    await rm(folder, { recursive: true, force: true });
+  }
+});

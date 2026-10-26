@@ -202,12 +202,13 @@ These checks establish deterministic behaviour and readable pictures. They do no
 | `build <scene>` | The page, its receipt, its header recipe and `loader.js` |
 | `render <scene>` | A video with subtitles, chapters, transcript and receipt |
 | `shots <scene>` | A contact sheet of every step, as SVG and PNG |
+| `see <scene> [step]` | One step's resting picture drawn as text, then its title, caption, the picture in words and what it changed in `scene.state` (`key: before → after`). The last step by default; needs no browser, so an agent can read a scene from a terminal |
 
 | Option | Applies to | Effect |
 | --- | --- | --- |
-| `--out <path>` | all but `init` and `snapshots` | The output file; for `check`, the report's directory. Defaults under `out/` in the current directory |
+| `--out <path>` | all but `init` and `snapshots` | The output file; for `check`, the report's directory; for `see`, the resting picture as SVG (nothing is written without it). Defaults under `out/` in the current directory |
 | `--refresh` | all but `init` | Recapture every diagram |
-| `--case id=value` | `render`, `shots` | One case; repeat for several settings |
+| `--case id=value` | `render`, `shots`, `see` | One case; repeat for several settings |
 | `--all` | `render` | Every case, each file suffixed `-id=value` |
 | `--footer` | `render` | The 1280 × 960 caption-footer preset |
 | `--width <even>` | `render` | Stage-only width, default 1280 |

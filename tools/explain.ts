@@ -27,6 +27,9 @@ Commands:
   build <scene>       HTML, receipt, header recipe, loader.js
   render <scene>      Silent MP4 (or .webm), captions, chapters and receipt
   shots <scene>       Step contact sheet as SVG and PNG
+  see <scene> [step]  One step's resting picture as text, with its caption, its
+                      picture in words and what it changed in scene.state
+                      (the last step by default; --out file.svg also writes it)
 
 Every command fails on text the embedded fonts cannot draw.
 
@@ -37,7 +40,7 @@ Options:
   --width <even>      Stage-only video width (default 1280)
   --fps <1–120>       Video frame rate (default 30)
   --all               Export videos for every declared case
-  --case id=value     Export (render) or show (shots) one case; repeat for multiple settings
+  --case id=value     Export (render) or show (shots, see) one case; repeat for multiple settings
   --port <integer>    Preview server port (default 5174)
   --watch             Preview: rebuild the page and contact sheet on save
 
@@ -69,6 +72,8 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
   });
   const [command, input, ...extra] = positionals;
   if (!input) throw new Error('Supply a scene file or directory. Use --help for usage.');
+  // `see` takes the step to show as a second argument.
+  const step = command === 'see' ? extra.shift() : undefined;
   if (extra.length) throw new Error(`Unexpected argument: ${extra[0]}`);
   if (command === 'init') {
     const dir = resolve(input);
@@ -108,7 +113,7 @@ export default class MyExplainer extends Scene {
     console.log(`Created ${join(dir, 'scene.ts')}`);
     return;
   }
-  if (!['preview', 'snapshots', 'check', 'build', 'render', 'shots'].includes(command!))
+  if (!['preview', 'snapshots', 'check', 'build', 'render', 'shots', 'see'].includes(command!))
     throw new Error(`Unknown command: ${command}`);
   const project = await collectProject(input, { refresh: flags.refresh });
   const slug = sceneSlug(project);
@@ -165,6 +170,11 @@ export default class MyExplainer extends Scene {
         ),
       );
     }
+    return;
+  }
+  if (command === 'see') {
+    const { see } = await import('./lib/explain-see.ts');
+    console.log(await see(project, selectedVariant(), step, flags.out));
     return;
   }
   if (command === 'shots') {
