@@ -16,6 +16,7 @@
     "videos": "node tools/explain-demos.ts --render && EXPLAIN_VIDEO=1 node --test test/explain-video.test.ts && EXPLAIN_VIDEO=1 node tools/explain-package-smoke.ts",
     "demos:serve": "node tools/explain-serve.ts",
     "demos:review": "node tools/explain-review.ts",
+    "bench": "node tools/bench.ts",
     "pack:smoke": "node tools/explain-package-smoke.ts",
     "site:export": "node tools/explain-site.ts",
     "test:embeds": "EXPLAIN_BROWSER=1 node --test test/explain-capture.test.ts test/explain-embed.test.ts",

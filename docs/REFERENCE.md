@@ -297,10 +297,27 @@ With `--footer`, `render` fails before FFmpeg starts on a title or caption that 
 | `npm run videos` | Everything video, kept out of CI: `demos:render`, `test:video` and the package smoke test's installed render. Needs FFmpeg |
 | `npm run demos:serve` | Serve `out/` on port 5175 with each page's headers and byte ranges; `-- --port n` |
 | `npm run demos:review` | Open every served case at 390 px and 1180 px in Chromium and check captions, artwork, errors, outside requests and headers, and video byte ranges when `out/videos/` has videos; screenshots in `out/review/` |
+| `npm run bench` | Reader speed of four built explainers, the working tree against `origin/main` (`-- --base <rev>`), in Chromium; fails on a slowdown seen on two separate rounds, or on any layout shift while stepping. Run it before merging a change to `app/`, `src/` or `explain/`; not in CI (below) |
 | `npm run site:export -- <site-root>` | Copy the built pages, posters, videos and loader under `<site-root>/projects/rayner` (`--path` changes it) and write their `_headers` block to `out/site-headers.txt` |
 | `npm run pack:smoke` | Pack, install into a fresh project without the optional packages, build an outside scene; `EXPLAIN_BROWSER=1` adds capture, `EXPLAIN_VIDEO=1` a render |
 | `npm run build:lib` | Compile `dist/` (runs on `npm pack`) |
 | `npm run fonts` | Regenerate `src/font-data.ts` from Inter, JetBrains Mono and the Noto numeral subsets, reproducibly (needs `fonttools` and `brotli`) |
+
+`npm run bench` builds BASE's pages with BASE's own `explain build`, from a temporary git worktree, and HEAD's from the working tree, so `--base HEAD` measures the uncommitted change alone. It serves both and opens each page in a fresh browser context at 390 × 844 with the CPU slowed 4× (`--cpu`), taking BASE and HEAD in turn, in alternating order, `--reps` times (default 7; fewer than 5 are shown but not judged). Each opening loads the page, waits a second as a reader would, presses Next, waits again and jumps to the last step through the steps list, a step it has not drawn yet. From what the page records about itself it takes:
+
+| Metric | From | To | Slower by more than |
+| --- | --- | --- | --- |
+| load → ready | navigation | the player's `data-ready` | 10% and 100 ms |
+| Next → first motion | the click event | the stage's first change | 25% and 40 ms |
+| Next → resting | the click event | the `rayner:step` event | 3% and 100 ms (mostly the step's authored motion) |
+| Next: longest gap | the click event | the `rayner:step` event: the longest wait between animation frames | 50% and 50 ms |
+| jump to last step | the click event | the `rayner:step` event | 20% and 60 ms |
+| blocking | both windows above | | 25% and 60 ms: each long task's time over 50 ms, as Total Blocking Time counts it |
+| layout shift | the player's `data-ready` | the jump's `rayner:step` event | any: every `layout-shift` entry counts, including those just after a click, which CLS excuses |
+
+The four defaults differ where the player's costs differ: mr-cache is short (4 steps) with captured diagrams; seasons is the longest scene of the four (8 steps, 131 s of scene time) and draws its charts natively; oauth-pkce and exgit carry the most captured diagrams (3 and 6), and exgit is the slowest of the four to load and to jump (about 2.2 s and 540 ms at 4×). mr-cache and exgit are also the layout test's, and all but seasons are the embed tests'. Each explainer adds about 2 minutes to a run, so the set is small; `--explainers a,b` measures others. A metric regresses when HEAD's median is slower than BASE's by both its margins and HEAD was the slower of the pair in at least 70% of pairs; an explainer with such a metric is measured again, and the gate fails only on a metric that regresses both times. Single openings on a shared machine move by ±30% (ready 1.2–2.1 s for one page), so there is no stored baseline. `out/bench/samples.json` keeps every sample. A run of the defaults takes about 9 minutes, and up to twice that when something is measured again.
+
+It is not in CI: it would add 9 to 18 minutes to a job that takes about 20 of its 35, a push to `main` has no BASE to compare with, and its margins were set from runs on one shared 4-core VM, not on a CI runner.
 
 Test environment: `FC_RUNS=n` sets the property cases, and `FC_SEED` with `FC_PATH` replays a fast-check failure. `UPDATE_GOLDEN=1` rewrites `test/golden-traces.json` after a deliberate change. `EXPLAIN_BROWSER=1` and `EXPLAIN_VIDEO=1` enable the browser and video tests. `test/explain-gates.test.ts` gives each check one seeded defect.
 
