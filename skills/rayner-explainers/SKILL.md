@@ -28,10 +28,10 @@ Each explainer in [`scenes/explainers/`](https://github.com/adewale/rayner/blob/
 | You are explaining | Start from | It shows |
 | --- | --- | --- |
 | A code change and what it does to a system | `mr-cache` | `TransformDiff` on the code, the same edit replayed on the diagram with `ops`, a setting for hit or miss |
-| A protocol or request flow | `oauth-pkce` | Walks over a sequence diagram; a setting that adds the attacker's step |
+| A protocol or request flow | `oauth-pkce` | A sequence diagram revealed message by message (`build: 'frame'`, `reveal`); a setting that adds the attacker's step |
 | A data structure changing step by step | `ring-buffer` | No diagram: native shapes, `Succession`, a `view` of `scene.state` |
 | A state machine | `state-machine` | A state diagram driven by the real reducer, code spans, `Restore` |
-| A rate or a model's numbers over time | `token-bucket`, `seasons` | `Axes`, `lineGraph`, `stateView`; a setting that reruns the model |
+| A rate or a model's numbers over time | `token-bucket`, `seasons` | `token-bucket`: `Axes`, `lineGraph`, `stateView`; `seasons`: `Axes.plot`; a setting that reruns the model |
 | Identity, hashing or text that changes | `exgit` | `TransformMatchingText`, `TransformMatchingShapes`, `TransformFromCopy` |
 | A real tool's behaviour, checked against it | `isdigit`, `gtfs`, `traffic-policy` | A model checked against the tool's own output, with a fidelity test |
 | Records, schedules or shares | `gtfs` (ER, gantt), `pg-page` (pie), `cert-renewal` (timeline) | Diagram families beyond flowcharts |
@@ -39,12 +39,12 @@ Each explainer in [`scenes/explainers/`](https://github.com/adewale/rayner/blob/
 
 ## Test the model
 
-The scene asks the model; it never states an answer it did not get from one.
+The scene asks the model; it never states an answer it did not get from one. These steps apply when you write or change an explainer's model; a change to layout, captions or publishing needs none of them.
 
-1. Put the model in its own module (in this repository, `scenes/explainers/lib/<id>.ts`), with no drawing in it.
+1. Put the model in its own module, with no drawing in it. In this repository, a model of an outside tool or format gets `scenes/explainers/lib/<id>.ts`; the small models behind `ring-buffer`, `state-machine`, `token-bucket` and `seasons` share `scenes/explainers/lib/models.ts`.
 2. Check the model against its source: run the real program or library, or use its published test vectors, and pin the version you ran in the `meta.sources` links (`isdigit` links CPython at tag `v3.15.1`). If you cannot run the source, say so in your report.
 3. At each step, record what the picture shows on `this.state` (`isdigit` sets `this.state.outcome = run.outcome` from the model's run).
-4. Add a test that runs every case and asserts each step's state equals the model. In this repository that is `test/lib/fidelity/<id>.ts`, using `assertStepState(trace, step, { … })`, called from `test/explain-fidelity.test.ts`; a picture built with `view` adds `assertViewFollowsState`. Make the test fail first: break the model and watch it go red.
+4. Add a test that runs every case and asserts each step's state equals the model. In this repository, a model of an outside tool gets `test/lib/fidelity/<id>.ts`, using `assertStepState(trace, step, { … })`, called from `test/explain-fidelity.test.ts`; a model in `lib/models.ts` is tested in `test/explain-models.test.ts`, and a picture built with `view` adds `assertViewFollowsState`. Make the test fail first: break the model and watch it go red.
 
 ## Rules
 
