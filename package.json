@@ -1,6 +1,6 @@
 {
   "name": "rayner",
-  "version": "0.2.0-explainers.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "build:lib": "rm -rf dist && tsc -p tsconfig.lib.json && node tools/copy-vendor.ts && node tools/build-cli.ts",
@@ -10,7 +10,7 @@
     "fonts:lettering": "tools/lettering-fonts.sh",
     "check": "tsc -b && node tools/copy-vendor.ts && tsc -p test/consumer/tsconfig.json",
     "prepack": "npm run build:lib",
-    "explain": "node tools/explain.ts",
+    "rayner": "node tools/explain.ts",
     "demos:build": "node tools/explain-demos.ts",
     "demos:check": "node tools/explain-demos.ts --check",
     "demos:render": "node tools/explain-demos.ts --render",
@@ -47,7 +47,7 @@
     }
   },
   "bin": {
-    "explain": "dist/tools/explain.js"
+    "rayner": "dist/tools/explain.js"
   },
   "author": "Ade Oshineye (https://github.com/adewale)",
   "license": "MIT",
@@ -65,14 +65,15 @@
     "vendor/glyph.d.ts",
     "vendor/lettering",
     "vendor/licenses",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=26"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/adewale/rayner"
+    "url": "git+https://github.com/adewale/rayner.git"
   },
   "keywords": [
     "animation",
@@ -107,5 +108,9 @@
     "svgpath": {
       "optional": true
     }
+  },
+  "homepage": "https://oshineye.dev/projects/rayner",
+  "bugs": {
+    "url": "https://github.com/adewale/rayner/issues"
   }
 }

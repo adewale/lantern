@@ -82,7 +82,7 @@ export async function buildExplainer(
     .join('');
   const licenses = (
     await Promise.all(
-      ['LICENSE', 'vendor/licenses/Inter-OFL.txt', 'vendor/licenses/JetBrainsMono-OFL.txt', 'vendor/licenses/Noto-OFL.txt'].map((file) =>
+      ['LICENSE', 'vendor/licenses/Inter-OFL.txt', 'vendor/licenses/JetBrainsMono-OFL.txt', 'vendor/licenses/Noto-OFL.txt', 'vendor/licenses/glyph-MIT.txt'].map((file) =>
         readFile(join(ROOT, file), 'utf8'),
       ),
     )

@@ -148,7 +148,7 @@ export default class ForkExplainer extends Scene {
       held = shown.hold == null ? 0 : shown.t1! - shown.hold;
     await this.step('video', {
       title: 'The same steps become a silent, captioned video',
-      caption: `explain render draws every frame with resvg and encodes them with FFmpeg. In the video, each step shows its title while it moves, then holds still under its caption long enough to read it at ${Scene.captionWpm} words a minute. Lantern’s render stops at numbered SVG frames.`,
+      caption: `rayner render draws every frame with resvg and encodes them with FFmpeg. In the video, each step shows its title while it moves, then holds still under its caption long enough to read it at ${Scene.captionWpm} words a minute. Lantern’s render stops at numbered SVG frames.`,
     });
     await s.clearOverlays();
     await flow.dim(['Clock', 'Frames', 'Video']);

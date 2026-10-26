@@ -40,7 +40,7 @@ async function scenePath(input: string): Promise<string> {
 /** Force author, helper and player imports onto one engine, including compiled-scene reuse. */
 export function engineAlias(node = false): Plugin {
   return {
-    name: 'one-lantern-engine',
+    name: 'one-rayner-engine',
     setup(b) {
       b.onResolve({ filter: /.*/ }, (args) => {
         let file: string | undefined;
@@ -103,9 +103,9 @@ async function loadScene(
   });
   const code = result.outputFiles[0]!.text,
     sourceHash = hash(
-      code.replaceAll(pathToFileURL(ROOT).href, 'lantern:/').replaceAll(dirname(file), '<author>'),
+      code.replaceAll(pathToFileURL(ROOT).href, 'rayner:/').replaceAll(dirname(file), '<author>'),
     );
-  const folder = join(tmpdir(), 'lantern-explain');
+  const folder = join(tmpdir(), 'rayner-explain');
   await mkdir(folder, { recursive: true });
   const output = join(folder, hash(code) + '.mjs');
   await writeFile(output, code);
@@ -225,7 +225,7 @@ export async function collectProject(
     const key = diagramKey(snapshot.spec);
     if (!warned.has(key)) {
       warned.add(key);
-      for (const warning of lostLabelWarnings(snapshot)) console.warn('explain: ' + warning);
+      for (const warning of lostLabelWarnings(snapshot)) console.warn('rayner: ' + warning);
     }
     return snapshot;
   };

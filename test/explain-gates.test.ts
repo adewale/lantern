@@ -1,4 +1,4 @@
-// One seeded defect per gate, through the entry points `explain check` uses:
+// One seeded defect per gate, through the entry points `rayner check` uses:
 // collectProject (load, cases, named steps, drawable text) and checkProject
 // (every check on every case). Each scene breaks exactly one rule and must fail
 // with that gate's own message; the clean scene shows the same shape passes.
@@ -15,7 +15,7 @@ import { diagramKey } from '../integrations/agentic-mermaid/snapshot.ts';
 import type { DiagramSnapshot } from '../explain/index.ts';
 import { fixedSnapshot, square } from './lib/random-snapshot.ts';
 
-const folder = await mkdtemp(join(tmpdir(), 'lantern-gates-'));
+const folder = await mkdtemp(join(tmpdir(), 'rayner-gates-'));
 after(() => rm(folder, { recursive: true, force: true }));
 
 const HEAD = `import{Scene,Text,Dot,Rectangle,FadeIn}from'rayner';import{stage,settingsOf}from'rayner/explain';`;
@@ -224,5 +224,5 @@ test('explain check exits 1 and names the failing gate on stderr', async () => {
     refused = error as { status: number; stderr: Buffer };
   }
   assert.equal(refused?.status, 1, 'check must exit 1 on a scene whose seek differs from play');
-  assert.match(String(refused?.stderr), /^explain: Seek mismatch at frame \d+/);
+  assert.match(String(refused?.stderr), /^rayner: Seek mismatch at frame \d+/);
 });

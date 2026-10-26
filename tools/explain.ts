@@ -11,11 +11,12 @@ import { buildExplainer, buildLoader } from './lib/explain-build.ts';
 // Optional peer packages, by what needs them; package.json pins their versions.
 const CAPTURE = ['agentic-mermaid', 'playwright-core', 'svgpath'],
   RASTER = ['@resvg/resvg-js'];
-const peers: Record<string, string> = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).peerDependencies;
+const pkg: { version: string; peerDependencies: Record<string, string> } = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+const peers = pkg.peerDependencies;
 const install = (names: string[]) => 'npm i ' + names.map((n) => `${n}@${peers[n]}`).join(' ');
-const HELP = `Rayner (Node 26+)
+const HELP = `Rayner ${pkg.version} (Node 26+)
 
-Usage: explain <command> <scene.ts | directory> [options]
+Usage: rayner <command> <scene.ts | directory> [options]
 
 Commands:
   init <directory>    Write a scene with one setting
@@ -42,6 +43,7 @@ Options:
   --case id=value     Export (render) or show (shots) one case; repeat for multiple settings
   --port <integer>    Preview server port (default 5174)
   --watch             Preview: rebuild the page and contact sheet on save
+  --version           Print the version
 
 A default install leaves out what diagrams, PNGs and video need:
   Diagram capture     ${install(CAPTURE)}
@@ -52,6 +54,10 @@ A default install leaves out what diagrams, PNGs and video need:
 export async function main(args = process.argv.slice(2)): Promise<void> {
   if (!args.length || args.includes('--help') || args[0] === 'help') {
     console.log(HELP);
+    return;
+  }
+  if (args.includes('--version') || args[0] === 'version') {
+    console.log(pkg.version);
     return;
   }
   const { values: flags, positionals } = parseArgs({
@@ -217,7 +223,7 @@ export default class MyExplainer extends Scene {
               await contactSheet(next, shots);
               console.log(`Rebuilt ${slug}: ${next.variants.length} cases`);
             } catch (error) {
-              console.error(`explain: ${(error as Error).message} (still serving the last good build)`);
+              console.error(`rayner: ${(error as Error).message} (still serving the last good build)`);
             }
           });
         }, 200);
@@ -236,8 +242,8 @@ if (
     const group = missing && [CAPTURE, RASTER].find((g) => g.includes(missing));
     console.error(
       missing
-        ? `explain: this command needs ${missing}${group ? `. Install: ${install(group)}` : ''}`
-        : `explain: ${error.message}`,
+        ? `rayner: this command needs ${missing}${group ? `. Install: ${install(group)}` : ''}`
+        : `rayner: ${error.message}`,
     );
     process.exitCode = 1;
   });

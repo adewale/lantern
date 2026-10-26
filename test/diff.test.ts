@@ -20,7 +20,7 @@ const header = (hs: Hunk[]) => hs.map(hunkHeader);
 
 /** `git diff --no-index` of two texts (lines), as its unified diff output. */
 function gitDiff(a: readonly string[], b: readonly string[], context = 0): string {
-  const dir = mkdtempSync(join(tmpdir(), 'lantern-diff-'));
+  const dir = mkdtempSync(join(tmpdir(), 'rayner-diff-'));
   const file = (name: string, lines: readonly string[]) => { const p = join(dir, name); writeFileSync(p, lines.map((l) => l + '\n').join('')); return p; };
   try {
     // Exit status 1 means "they differ": the diff is on stdout either way

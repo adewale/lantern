@@ -1,5 +1,5 @@
 // Property tests for the close-ups a narrow stage opens each step on (app/embed-closeup.ts),
-// in Node. The player and `explain check` both take their phone view from these functions,
+// in Node. The player and `rayner check` both take their phone view from these functions,
 // so these contracts are what a phone reader gets: every label near a step's changes at
 // 12 px or more, and every change reachable by the overview's tour, with no panning.
 // Counts: test/lib/pbt.ts (FULL=1 is 10x).

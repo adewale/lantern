@@ -2,11 +2,11 @@
 
 Rayner turns a TypeScript program into an explainer that a reader steps through at their own pace. A slide deck holds a fixed picture per slide. In Rayner one program computes every step: change a reader setting, such as the token bucket's refill rate, and the program runs again, so the numbers, the diagram and the captions follow that case. Every case is built and checked before anyone sees it, and the same scene also renders a silent, captioned video. Diagrams come from [Agentic Mermaid](https://github.com/adewale/agentic-mermaid) at build time and are stored beside the scene, so the page runs no diagram renderer and makes no network requests.
 
-Rayner is a fork of Ivar Vong's [Lantern](https://github.com/ivarvong/lantern) at commit `2c7bad5`, maintained by [Ade Oshineye](https://github.com/adewale). It keeps Lantern's engine: shapes and glyphs stored as Bézier points, a fixed clock, and seeking by replay. [Upstream](docs/UPSTREAM.md) lists each engine change with the test that proves it. It deletes Lantern's development player, Cloudflare Worker, JSON scene format and flowchart parser. In their place, a build sits between the scene and the reader: Agentic Mermaid draws the diagrams, every reader setting becomes a case that is checked before it ships, and the output is a portable HTML page or a captioned video. Agents lose the Worker's endpoints in that trade. The explainers are published at [oshineye.dev/projects/rayner](https://oshineye.dev/projects/rayner). The npm package `rayner` has not been published.
+Rayner is a fork of Ivar Vong's [Lantern](https://github.com/ivarvong/lantern) at commit `2c7bad5`, maintained by [Ade Oshineye](https://github.com/adewale). It keeps Lantern's engine: shapes and glyphs stored as Bézier points, a fixed clock, and seeking by replay. [Upstream](docs/UPSTREAM.md) lists each engine change with the test that proves it. It deletes Lantern's development player, Cloudflare Worker, JSON scene format and flowchart parser. In their place, a build sits between the scene and the reader: Agentic Mermaid draws the diagrams, every reader setting becomes a case that is checked before it ships, and the output is a portable HTML page or a captioned video. Agents lose the Worker's endpoints in that trade. The explainers are published at [oshineye.dev/projects/rayner](https://oshineye.dev/projects/rayner).
 
 ## Requirements
 
-Node 26 or later. CI runs on Ubuntu 24.04; other platforms have not been checked. In a checkout, `npm ci` installs everything except Chromium and FFmpeg. A package install leaves out the capture and picture packages; `explain --help` prints these lines:
+Node 26 or later. CI is set up on Ubuntu 24.04 and the suite has also passed on macOS; other platforms have not been checked. Install the package with `npm i -D rayner`. In a checkout, `npm ci` installs everything except Chromium and FFmpeg. A package install leaves out the capture and picture packages; `explain --help` prints these lines:
 
 | Needed for | Install |
 | --- | --- |
@@ -36,11 +36,14 @@ The collection has 26 explainers with 140 cases between them, and uses all 15 Ag
 ## Write one
 
 ```sh
-npm run explain -- init my-explainer
-npm run explain -- preview my-explainer/scene.ts --watch
-npm run explain -- check my-explainer/scene.ts
-npm run explain -- build my-explainer/scene.ts --out public/my-explainer.html
+npm i -D rayner
+npx rayner init my-explainer
+npx rayner preview my-explainer/scene.ts --watch
+npx rayner check my-explainer/scene.ts
+npx rayner build my-explainer/scene.ts --out public/my-explainer.html
 ```
+
+In a checkout of this repository, run the same commands as `npm run rayner -- <command>`. `npx rayner --version` prints the installed version.
 
 `init` writes this scene, which has one setting and two steps:
 
@@ -111,6 +114,6 @@ A scene is an ordinary Rayner scene, so beside the helpers it can use the engine
 
 ## License and attribution
 
-Rayner is MIT (`package.json`). `LICENSE` carries Lantern's notice: Lantern is MIT, copyright 2026 Ivar Vong. Inter 4.1, JetBrains Mono 2.242 and the Noto Sans Arabic, Devanagari and SC subsets are under the SIL Open Font License, with notices in `vendor/licenses/`. Agentic Mermaid 0.4.1 is an optional, build-only dependency. Neither project endorses this fork.
+Rayner is MIT (`package.json`). `LICENSE` carries Lantern's notice (Lantern is MIT, copyright 2026 Ivar Vong) and the fork's (copyright 2026 Ade Oshineye). `vendor/glyph.js` is Ivar Vong's glyph, also MIT, with its notice in `vendor/licenses/glyph-MIT.txt`. Inter 4.1, JetBrains Mono 2.242 and the Noto Sans Arabic, Devanagari and SC subsets are under the SIL Open Font License, with notices in `vendor/licenses/`. Agentic Mermaid 0.4.1 is an optional, build-only dependency. Neither project endorses this fork.
 
 Report problems in [GitHub issues](https://github.com/adewale/rayner/issues).

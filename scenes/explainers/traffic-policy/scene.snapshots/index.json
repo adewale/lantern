@@ -2,7 +2,7 @@
   "version": 2,
   "importer": "725da4d8fc61bf77",
   "renderer": "agentic-mermaid@0.4.1",
-  "sourceHash": "224c9df90067c02c9f0bc60c9f8a48efcbb8e004dcccf75357146fc5a147cc3f",
+  "sourceHash": "148694d7521843db86be2a640ef1737fc2ad7958a7e569a85e66e83cc1780435",
   "diagrams": {
     "[\"---\\nconfig:\\n  architecture:\\n    fontSize: 24\\n    iconSize: 60\\n---\\narchitecture-beta\\n  service lb(internet)[Load balancer]\\n  group n1[ ]\\n  service k1(server)[Node 1 · 10.240.0.1] in n1\\n  service a(disk)[Pod a] in n1\\n  group n2[ ]\\n  service k2(server)[Node 2 · 10.240.0.2] in n2\\n  service b(disk)[Pod b] in n2\\n  group n3[ ]\\n  service k3(server)[Node 3 · 10.240.0.3] in n3\\n  service c(disk)[Pod c] in n3\\n  lb:L --> B:k1\\n  lb:T --> B:k2\\n  lb:R --> B:k3\\n  k1:T --> B:a\\n  k2:T --> B:b\\n  k3:T --> B:c\\n  align row k1 k2 k3\",\"github-light\"]": "16e6bcf01e1e5bf1.json",
     "[\"---\\nconfig:\\n  architecture:\\n    fontSize: 24\\n    iconSize: 60\\n---\\narchitecture-beta\\n  service lb(internet)[Load balancer]\\n  group n1[ ]\\n  service k1(server)[Node 1 · 10.240.0.1] in n1\\n  service a(disk)[Pod a] in n1\\n  group n2[ ]\\n  service k2(server)[Node 2 · 10.240.0.2] in n2\\n  service b(disk)[Pod b] in n2\\n  group n3[ ]\\n  service k3(server)[Node 3 · 10.240.0.3] in n3\\n  service c(disk)[Pod c] in n3\\n  lb:L --> B:k1\\n  lb:T --> B:k2\\n  lb:R --> B:k3\\n  k1:T --> B:a\\n  k2:T --> B:b\\n  k3:T --> B:c\\n  k3:L --> R:b\\n  align row k1 k2 k3\",\"github-light\"]": "db4e28939cbafd7c.json",

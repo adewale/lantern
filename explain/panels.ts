@@ -74,7 +74,7 @@ function place(panel: Group, at: Vec | Box, height: number, align: 'center' | 't
 
 /**
  * Labelled values on a panel. A native Group: move, fade or transform it like
- * any Lantern object. `set` crossfades changed values and `mark` keeps a row
+ * any engine object. `set` crossfades changed values and `mark` keeps a row
  * lit, so the resting frame of a step shows what changed.
  */
 export class Card extends Group {
@@ -229,7 +229,7 @@ interface LineMark {
 
 /**
  * Code on a panel in the stage's colours, with a focus bar that stays where
- * it was put. A native Group around Lantern's `Code`.
+ * it was put. A native Group around the engine's `Code`.
  */
 export class CodeBlock extends Group {
   readonly scene: Scene;

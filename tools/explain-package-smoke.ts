@@ -9,7 +9,7 @@ import { promisify } from 'node:util';
 import assert from 'node:assert/strict';
 import { ROOT } from './lib/explain-project.ts';
 const run = promisify(execFile),
-  folder = await mkdtemp(join(tmpdir(), 'lantern-package-'));
+  folder = await mkdtemp(join(tmpdir(), 'rayner-package-'));
 try {
   const packed = await run('npm', ['pack', '--json', '--pack-destination', folder], {
     cwd: ROOT,
@@ -25,11 +25,12 @@ try {
     maxBuffer: 4 * 1024 * 1024,
   });
   const cli = join(folder, 'node_modules/rayner/dist/tools/explain.js');
-  const bin = join(folder, 'node_modules/.bin/explain');
-  assert.match((await run(bin, ['--help'], { cwd: folder })).stdout, /Rayner \(Node 26\+\)/);
+  const bin = join(folder, 'node_modules/.bin/rayner');
+  const { version, peerDependencies: peers } = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8'));
+  assert.ok((await run(bin, ['--help'], { cwd: folder })).stdout.startsWith(`Rayner ${version} (Node 26+)`));
+  assert.equal((await run(bin, ['--version'], { cwd: folder })).stdout.trim(), version);
   await run(process.execPath, [cli, 'init', 'first'], { cwd: folder });
   // A default install leaves the optional peers out; the template's diagram then names what to install.
-  const peers = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8')).peerDependencies;
   for (const name of Object.keys(peers)) assert.ok(!existsSync(join(folder, 'node_modules', name)), `${name} installed by default`);
   const refused: string = await run(bin, ['snapshots', 'first'], { cwd: folder }).then(() => '', (e) => e.stderr);
   const install = /Install: npm (i .+)/.exec(refused)?.[1];

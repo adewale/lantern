@@ -1,6 +1,6 @@
 // An explainer as data, for agents: every case and every step, with the words a reader gets,
 // the state the scene recorded, what each step changed and its resting picture drawn as text.
-// One definition behind `explain describe` and anything an agent imports; it runs the scene in
+// One definition behind `rayner describe` and anything an agent imports; it runs the scene in
 // Node or a browser, with no Chromium, given the diagrams' pinned snapshots.
 import { renderAt, renderText, traceScene } from '../src/index.ts';
 import type { Scene, SceneState, Sink } from '../src/index.ts';
@@ -102,7 +102,7 @@ export async function describeExplainer(Scene: ExplainerClass, options: Describe
   };
 }
 
-/** The picture at `t` as text, without the heading that names the step, as `explain check` draws it. */
+/** The picture at `t` as text, without the heading that names the step, as `rayner check` draws it. */
 async function drawing(Bound: ExplainerClass, t: number): Promise<string> {
   const sink: Sink = { async frame() {} };
   const scene: Scene = await renderAt(Bound, t, sink);

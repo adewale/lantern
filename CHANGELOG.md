@@ -1,8 +1,26 @@
 # Changelog
 
-## Unreleased: 0.2.0-explainers.0
+## 0.1.0 (unreleased)
 
-Newest first; all on 24–26 October 2026.
+The first release of the `rayner` npm package. Lantern released 0.1.0 under the name `manim-js`; `rayner` is a new package, so its numbering starts again at 0.1.0. Earlier drafts of this changelog called this version `0.2.0-explainers.0`.
+
+What the package provides:
+
+- `rayner`: Lantern's engine at `2c7bad5`, with the fixes [Upstream](docs/UPSTREAM.md) lists, plus a camera, matching and diff transforms, emphasis, graphing, views and addressable code.
+- `rayner/explain`: helpers for diagrams, cards and code panels; reader settings that rerun the scene as checked cases; and `describeExplainer`.
+- `rayner/lettering`: Latin Extended, Greek and Cyrillic for the explainers that ask for them.
+- The `rayner` command: `init`, `preview`, `snapshots`, `check`, `build`, `render`, `shots` and `describe`, and `--version`. Install with `npm i -D rayner` and run with `npx rayner`.
+- Portable HTML pages with a loader and header recipes, and silent captioned video.
+- An agent skill, `skills/rayner-explainers/SKILL.md`.
+
+Changes in this release, for anyone using a checkout from before it:
+
+- **The command is `rayner`**, not `explain`. In a checkout, `npm run explain -- …` is now `npm run rayner -- …`, and errors start `rayner:`. `--version` prints the version.
+- **Lantern's name is left only where it means Lantern.** Built SVG clip ids are `rayner-clip-…` (were `lantern-clip-…`); diagram capture marks parts with `data-rayner-part` and names its backend `backend:rayner-capture`; `demos:serve` prints "Rayner demos"; temporary folders and the docs call the engine Rayner's. Because the engine's source and every page's licence notices changed, every explainer's engine hash and page bytes change once, so run `npm run videos` before publishing videos again. The receipt's `engine` field still says `lantern@2c7bad5+explainer`, which records where the engine came from.
+- **Licences**: `LICENSE` adds the fork's copyright line beside Lantern's, and `vendor/licenses/glyph-MIT.txt` carries the notice for the bundled glyph. The package now includes this changelog.
+- **CI** can be started by hand (`workflow_dispatch`).
+
+The entries below record how the release was built, newest first, all on 24–26 October 2026.
 
 - **A link to a step previews that step, on X too**: `demos:build` draws every step of each explainer's default case as a preview picture (`out/explainers/<id>/<step>.png`, the 960 × 540 still centred on a 1080 × 540 canvas of the stage's paper, with `steps.json`), and `site:export --origin https://…` writes a share page per step, `<id>/<step>`, which sends a reader to the player at that step. Each share page, and each explainer page `site:export --origin` publishes (for its gallery tile's step), carries Open Graph tags and X's own Twitter card tags (`twitter:card` = `summary_large_image`, `twitter:title`, `twitter:description`, `twitter:image`, `twitter:image:alt`), with absolute URLs; before, an explainer link previewed as nothing. A `?step=` URL cannot preview its step on a static host, because crawlers get the same HTML for every query. The pictures are 2:1 because X shows these cards at 2:1: a 16:9 picture would lose 30 px top and bottom, and 81 of the 175 steps draw within 30 px of the top or bottom edge. `site:export` then checks every page has each tag once, with https URLs, and each picture exists at the declared size; `demos:review` runs it. `--origin` must now be https. The player's Copy link is unchanged.
 

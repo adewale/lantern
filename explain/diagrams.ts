@@ -464,7 +464,7 @@ export class Diagram {
   private end(id: string): string {
     return this.find(id) ? this.top(id) : id;
   }
-  /** Put the root on stage. Hidden marks are never added: opacity on a Group does not mask its descendants in Lantern. */
+  /** Put the root on stage. Hidden marks are never added: opacity on a Group does not mask its descendants in the engine. */
   private attach(): void {
     if (!this.scene.mobjects.includes(this.root)) this.scene.add(this.root);
   }
@@ -915,7 +915,7 @@ export class Diagram {
    * With `camera: true` the stage's camera (`scene.frame`) moves instead, onto the parts,
    * their notes and any native objects in `also`, with `margin` scene units around them;
    * `zoom` above 1 goes closer, below 1 shows more. No point moves: labels keep their size
-   * in the world and the camera enlarges them on screen, which is how `explain check` and
+   * in the world and the camera enlarges them on screen, which is how `rayner check` and
    * the player's close-ups measure them. The view never leaves the 16 × 9 stage, but it
    * shows less of it: the heading, cards and code are world objects too, so keep what the
    * step's last frame needs inside the view with `also`.

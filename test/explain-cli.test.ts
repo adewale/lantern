@@ -17,9 +17,9 @@ const failure = (run: () => unknown) => {
   }
 };
 
-// The gates `explain check` runs, each with a seeded defect, are in explain-gates.test.ts.
+// The gates `rayner check` runs, each with a seeded defect, are in explain-gates.test.ts.
 test('external source and compiled ESM scenes share the CLI engine; source hashes ignore checkout paths', async () => {
-  const folder = await mkdtemp(join(tmpdir(), 'lantern-cli-'));
+  const folder = await mkdtemp(join(tmpdir(), 'rayner-cli-'));
   try {
     const source = `import{Scene,Text,FadeIn}from'rayner';import{stage}from'rayner/explain';export default class Author extends Scene{static meta={id:'author',title:'External author'};async construct(){const s=stage(this);await this.step('one',{caption:'A real native scene.'});await this.play(new FadeIn(new Text('hello',{color:s.palette.ink})));this.state.answer=42;}}`;
     const a = join(folder, 'a', 'scene.ts'),
@@ -51,18 +51,18 @@ test('external source and compiled ESM scenes share the CLI engine; source hashe
     assert.match(output, /Built/);
     const html = await readFile(join(folder, 'page.html'), 'utf8');
     assert.match(html, /External author/);
-    // The notices every built page carries: Lantern's MIT licence and the fonts' OFL.
+    // The notices every built page carries: the MIT licence (Lantern's and the fork's) and the fonts' OFL.
     assert.match(html, /Copyright \(c\) 2026 Ivar Vong/);
     assert.match(html, /SIL OPEN FONT LICENSE/);
     const refused = failure(() => execFileSync(process.execPath, [cli, 'not-a-command', a], { stdio: 'pipe' }));
     assert.equal(refused?.status, 1, 'an unknown command must exit 1');
-    assert.match(String(refused?.stderr), /^explain: Unknown command: not-a-command/);
+    assert.match(String(refused?.stderr), /^rayner: Unknown command: not-a-command/);
   } finally {
     await rm(folder, { recursive: true, force: true });
   }
 });
 
-test('the README shows the scene `explain init` writes, byte for byte', async () => {
+test('the README shows the scene `rayner init` writes, byte for byte', async () => {
   const folder = await mkdtemp(join(tmpdir(), 'explain-init-'));
   try {
     execFileSync(process.execPath, [join(ROOT, 'tools/explain.ts'), 'init', join(folder, 'first')], { stdio: 'pipe' });
@@ -74,7 +74,7 @@ test('the README shows the scene `explain init` writes, byte for byte', async ()
   }
 });
 
-test('`explain describe` prints the explainer as JSON, every case and step', async () => {
+test('`rayner describe` prints the explainer as JSON, every case and step', async () => {
   const out = execFileSync(process.execPath, [join(ROOT, 'tools/explain.ts'), 'describe', join(ROOT, 'scenes/explainers/oauth-pkce/scene.ts')], {
     encoding: 'utf8',
     maxBuffer: 16 * 1024 * 1024,
