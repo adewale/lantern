@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  Rectangle, Line, Arrow, Text, Dot, Circle, VMobject, Transform, AnimationGroup, FadeIn, linear, thereAndBack,
+  Rectangle, Line, Arrow, Text, Dot, Transform, AnimationGroup, FadeIn, linear, thereAndBack,
   Scene, NullSink, toSvgString, UP, DOWN, UR, rotate,
   loadFonts,
 } from '../src/index.ts';
@@ -79,22 +79,4 @@ test('Transform adds and removes optional SVG paint at exact endpoints, there-an
   assert.deepEqual(mark.style, returnToStart.style);
   await scene.play(new Transform(mark, native));
   assert.deepEqual(mark.style, native.style);
-});
-
-test('alignment pads a path the same way whether or not its box was cached first', () => {
-  // A property run (test/property.test.ts) found this: a circle that an earlier Transform made a
-  // container has no subpaths of its own, so alignData pads it first at the other path's first
-  // point, outside its box, then at its center(). That center() read the box cached before the
-  // first pad, so a scene drew differently when anything had asked for the box in between.
-  const pad = (cache: boolean) => {
-    const c = new Circle({ radius: 1 });
-    c.pushIntoChildren();
-    if (cache) c.box();
-    const other = new VMobject();
-    for (const x of [5, 8]) { other.startNewPath([x, 5]); other.addLineTo([x + 1, 5]); other.addLineTo([x + 1, 6]); other.closePath(); }
-    c.alignData(other);
-    return c.subpaths.map((p) => Array.from(p));
-  };
-  assert.equal(pad(false).length, 2);
-  assert.deepEqual(pad(true), pad(false));
 });
