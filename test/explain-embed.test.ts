@@ -35,7 +35,7 @@ before(async () => {
   browser = await launch();
   await new Promise<void>((r) => hostServer.listen(0, '127.0.0.1', r));
   host = `http://127.0.0.1:${(hostServer.address() as { port: number }).port}`;
-  for (const name of ['mr-cache', 'oauth-pkce', 'exgit', 'lantern']) {
+  for (const name of ['mr-cache', 'oauth-pkce', 'exgit', 'lantern', 'send-sync']) {
     const project = await collectProject(`scenes/explainers/${name}`, { write: false });
     projects.set(name, project);
     await buildExplainer(project, join(folder, name + '.html'));
@@ -153,6 +153,32 @@ test('?theme=dark, light and auto (following the reader\'s colour scheme) set th
   } finally {
     await context.close();
   }
+});
+test('stepping moves nothing below the caption: Next, the steps list and the transcript stay put', options, async () => {
+  // Captions run from one line to four, and on a phone send-sync's first step opens on a
+  // close-up and shows Fit; neither may push the page down mid-explainer.
+  for (const [width, height] of [[1180, 800], [390, 844]] as const)
+    for (const scene of ['exgit', 'mr-cache', 'send-sync']) {
+      const page = await browser.newPage({ viewport: { width, height } });
+      try {
+        await page.goto(`${embed}/${scene}.html`);
+        await page.waitForSelector('[data-ready=true]');
+        const places = new Set<string>();
+        const n = await page.locator('.steps button').count();
+        for (let i = 0; i < n; i++) {
+          await page.locator('.steps button').nth(i).evaluate((b: HTMLElement) => b.click());
+          await page.waitForFunction((i) => document.querySelectorAll('.steps button')[i]?.getAttribute('aria-current') === 'step', i);
+          places.add(
+            await page.evaluate(() =>
+              ['.controls', '.steps', '.transcript'].map((s) => Math.round(document.querySelector(s)!.getBoundingClientRect().top + scrollY)).join(' '),
+            ),
+          );
+        }
+        assert.equal(places.size, 1, `${scene} at ${width} px: controls, steps and transcript tops per step ${[...places].join(' | ')}`);
+      } finally {
+        await page.close();
+      }
+    }
 });
 test(
   'mobile controls and transcript work offline with storage disabled and no page errors',
