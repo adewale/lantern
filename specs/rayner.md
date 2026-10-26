@@ -155,7 +155,7 @@ It is an npm package with a command-line tool, plus an agent skill. An explainer
 | --- | --- | --- |
 | Author, by hand | `npm i -D <name>`: the engine, helpers and Agentic Mermaid integration as one package with a pinned engine | Scenes are TypeScript; editor, types, tests and git all apply |
 | Author or CI | The CLI | Snapshots, checks, pages and videos are build steps |
-| Coding agent | The agent skill in `skills/lantern-explainers/` | Agents already have a shell and an editor; a skill costs nothing to run |
+| Coding agent | The agent skill in `skills/rayner-explainers/` | Agents already have a shell and an editor; a skill costs nothing to run |
 | Agent with no shell | An optional MCP server wrapping the same CLI, later | Useful only where an agent cannot run the CLI |
 | Reader | A static HTML page, or an iframe of it | No account, server or network |
 | Viewer of a video | An MP4 with captions | For talks and channels without embeds |

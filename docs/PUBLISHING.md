@@ -47,7 +47,7 @@ How to put a built page on a website, and how to export the same scene as a vide
    The loader starts the iframe at 640 px, then follows the page's height messages, accepting them only from that iframe's window and the page's origin, so several embeds on one page size independently. It adds the "Open in a new tab" link beside the iframe, in English or French: `data-lang`, or the `lang` option of `mountExplainer`, sets the language, which is otherwise the host page's `lang`. `data-theme="light"` or `"dark"` fixes the player's colours. An application can mount and remove embeds itself:
 
    ```js
-   const dispose = LanternEmbed.mountExplainer(target, '/explainers/cache.html', { title: 'Cache', height: 640, theme: 'auto' });
+   const dispose = RaynerEmbed.mountExplainer(target, '/explainers/cache.html', { title: 'Cache', height: 640, theme: 'auto' });
    dispose(); // removes the iframe, the link and the message listener
    ```
 

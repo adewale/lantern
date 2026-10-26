@@ -136,7 +136,13 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   // The stage and, over its corner on a narrow stage, the overview: a control outside the
   // stage, whose role of img makes everything inside it a picture.
   const frame = el('div', undefined, 'frame');
-  player.append(frame, summary, caption, described, controls, notice);
+  // An unseen copy of the caption, at its width and in its type, measures every step's
+  // caption so the caption can keep the room its case's longest needs: Next, the steps
+  // list and the transcript then stay put as the reader steps. It is not a .caption, so
+  // the page still has one.
+  const ruler = el('p', undefined, 'ruler');
+  ruler.setAttribute('aria-hidden', 'true');
+  player.append(frame, summary, caption, described, controls, notice, ruler);
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', t.stepList);
@@ -211,7 +217,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     () => {
       zoomOut.disabled = zoom.k <= 1;
       zoomIn.disabled = zoom.k >= zoom.max;
-      zoomFit.hidden = zoom.k <= 1;
+      // Unseen until zoomed, but it keeps its place, so a step that opens on a close-up
+      // does not wrap the controls onto a second row and push the page down.
+      zoomFit.style.visibility = zoom.k <= 1 ? 'hidden' : '';
       closer.hidden = follow || !narrow();
       drawOverview();
     },
@@ -262,6 +270,24 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     described.hidden = !picture.innerHTML;
     setIcon(replay, playing ? t.stop : t.replay, playing ? 'stop' : 'replay');
   }
+  let shownCase = '',
+    reservedFor = '';
+  function reserve() {
+    if (!trace || !caption.clientWidth) return;
+    const key = `${caption.clientWidth} ${shownCase}`;
+    if (key === reservedFor) return;
+    reservedFor = key;
+    ruler.style.width = `${caption.clientWidth}px`;
+    let tallest = 0;
+    for (const s of trace.steps) {
+      ruler.textContent = String(s.meta.caption ?? '');
+      // The exact height: offsetHeight rounds, and a 115.2 px caption would still move Next by a fraction.
+      tallest = Math.max(tallest, ruler.getBoundingClientRect().height);
+    }
+    ruler.textContent = '';
+    caption.style.minHeight = `${tallest}px`;
+  }
+  new ResizeObserver(reserve).observe(player);
   /**
    * The close-up a step opens on: on a narrow stage while close-ups are on, the zoom that
    * frames what the step changed (app/embed-closeup.ts); otherwise null, and the zoom keeps
@@ -287,7 +313,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     if (target) zoom.to(target);
     else zoom.apply();
     root.classList.remove('loading');
-    document.dispatchEvent(new CustomEvent('lantern:step', { detail: { step: step.step, settings: values } }));
+    document.dispatchEvent(new CustomEvent('rayner:step', { detail: { step: step.step, settings: values } }));
     primeNext();
   }
   async function show(index: number, push = true) {
@@ -466,7 +492,13 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     steps.replaceChildren(
       ...trace.steps.map((s, i) => {
         const li = el('li'),
-          b = el('button', String(s.meta.title ?? s.step));
+          b = el('button'),
+          label = String(s.meta.title ?? s.step),
+          // The current step is bold; an unseen bold copy in the same grid cell gives every
+          // item the bold one's height, so the list keeps its height from step to step.
+          bold = el('span', label, 'bold');
+        bold.setAttribute('aria-hidden', 'true');
+        b.append(el('span', label), bold);
         b.type = 'button';
         b.dataset.step = s.step;
         b.addEventListener('click', () => void show(i));
@@ -476,6 +508,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     );
     const shown = new URLSearchParams(values).toString();
     for (const section of transcript.querySelectorAll<HTMLElement>('section')) section.hidden = section.dataset.case !== shown;
+    shownCase = shown;
+    reserve();
     await show(selected, push);
   }
   prev.onclick = () => void show(selected - 1);

@@ -26,7 +26,7 @@ try {
   });
   const cli = join(folder, 'node_modules/rayner/dist/tools/explain.js');
   const bin = join(folder, 'node_modules/.bin/explain');
-  assert.match((await run(bin, ['--help'], { cwd: folder })).stdout, /Lantern Explainers/);
+  assert.match((await run(bin, ['--help'], { cwd: folder })).stdout, /Rayner \(Node 26\+\)/);
   await run(process.execPath, [cli, 'init', 'first'], { cwd: folder });
   // A default install leaves the optional peers out; the template's diagram then names what to install.
   const peers = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8')).peerDependencies;

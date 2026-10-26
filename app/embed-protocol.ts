@@ -1,4 +1,4 @@
-export const RESIZE_TYPE = 'lantern:resize';
+export const RESIZE_TYPE = 'rayner:resize';
 export function exactHttpOrigin(value: string | null): string | null {
   if (!value) return null;
   try {
@@ -44,12 +44,12 @@ export function reportHeight(root: HTMLElement): () => void {
   // measure whenever the player settles on a step, and once the page has loaded.
   const observer = new ResizeObserver(measure);
   observer.observe(root);
-  document.addEventListener('lantern:step', measure);
+  document.addEventListener('rayner:step', measure);
   window.addEventListener('load', measure);
   measure();
   return () => {
     observer.disconnect();
-    document.removeEventListener('lantern:step', measure);
+    document.removeEventListener('rayner:step', measure);
     window.removeEventListener('load', measure);
   };
 }
