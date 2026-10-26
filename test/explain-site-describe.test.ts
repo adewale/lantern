@@ -30,8 +30,13 @@ test('site:export writes each explainer as <id>.json beside its page, and llms.t
       /^- \[A ring buffer reuses freed slots and refuses a push when full\]\(\/projects\/rayner\/ring-buffer\): Head is the next value to pop; tail is the next slot to write\. JSON: \[ring-buffer\.json\]\(\/projects\/rayner\/ring-buffer\.json\)$/m,
     );
     assert.match(llms, /^## How these are made\n\n- \[[^\]]+\]\(\/projects\/rayner\/glyph\): .+ JSON: \[glyph\.json\]\(\/projects\/rayner\/glyph\.json\)$/m);
-    // A second export replaces its own llms.txt; a site's own llms.txt is left alone and the export fails.
-    await writeDescriptions(root, '/projects/rayner', [{ id: 'ring-buffer', group: 'topic' }]);
+    // A second export replaces its own llms.txt, with absolute links given --origin; a site's own
+    // llms.txt is left alone and the export fails.
+    await writeDescriptions(root, '/projects/rayner', [{ id: 'ring-buffer', group: 'topic' }], 'https://example.org/');
+    assert.match(
+      await readFile(join(root, 'llms.txt'), 'utf8'),
+      /\]\(https:\/\/example\.org\/projects\/rayner\/ring-buffer\): .+ JSON: \[ring-buffer\.json\]\(https:\/\/example\.org\/projects\/rayner\/ring-buffer\.json\)$/m,
+    );
     await writeFile(join(root, 'llms.txt'), '# My site\n');
     await assert.rejects(writeDescriptions(root, '/projects/rayner', [{ id: 'ring-buffer', group: 'topic' }]), /not one site:export wrote/);
     assert.equal(await readFile(join(root, 'llms.txt'), 'utf8'), '# My site\n');

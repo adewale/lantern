@@ -5,11 +5,14 @@ import { parseArgs } from 'node:util';
 import { spawn } from 'node:child_process';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
 import { collectProject, defaultVariant, ROOT, baseReceipt } from './lib/explain-project.ts';
-import { restingTime, htmlEscape } from '../explain/trace.ts';
+import { restingTime, htmlEscape, pictureSummary } from '../explain/trace.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
-import { contactSheet, stillPng } from './lib/explain-shots.ts';
+import { contactSheet, stillPng, cardPng } from './lib/explain-shots.ts';
 import { exporterHash, probeVideo, footerLines } from './lib/explain-video.ts';
 import { checkProject } from './lib/explain-check.ts';
+import { shareable } from './lib/explain-share.ts';
+import { useProjectLettering } from './lib/explain-lettering.ts';
+import type { ShareManifest } from './lib/explain-share.ts';
 
 const directory = join(ROOT, 'out/explainers');
 await mkdir(directory, { recursive: true });
@@ -37,6 +40,25 @@ for (const item of EXPLAINERS) {
     step = variant.trace.steps.find((s) => s.step === item.step) ?? variant.trace.steps[0]!;
   await writeFile(join(directory, item.id + '.png'), await stillPng(variant.Scene, restingTime(step, variant.trace.fps), 960));
   await contactSheet(project, join(directory, item.id + '.steps.png'));
+  // Share pages (tools/lib/explain-share.ts): a picture and the words for every step of the default
+  // case, so site:export can give each step a URL whose link preview is that step.
+  await mkdir(join(directory, item.id), { recursive: true });
+  const pictured = variant.trace.steps.filter((x) => shareable(x.step));
+  const share: ShareManifest = {
+    id: item.id,
+    title: project.Scene.meta?.title ?? item.id,
+    lang: project.Scene.meta?.lang ?? 'en',
+    // The explainer's own page previews as its gallery tile's step.
+    cover: (pictured.find((x) => x.step === step.step) ?? pictured[0])?.step ?? '',
+    steps: [],
+  };
+  // The pictures draw with the project's lettering, as its page and contact sheet do.
+  await useProjectLettering(project);
+  for (const s of pictured) {
+    await writeFile(join(directory, item.id, s.step + '.png'), await cardPng(variant.Scene, restingTime(s, variant.trace.fps)));
+    share.steps.push({ step: s.step, title: String(s.meta.title ?? s.step), caption: String(s.meta.caption ?? ''), picture: pictureSummary(s.after) });
+  }
+  await writeFile(join(directory, item.id, 'steps.json'), JSON.stringify(share, null, 2) + '\n');
   if (check) await checkProject(project, join(ROOT, 'out/checks', item.id));
   // Videos only: every case of an explainer with video must export with the caption footer.
   if (render && item.video !== false)

@@ -30,13 +30,13 @@ export function summaryOf(d: ExplainerDescription): string {
 
 const linkText = (text: string) => text.replace(/[[\]\\]/g, '\\$&');
 
-/** llms.txt: an H1, a one-line blockquote, then each explainer's page, opening sentence and JSON, by group. */
-export function llmsTxt(entries: { item: SiteItem; d: ExplainerDescription }[], path: string): string {
+/** llms.txt: an H1, a one-line blockquote, then each explainer's page, opening sentence and JSON, by group. `base` prefixes every link. */
+export function llmsTxt(entries: { item: SiteItem; d: ExplainerDescription }[], base: string): string {
   const sections = (Object.keys(GROUPS) as SiteItem['group'][])
     .map((group) => {
       const lines = entries
         .filter((e) => e.item.group === group)
-        .map(({ item: { id }, d }) => `- [${linkText(d.title)}](${path}/${id}): ${summaryOf(d)} JSON: [${id}.json](${path}/${id}.json)`);
+        .map(({ item: { id }, d }) => `- [${linkText(d.title)}](${base}/${id}): ${summaryOf(d)} JSON: [${id}.json](${base}/${id}.json)`);
       return lines.length ? `## ${GROUPS[group]}\n\n${lines.join('\n')}\n` : '';
     })
     .filter(Boolean);
@@ -53,9 +53,15 @@ export function llmsTxt(entries: { item: SiteItem; d: ExplainerDescription }[], 
 
 /**
  * Write <siteRoot><path>/<id>.json for each explainer and <siteRoot>/llms.txt, and return their sizes in
- * bytes. An llms.txt that this did not write is the site's own, so it is left alone and the export fails.
+ * bytes. Links are absolute with `origin`, else root-relative. An llms.txt that this did not write is the
+ * site's own, so it is left alone and the export fails.
  */
-export async function writeDescriptions(siteRoot: string, path: string, items: readonly SiteItem[]): Promise<{ json: number; llms: number }> {
+export async function writeDescriptions(
+  siteRoot: string,
+  path: string,
+  items: readonly SiteItem[],
+  origin?: string,
+): Promise<{ json: number; llms: number }> {
   const llmsFile = join(siteRoot, 'llms.txt'),
     existing = await readFile(llmsFile, 'utf8').catch(() => null);
   if (existing != null && !existing.startsWith(TITLE + '\n'))
@@ -69,7 +75,7 @@ export async function writeDescriptions(siteRoot: string, path: string, items: r
     json += Buffer.byteLength(body);
     entries.push({ item, d });
   }
-  const llms = llmsTxt(entries, path);
+  const llms = llmsTxt(entries, (origin ?? '').replace(/\/$/, '') + path);
   await writeFile(llmsFile, llms);
   return { json, llms: Buffer.byteLength(llms) };
 }
