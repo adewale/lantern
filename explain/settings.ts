@@ -1,4 +1,4 @@
-import type { LetteringRequest } from '../src/lettering.ts';
+import type { LetteringRequest } from '../src/lettering-outlines.ts';
 import type { Scene, SceneClass } from '../src/index.ts';
 
 export interface Setting {

@@ -6,7 +6,7 @@ It is imported only during requested maths snapshot capture, never by a page.
 
 Requested text faces come from pinned Fontsource 5.3.0 packages and Inter UI
 4.1.1 (OFL). Optional Noto Sans SC uses the checksum-pinned Sans2.004 TrueType
-release. `tools/lettering-fonts.sh` retrieves them without changing default faces.
+release. `tools/lettering-outline-fonts.sh` retrieves them without changing default faces.
 Each requested face's licence is stored in its snapshot and included in the
 page's licence block. Latin Modern Math 1.959 is the explicit GUST/LPPL exception;
 its source checksum and notice are checked before subsetting.

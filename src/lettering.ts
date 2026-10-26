@@ -1,111 +1,170 @@
-// Optional outline snapshots. This module has no installation side effects: a
-// page without lettering never imports a provider or carries a lettering store.
-import type { SceneClass } from './scene.ts';
-import { Scene } from './scene.ts';
-import { loadFonts } from './fonts.ts';
+// Lettering on request: scripts an explainer asks for with `static meta.lettering`,
+// beyond what the embedded faces in font-data.ts hold.
+//
+//   static meta = { id: 'alphabet', title: 'Αλφάβητο', lettering: { scripts: ['Grek'] } satisfies LetteringRequest };
+//
+// The build (tools/lib/explain-lettering.ts) cuts Inter and JetBrains Mono from
+// vendor/lettering/ down to the characters the explainer draws in those scripts,
+// and that explainer's page calls useLettering() with the result before anything
+// shapes text. An explainer that asks for nothing never loads this module, so its
+// page and receipt are what they were before lettering existed.
+//
+// Nothing in the engine imports this file, and fonts.ts does not know about it.
+// That is deliberate: esbuild names minified identifiers by how often each
+// character occurs across every bundled file's whole source, types and dead
+// code included: a first draft with useLettering in fonts.ts, left out of every
+// page that did not call it, still renamed an identifier in exgit's page. Instead, useLettering() swaps the shapers in the
+// record loadFonts() resolves to, which is the record shaperFor() reads.
+import { loadFont } from '../vendor/glyph.js';
+import type { Font, Run } from '../vendor/glyph.js';
+import { loadFonts, shapeChain, takeMissingGlyphs as takeEmbeddedMissing } from './fonts.ts';
 import type { FontName, Shaper } from './fonts.ts';
-import type { Run } from '../vendor/glyph.js';
+import { SANS, MONO, FALLBACK } from './font-data.ts';
 
+/** Writing systems an explainer can ask for, by ISO 15924 code. `Latn` is Latin beyond Latin-1. */
+export type LetteringScript = 'Latn' | 'Grek' | 'Cyrl';
+/** What `static meta.lettering` asks for. */
 export interface LetteringRequest {
-  faces?: Partial<Record<FontName, string>>;
-  /** ISO 15924 script codes, e.g. Arab, Deva, Hebr, Hani. */
-  scripts?: readonly string[];
-  math?: boolean;
+  /** Scripts whose letters the explainer draws. They need no shaping beyond what `glyph` does for Latin. */
+  scripts: readonly LetteringScript[];
 }
-export interface LetteringSnapshot {
-  version: 1;
-  sourceHash: string;
-  builderHash: string;
-  request: LetteringRequest;
-  /** Unit-em runs; clusters count source code points, including for RTL runs. */
-  runs: Record<string, Run>;
-  faces: Record<string, { hash: string; data: string; license: string }>;
-  shaper: string;
+/** The faces a page carries for its request: one WOFF2 subset, base64, per family that draws requested letters. */
+export type LetteringFaces = Readonly<Partial<Record<FontName, string>>>;
+
+/** Shaped runs kept per family, as in fonts.ts. */
+const SHAPE_MEMO_MAX = 8192;
+/** Characters no face in a lettered chain can draw, by the string that held them. */
+const missing = new Map<string, string>();
+/** Code points each requested face drew since the last takeLetteringUse(), by family. */
+const drawn: Record<FontName, Set<number>> = { sans: new Set(), mono: new Set() };
+/** The shapers loadFonts() made, to put back when the request is taken away. */
+let embedded: Record<FontName, Shaper> | null = null;
+/** The embedded faces, decoded once for the lettered chains. */
+let decoded: Promise<{ sans: Font; mono: Font; fallback: Font[] }> | null = null;
+/** The faces in use, as a key: empty for none. */
+let current = '';
+
+function bytesOf(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
 }
-export interface LetteringProvider {
-  shape(font: FontName, text: string, size: number, fallback: Shaper): Run;
-  math(latex: string, size: number, display: boolean): Run;
+async function decode(b64: string, name: string): Promise<Font> {
+  const r = await loadFont(bytesOf(b64));
+  if (r.tag !== 'Ok') throw new Error(`${name}: ${JSON.stringify(r.error)}`);
+  return r.value;
 }
-export const letteringOf = (Source: object): LetteringRequest | undefined =>
-  (Source as { meta?: { lettering?: LetteringRequest } }).meta?.lettering;
-export const usesLettering = (request: LetteringRequest, font: FontName, text: string): boolean =>
-  !!request.faces?.[font] || (request.scripts ?? []).some((s) => new RegExp(`\\p{Script_Extensions=${s}}`, 'u').test(text));
-export const runKey = (font: string, text: string, display = false): string => JSON.stringify([font, text, display]);
-export function scaledRun(run: Run, size: number): Run {
-  return { ...run, width: run.width * size, ascent: run.ascent * size, descent: run.descent * size,
-    s: (run.s ?? 1) * size,
-    glyphs: run.glyphs.map((g) => ({ ...g, x: g.x * size, dx: g.dx * size, dy: g.dy * size, ax: g.ax * size, s: (g.s ?? run.s ?? 1) * size })) };
+
+/** Characters that draw with the character before them (fonts.ts). */
+const ATTACHED = /^[\p{M}‌‍︀-️\u{E0100}-\u{E01EF}]$/u;
+/** A run's undrawable clusters, as fonts.ts counts them: control characters are not missing. */
+function undrawable(text: string, r: Run): string {
+  const chars = [...text],
+    starts = [...new Set(r.glyphs.map((g) => g.cluster))].sort((a, b) => a - b);
+  return r.glyphs
+    .filter((g) => g.gid === 0)
+    .map((g) => chars.slice(g.cluster, starts.find((s) => s > g.cluster) ?? chars.length).join(''))
+    .join('')
+    .replace(/\p{Cc}/gu, '');
 }
-export function snapshotProvider(snapshot: LetteringSnapshot): LetteringProvider {
-  const lookup = (font: string, text: string, size: number, display = false) => {
-    const run = snapshot.runs[runKey(font, text, display)];
-    if (!run) throw new Error(`Lettering snapshot has no run for ${JSON.stringify(text)} (${font}); run explain snapshots`);
-    return scaledRun(run, size);
-  };
-  return {
-    shape: (font, text, size, fallback) => usesLettering(snapshot.request, font, text)
-      ? lookup(font, text, size) : fallback(text, size),
-    math: (text, size, display) => lookup('math', text, size, display),
+
+/**
+ * A shaper over `chain`, memoized and recording what it cannot draw, as the
+ * embedded shapers do. `requested` is the chain's requested faces with the
+ * family each came from, so the build learns which face drew which letters.
+ * A string with an undrawable character is also given to `plain`, the embedded
+ * shaper, so the engine's own takeMissingGlyphs fails on it too: it then names
+ * every character the embedded faces lack, and takeMissingGlyphs here names
+ * only the ones the requested faces lack as well.
+ */
+function shaper(chain: readonly Font[], key: FontName, requested: ReadonlyMap<Font, FontName>, plain: Shaper): Shaper {
+  const memo = new Map<string, Run & { missing?: string; uses?: readonly (readonly [FontName, number])[] }>();
+  return (text, size) => {
+    const k = size + '\u0000' + text;
+    let r = memo.get(k);
+    if (r) {
+      memo.delete(k);
+      memo.set(k, r);
+    } else {
+      memo.set(k, (r = shapeChain(chain, key, text, size)));
+      r.missing = undrawable(text, r);
+      if (requested.size) {
+        // The face shapeChain gives each character: the first in the chain that has it
+        const uses: [FontName, number][] = [];
+        let owner: Font | undefined;
+        for (const ch of text) {
+          const cp = ch.codePointAt(0)!;
+          if (!ATTACHED.test(ch)) owner = chain.find((f) => f.glyphOf(cp) !== 0);
+          const family = owner && requested.get(owner);
+          if (family) uses.push([family, cp]);
+        }
+        r.uses = uses;
+      }
+      if (memo.size > SHAPE_MEMO_MAX) memo.delete(memo.keys().next().value!);
+    }
+    // Recorded on every call, memoized or not, as fonts.ts does
+    if (r.missing) {
+      missing.set(text, r.missing);
+      plain(text, size);
+    }
+    for (const [family, cp] of r.uses ?? []) drawn[family].add(cp);
+    return r;
   };
 }
 
-// Text and diagram lowering use the same public font table. Lease it for a
-// complete run, and restore it even on StopScene or errors. Once an optional
-// provider is installed ALL runs participate, so overlapping seeks, videos and
-// ordinary scenes cannot borrow one another's fonts. No patch is installed on
-// pages which do not request lettering.
-const providers: WeakMap<object, LetteringProvider> = /* @__PURE__ */ new WeakMap();
-let installed = false;
-let pending: Promise<unknown> | undefined;
-let active: LetteringProvider | undefined;
-let currentFonts: Awaited<ReturnType<typeof loadFonts>> | undefined;
-export function withFontRun<T>(font: FontName, run: Run, draw: () => T): T {
-  if (!currentFonts) throw new Error('Lettering requires a running scene');
-  const saved = currentFonts[font];
-  currentFonts[font] = () => run;
-  try { return draw(); } finally { currentFonts[font] = saved; }
-}
-export function mathRun(text: string, size: number, display: boolean): Run {
-  if (!active) throw new Error('Math requires meta.lettering.math and a fresh lettering snapshot');
-  return active.math(text, size, display);
-}
-function providerOf(Source: object): LetteringProvider | undefined {
-  for (let c: object | null = Source; c; c = Object.getPrototypeOf(c)) {
-    const p = providers.get(c);
-    if (p) return p;
+/**
+ * Add the faces an explainer's page carries to the chains, or with null go back
+ * to the embedded faces alone. A requested face joins its family's chain after
+ * the embedded face and before the fallbacks, and the mono chain tries mono's
+ * requested face before sans: a character the embedded faces draw is drawn as
+ * before. Call it before anything shapes text; Text built earlier keeps the
+ * outlines it has. Calling it again with the same faces does nothing.
+ */
+export async function useLettering(faces: LetteringFaces | null): Promise<void> {
+  const key = faces && (faces.sans || faces.mono) ? JSON.stringify([faces.sans ?? '', faces.mono ?? '']) : '';
+  if (key === current) return;
+  const shapers = await loadFonts();
+  embedded ??= { ...shapers };
+  if (!key) {
+    Object.assign(shapers, embedded);
+    current = '';
+    return;
   }
-  return undefined;
+  decoded ??= (async () => {
+    const fallback: Font[] = [];
+    // A fallback face that cannot load is left out, as fonts.ts leaves it out
+    for (const [, b64] of FALLBACK) {
+      const r = await loadFont(bytesOf(b64));
+      if (r.tag === 'Ok') fallback.push(r.value);
+    }
+    return { sans: await decode(SANS, 'sans'), mono: await decode(MONO, 'mono'), fallback };
+  })();
+  const base = await decoded;
+  const sans = faces!.sans ? [await decode(faces!.sans, 'lettering for sans')] : [];
+  const mono = faces!.mono ? [await decode(faces!.mono, 'lettering for mono')] : [];
+  const requested = new Map<Font, FontName>([...sans.map((f) => [f, 'sans'] as const), ...mono.map((f) => [f, 'mono'] as const)]);
+  shapers.sans = shaper([base.sans, ...sans, ...base.fallback], 'sans', requested, embedded.sans);
+  shapers.mono = shaper([base.mono, ...mono, base.sans, ...sans, ...base.fallback], 'mono', requested, embedded.mono);
+  current = key;
 }
-async function lease<T>(p: LetteringProvider | undefined, work: () => Promise<T>): Promise<T> {
-  const fonts = await loadFonts(), saved = { ...fonts };
-  active = p;
-  currentFonts = fonts;
-  if (p) for (const font of ['sans', 'mono'] as const)
-    fonts[font] = (text, size) => p.shape(font, text, size, saved[font]);
-  try { return await work(); }
-  finally { Object.assign(fonts, saved); active = undefined; currentFonts = undefined; }
+
+/**
+ * What was shaped since the last call that the fonts could not draw, as the
+ * engine's takeMissingGlyphs reports it, but naming for a lettered string only
+ * the characters no face, requested or embedded, has; clears both records.
+ */
+export function takeMissingGlyphs(): Map<string, string> {
+  const out = takeEmbeddedMissing();
+  for (const [text, chars] of missing) out.set(text, chars);
+  missing.clear();
+  return out;
 }
-function enqueue<T>(p: LetteringProvider | undefined, work: () => Promise<T>): Promise<T> {
-  const execute = () => lease(p, work);
-  const result = (pending ?? Promise.resolve()).then(execute, execute);
-  pending = result.then(() => undefined, () => undefined);
-  return result;
-}
-/** Build-time text outside a run (caption wrapping, video footers). */
-export function withSceneLettering<T>(Source: object, work: () => Promise<T>): Promise<T> {
-  const p = providerOf(Source);
-  if (!p || active === p) return work();
-  return enqueue(p, work);
-}
-export function bindLettering(Source: SceneClass, provider: LetteringProvider | LetteringSnapshot): SceneClass {
-  if (!installed) {
-    installed = true;
-    const original = Scene.prototype.run;
-    Scene.prototype.run = function () {
-      return enqueue(providerOf(this.constructor), () => original.call(this));
-    };
-  }
-  const Bound = class extends Source {};
-  providers.set(Bound, 'version' in provider ? snapshotProvider(provider) : provider);
-  return Bound;
+
+/** The code points each requested face drew since the last call, by family; clears the record. */
+export function takeLetteringUse(): Record<FontName, number[]> {
+  const out = { sans: [...drawn.sans].sort((a, b) => a - b), mono: [...drawn.mono].sort((a, b) => a - b) };
+  drawn.sans.clear();
+  drawn.mono.clear();
+  return out;
 }

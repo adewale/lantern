@@ -1,4 +1,4 @@
-import { withSceneLettering } from '../../src/lettering.ts';
+import { withSceneLettering } from '../../src/lettering-outlines.ts';
 import { spawn, execFileSync } from 'node:child_process';
 import { once } from 'node:events';
 import { mkdir, writeFile, readFile, mkdtemp, rename, rm } from 'node:fs/promises';

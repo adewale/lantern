@@ -1,7 +1,7 @@
 import { Text } from './text.ts';
 import type { TextOpts } from './text.ts';
 import type { Style } from './mobject.ts';
-import { mathRun, withFontRun } from './lettering.ts';
+import { mathRun, withFontRun } from './lettering-outlines.ts';
 
 /** TeX-subset maths, typeset by glyph at build time. No browser typesetter. */
 export class MathTex extends Text {

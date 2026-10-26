@@ -7,8 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { loadFont } from '../../vendor/glyph.js';
 import { SANS, MONO, FALLBACK } from '../../src/font-data.ts';
-import { bindLettering, letteringOf, runKey, scaledRun, snapshotProvider, usesLettering } from '../../src/lettering.ts';
-import type { LetteringSnapshot, LetteringProvider, LetteringRequest } from '../../src/lettering.ts';
+import { bindLettering, letteringOf, runKey, scaledRun, snapshotProvider, usesLettering } from '../../src/lettering-outlines.ts';
+import type { LetteringSnapshot, LetteringProvider, LetteringRequest } from '../../src/lettering-outlines.ts';
 import type { ExplainerClass } from '../../explain/settings.ts';
 import type { Run } from '../../vendor/glyph.js';
 
@@ -59,7 +59,7 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
   if (!request) return undefined;
   validateLettering(request);
   if (!Object.keys(request.faces ?? {}).length && !request.scripts?.length && !request.math) return undefined;
-  const builderHash = hash((await Promise.all(['src/lettering.ts', 'src/math.ts', 'tools/lib/lettering.ts', 'tools/lettering.py', 'tools/lettering-requirements.txt', 'vendor/glyph-math.js'].map((name) => readFile(join(root, name), 'utf8')))).join('\n'));
+  const builderHash = hash((await Promise.all(['src/lettering-outlines.ts', 'src/math.ts', 'tools/lib/lettering.ts', 'tools/lettering.py', 'tools/lettering-requirements.txt', 'vendor/glyph-math.js'].map((name) => readFile(join(root, name), 'utf8')))).join('\n'));
   const path = file.replace(/\.[^.]+$/, '') + '.lettering.json';
   if (!capture) {
     const snapshot: LetteringSnapshot | undefined = await readFile(path, 'utf8').then(JSON.parse).catch((e: NodeJS.ErrnoException) => {
@@ -84,7 +84,7 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
       const bytes = await readFile(file), license = await readFile(name === 'noto-sans-sc' ? join(folder, 'Noto-CJK-OFL.txt') : join(base, name === 'inter' ? 'LICENSE.txt' : 'LICENSE'), 'utf8');
       if (!license.includes('SIL OPEN FONT LICENSE')) throw new Error('Only OFL registry faces may be embedded');
       fonts.set(name, { file, license, hash: hash(bytes) });
-    } catch (e) { throw new Error(`Install requested lettering fonts with tools/lettering-fonts.sh: ${String(e)}`); }
+    } catch (e) { throw new Error(`Install requested lettering fonts with tools/lettering-outline-fonts.sh: ${String(e)}`); }
   };
   for (const name of [...Object.values(request.faces ?? {}), ...(request.scripts ?? []).flatMap((s) => scriptFaces[s] ?? [])]) await addFace(name);
   // The old, already subset faces are the final fallback, unchanged. Write

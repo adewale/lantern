@@ -1,3 +1,6 @@
+import { prepareLettering as prepareOutlineLettering } from './lettering.ts';
+import { usesOutlineLettering, withSceneLettering } from '../../src/lettering-outlines.ts';
+import type { LetteringSnapshot } from '../../src/lettering-outlines.ts';
 import { build } from 'esbuild';
 import type { Plugin } from 'esbuild';
 import { readFile, writeFile, mkdir, stat, readdir, rm } from 'node:fs/promises';
@@ -5,16 +8,16 @@ import { dirname, resolve, join, basename, relative } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
-import { Scene, NullSink, traceScene, takeMissingGlyphs } from '../../src/index.ts';
+import { Scene, NullSink, traceScene, shaperFor } from '../../src/index.ts';
+import { takeMissingGlyphs } from '../../src/lettering.ts';
 import type { Trace } from '../../src/index.ts';
 import { variantsOf, withSettings, bindSnapshots, caseName, resolveSettings } from '../../explain/index.ts';
 import type { ExplainerClass, SnapshotStore, Settings } from '../../explain/index.ts';
 import type { DiagramResolver } from '../../integrations/agentic-mermaid/snapshot.ts';
 import { diagramKey, RENDERER } from '../../integrations/agentic-mermaid/snapshot.ts';
-import { withSceneLettering } from '../../src/lettering.ts';
-import { prepareLettering } from './lettering.ts';
-import type { LetteringSnapshot } from '../../src/lettering.ts';
 import { lostLabelWarnings } from './explain-warnings.ts';
+import { letteringRequest, prepareLettering, useProjectLettering } from './explain-lettering.ts';
+import type { Lettering } from './explain-lettering.ts';
 
 export const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 export const hash = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
@@ -39,22 +42,21 @@ async function scenePath(input: string): Promise<string> {
 
 /** Force author, helper and player imports onto one engine, including compiled-scene reuse. */
 const legacySource = (source: string) => source
-  .replace("import type { LetteringRequest } from '../src/lettering.ts';\n", '')
+  .replace("import type { LetteringRequest } from '../src/lettering-outlines.ts';\n", '')
   .replace('; lettering?: LetteringRequest', '')
   .replace(/\n\/\/ Optional lettering: tree-shaken[\s\S]*?\/\/ End optional lettering\.\n/, '');
-export function engineAlias(node = false, lettering = false): Plugin {
+export function engineAlias(node = false, outlines = false): Plugin {
   return {
     name: 'one-lantern-engine',
     setup(b) {
-      // Keep opt-out bundles byte-identical, including esbuild symbol allocation.
-      // Merely tree-shaking the new exports preserves size but renames symbols.
-      if (!lettering) b.onLoad({ filter: /[/\\]src[/\\]index\.ts$/ }, async (args) => ({
+      if (!outlines) b.onLoad({ filter: /[/\\]src[/\\]index\.ts$/ }, async (args) => ({
         contents: legacySource(await readFile(args.path, 'utf8')), loader: 'ts',
       }));
       b.onResolve({ filter: /.*/ }, (args) => {
         let file: string | undefined;
         if (args.path === 'rayner') file = join(ROOT, 'src/index.ts');
         else if (args.path === 'rayner/explain') file = join(ROOT, 'explain/index.ts');
+        else if (args.path === 'rayner/lettering') file = join(ROOT, 'src/lettering.ts');
         else if (args.path.startsWith('.') || args.path.startsWith('/')) {
           const absolute = resolve(args.resolveDir, args.path);
           const compiled = absolute.match(/\/dist\/(src|explain|integrations\/agentic-mermaid)\/(.+)\.js$/);
@@ -79,12 +81,17 @@ export function engineAlias(node = false, lettering = false): Plugin {
     },
   };
 }
-// The legacy engine fingerprint excludes optional entrypoints; lettering receipts
-// additionally hash their snapshot, whose builderHash covers that runtime and toolchain.
-async function engineHash(): Promise<string> {
+/**
+ * The engine's fingerprint. src/lettering.ts counts only for an explainer that asks
+ * for lettering: no other page carries it, and leaving it out keeps every other
+ * explainer's receipts, and its video's freshness, as they were.
+ */
+async function engineHash(lettered: boolean): Promise<string> {
   const inputs: string[] = [];
   for (const folder of ['src', 'explain', 'integrations/agentic-mermaid'])
-    for (const name of (await readdir(join(ROOT, folder))).filter((n) => n.endsWith('.ts') && !['lettering.ts', 'math.ts'].includes(n)).sort())
+    for (const name of (await readdir(join(ROOT, folder)))
+      .filter((n) => n.endsWith('.ts') && !['lettering-outlines.ts', 'math.ts'].includes(n) && (lettered || folder + '/' + n !== 'src/lettering.ts'))
+      .sort())
       inputs.push(folder + '/' + name + '\n' + legacySource(await readFile(join(ROOT, folder, name), 'utf8')));
   inputs.push(await readFile(join(ROOT, 'vendor/glyph.js'), 'utf8'));
   return hash(inputs.join('\n'));
@@ -124,7 +131,8 @@ async function loadScene(
         ? Object.keys(module).find((k) => module[k] === choices[0])!
         : null;
   if (!exportName) throw new Error('Export one Scene subclass (or a default Scene export)');
-  return { Scene: module[exportName] as ExplainerClass, exportName, file, sourceHash, engineHash: await engineHash() };
+  const Explainer = module[exportName] as ExplainerClass;
+  return { Scene: Explainer, exportName, file, sourceHash, engineHash: await engineHash(usesOutlineLettering(Explainer) || letteringRequest(Explainer) !== undefined) };
 }
 export interface Project {
   Scene: ExplainerClass;
@@ -136,7 +144,9 @@ export interface Project {
   store: SnapshotStore;
   variants: { values: Settings; Scene: ExplainerClass; trace: Trace }[];
   edits: number;
-  lettering?: LetteringSnapshot;
+  /** The faces cut for `static meta.lettering`; absent when the scene asks for none. */
+  lettering?: Lettering;
+  outlineLettering?: LetteringSnapshot;
 }
 
 /**
@@ -213,8 +223,10 @@ export async function collectProject(
 ): Promise<Project> {
   const loaded = await loadScene(input);
   const { file } = loaded;
-  const lettering = await prepareLettering(loaded.Scene, file, loaded.sourceHash, captureLettering, write);
-  const Source = lettering?.Scene ?? loaded.Scene;
+  const outlineRequested = usesOutlineLettering(loaded.Scene);
+  const outline = outlineRequested
+    ? await prepareOutlineLettering(loaded.Scene, file, loaded.sourceHash, captureLettering, write) : undefined;
+  const Source = outline?.Scene ?? loaded.Scene;
   const base = file.replace(/\.[^.]+$/, '');
   const previous: SnapshotStore = refresh ? {} : await readSnapshots(base);
   // Lazy: native scenes never require Agentic Mermaid or Chromium.
@@ -255,7 +267,35 @@ export async function collectProject(
   };
   const variants: Project['variants'] = [];
   const undrawable: string[] = [];
+  const request = outlineRequested ? undefined : letteringRequest(Source);
+  let lettering: Lettering | undefined;
   try {
+    // Only a scene that asks for lettering runs this: once per case with the whole
+    // source faces, to learn which letters to cut them to (explain-lettering.ts).
+    if (request) {
+      lettering = await prepareLettering(
+        base,
+        request,
+        async () => {
+          const counted = edits;
+          for (const values of variantsOf(Source)) {
+            const scene = await new (withSettings(bindSnapshots(Source, resolver), values))(new NullSink(), {
+              skipUntil: Infinity,
+            }).run();
+            // The video footer draws each step's title and caption as outlines too
+            for (const s of scene.steps)
+              for (const t of [s.meta.title ?? s.name, s.meta.caption ?? '']) shaperFor('sans')(String(t), 1);
+          }
+          edits = counted;
+          takeMissingGlyphs();
+        },
+        { write },
+      );
+      // Diagrams captured on that run are pinned for this one
+      for (const key of Object.keys(store))
+        Object.defineProperty(previous, key, { value: store[key], enumerable: true, writable: true, configurable: true });
+    }
+    await useProjectLettering({ lettering });
     for (const values of variantsOf(Source)) {
       const collect = new (withSettings(bindSnapshots(Source, resolver), values))(new NullSink(), { skipUntil: Infinity });
       // Text the embedded fonts cannot draw shows as nothing: name it by case and step, then fail.
@@ -280,7 +320,7 @@ export async function collectProject(
         throw new Error(`Each case needs non-empty named steps: ${JSON.stringify(values)}`);
       if (new Set(names).size !== names.length)
         throw new Error(`Duplicate step names prevent stable links: ${JSON.stringify(values)}`);
-      if (lettering) await withSceneLettering(Bound, async () => {
+      if (outline) await withSceneLettering(Bound, async () => {
         const { Text } = await import('../../src/index.ts');
         const { wrapCaption, FOOTER_TEXT_WIDTH } = await import('./explain-video.ts');
         for (const s of trace.steps) for (const text of [s.meta.title ?? s.step, s.meta.caption ?? '']) {
@@ -299,9 +339,9 @@ export async function collectProject(
     }
     if (undrawable.length)
       throw new Error(`The embedded fonts cannot draw these characters:\n${[...new Set(undrawable)].join('\n')}`);
-    await lettering?.finish();
+    await outline?.finish();
     if (write) await writeSnapshots(base, store, loaded.sourceHash);
-    return { ...loaded, Scene: Source, store, variants, edits, ...(lettering ? { lettering: lettering.snapshot } : {}) };
+    return { ...loaded, Scene: Source, store, variants, edits, ...(lettering ? { lettering } : {}), ...(outline ? { outlineLettering: outline.snapshot } : {}) };
   } finally {
     await builder?.close();
   }
@@ -321,5 +361,5 @@ export const baseReceipt = (p: Project) => ({
   engine: 'lantern@2c7bad5+explainer',
   agenticMermaid: RENDERER.split('@')[1],
   snapshotHashes: Object.values(p.store).map((s) => hash(JSON.stringify(s))),
-  ...(p.lettering ? { letteringHash: hash(JSON.stringify(p.lettering)) } : {}),
+  ...(p.outlineLettering ? { letteringHash: hash(JSON.stringify(p.outlineLettering)) } : {}),
 });

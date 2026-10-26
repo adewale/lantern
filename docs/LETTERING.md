@@ -1,5 +1,9 @@
 # Lettering on request
 
+Plain `Latn`, `Grek`, and `Cyrl` requests retain the subset workflow introduced
+in PR #10. Requests containing `faces`, `math`, or another script use the outline
+snapshot workflow described here; the existing snapshot schema remains supported.
+
 Existing scenes keep their embedded Inter/JetBrains Mono lettering and their
 page bytes and receipts. Nothing is downloaded for them. Do not regenerate
 `src/font-data.ts` to add a language to one scene.
@@ -42,7 +46,7 @@ new lettering snapshots, install the optional build-time tools:
 python3 -m venv out/lettering-venv
 out/lettering-venv/bin/pip install -r tools/lettering-requirements.txt
 export RAYNER_LETTERING_PYTHON="$PWD/out/lettering-venv/bin/python"
-bash tools/lettering-fonts.sh
+bash tools/lettering-outline-fonts.sh
 # Latin Modern Math 1.959 is supplied by Ubuntu's fonts-lmodern package.
 # Else set RAYNER_MATH_FONT to the original latinmodern-math.otf.
 npm run explain -- snapshots path/to/scene.ts
@@ -84,7 +88,7 @@ replacing Inter for ordinary text:
 | `Grek`, `Cyrl`, extended `Latn` | Full Inter |
 | `Hani` | Noto Sans SC, TrueType outlines |
 
-For Chinese, first run `LETTERING_CJK=1 bash tools/lettering-fonts.sh`; this
+For Chinese, first run `LETTERING_CJK=1 bash tools/lettering-outline-fonts.sh`; this
 fetches the checksum-pinned larger face and fixes its variable weight at 400.
 The others use pinned npm packages. `RAYNER_LETTERING_FONTS` can select another
 cache directory. Cached fonts and Python are required only for capture, not for
@@ -124,9 +128,9 @@ a single source cluster. All replacement strings must be built into a case.
 ## Verification
 
 ```sh
-node --test test/lettering.test.ts
-EXPLAIN_LETTERING=1 node --test test/lettering.test.ts
-EXPLAIN_BROWSER=1 node --test test/lettering.test.ts
+node --test test/lettering-outlines.test.ts
+EXPLAIN_LETTERING=1 node --test test/lettering-outlines.test.ts
+EXPLAIN_BROWSER=1 node --test test/lettering-outlines.test.ts
 ```
 
 The first command uses committed Arabic, Devanagari, maths and serif fixtures

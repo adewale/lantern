@@ -10,8 +10,11 @@ import { Code, TransformDiff, diffLines, parseUnifiedDiff, renderElements } from
 import type { Hunk, TransformDiffOpts, Evidence, StepRecord, ColorSpan, CodeSpan, RenderOptions, Step } from 'rayner';
 import { Frame, StateReadout, View, ViewSync, stateView, viewMismatch, Axes, NumberLine, Brace, Circumscribe, SurroundingRectangle, Succession, TransformFromCopy, Restore, DOWN } from 'rayner';
 import type { FrameFitOpts, SyncOpts, AxesOpts, NumberLineOpts, PlotOpts, BraceOpts, CircumscribeOpts } from 'rayner';
+import type { LetteringRequest } from 'rayner/lettering';
 
 export class Demo extends Scene {
+  // Lettering on request: the build reads it; the type checks it
+  static meta = { id: 'demo', lettering: { scripts: ['Grek', 'Cyrl'] } satisfies LetteringRequest };
   override async construct() {
     this.state = { ok: false };
     await this.step('one', { caption: 'hello' });
