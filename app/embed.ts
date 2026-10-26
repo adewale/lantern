@@ -55,7 +55,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     playing = false,
     // On a narrow stage, whether each step opens on its close-up; Fit turns it off, Close-up on.
     follow = true;
-  type Entry = { Scene: ExplainerClass; trace: Trace; layouts?: Promise<Map<string, StepLayout>> };
+  type Entry = { Scene: ExplainerClass; trace: Trace; layouts?: Promise<Map<string, StepLayout>>; resting: Map<string, Node[]> };
   const cache = new Map<string, Entry>();
   /** The case on show, with its layouts once a close-up has needed them. */
   let current: Entry | undefined;
@@ -279,6 +279,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     else zoom.apply();
     root.classList.remove('loading');
     document.dispatchEvent(new CustomEvent('lantern:step', { detail: { step: step.step, settings: values } }));
+    primeNext();
   }
   async function show(index: number, push = true) {
     if (!trace) return; // Controls exist before the first case has loaded.
@@ -288,10 +289,15 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     chrome();
     link(push);
     const step = trace.steps[selected]!;
-    const container = el('div'),
-      sink = new DomSink(container, { realtime: false });
-    const [, target] = await Promise.all([renderAt(Active, restingTime(step, trace.fps), sink), framing(step)]);
+    const at = current!,
+      kept = at.resting.get(step.step);
+    const container = el('div');
+    const [, target] = await Promise.all([
+      kept ? container.append(...kept.map((n) => n.cloneNode(true))) : renderAt(Active, restingTime(step, trace.fps), new DomSink(container, { realtime: false })),
+      framing(step),
+    ]);
     if (gen !== generation) return;
+    if (!kept) at.resting.set(step.step, [...container.childNodes].map((n) => n.cloneNode(true)));
     // Reduced motion: no animation, but the old picture fades out over the new one, so the change is still seen.
     const old = reduced() ? stage.querySelector('svg') : null;
     old?.classList.add('leaving');
@@ -308,6 +314,78 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     link(true);
     await animate(true);
   }
+  /** A run of one step's animation, held at the step's first frame until it is let go (or cancelled with null). */
+  type Run = { at: Entry; index: number; release: (go: { gen: number; target: Zoom | null } | null) => void; done: Promise<boolean> };
+  let primed: Run | undefined;
+  /**
+   * Run the scene to a step's first frame and wait there. Released, it plays the step until
+   * the hold, then runs on undrawn to the step's resting frame (the one a link to it shows)
+   * and draws that; `done` says whether it got there.
+   */
+  function prepare(at: Entry, index: number): Run {
+    const step = at.trace.steps[index]!,
+      start = step.t0,
+      // Stop when the picture stops: the caption-reading hold is for video; here the reader sets the pace.
+      end = step.hold ?? step.t1 ?? at.trace.duration,
+      rest = restingTime(step, at.trace.fps);
+    const container = el('div'),
+      seek = new SeekSink(new DomSink(container), start);
+    let release!: Run['release'];
+    const gate = new Promise<Parameters<Run['release']>[0]>((r) => (release = r));
+    let go: Parameters<Run['release']>[0] | undefined,
+      attached = false,
+      rested = false;
+    const attach = (g: NonNullable<typeof go>) => {
+      stage.replaceChildren(...container.childNodes);
+      zoom.apply();
+      // The view glides to the step's close-up as the step begins, so the change is watched.
+      if (!attached && g.target) requestAnimationFrame(() => g.gen === generation && zoom.to(g.target!, true));
+      attached = true;
+    };
+    const done = new at.Scene(
+      {
+        // Until released, yield at each step boundary, so a tap never waits behind the whole run.
+        async stepBegin() {
+          if (go === undefined) await new Promise((r) => setTimeout(r));
+        },
+        async frame(scene, dt) {
+          if (scene.time + 1e-9 < start) return; // before the step: dropped, as SeekSink drops it
+          if (dt === 0 && scene.mobjects.length === 0) return; // Keep the poster until a meaningful first frame.
+          if (go === undefined) go = await gate;
+          if (!go || go.gen !== generation) throw new StopScene();
+          if (scene.time > end + 1e-8) {
+            if (scene.time + 1e-9 < rest) return;
+            // Drawn afresh, as a link to the step draws it, so the two are the same picture.
+            await new DomSink(container, { realtime: false }).frame(scene, 0);
+            attach(go);
+            rested = true;
+            throw new StopScene();
+          }
+          await seek.frame(scene, dt);
+          if (go.gen !== generation) throw new StopScene(); // superseded while that frame was drawn
+          if (!attached) attach(go);
+        },
+      },
+      { skipUntil: start },
+    )
+      .run()
+      .then(() => rested);
+    return { at, index, release, done };
+  }
+  /** Once the reader is on a step, run the scene to the next one, so Next starts at once. */
+  function primeNext() {
+    primed?.release(null);
+    primed = undefined;
+    const at = current,
+      index = selected + 1,
+      gen = generation;
+    if (!at || index >= at.trace.steps.length || reduced()) return;
+    setTimeout(() => {
+      if (gen !== generation || at !== current || primed) return;
+      primed = prepare(at, index);
+      primed.done.catch(() => {}); // reported when it is used
+    });
+  }
   async function animate(force = false) {
     if (!trace) return;
     if (playing && !force) return show(selected, false);
@@ -318,37 +396,20 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     const gen = ++generation;
     playing = true;
     chrome();
-    const step = trace.steps[selected]!,
-      start = step.t0,
-      // Stop when the picture stops: the caption-reading hold is for video; here the reader sets the pace.
-      end = step.hold ?? step.t1 ?? trace.duration;
-    const container = el('div'),
-      seek = new SeekSink(new DomSink(container), start);
+    const at = current!,
+      step = trace.steps[selected]!;
+    const run = primed?.at === at && primed.index === selected ? primed : prepare(at, selected);
+    if (run !== primed) primed?.release(null);
+    primed = undefined;
     const target = await framing(step);
+    run.release(gen === generation ? { gen, target } : null);
+    const rested = await run.done;
     if (gen !== generation) return;
-    let attached = false;
-    await new Active(
-      {
-        async frame(scene, dt) {
-          if (gen !== generation || scene.time > end + 1e-8) throw new StopScene();
-          if (dt === 0 && scene.mobjects.length === 0) return; // Keep the poster until a meaningful first frame.
-          await seek.frame(scene, dt);
-          if (gen !== generation) throw new StopScene(); // superseded while that frame was drawn
-          if (!attached && scene.time + 1e-8 >= start) {
-            attached = true;
-            stage.replaceChildren(...container.childNodes);
-            zoom.apply();
-            // The view glides to the step's close-up as the step begins, so the change is watched.
-            if (target) requestAnimationFrame(() => gen === generation && zoom.to(target, true));
-          }
-        },
-      },
-      { skipUntil: start },
-    ).run();
-    if (gen !== generation) return;
-    // End on the step's resting picture, the one a link to it shows. The animation stops
-    // where the caption hold begins, before anything the step adds after its last play().
-    await show(selected, false);
+    if (!rested) return show(selected, false);
+    at.resting.set(step.step, [...stage.childNodes].filter((n) => n.nodeName === 'svg').map((n) => n.cloneNode(true)));
+    playing = false;
+    chrome();
+    settle(step, null);
   }
   /**
    * Show a case. Until its trace is ready the player keeps showing (and linking to) the
@@ -372,7 +433,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     let entry = cache.get(key);
     if (!entry) {
       const Scene = withSettings(Bound, next);
-      entry = { Scene, trace: await traceScene(Scene) };
+      entry = { Scene, trace: await traceScene(Scene), resting: new Map() };
       cache.set(key, entry);
     }
     if (token !== loads) return;

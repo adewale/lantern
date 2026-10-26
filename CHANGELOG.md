@@ -2,7 +2,9 @@
 
 ## Unreleased: 0.2.0-explainers.0
 
-Newest first; all on 24–25 October 2026.
+Newest first; all on 24–26 October 2026.
+
+- **Faster player**: Next no longer re-runs the scene to draw the step's resting picture; the animation's own run carries on undrawn to that frame and draws it afresh. While the reader is on a step, the scene runs ahead to the next step's first frame and waits there, so Next starts at once. Each step's resting picture is kept per case, so returning to a step copies it instead of re-running the scene. On a 4× slowed CPU at 390 px: tap to motion 220–480 ms → about 100–215 ms, the longest freeze during Next 230–430 ms → 50–170 ms, a step already visited 180–490 ms → under 100 ms.
 
 - **Package name and maintainer**: Ade Oshineye maintains this fork (`author` in `package.json`). The npm package is `rayner`, replacing Lantern's `manim-js`; authors import from `rayner` and `rayner/explain`. It is not yet published. The design record moves from `specs/kyle.md` to `specs/rayner.md`. The `fork` explainer no longer says the fork has no named maintainer, and links to `docs/UPSTREAM.md` on `main`, not on the merged branch. `TODO.md` is removed; its one item was the name.
 
