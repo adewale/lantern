@@ -100,12 +100,14 @@ so a camera that glides past a small label does not make it read
 
 ## In the explainers
 
-- [seasons](../scenes/explainers/seasons/scene.ts), "noon": `this.frame.animate.fit(box, { margin: 0 })`
-  onto a box the scene computes so the heading stays outside it, a 2× zoom onto the noon angle
-  with labels sized for the zoomed view, and `reset()` at the start of the next step.
+- [seasons](../scenes/explainers/seasons/scene.ts), "noon": the stage's `s.focus(box, { exact: true })`
+  onto a box the scene computes, a 2× zoom onto the noon angle with labels sized for the zoomed
+  view, and `s.focus('all')` at the start of the next step. The stage keeps the heading and its
+  line on screen over a paper band while the camera is away, so the box keeps the band's strip
+  free of content.
 - [lantern](../scenes/explainers/lantern/scene.ts), "points": the diagram helper `d.focus(ids, { camera: true, also })`,
   which moves the same camera; without `camera` a focus enlarges the artwork inside the diagram's box
   ([reference](REFERENCE.md#diagrams)).
 
-In both the heading falls outside the box while zoomed; the player still shows the
-step's title and caption.
+With `d.focus(…, { camera: true })` or a raw `this.frame` move the heading falls outside the
+view while zoomed; `s.focus` (the [stage](REFERENCE.md#stage)) keeps it on screen instead.

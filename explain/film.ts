@@ -24,11 +24,29 @@ export const FILM = {
 export const PACING = {
   /** The longest run of frames in which the scene's picture does not change, in seconds. */
   longestStill: 3,
-  /** The share of the film in which the scene's picture does not change. */
-  stillShare: 0.45,
+  /**
+   * The share of the scene's motion in which its picture does not change: pauses, waits and holds
+   * inside steps. Rests are not counted: each is at most FILM.maxBeat and pushes in.
+   */
+  stillShare: 0.2,
+  /** The share of the film spent resting: more and it is a slideshow, however short each rest. */
+  restShare: 0.6,
+  /** The shares are judged only on a film at least this long, in seconds: a few seconds cannot drag. */
+  shareFrom: 10,
 } as const;
 
-const words = (text: unknown) => (typeof text === 'string' && text.trim() ? text.trim().split(/\s+/).length : 0);
+/** Words in a title, line or caption. */
+export const words = (text: unknown) => (typeof text === 'string' && text.trim() ? text.trim().split(/\s+/).length : 0);
+
+/**
+ * The rest after a step's motion, in seconds: enough to read `count` words of title and line at
+ * FILM.wpm beyond what the motion already gave, between FILM.minBeat and FILM.maxBeat, and at
+ * least FILM.lastBeat after the last step.
+ */
+export function beatSeconds(count: number, motion: number, final = false): number {
+  const seconds = Math.min(FILM.maxBeat, Math.max(FILM.minBeat, (count / FILM.wpm) * 60 - motion));
+  return final ? Math.max(FILM.lastBeat, seconds) : seconds;
+}
 
 export interface FilmStep {
   step: string;
@@ -57,10 +75,7 @@ export function filmPlan(trace: Pick<Trace, 'fps' | 'frames' | 'steps'>): FilmSt
       moveEnd = s.hold == null ? last : Math.round(s.hold * fps);
     const motion = (moveEnd - s.frame0) / fps,
       count = words(s.meta.title) + words(s.meta.line);
-    const final = index === trace.steps.length - 1;
-    const read = (count / FILM.wpm) * 60 - motion;
-    const seconds = Math.min(FILM.maxBeat, Math.max(FILM.minBeat, read));
-    const beat = Math.round((final ? Math.max(FILM.lastBeat, seconds) : seconds) * fps);
+    const beat = Math.round(beatSeconds(count, motion, index === trace.steps.length - 1) * fps);
     const t0 = at / fps;
     at += moveEnd - s.frame0;
     const rest = at / fps;
@@ -94,8 +109,10 @@ export interface Pacing {
   seconds: number;
   /** The longest run in which the scene's picture does not change, in seconds. */
   longestStill: number;
-  /** The share of the film in which the scene's picture does not change. */
+  /** The share of the scene's motion, rests left out, in which its picture does not change. */
   stillShare: number;
+  /** The share of the film spent resting after each step's motion. */
+  restShare: number;
   /** Words on the picture (titles and lines) per second of film. */
   wordsPerSecond: number;
   /** Steps with no `line`: the film shows only their title. */
@@ -104,8 +121,9 @@ export interface Pacing {
 
 /**
  * Pacing from the plan and, for each scene frame, whether its picture differs from the
- * frame before (`changed[n]` for frame n; frame 0 is the first picture). Rests are still
- * (the ambient push-in is the film's, not the scene's).
+ * frame before (`changed[n]` for frame n; frame 0 is the first picture). A rest counts toward
+ * the longest still stretch (its push-in is slight) but not toward the still share, which is the
+ * scene's own pauses: a rest is capped, and a longer line should not cost a shorter one.
  */
 export function pacing(trace: Pick<Trace, 'fps' | 'frames' | 'steps'>, changed: readonly boolean[]): Pacing {
   const plan = filmPlan(trace),
@@ -113,24 +131,27 @@ export function pacing(trace: Pick<Trace, 'fps' | 'frames' | 'steps'>, changed: 
   let run = 0,
     longest = 0,
     still = 0,
+    motion = 0,
     total = 0;
-  const frame = (moving: boolean) => {
+  const frame = (moving: boolean, resting: boolean) => {
     total++;
+    if (!resting) motion++;
     if (moving) run = 0;
     else {
-      still++;
+      if (!resting) still++;
       longest = Math.max(longest, ++run);
     }
   };
   for (const s of plan) {
-    for (let n = s.frame0 + 1; n <= s.moveEnd; n++) frame(!!changed[n]);
-    for (let i = 0; i < s.beat; i++) frame(false);
+    for (let n = s.frame0 + 1; n <= s.moveEnd; n++) frame(!!changed[n], false);
+    for (let i = 0; i < s.beat; i++) frame(false, true);
   }
   const seconds = total / fps;
   return {
     seconds: Math.round(seconds * 100) / 100,
     longestStill: Math.round((longest / fps) * 100) / 100,
-    stillShare: total ? Math.round((still / total) * 1000) / 1000 : 0,
+    stillShare: motion ? Math.round((still / motion) * 1000) / 1000 : 0,
+    restShare: total ? Math.round(((total - motion) / total) * 1000) / 1000 : 0,
     wordsPerSecond: seconds ? Math.round((plan.reduce((n, s) => n + s.words, 0) / seconds) * 100) / 100 : 0,
     withoutLine: trace.steps.filter((s) => !(typeof s.meta.line === 'string' && s.meta.line.trim())).map((s) => s.step),
   };
@@ -141,7 +162,9 @@ export function pacingProblems(p: Pacing): string[] {
   const out: string[] = [];
   if (p.longestStill > PACING.longestStill)
     out.push(`the picture stands still for ${p.longestStill} s at once (budget ${PACING.longestStill} s): shorten a wait or give it motion`);
-  if (p.stillShare > PACING.stillShare)
-    out.push(`the picture stands still for ${Math.round(p.stillShare * 100)}% of the film (budget ${PACING.stillShare * 100}%)`);
+  if (p.seconds >= PACING.shareFrom && p.stillShare > PACING.stillShare)
+    out.push(`the picture stands still for ${Math.round(p.stillShare * 100)}% of the scene's motion, rests aside (budget ${PACING.stillShare * 100}%): shorten a wait or give it motion`);
+  if (p.seconds >= PACING.shareFrom && p.restShare > PACING.restShare)
+    out.push(`the film rests for ${Math.round(p.restShare * 100)}% of its length (budget ${PACING.restShare * 100}%): give the steps more motion`);
   return out;
 }

@@ -93,10 +93,10 @@ export default class MyExplainer extends Scene {
     const s = stage(this, { style: 'nord' });
     const which = settingsOf(this).request as 'hit' | 'miss';
 
-    await this.step('architecture', { title: 'A cache in front of storage', caption: 'A request checks the cache first and reads the database only on a miss.' });
+    await this.step('architecture', { title: 'A cache in front of storage', line: 'The cache sits between the request and the database.', caption: 'A request checks the cache first and reads the database only on a miss.' });
     const d = await s.show({ source: FLOW }, { box: 'top' });
 
-    await this.step('request', { title: which === 'hit' ? 'A cache hit' : 'A cache miss', caption: which === 'hit' ? 'The value is already cached, so the request returns without reading the database.' : 'The value is absent, so the request reads the database once and then returns.' });
+    await this.step('request', { title: which === 'hit' ? 'A cache hit' : 'A cache miss', line: which === 'hit' ? 'The reply comes from the cache: no database read.' : 'The cache misses, so the database is read once.', caption: which === 'hit' ? 'The value is already cached, so the request returns without reading the database.' : 'The value is absent, so the request reads the database once and then returns.' });
     // Ask the program, then show its answer: here the path and the read count.
     const reads = which === 'hit' ? 0 : 1;
     await d.dim([...new Set(PATH[which].flat())]);

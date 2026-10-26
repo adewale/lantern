@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
 import { collectProject } from '../tools/lib/explain-project.ts';
 import { assertStepState } from './lib/explainer-state.ts';
+import { filmPlan } from '../explain/film.ts';
 import {
   reduceSession,
   sessionAttempt,
@@ -280,14 +281,19 @@ for (const entry of EXPLAINERS)
           break;
         }
         case 'fork': {
-          // The timeline drawn in 'video' is the trace's own timing of the 'fork' step,
-          // and that step lasts its caption's reading time at Scene.captionWpm, to the frame.
+          // The timelines drawn in 'video' are the trace's own timing of the 'fork' step: its
+          // motion, the rest the film plan gives it, and the hold the first exporter gave it
+          // (its caption at Scene.captionWpm), which is also how long the step lasts in the scene.
           const fork = trace.steps.find((s) => s.step === 'fork')!;
           const words = String(fork.meta.caption).trim().split(/\s+/).length;
           assert.ok(fork.hold != null && fork.t1 != null, 'the fork step holds for its caption');
-          assertStepState(trace, 'video', {
-            video: { motion: +(fork.hold - fork.t0).toFixed(2), held: +(fork.t1 - fork.hold).toFixed(2), words },
-          });
+          const planned = filmPlan(trace).find((s) => s.step === 'fork')!;
+          const video = trace.steps.find((s) => s.step === 'video')!.after!.video as { motion: number; rest: number; held: number; words: number };
+          assert.deepEqual(
+            { motion: video.motion, held: video.held, words: video.words },
+            { motion: +(fork.hold - fork.t0).toFixed(2), held: +((words / Scene.captionWpm) * 60).toFixed(2), words },
+          );
+          assert.ok(Math.abs(video.rest - planned.beat / trace.fps) <= 1 / trace.fps + 0.005, `${video.rest} vs ${planned.beat / trace.fps}`);
           assert.ok(Math.abs(fork.t1 - fork.t0 - (words / Scene.captionWpm) * 60) <= 1 / trace.fps + 1e-9);
           break;
         }

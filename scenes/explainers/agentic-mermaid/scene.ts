@@ -51,6 +51,7 @@ export default class MermaidExplainer extends Scene {
 
     await this.step('source', {
       title: 'The agent’s edit, parsed into a snapshot with ids',
+      line: 'The card lists the id of every node and edge.',
       caption:
         'The agent’s edit is Mermaid source, and the card lists the id the snapshot gives each node and edge. Agentic Mermaid parses, lays out, styles and verifies it at build time, and none of Agentic Mermaid ships to the reader.',
     });
@@ -63,6 +64,9 @@ export default class MermaidExplainer extends Scene {
 
     await this.step('verify', {
       title: missing ? 'The verifier flags both edges out of Cached' : 'The verifier finds no warnings in the first edit',
+      line: missing
+        ? 'The verifier says ok: true, with one warning per unlabeled edge.'
+        : 'Both edges already carry yes and no, so nothing is flagged.',
       caption: missing
         ? 'verify(flow) returns ok: true with two DECISION_BRANCH_UNLABELED warnings, one per marked edge. The diagram renders, but nothing on it says which edge out of Cached means yes.'
         : 'Both edges out of Cached carry labels, yes and no, so verify(flow) returns no warnings and this case skips the repair step.',
@@ -97,6 +101,7 @@ export default class MermaidExplainer extends Scene {
     if (missing) {
       await this.step('repair', {
         title: 'Two set_label operations label the branches',
+        line: 'Replaying the ops on the first edit must give the next diagram.',
         caption:
           'Two set_label operations add yes and no to the edges. The build replays them on the parsed first edit and throws unless the result serializes to the same Mermaid as the next diagram.',
       });
@@ -115,6 +120,7 @@ export default class MermaidExplainer extends Scene {
 
     await this.step('walk', {
       title: 'The token travels the yes edge’s own route',
+      line: 'Each hop is checked first; Reply to Database would throw.',
       caption:
         'The card lists the route the token follows from Cached to Reply. walk() looks up every hop before animating, so a hop with no edge, such as Reply to Database, throws before anything moves.',
     });
@@ -142,14 +148,15 @@ export default class MermaidExplainer extends Scene {
       ),
     );
 
-    await this.step('evidence', {
-      title: 'The chart counts stored verifier warnings',
-      caption:
-        'The scene.snapshots folder stores each diagram’s marks, ids, routes and verifier findings. The bars count the warnings stored for the first edit and for the final diagram.',
-    });
     const final = d.snapshot;
     const count = warnings.length,
       finalCount = d.findings().length;
+    await this.step('evidence', {
+      title: 'The chart counts stored verifier warnings',
+      line: `First edit: ${count} warnings; final diagram: ${finalCount}.`,
+      caption:
+        'The scene.snapshots folder stores each diagram’s marks, ids, routes and verifier findings. The bars count the warnings stored for the first edit and for the final diagram.',
+    });
     await s.clear();
     const chart = await s.show(
       { source: `xychart-beta\n x-axis ["First edit", "Final"]\n y-axis "Warnings" 0 --> 3\n bar [${count},${finalCount}]` },
@@ -169,6 +176,7 @@ export default class MermaidExplainer extends Scene {
 
     await this.step('history', {
       title: 'Source, edit and snapshot share one history',
+      line: 'Three commits in order; the renderer stays pinned at 0.4.1.',
       caption:
         'The git graph shows the Mermaid source, the typed edit and the checked snapshot as three commits in order. The renderer stays pinned at agentic-mermaid@0.4.1, so an upgrade is a deliberate change whose snapshot diff gets reviewed.',
     });

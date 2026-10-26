@@ -14,7 +14,7 @@ This writes `my-explainer/scene.ts`. Open it. It is an ordinary Lantern `Scene`:
 
 - `static meta` gives the explainer an id (`my-explainer`, which names the output files) and a title.
 - `static settings` declares one setting, `request`, with two options. With one setting, each option is a **case**; every case is built and checked before anyone reads it.
-- `construct()` has two **steps**. Each has a stable name, a title and a caption. `stage(this, { style: 'nord' })` draws the paper and a heading that follows the step titles, and gives every diagram the `nord` style.
+- `construct()` has two **steps**. Each has a stable name, a title, a line and a caption. `stage(this, { style: 'nord' })` draws the paper and a heading that follows the steps: a step number, the title and the line under it. It also gives every diagram the `nord` style. The page prints the caption under the stage; a video shows the title and line and puts the caption in its subtitles.
 - The second step asks a tiny program for the answer (how many database reads), then shows it: `d.dim` fades the parts off the path, `d.walk(..., { trail: true })` sends a token along the real links and leaves them marked, and `s.card` shows the count.
 
 ## 2. Preview it

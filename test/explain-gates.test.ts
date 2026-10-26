@@ -2,7 +2,7 @@
 // collectProject (load, cases, named steps, drawable text) and checkProject
 // (every check on every case). Each scene breaks exactly one rule and must fail
 // with that gate's own message; the clean scene shows the same shape passes.
-// Render's own gates (footer fit, hold, footer glyphs) are in explain-video.test.ts.
+// Render's own gates (a line too wide for the heading, the hold) are in explain-video.test.ts.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
@@ -111,6 +111,18 @@ const gates: { gate: string; source: string; message: RegExp; snapshots?: () => 
     gate: 'hold: the picture moves after the step’s last play()',
     source: scene(`await this.step('moves',{caption:'A caption long enough to need a hold of a few seconds at reading pace.'});const d=new Dot();await s.enter(d,{describe:'a dot'});d.addUpdater((m,dt)=>{m.shift([dt*0.5,0])});`),
     message: /The picture changes after the caption hold begins/,
+  },
+  {
+    // The film rests at most 2 s per step, so a long wait is the film standing still.
+    gate: 'pacing: a picture still for four seconds',
+    source: scene(`await this.step('one',{title:'One'});${label('hello')}await this.wait(4);await this.step('two',{title:'Two'});${label('world', '[0,-2]')}`),
+    message: /The video drags[^]*stands still for 4/,
+  },
+  {
+    // A step line takes the band under the title; content must stay below it.
+    gate: 'text: content runs into the heading’s line',
+    source: scene(`await this.step('one',{title:'One',line:'A line under the title.'});${label('too high', '[0,3.45]', 0.3)}`),
+    message: /runs into the heading's "A line under the title\."/,
   },
   {
     gate: 'step change: a step that ends on the same picture',

@@ -93,6 +93,7 @@ export default class GitExplainer extends Scene {
     // ── blob: the bytes that are hashed ────────────────────────────────
     await this.step('blob', {
       title: 'A blob id is the SHA-1 of typed bytes',
+      line: 'Header bytes, then content bytes: 13 in all, hashed together.',
       caption:
         'Git hashes a header (the type, the byte length and a zero byte) followed by the content. The id is the SHA-1 of exactly these 13 bytes, and the brace marks the seven digits that name it in later pictures.',
     });
@@ -171,6 +172,7 @@ export default class GitExplainer extends Scene {
     // ── tree: names live in the tree ────────────────────────────────────
     await this.step('tree', {
       title: 'A tree gives those bytes a name',
+      line: 'The name hello.txt is in the tree entry, not in the blob.',
       caption:
         'A tree entry stores a mode, the name hello.txt and the blob’s id. Hashing the tree’s own bytes gives it an id too. The name lives in the tree, never in the blob.',
     });
@@ -186,6 +188,7 @@ export default class GitExplainer extends Scene {
     // ── commit: a commit names a tree; a branch names a commit ─────────
     await this.step('commit', {
       title: 'A commit names a tree; a branch names a commit',
+      line: 'main → commit → tree → blob: each holds the next one’s id.',
       caption:
         'The commit’s first line is its tree’s id. The branch main is just a reference holding the commit’s id. Follow main to the commit, its tree and the file bytes.',
     });
@@ -223,6 +226,9 @@ export default class GitExplainer extends Scene {
       written = reachable(repo, c2).filter((id) => !before.includes(id)).length;
     await this.step('change', {
       title: add ? 'Add a file: the old blob is reused' : 'Edit a file: new blob, new tree, new commit',
+      line: add
+        ? `Tree two names blob ${short(hello)} again; ${written} new objects are written.`
+        : `Changed bytes change every id above them: ${written} new objects.`,
       caption: add
         ? `Tree two lists hello.txt with the very same blob id, plus world.txt. Below, commit one’s row stays put, ${written} new objects grow in, and the hello blob moves into tree two as the same object: git does not write it again.`
         : `New bytes hash to a new blob id. The tree naming it changes, so its id changes, and so does the commit’s. Below, commit one’s row stays put and all ${written} of commit two’s objects grow in new.`,
@@ -348,6 +354,7 @@ export default class GitExplainer extends Scene {
     // ── head: the branch moves; HEAD follows it ─────────────────────────
     await this.step('head', {
       title: 'Moving main to commit two changes one reference',
+      line: 'refs/heads/main now holds commit two’s id; no object is copied.',
       caption:
         'HEAD names refs/heads/main, and moving the branch rewrote the id main holds from commit one to commit two. No object was copied, and commit one stays reachable through commit two’s parent link.',
     });
@@ -383,6 +390,7 @@ export default class GitExplainer extends Scene {
       kept = inPlace.tree + inPlace.commit;
     await this.step('hashes', {
       title: 'Commit two’s id depends on every object it reaches',
+      line: `${kept} of 80 digits match in place, about the ${80 / 16} chance gives.`,
       caption: `Commit two’s bytes hold its tree’s id and its parent’s id, so its id depends on everything it reaches. Of the 80 digits in the new tree and commit ids, ${kept} are the same digit in the same place as in the old ids, about the ${80 / 16} that chance alone gives: SHA-1 changes everywhere. A test checks every id against git hash-object.`,
     });
     this.record('samePlace', inPlace);

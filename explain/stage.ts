@@ -364,10 +364,15 @@ export function stage(scene: Scene, options: StageOptions = {}) {
      * Move the camera so `target` (mobjects or a box) fills the stage below the heading, with
      * `margin` around it, or back home with `'all'`. The heading, its number and its line stay
      * where they are on screen, at their size; everything else is seen closer. The camera never
-     * zooms out past the stage, and never shows beyond its edges.
+     * zooms out past the stage, and never shows beyond its edges. `exact: true` takes `target`, a
+     * 16:9 box, as the camera's view as it is. `with` plays other animations in the same play.
      */
-    async focus(target: Mobject | readonly Mobject[] | Box | 'all', { margin = 0.4, runTime = 0.9 } = {}) {
-      await scene.play(...cameraTo(target === 'all' ? HOME : viewFor(target, margin), runTime));
+    async focus(
+      target: Mobject | readonly Mobject[] | Box | 'all',
+      { margin = 0.4, runTime = 0.9, exact = false, with: also = [] }: { margin?: number; runTime?: number; exact?: boolean; with?: Animation[] } = {},
+    ) {
+      const box = target === 'all' ? HOME : exact ? (target as Box) : viewFor(target, margin);
+      await scene.play(...cameraTo(box, runTime), ...also.map((a) => a.setOptions({ runTime })));
     },
     /**
      * Move a kept object to a new place in one glide: a point, or a box or region it is scaled

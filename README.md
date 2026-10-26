@@ -38,10 +38,11 @@ The collection has 27 explainers with 142 cases between them, and uses all 15 Ag
 npm run explain -- init my-explainer
 npm run explain -- preview my-explainer/scene.ts --watch
 npm run explain -- check my-explainer/scene.ts
+npm run explain -- filmstrip my-explainer/scene.ts --every 0.5
 npm run explain -- build my-explainer/scene.ts --out public/my-explainer.html
 ```
 
-`init` writes a working scene with one setting. `preview` serves the page and rebuilds it on save. `check` runs every case through [the checks](docs/REFERENCE.md#checks). `build` writes the page and the response headers it needs; [publishing](docs/PUBLISHING.md) shows how to embed it.
+`init` writes a working scene with one setting. `preview` serves the page and rebuilds it on save. `check` runs every case through [the checks](docs/REFERENCE.md#checks), the video's pacing among them. `filmstrip` samples the video mid-motion, where a resting picture hides collisions and clipping. `build` writes the page and the response headers it needs; [publishing](docs/PUBLISHING.md) shows how to embed it.
 
 A scene is ordinary Lantern, so beside the helpers it can use the general engine features the explainers use: a camera that zooms without moving a point (`this.frame`, which `d.focus` moves when given `{ camera: true }`; by default a focus still rescales the artwork), code that morphs along its own diff (`TransformDiff`), matching transforms, emphasis that stays on the resting picture, charts of the model's numbers (`Axes`), readouts rebuilt from `scene.state` (`view`), addressable and syntax-coloured code, and `Restore`, `TransformFromCopy` and `Succession`. [The engine map](docs/ENGINE.md) links a guide for each and says why the engine leaves out 3D, boolean path operations, runtime LaTeX, `transform` matrices, raster images and narration.
 

@@ -113,6 +113,7 @@ export default class IcalRecurrenceExplainer extends Scene {
     // ------------------------------------------------------------------ series
     await this.step('series', {
       title: 'A weekly stand-up is stored as one VEVENT',
+      line: 'DTSTART is the first meeting; RRULE with COUNT=6 makes six.',
       // RFC 5545 §3.3.10, lines 2272–2274: COUNT; DTSTART counts as the first occurrence.
       caption: `Alice’s calendar app saves her stand-up as one VEVENT. DTSTART is the first meeting, ${long(DTSTART)} 2026 at 09:00 UTC. RRULE repeats it weekly, and COUNT=6 stops after six meetings, with DTSTART counting as the first. The list shows the meetings a calendar computes from those two lines.`,
     });
@@ -123,6 +124,7 @@ export default class IcalRecurrenceExplainer extends Scene {
     // ------------------------------------------------------------------ invite
     await this.step('invite', {
       title: 'Inviting Bob to one meeting stores a second VEVENT',
+      line: `Same UID, and RECURRENCE-ID ${GUEST_MEETING} names the third meeting.`,
       // RFC 5545 §3.8.4.4, lines 6294–6306: UID names the set, RECURRENCE-ID one instance, by its original start.
       caption: `Alice invites Bob to the third meeting only. The app keeps the first VEVENT as it was and adds a second with the same UID, an override. Its RECURRENCE-ID, ${GUEST_MEETING}, is the start the rule gave that meeting. RFC 5545 keeps that value even when the meeting is moved.`,
     });
@@ -140,6 +142,12 @@ export default class IcalRecurrenceExplainer extends Scene {
           : change === 'skip'
             ? `Skipping Bob’s meeting adds an EXDATE; ${number(expand(after).length)} meetings remain`
             : 'Five meetings come from the rule, one from the override',
+      line:
+        change === 'move'
+          ? 'RECURRENCE-ID keeps the rule’s start; DTSTART holds the new one.'
+          : change === 'skip'
+            ? 'COUNT=6 still counts the excluded start; the override is deleted.'
+            : 'The override replaces the start that equals its RECURRENCE-ID.',
       caption:
         change === 'move'
           ? `Alice moves the second meeting to ${long(MOVED_TO)} at 14:00. The first VEVENT does not change, and its rule still gives ${long(MOVED_FROM)}. A third VEVENT, an override with RECURRENCE-ID ${MOVED_FROM}, that original start, carries the new DTSTART, and calendars show it in the Monday’s place.`
@@ -167,6 +175,7 @@ export default class IcalRecurrenceExplainer extends Scene {
     // ------------------------------------------------------------------ schema
     await this.step('schema', {
       title: 'One UID: at most one master, any number of overrides',
+      line: 'At a line’s end, a bar is one, a circle zero, a crow’s foot many.',
       // RFC 4791 §4.1, lines 479–487.
       caption:
         'The same storage as a schema. Marks at a line’s ends say how many: a bar is one, a circle zero, a crow’s foot many. RFC 4791 puts every VEVENT with one UID in one calendar object: the master, which it defines as the one without RECURRENCE-ID, and the overrides, which may be stored without it.',
@@ -183,6 +192,7 @@ export default class IcalRecurrenceExplainer extends Scene {
     if (copy === 'organiser') {
       await this.step('copy', {
         title: `Alice’s copy: ${plural(n.vevents, 'VEVENT')}, one UID`,
+        line: `${n.masters ? 'One master' : 'No master'} and ${plural(n.overrides, 'override')}; her calendar shows ${number(expand(mine).length)} meetings.`,
         caption: `The server stores Alice’s object as her app saved it: ${parts}, ${n.vevents > 1 ? 'all ' : ''}with UID standup. The notes count each part in her copy, and parts her copy lacks are dimmed. Her calendar shows ${number(expand(mine).length)} meetings.`,
       });
       const present = [
@@ -203,6 +213,12 @@ export default class IcalRecurrenceExplainer extends Scene {
       await this.step('copy', {
         title:
           change === 'skip' ? 'Bob’s copy keeps the meeting, marked cancelled' : change === 'move' ? 'Alice’s move leaves Bob’s copy as it was' : 'Bob’s copy is one override and no master',
+        line:
+          change === 'skip'
+            ? 'Delivering the CANCEL sets STATUS:CANCELLED and deletes nothing.'
+            : change === 'move'
+              ? 'The iTIP REQUEST holds only the override Bob attends.'
+              : 'It came as an iTIP REQUEST, and the server stored it as it came.',
         // Broker.php:459–620 (what each attendee is sent), :269–317 (how it is stored).
         caption:
           change === 'skip'
@@ -224,6 +240,7 @@ export default class IcalRecurrenceExplainer extends Scene {
     );
     await this.step('server', {
       title: 'The server refuses a second master or a second RRULE',
+      line: 'It answers 415; RFC 5545 only says RRULE SHOULD NOT repeat.',
       // sabre/dav Plugin.php:843–874; sabre/vobject VCalendar.php:448–455, Component.php:626–647.
       // RFC 5545 §3.8.5.3, lines 6808–6812: RRULE SHOULD NOT repeat; the set is then undefined.
       caption:

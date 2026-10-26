@@ -59,7 +59,7 @@ With neither `style` nor `palette`, the stage adopts the first diagram's palette
 | `s.keep(...mobs, { describe })` | Keep native objects without animating them; returns the first |
 | `s.clearOverlays()` | Fade out cards, code, notes (the stage's and the diagrams') and kept objects |
 | `s.clear({ runTime })` | Fade out everything except paper and heading, and bring the camera home, in one play |
-| `s.focus(target \| 'all', { margin, runTime })` | Move the camera so a mobject, mobjects or a box fill the stage below the heading, with `margin`; `'all'` goes home. Never zooms out past the stage or shows beyond its edges |
+| `s.focus(target \| 'all', { margin, runTime, exact, with })` | Move the camera so a mobject, mobjects or a box fill the stage below the heading, with `margin`; `'all'` goes home. Never zooms out past the stage or shows beyond its edges. `exact: true` takes a 16:9 box as the view as it is; `with` plays other animations in the same play |
 | `s.carry(m, to, { runTime })` | Glide a kept object to a point, or into a box or region it is shrunk to fit (never enlarged): carry an idea on instead of clearing it |
 | `s.draw(m, { tool, color, runTime, describe })` | Draw `m` stroke by stroke at an even speed with a `'pen'` or `'pencil'` riding the tip (`false` for none), and keep it. Between strokes the tool travels at drawing speed, so it never jumps. `m` must not be on stage yet |
 | `s.dimension(a, b, label, { offset, color, size })` | A dimension line from `a` to `b` with ticks, arrowheads and `label`, set off by `offset`; drawn in and kept |
@@ -186,7 +186,7 @@ Capture asserts that its output equals Agentic Mermaid's `renderMermaidSVG` byte
 | Legibility | A native label never reaches 14 px at a 1280 px stage in a frame where it is drawn (opacity and draw fraction at least 0.95) and inside the camera's view; an imported label never reaches 14 px in a resting picture inside its diagram's viewport. Sizes are on screen: world size × the camera's zoom, min(16 ÷ view width, 9 ÷ view height). A native label counts at that zoomed size only in a step's completed frame; in other frames it counts at no more than its size with the camera home, so a camera gliding past does not make it read |
 | Words | A kept drawing with no text and no `describe` |
 | Bare runtime | The scene, bundled, gives different steps or state in a context with no DOM, Node, timers or console |
-| Pacing | The [film](#video-files) stands still for more than 3 s at once, or for more than 45% of its length (`PACING` in `explain/film.ts`). Still means the scene's picture does not change; a rest counts as still, its push-in being the film's, not the scene's |
+| Pacing | The [film](#video-files) stands still for more than 3 s at once (a rest counts, its push-in being slight); or, in a film of 10 s or more, the scene's picture stands still for more than 20% of its motion (rests aside: waits and pauses inside steps), or the film rests for more than 60% of its length (`PACING` in `explain/film.ts`). Rests are kept out of the still share so that a fuller line, which lengthens a rest, is never a reason to cut words |
 | Glyphs | Any text the embedded fonts cannot draw (every command checks this) |
 
 The report goes to `out/checks/<id>/report.json`. For each case it holds the full step trace, each step's resting picture as a rough text drawing (`restingFrames`: boxes and lines, with diagram labels as bars), and label sizes (`legibility`):
@@ -198,7 +198,7 @@ The report goes to `out/checks/<id>/report.json`. For each case it holds the ful
 | `labelsOutsideCloseUpsAt390` | Labels no close-up shows whole, which a reader reaches by panning |
 | `minLabelPx390WholeStage` | Smallest label on that phone without close-ups |
 
-`pacing` gives the film's length in seconds, its longest still stretch, its share of still frames, words on the picture per second, and `withoutLine`, the steps the film shows by their title alone. `cardsAtRest` counts the cards in each step's resting picture.
+`pacing` gives the film's length in seconds, its longest still stretch, the still share of its motion, the share spent resting, words on the picture per second, and `withoutLine`, the steps the film shows by their title alone. `cardsAtRest` counts the cards in each step's resting picture.
 
 The phone sizes are reported, not gated; every demo case reports no label under 12 px. A close-up zooms on top of the author's camera, so its sizes multiply the camera zoom by the close-up's.
 

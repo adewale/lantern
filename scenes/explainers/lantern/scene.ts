@@ -95,6 +95,7 @@ export default class LanternExplainer extends Scene {
 
     await this.step('model', {
       title: 'A scene is an ordinary program',
+      line: 'Each this.step names an idea; each this.play runs one.',
       caption:
         'demo.ts holds one async construct method: each this.step call names an idea and each this.play call runs an animation on the stage beside it. The engine calls that method directly, with no lesson interpreter in between, as the card’s last row records.',
     });
@@ -130,6 +131,7 @@ export default class LanternExplainer extends Scene {
 
     await this.step('objects', {
       title: 'A Scene owns mobjects, plays animations and emits frames to a sink',
+      line: 'Three sinks turn the same frames into a view, SVG or a trace.',
       caption:
         'Each walked edge is one relation: a Scene owns mobjects, plays animations between endpoints fixed when they begin, and emits frames to a sink. The card’s three sinks turn the same frames into a browser view, an SVG string or an inspection trace.',
     });
@@ -157,6 +159,7 @@ export default class LanternExplainer extends Scene {
     for (let i = 0; i < raw.length; i += 2) pts.push([raw[i]!, raw[i + 1]!]);
     await this.step('points', {
       title: `A circle is ${pts.length} points: ${(pts.length - 1) / 3} cubic Béziers`,
+      line: 'Anchors and handles: every shape and glyph is stored this way.',
       caption:
         'Every shape, glyph and imported diagram is stored as cubic Bézier points, like the anchors and handles drawn on this circle. The zoom onto Mobject is the camera: it changes what the stage shows, and no point in the diagram moves.',
     });
@@ -192,6 +195,7 @@ export default class LanternExplainer extends Scene {
 
     await this.step('clock', {
       title: `Every sink gets the same frames, 1/${this.fps} s apart`,
+      line: 'The browser waits for display ticks; the trace takes all at once.',
       caption:
         'Scene time advances by a fixed dt per frame, whichever sink is attached. The browser sink waits for a display tick before each frame while the trace sink takes them all at once, so both see the same scene times on the ruler.',
     });
@@ -231,6 +235,7 @@ export default class LanternExplainer extends Scene {
 
     await this.step('seek', {
       title: 'Seeking replays the same program',
+      line: 'Played or seeked to the same moment, the SVG matches.',
       caption:
         'renderAt seeks by running the scene again and skipping every frame before the target. Because each animation fixes its endpoints when it begins, the frame seeked straight to t has the same SVG fingerprint as the frame played there.',
     });
@@ -271,6 +276,7 @@ export default class LanternExplainer extends Scene {
 
     await this.step('publish', {
       title: 'The build captures diagrams once and ships one HTML file',
+      line: 'Readers change only the pace; the page never lays anything out.',
       caption:
         'explain build captures each diagram once and writes lantern.html with the steps, cases, poster and transcript. Because the layouts are already captured, reader controls change only the pace and the page never calls a layout service.',
     });
@@ -289,14 +295,15 @@ export default class LanternExplainer extends Scene {
         '$ explain build scenes/explainers/lantern',
         '  lantern.html               steps, cases, poster, transcript',
         '  lantern.html.receipt.json  source, engine and snapshot hashes',
-        '$ explain render scenes/explainers/lantern --footer',
-        '  captioned video, chapters from the same steps',
+        '$ explain render scenes/explainers/lantern',
+        '  video paced by its motion, captions as subtitles',
       ],
       { at: regionBox('bottom', { top: -0.85 }), fontSize: 0.24 },
     );
 
     await this.step('inspect', {
       title: 'The trace records every walk, and explain check tests every case',
+      line: 'Recorded walks, and four checks run on every case.',
       caption:
         'Each walk records the edges it travelled, and trace.json lists this scene’s own clock and seek walks. explain check runs the card’s four tests on every case, so a frame that jumps or text under 14 px fails the check.',
     });

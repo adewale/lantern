@@ -74,3 +74,25 @@ test('a contact sheet --out with no extension writes NAME.png and NAME.svg besid
   assert.deepEqual((await readFile(join(sheets, 'sheet.png'))).subarray(0, 8), PNG);
   assert.deepEqual((await readdir(dir)).sort(), ['scene.ts', 'v1.2']);
 });
+
+// resvg 2.6.2 also panics (geom.rs: unwrap on None) on a compositing layer round a path with no
+// area, such as a horizontal line fading in or out: a callout's leader or a dimension line. A path
+// showing one paint carries its opacity on that paint, so it needs no layer.
+test('a fading horizontal line rasterises: its opacity rides on its stroke', { skip }, async () => {
+  const { Line, Circle } = await import('../src/index.ts');
+  const scene = new Scene(new NullSink());
+  const line = new Line([-2, 0], [2, 0], { stroke: '#000000', strokeWidth: 0.004 });
+  line.style.opacity = 0.79;
+  // Fill and stroke together still need the element's opacity, where they overlap.
+  const both = new Circle({ radius: 0.5, fill: '#ff0000', fillOpacity: 1, stroke: '#000000', strokeWidth: 0.05 }).moveTo([0, 1]);
+  both.style.opacity = 0.5;
+  scene.add(line, both);
+  const svg = toSvgString(scene, { width: 480 });
+  assert.match(svg, /stroke-opacity="0\.79"/);
+  assert.equal((svg.match(/ opacity="/g) ?? []).length, 1);
+  // In a child process: an abort would take the test runner down.
+  const file = join(folder, 'fade.svg');
+  await writeFile(file, svg);
+  const run = spawnSync(process.execPath, ['-e', `import('@resvg/resvg-js').then(({Resvg})=>{new Resvg(require('node:fs').readFileSync(${JSON.stringify(file)},'utf8')).render();console.log('ok')})`], { cwd: ROOT, encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr);
+});

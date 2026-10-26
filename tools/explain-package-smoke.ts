@@ -60,7 +60,8 @@ try {
     ],
     { cwd: folder },
   );
-  assert.equal(result.stdout.trim(), '2');
+  // The stage adds the paper, the heading's band and the heading.
+  assert.equal(result.stdout.trim(), '3');
   if (process.env.EXPLAIN_VIDEO) {
     await run('npm', ['i', `@resvg/resvg-js@${peers['@resvg/resvg-js']}`, '--no-audit', '--no-fund'], { cwd: folder });
     await run(bin, ['render', 'first', '--out', 'public/outside.mp4', '--fps', '4'], {

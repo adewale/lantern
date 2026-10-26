@@ -1,5 +1,6 @@
 import { Scene, Rectangle, Text, Group } from '../../../src/index.ts';
 import { stage, regionBox } from '../../../explain/index.ts';
+import { beatSeconds, words as wordsIn, FILM } from '../../../explain/film.ts';
 const STYLE = 'github-light';
 // Upstream Lantern at the fork base, 2c7bad5: README "Outputs", app/worker.ts, src/mermaid.ts, src/doc.ts.
 const LANTERN =
@@ -38,6 +39,7 @@ export default class ForkExplainer extends Scene {
 
     await this.step('lantern', {
       title: 'Lantern plays a scene in a live player and a Worker',
+      line: 'A fixed clock feeds the dev player and the Worker alike.',
       caption:
         'Lantern, at commit 2c7bad5, runs a Scene class on a fixed clock. A development player shows it with links to any step, and a Cloudflare Worker serves one frame as SVG or as text, or the whole trace as JSON, to people and agents alike.',
     });
@@ -62,6 +64,7 @@ export default class ForkExplainer extends Scene {
 
     await this.step('engine', {
       title: 'The fork keeps the engine',
+      line: 'Bézier points, fixed endpoints and seek by replay all stay.',
       caption:
         'The scene still runs on Lantern’s src/: shapes and glyphs stored as Bézier points, animations whose endpoints are fixed when they begin, the fixed clock and seeking by replay. The fork changed the engine only to fix a fault or add a hook the helpers need, and docs/UPSTREAM.md lists each change with its regression test.',
     });
@@ -81,6 +84,7 @@ export default class ForkExplainer extends Scene {
 
     await this.step('removed', {
       title: 'Four parts of Lantern are deleted',
+      line: 'The JSON doc, parser, dev player and Worker are gone.',
       caption:
         'The fork deleted the JSON scene format, the flowchart parser, the development player and the Worker, along with the nine original scenes, which the explainers rebuild. The player and the parser have replacements; the JSON format and the Worker’s endpoints have none.',
     });
@@ -100,6 +104,7 @@ export default class ForkExplainer extends Scene {
 
     await this.step('fork', {
       title: 'The fork puts a build between the scene and the reader',
+      line: 'Diagrams are captured once; the page runs no renderer.',
       caption:
         'Agentic Mermaid draws each diagram in Chromium at build time, and the snapshot is stored beside the scene, so the page runs no diagram renderer. The same scene and clock then feed an embed page, a captioned video and explain check.',
     });
@@ -125,6 +130,7 @@ export default class ForkExplainer extends Scene {
 
     await this.step('settings', {
       title: 'A reader setting is a case built ahead of time',
+      line: 'Each option of the refill rate is a case, checked in advance.',
       caption:
         'A scene may declare a few settings, like the token bucket’s refill rate. Every combination of options is a case: the build runs each one, captures its diagrams and checks it, so choosing 4 tokens opens a page that was already tested.',
     });
@@ -143,42 +149,51 @@ export default class ForkExplainer extends Scene {
 
     // The video step reads the timing of the 'fork' step this scene has just played.
     const shown = this.steps.find((st) => st.name === 'fork')!;
-    const words = String(shown.meta.caption).trim().split(/\s+/).length;
+    const words = wordsIn(shown.meta.caption),
+      read = wordsIn(shown.meta.title) + wordsIn(shown.meta.line);
     const motion = (shown.hold ?? shown.t1!) - shown.t0,
-      held = shown.hold == null ? 0 : shown.t1! - shown.hold;
+      rest = beatSeconds(read, motion),
+      // What the first exporter did: hold the picture under the whole caption at reading speed.
+      held = (words / Scene.captionWpm) * 60;
     await this.step('video', {
-      title: 'The same steps become a silent, captioned video',
-      caption: `explain render draws every frame with resvg and encodes them with FFmpeg. In the video, each step shows its title while it moves, then holds still under its caption long enough to read it at ${Scene.captionWpm} words a minute. Lantern’s render stops at numbered SVG frames.`,
+      title: 'The same steps become a silent video, paced by their motion',
+      line: `This step: ${motion.toFixed(1)} s moving, ${rest.toFixed(1)} s at rest, never ${held.toFixed(1)} s still.`,
+      caption: `explain render draws every frame with resvg and encodes them with FFmpeg. Each step moves under its title and line, then rests at most ${FILM.maxBeat} s while the view pushes in; its caption goes to the subtitles. The first exporter held each picture under its caption at ${Scene.captionWpm} words a minute instead, and most of every video stood still.`,
     });
     await s.clearOverlays();
     await flow.dim(['Clock', 'Frames', 'Video']);
     await flow.focus(['Clock', 'Page', 'Frames', 'Video', 'Check'], { zoom: 0.95 });
-    // One bar per phase of the 'fork' step, to scale.
+    // The 'fork' step in the video, to scale: as it plays now, and as the first exporter played it.
     const unit = 11 / (motion + held),
-      x0 = -5.5,
-      y = -2.85;
-    const phase = (from: number, len: number, fill: string, label: string) => {
-      const bar = new Rectangle({ width: len * unit, height: 0.55, fill, fillOpacity: 0.85, stroke: 'none' }).moveTo([
+      x0 = -5.5;
+    const phase = (from: number, len: number, y: number, fill: string, label: string) => {
+      const bar = new Rectangle({ width: len * unit, height: 0.4, fill, fillOpacity: 0.85, stroke: 'none' }).moveTo([
         x0 + (from + len / 2) * unit,
         y,
       ]);
-      const text = new Text(label, { fontSize: 0.24, color: ink }).moveTo([x0 + (from + len / 2) * unit, y - 0.6]);
+      const text = new Text(label, { fontSize: 0.22, color: ink }).moveTo([x0 + (from + len / 2) * unit, y - 0.42]);
       return new Group(bar, text);
     };
+    const rowLabel = (text: string, y: number) =>
+      new Text(text, { fontSize: 0.22, color: ink, weight: 'bold', anchor: 'start' }).moveTo([x0, y + 0.42], [-1, 0]);
     await s.enter(
-      new Text(`Step 'fork' in the video: ${(motion + held).toFixed(1)} s`, { fontSize: 0.26, color: ink, weight: 'bold' }).moveTo([0, -1.85]),
-      phase(0, motion, s.emphasis, `moving, title in the footer: ${motion.toFixed(1)} s`),
-      phase(motion, held, s.soft, `still, caption of ${words} words: ${held.toFixed(1)} s`),
+      rowLabel(`Now: ${(motion + rest).toFixed(1)} s`, -1.95),
+      phase(0, motion, -1.95, s.emphasis, `moving: ${motion.toFixed(1)} s`),
+      phase(motion, rest, -1.95, s.soft, `rest: ${rest.toFixed(1)} s`),
+      rowLabel(`First exporter: ${(motion + held).toFixed(1)} s`, -3.2),
+      phase(0, motion, -3.2, s.emphasis, `moving: ${motion.toFixed(1)} s`),
+      phase(motion, held, -3.2, s.soft, `still under a ${words}-word caption: ${held.toFixed(1)} s`),
       {
-        describe: `A timeline of the fork step in the video: ${motion.toFixed(1)} seconds of motion under its title, then ${held.toFixed(1)} seconds still under its ${words}-word caption`,
+        describe: `Two timelines of the fork step in the video, to scale. Now: ${motion.toFixed(1)} seconds of motion, then a ${rest.toFixed(1)}-second rest. The first exporter: the same motion, then ${held.toFixed(1)} seconds still under its ${words}-word caption`,
       },
     );
-    this.state.video = { motion: Number(motion.toFixed(2)), held: Number(held.toFixed(2)), words };
+    this.state.video = { motion: Number(motion.toFixed(2)), rest: Number(rest.toFixed(2)), held: Number(held.toFixed(2)), words };
 
     await this.step('checks', {
       title: 'Every case passes explain check before it ships',
+      line: 'Two checks come from Lantern; the fork adds five.',
       caption:
-        'Lantern’s own tests compared a seeked frame with a played one and looked for jumps in motion. explain check runs both on every case and adds the fork’s checks: text at least 14 px, no letters the fonts lack, words for every drawing, and a still picture while the caption is read.',
+        'Lantern’s own tests compared a seeked frame with a played one and looked for jumps in motion. explain check runs both on every case and adds the fork’s checks: text at least 14 px, no letters the fonts lack, words for every drawing, a still picture while the caption is read, and a video that does not stand still.',
     });
     await s.clearOverlays();
     await flow.focus('all');
@@ -192,12 +207,14 @@ export default class ForkExplainer extends Scene {
         ['Letters in the fonts', 'fork'],
         ['Words for every drawing', 'fork'],
         ['Still while the caption reads', 'fork'],
+        ['A video that keeps moving', 'fork'],
       ],
       { at: BELOW, fontSize: 0.2 },
     );
 
     await this.step('cost', {
       title: 'What the fork gave up',
+      line: 'No agent endpoints, Inter everywhere, Chromium to capture.',
       caption:
         'Agents lose the Worker’s endpoints, and every diagram style is lettered in Inter. Capturing a new diagram needs Chromium at build time, though a page built from stored snapshots needs nothing. No engine change has gone upstream.',
     });
