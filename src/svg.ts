@@ -259,17 +259,7 @@ function vmobjectAttrs(m: VMobject, s: StyleRecord, pd: { d: string }): Attrs {
     }
     if (s.miterLimit != null) attrs['stroke-miterlimit'] = fmt(s.miterLimit);
     if (s.paintOrder) attrs['paint-order'] = s.paintOrder;
-    if (s.opacity < 1) {
-      // A path that shows one paint looks the same with the opacity on that paint as on the whole
-      // element, and needs no compositing layer: resvg 2.6.2 panics on a layer around a path
-      // with no area, such as a fading horizontal line. Only a path showing both fill and stroke,
-      // where the two overlap, needs the element's opacity.
-      const fill = s.fill !== 'none' && s.fillOpacity > 0,
-        stroke = s.stroke !== 'none' && s.strokeOpacity > 0 && s.strokeWidth > 0;
-      if (fill && stroke) attrs.opacity = fmt(s.opacity);
-      else if (stroke) attrs['stroke-opacity'] = fmt(s.strokeOpacity * s.opacity);
-      else attrs['fill-opacity'] = fmt(s.fillOpacity * s.opacity);
-    }
+    if (s.opacity < 1) attrs.opacity = fmt(s.opacity);
     if (s.drawFraction != null && s.drawFraction < 1) {
       const L = perf.span('arcLength', () => m.arcLength()) + 0.001;
       const revealed = dashes ? dashedReveal(dashes, s.dashOffset ?? 0, L, s.drawFraction) : null;

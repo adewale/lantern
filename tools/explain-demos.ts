@@ -9,6 +9,7 @@ import { restingTime, htmlEscape } from '../explain/trace.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
 import { contactSheet, stillPng } from './lib/explain-shots.ts';
 import { exporterHash, probeVideo } from './lib/explain-video.ts';
+import { pacingProblems } from '../explain/film.ts';
 import { checkProject } from './lib/explain-check.ts';
 
 const directory = join(ROOT, 'out/explainers');
@@ -182,12 +183,15 @@ if (render) {
       const video = probe.streams.find((s) => s.codec_type === 'video')!;
       if (
         video.width !== 1280 ||
-        video.height !== 960 ||
+        video.height !== 720 ||
         Number(video.nb_frames) !== receipt.frames ||
         probe.chapters.length !== receipt.chapters.length
       )
         throw new Error(`Video metadata mismatch: ${item.id}`);
-      console.log(`Video verified: ${item.id} · ${receipt.frames} frames`);
+      // The film keeps its pacing budgets, as check found for every case.
+      const slow = pacingProblems(receipt.pacing);
+      if (slow.length) throw new Error(`${item.id}: ${slow.join('; ')}`);
+      console.log(`Video verified: ${item.id} · ${receipt.frames} frames · ${receipt.pacing.seconds} s`);
     }
   }
   await Promise.all([worker(), worker(), worker()]);

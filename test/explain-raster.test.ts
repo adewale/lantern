@@ -75,24 +75,26 @@ test('a contact sheet --out with no extension writes NAME.png and NAME.svg besid
   assert.deepEqual((await readdir(dir)).sort(), ['scene.ts', 'v1.2']);
 });
 
-// resvg 2.6.2 also panics (geom.rs: unwrap on None) on a compositing layer round a path with no
-// area, such as a horizontal line fading in or out: a callout's leader or a dimension line. A path
-// showing one paint carries its opacity on that paint, so it needs no layer.
-test('a fading horizontal line rasterises: its opacity rides on its stroke', { skip }, async () => {
-  const { Line, Circle } = await import('../src/index.ts');
+// resvg 2.6.2 also panics (geom.rs: unwrap on None) on a translucent element inside a nested svg
+// that clips its viewport while something there reaches past it: under a zoomed camera the paper
+// does, and any fading element (a pen tool, a leader line) then took the film down. band() lets the
+// inner svg overflow; the outer one still crops.
+test('a translucent element under a zoomed camera rasterises through band()', { skip }, async () => {
   const scene = new Scene(new NullSink());
-  const line = new Line([-2, 0], [2, 0], { stroke: '#000000', strokeWidth: 0.004 });
-  line.style.opacity = 0.79;
-  // Fill and stroke together still need the element's opacity, where they overlap.
-  const both = new Circle({ radius: 0.5, fill: '#ff0000', fillOpacity: 1, stroke: '#000000', strokeWidth: 0.05 }).moveTo([0, 1]);
-  both.style.opacity = 0.5;
-  scene.add(line, both);
-  const svg = toSvgString(scene, { width: 480 });
-  assert.match(svg, /stroke-opacity="0\.79"/);
-  assert.equal((svg.match(/ opacity="/g) ?? []).length, 1);
+  scene.add(new Rectangle({ width: 16, height: 9, fill: '#faf6ec', stroke: 'none' }));
+  const mark = new Rectangle({ width: 0.5, height: 0.5, fill: '#68645d', stroke: '#241f1a', strokeWidth: 0.02 }).moveTo([-1.7, -1.3]);
+  mark.style.opacity = 0.5;
+  scene.add(mark);
+  scene.frame.fit([-3.3, -2.4, -0.2, -0.6], { margin: 0 });
+  const svg = band(scene, 1280, 9);
+  assert.match(svg, /<svg overflow="visible" /);
   // In a child process: an abort would take the test runner down.
-  const file = join(folder, 'fade.svg');
+  const file = join(folder, 'zoomed.svg');
   await writeFile(file, svg);
   const run = spawnSync(process.execPath, ['-e', `import('@resvg/resvg-js').then(({Resvg})=>{new Resvg(require('node:fs').readFileSync(${JSON.stringify(file)},'utf8')).render();console.log('ok')})`], { cwd: ROOT, encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);
+  // Without the overflow, the same picture panics: the test reproduces the cause, not just the fix.
+  await writeFile(file, svg.replace('<svg overflow="visible" ', '<svg '));
+  const bare = spawnSync(process.execPath, ['-e', `import('@resvg/resvg-js').then(({Resvg})=>{new Resvg(require('node:fs').readFileSync(${JSON.stringify(file)},'utf8')).render();console.log('ok')})`], { cwd: ROOT, encoding: 'utf8' });
+  assert.notEqual(bare.status, 0, 'resvg no longer panics here: the overflow workaround may be dropped');
 });
