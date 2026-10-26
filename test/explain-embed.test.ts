@@ -563,7 +563,8 @@ function observe(ids: string[]) {
     stageH: stage.clientHeight,
     zoomOutDisabled: button('Zoom out')!.disabled,
     zoomInDisabled: button('Zoom in')!.disabled,
-    fitHidden: button('Fit stage')!.hidden,
+    // Unseen, whether removed or holding its place (Fit keeps its place so the controls do not wrap).
+    fitHidden: ((b) => b.hidden || getComputedStyle(b).visibility === 'hidden')(button('Fit stage')!),
     closeUpHidden: button('Close-up of each step')!.hidden,
     overviewHidden: document.querySelector<HTMLButtonElement>('.overview')!.hidden,
     transcriptOpen: (document.querySelector('details.transcript') as HTMLDetailsElement).open,

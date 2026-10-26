@@ -136,10 +136,11 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   // The stage and, over its corner on a narrow stage, the overview: a control outside the
   // stage, whose role of img makes everything inside it a picture.
   const frame = el('div', undefined, 'frame');
-  // An unseen copy of the caption, at its width, measures every step's caption so the
-  // caption can keep the room its case's longest needs: Next, the steps list and the
-  // transcript then stay put as the reader steps.
-  const ruler = el('p', undefined, 'caption ruler');
+  // An unseen copy of the caption, at its width and in its type, measures every step's
+  // caption so the caption can keep the room its case's longest needs: Next, the steps
+  // list and the transcript then stay put as the reader steps. It is not a .caption, so
+  // the page still has one.
+  const ruler = el('p', undefined, 'ruler');
   ruler.setAttribute('aria-hidden', 'true');
   player.append(frame, summary, caption, described, controls, notice, ruler);
 
