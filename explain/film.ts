@@ -4,6 +4,7 @@
 // step's title and line at a quick reading speed, never longer than FILM.maxBeat. The full
 // caption goes to the subtitles and the transcript, not the picture.
 import type { Trace } from '../src/index.ts';
+import { stepWords } from './trace.ts';
 
 export const FILM = {
   /** Words a minute the title and line are read at while the film runs: quick, since they are short. */
@@ -74,7 +75,7 @@ export function filmPlan(trace: Pick<Trace, 'fps' | 'frames' | 'steps'>): FilmSt
     const last = s.frame1 ?? trace.frames,
       moveEnd = s.hold == null ? last : Math.round(s.hold * fps);
     const motion = (moveEnd - s.frame0) / fps,
-      count = words(s.meta.title) + words(s.meta.line);
+      count = words(s.meta.title) + words(stepWords(s).line);
     const beat = Math.round(beatSeconds(count, motion, index === trace.steps.length - 1) * fps);
     const t0 = at / fps;
     at += moveEnd - s.frame0;
@@ -153,7 +154,7 @@ export function pacing(trace: Pick<Trace, 'fps' | 'frames' | 'steps'>, changed: 
     stillShare: motion ? Math.round((still / motion) * 1000) / 1000 : 0,
     restShare: total ? Math.round(((total - motion) / total) * 1000) / 1000 : 0,
     wordsPerSecond: seconds ? Math.round((plan.reduce((n, s) => n + s.words, 0) / seconds) * 100) / 100 : 0,
-    withoutLine: trace.steps.filter((s) => !(typeof s.meta.line === 'string' && s.meta.line.trim())).map((s) => s.step),
+    withoutLine: trace.steps.filter((s) => !stepWords(s).line).map((s) => s.step),
   };
 }
 

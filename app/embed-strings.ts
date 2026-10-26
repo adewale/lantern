@@ -46,8 +46,8 @@ export interface Chrome {
   noStep: (step: string) => string;
   /** A notice when the URL's settings are invalid. */
   fallback: (problem: SettingsProblem) => string;
-  /** The stage's accessible name: the explainer's title and the step's. */
-  stageLabel: (title: string, step: string) => string;
+  /** The stage's accessible name: the explainer's title, the step's, and the line under it. */
+  stageLabel: (title: string, step: string, line: string) => string;
   /** "Label: option", the way a case is named in headings. */
   setting: (label: string, option: string) => string;
   transcript: string;
@@ -81,7 +81,7 @@ const EN: Chrome = {
   noStep: (step) => `This case has no “${step}” step, so it opens at the first step.`,
   fallback: (p) =>
     `${p.kind === 'option' ? `Unknown ${p.id} option: ${p.value}` : p.kind === 'setting' ? `Unknown setting: ${p.id}` : p.message}. Showing the default case.`,
-  stageLabel: (title, step) => `${title}: ${step}`,
+  stageLabel: (title, step, line) => `${title}: ${step}${line ? ` — ${line}` : ''}`,
   setting: (label, option) => `${label}: ${option}`,
   transcript: 'Transcript',
   sources: 'Sources',
@@ -119,7 +119,7 @@ const FR: Chrome = {
           ? `Cette explication n’a pas de réglage « ${p.id} »`
           : 'Les réglages de l’adresse ne sont pas valides'
     }. Le cas par défaut est affiché.`,
-  stageLabel: (title, step) => `${title} : ${step}`,
+  stageLabel: (title, step, line) => `${title} : ${step}${line ? ` — ${line}` : ''}`,
   setting: (label, option) => `${label} : ${option}`,
   transcript: 'Transcription',
   sources: 'Sources',

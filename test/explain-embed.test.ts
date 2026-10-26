@@ -13,7 +13,7 @@ import { serve } from '../tools/lib/explain-serve.ts';
 import { fc, params } from './lib/pbt.ts';
 import { resolveSettings } from '../explain/index.ts';
 import type { Settings } from '../explain/index.ts';
-import { pictureHtml, pictureSummary } from '../explain/trace.ts';
+import { pictureHtml, pictureSummary, stepWords } from '../explain/trace.ts';
 import { NARROW_PX, READ_PX, closeUps, labelsToRead, stageScale, stepLayouts, viewBox } from '../app/embed-closeup.ts';
 import type { StepLayout } from '../app/embed-closeup.ts';
 import { zoomOfView } from '../app/embed-zoom.ts';
@@ -450,6 +450,7 @@ interface StepSpec {
   step: string;
   caption: string;
   title: string;
+  line: string;
   summary: string;
   picture: string;
 }
@@ -485,8 +486,9 @@ function stepsOf(p: Project, values: Settings): StepSpec[] {
   assert.ok(v, `no prebuilt case ${JSON.stringify(values)}`);
   return v.trace.steps.map((s) => ({
     step: s.step,
-    caption: String(s.meta.caption ?? ''),
-    title: String(s.meta.title ?? s.step),
+    caption: stepWords(s).caption,
+    title: stepWords(s).title,
+    line: stepWords(s).line,
     summary: pictureSummary(s.after),
     picture: pictureHtml(s.after),
   }));
@@ -542,6 +544,7 @@ function observe(ids: string[]) {
     current: [...document.querySelectorAll<HTMLElement>('.steps [aria-current=step]')].map((b) => b.dataset.step),
     list: [...document.querySelectorAll<HTMLElement>('.steps button')].map((b) => b.dataset.step),
     caption: document.querySelector('.caption')!.textContent,
+    lede: [...document.querySelectorAll('.lede > *')].map((e) => ((e as HTMLElement).hidden ? null : e.textContent)),
     stageLabel: stage.getAttribute('aria-label'),
     // The resting picture in words: a summary as the stage's description, the full list under a disclosure.
     summary: document.getElementById(stage.getAttribute('aria-describedby') ?? '')?.textContent,
@@ -664,7 +667,8 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   eq('step list', seen.list, list.map((s) => s.step));
   eq('aria-current', seen.current, [entry.step]);
   eq('caption', seen.caption, spec.caption);
-  eq('stage label', seen.stageLabel, `${seen.title}: ${spec.title}`);
+  eq('stage label', seen.stageLabel, `${seen.title}: ${spec.title}${spec.line ? ` — ${spec.line}` : ''}`);
+  eq('lede', seen.lede, [`${i + 1}. ${spec.title}`, spec.line || null]);
   eq('stage description', seen.summary, spec.summary);
   eq('computed stage description', await stageDescription(r.page), spec.summary.replace(/\s+/g, ' ').trim());
   // Compared as the browser serializes it, which writes &quot; in text as a plain quote.
@@ -1224,6 +1228,46 @@ test(
         }
       }),
       params(5),
+    );
+  },
+);
+
+// Next pressed while a step plays sends the playing run on to the next step, undrawn,
+// instead of replaying the scene from its start; it must still rest on the link's picture.
+test(
+  'player, motion on: Next pressed mid-motion rests on exactly the picture a link to the step after shows',
+  options,
+  async () => {
+    const all = ['oauth-pkce', 'exgit'].flatMap((name) =>
+      projects.get(name)!.variants.slice(0, 1).flatMap((v) =>
+        v.trace.steps.slice(0, -2).map((_, i) => ({ name, values: v.values, i })),
+      ),
+    );
+    await fc.assert(
+      fc.asyncProperty(fc.constantFrom(...all), fc.constantFrom(60, 250, 600), async ({ name, values, i }, after) => {
+        const p = projects.get(name)!,
+          list = stepsOf(p, values);
+        const context = await browser.newContext({ reducedMotion: 'no-preference' });
+        try {
+          const a = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i]!.step)}`);
+          await quiet(a.page);
+          await a.page.locator('button[aria-label="Next step"]').click();
+          await a.page.waitForTimeout(after);
+          await a.page.locator('button[aria-label="Next step"]').click();
+          await a.page.waitForFunction((step) => (window as unknown as { __last: { step: string } | null }).__last?.step === step, list[i + 2]!.step, {
+            timeout: 30_000,
+          });
+          await quiet(a.page);
+          const b = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i + 2]!.step)}`);
+          const where = `${name} ${list[i]!.step} → Next, ${after} ms, Next`;
+          assert.equal(new URL(a.page.url()).searchParams.get('step'), list[i + 2]!.step, where);
+          assert.equal(await stagePicture(a.page), await stagePicture(b.page), where);
+          assert.deepEqual([...a.errors, ...b.errors], []);
+        } finally {
+          await context.close();
+        }
+      }),
+      params(6),
     );
   },
 );

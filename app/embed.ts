@@ -3,7 +3,7 @@ import type { Trace } from '../src/index.ts';
 import { StopScene } from '../src/index.ts';
 import { bindSnapshots, withSettings, resolveSettings } from '../explain/index.ts';
 import type { ExplainerClass, Settings, SnapshotStore } from '../explain/index.ts';
-import { restingTime, pictureHtml, pictureSummary } from '../explain/trace.ts';
+import { restingTime, pictureHtml, pictureSummary, stepWords } from '../explain/trace.ts';
 import { reportHeight } from './embed-protocol.ts';
 import { icon } from './embed-icons.ts';
 import type { IconName } from './embed-icons.ts';
@@ -98,6 +98,12 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const poster = root.querySelector('svg');
   if (poster) stage.append(poster);
   stage.tabIndex = 0;
+  // On a narrow stage the heading the stage draws is too small to read, and a close-up
+  // leaves it out, so the step's number, title and line show here as text.
+  const lede = el('p', undefined, 'lede'),
+    ledeTitle = el('strong'),
+    ledeLine = el('span');
+  lede.append(ledeTitle, ledeLine);
   const caption = el('p', undefined, 'caption');
   caption.setAttribute('aria-live', 'polite');
   // The resting picture in words, for readers who cannot see it or cannot read its labels:
@@ -136,13 +142,17 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   // The stage and, over its corner on a narrow stage, the overview: a control outside the
   // stage, whose role of img makes everything inside it a picture.
   const frame = el('div', undefined, 'frame');
-  // An unseen copy of the caption, at its width and in its type, measures every step's
-  // caption so the caption can keep the room its case's longest needs: Next, the steps
-  // list and the transcript then stay put as the reader steps. It is not a .caption, so
-  // the page still has one.
-  const ruler = el('p', undefined, 'ruler');
+  // Unseen copies of the caption and the lede, at their width and in their type, measure
+  // every step's words so each keeps the room its case's longest needs: the steps list and
+  // the transcript then stay put as the reader steps. They are not a .caption or a .lede,
+  // so the page still has one of each.
+  const ruler = el('p', undefined, 'ruler'),
+    ledeRuler = el('p', undefined, 'lede-ruler');
   ruler.setAttribute('aria-hidden', 'true');
-  player.append(frame, summary, caption, described, controls, notice, ruler);
+  ledeRuler.setAttribute('aria-hidden', 'true');
+  // The controls sit straight under the picture, above the words, so however long a
+  // caption runs, Next stays beside what it moves.
+  player.append(frame, controls, notice, summary, lede, caption, described, ruler, ledeRuler);
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', t.stepList);
@@ -184,6 +194,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       h = stage.clientHeight,
       on = narrow() && zoom.k > 1;
     stage.classList.toggle('narrow', narrow());
+    player.classList.toggle('narrow', narrow());
     overview.hidden = !on;
     if (!on) return;
     overview.disabled = tour.length < 2;
@@ -258,13 +269,15 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     standalone.href = out.href;
   }
   function chrome() {
-    const step = trace.steps[selected]!;
-    caption.textContent = String(step.meta.caption ?? '');
+    const step = trace.steps[selected]!,
+      words = stepWords(step);
+    caption.textContent = words.caption;
+    fillLede(ledeTitle, ledeLine, selected, words);
     prev.disabled = selected === 0;
     next.disabled = selected === trace.steps.length - 1;
     for (const b of steps.querySelectorAll('button'))
       b.setAttribute('aria-current', b.dataset.step === step.step ? 'step' : 'false');
-    stage.setAttribute('aria-label', t.stageLabel(title.textContent!, String(step.meta.title ?? step.step)));
+    stage.setAttribute('aria-label', t.stageLabel(title.textContent!, words.title, words.line));
     summary.textContent = pictureSummary(step.after);
     picture.innerHTML = pictureHtml(step.after);
     described.hidden = !picture.innerHTML;
@@ -272,20 +285,36 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   }
   let shownCase = '',
     reservedFor = '';
+  /** The lede's words for step `i`: its number and title, then its line when it has one. */
+  function fillLede(strong: HTMLElement, span: HTMLElement, i: number, words: { title: string; line: string }) {
+    strong.textContent = `${i + 1}. ${words.title}`;
+    span.textContent = words.line;
+    span.hidden = !words.line;
+  }
   function reserve() {
+    player.classList.toggle('narrow', narrow());
     if (!trace || !caption.clientWidth) return;
     const key = `${caption.clientWidth} ${shownCase}`;
     if (key === reservedFor) return;
     reservedFor = key;
-    ruler.style.width = `${caption.clientWidth}px`;
-    let tallest = 0;
-    for (const s of trace.steps) {
-      ruler.textContent = String(s.meta.caption ?? '');
-      // The exact height: offsetHeight rounds, and a 115.2 px caption would still move Next by a fraction.
+    ruler.style.width = ledeRuler.style.width = `${caption.clientWidth}px`;
+    const strong = el('strong'),
+      span = el('span');
+    ledeRuler.replaceChildren(strong, span);
+    let tallest = 0,
+      tallestLede = 0;
+    for (const [i, s] of trace.steps.entries()) {
+      const words = stepWords(s);
+      ruler.textContent = words.caption;
+      fillLede(strong, span, i, words);
+      // The exact height: offsetHeight rounds, and a 115.2 px caption would still move the steps list by a fraction.
       tallest = Math.max(tallest, ruler.getBoundingClientRect().height);
+      tallestLede = Math.max(tallestLede, ledeRuler.getBoundingClientRect().height);
     }
     ruler.textContent = '';
+    ledeRuler.replaceChildren();
     caption.style.minHeight = `${tallest}px`;
+    lede.style.minHeight = `${tallestLede}px`;
   }
   new ResizeObserver(reserve).observe(player);
   /**
@@ -320,6 +349,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     if (!trace) return; // Controls exist before the first case has loaded.
     const gen = ++generation;
     playing = false;
+    active = undefined;
     selected = Math.max(0, Math.min(trace.steps.length - 1, index));
     chrome();
     link(push);
@@ -349,63 +379,97 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     link(true);
     await animate(true);
   }
-  /** A run of one step's animation, held at the step's first frame until it is let go (or cancelled with null). */
-  type Run = { at: Entry; index: number; release: (go: { gen: number; target: Zoom | null } | null) => void; done: Promise<boolean> };
-  let primed: Run | undefined;
+  type Go = { gen: number; target: Zoom | null };
+  /**
+   * A run of the scene that plays one step's animation, held at the step's first frame until
+   * it is let go (or cancelled with null). While it plays, `follow` aims it at the next step
+   * instead: it runs on undrawn to that step's first frame and waits there to be let go again,
+   * so Next pressed mid-motion does not replay the scene from its start. It refuses (false)
+   * once the run is over or before it was first let go.
+   */
+  type Run = { at: Entry; index: () => number; release: (go: Go | null) => void; follow: () => boolean; done: Promise<boolean> };
+  let primed: Run | undefined,
+    // The run playing the step on show, while it plays.
+    active: Run | undefined;
   /**
    * Run the scene to a step's first frame and wait there. Released, it plays the step until
    * the hold, then runs on undrawn to the step's resting frame (the one a link to it shows)
    * and draws that; `done` says whether it got there.
    */
-  function prepare(at: Entry, index: number): Run {
-    const step = at.trace.steps[index]!,
-      start = step.t0,
-      // Stop when the picture stops: the caption-reading hold is for video; here the reader sets the pace.
-      end = step.hold ?? step.t1 ?? at.trace.duration,
-      rest = restingTime(step, at.trace.fps);
-    const container = el('div'),
-      seek = new SeekSink(new ReaderSink(container, {}, readerView), start);
-    let release!: Run['release'];
-    const gate = new Promise<Parameters<Run['release']>[0]>((r) => (release = r));
-    let go: Parameters<Run['release']>[0] | undefined,
+  function prepare(at: Entry, first: number): Run {
+    /** Where the run is headed: a step, its times, and a fresh drawing of it. */
+    const aimAt = (index: number) => {
+      const step = at.trace.steps[index]!,
+        container = el('div');
+      return {
+        index,
+        start: step.t0,
+        // Stop when the picture stops: the caption-reading hold is for video; here the reader sets the pace.
+        end: step.hold ?? step.t1 ?? at.trace.duration,
+        rest: restingTime(step, at.trace.fps),
+        container,
+        seek: new SeekSink(new ReaderSink(container, {}, readerView), step.t0),
+      };
+    };
+    let aim = aimAt(first),
+      release!: Run['release'],
+      gate!: Promise<Go | null>;
+    const arm = () => (gate = new Promise<Go | null>((r) => (release = r)));
+    arm();
+    let go: Go | null | undefined,
       attached = false,
-      rested = false;
-    const attach = (g: NonNullable<typeof go>) => {
-      stage.replaceChildren(...container.childNodes);
+      rested = false,
+      over = false;
+    const stop = () => {
+      over = true;
+      return new StopScene();
+    };
+    const attach = (g: Go) => {
+      stage.replaceChildren(...aim.container.childNodes);
       zoom.apply();
       // The view glides to the step's close-up as the step begins, so the change is watched.
       if (!attached && g.target) requestAnimationFrame(() => g.gen === generation && zoom.to(g.target!, true));
       attached = true;
     };
-    const done = new at.Scene(
+    const runner = new at.Scene(
       {
         // Until released, yield at each step boundary, so a tap never waits behind the whole run.
         async stepBegin() {
           if (go === undefined) await new Promise((r) => setTimeout(r));
         },
         async frame(scene, dt) {
-          if (scene.time + 1e-9 < start) return; // before the step: dropped, as SeekSink drops it
+          if (scene.time + 1e-9 < aim.start) return; // before the step: dropped, as SeekSink drops it
           if (dt === 0 && scene.mobjects.length === 0) return; // Keep the poster until a meaningful first frame.
           if (go === undefined) go = await gate;
-          if (!go || go.gen !== generation) throw new StopScene();
-          if (scene.time > end + 1e-8) {
-            if (scene.time + 1e-9 < rest) return;
+          if (!go || go.gen !== generation) throw stop();
+          if (scene.time > aim.end + 1e-8) {
+            if (scene.time + 1e-9 < aim.rest) return;
             // Drawn afresh, as a link to the step draws it, so the two are the same picture.
-            await new ReaderSink(container, { realtime: false }, readerView).frame(scene, 0);
+            await new ReaderSink(aim.container, { realtime: false }, readerView).frame(scene, 0);
             attach(go);
             rested = true;
-            throw new StopScene();
+            throw stop();
           }
-          await seek.frame(scene, dt);
-          if (go.gen !== generation) throw new StopScene(); // superseded while that frame was drawn
-          if (!attached) attach(go);
+          await aim.seek.frame(scene, dt);
+          // Superseded while that frame was drawn; a run sent on to the next step waits for it instead.
+          if (go && go.gen !== generation) throw stop();
+          if (go && !attached) attach(go);
         },
       },
-      { skipUntil: start },
-    )
-      .run()
-      .then(() => rested);
-    return { at, index, release, done };
+      { skipUntil: aim.start },
+    );
+    const done = runner.run().then(() => rested);
+    const follow = () => {
+      if (over || rested || !go || aim.index + 1 >= at.trace.steps.length) return false;
+      aim = aimAt(aim.index + 1);
+      // The way a link seeks: plays begun from here on to the next step are not interpolated.
+      runner.skipUntil = aim.start;
+      go = undefined;
+      attached = false;
+      arm();
+      return true;
+    };
+    return { at, index: () => aim.index, release: (g) => release(g), follow, done };
   }
   /** Once the reader is on a step, run the scene to the next one, so Next starts at once. */
   function primeNext() {
@@ -433,13 +497,18 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     chrome();
     const at = current!,
       step = trace.steps[selected]!;
-    const run = primed?.at === at && primed.index === selected ? primed : prepare(at, selected);
+    // Next mid-motion: the run playing the step before carries on to this one. This must happen
+    // before the first await, while that run has not yet seen the new generation.
+    const followed = active?.at === at && active.index() === selected - 1 && active.follow();
+    const run = followed ? active! : primed?.at === at && primed.index() === selected ? primed : prepare(at, selected);
     if (run !== primed) primed?.release(null);
     primed = undefined;
+    active = run;
     const target = await framing(step);
     run.release(gen === generation ? { gen, target } : null);
     const rested = await run.done;
     if (gen !== generation) return;
+    active = undefined;
     if (!rested) return show(selected, false);
     at.resting.set(step.step, [...stage.childNodes].filter((n) => n.nodeName === 'svg').map((n) => n.cloneNode(true)));
     playing = false;
@@ -493,7 +562,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       ...trace.steps.map((s, i) => {
         const li = el('li'),
           b = el('button'),
-          label = String(s.meta.title ?? s.step),
+          label = stepWords(s).title,
           // The current step is bold; an unseen bold copy in the same grid cell gives every
           // item the bold one's height, so the list keeps its height from step to step.
           bold = el('span', label, 'bold');

@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { SnapshotSink, renderAt } from '../../src/index.ts';
 import { chromeFor, caseNameIn, descriptionLang } from '../../app/embed-strings.ts';
-import { restingTime, pictureHtml, htmlEscape } from '../../explain/trace.ts';
+import { restingTime, pictureHtml, htmlEscape, stepWords, wordsHtml } from '../../explain/trace.ts';
 import { ROOT, engineAlias, defaultVariant, hash, scriptEscape, sceneSlug, baseReceipt } from './explain-project.ts';
 import type { Project } from './explain-project.ts';
 
@@ -63,8 +63,9 @@ export async function buildExplainer(
         name = caseNameIn(lang, project.Scene, values);
       const steps = trace.steps.map((s, i) => {
         const href = `?${key ? key + '&' : ''}${new URLSearchParams({ step: s.step })}`,
-          shows = pictureHtml(s.after, trace.steps[i - 1]?.after);
-        return `<li><a href="${htmlEscape(href)}">${htmlEscape(s.meta.title ?? s.step)}</a><p>${htmlEscape(s.meta.caption ?? '')}</p>${shows ? `<div${descriptionLang(lang)}>${shows}</div>` : ''}</li>`;
+          shows = pictureHtml(s.after, trace.steps[i - 1]?.after),
+          words = stepWords(s);
+        return `<li><a href="${htmlEscape(href)}">${htmlEscape(words.title)}</a>${wordsHtml(words)}${shows ? `<div${descriptionLang(lang)}>${shows}</div>` : ''}</li>`;
       });
       return `<section data-case="${htmlEscape(key)}">${name ? `<h2>${htmlEscape(name)}</h2>` : ''}<ol>${steps.join('')}</ol></section>`;
     })
@@ -79,7 +80,7 @@ export async function buildExplainer(
       ),
     )
   ).join('\n\n');
-  const html = `<!doctype html>\n<html lang="${htmlEscape(lang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${htmlEscape(title)}</title><meta name="generator" content="Rayner"><style>${css}</style></head><body><main id="content"><h1>${htmlEscape(title)}</h1><div class="stage poster">${sink.svg}</div><p class="caption">${htmlEscape(first.meta.caption ?? '')}</p><details class="transcript" open><summary>${htmlEscape(t.transcript)}</summary>${transcript}${sources ? `<h2>${htmlEscape(t.sources)}</h2><ul>${sources}</ul>` : ''}</details></main><template id="licenses"><pre>${htmlEscape(licenses)}</pre></template><script>${js}</script></body></html>\n`;
+  const html = `<!doctype html>\n<html lang="${htmlEscape(lang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${htmlEscape(title)}</title><meta name="generator" content="Rayner"><style>${css}</style></head><body><main id="content"><h1>${htmlEscape(title)}</h1><div class="stage poster">${sink.svg}</div><p class="caption">${htmlEscape(stepWords(first).caption)}</p><details class="transcript" open><summary>${htmlEscape(t.transcript)}</summary>${transcript}${sources ? `<h2>${htmlEscape(t.sources)}</h2><ul>${sources}</ul>` : ''}</details></main><template id="licenses"><pre>${htmlEscape(licenses)}</pre></template><script>${js}</script></body></html>\n`;
   const sri = (value: string) => "'sha256-" + createHash('sha256').update(value).digest('base64') + "'";
   const policy = `default-src 'none'; script-src ${sri(js)}; style-src ${sri(css)}; img-src data:; connect-src 'none'; font-src 'none'; base-uri 'none'; object-src 'none'; frame-ancestors *`;
   const receipt = {

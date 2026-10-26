@@ -9,7 +9,7 @@ import { FRAME } from '../../src/svg.ts';
 import { caseNameIn, descriptionLang } from '../../app/embed-strings.ts';
 import type { ExplainerClass, Settings } from '../../explain/index.ts';
 import { filmPlan, pushAt, pacing, FILM } from '../../explain/film.ts';
-import { pictureHtml, htmlEscape } from '../../explain/trace.ts';
+import { pictureHtml, htmlEscape, stepWords, wordsHtml } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
 import { ROOT, hash, baseReceipt } from './explain-project.ts';
 
@@ -29,9 +29,9 @@ export function trackLanguage(lang: string, webm = false): string {
 export function videoTranscript(title: string, lang: string, steps: Trace['steps']): string {
   return `<!doctype html><html lang="${htmlEscape(lang)}"><meta charset="utf-8"><title>${htmlEscape(title)}</title><h1>${htmlEscape(title)}</h1><ol>${steps
     .map((s) => {
-      const shows = pictureHtml(s.after);
-      const line = typeof s.meta.line === 'string' && s.meta.line.trim() ? `<p><strong>${htmlEscape(s.meta.line)}</strong></p>` : '';
-      return `<li><h2>${htmlEscape(s.meta.title ?? s.step)}</h2>${line}<p>${htmlEscape(s.meta.caption ?? '')}</p>${shows && descriptionLang(lang) ? `<div${descriptionLang(lang)}>${shows}</div>` : shows}</li>`;
+      const shows = pictureHtml(s.after),
+        words = stepWords(s);
+      return `<li><h2>${htmlEscape(words.title)}</h2>${wordsHtml(words)}${shows && descriptionLang(lang) ? `<div${descriptionLang(lang)}>${shows}</div>` : shows}</li>`;
     })
     .join('')}</ol></html>\n`;
 }
@@ -72,10 +72,10 @@ export function captionsVtt(trace: Trace, lang = 'en'): string {
   return (
     `WEBVTT\nLanguage: ${lang}\n\n` +
     trace.steps
-      .filter((s) => s.meta.caption)
+      .filter((s) => stepWords(s).caption)
       .map(
         (s, i) =>
-          `${i + 1}\n${vttTime(s.t0)} --> ${vttTime(s.t1 ?? trace.duration)}\n${String(s.meta.caption).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n\s*\n/g, '\n').trim()}\n`,
+          `${i + 1}\n${vttTime(s.t0)} --> ${vttTime(s.t1 ?? trace.duration)}\n${stepWords(s).caption.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n\s*\n/g, '\n').trim()}\n`,
       )
       .join('\n')
   );
@@ -146,7 +146,7 @@ export async function renderVideo(
       plan
         .map(
           (s, i) =>
-            `[CHAPTER]\nTIMEBASE=1/1000\nSTART=${Math.round(s.t0 * 1000)}\nEND=${Math.round(s.t1 * 1000)}\ntitle=${escape(String(trace.steps[i]!.meta.title ?? s.step))}\n`,
+            `[CHAPTER]\nTIMEBASE=1/1000\nSTART=${Math.round(s.t0 * 1000)}\nEND=${Math.round(s.t1 * 1000)}\ntitle=${escape(stepWords(trace.steps[i]!).title)}\n`,
         )
         .join(''),
   );

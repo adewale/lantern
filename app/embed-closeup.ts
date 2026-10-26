@@ -46,6 +46,12 @@ export interface StepLayout {
   /** The part the step opens on: the one whose lettering changed most (new words, new values), else the first. */
   lead: number;
   labels: LayoutLabel[];
+  /**
+   * The top of the content area, in the camera's view units: the lowest edge of the heading
+   * the stage draws (its title, number and line), which stays put on screen. A close-up keeps
+   * below it, since cutting through the heading shows half a line of text. Absent without a heading.
+   */
+  top?: number;
 }
 /** Changed boxes closer than this, in stage units, read as one part. */
 const GAP = 0.5;
@@ -129,6 +135,28 @@ function leavesOf(scene: Scene): Leaf[] {
   const view = viewOf(scene);
   for (const top of scene.mobjects) if (!fixed(top)) walk(top, top, 1, view, false);
   return out;
+}
+
+/**
+ * The lowest edge of the heading the stage draws, in the camera's view units, or undefined
+ * when nothing of it is drawn. The heading is pinned to the screen, so it lands in the same
+ * place whatever the camera does.
+ */
+function headingBottom(scene: Scene): number | undefined {
+  const view = viewOf(scene);
+  let bottom: number | undefined;
+  const walk = (m: Mobject, opacity: number) => {
+    const o = opacity * (m.style.opacity ?? 1);
+    if (o < 0.05) return;
+    // A label's own box, which can reach below its glyphs, or a painted leaf's.
+    if (labelOf(m) || (!m.children.length && painted(m))) {
+      const b = m.box();
+      if (b) bottom = Math.min(bottom ?? Infinity, toView(b, view)[1]);
+    }
+    for (const child of m.children) walk(child, o);
+  };
+  for (const top of scene.mobjects) if (top.key === '__heading' || top.key === '__chrome') walk(top, 1);
+  return bottom;
 }
 
 /** Every readable label in the camera's view, in its units: a label's size grows with the camera's zoom. */
@@ -225,7 +253,8 @@ export async function stepLayouts(Scene: SceneClass): Promise<Map<string, StepLa
         view = viewOf(scene);
       // Changes are found in the world (a camera move alone changes no leaf), then framed as the camera shows them.
       const changes = changed(leaves, before).map((c) => ({ ...c, box: toView(c.box, view) }));
-      layouts.set(step.name, { ...partsOf(changes), labels: labelsOf(scene) });
+      const top = headingBottom(scene);
+      layouts.set(step.name, { ...partsOf(changes), labels: labelsOf(scene), ...(top == null ? {} : { top }) });
       before = leaves;
     },
   };
@@ -257,15 +286,16 @@ export function labelsToRead(layout: StepLayout): LayoutLabel[] {
  * order: changed parts taken together while they fit in one view, each group centred;
  * a group too big for one view is covered by views in rows, top to bottom, each row left
  * to right, overlapping evenly, the way a comic reader's guided view crosses a big panel.
+ * Views stay inside `bounds` where they fit it, so a close-up never cuts the heading.
  */
-export function tourRegions(parts: readonly Box[], vw: number, vh: number): Box[] {
+export function tourRegions(parts: readonly Box[], vw: number, vh: number, bounds: Box = FRAME): Box[] {
   const groups: Box[] = [];
   let group: Box | null = null;
   // Room around each part, but never so much that a part which fits a view no longer does.
   const room = (b: Box): Box => {
     const x = b[2] - b[0] <= vw ? Math.min(PAD, (vw - (b[2] - b[0])) / 2) : PAD,
       y = b[3] - b[1] <= vh ? Math.min(PAD, (vh - (b[3] - b[1])) / 2) : PAD;
-    return intersect([b[0] - x, b[1] - y, b[2] + x, b[3] + y], FRAME) ?? FRAME;
+    return intersect([b[0] - x, b[1] - y, b[2] + x, b[3] + y], bounds) ?? bounds;
   };
   for (const p of parts.map(room)) {
     const next = union(group, p);
@@ -283,9 +313,18 @@ export function tourRegions(parts: readonly Box[], vw: number, vh: number): Box[
     if (n < 2) return [(lo + hi) / 2 - size / 2];
     return Array.from({ length: n }, (_, i) => lo + (i * (hi - lo - size)) / (n - 1));
   };
+  // A view centred on a part near an edge would reach past the bounds: slide it back in.
+  // A view that fits only to a rounding (zoomed exactly to fit under the heading) still slides.
+  const inside = (lo: number, size: number, min: number, max: number) => (size <= max - min + 1e-9 ? Math.min(Math.max(lo, min), max - size) : lo);
   for (const g of groups)
     for (const bottom of starts(g[1], g[3], vh).reverse())
-      for (const left of starts(g[0], g[2], vw)) views.push([left, bottom, left + vw, bottom + vh]);
+      for (const left of starts(g[0], g[2], vw)) {
+        // A view as tall as the frame (a tall stage) can still be panned into the letterbox
+        // under the drawing: lift it until it shows the frame's top, heading and all.
+        const x = inside(left, vw, bounds[0], bounds[2]),
+          y = vh >= FRAME[3] - FRAME[1] - 1e-9 ? Math.max(bottom, FRAME[3] - vh) : inside(bottom, vh, bounds[1], bounds[3]);
+        views.push([x, y, x + vw, y + vh]);
+      }
   return views;
 }
 
@@ -299,6 +338,8 @@ export function tourRegions(parts: readonly Box[], vw: number, vh: number): Box[
  * panning, reads the same in any other. When every such label already reads at
  * READ_PX, there is one: the whole picture. Any label under it is enlarged, however
  * little it needs: a label at 11 px is still under the floor `explain check` measures.
+ * Close-ups keep below the heading the stage draws (`layout.top`), zooming a little further
+ * when that is what it takes for a view to fit under it.
  */
 export function closeUps(layout: StepLayout | undefined, w: number, h: number, max = ZOOM_MAX): Zoom[] {
   const whole = [clampZoom(IDENTITY, w, h, max)];
@@ -307,11 +348,19 @@ export function closeUps(layout: StepLayout | undefined, w: number, h: number, m
   if (!read.length) return whole;
   const { s, ox, oy } = stageScale(w, h);
   const smallest = Math.min(...read.map((l) => l.size));
-  const k = Math.min(max, Math.max(1, READ_PX / (smallest * s)));
-  if (k < 1 + 1e-9) return whole;
+  const reading = Math.min(max, Math.max(1, READ_PX / (smallest * s)));
+  if (reading < 1 + 1e-9) return whole;
+  // Below the heading, unless a change reaches into it. A view shorter than the frame would
+  // cut the heading somewhere, so it zooms a little further, until it fits under it (as far
+  // as the zoom cap allows); a view as tall as the frame shows the heading whole.
+  const ceiling = Math.min(FRAME[3], Math.max(layout.top ?? FRAME[3], ...layout.parts.map((p) => p[3])));
+  const bounds: Box = [FRAME[0], FRAME[1], FRAME[2], ceiling];
+  const short = h / (reading * s) < FRAME[3] - FRAME[1] - 1e-9;
+  const fit = short && ceiling < FRAME[3] ? h / ((ceiling - FRAME[1]) * s) : 1;
+  const k = Math.min(max, Math.max(reading, fit));
   const vw = w / (k * s),
     vh = h / (k * s);
-  const regions = tourRegions(layout.parts, vw, vh);
+  const regions = tourRegions(layout.parts, vw, vh, bounds);
   // Open on the lead part: the first region that holds all of it when it fits a view, else the
   // first that holds its top-left corner, where reading it starts.
   const lead = layout.parts[layout.lead] ?? layout.parts[0]!,

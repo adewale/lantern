@@ -4,7 +4,7 @@ import { Scene, Text, NullSink, SnapshotSink, renderAt } from '../../src/index.t
 import { rasterize, band, pushedView } from './explain-video.ts';
 import { filmPlan, pushAt } from '../../explain/film.ts';
 import { defaultVariant } from './explain-project.ts';
-import { restingTime } from '../../explain/trace.ts';
+import { restingTime, stepWords } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
 
 /**
@@ -33,7 +33,7 @@ export async function contactSheet(
     const step = steps[i]!,
       png = await stillPng(v.Scene, restingTime(step, v.trace.fps), w);
     const labelScene = new Scene(new NullSink()),
-      label = new Text(`${i + 1}. ${String(step.meta.title ?? step.step)}`, {
+      label = new Text(`${i + 1}. ${stepWords(step).title}`, {
         fontSize: 0.36,
         color: '#eef3fa',
         anchor: 'start',
@@ -103,7 +103,7 @@ export async function filmstrip(
     if (!svg) continue;
     const png = (await rasterize(svg)).asPng();
     const labelScene = new Scene(new NullSink()),
-      title = String(v.trace.steps[s.step]!.meta.title ?? plan[s.step]!.step);
+      title = stepWords(v.trace.steps[s.step]!).title;
     const label = new Text(`${(s.film / fps).toFixed(1)} s · ${s.step + 1} ${s.resting ? 'rest' : 'motion'} · ${title}`, {
       fontSize: 0.5,
       color: '#eef3fa',
