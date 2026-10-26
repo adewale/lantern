@@ -4,6 +4,8 @@
 
 Newest first; all on 24–26 October 2026.
 
+- **Agent skill**: `skills/rayner-explainers/SKILL.md` maps kinds of explanation to the explainer to copy (`mr-cache` for a code change, `oauth-pkce` for a protocol, `ring-buffer` for a data structure, and six more); points to the engine map before an agent hand-rolls motion; and says how to test a model against its source: a model module with no drawing, its version pinned in `meta.sources`, `this.state` recorded at each step, and a fidelity test using `assertStepState` that fails first.
+
 - **README: the difference from slides**: the opening no longer names motion between steps or step links as the difference, since reveal.js 6.0.2 does both (auto-animate tweens position, size and colour between slides; `#/2` opens the third slide). It names what a deck cannot do: one program computes every step, a setting reruns it so the numbers, diagram and captions follow the case, and every case is checked before anyone sees it.
 
 - **README**: a tagline in the title; an opening that says how an explainer differs from a slide deck (one program on a clock, linkable steps, settings that rerun it as checked cases); one paragraph on the lineage, saying what the fork keeps from Lantern, what it deletes and what it adds; the scene `explain init` writes, which a test keeps identical to the template; the engine features as a list with their guides; Limits as a list; the platform CI runs on; a clone step; the project's licence; and where to report problems.
