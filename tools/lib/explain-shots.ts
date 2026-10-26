@@ -5,6 +5,7 @@ import { rasterize, band } from './explain-video.ts';
 import { defaultVariant } from './explain-project.ts';
 import { restingTime } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
+import { useProjectLettering } from './explain-lettering.ts';
 
 /**
  * A scene's picture at `time` as PNG, `width` pixels wide. Culled: resvg 2.6.2 aborts on a
@@ -21,6 +22,7 @@ export async function contactSheet(
   out: string,
   v: Project['variants'][number] = defaultVariant(project),
 ): Promise<string> {
+  await useProjectLettering(project);
   const
     steps = v.trace.steps,
     cols = 2,
