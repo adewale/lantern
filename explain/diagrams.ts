@@ -317,6 +317,8 @@ export class Diagram {
   private zoom = 1;
   /** The top-level parts last focused on, for the description; null when the diagram is seen whole. */
   private focused: string[] | null = null;
+  /** Where a camera focus left the camera; once the camera is elsewhere, the parts are no longer in focus. */
+  private focusView: Box | null = null;
   /** Marked parts: their colour, and the word a description gives the mark. */
   private marks = new Map<string, { color: string; as: string }>();
   private kept: Set<string> | null = null;
@@ -633,6 +635,10 @@ export class Diagram {
     const step = this.scene.steps.at(-1)?.name;
     // A trail already marks the path; a walk without one names it.
     const walked = this.walked;
+    // A camera focus holds only while the camera stays where it put it.
+    const view = this.scene.frame.box(),
+      focused =
+        this.focusView && !(view && view.every((v, i) => Math.abs(v - this.focusView![i]!) < 1e-6)) ? null : this.focused;
     if (walked && walked.step === step && !walked.trail) parts.push({ name: walked.hops.join(', '), mark: w.path });
     for (const n of this.notes) parts.push({ name: w.beside(n.text, this.nameOf(n.id)), mark: w.note });
     const order = [...this.order].sort((a, b) => +!isScaffold(this.parts.get(a)!.info) - +!isScaffold(this.parts.get(b)!.info));
@@ -655,7 +661,7 @@ export class Diagram {
       // A line through the things (a journey's experience curve) is not one of them.
       else if ((!isScaffold(info) || info.role === 'actor') && info.role !== 'series') things++;
       // A part in focus is said to be, unless a mark says more.
-      const mark = this.marks.get(id)?.as ?? (this.focused?.includes(id) ? w.focused : undefined);
+      const mark = this.marks.get(id)?.as ?? (focused?.includes(id) ? w.focused : undefined);
       const dimmed = !!this.kept && !this.kept.has(id) && !isScaffold(info);
       parts.push({ name, ...(mark ? { mark } : {}), ...(dimmed ? { dimmed } : {}) });
     }
@@ -933,7 +939,7 @@ export class Diagram {
     const mobs = [...this.parts.values()].filter((p) => !p.info.owner).map((p) => p.mob);
     const whole = new Group(...mobs.map((m) => m.copy()));
     if (ids === 'all') {
-      this.focused = null;
+      this.focused = this.focusView = null;
       const anims: Transform[] = atHome(frame) ? [] : [new Transform(frame, frame.copy().reset(), { runTime })];
       // Apply one global affine map from current full diagram bounds to its authored frame.
       const home = this.home.box(),
@@ -969,6 +975,7 @@ export class Diagram {
       ];
       this.focused = tops;
       await this.scene.play(frame.animate.fit(cameraBox(box, margin, zoom), { margin: 0 }), { runTime });
+      this.focusView = [...frame.box()!] as Box;
       return;
     }
     const chosen = new Group(...ids.map((id) => this.get(id).copy()));
@@ -982,6 +989,7 @@ export class Diagram {
       0.78 *
       zoom;
     this.focused = tops;
+    this.focusView = null;
     const anims = this.partMoves(mobs, (m) => moved(m, k, center, boxCenter(box)), runTime);
     if (anims.length) await this.scene.play(...anims);
     this.rezoom(this.zoom * k);
@@ -1047,7 +1055,7 @@ export class Diagram {
     this.marks.clear();
     this.kept = null;
     this.walked = null;
-    this.focused = null;
+    this.focused = this.focusView = null;
   }
   /** Fade the whole diagram (and its notes) out. `reveal` can bring parts back. */
   async hide(): Promise<void> {

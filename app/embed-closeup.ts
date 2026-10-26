@@ -90,11 +90,17 @@ const fixed = (m: Mobject) => m.key === '__paper' || m.key === '__heading';
  * The identity at home. `explain check` maps its labels the same way (inView there).
  */
 export function toView(box: Box, view: Box): Box {
-  const z = 16 / (view[2] - view[0]),
+  const z = viewZoom(view),
     cx = (view[0] + view[2]) / 2,
     cy = (view[1] + view[3]) / 2;
   return [(box[0] - cx) * z, (box[1] - cy) * z, (box[2] - cx) * z, (box[3] - cy) * z];
 }
+/**
+ * The camera's zoom: stage units per world unit. The stage shows the view whole and
+ * centred (an SVG viewBox meets its viewport), so a view out of 16:9 is letterboxed
+ * and the tighter side sets the scale. 1 at home.
+ */
+export const viewZoom = (view: Box): number => Math.min(16 / (view[2] - view[0]), 9 / (view[3] - view[1]));
 /** The camera's box: what the author's frame shows, the most a leaf can be seen in. */
 const viewOf = (scene: Scene): Box => [...(scene.frame?.box() ?? FRAME)] as Box;
 
@@ -126,7 +132,7 @@ function leavesOf(scene: Scene): Leaf[] {
 function labelsOf(scene: Scene): LayoutLabel[] {
   const out: LayoutLabel[] = [];
   const view = viewOf(scene),
-    zoom = 16 / (view[2] - view[0]);
+    zoom = viewZoom(view);
   const walk = (m: Mobject, opacity: number, clip: Box) => {
     const o = opacity * (m.style.opacity ?? 1);
     if (o < 0.25) return;

@@ -18,7 +18,7 @@ import { diagramKey } from '../integrations/agentic-mermaid/snapshot.ts';
 import type { DiagramSnapshot } from '../explain/index.ts';
 import { cameraBox } from '../explain/diagrams.ts';
 import { labelPx, restingTextProblems, MIN_PX } from '../tools/lib/explain-check.ts';
-import { closeUps, stepLayouts } from '../app/embed-closeup.ts';
+import { closeUps, stepLayouts, toView } from '../app/embed-closeup.ts';
 
 const spec = { source: 'graph LR\nA --> B\nB --> C', style: 'nord' };
 const HOME: Box = [-8, -4.5, 8, 4.5];
@@ -103,6 +103,31 @@ test('focus with camera moves the camera, not the diagram; notes, marks, dims an
     }
   }
   await new (bound(Zoom))(new NullSink()).run();
+});
+
+test('a camera focus is described only while the camera stays on it; an artwork focus does not depend on the camera', async () => {
+  class Away extends Scene {
+    override async construct() {
+      const s = stage(this);
+      await this.step('one');
+      const d = await s.show(spec, { box: 'full' });
+      const focused = () => d.describe().parts.filter((p) => p.mark === 'focused').map((p) => p.name);
+      await d.focus(['B'], { camera: true });
+      assert.deepEqual(focused(), ['Beta'], 'in focus while the camera is on it');
+      await this.play(this.frame.animate.reset());
+      assert.deepEqual(focused(), [], 'the camera went home without focus("all")');
+      await d.focus(['B'], { camera: true });
+      await this.play(this.frame.animate.shift([1, 0]));
+      assert.deepEqual(focused(), [], 'the camera moved on');
+      await this.play(this.frame.animate.reset());
+      // The artwork moves inside the diagram's own box: where the camera is does not matter.
+      await d.focus(['A']);
+      await this.play(this.frame.animate.scale(0.9));
+      assert.deepEqual(focused(), ['Alpha'], 'an artwork focus holds wherever the camera is');
+      this.state.done = true;
+    }
+  }
+  await new (bound(Away))(new NullSink()).run();
 });
 
 test('by default focus moves the diagram inside its own box and the camera stays home', async () => {
@@ -215,6 +240,10 @@ test('labels are measured on screen: world size times the camera zoom', () => {
   assert.ok(labelPx(big, scene)! >= MIN_PX);
   scene.frame.scale(2); // zoom 0.5
   assert.ok(labelPx(big, scene)! < MIN_PX, 'a 20 px label zoomed out 2x fails');
+  // A view out of 16:9 is letterboxed: 16 x 36 shows 20 px per unit, so 20 px at home reads 5.
+  scene.frame.reset().stretch(4, 1);
+  assert.ok(Math.abs(labelPx(big, scene)! - 5) < 0.5, `about 5 px in a 16 x 36 view, got ${labelPx(big, scene)}`);
+  assert.deepEqual(toView([0, 0, 4, 4], scene.frame.box()!), [0, 0, 1, 1], 'close-ups work in the letterboxed units too');
 });
 
 test('resting text is judged in the camera view: cut by its edge fails, wholly outside is off screen', () => {

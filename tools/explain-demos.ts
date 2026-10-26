@@ -3,13 +3,12 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { spawn } from 'node:child_process';
-import { SnapshotSink, renderAt } from '../src/index.ts';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
 import { collectProject, defaultVariant, ROOT, baseReceipt } from './lib/explain-project.ts';
 import { restingTime, htmlEscape } from '../explain/trace.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
-import { contactSheet } from './lib/explain-shots.ts';
-import { rasterize, exporterHash, probeVideo, footerLines } from './lib/explain-video.ts';
+import { contactSheet, stillPng } from './lib/explain-shots.ts';
+import { exporterHash, probeVideo, footerLines } from './lib/explain-video.ts';
 import { checkProject } from './lib/explain-check.ts';
 
 const directory = join(ROOT, 'out/explainers');
@@ -36,9 +35,7 @@ for (const item of EXPLAINERS) {
   // The tile links to the default case, so it shows that case's picture.
   const variant = defaultVariant(project),
     step = variant.trace.steps.find((s) => s.step === item.step) ?? variant.trace.steps[0]!;
-  const sink = new SnapshotSink({ width: 960 });
-  await renderAt(variant.Scene, restingTime(step, variant.trace.fps), sink);
-  await writeFile(join(directory, item.id + '.png'), (await rasterize(sink.svg)).asPng());
+  await writeFile(join(directory, item.id + '.png'), await stillPng(variant.Scene, restingTime(step, variant.trace.fps), 960));
   await contactSheet(project, join(directory, item.id + '.steps.png'));
   if (check) await checkProject(project, join(ROOT, 'out/checks', item.id));
   // Videos only: every case of an explainer with video must export with the caption footer.

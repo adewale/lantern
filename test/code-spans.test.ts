@@ -240,7 +240,7 @@ test('tools/tokens.ts prints the spans JSON for stdin', () => {
   assert.match(r.stderr, /engine fallback/);
 });
 
-const shikiSkip = hasShiki() ? false : 'shiki is not installed (optional dependency)';
+const shikiSkip = hasShiki() ? false : 'shiki is not installed (a pinned devDependency: run npm install)';
 
 test('shiki and the fallback lexer cover the same ranges on simple code', { skip: shikiSkip }, () => {
   const snippets: Array<[string, string]> = [

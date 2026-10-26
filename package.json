@@ -27,6 +27,7 @@
     "agentic-mermaid": "0.4.1",
     "fast-check": "4.10.2",
     "playwright-core": "1.64.1",
+    "shiki": "4.5.0",
     "svgpath": "2.6.0"
   },
   "description": "Step-through explainers from one TypeScript scene, with build-time Agentic Mermaid diagrams and optional captioned video. The browser runtime has no dependencies.",
@@ -85,7 +86,6 @@
     "@resvg/resvg-js": "^2.6.2",
     "agentic-mermaid": "0.4.1",
     "playwright-core": "^1.64.1",
-    "shiki": "4.5.0",
     "svgpath": "^2.6.0"
   },
   "peerDependenciesMeta": {
@@ -96,9 +96,6 @@
       "optional": true
     },
     "playwright-core": {
-      "optional": true
-    },
-    "shiki": {
       "optional": true
     },
     "svgpath": {

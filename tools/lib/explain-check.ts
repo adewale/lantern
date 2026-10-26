@@ -18,7 +18,7 @@ import { ROOT, engineAlias, sceneSlug } from './explain-project.ts';
 import { caseName } from '../../explain/index.ts';
 import { restingFrame, undescribed } from '../../explain/trace.ts';
 import { labelOf } from '../../explain/diagrams.ts';
-import { closeUps, stageScale, stepLayouts, toView, viewBox } from '../../app/embed-closeup.ts';
+import { closeUps, stageScale, stepLayouts, toView, viewBox, viewZoom } from '../../app/embed-closeup.ts';
 import type { Box, Mobject } from '../../src/index.ts';
 import type { Project } from './explain-project.ts';
 
@@ -77,14 +77,14 @@ const isHome = (view: Box) => view.every((v, i) => Math.abs(v - FRAME[i]!) < 1e-
 /**
  * A label's size as the reader sees it, in CSS pixels at a 1280-pixel stage: its size
  * in the world times the camera's zoom. A label the camera has zoomed in on reads
- * larger; one it has zoomed out from reads smaller. Null for a mobject that is not a
- * sized label. A phone close-up multiplies this again (the reader's zoom, on top).
+ * larger; one it has zoomed out from reads smaller. A view out of 16:9 is letterboxed,
+ * so its tighter side sets the zoom. Null for a mobject that is not a sized label.
+ * A phone close-up multiplies this again (the reader's zoom, on top).
  */
 export function labelPx(m: Mobject, scene: Pick<Viewed, 'frame'>): number | null {
   const label = labelOf(m);
   if (!label) return null;
-  const view = viewOf(scene);
-  return m.height() * label.emRatio * (1280 / (view[2] - view[0]));
+  return m.height() * label.emRatio * STAGE_PX_PER_UNIT * viewZoom(viewOf(scene));
 }
 /** `box` cut down to every clip around `m`: the part of it that is drawn (a diagram clips to its frame). */
 function clipped(m: Mobject, box: Box): Box {
@@ -312,7 +312,10 @@ export async function checkProject(project: Project, out: string): Promise<Recor
               seen(record, px, shown(m.box()), scene.frameCount);
           } else {
             if (!labels.has(m)) labels.set(m, { text, px: 0, phone: 0, inView: false });
-            if (readable(m, m.box(), viewport)) seen(labels.get(m)!, px, shown(m.box()), scene.frameCount);
+            // A camera gliding past does not make a label read: between completed frames a
+            // label counts at no more than its size with the camera home.
+            const credited = completedFrames.has(scene.frameCount) ? px : Math.min(px, m.height() * label.emRatio * STAGE_PX_PER_UNIT);
+            if (readable(m, m.box(), viewport)) seen(labels.get(m)!, credited, shown(m.box()), scene.frameCount);
           }
         }
       },
