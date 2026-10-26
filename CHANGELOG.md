@@ -4,6 +4,8 @@
 
 Newest first; all on 24–26 October 2026.
 
+- **`describeExplainer`**: `rayner/explain` exports `describeExplainer(Scene, { snapshots?, drawings? })`, an explainer as one typed, JSON-safe object (`schema: 1`): every case and step with its title, caption, timings, the state the scene recorded, what each step changed, the resting picture in words and drawn as text. `explain describe <scene>` prints it. It gives agents back what Lantern's Worker served (`/index.json`, `/trace.json`, `/text`) without a server, plus the captions and picture descriptions Lantern did not have.
+
 - **README: the difference from slides**: the opening no longer names motion between steps or step links as the difference, since reveal.js 6.0.2 does both (auto-animate tweens position, size and colour between slides; `#/2` opens the third slide). It names what a deck cannot do: one program computes every step, a setting reruns it so the numbers, diagram and captions follow the case, and every case is checked before anyone sees it.
 
 - **README**: a tagline in the title; an opening that says how an explainer differs from a slide deck (one program on a clock, linkable steps, settings that rerun it as checked cases); one paragraph on the lineage, saying what the fork keeps from Lantern, what it deletes and what it adds; the scene `explain init` writes, which a test keeps identical to the template; the engine features as a list with their guides; Limits as a list; the platform CI runs on; a clone step; the project's licence; and where to report problems.
