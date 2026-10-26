@@ -8,6 +8,9 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { htmlEscape } from '../../explain/trace.ts';
+import { SHARE_META, shareable } from '../../app/embed-share.ts';
+
+export { shareable };
 
 /**
  * A preview picture: the 960 × 540 still centred on a 1080 × 540 (2:1) canvas of the stage's
@@ -36,9 +39,6 @@ export interface ShareManifest {
   cover: string;
   steps: ShareStep[];
 }
-
-/** Steps whose names are safe as one path segment; others get no share page. */
-export const shareable = (step: string) => /^[A-Za-z0-9_-]+$/.test(step);
 
 /** At most `max` characters, cut at a word, with an ellipsis when cut. */
 export function clip(text: string, max = 200): string {
@@ -109,15 +109,18 @@ ${cardTags(card(m, s, origin, title, url, path))}
 
 /**
  * The explainer's own page as `site:export --origin` publishes it: the built page with the same
- * tags in its head, previewing as its cover step. Its CSP pins only its inline script and style,
- * so tags in the head need no new header.
+ * tags in its head, previewing as its cover step, and SHARE_META naming <origin><path>/<id>/, so
+ * the player's Copy link gives a step's share page (app/embed.ts). Its CSP pins only its inline
+ * script and style, so tags in the head need no new header.
  */
 export function publishedPage(html: string, m: ShareManifest, origin: string, path: string): string {
   const cover = m.steps.find((s) => s.step === m.cover);
   if (!cover) throw new Error(`${m.id}: cover step ${m.cover} has no share picture`);
   const at = html.indexOf('</head>');
   if (at < 0) throw new Error(`No </head> in the page for ${m.id}`);
-  const tags = cardTags(card(m, cover, origin, m.title, `${folder(origin, path)}/${m.id}`, path));
+  const tags =
+    cardTags(card(m, cover, origin, m.title, `${folder(origin, path)}/${m.id}`, path)) +
+    `\n<meta name="${SHARE_META}" content="${htmlEscape(`${folder(origin, path)}/${m.id}/`)}">`;
   return html.slice(0, at) + tags + html.slice(at);
 }
 
@@ -132,8 +135,9 @@ export function pngSize(png: Buffer): { width: number; height: number } {
 
 /**
  * Check a `site:export --origin` folder: for each explainer id, its page (<id>.html) and every
- * share page (<id>/<step>.html) has each of CARD_TAGS once, its URLs are absolute https URLs on `origin`, and
- * the picture each names exists at that path with the declared size. Returns the problems found.
+ * share page (<id>/<step>.html) has each of CARD_TAGS once, its URLs are absolute https URLs on
+ * `origin`, and the picture each names exists at that path with the declared size; an explainer
+ * page also names its share pages' folder in SHARE_META. Returns the problems found.
  */
 export async function checkCards(
   root: string,
@@ -168,6 +172,8 @@ export async function checkCards(
     }
     if (tags.get('twitter:card')?.[0] !== 'summary_large_image') say('twitter:card is not summary_large_image');
     if ((tags.get('twitter:title')?.[0]?.length ?? 0) > TITLE_MAX) say(`twitter:title is over ${TITLE_MAX} characters`);
+    // The player's Copy link reads this to give a step's share page.
+    if (!page.includes('/') && tags.get(SHARE_META)?.join() !== `${site}/${page.replace(/\.html$/, '')}/`) say(`${SHARE_META} is not ${site}/${page.replace(/\.html$/, '')}/`);
     for (const key of ['og:url', 'og:image', 'twitter:image'])
       for (const url of tags.get(key) ?? []) if (!url.startsWith('https://') || !url.startsWith(site + '/')) say(`${key} ${url} is not an https URL under ${site}`);
     const image = tags.get('og:image')?.[0];
