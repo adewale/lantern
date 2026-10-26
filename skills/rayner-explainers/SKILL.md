@@ -1,11 +1,11 @@
 ---
-name: lantern-explainers
-description: Author, check and publish native Lantern explainers as reader-paced HTML embeds and optional silent captioned video. Use for step-through diagrams, code-change explanations, protocol walkthroughs and program-driven animation.
+name: rayner-explainers
+description: Author, check and publish Rayner explainers as reader-paced HTML embeds and optional silent captioned video. Use for step-through diagrams, code-change explanations, protocol walkthroughs and program-driven animation.
 ---
 
-# Lantern explainers
+# Rayner explainers
 
-An explainer is one Lantern `Scene`. The CLI builds it into a step-through HTML page and, optionally, a video. It needs no server or MCP. Read the [reference](https://github.com/adewale/lantern/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/lantern/blob/main/docs/PUBLISHING.md) before you host a page or export a video.
+An explainer is one Rayner `Scene`. The CLI builds it into a step-through HTML page and, optionally, a video. It needs no server or MCP. Read the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) before you host a page or export a video.
 
 ## Loop
 
@@ -14,7 +14,7 @@ Commands are `explain <command>`, or `npm run explain -- <command>` in a checkou
 1. `explain init <directory>` writes a working `scene.ts`. Keep one default-exported `Scene` subclass with static `meta` (id, title, sources, and `lang` if not English) and, if a second case teaches something, static `settings`.
 2. Derive every value on screen from a small model of the system. Test the model against its cited source; the checks cannot tell whether a caption is true.
 3. Give each idea a step with a stable name, a title the picture can prove and a short caption naming what is on screen.
-4. Call `stage(this, { style })` once. Put diagrams (`s.show`), cards (`s.card`) and code (`s.code`) in named regions (`main`, `side`, `top`, `bottom`) so nothing overlaps. Native Lantern objects mix freely; bring several in together with `s.enter(...)`, and pass `{ describe: '…' }` to `s.enter` or `s.keep` so readers who cannot see the drawing get it in words.
+4. Call `stage(this, { style })` once. Put diagrams (`s.show`), cards (`s.card`) and code (`s.code`) in named regions (`main`, `side`, `top`, `bottom`) so nothing overlaps. Native Rayner objects mix freely; bring several in together with `s.enter(...)`, and pass `{ describe: '…' }` to `s.enter` or `s.keep` so readers who cannot see the drawing get it in words.
 5. Design each step's resting picture, what the step leaves on screen, because the reader looks at it while reading the caption. Leave the idea there with `walk(..., { trail: true })`, `mark`, `dim`, `note`, `card.set`, `card.mark` and `code.focus`; give marks an `as` word ("rejected") when they mean something. A token that walks and vanishes leaves nothing.
 6. `explain preview scene.ts --watch` and `explain shots scene.ts --case id=value`: look at every step of every case. A passing build is not a visual review.
 7. `explain check scene.ts`. Fix failures at their cause; `out/checks/<id>/report.json` draws each resting picture roughly in text. Its `legibility.labelsUnder12PxAt390` counts labels a phone reader sees under 12 px in the step's close-up; get it to 0 in every case (a heading at `stage(this, { headingSize: 0.54 })` reads at 12 px).
@@ -41,4 +41,4 @@ Report the commands you ran, the artifact paths and what the checks found. Do no
 - support for styles, scripts or SVG features the collection does not test;
 - identical video bytes across FFmpeg builds.
 
-The engine is Lantern by Ivar Vong (MIT). Keep the MIT and font notices, and do not imply endorsement by Lantern or Agentic Mermaid.
+The engine is a fork of Lantern by Ivar Vong (MIT). Keep the MIT and font notices, and do not imply endorsement by Lantern or Agentic Mermaid.

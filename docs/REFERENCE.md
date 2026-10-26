@@ -249,7 +249,7 @@ Inside an iframe without `parentOrigin` (a raw iframe), the page adds its own "O
 ### Resize protocol v1
 
 ```ts
-{ type: 'lantern:resize', version: 1, height: 742 }
+{ type: 'rayner:resize', version: 1, height: 742 }
 ```
 
 - The page measures its content root, rounds up, and posts only changed heights, only while framed, and only to the exact `parentOrigin`. It measures on load, on each `ResizeObserver` callback, and whenever the player settles on a step, because browsers can stop rendering an offscreen cross-origin iframe.
@@ -297,7 +297,7 @@ With `--footer`, `render` fails before FFmpeg starts on a title or caption that 
 | `npm run videos` | Everything video, kept out of CI: `demos:render`, `test:video` and the package smoke test's installed render. Needs FFmpeg |
 | `npm run demos:serve` | Serve `out/` on port 5175 with each page's headers and byte ranges; `-- --port n` |
 | `npm run demos:review` | Open every served case at 390 px and 1180 px in Chromium and check captions, artwork, errors, outside requests and headers, and video byte ranges when `out/videos/` has videos; screenshots in `out/review/` |
-| `npm run site:export -- <site-root>` | Copy the built pages, posters, videos and loader under `<site-root>/projects/lantern-explainers` (`--path` changes it) and write their `_headers` block to `out/site-headers.txt` |
+| `npm run site:export -- <site-root>` | Copy the built pages, posters, videos and loader under `<site-root>/projects/rayner` (`--path` changes it) and write their `_headers` block to `out/site-headers.txt` |
 | `npm run pack:smoke` | Pack, install into a fresh project without the optional packages, build an outside scene; `EXPLAIN_BROWSER=1` adds capture, `EXPLAIN_VIDEO=1` a render |
 | `npm run build:lib` | Compile `dist/` (runs on `npm pack`) |
 | `npm run fonts` | Regenerate `src/font-data.ts` from Inter, JetBrains Mono and the Noto numeral subsets, reproducibly (needs `fonttools` and `brotli`) |

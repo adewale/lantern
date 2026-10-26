@@ -61,3 +61,15 @@ test('external source and compiled ESM scenes share the CLI engine; source hashe
     await rm(folder, { recursive: true, force: true });
   }
 });
+
+test('the README shows the scene `explain init` writes, byte for byte', async () => {
+  const folder = await mkdtemp(join(tmpdir(), 'explain-init-'));
+  try {
+    execFileSync(process.execPath, [join(ROOT, 'tools/explain.ts'), 'init', join(folder, 'first')], { stdio: 'pipe' });
+    const scene = await readFile(join(folder, 'first', 'scene.ts'), 'utf8'),
+      readme = await readFile(join(ROOT, 'README.md'), 'utf8');
+    assert.ok(readme.includes('```ts\n' + scene + '```'), 'README "Write one" must show the template from tools/explain.ts');
+  } finally {
+    await rm(folder, { recursive: true, force: true });
+  }
+});

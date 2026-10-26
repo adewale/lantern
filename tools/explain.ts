@@ -13,7 +13,7 @@ const CAPTURE = ['agentic-mermaid', 'playwright-core', 'svgpath'],
   RASTER = ['@resvg/resvg-js'];
 const peers: Record<string, string> = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).peerDependencies;
 const install = (names: string[]) => 'npm i ' + names.map((n) => `${n}@${peers[n]}`).join(' ');
-const HELP = `Lantern Explainers (Node 26+)
+const HELP = `Rayner (Node 26+)
 
 Usage: explain <command> <scene.ts | directory> [options]
 

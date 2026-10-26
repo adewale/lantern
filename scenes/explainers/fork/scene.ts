@@ -29,7 +29,7 @@ export default class ForkExplainer extends Scene {
       'https://github.com/ivarvong/lantern/blob/2c7bad5/README.md',
       'https://github.com/ivarvong/lantern/blob/2c7bad5/app/worker.ts',
       'https://github.com/ivarvong/lantern/blob/2c7bad5/src/mermaid.ts',
-      'https://github.com/adewale/lantern/blob/main/docs/UPSTREAM.md',
+      'https://github.com/adewale/rayner/blob/main/docs/UPSTREAM.md',
     ],
   };
   override async construct() {
