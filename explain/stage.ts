@@ -1,5 +1,7 @@
-import { Mobject, Rectangle, Text, FadeIn, FadeOut, Transform } from '../src/index.ts';
+import { Mobject, Group, Rectangle, Circle, Text, FadeIn, FadeOut, Transform, Create } from '../src/index.ts';
 import type { Scene, Vec, Box, FadeOpts, Animation } from '../src/index.ts';
+import { dimension, pin, callout, tool, Draw, oneStrokeEach } from './annotate.ts';
+import type { Side, ToolKind } from './annotate.ts';
 import { Diagram } from './diagrams.ts';
 import type { ShowOptions } from './diagrams.ts';
 import { Card, CodeBlock } from './panels.ts';
@@ -7,7 +9,8 @@ import type { CardRow, CardOptions, CodeOptions } from './panels.ts';
 import { diagramsOf } from '../integrations/agentic-mermaid/snapshot.ts';
 import type { Palette, DiagramSpec } from '../integrations/agentic-mermaid/snapshot.ts';
 import { palette } from './palettes.ts';
-import { soft, emphasis, good, bad } from './look.ts';
+import { soft, emphasis, good, bad, regionBox } from './look.ts';
+import type { Region } from './look.ts';
 import { picture, shownNames } from './trace.ts';
 import { wordsOf, langOf } from './words.ts';
 import type { Seen } from './trace.ts';
@@ -25,6 +28,8 @@ export interface StageOptions {
   heading?: 'step' | string | false;
   /** The heading's font size; at the default 0.36 it is under 12 px on a 390 px phone, at 0.5 about 12. */
   headingSize?: number;
+  /** Number each step's heading (a circled 1, 2, 3 before the title). On by default when the heading follows the steps. */
+  numbered?: boolean;
 }
 /** `enter: false` makes the panel and keeps it without playing, for `s.enter` to bring in with others. */
 type Entry = { enter?: boolean };
@@ -35,6 +40,14 @@ type Entry = { enter?: boolean };
 export type Describe = { describe?: string | (() => string) };
 const isOptions = (v: unknown): v is object => !!v && !(v instanceof Mobject);
 const HEADING_Y = 3.8;
+/** With a line under it, the heading moves up to make room. */
+const HEADING_Y_WITH_LINE = 3.98;
+/** A step's `line`: one line under the heading, in the soft colour. */
+const LINE_SIZE = 0.3;
+/** The widest the heading and its line may be, in scene units. */
+const CHROME_WIDTH = 14.6;
+/** Where content goes when the camera focuses on it: the stage below the heading and its line. */
+const CONTENT: Box = [-7.55, -4.25, 7.55, 3.25];
 /** The camera's home box: the whole stage. */
 const HOME: Box = [-8, -4.5, 8, 4.5];
 
@@ -46,32 +59,119 @@ export function stage(scene: Scene, options: StageOptions = {}) {
   const paper = new Rectangle({ width: 16, height: 9, fill: colors.paper, stroke: 'none' });
   paper.key = '__paper';
   scene.add(paper);
-  const makeHeading = (text: string) => {
-    const t = new Text(text, { fontSize: options.headingSize ?? 0.36, color: colors.ink, weight: 'bold' });
-    if (t.width() > 14.6) t.setWidth(14.6);
-    t.moveTo([0, HEADING_Y]);
+  const numbered = options.numbered ?? mode === 'step';
+  const headingSize = options.headingSize ?? 0.36;
+  /**
+   * The heading, at home (camera at rest): the title, a circled step number before it when
+   * numbered, and the step's line under it. The number and line are keyed `__chrome`: like the
+   * heading they belong to the stage, not the picture a step leaves.
+   */
+  const makeChrome = (text: string, line: string, number: number | null, step: string) => {
+    const t = new Text(text, { fontSize: headingSize, color: colors.ink, weight: 'bold' });
     t.key = '__heading';
-    return t;
+    const y = line ? HEADING_Y_WITH_LINE : HEADING_Y;
+    const parts: Mobject[] = [];
+    let badge: Group | null = null;
+    if (number != null && text) {
+      const r = headingSize * 0.62;
+      const digit = new Text(String(number), { fontSize: headingSize * 0.72, color: emphasis(colors), weight: 'bold' });
+      badge = new Group(new Circle({ radius: r, stroke: emphasis(colors), strokeWidth: headingSize * 0.06, fill: 'none' }), digit);
+      badge.key = '__chrome';
+    }
+    const badgeW = badge ? headingSize * 1.24 + headingSize * 0.5 : 0;
+    if (t.width() + badgeW > CHROME_WIDTH) t.setWidth(CHROME_WIDTH - badgeW);
+    t.moveTo([badgeW / 2, y]);
+    if (badge) {
+      badge.moveTo([t.box()![0] - headingSize * 0.5 - headingSize * 0.62, y]);
+      (badge.children[1] as Text).moveTo(badge.children[0]!.center());
+      parts.push(badge);
+    }
+    if (line) {
+      const l = new Text(line, { fontSize: LINE_SIZE, color: soft(colors) });
+      if (l.width() > CHROME_WIDTH)
+        throw new Error(
+          `Step "${step}": its line is ${l.width().toFixed(1)} units wide, longer than one line under the heading (${CHROME_WIDTH}); shorten it`,
+        );
+      l.moveTo([0, t.box()![1] - 0.08 - l.height() / 2]);
+      l.key = '__chrome';
+      parts.push(l);
+    }
+    return { heading: t, chrome: parts };
   };
-  let heading = makeHeading(typeof mode === 'string' && mode !== 'step' ? mode : '');
-  scene.add(heading);
+  const first = makeChrome(typeof mode === 'string' && mode !== 'step' ? mode : '', '', null, '');
+  let heading = first.heading;
+  let chrome: Mobject[] = [];
+  /**
+   * A paper band behind the heading. Invisible at home, where content keeps below the heading;
+   * while the camera is away, zoomed content passes under it instead of through the title.
+   */
+  const band = new Rectangle({ width: 16, height: 4.5 - CONTENT[3], fill: colors.paper, stroke: 'none' }).moveTo([0, (4.5 + CONTENT[3]) / 2]);
+  band.style.opacity = 0;
+  band.key = '__chrome';
+  scene.add(band, heading);
+  /** Each heading part's home placement; the camera maps it to the screen while it is away. */
+  const home = new Map<Mobject, Mobject>([
+    [heading, heading.copy()],
+    [band, band.copy()],
+  ]);
+  /** The heading, its band, number and line draw last, over anything added after them. */
+  const onTop = () => {
+    const top = [band, heading, ...chrome].filter((m) => scene.mobjects.includes(m));
+    scene.mobjects = [...scene.mobjects.filter((m) => !top.includes(m)), ...top];
+  };
+  const add = scene.add.bind(scene);
+  scene.add = (...mobs: Mobject[]) => {
+    add(...mobs);
+    onTop();
+    return scene;
+  };
+  /** The camera's map from home to the world: world = shift + k × home. */
+  let view = { k: 1, shift: [0, 0] as Vec };
+  const pinned = (m: Mobject, v = view) => {
+    const at = home.get(m)!.copy();
+    at.scale(v.k, { aboutPoint: [0, 0] });
+    for (const x of at.family()) if (x.style.strokeWidth) x.style.strokeWidth *= v.k;
+    return at.shift(v.shift);
+  };
   /** Kept objects, each with what describes it (several kept together share one). */
   const overlays = new Map<Mobject, (() => string) | undefined>();
   const diagrams = new Set<Diagram>();
 
-  async function setHeading(text: string): Promise<void> {
-    if (heading.text === text) return;
-    const next = makeHeading(text);
+  async function setHeading(text: string, line: string, number: number | null, step: string): Promise<void> {
+    const next = makeChrome(text, line, number, step);
+    const was = [heading.text, ...chrome.map((c) => (c as { text?: string }).text ?? '')].join('|'),
+      now = [next.heading.text, ...next.chrome.map((c) => (c as { text?: string }).text ?? '')].join('|');
+    if (was === now && chrome.length === next.chrome.length) return;
+    // Away from home, the new heading arrives where the camera shows the old one.
+    for (const m of [next.heading, ...next.chrome]) {
+      home.set(m, m.copy());
+      if (view.k === 1 && !view.shift[0] && !view.shift[1]) continue;
+      m.scale(view.k, { aboutPoint: [0, 0] });
+      for (const x of m.family()) if (x.style.strokeWidth) x.style.strokeWidth *= view.k;
+      m.shift(view.shift);
+    }
     const anims = [];
     if (heading.text) anims.push(new FadeOut(heading, { runTime: 0.3 }));
     else scene.remove(heading);
-    if (text) anims.push(new FadeIn(next, { runTime: 0.3 }));
-    heading = next;
-    if (!text) scene.add(next);
+    for (const c of chrome) anims.push(new FadeOut(c, { runTime: 0.3 }));
+    if (text) anims.push(new FadeIn(next.heading, { runTime: 0.3 }));
+    for (const c of next.chrome) anims.push(new FadeIn(c, { runTime: 0.3 }));
+    for (const m of [heading, ...chrome]) home.delete(m);
+    heading = next.heading;
+    chrome = next.chrome;
+    if (!text) scene.add(heading);
     if (anims.length) await scene.play(...anims);
   }
-  // Follow step titles without asking authors to repeat them.
-  if (mode === 'step') scene.onStep((s) => setHeading(typeof s.meta.title === 'string' ? s.meta.title : ''));
+  // Follow step titles (and lines) without asking authors to repeat them.
+  if (mode === 'step')
+    scene.onStep((s) =>
+      setHeading(
+        typeof s.meta.title === 'string' ? s.meta.title : '',
+        typeof s.meta.line === 'string' ? s.meta.line.trim() : '',
+        numbered ? scene.steps.length : null,
+        s.name,
+      ),
+    );
   /** What a sighted reader sees: diagrams, then panels and described drawings, then other kept text. */
   function look(): Seen[] {
     const w = wordsOf(scene);
@@ -106,6 +206,57 @@ export function stage(scene: Scene, options: StageOptions = {}) {
     const say = typeof describe === 'string' ? () => describe : describe;
     for (const m of mobs) overlays.set(m, say);
   };
+  /**
+   * Annotations are sized for the screen: made in home coordinates from the points the camera
+   * shows, then mapped into the world as the heading is, so a zoomed camera shows them at size.
+   */
+  const toScreen = (p: Vec): Vec => [(p[0] - view.shift[0]) / view.k, (p[1] - view.shift[1]) / view.k];
+  function onScreen<T extends Mobject>(m: T): T {
+    if (view.k === 1 && !view.shift[0] && !view.shift[1]) return m;
+    m.scale(view.k, { aboutPoint: [0, 0] });
+    for (const x of m.family()) if (x.style.strokeWidth) x.style.strokeWidth *= view.k;
+    m.shift(view.shift);
+    return m;
+  }
+  /** The camera box that shows `target` in the content area below the heading. */
+  function viewFor(target: Mobject | readonly Mobject[] | Box, margin: number): Box {
+    let b: Box | null;
+    if (Array.isArray(target) && typeof target[0] === 'number') b = target as Box;
+    else {
+      const mobs = (Array.isArray(target) ? target : [target]) as Mobject[];
+      const boxes = mobs.map((m) => m.box()).filter((x): x is Box => !!x);
+      if (!boxes.length) throw new Error('focus(): nothing to look at');
+      b = [Math.min(...boxes.map((x) => x[0])), Math.min(...boxes.map((x) => x[1])), Math.max(...boxes.map((x) => x[2])), Math.max(...boxes.map((x) => x[3]))];
+    }
+    const w = b[2] - b[0] + 2 * margin,
+      h = b[3] - b[1] + 2 * margin;
+    const z = Math.max(1, Math.min((CONTENT[2] - CONTENT[0]) / Math.max(w, 1e-6), (CONTENT[3] - CONTENT[1]) / Math.max(h, 1e-6)));
+    const cc: Vec = [(CONTENT[0] + CONTENT[2]) / 2, (CONTENT[1] + CONTENT[3]) / 2],
+      tc: Vec = [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
+    const hw = 8 / z,
+      hh = 4.5 / z;
+    // Put the target's centre where the content area's centre is on screen, then keep the view on the stage.
+    const cx = Math.min(8 - hw, Math.max(-8 + hw, tc[0] - cc[0] / z)),
+      cy = Math.min(4.5 - hh, Math.max(-4.5 + hh, tc[1] - cc[1] / z));
+    return [cx - hw, cy - hh, cx + hw, cy + hh];
+  }
+  /**
+   * The animations that move the camera to `box`, with the heading's parts moving in step so
+   * they stay put on screen: the camera's map from home is linear in the box, so both
+   * interpolate together exactly.
+   */
+  function cameraTo(box: Box, runTime: number): Animation[] {
+    const k = (box[2] - box[0]) / 16,
+      next = { k, shift: [(box[0] + box[2]) / 2, (box[1] + box[3]) / 2] as Vec };
+    const anims: Animation[] = [new Transform(scene.frame, scene.frame.copy().fit(box, { margin: 0 }), { runTime })];
+    for (const m of [heading, ...chrome]) if (home.has(m)) anims.push(new Transform(m, pinned(m, next), { runTime }));
+    const away = Math.abs(k - 1) > 1e-9 || Math.abs(next.shift[0]) > 1e-9 || Math.abs(next.shift[1]) > 1e-9;
+    const banded = pinned(band, next);
+    banded.style.opacity = away ? 0.94 : 0;
+    anims.push(new Transform(band, banded, { runTime }));
+    view = next;
+    return anims;
+  }
   async function enterPanel<T extends Mobject>(panel: T, { enter = true }: Entry, fade: FadeOpts): Promise<T> {
     overlays.set(panel, undefined);
     if (enter) await scene.play(new FadeIn(panel, fade));
@@ -143,6 +294,15 @@ export function stage(scene: Scene, options: StageOptions = {}) {
         colors = snapshot.palette;
         paper.setFill(colors.paper);
         heading.setFill(colors.ink);
+        band.setFill(colors.paper);
+        home.get(band)!.setFill(colors.paper);
+        // The number and line take the adopted palette too, here and in their home copies.
+        for (const c of chrome)
+          for (const m of [c, home.get(c)!])
+            if (m instanceof Group) {
+              m.children[0]!.setStroke(emphasis(colors));
+              m.children[1]!.setFill(emphasis(colors));
+            } else m.setFill(soft(colors));
       }
       const diagram = new Diagram(scene, spec, snapshot, opts);
       diagrams.add(diagram);
@@ -192,13 +352,78 @@ export function stage(scene: Scene, options: StageOptions = {}) {
      * next idea. A camera moved by `focus` glides home in the same play.
      */
     async clear({ runTime = 0.4 } = {}) {
-      const gone = scene.mobjects.filter((m) => m !== paper && m !== heading);
-      const home = scene.frame.box()!.every((v, i) => Math.abs(v - HOME[i]!) < 1e-6);
+      const gone = scene.mobjects.filter((m) => m !== paper && m !== heading && m !== band && !chrome.includes(m));
+      const atHome = scene.frame.box()!.every((v, i) => Math.abs(v - HOME[i]!) < 1e-6);
       const anims: Animation[] = gone.map((m) => new FadeOut(m, { runTime }));
-      if (!home) anims.push(new Transform(scene.frame, scene.frame.copy().reset(), { runTime }));
+      if (!atHome) anims.push(...cameraTo(HOME, runTime));
       if (anims.length) await scene.play(...anims);
       for (const d of diagrams) d.forget();
       overlays.clear();
+    },
+    /**
+     * Move the camera so `target` (mobjects or a box) fills the stage below the heading, with
+     * `margin` around it, or back home with `'all'`. The heading, its number and its line stay
+     * where they are on screen, at their size; everything else is seen closer. The camera never
+     * zooms out past the stage, and never shows beyond its edges.
+     */
+    async focus(target: Mobject | readonly Mobject[] | Box | 'all', { margin = 0.4, runTime = 0.9 } = {}) {
+      await scene.play(...cameraTo(target === 'all' ? HOME : viewFor(target, margin), runTime));
+    },
+    /**
+     * Move a kept object to a new place in one glide: a point, or a box or region it is scaled
+     * down to fit (never up). The idea carried on from the step before, rather than cleared.
+     */
+    async carry(m: Mobject, to: Vec | Box | Region, { runTime = 0.8 } = {}) {
+      const target = m.copy();
+      if (typeof to === 'string' || to.length === 4) {
+        const b = typeof to === 'string' ? regionBox(to) : (to as Box);
+        const k = Math.min(1, (b[2] - b[0]) / Math.max(1e-6, target.width()), (b[3] - b[1]) / Math.max(1e-6, target.height()));
+        target.scale(k).moveTo([(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]);
+      } else target.moveTo(to as Vec);
+      await scene.play(new Transform(m, target, { runTime }));
+    },
+    /** A dimension line from `a` to `b` with `label`, set off by `offset`; drawn in, and kept. */
+    async dimension(a: Vec, b: Vec, label: string, opts: { offset?: number; color?: string; size?: number } = {}) {
+      const g = onScreen(dimension(toScreen(a), toScreen(b), label, { color: opts.color ?? emphasis(colors), ...opts }));
+      keepAll([g], { describe: () => `A dimension line marked “${label}”` });
+      await scene.play(new Create(g, { runTime: 0.6, lagRatio: 0.1 }));
+      return g;
+    },
+    /** A pin stuck in at `at`, with an optional label; drawn in, and kept. */
+    async pin(at: Vec, opts: { label?: string; color?: string; size?: number } = {}) {
+      const g = onScreen(pin(toScreen(at), { color: opts.color ?? emphasis(colors), ...opts }));
+      keepAll([g], { describe: () => (opts.label ? `A pin marked “${opts.label}”` : 'A pin') });
+      await scene.play(new FadeIn(g, { runTime: 0.4, shift: [0, -0.15] }));
+      return g;
+    },
+    /** Words beside a target with a leader line to it; drawn in, and kept. */
+    async callout(target: Vec | Box | Mobject, text: string, opts: { side?: Side; gap?: number; color?: string; size?: number } = {}) {
+      const box = Array.isArray(target) ? (target.length === 2 ? ([...target, ...target] as Box) : (target as Box)) : (target as Mobject).box();
+      if (!box) throw new Error('callout(): the target has no extent');
+      const [a, b] = [toScreen([box[0], box[1]]), toScreen([box[2], box[3]])];
+      const g = onScreen(callout([a[0], a[1], b[0], b[1]], text, { color: opts.color ?? colors.ink, ...opts }));
+      keepAll([g], {});
+      await scene.play(new Create(g, { runTime: 0.6, lagRatio: 0.15 }));
+      return g;
+    },
+    /**
+     * Draw `m` stroke by stroke at an even speed, with a pen or pencil riding the tip (or none),
+     * and keep it. `m` must not be on stage yet. A path of several strokes is split into one path
+     * per stroke first; the result is what was drawn and kept. `describe` says what it shows.
+     */
+    async draw(m: Mobject, { tool: kind = 'pen', color, runTime = 1.5, describe }: { tool?: ToolKind | false; color?: string; runTime?: number } & Describe = {}) {
+      // One path per stroke, so the tool can follow each in turn.
+      m = oneStrokeEach(m);
+      keepAll([m], { describe });
+      const t = kind ? tool(kind, { ink: colors.ink, body: color ?? (kind === 'pen' ? soft(colors) : emphasis(colors)) }) : null;
+      if (t) {
+        // The tool is sized to the stage, as the camera shows it.
+        t.scale(view.k, { aboutPoint: [0, 0] });
+        for (const x of t.family()) if (x.style.strokeWidth) x.style.strokeWidth *= view.k;
+      }
+      await scene.play(new Draw(m, t, { runTime }));
+      if (t) scene.remove(t);
+      return m;
     },
   };
 }

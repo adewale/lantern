@@ -13,7 +13,11 @@ import {
   traceScene,
   renderText,
   Text,
+  renderElements,
 } from '../../src/index.ts';
+import type { ElementRecord } from '../../src/index.ts';
+import { pacing, pacingProblems } from '../../explain/film.ts';
+import { Card } from '../../explain/panels.ts';
 import { ROOT, engineAlias, sceneSlug } from './explain-project.ts';
 import { caseName } from '../../explain/index.ts';
 import { restingFrame, undescribed } from '../../explain/trace.ts';
@@ -122,6 +126,7 @@ export function restingTextProblems(scene: Viewed): string[] {
     zoomed = !isHome(view);
   const texts: { m: Mobject; box: Box; native: boolean; text: string }[] = [];
   const problems: string[] = [];
+  const chromeBoxes: { box: Box; text: string }[] = [];
   const visible = (m: Mobject) => {
     for (let a: Mobject | null = m; a; a = a.parent) if ((a.style.opacity ?? 1) < 0.5) return false;
     // Text is drawn by the fill (and any stroke) of its paths: with neither it shows nothing.
@@ -149,11 +154,19 @@ export function restingTextProblems(scene: Viewed): string[] {
     const shown = box[0] < view[2] && box[2] > view[0] && box[1] < view[3] && box[3] > view[1];
     if (zoomed && !shown) continue; // off screen while the camera looks elsewhere
     const native = m instanceof Text;
-    const heading = m.key === '__heading';
+    // The heading, and its number and line: stage furniture, kept clear of the picture by the stage itself.
+    let heading = false;
+    for (let x: Mobject | null = m; x; x = x.parent) if (x.key === '__heading' || x.key === '__chrome') heading = true;
     if (zoomed && (native || heading) && (box[0] < view[0] || box[1] < view[1] || box[2] > view[2] || box[3] > view[3]))
       problems.push(`"${text}" is cut off by the frame`);
     if (!heading) texts.push({ m, box, native, text });
+    else chromeBoxes.push({ box, text });
   }
+  // The heading's line takes room under the title: content text must stay clear of all of it.
+  for (const t of texts)
+    for (const c of chromeBoxes)
+      if (t.box[0] < c.box[2] && t.box[2] > c.box[0] && t.box[1] < c.box[3] && t.box[3] > c.box[1])
+        problems.push(`"${t.text}" runs into the heading's "${c.text}"`);
   for (const t of texts)
     if (t.native && (t.box[0] < FRAME[0] || t.box[1] < FRAME[1] || t.box[2] > FRAME[2] || t.box[3] > FRAME[3]))
       problems.push(`"${t.text}" crosses the stage edge`);
@@ -271,9 +284,22 @@ export async function checkProject(project: Project, out: string): Promise<Recor
     );
     const held = new Map<string, string>(),
       moved = new Set<string>();
+    // The film's pacing: whether each frame's picture differs from the frame before. The renderer
+    // reuses an element's record while nothing about it changes, so identity is enough.
+    const changed: boolean[] = [];
+    let lastRecords: ElementRecord[] = [],
+      lastView = '';
+    // Cards on screen at each resting picture: a step that ends on a card says its values in a panel.
+    const cardsAtRest: Record<string, number> = {};
     await new v.Scene({
       async frame(scene, dt) {
         await motion.frame(scene);
+        const records = renderElements(scene),
+          viewNow = scene.frame.box()!.join(' ');
+        changed[scene.frameCount] =
+          viewNow !== lastView || records.length !== lastRecords.length || records.some((r, i) => r !== lastRecords[i]);
+        lastRecords = records;
+        lastView = viewNow;
         const hold = dt ? holds.find((h) => scene.frameCount >= h.from && scene.frameCount <= h.to) : undefined;
         if (hold) {
           const svg = toSvgString(scene);
@@ -282,12 +308,14 @@ export async function checkProject(project: Project, out: string): Promise<Recor
         }
         if (targets.has(scene.frameCount)) frames.set(scene.frameCount, toSvgString(scene));
         if (completedFrames.has(scene.frameCount)) {
-          // The resting picture of a step, without the heading that names it.
+          // The resting picture of a step, without the heading (number, title, line) that names it.
           const all = scene.mobjects;
-          scene.mobjects = all.filter((m) => m.key !== '__heading');
+          scene.mobjects = all.filter((m) => m.key !== '__heading' && m.key !== '__chrome');
           resting.set(scene.frameCount, toSvgString(scene));
           scene.mobjects = all;
           restingText.set(scene.frameCount, renderText(scene));
+          if (scene.currentStep)
+            cardsAtRest[scene.currentStep.name] = scene.familyMembers().filter((m) => m instanceof Card && (m.style.opacity ?? 1) >= 0.5).length;
           collisions.push(...restingTextProblems(scene).map((p) => `${scene.currentStep?.name}: ${p}`));
         }
         // Sizes on screen: world size times the camera's zoom, inside the camera's view
@@ -359,6 +387,8 @@ export async function checkProject(project: Project, out: string): Promise<Recor
     );
     const small = [...labels.values()].filter((label) => label.px < MIN_PX).map(({ text, px }) => ({ text, px }));
     assert.deepEqual(small, [], `Labels never reach ${MIN_PX}px at 1280px stage ${where}: ${JSON.stringify(small)}`);
+    const film = pacing(v.trace, changed);
+    assert.deepEqual(pacingProblems(film), [], `The video drags ${where}`);
     const blank = v.trace.steps.flatMap((s) => undescribed(s.after).map((m) => `${s.step}: ${m}`));
     assert.deepEqual(blank, [], `Every drawing needs words for readers who cannot see it ${where}`);
     const contents = `import * as author from ${JSON.stringify(project.file)};import{bindSnapshots,withSettings}from ${JSON.stringify(join(ROOT, 'explain/index.ts'))};import{Scene,NullSink,toSvgString}from ${JSON.stringify(join(ROOT, 'src/index.ts'))};const Source=author[${JSON.stringify(project.exportName)}];export async function run(){const C=withSettings(bindSnapshots(Source,${JSON.stringify(project.store)}),${JSON.stringify(v.values)});const s=await new C(new NullSink(),{skipUntil:Infinity}).run();return{steps:s.steps.map(s=>s.name),state:s.describe(),svg:toSvgString(s)}}`;
@@ -391,6 +421,9 @@ export async function checkProject(project: Project, out: string): Promise<Recor
       completedStepLabels: staticLabels.size,
       // What a reader sees: the labels at 1280 px, and on a 390 px phone in each step's close-up.
       legibility: legibilityReport([...labels.values(), ...staticLabels.values()]),
+      // How the video plays: its length, its stillest stretch, and steps the film shows by title only.
+      pacing: film,
+      cardsAtRest,
       // Each step's resting frame as text, so an author can read it without a browser.
       restingFrames: Object.fromEntries(v.trace.steps.map((step) => [step.step, restingText.get(restingFrame(step)) ?? ''])),
     });

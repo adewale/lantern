@@ -8,7 +8,7 @@ import { collectProject, defaultVariant, ROOT, baseReceipt } from './lib/explain
 import { restingTime, htmlEscape } from '../explain/trace.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
 import { contactSheet, stillPng } from './lib/explain-shots.ts';
-import { exporterHash, probeVideo, footerLines } from './lib/explain-video.ts';
+import { exporterHash, probeVideo } from './lib/explain-video.ts';
 import { checkProject } from './lib/explain-check.ts';
 
 const directory = join(ROOT, 'out/explainers');
@@ -38,12 +38,6 @@ for (const item of EXPLAINERS) {
   await writeFile(join(directory, item.id + '.png'), await stillPng(variant.Scene, restingTime(step, variant.trace.fps), 960));
   await contactSheet(project, join(directory, item.id + '.steps.png'));
   if (check) await checkProject(project, join(ROOT, 'out/checks', item.id));
-  // Videos only: every case of an explainer with video must export with the caption footer.
-  if (render && item.video !== false)
-    for (const v of project.variants)
-      await footerLines(v.trace, v.values).catch((error: Error) => {
-        throw new Error(`${item.id}: ${error.message}`);
-      });
   evidence.push({
     id: item.id,
     title: project.Scene.meta?.title ?? item.id,
@@ -139,8 +133,7 @@ if (render) {
             receipt.exporterHash === exporter &&
             receipt.engineHash === entry.engineHash &&
             JSON.stringify(receipt.snapshotHashes) === JSON.stringify(entry.snapshotHashes) &&
-            receipt.fps === 30 &&
-            receipt.preset === 'caption-footer';
+            receipt.fps === 30;
         } catch (error) {
           if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
         }
@@ -156,7 +149,6 @@ if (render) {
             join(ROOT, 'tools/explain.ts'),
             'render',
             join(ROOT, 'scenes/explainers', item.id),
-            '--footer',
             '--out',
             out,
           ],

@@ -139,6 +139,7 @@ export default class PenAndPencil extends Scene {
 
     await this.step('text', {
       title: 'Each plate starts as a real chart written in Mermaid',
+      line: 'Four real charts on the page; here, a timeline of our own.',
       caption:
         'The page draws four real charts, a radar, a state diagram, a sankey and a timeline, each inside a made-up world. This explainer models its method on a timeline of its own, not the page’s code: four periods with one event each, and no positions anywhere in the text.',
     });
@@ -149,10 +150,13 @@ export default class PenAndPencil extends Scene {
 
     await this.step('layout', {
       title: 'The layout engine fixes every box, marker and label',
+      line: 'The engine places every box; the drawing never moves one.',
       caption:
-        'On the page pele lays the chart out, measuring each label with Hershey letter widths so the boxes fit the hand lettering. Here Agentic Mermaid does the layout with Inter’s widths, so the lettering is fitted into the boxes later. The card gives one event box in stage units.',
+        'On the page pele lays the chart out, measuring each label with Hershey letter widths so the boxes fit the hand lettering. Here Agentic Mermaid does the layout with Inter’s widths, so the lettering is fitted into the boxes later. The dimension gives one event box’s width in stage units.',
     });
+    // The text stays in view, carried into a corner, while the layout it became arrives.
     await drop(plates);
+    await s.carry(source, [-7.55, 1.5, -2.95, 3.25]);
     const d = await s.show({ source: WORLD }, { box: CHART_BOX });
     // Read every mark before anything restyles the diagram.
     const parts = facts.map((_, i) => anatomy(d, i));
@@ -161,15 +165,8 @@ export default class PenAndPencil extends Scene {
     const chart = union([...parts.flatMap((p) => [p.period.box, p.event.box]), rail]);
     const focus = parts[FOCUS]!;
     await d.mark([`period:period-${FOCUS}`], { as: 'measured' });
-    const boxCard = await s.card(
-      [
-        ['left', fmt(focus.event.box[0], 2)],
-        ['bottom', fmt(focus.event.box[1], 2)],
-        ['width', fmt(focus.event.box[2] - focus.event.box[0], 2)],
-        ['height', fmt(focus.event.box[3] - focus.event.box[1], 2)],
-      ],
-      { at: regionBox('top', { left: 0.2, bottom: 0.9 }), title: focus.event.text },
-    );
+    const [ex0, ey0, ex1] = focus.event.box;
+    const width = await s.dimension([ex0, ey0], [ex1, ey0], `${fmt(ex1 - ex0, 2)} units`, { offset: -0.3 });
 
     // ---- Everything the plate needs, worked out from the marks before anything is drawn.
     const marks = parts.reduce((n, p) => n + p.marks, 1);
@@ -189,13 +186,13 @@ export default class PenAndPencil extends Scene {
     const penRand = rng(seed),
       pencilRand = rng(seed + 1),
       sceneRand = rng(seed + 2);
-    // The magnified ring: the hand's ink against the ring as laid out.
+    // The ring the camera closes on: the hand's ink against the ring as laid out.
     const ringInk = hand(focus.ring, HAND, penRand);
     const ringStray = deviation(ringInk, focus.ring);
 
-    // Cards that own paper in the last two steps, made now so the scenery can avoid them.
-    const cardAt = regionBox('top', { right: -3.6, bottom: 1.5 });
+    // The paper the chart and the title own; the scenery is cut away there.
     const titleBox: Box = [-2.9, 2.6, 1.7, 3.05];
+    const owned = [grow(chart, MARGIN), grow(titleBox, MARGIN)];
 
     // Chart objects, ink and pencil, with every word's box kept clear.
     const words = parts.flatMap((p) => [p.period.label, p.event.label]).map((b) => grow(b, 0.05));
@@ -221,14 +218,16 @@ export default class PenAndPencil extends Scene {
       for (const seg of hatch(shape.map(([x, y]) => [x + (x < hx ? 0.03 : -0.03), y + (y < hy ? 0.03 : -0.03)] as Pt), { angle: 120, spacing: 0.06, shortfall: 0.05 }, pencilRand))
         for (const piece of unowned(seg, [...words, [hx - 0.06, hy - 0.06, hx + 0.06, hy + 0.06]], 0.01))
           chartPencil.push({ seg: [piece[0]!, piece.at(-1)!], tint: 'tag' });
-      chartPen.push(p.string, p.ring);
+      // The ring the camera closed on is already inked; the others are drawn with the plate.
+      chartPen.push(p.string);
+      if (p !== focus) chartPen.push(p.ring);
     }
     // The rail as a rope: two strands and a twist every 0.14.
     const ry = (rail[1] + rail[3]) / 2;
     chartPen.push([[rail[0], ry + 0.025], [rail[2], ry + 0.025]], [[rail[0], ry - 0.025], [rail[2], ry - 0.025]]);
     for (let x = rail[0] + 0.07; x < rail[2]; x += 0.14) chartPen.push([[x - 0.03, ry - 0.025], [x + 0.03, ry + 0.025]]);
     const chartInk = chartPen.map((l) => hand(l, HAND, penRand));
-    const chartStray = Math.max(...chartInk.map((ink, i) => deviation(ink, chartPen[i]!)));
+    const chartStray = Math.max(ringStray, ...chartInk.map((ink, i) => deviation(ink, chartPen[i]!)));
     const dots = parts.map((p) => p.dot);
 
     // Words last: Hershey letters fitted into each label's box, and the plate's title in the sky.
@@ -240,64 +239,37 @@ export default class PenAndPencil extends Scene {
 
     await this.step('marks', {
       title: `The layout is read back as ${marks} marks and traced in blue`,
+      line: 'Every later stroke is drawn from these marks alone.',
       caption: `Like the page, which flattens pele’s SVG into marks a script can select, the drawing reads the layout back: ${outlineCount} outlines, ${filledCount} filled shapes and ${wordCount} words. A blue construction pencil traces them first, and every later stroke is drawn from these marks alone.`,
     });
-    await drop(boxCard);
+    await drop(width);
     await d.hide();
-    s.keep(construction, {
+    await s.draw(construction, {
+      tool: 'pencil',
+      color: CONSTRUCTION,
+      runTime: 3,
       describe: `The timeline’s layout traced in thin blue construction pencil: ${facts.length} period boxes, ${facts.length} event boxes, their markers and strings, the rail and an empty box where each word will go`,
     });
-    await this.play(new Create(construction, { runTime: 2.2, lagRatio: 0.02 }));
-    const marksCard = await s.card(
-      [
-        ['outlines', outlineCount],
-        ['filled shapes', filledCount],
-        ['words', wordCount],
-      ],
-      { at: regionBox('top', { left: 0.2, bottom: 0.9 }) },
-    );
+    const tally = await s.callout(parts[2]!.period.box, `${outlineCount} outlines · ${filledCount} filled shapes · ${wordCount} words`, { side: 'above', gap: 0.45 });
     this.state.marks = { outlines: outlineCount, filled: filledCount, words: wordCount };
 
-    // The magnified ring, in the top left where the code was.
-    const k = 9;
-    const rc = boundsOf([focus.ring]);
-    const ringCentre: Pt = [(rc[0] + rc[2]) / 2, (rc[1] + rc[3]) / 2];
-    const to: Pt = [-4.2, 1.45];
-    const big = (pts: readonly Pt[]) => pts.map(([x, y]) => [to[0] + (x - ringCentre[0]) * k, to[1] + (y - ringCentre[1]) * k] as Pt);
     await this.step('hand', {
       title: `The hand strays at most ${fmt(ringStray)} units from the line it follows`,
-      caption: `The pen is a mass on a damped spring, ${HAND.frequency} Hz with damping ${HAND.damping}, chasing a point that moves along the line at ${HAND.speed} units a second, shaken by tremor of up to ${HAND.tremor}. Magnified ${k} times around the Midnight marker, the spring smooths the tremor into slow wobbles about the blue ring.`,
+      line: 'A damped spring chases the line; tremor shakes it.',
+      caption: `The pen is a mass on a damped spring, ${HAND.frequency} Hz with damping ${HAND.damping}, chasing a point that moves along the line at ${HAND.speed} units a second, shaken by tremor of up to ${HAND.tremor}. Close on the Midnight marker, the spring smooths the tremor into slow wobbles about the blue ring.`,
     });
-    await drop(source, marksCard);
-    const bigRing = polylines([big(focus.ring)], CONSTRUCTION, 0.1, { opacity: 0.45 });
-    const bigInk = polylines([big(ringInk)], INK, 0.022);
-    s.keep(bigRing, bigInk, { describe: `The Midnight marker’s ring magnified ${k} times: the blue ring as laid out, and the pen’s thin ink line wobbling gently along it` });
-    await this.play(new Create(bigRing, { runTime: 0.6 }));
-    await this.play(new Create(bigInk, { runTime: 1.6 }));
-    const handCard = await s.card(
-      [
-        ['spring', `${HAND.frequency} Hz`],
-        ['damping', HAND.damping],
-        ['tremor', HAND.tremor],
-        ['widest stray', fmt(ringStray)],
-      ],
-      { at: regionBox('top', { left: 0.2, bottom: 0.9 }) },
-    );
+    await drop(source, tally);
+    const ring = polylines([focus.ring], CONSTRUCTION, 0.004);
+    await s.focus(ring, { margin: 0.55 });
+    await s.draw(polylines([ringInk], INK, 0.006), {
+      tool: 'pen',
+      runTime: 2,
+      describe: 'Close on the Midnight marker: the pen’s ink following the blue ring, wobbling gently about it',
+    });
     this.state.hand = { stray: Number(fmt(ringStray)) };
 
-    // The last two cards have four rows and a fixed width, so a stand-in measures the paper they own.
-    const standIn = await s.card(
-      [
-        ['a', 0],
-        ['b', 0],
-        ['c', 0],
-        ['d', 0],
-      ],
-      { at: cardAt, enter: false, width: 3.3 },
-    );
-    const owned = [grow(chart, MARGIN), grow(standIn.box()! as Box, MARGIN), grow(titleBox, MARGIN)];
+    const pressure = pressures(scenery([-7.55, chart[3] - 0.3, 7.55, 3.15], owned, rng(seed + 2)).reduce((n, l) => n + l.pen.length, 0) + chartInk.length, penRand);
     const layers: Layer[] = scenery([-7.55, chart[3] - 0.3, 7.55, 3.15], owned, sceneRand);
-    const pressure = pressures(layers.reduce((n, l) => n + l.pen.length, 0) + chartInk.length, penRand);
     let pi = 0,
       pencilIndex = 0;
     const sceneInk = layers.map((l) => l.pen.map((line) => hand(line, HAND, penRand)));
@@ -310,61 +282,56 @@ export default class PenAndPencil extends Scene {
     });
     const scenePoints = [...sceneInk.flat(2), ...layers.flatMap((l) => l.pencil.flat())];
     const trespass = scenePoints.filter((p) => owned.some((b) => inside(p, grow(b, -MARGIN)))).length;
-    const scenePen = layers.reduce((n, l) => n + l.pen.length, 0),
-      scenePencil = layers.reduce((n, l) => n + l.pencil.length, 0);
-    const sceneCard = await s.card(
-      [
-        ['layers', layers.length],
-        ['pen strokes', scenePen],
-        ['pencil strokes', scenePencil],
-        ['on owned paper', trespass],
-      ],
-      { at: cardAt, enter: false, width: 3.3 },
+    // The owned paper, shown: dashed outlines the scenery is cut around.
+    const ownedShown = new Group(
+      ...owned.map((b) => polylines([[...boxPolygon(b), [b[0], b[1]]]], TINTS.bands!, 0.016, { opacity: 0.8 })),
     );
+    for (const m of ownedShown.family()) m.style.dashArray = '0.08 0.06';
 
     await this.step('scene', {
       title: 'The made-up world is drawn far to near, around the chart',
-      caption: `Hills, sea, a rock with its lighthouse and beam, then gulls: ${layers.length} layers, far to near. The chart, its words and this card own their paper with a ${MARGIN} margin, so the scenery is cut away there, and the card counts ${trespass} scenery points on owned paper.`,
+      line: 'Hills, sea, lighthouse, gulls: never on paper the chart owns.',
+      caption: `Hills, sea, a rock with its lighthouse and beam, then gulls: ${layers.length} layers, far to near. The chart and the title own the paper inside the dashed lines, with a ${MARGIN} margin, so the scenery is cut away there: ${trespass} scenery points land on owned paper.`,
     });
-    await drop(bigRing, bigInk, handCard);
+    await s.focus('all');
+    await s.draw(ownedShown, { tool: false, runTime: 0.8, describe: 'Dashed red outlines round the chart and the title: the paper they own' });
     s.keep(sceneGroups[0]!, ...sceneGroups.slice(1), {
-      describe: 'Around the blue construction lines, a world drawn far to near: hatched hills on the left, a sea of short blue strokes, a rock and a striped lighthouse on the right with a yellow beam, and three gulls; the paper the chart and the card own is left bare',
+      describe: 'Around the blue construction lines, a world drawn far to near: hatched hills on the left, a sea of short blue strokes, a rock and a striped lighthouse on the right with a yellow beam, and three gulls; the paper the chart and the title own is left bare',
     });
     await this.play(new LaggedStart(sceneGroups.map((g) => new Create(g, { runTime: 2.2, lagRatio: 0.03 })), { lagRatio: 0.55 }));
-    await s.enter(sceneCard);
     this.state.scene = { layers: layers.map((l) => l.name), trespass };
 
-    // The chart in ink and pencil, then the words.
-    const chartGroup = new Group();
+    // The chart in pencil and ink, then the words.
+    const tints = new Group();
     for (const { seg, tint } of chartPencil)
-      chartGroup.add(new Line(seg[0] as Vec, seg[1] as Vec, { stroke: TINTS[tint]!, strokeWidth: pencilWidth(pencilIndex++, 0.016, SHARPEN), strokeOpacity: 0.55, lineCap: 'round' }));
-    for (const ink of chartInk) chartGroup.add(polylines([ink], INK, 0.022 * pressure[pi++]!));
-    chartGroup.add(polylines(dots, INK, 0.01, { fill: true }));
+      tints.add(new Line(seg[0] as Vec, seg[1] as Vec, { stroke: TINTS[tint]!, strokeWidth: pencilWidth(pencilIndex++, 0.016, SHARPEN), strokeOpacity: 0.55, lineCap: 'round' }));
+    const inked = new Group(...chartInk.map((l) => polylines([l], INK, 0.022 * pressure[pi++]!)), polylines(dots, INK, 0.01, { fill: true }));
     const wordGroup = new Group(...letters.map((l) => polylines(l, INK, 0.02)));
     const sharpenings = Math.floor(pencilIndex / SHARPEN);
     const objects = parts.length * 3 + 1;
     await this.step('plate', {
       title: 'The chart is drawn last, then its words',
+      line: `Objects, then words; no ink strays over ${fmt(chartStray)} from its mark.`,
       caption:
         which === 'first'
           ? `Periods become planks, events become tags hung on strings, and the rail becomes a rope: ${objects} objects drawn on the laid-out marks, no ink more than ${fmt(chartStray)} units from them. Hershey letters come last, inside the boxes the layout gave; a second drawing changes every stroke but moves nothing.`
           : `The second drawing used another seed, so every wobble, tremor and pencil end differs from the first, yet no ink lies more than ${fmt(chartStray)} units from the same laid-out marks. Only the hand changed; the planks, tags and words stayed put.`,
     });
-    await drop(sceneCard);
-    s.keep(chartGroup, wordGroup, {
-      describe: `The timeline drawn as objects in warm-black ink and light pencil over its blue construction: ${facts.length} periods as planks with ochre tint, ${facts.length} events as blue-tinted tags on strings, marker rings and a rope rail; then every word in Hershey letters, and the title “${TITLE}” in the sky`,
+    await drop(ownedShown);
+    s.keep(tints, {
+      describe: `Light pencil tints on the chart: ochre on the ${facts.length} period planks, blue on the ${facts.length} event tags, every word’s box left clear`,
     });
-    await this.play(new Create(chartGroup, { runTime: 2.6, lagRatio: 0.02 }));
-    await this.play(new Create(wordGroup, { runTime: 1.8, lagRatio: 0.05 }));
-    await s.card(
-      [
-        ['objects', objects],
-        ['ink off the marks', fmt(chartStray)],
-        ['letter strokes', letterCount],
-        ['image files', 0],
-      ],
-      { at: cardAt, width: 3.3 },
-    );
+    await this.play(new Create(tints, { runTime: 1.2, lagRatio: 0.02 }));
+    await s.draw(inked, {
+      tool: 'pen',
+      runTime: 3.2,
+      describe: `The timeline drawn as objects in warm-black ink over its blue construction: ${facts.length} periods as planks, ${facts.length} events as tags on strings, marker rings and a rope rail`,
+    });
+    await s.draw(wordGroup, {
+      tool: 'pen',
+      runTime: 2.4,
+      describe: `Every word of the chart in Hershey single-stroke letters, and the title “${TITLE}” in the sky`,
+    });
     this.state.plate = { objects, stray: Number(fmt(chartStray)), letters: letterCount, sharpenings };
   }
 }

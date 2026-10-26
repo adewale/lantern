@@ -82,8 +82,11 @@ const painted = (m: Mobject) =>
   (m.style.fill !== 'none' && (m.style.fillOpacity ?? 1) > 0) ||
   (m.style.stroke !== 'none' && (m.style.strokeOpacity ?? 1) > 0 && (m.style.strokeWidth ?? 0) > 0);
 
-/** The paper and the heading frame every step; the heading changes each step but says nothing about where to look. */
-const fixed = (m: Mobject) => m.key === '__paper' || m.key === '__heading';
+/**
+ * The paper and the heading (with its number and line) frame every step; the heading changes
+ * each step but says nothing about where to look.
+ */
+const fixed = (m: Mobject) => m.key === '__paper' || m.key === '__heading' || m.key === '__chrome';
 
 /**
  * A world box in the units of the camera's view `view`: 16 wide, centred on the origin.

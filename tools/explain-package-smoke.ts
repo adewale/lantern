@@ -63,7 +63,7 @@ try {
   assert.equal(result.stdout.trim(), '2');
   if (process.env.EXPLAIN_VIDEO) {
     await run('npm', ['i', `@resvg/resvg-js@${peers['@resvg/resvg-js']}`, '--no-audit', '--no-fund'], { cwd: folder });
-    await run(bin, ['render', 'first', '--out', 'public/outside.mp4', '--footer', '--fps', '4'], {
+    await run(bin, ['render', 'first', '--out', 'public/outside.mp4', '--fps', '4'], {
       cwd: folder,
     });
   }
