@@ -1,5 +1,5 @@
-import { Mobject, Rectangle, Text, FadeIn, FadeOut } from '../src/index.ts';
-import type { Scene, Vec, FadeOpts } from '../src/index.ts';
+import { Mobject, Rectangle, Text, FadeIn, FadeOut, Transform } from '../src/index.ts';
+import type { Scene, Vec, Box, FadeOpts, Animation } from '../src/index.ts';
 import { Diagram } from './diagrams.ts';
 import type { ShowOptions } from './diagrams.ts';
 import { Card, CodeBlock } from './panels.ts';
@@ -35,6 +35,8 @@ type Entry = { enter?: boolean };
 export type Describe = { describe?: string | (() => string) };
 const isOptions = (v: unknown): v is object => !!v && !(v instanceof Mobject);
 const HEADING_Y = 3.8;
+/** The camera's home box: the whole stage. */
+const HOME: Box = [-8, -4.5, 8, 4.5];
 
 export function stage(scene: Scene, options: StageOptions = {}) {
   // Without a style or palette, the stage adopts the first diagram's palette.
@@ -185,10 +187,16 @@ export function stage(scene: Scene, options: StageOptions = {}) {
       if (shown.length) await scene.play(...shown.map((g) => new FadeOut(g, { runTime: 0.3 })));
       overlays.clear();
     },
-    /** Fade everything but paper and heading in one play: a clean slate for the next idea. */
+    /**
+     * Fade everything but paper and heading in one play: a clean slate for the
+     * next idea. A camera moved by `focus` glides home in the same play.
+     */
     async clear({ runTime = 0.4 } = {}) {
       const gone = scene.mobjects.filter((m) => m !== paper && m !== heading);
-      if (gone.length) await scene.play(...gone.map((m) => new FadeOut(m, { runTime })));
+      const home = scene.frame.box()!.every((v, i) => Math.abs(v - HOME[i]!) < 1e-6);
+      const anims: Animation[] = gone.map((m) => new FadeOut(m, { runTime }));
+      if (!home) anims.push(new Transform(scene.frame, scene.frame.copy().reset(), { runTime }));
+      if (anims.length) await scene.play(...anims);
       for (const d of diagrams) d.forget();
       overlays.clear();
     },

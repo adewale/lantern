@@ -13,7 +13,12 @@ Scene.captionWpm = Infinity;
 // (FULL=1: every third). One output mode per run: the path cache holds one mode, so
 // alternating modes would bypass it.
 const EVERY = process.env.FULL ? 3 : 15;
-const fresh = (scene: Scene): Scene => new Scene(new NullSink()).add(...scene.mobjects.map((m) => m.copy()));
+// The camera comes along: an explainer that zooms (seasons) renders a viewBox of its own
+const fresh = (scene: Scene): Scene => {
+  const s = new Scene(new NullSink());
+  s.frame = scene.frame.copy();
+  return s.add(...scene.mobjects.map((m) => m.copy()));
+};
 const absolute = (els: ElementRecord[]): string => els.map((e) => `${e.transform ?? ''}|${JSON.stringify(e.attrs)}|${e.text ?? ''}`).join('\n');
 
 test('render caches are never stale: every explainer, both output modes, each sampled frame equals a cache-free render', async () => {
