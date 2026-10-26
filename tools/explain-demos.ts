@@ -5,7 +5,7 @@ import { parseArgs } from 'node:util';
 import { spawn } from 'node:child_process';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
 import { collectProject, defaultVariant, ROOT, baseReceipt } from './lib/explain-project.ts';
-import { restingTime, htmlEscape, pictureSummary } from '../explain/trace.ts';
+import { restingTime, htmlEscape, pictureSummary, stepWords } from '../explain/trace.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
 import { contactSheet, stillPng, cardPng } from './lib/explain-shots.ts';
 import { exporterHash, probeVideo, footerLines } from './lib/explain-video.ts';
@@ -56,7 +56,7 @@ for (const item of EXPLAINERS) {
   await useProjectLettering(project);
   for (const s of pictured) {
     await writeFile(join(directory, item.id, s.step + '.png'), await cardPng(variant.Scene, restingTime(s, variant.trace.fps)));
-    share.steps.push({ step: s.step, title: String(s.meta.title ?? s.step), caption: String(s.meta.caption ?? ''), picture: pictureSummary(s.after) });
+    share.steps.push({ step: s.step, title: stepWords(s).title, caption: stepWords(s).caption, picture: pictureSummary(s.after) });
   }
   await writeFile(join(directory, item.id, 'steps.json'), JSON.stringify(share, null, 2) + '\n');
   if (check) await checkProject(project, join(ROOT, 'out/checks', item.id));
