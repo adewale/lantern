@@ -81,23 +81,26 @@ export interface RenderOptions {
    * the state, like everything else here: seeks are unaffected.
    */
   cull?: boolean;
+  /** Pixel width of the output the cull is for (default 1280): it keeps anything showing 2 or more of its pixels. */
+  width?: number;
 }
 
 /** One record per drawable leaf: { id, tag, attrs, text }. */
-export function renderElements(scene: Scene, { relative = true, cull = false }: RenderOptions = {}): ElementRecord[] {
-  return perf.span('render.elements', () => renderElementsImpl(scene, relative, cull));
+export function renderElements(scene: Scene, { relative = true, cull = false, width = 1280 }: RenderOptions = {}): ElementRecord[] {
+  return perf.span('render.elements', () => renderElementsImpl(scene, relative, cull, width));
 }
-function renderElementsImpl(scene: Scene, relative: boolean, cull: boolean): ElementRecord[] {
+function renderElementsImpl(scene: Scene, relative: boolean, cull: boolean, width: number): ElementRecord[] {
   const out: ElementRecord[] = [];
   const view = cull ? scene.frame.box()! : null;
-  // Culled: the mobject's box, grown by its stroke, leaves less than ~2 px of the
-  // view in some direction (a thinner sliver is what resvg rounds to nothing). A
-  // group is skipped whole only when it clears the view by a generous margin,
-  // since its stroke widths are its leaves'.
+  // Culled: the mobject's box, grown by its stroke, leaves less than 2 output pixels
+  // of the view in some direction. That drops everything the camera has left (the
+  // empty visible box resvg aborts on) and, at most, a strip under 2 px at the
+  // frame's edge (resvg would paint it, faintly). A group is skipped whole only
+  // when it clears the view by a generous margin, since its stroke widths are its leaves'.
   const unseen = (m: Mobject, margin: number): boolean => {
     const b = m.box();
     if (!b || !view) return false;
-    const px = 2 * (view[2] - view[0]) / 1280;
+    const px = 2 * (view[2] - view[0]) / width;
     return b[2] + margin - view[0] < px || view[2] - (b[0] - margin) < px || b[3] + margin - view[1] < px || view[3] - (b[1] - margin) < px;
   };
   const walk = (m: Mobject, inherited?: Clip): void => {
@@ -355,7 +358,7 @@ export function toSvgString(scene: Scene, { width = 1280, background = '#1a1a1a'
   const [vx, vy, vw, vh] = userRect(scene.frame.box()!);
   let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${vx} ${vy} ${vw} ${vh}">`;
   s += `<rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" fill="${background}"/>`;
-  const els = renderElements(scene, { cull });
+  const els = renderElements(scene, { cull, width });
   const end = perf.begin('render.serialize');
   const parts = [s];
   const clips = clipsOf(els);

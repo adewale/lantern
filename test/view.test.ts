@@ -214,6 +214,16 @@ test('placement: a moved and scaled View stays moved and scaled; place: false le
   assert.throws(() => bad.sync().begin(), /build a new one each time/);
 });
 
+test('a StateReadout copy() names its own value Texts', () => {
+  const r = new StateReadout([['n', 1], ['m', 'x']]);
+  const c = r.copy();
+  assert.equal(c.values.n, c.children[1]);
+  assert.equal(c.values.m, c.children[3]);
+  assert.notEqual(c.values.n, r.values.n);
+  assert.equal(c.values.m!.text, 'x');
+  assert.deepEqual(Object.keys(c.values), ['n', 'm']);
+});
+
 test('stateView: a StateReadout of the scene\'s state whose keys stay put as values grow', async () => {
   class Counter extends Scene {
     rv?: View<StateReadout>;

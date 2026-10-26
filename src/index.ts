@@ -13,7 +13,7 @@ export type { SurroundingRectangleOpts, UnderlineOpts, CrossOpts, BraceOpts, Bra
 export { Text, DecimalNumber, Code } from './text.ts';
 export type { TextOpts, DecimalNumberOpts, CodeOpts } from './text.ts';
 export type { CodeSpan, ColorSpan } from './text.ts';
-export { title, CodePanel, StateReadout } from './panels.ts';
+export { StateReadout } from './panels.ts';
 // Views: a picture rebuilt from state, changed by matching transforms (docs/VIEWS.md)
 export { View, ViewSync, view, stateView, viewMismatch } from './view.ts';
 export type { ViewOpts, ViewPlace, ViewMatch, SyncOpts, StateViewOpts } from './view.ts';

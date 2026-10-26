@@ -655,22 +655,52 @@ export class Restore extends Transform {
 /**
  * A copy of `source` morphs into `target`: `source` stays where it is,
  * unchanged, and the scene holds `target` at the end (the copy hands over to
- * it, as with `replace`). The copy is made when the play begins; until then
- * `mobject` is an empty placeholder, so the copy, a different mobject from
- * `source`, conflicts with nothing: `play(new TransformFromCopy(a, b), new Indicate(a))`
- * is fine.
+ * it, as with `replace`). The copy is made when the play begins, before any
+ * animation in the play begins (see takeCopies), so it is `source` as the
+ * play found it whatever the argument order; until then `mobject` is an empty
+ * placeholder, so the copy, a different mobject from `source`, conflicts with
+ * nothing: `play(new TransformFromCopy(a, b), new Indicate(a))` and
+ * `play(new Create(a), new TransformFromCopy(a, b))` are fine.
  */
 export class TransformFromCopy extends Transform {
   source: Mobject;
+  /** The copy takeCopy() made for the next begin(), or null. */
+  private taken: Mobject | null;
 
   constructor(source: Mobject, target: Mobject, opts: Omit<TransformOpts, 'replace'> = {}) {
     super(new Group(), target, { ...opts, replace: true });
     this.source = source;
+    this.taken = null;
+  }
+
+  /** Copy the source now, for the next begin(); a second call before it keeps the first copy. */
+  takeCopy(): void {
+    if (this.taken) return;
+    this.taken = this.source.copy();
+    const from = this.source.family();
+    this.taken.family().forEach((m, i) => { if (from[i]) copiedFrom.set(m, from[i]); });
   }
 
   override begin(): void {
-    this.mobject = this.source.copy();
+    this.takeCopy();
+    this.mobject = this.taken!; this.taken = null;
     super.begin();
+  }
+}
+
+/** Each part of a TransformFromCopy's copy, to the part of the source it copies: the motion verifier's provenance. */
+export const copiedFrom = new WeakMap<Mobject, Mobject>();
+
+/**
+ * Make every TransformFromCopy's copy in `anims` (nested in groups too, and a
+ * Succession's first member, which begins with the play) before any of them
+ * begins: another animation's begin() may change the source (Create hides it).
+ */
+export function takeCopies(anims: readonly Animation[]): void {
+  for (const a of anims) {
+    if (a instanceof TransformFromCopy) a.takeCopy();
+    else if (a instanceof Succession) takeCopies(a.animations.slice(0, 1));
+    else if (a instanceof AnimationGroup) takeCopies(a.animations);
   }
 }
 
@@ -698,6 +728,9 @@ export class Succession extends AnimationGroup {
     this.scene = null;
     this.active = -1;
   }
+
+  /** Members run one after another: a lagRatio passed to play() is ignored (runTime and rateFunc apply). */
+  override setOptions({ lagRatio: _, ...opts }: PlayOpts = {}): this { return super.setOptions(opts); }
 
   override begin(): void {
     this.active = -1;

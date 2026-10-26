@@ -6,7 +6,7 @@
 // deterministic regardless of sink.
 
 import { prepareAnimation, AnimationGroup } from './animation.ts';
-import { Succession, bindSuccessions } from './animation.ts';
+import { Succession, bindSuccessions, takeCopies } from './animation.ts';
 import { bindRecorders } from './animation.ts';
 import type { Animation, Playable, PlayOpts } from './animation.ts';
 import type { Mobject } from './mobject.ts';
@@ -370,19 +370,30 @@ export class Scene {
     const runTime = Math.max(...anims.map((a) => a.runTime));
     const dt = 1 / this.fps;
     const n = Math.max(1, Math.round(runTime * this.fps));
-    const canSkip = this.skipUntil > this.time && !this.hasUpdaters();
+    let canSkip = this.skipUntil > this.time && !this.hasUpdaters();
+    // A Succession begins its members (adding their mobjects) as it interpolates, so in
+    // a play holding one, skipped frames still interpolate, and the first member to bring
+    // an updater ends the skipping: the full run integrates it from the frame it joins.
+    const sequenced = canSkip && anims.some(function holds(a: Animation): boolean {
+      return a instanceof Succession || (a instanceof AnimationGroup && a.animations.some(holds));
+    });
+    const interpolate = (t: number): void => perf.span('interpolate', () => {
+      for (const a of anims) {
+        const alpha = a.runTime > 0 ? Math.min(t / a.runTime, 1) : 1;
+        a.interpolate(a.rateFunc(alpha));
+      }
+    });
     let skipped = 0;
     for (let f = 1; f <= n; f++) {
-      // Same comparison SeekSink uses to drop a frame, so the first frame shown is identical
-      if (canSkip && this.time + dt + 1e-9 < this.skipUntil) { this.tick(); skipped++; continue; }
       // The last frame draws the finished animation even when runTime·fps rounded down.
       const t = f === n ? runTime : Math.min(f * dt, runTime);
-      perf.span('interpolate', () => {
-        for (const a of anims) {
-          const alpha = a.runTime > 0 ? Math.min(t / a.runTime, 1) : 1;
-          a.interpolate(a.rateFunc(alpha));
-        }
-      });
+      // Same comparison SeekSink uses to drop a frame, so the first frame shown is identical
+      if (canSkip && this.time + dt + 1e-9 < this.skipUntil) {
+        if (!sequenced) { this.tick(); skipped++; continue; }
+        interpolate(t);
+        if (!this.hasUpdaters()) { this.tick(); skipped++; continue; }
+        canSkip = false;
+      } else interpolate(t);
       await this.emitFrame(dt);
     }
     perf.count('frames skipped', skipped);
@@ -392,6 +403,7 @@ export class Scene {
   beginAnimations(anims: readonly Animation[]): void {
     bindSuccessions(anims, this); // a Succession begins its members here, one by one, as their turns come
     bindRecorders(anims, this); // matching transforms record what they paired (Scene.record) as they begin
+    takeCopies(anims); // every TransformFromCopy copies its source before anything in the play begins
     const present = new Set(this.familyMembers());
     for (const a of anims) {
       a.begin();

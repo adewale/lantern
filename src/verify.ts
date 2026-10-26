@@ -16,10 +16,14 @@
 //              ReplacementTransform) but the replacement is somewhere else
 //
 // A cut-out and cut-in in the same frame with matching boxes is a seamless
-// handoff and is not reported, nor is a cut-in over a matching leaf that stays
-// (a copy taking off from its source). Every event carries the step it happened in.
+// handoff and is not reported, nor is a cut-in over a leaf that stays, in about
+// the same place and no more opaque, when it was copied from that leaf
+// (TransformFromCopy) or every part of it looks like a part of that leaf (same
+// shape and paints: a copy, or a piece of one, laid over its source). Every
+// event carries the step it happened in.
 
 import { VMobject } from './vmobject.ts';
+import { copiedFrom } from './animation.ts';
 import type { Box, HasText, Mobject } from './mobject.ts';
 import type { Scene, Sink } from './scene.ts';
 import { FRAME } from './svg.ts';
@@ -35,8 +39,14 @@ export interface MotionOptions {
   handoffIoU?: number;
 }
 
-/** One drawn leaf in one frame: box center, size and effective alpha. */
-export interface LeafSample { cx: number; cy: number; w: number; h: number; a: number; box: Box }
+/**
+ * One drawn leaf in one frame: box center, size and effective alpha. On every
+ * leaf of a frame in which some leaf appears, also `look` (each part's shape,
+ * as VMobject.shapeKey(), and which of fill and stroke show; the parts of a
+ * merged run like a Text are its glyphs) and, for a leaf of a
+ * TransformFromCopy's copy, `from`: the id of the source leaf it copies.
+ */
+export interface LeafSample { cx: number; cy: number; w: number; h: number; a: number; box: Box; look?: string[]; from?: number }
 export interface MotionFrame { t: number; step: string | null; leaves: Map<number, LeafSample> }
 
 export type MotionKind = 'teleport' | 'resize' | 'pop' | 'cut-in' | 'cut-out' | 'flicker' | 'handoff';
@@ -60,6 +70,22 @@ function alphaOf(m: Mobject): number {
   return (s.opacity ?? 1) * Math.max(f, k) * (s.drawFraction ?? 1);
 }
 
+/** Which paints show: f(ill), s(troke). */
+function paintsOf(m: Mobject): string {
+  const s = m.style;
+  return (s.fill !== 'none' && s.fillOpacity > 0 ? 'f' : '') + (s.stroke !== 'none' && s.strokeOpacity > 0 && s.strokeWidth > 0 ? 's' : '');
+}
+/** Each shown part's shape and paints, position and size aside: equal for a copy and its source. */
+function lookOf(m: Mobject, unit: boolean): string[] {
+  return (unit ? m.children.filter((c) => alphaOf(c) > 0.02) : [m]).map((x) => (x instanceof VMobject ? x.shapeKey() : '') + '/' + paintsOf(x));
+}
+/** Every part of `a` matches a part of `b` (each used once). */
+function partsOf(a: readonly string[] | undefined, b: readonly string[] | undefined): boolean {
+  if (!a || !b || a.length > b.length) return false;
+  const left = [...b];
+  return a.every((k) => { const i = left.indexOf(k); if (i >= 0) left.splice(i, 1); return i >= 0; });
+}
+
 // Text-like mobjects carry their string as `text`; read it structurally
 const textOf = (m: Mobject): string | undefined => (m as HasText).text;
 
@@ -77,6 +103,7 @@ export class MotionSink implements Sink {
   constructor() { this.frames = []; this.labels = new Map(); }
   async frame(scene: Scene): Promise<void> {
     const f = new Map<number, LeafSample>();
+    const sampled: Array<[LeafSample, Mobject, boolean]> = [];
     // Camera: sample in screen space, in scene units of the default 16-wide frame
     // (exactly world space when the camera is home), so thresholds mean what a
     // reader sees; a camera jump moves every leaf at once.
@@ -85,14 +112,16 @@ export class MotionSink implements Sink {
     const walk = (m: Mobject): void => {
       // A merged run (Text) is one visual thing whose glyphs are rebuilt when
       // its string changes, so it is tracked as a unit, not per glyph.
-      const unit = m.mergeLeaves && m.children.length > 0;
+      const unit = !!m.mergeLeaves && m.children.length > 0;
       const drawn = unit || (m instanceof VMobject && m.hasPoints());
       if (drawn) {
         const a = unit ? Math.max(...m.children.map(alphaOf)) : alphaOf(m);
         if (a > 0.02) {
           const w = m.box(), b = w && screen(w);
           if (b) {
-            f.set(m.id, { cx: (b[0] + b[2]) / 2, cy: (b[1] + b[3]) / 2, w: b[2] - b[0], h: b[3] - b[1], a, box: b });
+            const s: LeafSample = { cx: (b[0] + b[2]) / 2, cy: (b[1] + b[3]) / 2, w: b[2] - b[0], h: b[3] - b[1], a, box: b };
+            f.set(m.id, s);
+            sampled.push([s, m, unit]);
             if (!this.labels.has(m.id)) this.labels.set(m.id, describeLeaf(m));
           }
         }
@@ -100,6 +129,15 @@ export class MotionSink implements Sink {
       if (!unit) for (const c of m.children) walk(c);
     };
     for (const top of scene.mobjects) walk(top);
+    // Looks are for telling a copy over its source from a new shape, so only frames where a leaf appears need them
+    const last = this.frames.at(-1)?.leaves;
+    if (last && sampled.some(([, m]) => !last.has(m.id))) {
+      for (const [s, m, unit] of sampled) {
+        s.look = lookOf(m, unit);
+        const src = copiedFrom.get(m);
+        if (src) s.from = src.id;
+      }
+    }
     this.frames.push({ t: scene.time, step: scene.currentStep?.path ?? null, leaves: f });
   }
 }
@@ -177,9 +215,10 @@ export function analyzeMotion(sink: MotionSink, opts: MotionOptions = {}): Motio
       else ev('cut-out', f, oid, op.a, `vanished at alpha ${op.a.toFixed(2)}`);
     }
     // A leaf appearing over one that was and still is drawn there, no more opaque,
-    // changes nothing a viewer sees: a copy leaving its source (TransformFromCopy)
+    // changes nothing a viewer sees when it is a copy of that leaf (TransformFromCopy)
+    // or its parts look like that leaf's. A filled shape inside an outline is a cut-in.
     const overStaying = (s: LeafSample): boolean => {
-      for (const [id, q] of cur) if (prev.has(id) && q.a + 0.02 >= s.a && iou(q.box, s.box) >= o.handoffIoU) return true;
+      for (const [id, q] of cur) if (prev.has(id) && q.a + 0.02 >= s.a && iou(q.box, s.box) >= o.handoffIoU && (s.from === id || partsOf(s.look, q.look))) return true;
       return false;
     };
     for (const [iid, ip] of cutIns) if (!usedIn.has(iid)) {

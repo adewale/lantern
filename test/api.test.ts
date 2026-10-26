@@ -9,7 +9,7 @@ const EXPECTED = [
   // model
   'Mobject', 'Group', 'VMobject',
   'Arc', 'ArcBetweenPoints', 'Arrow', 'Circle', 'CurvedArrow', 'Dot', 'Labeled', 'Line', 'Polygon', 'Rectangle', 'Square',
-  'Text', 'DecimalNumber', 'Code', 'title', 'CodePanel', 'StateReadout',
+  'Text', 'DecimalNumber', 'Code', 'StateReadout',
   'NumberLine', 'Axes',
   'View', 'ViewSync', 'view', 'stateView', 'viewMismatch',
   // motion

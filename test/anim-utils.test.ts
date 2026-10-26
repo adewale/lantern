@@ -4,9 +4,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   Scene, StringSink, SnapshotSink, MotionSink, analyzeMotion, renderAt, indexScene, toSvgString,
-  Mobject, Group, Rectangle, Circle, Square, Text, Code,
-  Transform, FadeIn, FadeOut, Indicate, Create, AnimationGroup, LaggedStart,
-  Restore, TransformFromCopy, Succession,
+  Mobject, Group, Rectangle, Circle, Square, Polygon, Text, Code,
+  Transform, FadeIn, FadeOut, Indicate, Flash, Create, AnimationGroup, LaggedStart,
+  Restore, TransformFromCopy, Succession, TransformMatchingText,
   RED, BLUE, GREEN, RIGHT, LEFT, UP, DOWN, loadFonts,
 } from '../src/index.ts';
 import type { SceneOptions, Sink } from '../src/index.ts';
@@ -170,6 +170,34 @@ test('TransformFromCopy and an animation on the source share a play', async () =
   });
 });
 
+test('TransformFromCopy copies its source before anything in its play begins, in either argument order', async () => {
+  // Create's begin() hides its mobject: a copy taken after it would morph from nothing
+  const body = (copyFirst: boolean, onScreen: boolean) => async (s: Scene) => {
+    const a = new Square({ side: 1 }).shift([-3, 0]), b = new Circle({ radius: 0.5 }).shift([3, 0]);
+    if (onScreen) s.add(a);
+    const anims = [new TransformFromCopy(a, b), new Create(a)];
+    await s.play(...(copyFirst ? anims : anims.reverse()));
+    await s.wait(0.1);
+  };
+  // Mobjects new to the scene are drawn in argument order, so there compare the set of paths
+  const paths = (svg: string) => (svg.match(/<path[^>]*>/g) ?? []).sort().join('\n');
+  for (const onScreen of [true, false]) {
+    const x = new StringSink(), y = new StringSink();
+    await run(body(true, onScreen), x);
+    await run(body(false, onScreen), y);
+    if (onScreen) assert.deepEqual(y.frames, x.frames);
+    else assert.deepEqual(y.frames.map(paths), x.frames.map(paths));
+  }
+  // and a seek lands on the frame the full run drew
+  const S = sceneOf(body(false, true)), full = new StringSink();
+  await new S(full).run();
+  for (const t of [0.1, 0.5, 0.9, 1.05]) {
+    const snap = new SnapshotSink();
+    const scene = await renderAt(S, t, snap);
+    assert.equal(snap.svg, full.frames[Math.round(scene.time * scene.fps)], `seek to ${t}`);
+  }
+});
+
 // ---- Succession --------------------------------------------------------------
 
 /** The same three animations, as one Succession or as three plays. */
@@ -201,6 +229,34 @@ test('a Succession runs like consecutive plays: same frames, same step times', a
   const ia = await indexScene(sceneOf(chain(true))), ib = await indexScene(sceneOf(chain(false)));
   assert.deepEqual(ia.steps.map((x) => [x.name, x.t0, x.frame0]), ib.steps.map((x) => [x.name, x.t0, x.frame0]));
   assert.equal(ia.duration, ib.duration);
+});
+
+test('a lagRatio passed to play() leaves a Succession sequential', async () => {
+  const succession = new Succession([new FadeIn(new Square(), { runTime: 1 }), new FadeIn(new Circle(), { runTime: 1 })]);
+  const s = await run(async (s) => { await s.play(succession, { lagRatio: 0.5 }); });
+  assert.deepEqual(succession.timings, [[0, 1], [1, 2]]);
+  assert.equal(succession.runTime, 2);
+  assert.equal(Math.round(s.time * s.fps), 60);
+});
+
+test('seeking into a Succession whose member brings an updater matches the full run', async () => {
+  // The Flash member adds b, which has an updater, a second into the play: from that
+  // frame on, the full run integrates it, so a seek must stop skipping there too.
+  const S = sceneOf(async (s) => {
+    const a = new Square({ side: 1 });
+    const b = new Circle({ radius: 0.5 }).shift([-3, 0]);
+    b.addUpdater((m, dt) => { m.shift([dt, 0]); });
+    await s.play(new Succession([new Create(a), new Flash(b)]));
+    await s.wait(0.2);
+  });
+  const full = new StringSink();
+  await new S(full).run();
+  for (let i = 1; i < full.frames.length; i += 4) {
+    const snap = new SnapshotSink();
+    const scene = await renderAt(S, i / 30, snap);
+    const k = Math.round(scene.time * scene.fps);
+    assert.equal(snap.svg, full.frames[k], `seek to frame ${k}`);
+  }
 });
 
 test('Succession run time is the sum of its members', () => {
@@ -337,6 +393,38 @@ test('a copy over its source is no cut, but a brighter shape over a faint one st
     s.add(new Square().shift([3, 0]));
     await s.wait(0.2);
   }), ['cut-in']);
+});
+
+test('a cut-in is exempt over a staying leaf only when it is a copy of it or looks the same', async () => {
+  const kinds = async (body: (s: Scene) => Promise<void>) => {
+    const sink = new MotionSink();
+    await run(body, sink);
+    return analyzeMotion(sink).map((e) => e.kind);
+  };
+  // A filled square popping in, with no outline and inside a stroke-only one: a cut-in either way
+  for (const outline of [false, true]) {
+    assert.deepEqual(await kinds(async (s) => {
+      if (outline) s.add(new Square({ side: 2, stroke: '#ffffff', fill: 'none' }));
+      await s.wait(0.2);
+      s.add(new Square({ side: 1.8, fill: RED, fillOpacity: 1, stroke: 'none' }));
+      await s.wait(0.2);
+    }), ['cut-in'], outline ? 'inside an outline' : 'on its own');
+  }
+  // A copy over its source is none, also when aligning to the target changed its points
+  assert.deepEqual(await kinds(async (s) => {
+    const a = new Square({ fill: RED, fillOpacity: 1 }); s.add(a);
+    await s.wait(0.2);
+    const hexagon = new Polygon([[0, 1], [0.87, 0.5], [0.87, -0.5], [0, -1], [-0.87, -0.5], [-0.87, 0.5]]).shift([3, 0]);
+    await s.play(new TransformFromCopy(a, hexagon));
+    await s.wait(0.2);
+  }), []);
+  // nor are the pieces of a copied text taking off from it (glyphs keep their shapes as they move)
+  assert.deepEqual(await kinds(async (s) => {
+    const t = new Text('hello world'); s.add(t);
+    await s.wait(0.2);
+    await s.play(new TransformMatchingText(t.copy(), new Text('low hello').shift([0, -1])));
+    await s.wait(0.2);
+  }), []);
 });
 
 test('play() with a lone .animate builder animates it (it is not the options object)', async () => {
