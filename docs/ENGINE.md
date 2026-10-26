@@ -20,6 +20,7 @@ them below say so.
 | `verify.ts`, `trace.ts`, `timeline.ts` | [The reference, "Checks"](REFERENCE.md#checks); Lantern's [VERIFY.md](https://github.com/ivarvong/lantern/blob/2c7bad533be25fbd56d26a9a2b6c5651743f011e/docs/VERIFY.md) (at `2c7bad5`) | Is the animation true, correct and smooth, and how is each checked? |
 | `perf.ts`, `svg.ts` | Lantern's [PERF.md](https://github.com/ivarvong/lantern/blob/2c7bad533be25fbd56d26a9a2b6c5651743f011e/docs/PERF.md) (at `2c7bad5`); run merging in [CODE.md](CODE.md#cost-elements-per-line) | Where does a frame's time go, and what made it faster? |
 | `fonts.ts`, `font-data.ts` | [The reference, "Scene"](REFERENCE.md#scene) (the fallback chain) and [upstream](UPSTREAM.md#engine-changes) | Which face draws a character, and what fails? |
+| `lettering.ts` | [The reference, "Lettering on request"](REFERENCE.md#lettering-on-request) | How does an explainer draw Greek or Cyrillic, and what does that cost the explainers that do not? |
 
 Lantern's Mermaid flowchart layout and its JSON document format were deleted in this fork
 ([upstream](UPSTREAM.md) lists what went); diagrams come from Agentic Mermaid capture instead.

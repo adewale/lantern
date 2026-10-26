@@ -7,6 +7,7 @@ import { chromeFor, caseNameIn, descriptionLang } from '../../app/embed-strings.
 import { restingTime, pictureHtml, htmlEscape } from '../../explain/trace.ts';
 import { ROOT, engineAlias, defaultVariant, hash, scriptEscape, sceneSlug, baseReceipt } from './explain-project.ts';
 import type { Project } from './explain-project.ts';
+import { pageFaces, letteringReport, useProjectLettering } from './explain-lettering.ts';
 
 export async function buildExplainer(
   project: Project,
@@ -19,9 +20,16 @@ export async function buildExplainer(
   const title = project.Scene.meta?.title ?? sceneSlug(project),
     lang = project.Scene.meta?.lang ?? 'en',
     t = chromeFor(lang);
+  await useProjectLettering(project);
   const sink = new SnapshotSink();
   await renderAt(v.Scene, restingTime(first, v.trace.fps), sink);
-  const entry = `import Source from 'virtual:author';import{mountEmbed}from ${JSON.stringify(join(ROOT, 'app/embed.ts'))};const root=document.getElementById('content');mountEmbed(root,Source,${JSON.stringify(project.store)}).then(()=>{root.dataset.ready='true'}).catch(error=>{console.error(error);const p=document.createElement('p');p.setAttribute('role','alert');p.textContent=${JSON.stringify(t.failed)};root.append(p)});`;
+  // A page that asked for lettering puts its faces in place before the player shapes anything.
+  // Every other page's entry is as it was: it never imports src/lettering.ts.
+  const mount = `mountEmbed(root,Source,${JSON.stringify(project.store)})`,
+    lettered = project.lettering
+      ? `import{useLettering}from ${JSON.stringify(join(ROOT, 'src/lettering.ts'))};`
+      : '';
+  const entry = `import Source from 'virtual:author';import{mountEmbed}from ${JSON.stringify(join(ROOT, 'app/embed.ts'))};${lettered}const root=document.getElementById('content');${lettered ? `useLettering(${JSON.stringify(pageFaces(project.lettering))}).then(()=>${mount})` : mount}.then(()=>{root.dataset.ready='true'}).catch(error=>{console.error(error);const p=document.createElement('p');p.setAttribute('role','alert');p.textContent=${JSON.stringify(t.failed)};root.append(p)});`;
   const bundled = await build({
     stdin: { contents: entry, resolveDir: ROOT, sourcefile: 'explainer-entry.ts', loader: 'ts' },
     bundle: true,
@@ -93,6 +101,8 @@ export async function buildExplainer(
     })),
     bytes: Buffer.byteLength(html),
     headers: { 'Content-Security-Policy': policy, 'Cache-Control': 'public, max-age=0, must-revalidate' },
+    // Only a page that asked for lettering says what it weighs; every other receipt is as it was.
+    ...(project.lettering ? { lettering: letteringReport(project.lettering) } : {}),
   };
   out = resolve(out);
   await mkdir(dirname(out), { recursive: true });
