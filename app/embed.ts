@@ -12,6 +12,7 @@ import type { Zoom } from './embed-zoom.ts';
 import { NARROW_PX, closeUps, stageScale, stepLayouts } from './embed-closeup.ts';
 import type { StepLayout } from './embed-closeup.ts';
 import { chromeFor, descriptionsLang, settingsProblem } from './embed-strings.ts';
+import { SHARE_META, shareable } from './embed-share.ts';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, className?: string): HTMLElementTagNameMap[K] => {
   const node = document.createElement(tag);
@@ -599,15 +600,20 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     enlarge.setAttribute('aria-pressed', String(on));
     zoom.apply();
   });
+  // A page `site:export --origin` published names <origin><path>/<id>/ here: each step of the
+  // default case with a path-safe name has a share page there, whose link preview is that step.
+  const shared = document.querySelector<HTMLMetaElement>(`meta[name="${SHARE_META}"]`)?.content;
   copy.onclick = async () => {
     if (!trace) return;
     const url = urlFor();
     url.searchParams.delete('parentOrigin');
+    const step = trace.steps[selected]!.step,
+      share = shared && shareable(step) && JSON.stringify(values) === JSON.stringify(resolveSettings(Source)) ? shared + step : url.href;
     try {
-      await navigator.clipboard.writeText(url.href);
+      await navigator.clipboard.writeText(share);
       notice.textContent = t.copied;
     } catch {
-      notice.textContent = url.href;
+      notice.textContent = share;
     }
   };
   root.addEventListener('keydown', (e) => {

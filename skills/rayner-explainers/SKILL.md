@@ -20,7 +20,8 @@ Commands are `explain <command>`, or `npm run explain -- <command>` in a checkou
 7. Make the drawing the show. `s.draw(m, { tool: 'pen' })` draws a mobject stroke by stroke with the tool on its tip; `s.focus(target)` moves the camera close while the heading stays put; `s.carry(m, region)` moves something the next step builds on, instead of clearing and redrawing it.
 8. `explain preview scene.ts --watch` and `explain shots scene.ts --case id=value`: look at every step of every case. A passing build is not a visual review.
 9. `explain check scene.ts`. Fix failures at their cause; `out/checks/<id>/report.json` draws each resting picture roughly in text. Its `legibility.labelsUnder12PxAt390` counts labels a phone reader sees under 12 px in the step's close-up; get it to 0 in every case (a heading at `stage(this, { headingSize: 0.54 })` reads at 12 px).
-10. `explain build scene.ts --out public/<id>.html`; optionally `explain render scene.ts --out public/<id>.mp4 --footer`, which also writes `<id>.transcript.html`.
+10. `explain describe scene.ts --out out/<id>.json` and read each step of each case: does the caption claim only what that step's `changed` and `picture` show? Rewrite a caption that names a value, mark or path the step does not show, or change the step so it shows it. `explain see scene.ts <step> --case id=value` prints one step.
+11. `explain build scene.ts --out public/<id>.html`; optionally `explain render scene.ts --out public/<id>.mp4 --footer`, which also writes `<id>.transcript.html`.
 
 ## Start from an example
 
