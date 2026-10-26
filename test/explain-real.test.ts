@@ -129,5 +129,8 @@ test('shipped explainers describe their steps: chart values, marks, focus, walks
   assert.match(connect, /A ring around connecting, the state the session is in/);
 
   const pkce = await steps('oauth-pkce');
-  assert.match(pictureSummary(pkce.get('authorize')!.after), /^Sequence diagram: 3 participants, 1 message; /);
+  // Only the first message is revealed, and what it carries is a note on it.
+  const authorize = pictureSummary(pkce.get('authorize')!.after);
+  assert.match(authorize, /^Sequence diagram: 3 participants, 1 message\. /);
+  assert.match(authorize, /Note: “code_challenge [^”]+, S256” beside Client → Auth server/);
 });

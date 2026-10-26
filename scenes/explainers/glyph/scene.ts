@@ -17,7 +17,7 @@ import {
   DOWN,
   shaperFor,
 } from '../../../src/index.ts';
-import type { Mobject, Vec, MatchSummary, FontName } from '../../../src/index.ts';
+import type { Box, Mobject, Vec, MatchSummary, FontName } from '../../../src/index.ts';
 import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
 
 const WORD = 'Hello, outlines';
@@ -272,15 +272,9 @@ export default class GlyphExplainer extends Scene {
     await this.play(toOther);
     const otherFont = toOther.summary();
     const paired = (m: MatchSummary) => `${m.matched} of ${m.matched + m.morphed + m.removed} paired`;
-    const shapes = await s.card(
-      [
-        [`${NAME[font]} at ${SMALL * 100}%`, paired(sameFont)],
-        [NAME[other], paired(otherFont)],
-      ],
-      { at: [-4.2, -4.25, 4.2, -2.2], title: 'Glyphs paired by outline shape' },
-    );
-    shapes.bar.style.fill = hot;
-    await shapes.mark(NAME[other]);
+    // Each row says how many of its glyphs found a partner, at its right end.
+    await s.callout(smaller, paired(sameFont), { side: 'right', gap: 0.35, color: soft, size: 0.26 });
+    await s.callout(across, paired(otherFont), { side: 'right', gap: 0.35, color: hot, size: 0.26 });
     this.state.shapePairs = { sameFont: sameFont.matched, otherFont: otherFont.matched };
 
     await this.step('pipeline', {
@@ -356,16 +350,14 @@ export default class GlyphExplainer extends Scene {
       describe: `Lines join the ${result.matched} paired letters of “cache miss” (${letters(before, morph.pairs.map(([a]) => a))}) to their places in “cache hit”; the dropped ${letters(before, morph.removed)} are crossed out and the new ${letters(after, morph.added)} underlined`,
     });
     await this.play(new Create(pairs, { runTime: 0.8, lagRatio: 0 }), new Create(marks, { runTime: 0.8, lagRatio: 0 }));
-    const tally = await s.card(
-      [
-        ['Paired', `${result.matched} · ${letters(before, morph.pairs.map(([a]) => a))}`],
-        ['Shrink away', `${result.removed} · ${letters(before, morph.removed)}`],
-        ['Grow in', `${result.added} · ${letters(after, morph.added)}`],
-      ],
-      { at: [2.6, -4.25, 7.55, -0.6], title: 'Glyph pairs', fontSize: 0.26 },
-    );
-    tally.bar.style.fill = hot;
-    await tally.mark('Grow in');
+    // The counts, each beside the marks it counts: right of the crossed letters and of the paired lines, under the underlined ones.
+    const around = (gs: Mobject[]) => {
+      const bs = gs.map((g) => g.box()!);
+      return [Math.min(...bs.map((b) => b[0])), Math.min(...bs.map((b) => b[1])), Math.max(...bs.map((b) => b[2])), Math.max(...bs.map((b) => b[3]))] as Box;
+    };
+    await s.callout(around(morph.removed.map(ghostOf)), `${result.removed} shrink away: ${letters(before, morph.removed)}`, { side: 'right', gap: 0.3, color: hot, size: 0.26 });
+    await s.callout(pairs, `${result.matched} paired: ${letters(before, morph.pairs.map(([a]) => a))}`, { side: 'right', gap: 0.35, color: soft, size: 0.26 });
+    await s.callout(around(morph.added), `${result.added} grow in: ${letters(after, morph.added)}`, { side: 'below', gap: 0.45, color: hot, size: 0.26 });
 
     await this.step('tradeoff', {
       title: 'Diagram labels are Inter outlines stretched to textLength',
