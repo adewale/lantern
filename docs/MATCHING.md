@@ -6,7 +6,7 @@ pieces (a word that grows a letter, code with a line inserted, a diagram that
 keeps two of its nodes), pair the pieces by what they are instead:
 
 ```js
-import { Text, Code, TransformMatchingText, TransformMatchingShapes, TransformMatching } from 'manim-js';
+import { Text, Code, TransformMatchingText, TransformMatchingShapes, TransformMatching } from 'rayner';
 
 // Five letters stay where they are, a d grows in
 await this.play(new TransformMatchingText(new Text('cache'), new Text('cached')));
@@ -46,6 +46,12 @@ glyph, an arrow's line or tip, a node's box). Containers are not parts; a
   with no partner grows from a point and fades in. Both are carried with the
   matched parts of their line (the line's move and font-size change), so a new
   letter grows beside its neighbours and travels with them.
+- In `TransformMatchingText` a removed glyph also ends inside the line it
+  becomes, an added glyph starts inside the line it joins, and a glyph whose
+  lagged share has not started rides with its line, so each line stays one
+  piece for the motion verifier (`test/matching-motion.test.ts`). With a
+  `lagRatio` above about 0.25 and large rearrangements, matched glyphs that
+  cross a line can still report a teleport in a few frames.
 - `fadeMismatches: false` morphs the unmatched parts into each other instead,
   by index, as manim's `transform_mismatches` does; only the surplus fades.
 
@@ -80,7 +86,9 @@ The grid pitch is irrational. With a decimal or binary pitch, common values
 (half a side, an eighth, ratios of integer font units) sit exactly on a cell
 boundary, and Float32 noise from moving the shape decides which way they round:
 50 steps per side split 8% of moved copies from their originals, 100 steps
-0.04%, the irrational pitch none of 40,000.
+0.04%. With the irrational pitch a moved copy always shares its original's
+key; a scaled copy can still split when a point lands on a grid-cell
+boundary, about 0.02% of copies.
 
 ## Relation to manim
 
@@ -104,9 +112,13 @@ boundary, and Float32 noise from moving the shape decides which way they round:
   (`test/matching.test.ts`, which also runs the motion verifier).
 - The target is never modified. The source is, as `Transform`'s alignment
   modifies it: matched parts gain curves, new copies are attached.
-- `begin()` costs about 30 ms for a 40-line code edit, 60 ms for 80 lines;
-  frames cost what a `Transform` of the same parts costs. A key repeated by
-  hundreds of parts is the expensive case (600 alike parts: 100 ms at begin).
+- `TransformMatchingText` scans both texts once per matching run it finds, so
+  `begin()` is O(runs·N·M). One edit costs little: 42 ms at begin for 40 lines
+  of code, 90 ms for 80. Scattered edits (a change on every line) leave many
+  short runs: 0.3 s for 40 lines, 1.2 s for 80. Prefer `TransformDiff` for
+  code (36 ms and 168 ms for the same edits). Frames cost what a `Transform`
+  of the same parts costs. A key repeated by hundreds of parts is the other
+  expensive case (600 alike parts: 100 ms at begin).
 
 ## Diff-driven
 
@@ -115,7 +127,7 @@ it is the diff. `TransformDiff` takes the pairing from it, so the animation
 cannot show a change the diff does not contain.
 
 ```js
-import { Code, TransformDiff, diffLines, parseUnifiedDiff } from 'manim-js';
+import { Code, TransformDiff, diffLines, parseUnifiedDiff } from 'rayner';
 
 await this.play(new TransformDiff(before, after));                       // hunks from diffLines
 await this.play(new TransformDiff(before, after, { hunks: parseUnifiedDiff(patch) }));   // the author's diff
@@ -173,6 +185,7 @@ In a scene, a matching transform records what it did as step evidence when it
 begins (`Scene.record`, see [the reference](REFERENCE.md#scene)): `{ kind: 'match', matched,
 morphed, removed, added }`, and for `TransformDiff`, `{ kind: 'diff', hunks,
 lines: { unchanged, changed, removed, added }, matched, morphed, removed, added }`.
+A View's internal morph (`view.sync()`) does not record evidence.
 The trace carries it per step, and `renderText` prints a one-line summary under the
 frame. The KV-cache explainer morphs its merge request's two texts with
 `TransformDiff`, and `test/explain-fidelity.test.ts` holds the hunks it

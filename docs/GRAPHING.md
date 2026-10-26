@@ -20,7 +20,7 @@ import { Scene, Axes, Create, Transform, FadeIn, GOLD, TEAL } from '../../../src
 import { sunlight, daylightYear } from '../lib/models.ts';
 
 const MONTHS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-// The model's own declination: month m (0 = January) to degrees
+// Declination: month m (0 = January) to degrees
 const declination = (m: number) => 23.44 * Math.sin((2 * Math.PI * (m - 2)) / 12);
 // Bar i is centered at x = i + 0.5, so the curve reads month x - 0.5 to line up with it
 const daylightAt = (lat: number) => (x: number) => sunlight(lat, declination(x - 0.5)).daylight;

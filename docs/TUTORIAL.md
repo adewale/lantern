@@ -90,7 +90,7 @@ This writes:
 
 ## 6. Draw with the engine
 
-The helpers cover diagrams, cards and code panels. For anything else a scene uses Lantern itself, imported from `manim-js`, and the engine has features made for explainers. Each excerpt below is shortened from one of the demo scenes in `scenes/explainers/`; [the reference](REFERENCE.md#engine-features) lists them all with their guides.
+The helpers cover diagrams, cards and code panels. For anything else a scene uses Lantern itself, imported from `rayner`, and the engine has general features the explainers use. Each excerpt below is shortened from one of the demo scenes in `scenes/explainers/`; [the reference](REFERENCE.md#engine-features) lists them all with their guides.
 
 Zoom onto what the step is about, then come back. The camera moves no point, so `check` measures labels as the reader sees them (`seasons`):
 

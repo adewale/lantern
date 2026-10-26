@@ -56,26 +56,28 @@ this.frame.scale(0.5).addUpdater((f) => f.moveTo(token));
   `width`/`height` attributes are unchanged, and the background rect covers whatever the
   viewBox shows. Path data and `transform` attributes do not change when only the camera
   moves: `renderElements` returns the identical record objects frame to frame.
-- **Live DOM** (`DomSink`): writes `viewBox` only when it changed, counted as one attribute
-  write in the playback logs. A pure camera move is one DOM write per frame.
+- **Live DOM** (`DomSink`): writes `viewBox` only when it changed. A pure camera move is one
+  DOM write per frame.
 - **Clips**: `clipBox` is in world coordinates and so are clip rects; the viewBox only
   changes what part of the world is visible, so clipped groups zoom with everything else.
 - **Text** (`renderText`): the grid shows the frame box, so zoomed content reads larger.
-- **Pages and videos**: they render through the sinks above. The video exporter turns on
-  culling (below). A page's reader zoom narrows the `viewBox` inside the camera's box, so an
+- **Pages and videos**: they render through the sinks above. The video exporter, `explain shots`,
+  `preview`'s contact sheet and the gallery tiles turn on culling (below). A page's reader zoom narrows the `viewBox` inside the camera's box, so an
   author's camera move keeps playing under it ([reference](REFERENCE.md#controls-and-accessibility)).
 
 ## Rendering off-screen content
 
 By default the sinks write every mobject, on screen or not. `renderElements(scene, { cull: true })`
 and `toSvgString(scene, { cull: true })` (type `RenderOptions`) leave out a leaf whose box, grown
-by its stroke, leaves under about 2 px of the view, and skip a group whole only when it clears the
-view by 0.5 units. Culling is a pure function of the state, so seeks are unaffected, and the
-records it keeps are the same objects as without it. The video exporter turns it on because
-resvg 2.6.2 (the latest release) aborts on an element with `opacity` whose visible box is empty:
+by its stroke, leaves under 2 output pixels of the view (2 × view width ÷ `width`, the output's
+width in pixels, default 1280; `toSvgString` passes its own `width`), and skip a group whole only
+when it clears the view by 0.5 units. Culling is a pure function of the state, so seeks are unaffected, and the
+records it keeps are the same objects as without it. The video exporter and every PNG the explain
+tools draw turn it on because resvg 2.6.2 (the latest release) aborts on an element with `opacity` whose visible box is empty:
 seasons' noon zoom left one fading glyph at opacity 0.054 beyond the frame, and its MP4 export
-died in resvg. DOM sinks leave it off and keep one element per mobject. Test:
-`test/camera.test.ts`, "cull: true leaves out what the camera cannot show; off by default".
+died in resvg. DOM sinks leave it off and keep one element per mobject. Tests:
+`test/camera.test.ts`, "cull: true leaves out what the camera cannot show; off by default" and
+"cull: 2 pixels of the output width, so a wider output keeps a thinner strip".
 
 ## How the verifier sees it
 
@@ -84,6 +86,17 @@ died in resvg. DOM sinks leave it off and keep one element per mobject. Test:
 smooth camera move is smooth motion of everything on screen and reports nothing. A camera
 cut moves every leaf at once and reports a teleport for each. When the camera is home,
 screen space is exactly world space.
+
+## How `check` measures labels
+
+`explain check` measures a native label on screen: its world size times the camera's zoom,
+which for a view `w` × `h` units is min(16 ÷ w, 9 ÷ h), since a view out of 16:9 is
+letterboxed and its tighter side sets the scale. A label passes when, in some frame where it
+is drawn (opacity and draw fraction at least 0.95) and inside the camera's view, it reaches
+14 px on a 1280 px stage. It is credited with its zoomed size only in a step's completed
+(resting) frame; in any other frame it counts at no more than its size with the camera home,
+so a camera that glides past a small label does not make it read
+([reference](REFERENCE.md#checks)).
 
 ## In the explainers
 

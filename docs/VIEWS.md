@@ -6,7 +6,7 @@ transforms the old one into it, and nothing checks that the two agree. A `View`
 makes the picture a function of the state instead:
 
 ```ts
-import { Scene, Text, FadeIn, view } from 'manim-js';
+import { Scene, Text, FadeIn, view } from 'rayner';
 
 class Ring extends Scene {
   override async construct() {
@@ -128,7 +128,7 @@ on a View that is not on screen yet adds it, and it appears abruptly.
 
 ## The fidelity check: the picture side
 
-`specs/kyle.md` asks for a named pattern: "a scene's state at each step must
+`specs/rayner.md` asks for a named pattern: "a scene's state at each step must
 equal the program's". The state side already exists: `test/explain-fidelity.test.ts`
 compares every case's step states with the program's answers, using
 `assertStepState` from `test/lib/explainer-state.ts`. A View adds the picture
@@ -146,7 +146,8 @@ await assertViewFollowsState(Ring, (scene) => (scene as Ring).readout);
 It fails on a scene that changes state and forgets to sync, and on a picture
 built from the wrong fields. It compares text (`pictureText`: every `Text` in
 the picture, in family order), not geometry. The pure form,
-`viewMismatch(view, state)`, is exported from the library. It returns `null`, or
+`viewMismatch(view, state)`, is exported from the library, and
+`assertViewFollowsState` calls it at each step end. It returns `null`, or
 a message that says what the View shows and what the state renders. Views made
 with `view(scene, render)` or `stateView` keep `render` for these checks; for a
 `view(build)` closure, pass the render function explicitly.
@@ -155,7 +156,8 @@ with `view(scene, render)` or `stateView` keep `render` for these checks; for a
 
 ### `StateReadout`
 
-`StateReadout` is unchanged and is **not** reimplemented on top of View.
+`StateReadout` keeps its layout and is **not** reimplemented on top of View.
+Its `values` are read from its children, so a `copy()` names its own `Text`s.
 Lantern's own scenes at the fork base (deleted here, see [upstream](UPSTREAM.md))
 treat it as a fixed layout of `Text` slots:
 

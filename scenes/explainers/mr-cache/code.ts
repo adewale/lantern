@@ -22,7 +22,8 @@ export const AFTER_CODE = [
 // Syntax colours for the two blocks: build-time data, not a runtime highlighter.
 // BEFORE_CODE and AFTER_CODE each saved to a .js file, then
 //   node tools/tokens.ts block.js --theme light --engine shiki
-// (shiki 4.5.0, the pinned optional dependency; light, for the paper stage).
+// (shiki 4.5.0, a devDependency of this checkout: npm install; light, for the
+// paper stage).
 // Regenerate if the code above changes; test/explain-fidelity.test.ts checks
 // that every span lies inside its line.
 export const BEFORE_SPANS: ColorSpan[] = [

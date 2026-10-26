@@ -1,7 +1,8 @@
 # Code: spans and syntax tokens
 
 `Code` is monospace lines, one `Text` per line, one glyph (a `VMobject`) per
-visible character. Each glyph's `cluster` is its index into the line's string.
+visible character. Each glyph's `cluster` is its index into the line's string as written
+(UTF-16 code units, tabs unexpanded).
 Spans address glyphs through that index; syntax colour is data computed at
 build time and painted through the same spans.
 
@@ -16,7 +17,9 @@ code.lineSpan(4);             // all of line 4
 ```
 
 Indices are JS string indices (UTF-16 code units) into `code.lines[i].text`,
-the same numbers `Glyph.cluster` holds. Out-of-range lines or indices throw
+the same numbers `Glyph.cluster` holds. A tab is one index however many
+columns it takes, and a character outside the BMP is two
+(`test/code-tabs.test.ts`). Out-of-range lines or indices throw
 `RangeError`; a `token` that isn't there throws.
 
 ### A span is a view
@@ -54,7 +57,8 @@ contract for features built on spans (braces, boxes, diff-driven transforms).
 built the same way so that boxes around tokens on one line line up:
 
 - **x**: from the pen position at `from` to the pen position at `to`, from the
-  shaped advances (spaces count; a span of spaces has a box and no glyphs);
+  shaped advances (spaces count; a span of spaces has a box and no glyphs; a
+  tab takes the columns it expands to, as drawn);
 - **y**: the line's descent to ascent at its current size, the same for every
   span of the line;
 - unioned with the glyphs' ink, so nothing is ever cut off (in the embedded
@@ -88,15 +92,17 @@ node tools/tokens.ts <file | -> [--lang ts|js|python|bash|elixir] [--theme dark|
 
 prints the spans as a JSON array, one span per line, ready to paste into a
 scene. The language defaults to the file extension; stdin needs `--lang`.
-The engine used goes to stderr. From code, `tokenize(source, lang, { engine,
-palette })` in `tools/lib/tokenize.ts` returns the same `ColorSpan[]` (the
-explain CLI can call it at build time); `lex()` and `shikiTokens()` return the
-classified tokens (`keyword`, `string`, `comment`, `number`, `function`,
-`punctuation`) before colouring.
+The engine used goes to stderr. From code, the module `tools/lib/tokenize.ts`
+exports `tokenize(source, lang, { engine, palette })`, which returns the same
+`ColorSpan[]` (the explain CLI can call it at build time). It is not the
+`tokenize` that `rayner` exports: that one, from `src/diff.ts`, splits a line
+into the tokens `diffTokens` compares. The module's `lex()` and `shikiTokens()`
+return the classified tokens (`keyword`, `string`, `comment`, `number`,
+`function`, `punctuation`) before colouring.
 
-- **shiki** (an optional peer package, pinned to 4.5.0): when installed,
-  `--engine auto` uses its grammars, loaded synchronously with the JavaScript
-  regex engine (no WASM). Its `github-dark` colours are mapped back to the
+- **shiki** (a devDependency of this checkout, pinned to 4.5.0, so `npm install`
+  brings it): with it, `--engine auto` uses its grammars, loaded synchronously
+  with the JavaScript regex engine (no WASM). Its `github-dark` colours are mapped back to the
   token kinds above; anything else (plain text, variables, parameters) stays
   in the base colour.
 - **fallback**: a single-pass lexer for ts/js, python, bash and elixir:
@@ -117,8 +123,8 @@ Spans are computed once, by a tool, and checked in as a literal array
 is the example). Nothing in `src/` or the browser bundle imports shiki or the lexer:
 
 - **zero runtime dependencies**: the engine and anything a page loads stay
-  dependency-free; shiki is an optional peer package, like `agentic-mermaid`,
-  used only by build tools.
+  dependency-free; shiki is a devDependency of the checkout, used only by
+  `tools/tokens.ts`, which the package does not ship.
 - **deterministic output**: the same data renders the same frames everywhere,
   and seeks stay byte-identical. A highlighter running at view time could
   change colours with a grammar update; a checked-in array changes only when
@@ -135,17 +141,29 @@ colour run. Spaces have no glyph, so `return await` in one colour is one run.
 A glyph mid-Write (partial draw) still falls back to one element per glyph.
 The SVG string renderer is unaffected.
 
-A 20-line TypeScript block (638 glyphs, from `src/text.ts`):
+A 20-line TypeScript block (lines 52 to 71 of `src/text.ts`, 638 glyphs),
+measured at `53c5add` with shiki 4.5.0:
 
-| | elements |
-|---|---|
-| plain | 19 |
-| coloured, before runs (one element per glyph on any mixed line) | 567 |
-| coloured, runs, fallback lexer (49 spans) | 97 |
-| coloured, runs, shiki (85 spans) | 140 |
+| | fallback lexer (48 spans) | shiki (94 spans) |
+|---|---|---|
+| plain | 19 | 19 |
+| coloured, one element per glyph on any mixed line (before runs, counted) | 559 | 578 |
+| coloured, runs | 97 | 163 |
 
 Grouping by style instead of by run (one element per colour per line) would
-give 53 / 62, but changes paint order between glyphs of a line, which matters
+give 45 / 49, but changes paint order between glyphs of a line, which matters
 mid-morph when glyphs cross; runs keep the per-glyph order exactly. Fewer
 colours is the cheaper lever: a palette that leaves punctuation uncoloured (the
 default) costs a fraction of one that colours it.
+
+## In the explainers
+
+- [mr-cache](../scenes/explainers/mr-cache/scene.ts): both blocks of the merge
+  request are `new Code(lines, { spans })`, with spans that
+  `node tools/tokens.ts --theme light --engine shiki` generated and that are
+  checked in beside the scene (`scenes/explainers/mr-cache/code.ts`);
+  `TransformDiff` morphs one into the other.
+- [state-machine](../scenes/explainers/state-machine/scene.ts): finds the reducer
+  row it read with `code.token(line, text)`, takes `code.span` from the key to
+  the value, and rings it with a `SurroundingRectangle` built from the span's
+  `box()`; `saveState`/`Restore` put the row back.

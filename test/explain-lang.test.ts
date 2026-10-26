@@ -310,8 +310,9 @@ test('quotient-familial: every English word in its descriptions is one its autho
   assert.ok(described(project)[0]!.summary.startsWith(`Logigramme${NB}: 8 nœuds, 8 liens${NB}; «${NB}Ce foyer${NB}», 4 valeurs étiquetées`));
 });
 
-// Descriptions of shipped English explainers, as they were before descriptions had a vocabulary.
-const ENGLISH_PINNED = [
+// Golden descriptions of shipped English explainers, pinned from this branch's output: a change
+// to the vocabulary, or to what these steps draw, shows up here.
+const GOLDEN_DESCRIPTIONS = [
   {
     id: "seasons",
     step: "compare",
@@ -341,8 +342,8 @@ const ENGLISH_PINNED = [
     html: "<ul><li>Flowchart: 7 nodes, 7 links:<ul><li>“parent” beside commit 7edf38a → commit 161f392 (note);</li><li>“one blob, two trees” beside blob ce01362 (note);</li><li>tree aaa96ce hello.txt → blob ce01362 (marked);</li><li>tree 88e3870 hello.txt, world.txt → blob ce01362 (marked);</li><li>blob ce01362 (marked);</li><li>main;</li><li>main → commit 161f392;</li><li>commit 7edf38a;</li><li>commit 7edf38a → commit 161f392;</li><li>commit 7edf38a → tree 88e3870 hello.txt, world.txt;</li><li>commit 161f392;</li><li>commit 161f392 → tree aaa96ce hello.txt;</li><li>tree aaa96ce hello.txt;</li><li>tree 88e3870 hello.txt, world.txt;</li><li>tree 88e3870 hello.txt, world.txt → blob cc628cc;</li><li>blob cc628cc.</li></ul></li><li>Two rows, commit one: commit 161f392 names tree aaa96ce, which lists hello.txt as blob ce01362; under it, commit two: commit 7edf38a names tree 88e3870, which lists hello.txt as blob ce01362 and world.txt as blob cc628cc. The hello.txt blob ce01362 is outlined in both trees: one object, named twice;</li><li>1 label:<ul><li>The redraw kept all 76 shapes of commit one’s row and grew 98 new ones.</li></ul></li></ul>",
   },
 ];
-test('English descriptions are byte for byte what they were before the vocabulary', async () => {
-  for (const pinned of ENGLISH_PINNED) {
+test('English descriptions match the golden descriptions byte for byte', async () => {
+  for (const pinned of GOLDEN_DESCRIPTIONS) {
     const project = await collectProject(join(ROOT, `scenes/explainers/${pinned.id}/scene.ts`));
     const s = described(project).find((d) => d.step === pinned.step)!;
     assert.equal(s.summary, pinned.summary, pinned.id);

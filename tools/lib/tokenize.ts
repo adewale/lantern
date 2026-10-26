@@ -1,13 +1,13 @@
 // Syntax tokens for Code, computed at build time and checked in as data.
 //
 // tokenize(source, lang) returns ColorSpan[] ({ line, from, to, color }, the
-// format `new Code(lines, { spans })` takes). With `shiki` installed (an
-// optional dependency, pinned) it classifies with shiki's grammars; otherwise
-// with the small lexer below (ts/js, python, bash, elixir: keywords, strings,
-// comments, numbers, function names, punctuation). Both paths reduce to the
-// same token kinds and the same palette, so the output is plain data that
-// never needs shiki (or this file) at runtime: nothing here reaches src/ or the
-// browser. Same input, same engine, same output.
+// format `new Code(lines, { spans })` takes). With `shiki` installed (a
+// devDependency of this checkout: npm install; pinned) it classifies with
+// shiki's grammars; otherwise with the small lexer below (ts/js, python, bash,
+// elixir: keywords, strings, comments, numbers, function names, punctuation).
+// Both paths reduce to the same token kinds and the same palette, so the output
+// is plain data that never needs shiki (or this file) at runtime: nothing here
+// reaches src/ or the browser. Same input, same engine, same output.
 
 import { createRequire } from 'node:module';
 import type { ColorSpan } from '../../src/text.ts';
@@ -49,7 +49,7 @@ export interface TokenizeOptions {
 export function tokenize(source: string, lang: Lang | string, { engine = 'auto', palette = DARK }: TokenizeOptions = {}): Span[] {
   const l = langOf(lang);
   let tokens: Token[] | null = engine === 'fallback' ? null : shikiTokens(source, l);
-  if (!tokens && engine === 'shiki') throw new Error('shiki is not installed (npm install, with optional dependencies)');
+  if (!tokens && engine === 'shiki') throw new Error('shiki is not installed (a devDependency of this checkout: npm install)');
   tokens ??= lex(source, l);
   const spans: Span[] = [];
   for (const t of tokens) {

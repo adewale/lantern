@@ -28,7 +28,7 @@ const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 // A scene that passes `explain check`: the camera zooms onto one label while another, off to
 // the side, fades to 0.3. The faded label is then outside the view, and translucent.
-const DIM = `import{Scene,Text}from'manim-js';import{stage}from'manim-js/explain';
+const DIM = `import{Scene,Text}from'rayner';import{stage}from'rayner/explain';
 export default class Dim extends Scene{async construct(){const s=stage(this);
 await this.step('one',{caption:'Two labels.'});
 const far=new Text('dimmed node',{fontSize:0.3}).moveTo([6,3]);
@@ -65,7 +65,7 @@ test('a contact sheet --out with no extension writes NAME.png and NAME.svg besid
   await mkdir(dir);
   await writeFile(
     join(dir, 'scene.ts'),
-    `import{Scene,Text}from'manim-js';import{stage}from'manim-js/explain';export default class Plain extends Scene{async construct(){const s=stage(this);await this.step('one',{caption:'A label.'});await s.enter(new Text('hello',{fontSize:0.4}),{describe:'hello'});}}`,
+    `import{Scene,Text}from'rayner';import{stage}from'rayner/explain';export default class Plain extends Scene{async construct(){const s=stage(this);await this.step('one',{caption:'A label.'});await s.enter(new Text('hello',{fontSize:0.4}),{describe:'hello'});}}`,
   );
   // A dot in the folder's name, none in the file's: the SVG used to land in the parent folder.
   const sheets = join(dir, 'v1.2');

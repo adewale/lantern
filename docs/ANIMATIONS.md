@@ -34,8 +34,20 @@ await this.play(new TransformFromCopy(formula, result), new Indicate(formula));
 ```
 
 A copy of `formula` morphs into `result`. `formula` stays where it is, unchanged, and
-the scene holds `result` at the end. The copy is made when the play begins and is a
-different mobject from the source, so the source can be animated in the same play.
+the scene holds `result` at the end. The copy is taken before any animation in the play
+begins, so it is `formula` as the play found it whatever the argument order, and it is a
+different mobject from the source, so the source can be animated in the same play. With
+the source already on screen, `TransformFromCopy(a, b)` listed before or after
+`Indicate(a)` renders the same frames byte for byte; with a source new to the scene
+(`play(new Create(a), new TransformFromCopy(a, b))`) both orders draw the same paths, in
+the order of the arguments (`test/anim-utils.test.ts`, "TransformFromCopy copies its source
+before anything in its play begins, in either argument order").
+
+TransformFromCopy is the supported way to morph a copy. The motion check lets a shape
+appear over a staying shape only when it is a `TransformFromCopy` copy of it or has the
+same shapes and paints, so a hand-made `Transform(t.copy(), other)` that changes glyph
+shapes on its first frame is reported as a cut-in. A known gap: a `TransformFromCopy`
+into a `Text` reports cut-outs of the target's glyphs at the handoff.
 
 ## Succession: one after another, in one play
 
@@ -62,7 +74,14 @@ animations may not drive one mobject at the same time looks through it: members 
 the `Succession`.
 
 Time through a `Succession` is linear by default; members ease with their own rate
-functions. A group rate function must not run time backwards.
+functions. A group rate function must not run time backwards. A `lagRatio` given to
+`play()` does not stagger a `Succession`: its members stay one after another
+(`test/anim-utils.test.ts`, "a lagRatio passed to play() leaves a Succession sequential").
+
+Seeking is exact through a `Succession` too. Its members begin, and add their mobjects,
+as it interpolates, so a seek into a play holding one still interpolates the frames it
+skips, and stops skipping once a member brings an updater ("seeking into a Succession
+whose member brings an updater matches the full run").
 
 ## In the explainers
 
