@@ -2,6 +2,7 @@
 // the picture as text, then the step's title, caption, what the picture shows in words, and what
 // the step changed in scene.state. Lantern's `npm run see`, for one case. Every word comes from
 // describeExplainer's description of the case, so `see` and `describe` cannot disagree.
+import { isHeading } from '../../explain/stage.ts';
 import { writeFile } from 'node:fs/promises';
 import { renderAt, toSvgString } from '../../src/index.ts';
 import type { Scene, Sink } from '../../src/index.ts';
@@ -25,6 +26,7 @@ export function seeText(id: string, c: CaseDescription, step?: string): string {
     '',
     `${id} · step ${names.indexOf(s.step) + 1} of ${names.length}: ${s.step}${c.name ? ` · ${c.name}` : ''}`,
     `Title: ${s.title}`,
+    ...(s.line ? [`Line: ${s.line}`] : []),
     ...(s.caption ? [`Caption: ${s.caption}`] : []),
     ...(s.picture ? [`Picture: ${s.picture}`] : []),
     changed.length ? `Changed: ${changed.join('; ')}` : 'Changed: nothing in scene.state',
@@ -39,7 +41,7 @@ export async function seeStep(project: Project, v: Variant, step?: string): Prom
   const s = step == null ? v.trace.steps.at(-1)! : v.trace.steps.find((x) => x.step === step)!;
   const sink: Sink = { async frame() {} };
   const scene: Scene = await renderAt(v.Scene, restingTime(s, v.trace.fps), sink);
-  scene.mobjects = scene.mobjects.filter((m) => m.key !== '__heading');
+  scene.mobjects = scene.mobjects.filter((m) => !isHeading(m));
   return { text, svg: toSvgString(scene) };
 }
 
