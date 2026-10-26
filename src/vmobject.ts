@@ -273,6 +273,8 @@ export class VMobject extends Mobject {
         const c: Vec = m.hasPoints() ? m.center() : [src[0]!, src[1]!];
         m.subpaths.push(new Float32Array([c[0], c[1]]));
         m.closed.push(o.closed[m.subpaths.length - 1]!);
+        // The next pad's centre must count this one: a box cached before alignment would not.
+        m.invalidateBox();
       }
     }
     for (let i = 0; i < this.subpaths.length; i++) {
