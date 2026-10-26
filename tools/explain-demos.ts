@@ -11,6 +11,7 @@ import { contactSheet, stillPng, cardPng } from './lib/explain-shots.ts';
 import { exporterHash, probeVideo, footerLines } from './lib/explain-video.ts';
 import { checkProject } from './lib/explain-check.ts';
 import { shareable } from './lib/explain-share.ts';
+import { useProjectLettering } from './lib/explain-lettering.ts';
 import type { ShareManifest } from './lib/explain-share.ts';
 
 const directory = join(ROOT, 'out/explainers');
@@ -51,6 +52,8 @@ for (const item of EXPLAINERS) {
     cover: (pictured.find((x) => x.step === step.step) ?? pictured[0])?.step ?? '',
     steps: [],
   };
+  // The pictures draw with the project's lettering, as its page and contact sheet do.
+  await useProjectLettering(project);
   for (const s of pictured) {
     await writeFile(join(directory, item.id, s.step + '.png'), await cardPng(variant.Scene, restingTime(s, variant.trace.fps)));
     share.steps.push({ step: s.step, title: String(s.meta.title ?? s.step), caption: String(s.meta.caption ?? ''), picture: pictureSummary(s.after) });
