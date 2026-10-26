@@ -1,3 +1,6 @@
+import { prepareLettering as prepareOutlineLettering } from './lettering.ts';
+import { usesOutlineLettering, withSceneLettering } from '../../src/lettering-outlines.ts';
+import type { LetteringSnapshot } from '../../src/lettering-outlines.ts';
 import { build } from 'esbuild';
 import type { Plugin } from 'esbuild';
 import { readFile, writeFile, mkdir, stat, readdir, rm } from 'node:fs/promises';
@@ -38,10 +41,17 @@ async function scenePath(input: string): Promise<string> {
 }
 
 /** Force author, helper and player imports onto one engine, including compiled-scene reuse. */
-export function engineAlias(node = false): Plugin {
+const legacySource = (source: string) => source
+  .replace("import type { LetteringRequest } from '../src/lettering-outlines.ts';\n", '')
+  .replace('; lettering?: LetteringRequest', '')
+  .replace(/\n\/\/ Optional lettering: tree-shaken[\s\S]*?\/\/ End optional lettering\.\n/, '');
+export function engineAlias(node = false, outlines = false): Plugin {
   return {
     name: 'one-lantern-engine',
     setup(b) {
+      if (!outlines) b.onLoad({ filter: /[/\\]src[/\\]index\.ts$/ }, async (args) => ({
+        contents: legacySource(await readFile(args.path, 'utf8')), loader: 'ts',
+      }));
       b.onResolve({ filter: /.*/ }, (args) => {
         let file: string | undefined;
         if (args.path === 'rayner') file = join(ROOT, 'src/index.ts');
@@ -80,9 +90,9 @@ async function engineHash(lettered: boolean): Promise<string> {
   const inputs: string[] = [];
   for (const folder of ['src', 'explain', 'integrations/agentic-mermaid'])
     for (const name of (await readdir(join(ROOT, folder)))
-      .filter((n) => n.endsWith('.ts') && (lettered || folder + '/' + n !== 'src/lettering.ts'))
+      .filter((n) => n.endsWith('.ts') && !['lettering-outlines.ts', 'math.ts'].includes(n) && (lettered || folder + '/' + n !== 'src/lettering.ts'))
       .sort())
-      inputs.push(folder + '/' + name + '\n' + (await readFile(join(ROOT, folder, name), 'utf8')));
+      inputs.push(folder + '/' + name + '\n' + legacySource(await readFile(join(ROOT, folder, name), 'utf8')));
   inputs.push(await readFile(join(ROOT, 'vendor/glyph.js'), 'utf8'));
   return hash(inputs.join('\n'));
 }
@@ -122,7 +132,16 @@ async function loadScene(
         : null;
   if (!exportName) throw new Error('Export one Scene subclass (or a default Scene export)');
   const Explainer = module[exportName] as ExplainerClass;
-  return { Scene: Explainer, exportName, file, sourceHash, engineHash: await engineHash(letteringRequest(Explainer) !== undefined) };
+  const outlines = usesOutlineLettering(Explainer);
+  // A captured run must survive installing the package: the same engine imports
+  // resolve to src/*.ts in a checkout and dist/src/*.js in the compiled CLI.
+  // Preserve the historical fingerprint exactly for every existing plain scene.
+  const portableSourceHash = outlines ? hash(
+    code.replaceAll(pathToFileURL(ROOT).href, 'lantern:/').replaceAll(dirname(file), '<author>')
+      .replace(/lantern:\/dist\/(src|explain|integrations)\//g, 'lantern:/$1/')
+      .replace(/(lantern:\/(?:src|explain|integrations)\/[^"'\n]+)\.js(?=["'])/g, '$1.ts'),
+  ) : sourceHash;
+  return { Scene: Explainer, exportName, file, sourceHash: portableSourceHash, engineHash: await engineHash(outlines || letteringRequest(Explainer) !== undefined) };
 }
 export interface Project {
   Scene: ExplainerClass;
@@ -136,6 +155,7 @@ export interface Project {
   edits: number;
   /** The faces cut for `static meta.lettering`; absent when the scene asks for none. */
   lettering?: Lettering;
+  outlineLettering?: LetteringSnapshot;
 }
 
 /**
@@ -208,10 +228,14 @@ export async function writeSnapshots(base: string, store: SnapshotStore, sourceH
 }
 export async function collectProject(
   input: string,
-  { refresh = false, write = true }: { refresh?: boolean; write?: boolean } = {},
+  { refresh = false, write = true, captureLettering = refresh }: { refresh?: boolean; write?: boolean; captureLettering?: boolean } = {},
 ): Promise<Project> {
   const loaded = await loadScene(input);
-  const { Scene: Source, file } = loaded;
+  const { file } = loaded;
+  const outlineRequested = usesOutlineLettering(loaded.Scene);
+  const outline = outlineRequested
+    ? await prepareOutlineLettering(loaded.Scene, file, loaded.sourceHash, captureLettering, write) : undefined;
+  const Source = outline?.Scene ?? loaded.Scene;
   const base = file.replace(/\.[^.]+$/, '');
   const previous: SnapshotStore = refresh ? {} : await readSnapshots(base);
   // Lazy: native scenes never require Agentic Mermaid or Chromium.
@@ -252,7 +276,7 @@ export async function collectProject(
   };
   const variants: Project['variants'] = [];
   const undrawable: string[] = [];
-  const request = letteringRequest(Source);
+  const request = outlineRequested ? undefined : letteringRequest(Source);
   let lettering: Lettering | undefined;
   try {
     // Only a scene that asks for lettering runs this: once per case with the whole
@@ -305,12 +329,32 @@ export async function collectProject(
         throw new Error(`Each case needs non-empty named steps: ${JSON.stringify(values)}`);
       if (new Set(names).size !== names.length)
         throw new Error(`Duplicate step names prevent stable links: ${JSON.stringify(values)}`);
+      if (outline) await withSceneLettering(Bound, async () => {
+        const { Text } = await import('../../src/index.ts');
+        const { wrapCaption, FOOTER_TEXT_WIDTH } = await import('./explain-video.ts');
+        for (const [i, s] of trace.steps.entries()) {
+          step = s.step;
+          // Contact sheets draw this numbered title outside the authored scene.
+          new Text(`${i + 1}. ${String(s.meta.title ?? s.step)}`);
+          for (const text of [s.meta.title ?? s.step, s.meta.caption ?? '']) {
+            new Text(String(text));
+            try { wrapCaption(String(text), FOOTER_TEXT_WIDTH); }
+            catch (error) {
+              // Long captions may still be valid on a page. Video reports its own
+              // footer limits; script/face/snapshot errors must always fail closed.
+              if (!/^Caption (word exceeds|exceeds four)/.test((error as Error).message)) throw error;
+            }
+            blanks();
+          }
+        }
+      });
       variants.push({ values, Scene: Bound, trace });
     }
     if (undrawable.length)
       throw new Error(`The embedded fonts cannot draw these characters:\n${[...new Set(undrawable)].join('\n')}`);
+    await outline?.finish();
     if (write) await writeSnapshots(base, store, loaded.sourceHash);
-    return { ...loaded, store, variants, edits, ...(lettering ? { lettering } : {}) };
+    return { ...loaded, Scene: Source, store, variants, edits, ...(lettering ? { lettering } : {}), ...(outline ? { outlineLettering: outline.snapshot } : {}) };
   } finally {
     await builder?.close();
   }
@@ -330,4 +374,5 @@ export const baseReceipt = (p: Project) => ({
   engine: 'lantern@2c7bad5+explainer',
   agenticMermaid: RENDERER.split('@')[1],
   snapshotHashes: Object.values(p.store).map((s) => hash(JSON.stringify(s))),
+  ...(p.outlineLettering ? { letteringHash: hash(JSON.stringify(p.outlineLettering)) } : {}),
 });
