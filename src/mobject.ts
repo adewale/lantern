@@ -105,6 +105,8 @@ export class Mobject {
   declare mergeLeaves?: boolean;
   /** Fixed world-coordinate paint viewport, inherited by descendants; does not change geometry. */
   declare clipBox?: Box;
+  /** The state saveState() stored, for restore() and Restore. Copies do not carry it. */
+  declare saved?: Mobject;
 
   constructor(style: Style = {}) {
     this.id = nextId++;
@@ -164,6 +166,7 @@ export class Mobject {
     if (this.clipBox) c.clipBox = [...this.clipBox];
     c.updaters = [];
     c._bbox = null;
+    if (this.saved) delete c.saved; // a copy is a new mobject: it has no saved state of its own
     c.copyData(this);
     c.children = this.children.map((ch) => { const cc = ch.copy(); cc.parent = c; return cc; });
     return c;
@@ -498,6 +501,49 @@ export class Mobject {
     return c;
   }
 
+  // ---- saved state -------------------------------------------------------
+
+  /** Store a deep copy of this mobject's current state, for restore() or `new Restore(this)`. */
+  saveState(): this {
+    this.saved = this.copy();
+    return this;
+  }
+
+  /**
+   * Return to the state saveState() stored, in place: points, style and every
+   * other field of each family member (a Text's string, a number's value).
+   * Expected: the same structure as when saved, which keeps every child
+   * mobject (and references to it) and only rewrites its data. If the family
+   * shape changed since (children added or removed, or a child of another
+   * class), the children are replaced wholesale with copies of the saved ones.
+   * Either way `this` keeps its identity, parent and updaters, and the saved
+   * state stays, so restore() can run again.
+   */
+  restore(): this {
+    if (!this.saved) throw new Error(`restore(): ${this.constructor.name}#${this.id} has no saved state; call saveState() first`);
+    adoptState(this, this.saved);
+    return this;
+  }
+
+  /**
+   * Same family shape as `other`: as many members, each of the same class
+   * with as many children. With `points`, also the same point counts, so
+   * interpolate() between the two needs no alignment.
+   */
+  sameShapeAs(other: Mobject, points = false): boolean {
+    const fa = this.family(), fb = other.family();
+    if (fa.length !== fb.length) return false;
+    for (let i = 0; i < fa.length; i++) {
+      const a = fa[i]!, b = fb[i]!;
+      if (Object.getPrototypeOf(a) !== Object.getPrototypeOf(b) || a.children.length !== b.children.length) return false;
+      if (points) {
+        const pa = a.pointArrays(), pb = b.pointArrays();
+        if (pa.length !== pb.length || pa.some((x, j) => x.length !== pb[j]!.length)) return false;
+      }
+    }
+    return true;
+  }
+
   // ---- updaters ----------------------------------------------------------
 
   addUpdater(fn: Updater<this>): this {
@@ -521,17 +567,11 @@ export class Mobject {
   get animate(): AnimateBuilder<this> {
     const calls: Array<[name: string, args: unknown[]]> = [];
     const mob = this;
-    // Not a plain object: play() takes a trailing plain object as its options, so a
-    // builder with Object.prototype (which the Proxy reports) was dropped when last.
-    const builder: AnimateBuilderBase<this> = Object.assign(Object.create(AnimateBuilderTarget.prototype) as object, {
-      _isAnimateBuilder: true as const,
-      mobject: mob,
-      buildTarget() {
-        const t = mob.copy();
-        // Recorded by name: each one was a function on this mobject when recorded
-        for (const [name, args] of calls) (t as unknown as Record<string, (...a: unknown[]) => unknown>)[name]!(...args);
-        return t;
-      },
+    const builder = animateBuilderBase(mob, () => {
+      const t = mob.copy();
+      // Recorded by name: each one was a function on this mobject when recorded
+      for (const [name, args] of calls) (t as unknown as Record<string, (...a: unknown[]) => unknown>)[name]!(...args);
+      return t;
     });
     const proxy: AnimateBuilder<this> = new Proxy(builder, {
       get(target, prop) {
@@ -555,8 +595,53 @@ for (const name of ['box', 'center', 'width', 'height', 'left', 'right', 'top', 
   });
 }
 
-/** The prototype of `.animate` builders: anything but Object.prototype (see Mobject.animate). */
+// Fields a mobject keeps through restore(): who it is and where it sits. Caches
+// (underscore fields) stay too; touchPoints() and new arrays invalidate them.
+const KEEP_ON_RESTORE = new Set(['id', 'parent', 'children', 'updaters', 'saved']);
+
+/** Rewrite `m`'s data from `state` in place (see restore()); `state` itself is never touched. */
+export function adoptState(m: Mobject, state: Mobject): void {
+  const fresh = state.copy();
+  const same = m.sameShapeAs(fresh);
+  const mf = m.family(), ff = fresh.family();
+  const pairs: Array<[Mobject, Mobject]> = same ? mf.map((x, i) => [x, ff[i]!]) : [[m, fresh]];
+  // A field that names a part (Code.lines, a View's current picture) must name this
+  // mobject's own part afterwards, not the copy's: a class whose copy() rebinds such
+  // fields (Code does) would otherwise leave them pointing at detached children.
+  const own = new Map<Mobject, Mobject>(same ? ff.map((x, i) => [x, mf[i]!]) : [[fresh, m]]);
+  const place = (v: unknown): unknown => {
+    if (v instanceof Mobject) return own.get(v) ?? v;
+    if (Array.isArray(v) && v.some((x) => x instanceof Mobject)) return v.map(place);
+    return v;
+  };
+  for (const [to, from] of pairs) {
+    const t = to as unknown as Record<string, unknown>, f = from as unknown as Record<string, unknown>;
+    const adopt = (k: string) => !KEEP_ON_RESTORE.has(k) && k[0] !== '_';
+    for (const k of Object.keys(t)) if (!(k in f) && adopt(k)) delete t[k];
+    for (const k of Object.keys(f)) if (adopt(k)) t[k] = place(f[k]);
+    to._bbox = null;
+    to.touchPoints();
+  }
+  if (!same) {
+    // Changed shape: take the saved children wholesale (fresh copies, so the saved state stays intact)
+    for (const c of m.children) c.parent = null;
+    m.children = fresh.children;
+    for (const c of m.children) c.parent = m;
+  }
+  m.invalidateBox();
+}
+
+/** The prototype of `.animate` builders: anything but Object.prototype (see animateBuilderBase). */
 class AnimateBuilderTarget {}
+
+/**
+ * The object an `.animate` Proxy wraps. Not a plain object: play() takes a trailing
+ * plain object as its options, so a builder with Object.prototype (which the Proxy
+ * reports) was dropped when it came last. Every `.animate` getter builds on this.
+ */
+export function animateBuilderBase<M extends Mobject>(mobject: M, buildTarget: () => M): AnimateBuilderBase<M> {
+  return Object.assign(Object.create(AnimateBuilderTarget.prototype) as object, { _isAnimateBuilder: true as const, mobject, buildTarget });
+}
 
 /** A mobject with no points of its own; a container. */
 export class Group extends Mobject {

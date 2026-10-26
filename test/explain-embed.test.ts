@@ -16,6 +16,7 @@ import type { Settings } from '../explain/index.ts';
 import { pictureHtml, pictureSummary } from '../explain/trace.ts';
 import { NARROW_PX, READ_PX, closeUps, labelsToRead, stageScale, stepLayouts, viewBox } from '../app/embed-closeup.ts';
 import type { StepLayout } from '../app/embed-closeup.ts';
+import { zoomOfView } from '../app/embed-zoom.ts';
 
 const enabled = !!process.env.EXPLAIN_BROWSER,
   options = { skip: enabled ? false : 'set EXPLAIN_BROWSER=1 for real cross-origin browser checks' };
@@ -34,7 +35,7 @@ before(async () => {
   browser = await launch();
   await new Promise<void>((r) => hostServer.listen(0, '127.0.0.1', r));
   host = `http://127.0.0.1:${(hostServer.address() as { port: number }).port}`;
-  for (const name of ['mr-cache', 'oauth-pkce', 'exgit']) {
+  for (const name of ['mr-cache', 'oauth-pkce', 'exgit', 'lantern']) {
     const project = await collectProject(`scenes/explainers/${name}`, { write: false });
     projects.set(name, project);
     await buildExplainer(project, join(folder, name + '.html'));
@@ -212,9 +213,8 @@ test(
       const size = await page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
       const layout = (await stepLayouts(project.variants.find((v) => v.values.request === values.request)!.Scene)).get('request')!;
       const tour = closeUps(layout, size.w, size.h);
-      const painted = async () =>
-        parseTransform(await page.locator('.stage svg:not(.leaving)').evaluate((svg) => (svg as SVGElement).style.transform));
-      const near = (a: ReturnType<typeof parseTransform>, b: { k: number; x: number; y: number }) =>
+      const painted = () => settledZoom(page);
+      const near = (a: ReturnType<typeof zoomOf>, b: { k: number; x: number; y: number }) =>
         !!a && Math.abs(a.k - b.k) < 1e-4 * b.k && Math.abs(a.x - b.x) < 0.01 && Math.abs(a.y - b.y) < 0.01;
       assert.ok(tour[0]!.k > 1 && tour.length > 1, `mr-cache's request step needs a close-up tour: ${JSON.stringify(tour)}`);
       assert.ok(near(await painted(), tour[0]!), `opens on the first close-up ${JSON.stringify(tour[0])}`);
@@ -223,53 +223,58 @@ test(
       for (let i = 1; i <= tour.length; i++) {
         await page.locator('.overview').click();
         const want = tour[i % tour.length]!;
-        await page.waitForFunction(
-          (want) => {
-            const m = (document.querySelector('.stage svg') as SVGElement).style.transform.match(/translate\((-?[\d.e+-]+)px, (-?[\d.e+-]+)px\)/);
-            return !!m && Math.abs(Number(m[1]) - want.x) < 0.01 && Math.abs(Number(m[2]) - want.y) < 0.01;
-          },
-          want,
-        );
+        await until(async () => near(zoomOf(await paintedView(page)), want), `close-up ${i}`);
       }
       // Fit shows the whole picture, and keeps it for the next steps; Close-up brings the close-ups back.
       await page.getByRole('button', { name: 'Fit stage' }).click();
-      await page.waitForFunction(() => !(document.querySelector('.stage svg') as SVGElement).style.transform);
+      await until(async () => zoomOf(await paintedView(page)) === null, 'Fit');
       assert.equal(await page.getByRole('button', { name: 'Close-up of each step' }).isVisible(), true);
       assert.equal(await page.locator('.overview').isHidden(), true, 'no overview of the whole picture');
       // Zoom: a phone reader can still enlarge the vector stage and pan it, without page overflow.
+      // It narrows the viewBox over the author's camera, the way the camera itself zooms, so the
+      // element keeps its size (no layout shift) and Fit is the author's frame.
+      const rect = (v: string) => v.split(' ').map(Number);
+      const view = async () => rect((await paintedView(page)).view);
       const width = () => page.locator('.stage svg').evaluate((svg) => svg.getBoundingClientRect().width);
-      // Fit glides for 220 ms; the whole picture is as wide as the stage once it lands.
-      await page.waitForFunction(
-        () => Math.abs(document.querySelector('.stage svg')!.getBoundingClientRect().width - document.querySelector('.stage')!.clientWidth) < 0.5,
-      );
-      const fit = await width();
+      const [fit, fitWidth] = [await view(), await width()];
+      assert.deepEqual(fit, rect((await paintedView(page)).camera), 'Fit shows the author\'s frame');
       await page.getByRole('button', { name: 'Zoom in' }).click();
       await page.getByRole('button', { name: 'Zoom in' }).click();
       // Button zoom glides for 220 ms; wait for it to settle at 2.56×.
-      await page.waitForFunction(
-        (fit) => Math.abs(document.querySelector('.stage svg')!.getBoundingClientRect().width / fit - 2.56) < 0.01,
-        fit,
-      );
+      await until(async () => Math.abs(fit[2]! / (await view())[2]! - 1.6 * 1.6) < 0.01, 'two zoom steps');
+      assert.ok(Math.abs((await width()) - fitWidth) < 0.5, 'the stage keeps its size');
       const box = (await page.locator('.stage').boundingBox())!;
-      const before = await page.locator('.stage svg').evaluate((svg) => svg.getBoundingClientRect().left);
+      const before = (await view())[0]!;
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
       await page.mouse.down();
       await page.mouse.move(box.x + box.width / 2 + 60, box.y + box.height / 2, { steps: 4 });
       await page.mouse.up();
-      assert.ok((await page.locator('.stage svg').evaluate((svg) => svg.getBoundingClientRect().left)) > before, 'drag pans');
+      assert.ok((await view())[0]! < before, 'drag pans: dragging right shows what is to the left');
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      // The zoom holds across step changes, over each step's own camera, and while Next plays.
+      const zoomed = (await view())[2]!;
+      const replaced = async (click: () => Promise<void>) => {
+        await page.locator('.stage svg:not(.leaving)').evaluate((svg) => svg.setAttribute('data-old', ''));
+        await click();
+        await page.waitForFunction(() => !document.querySelector('.stage svg[data-old]'));
+      };
+      await replaced(() => page.getByRole('button', { name: 'Previous step' }).click());
+      await quiet(page);
+      assert.ok(Math.abs(zoomed / (await view())[2]! - 1) < 1e-6, 'zoom kept across steps');
+      await replaced(() => page.getByRole('button', { name: 'Next step' }).click());
+      assert.ok(Math.abs(zoomed / (await view())[2]! - 1) < 1e-6, 'zoom kept while the step plays');
+      await quiet(page);
+      assert.ok(Math.abs(zoomed / (await view())[2]! - 1) < 1e-6, 'zoom kept through an animated step');
       await page.getByRole('button', { name: 'Fit stage' }).click();
-      await page.waitForFunction(
-        (fit) => Math.abs(document.querySelector('.stage svg')!.getBoundingClientRect().width - fit) < 0.5,
-        fit,
-      );
+      await until(async () => zoomOf(await paintedView(page)) === null, 'Fit');
+      assert.deepEqual(await view(), fit, 'Fit is the author frame');
       assert.equal(await page.getByRole('button', { name: 'Fit stage' }).isHidden(), true, 'Fit appears only when zoomed');
       await page.getByRole('button', { name: 'Close-up of each step' }).click();
-      await page.waitForFunction(() => !!(document.querySelector('.stage svg') as SVGElement).style.transform);
+      await until(async () => zoomOf(await paintedView(page)) !== null, 'Close-up');
       assert.ok(near(await painted(), tour[0]!), 'Close-up returns to the step\'s first close-up');
       assert.equal(await page.getByRole('button', { name: 'Close-up of each step' }).isHidden(), true);
       await page.getByRole('button', { name: 'Fit stage' }).click();
-      await page.waitForFunction(() => !(document.querySelector('.stage svg') as SVGElement).style.transform);
+      await until(async () => zoomOf(await paintedView(page)) === null, 'Fit');
       await page.locator('.transcript > summary').click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
       await page.locator('#content').focus();
@@ -292,6 +297,82 @@ test(
       assert.deepEqual(requests, []);
     } finally {
       await page.close();
+    }
+  },
+);
+// The author's camera (lantern's 'points' step focuses the camera on Mobject) and the reader's
+// zoom compose: Fit is the author's frame, a zoom narrows it, and the camera's glide home in the
+// next step plays under a held zoom.
+test(
+  "reader zoom composes with the author's camera: Fit is the author frame, and a camera glide plays under a held zoom",
+  options,
+  async () => {
+    const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'no-preference' });
+    const page = await context.newPage();
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    try {
+      await page.goto(embed + '/lantern.html?step=points');
+      await page.waitForSelector('[data-ready=true]');
+      await quiet(page);
+      const rect = (v: string) => v.split(' ').map(Number);
+      const home = '-8000 -4500 16000 9000';
+      const author = await paintedView(page);
+      assert.notEqual(author.camera, home, 'the step frames part of the stage');
+      assert.equal(author.view, author.camera, 'Fit shows the author frame');
+      await page.locator('.stage').focus();
+      await page.keyboard.press('+');
+      await page.keyboard.press('+');
+      const zoomed = await paintedView(page);
+      assert.equal(zoomed.camera, author.camera, 'the author frame is unchanged under a reader zoom');
+      assert.ok(Math.abs(rect(zoomed.camera)[2]! / rect(zoomed.view)[2]! - 2.56) < 1e-3, 'two zoom steps narrow the author frame 2.56 times');
+      const [cx, cy, cw, ch] = rect(zoomed.camera) as [number, number, number, number],
+        [vx, vy, vw, vh] = rect(zoomed.view) as [number, number, number, number];
+      assert.ok(vx >= cx - 1e-3 && vy >= cy - 1e-3 && vx + vw <= cx + cw + 1e-3 && vy + vh <= cy + ch + 1e-3, 'the view stays inside the author frame');
+      // Next plays 'clock', whose s.clear() glides the camera home: every frame keeps the reader's 2.56×.
+      const seen: Painted[] = [];
+      await page.getByRole('button', { name: 'Next step' }).click();
+      const end = Date.now() + 3000;
+      while (Date.now() < end) {
+        const p = await paintedView(page).catch(() => null);
+        if (p && (!seen.length || seen.at(-1)!.view !== p.view)) seen.push(p);
+        if (p?.camera === home && seen.length > 3) break;
+      }
+      const gliding = seen.filter((p) => p.camera !== author.camera && p.camera !== home);
+      assert.ok(gliding.length > 0, `the camera glide was seen under the zoom: ${seen.map((p) => p.camera).join(' | ')}`);
+      for (const p of seen)
+        assert.ok(Math.abs(rect(p.camera)[2]! / rect(p.view)[2]! - 2.56) < 1e-3, `zoom held through the glide: ${p.camera} -> ${p.view}`);
+      await quiet(page);
+      assert.equal((await paintedView(page)).camera, home, 'the camera is home after clear()');
+      await page.locator('.stage').focus();
+      await page.keyboard.press('0');
+      const fit = await paintedView(page);
+      assert.equal(fit.view, fit.camera, 'Fit returns to the author frame');
+      // On a phone the step's close-up is a reader zoom over that author frame, worked out in its units.
+      const phone = await context.browser()!.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+      try {
+        const small = await phone.newPage();
+        small.on('pageerror', (e) => errors.push(e.message));
+        await small.goto(embed + '/lantern.html?step=points');
+        await small.waitForSelector('[data-ready=true]');
+        await quiet(small);
+        const p = await paintedView(small);
+        assert.equal(p.camera, author.camera, 'the phone shows the same author frame');
+        const layout = (await stepLayouts(projects.get('lantern')!.variants[0]!.Scene)).get('points');
+        const want = closeUps(layout, p.w, p.h)[0]!,
+          got = zoomOf(p);
+        if (want.k === 1) assert.equal(got, null);
+        else
+          assert.ok(
+            got && Math.abs(got.k - want.k) < 1e-4 * want.k && Math.abs(got.x - want.x) < 0.01 && Math.abs(got.y - want.y) < 0.01,
+            `close-up over the camera: painted ${JSON.stringify(got)}, wanted ${JSON.stringify(want)}`,
+          );
+      } finally {
+        await phone.close();
+      }
+      assert.deepEqual(errors, []);
+    } finally {
+      await context.close();
     }
   },
 );
@@ -448,7 +529,10 @@ function observe(ids: string[]) {
     ),
     history: history.length,
     overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-    transform: stage.querySelector('svg')?.style.transform ?? null,
+    painted: (() => {
+      const svg = stage.querySelector('svg');
+      return svg && { view: svg.getAttribute('viewBox')!, camera: svg.getAttribute('data-camera') ?? svg.getAttribute('viewBox')! };
+    })(),
     stageW: stage.clientWidth,
     stageH: stage.clientHeight,
     zoomOutDisabled: button('Zoom out')!.disabled,
@@ -474,11 +558,45 @@ async function stageDescription(page: Page): Promise<string> {
 }
 const twoFrames = (page: Page) =>
   page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
-/** Parse `translate(Xpx, Ypx) scale(K)`; null for the identity (no transform). */
-function parseTransform(t: string | null) {
-  if (!t) return null;
-  const m = t.match(/^translate\((-?[\d.e+-]+)px(?:, (-?[\d.e+-]+)px)?\) scale\(([\d.e+-]+)\)$/);
-  return m ? { x: Number(m[1]), y: Number(m[2] ?? 0), k: Number(m[3]) } : { x: NaN, y: NaN, k: NaN };
+/**
+ * What the stage paints. The reader's zoom narrows the SVG's viewBox over the author's frame,
+ * which the SVG keeps as `data-camera` (app/embed-zoom.ts); with the stage's size, that reads
+ * back as the zoom painted.
+ */
+interface Painted {
+  view: string;
+  camera: string;
+  w: number;
+  h: number;
+}
+const paintedView = (page: Page | Frame): Promise<Painted> =>
+  page.locator('.stage svg:not(.leaving)').evaluate((svg) => ({
+    view: svg.getAttribute('viewBox')!,
+    camera: svg.getAttribute('data-camera') ?? svg.getAttribute('viewBox')!,
+    w: svg.parentElement!.clientWidth,
+    h: svg.parentElement!.clientHeight,
+  }));
+/** The reader's zoom painted over the author's frame; null when the stage shows the author's frame (Fit). */
+function zoomOf(p: Painted | null) {
+  if (!p || p.view === p.camera) return null;
+  return zoomOfView(p.camera, p.view, p.w, p.h);
+}
+/** The zoom painted once any glide (220 ms) has landed: two reads a frame apart agree. */
+async function settledZoom(page: Page | Frame) {
+  for (let i = 0; ; i++) {
+    const a = await paintedView(page);
+    await (page as Page).evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
+    const b = await paintedView(page);
+    if (a.view === b.view || i > 60) return zoomOf(b);
+  }
+}
+/** Poll until `ok` holds, for up to `ms`. */
+async function until(ok: () => Promise<boolean>, what: string, ms = 5000) {
+  const end = Date.now() + ms;
+  while (!(await ok())) {
+    if (Date.now() > end) throw new Error(`timed out waiting for ${what}`);
+    await new Promise((r) => setTimeout(r, 20));
+  }
 }
 
 async function verify(m: PlayerModel, r: PlayerReal, what: string) {
@@ -493,6 +611,7 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
     )
     .catch(() => {});
   await twoFrames(r.page);
+  await settledZoom(r.page);
   const seen = await r.page.evaluate(observe, ids);
   const entry = current(m),
     list = steps(m),
@@ -545,21 +664,19 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   const narrow = seen.stageW > 0 && seen.stageW < NARROW_PX;
   eq('Close-up hidden', seen.closeUpHidden, !(narrow && !m.follow));
   eq('overview hidden', seen.overviewHidden, !(narrow && m.k > 1));
-  const t = parseTransform(seen.transform);
-  if (m.k === 1) eq('transform at k=1', seen.transform, '');
-  else if (!t) problems.push(`transform: none painted, model k=${m.k}`);
+  // The zoom is painted as a viewBox over the author's frame (data-camera); at k = 1 it is that frame.
+  const t = zoomOf(seen.painted && { ...seen.painted, w: seen.stageW, h: seen.stageH });
+  if (m.k === 1) eq('viewBox at k=1 (the author frame)', seen.painted?.view, seen.painted?.camera);
+  else if (!t) problems.push(`viewBox: the author frame painted, model k=${m.k}`);
   else {
-    // style.transform reads back through CSS serialization, which keeps 6 significant
-    // digits; so each number is the painted one to within half a unit in the 6th digit.
-    const css = (v: number) => 5e-6 * Math.abs(v);
-    expect(Math.abs(t.k - m.k) <= css(m.k), 'painted scale', seen.transform, m.k);
+    // The viewBox is written to a thousandth of a user unit, so the zoom reads back to well
+    // under a millionth of its scale and a thousandth of a pixel of its pan.
+    const eps = 1e-3;
+    expect(Math.abs(t.k - m.k) <= 1e-6 * m.k, 'painted scale', seen.painted, m.k);
     expect(
-      t.x <= css(t.x) &&
-        t.y <= css(t.y) &&
-        t.x + seen.stageW * t.k >= seen.stageW - css(t.x) - css(seen.stageW * t.k) &&
-        t.y + seen.stageH * t.k >= seen.stageH - css(t.y) - css(seen.stageH * t.k),
+      t.x <= eps && t.y <= eps && t.x + seen.stageW * t.k >= seen.stageW - eps && t.y + seen.stageH * t.k >= seen.stageH - eps,
       'drawing covers stage',
-      { transform: seen.transform, w: seen.stageW, h: seen.stageH },
+      { painted: seen.painted, zoom: t, w: seen.stageW, h: seen.stageH },
       'covered',
     );
   }
@@ -1015,7 +1132,7 @@ test(
             const size = await a.page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
             assert.ok(size.w < NARROW_PX);
             const want = closeUps(layouts.get(step), size.w, size.h)[0]!;
-            const t = parseTransform(await a.page.locator('.stage svg:not(.leaving)').evaluate((svg) => (svg as SVGElement).style.transform));
+            const t = await settledZoom(a.page);
             const where = `${name} ${JSON.stringify(v.values)} ${step}`;
             if (want.k === 1) assert.equal(t, null, where);
             else
@@ -1033,7 +1150,7 @@ test(
             assert.equal(await stagePicture(b), rested, `${where}: Next and a link rest on different pictures`);
             await b.close();
             // Desktop: unchanged, the whole picture at every step, no overview, no close-up control.
-            assert.equal(await d.page.locator('.stage svg').evaluate((svg) => (svg as SVGElement).style.transform), '', where);
+            assert.equal(zoomOf(await paintedView(d.page)), null, where);
             assert.equal(await d.page.locator('.overview').isHidden(), true);
             assert.equal(await d.page.locator('button[aria-label="Close-up of each step"]').isHidden(), true);
           }
@@ -1081,6 +1198,61 @@ test(
       }),
       params(5),
     );
+  },
+);
+
+// Every scene run draws into an SVG root the page creates, and a kept picture is a copy
+// (cloneNode creates nothing). So when a stage picture was created tells whether the
+// player re-ran the scene for it: Next should play a run prepared while the reader was
+// on the previous step, and a step seen before should come back as a copy.
+test(
+  'player, motion on: Next plays a run prepared before the tap, and a revisited step is a copy, not a re-run',
+  options,
+  async () => {
+    const name = 'oauth-pkce',
+      p = projects.get(name)!,
+      v = p.variants[0]!,
+      list = v.trace.steps;
+    const context = await browser.newContext({ reducedMotion: 'no-preference' });
+    try {
+      await context.addInitScript(() => {
+        const born = new WeakMap<Node, number>(),
+          w = window as unknown as { __shown: Array<{ at: number; born: number | null }> };
+        w.__shown = [];
+        const create = Document.prototype.createElementNS;
+        Document.prototype.createElementNS = function (this: Document, ...args: Parameters<typeof create>) {
+          const node = create.apply(this, args);
+          born.set(node, performance.now());
+          return node;
+        } as typeof create;
+        new MutationObserver((records) => {
+          for (const r of records)
+            if ((r.target as Element).matches?.('.player .stage'))
+              for (const n of r.addedNodes) if (n.nodeName === 'svg') w.__shown.push({ at: performance.now(), born: born.get(n) ?? null });
+        }).observe(document, { childList: true, subtree: true });
+      });
+      const { page, errors } = await counted(context, `${embed}/${name}.html?${caseQuery(p, v.values, list[0]!.step)}`);
+      /** Run `act`, wait for the player to settle, and return the stage pictures shown meanwhile. */
+      const shownDuring = async (act: () => Promise<void>) => {
+        await quiet(page);
+        const [t, n] = await page.evaluate(() => [performance.now(), (window as unknown as { __settles: number }).__settles]);
+        await act();
+        await page.waitForFunction((n) => (window as unknown as { __settles: number }).__settles > n, n, { timeout: 30_000 });
+        const shown = await page.evaluate((t) => (window as unknown as { __shown: Array<{ at: number; born: number | null }> }).__shown.filter((s) => s.at > t), t);
+        return { t, shown };
+      };
+      const next = await shownDuring(() => page.locator('button[aria-label="Next step"]').click());
+      assert.ok(next.shown.length >= 1, 'Next showed a picture');
+      assert.ok(next.shown[0]!.born !== null && next.shown[0]!.born < next.t, `Next's first picture was drawn after the tap: ${JSON.stringify(next)}`);
+      for (const i of [0, 1]) {
+        const back = await shownDuring(() => page.locator('.steps button').nth(i).click());
+        assert.ok(back.shown.length >= 1, `step ${list[i]!.step} showed a picture`);
+        assert.equal(back.shown.at(-1)!.born, null, `step ${list[i]!.step} was drawn again, not copied: ${JSON.stringify(back)}`);
+      }
+      assert.deepEqual(errors, []);
+    } finally {
+      await context.close();
+    }
   },
 );
 
