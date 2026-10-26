@@ -1,7 +1,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Browser, Page, Frame } from 'playwright-core';
@@ -10,6 +10,7 @@ import { collectProject } from '../tools/lib/explain-project.ts';
 import type { Project } from '../tools/lib/explain-project.ts';
 import { buildExplainer, buildLoader } from '../tools/lib/explain-build.ts';
 import { serve } from '../tools/lib/explain-serve.ts';
+import { publishedPage } from '../tools/lib/explain-share.ts';
 import { fc, params } from './lib/pbt.ts';
 import { resolveSettings } from '../explain/index.ts';
 import type { Settings } from '../explain/index.ts';
@@ -150,6 +151,68 @@ test('?theme=dark, light and auto (following the reader\'s colour scheme) set th
     assert.deepEqual(await background('dark'), { theme: 'dark', background: 'rgb(15, 22, 29)' });
     assert.deepEqual(await background('light'), { theme: 'light', background: 'rgb(246, 247, 249)' });
     assert.deepEqual(await background('auto'), { theme: 'auto', background: 'rgb(15, 22, 29)' });
+  } finally {
+    await context.close();
+  }
+});
+// site:export --origin gives each step of the default case a share page, <path>/<id>/<step>, and
+// marks the player; Copy link then gives that page, whose link preview is the step. Any other case,
+// a step whose name is not path-safe, or a page published without share pages copies ?step=.
+test('Copy link gives the step\'s share page when site:export published one, else the player URL', options, async () => {
+  const site = join(folder, 'site');
+  await mkdir(site, { recursive: true });
+  // As site:export --origin publishes a page: publishedPage, from the steps demos:build lists.
+  const publish = async (id: string, from: string, steps: string[]) => {
+    const manifest = { id, title: id, lang: 'en', cover: steps[0]!, steps: steps.map((step) => ({ step, title: step, caption: '', picture: '' })) };
+    await writeFile(join(site, id + '.html'), publishedPage(await readFile(from + '.html', 'utf8'), manifest, 'https://example.org', '/projects/rayner'));
+    await copyFile(from + '.html.headers.json', join(site, id + '.html.headers.json'));
+  };
+  await publish('mr-cache', join(folder, 'mr-cache'), ['before', 'diff', 'after', 'request']);
+  // A scene whose second step has a name no share page can have.
+  const odd = join(folder, 'odd-steps');
+  await mkdir(odd, { recursive: true });
+  await writeFile(
+    join(odd, 'scene.ts'),
+    `import{Scene,Text,FadeIn}from'rayner';export default class Odd extends Scene{static meta={title:'Odd steps'};async construct(){` +
+      `await this.step('one',{title:'One',caption:'A word.'});await this.play(new FadeIn(new Text('one')));` +
+      `await this.step('two words',{title:'Two',caption:'Two words.'});await this.play(new FadeIn(new Text('two').moveTo([0,-2])));}}`,
+  );
+  await buildExplainer(await collectProject(odd, { write: false }), join(folder, 'odd-steps.html'));
+  await publish('odd-steps', join(folder, 'odd-steps'), ['one']);
+  const context = await browser.newContext({ permissions: ['clipboard-read', 'clipboard-write'], reducedMotion: 'reduce' });
+  const page = await context.newPage();
+  const copied = async () => {
+    await page.evaluate(() => {
+      document.querySelector('.notice')!.textContent = '';
+      return navigator.clipboard.writeText('');
+    });
+    await page.locator('button[aria-label="Copy link"]').click();
+    await page.waitForFunction(() => document.querySelector('.notice')?.textContent === 'Link copied.');
+    return page.evaluate(() => navigator.clipboard.readText());
+  };
+  const open = async (url: string) => {
+    await page.goto(url);
+    await page.waitForSelector('[data-ready=true]');
+  };
+  try {
+    await open(`${embed}/site/mr-cache.html?step=diff`);
+    assert.equal(await copied(), 'https://example.org/projects/rayner/mr-cache/diff');
+    // The share page sends readers to the default case, so another case keeps the player URL.
+    const pick = (value: string) => page.locator(`input[name="request"][value="${value}"]`).locator('xpath=..').click();
+    await pick('miss');
+    await page.waitForURL(/request=miss/);
+    assert.equal(await copied(), `${embed}/site/mr-cache.html?step=diff&request=miss`);
+    await pick('hit');
+    await page.waitForURL(/request=hit/);
+    assert.equal(await copied(), 'https://example.org/projects/rayner/mr-cache/diff');
+    await open(`${embed}/site/odd-steps.html?step=one`);
+    assert.equal(await copied(), 'https://example.org/projects/rayner/odd-steps/one');
+    await page.locator('button[aria-label="Next step"]').click();
+    await page.waitForURL(/step=two/);
+    assert.equal(await copied(), `${embed}/site/odd-steps.html?step=two+words`);
+    // Built without site:export: no share pages, so the player URL, as before.
+    await open(`${embed}/mr-cache.html?step=diff`);
+    assert.equal(await copied(), `${embed}/mr-cache.html?step=diff&request=hit`);
   } finally {
     await context.close();
   }
