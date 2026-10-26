@@ -40,7 +40,8 @@ async function built(project: Project, name: string) {
   return { html, receipt, headers: await readFile(join(folder, name + '.html.headers.json'), 'utf8') };
 }
 
-// The pins are what main built at 6b90d83, before lettering on request. They change only when an
+// The pins began as what main built at 6b90d83, before lettering on request; `git log
+// test/lettering-baseline.json` gives each deliberate re-pin since. They change only when an
 // explainer, the engine or the player changes on purpose: re-pin with UPDATE_GOLDEN=1 (FULL=1 for
 // all of them), in a commit that touches no lettering code, so a lettering change cannot hide in a
 // re-pin. The engine hash is checked by rule below instead of pinned: any edit under src/ moves it.

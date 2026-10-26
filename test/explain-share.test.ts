@@ -93,12 +93,15 @@ test('an exported explainer page keeps its page and adds the cover step\'s previ
   assert.equal(meta(html, 'og:url'), 'https://example.org/projects/rayner/token-bucket');
   assert.equal(meta(html, 'twitter:title'), manifest.title);
   assert.equal(meta(html, 'twitter:image'), 'https://example.org/projects/rayner/token-bucket/burst.png');
+  // Where its share pages are, for the player's Copy link.
+  assert.equal(meta(html, 'rayner:share'), 'https://example.org/projects/rayner/token-bucket/');
+  assert.equal(meta(sharePage(manifest, manifest.steps[0]!, origin, path), 'rayner:share'), undefined);
   assert.throws(() => publishedPage(page, { ...manifest, cover: 'gone' }, origin, path), /cover step gone/);
   assert.deepEqual(await exported(), []);
   assert.deepEqual(pngSize(await readFile(join(dir, manifest.id, 'burst.png'))), { width: CARD.width, height: CARD.height });
 });
 
-test('checkCards finds a missing tag on either page, a non-https or off-site URL, and a missing or mis-sized picture', async () => {
+test('checkCards finds a missing tag on either page, a page with no share marker, a non-https or off-site URL, and a missing or mis-sized picture', async () => {
   for (const key of CARD_TAGS) {
     const drop = (html: string) => html.replace(new RegExp(`<meta (?:property|name)="${key}" content="[^"]*">`), '');
     for (const [where, edit] of [['token-bucket/burst.html', { share: drop }], ['token-bucket.html', { page: drop }]] as const) {
@@ -107,6 +110,8 @@ test('checkCards finds a missing tag on either page, a non-https or off-site URL
       assert.ok(problems.every((p) => p.startsWith(where + ':')), problems.join('; '));
     }
   }
+  const unmarked = (html: string) => html.replace(/<meta name="rayner:share" content="[^"]*">/, '');
+  assert.deepEqual(await exported({ page: unmarked }), ['token-bucket.html: rayner:share is not https://example.org/projects/rayner/token-bucket/']);
   const http = (html: string) => html.replaceAll('content="https://example.org/', 'content="http://example.org/');
   assert.ok((await exported({ share: http })).some((p) => /og:image http:\/\/example\.org\S+ is not an https URL/.test(p)));
   const elsewhere = (html: string) => html.replaceAll('https://example.org/', 'https://cdn.example.net/');
