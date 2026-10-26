@@ -23,6 +23,7 @@ import { labelOf } from '../../explain/diagrams.ts';
 import { closeUps, stageScale, stepLayouts, toView, viewBox, viewZoom } from '../../app/embed-closeup.ts';
 import type { Box, Mobject } from '../../src/index.ts';
 import type { Project } from './explain-project.ts';
+import { pageFaces, letteringReport, useProjectLettering } from './explain-lettering.ts';
 
 const SWALLOW =
   'Do not catch around awaited animation/step calls in construct(): a broad catch can swallow StopScene. Catch model errors before animation.';
@@ -231,6 +232,7 @@ export async function checkProject(project: Project, out: string): Promise<Recor
   const lint = lintConstruct(await readFile(project.file, 'utf8'));
   assert.deepEqual(lint, [], lint.join('\n'));
   await mkdir(out, { recursive: true });
+  await useProjectLettering(project);
   const variants = [];
   for (const v of project.variants) {
     const where = `in ${caseName(project.Scene, v.values) || 'the scene'}`;
@@ -375,7 +377,11 @@ export async function checkProject(project: Project, out: string): Promise<Recor
     assert.deepEqual(small, [], `Labels never reach ${MIN_PX}px at 1280px stage ${where}: ${JSON.stringify(small)}`);
     const blank = v.trace.steps.flatMap((s) => undescribed(s.after).map((m) => `${s.step}: ${m}`));
     assert.deepEqual(blank, [], `Every drawing needs words for readers who cannot see it ${where}`);
-    const contents = `import * as author from ${JSON.stringify(project.file)};import{bindSnapshots,withSettings}from ${JSON.stringify(join(ROOT, 'explain/index.ts'))};import{Scene,NullSink,toSvgString}from ${JSON.stringify(join(ROOT, 'src/index.ts'))};const Source=author[${JSON.stringify(project.exportName)}];export async function run(){const C=withSettings(bindSnapshots(Source,${JSON.stringify(project.store)}),${JSON.stringify(v.values)});const s=await new C(new NullSink(),{skipUntil:Infinity}).run();return{steps:s.steps.map(s=>s.name),state:s.describe(),svg:toSvgString(s)}}`;
+    // A lettered explainer's bare runtime puts its faces in place first, as its page does.
+    const lettered = project.lettering
+      ? [`import{useLettering}from ${JSON.stringify(join(ROOT, 'src/lettering.ts'))};`, `await useLettering(${JSON.stringify(pageFaces(project.lettering))});`]
+      : ['', ''];
+    const contents = `import * as author from ${JSON.stringify(project.file)};import{bindSnapshots,withSettings}from ${JSON.stringify(join(ROOT, 'explain/index.ts'))};import{Scene,NullSink,toSvgString}from ${JSON.stringify(join(ROOT, 'src/index.ts'))};${lettered[0]}const Source=author[${JSON.stringify(project.exportName)}];export async function run(){${lettered[1]}const C=withSettings(bindSnapshots(Source,${JSON.stringify(project.store)}),${JSON.stringify(v.values)});const s=await new C(new NullSink(),{skipUntil:Infinity}).run();return{steps:s.steps.map(s=>s.name),state:s.describe(),svg:toSvgString(s)}}`;
     const b = await build({
       stdin: { contents, resolveDir: ROOT, loader: 'ts' },
       bundle: true,
@@ -416,6 +422,8 @@ export async function checkProject(project: Project, out: string): Promise<Recor
     variants,
     diagrams: Object.keys(project.store).length,
     replayedEdits: project.edits,
+    // What the requested lettering adds to the page; only an explainer that asked has it.
+    ...(project.lettering ? { lettering: letteringReport(project.lettering) } : {}),
   };
   await writeFile(join(out, 'report.json'), JSON.stringify(report, null, 2) + '\n');
   return report;
