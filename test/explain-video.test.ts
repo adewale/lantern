@@ -7,10 +7,9 @@ import { execFileSync } from 'node:child_process';
 import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
 import { renderVideo, vttTime, captionsVtt, probeVideo } from '../tools/lib/explain-video.ts';
 import { Scene, Dot, FadeIn } from '../src/index.ts';
-import { stage } from '../explain/index.ts';
 import { fc, params } from './lib/pbt.ts';
 
-// The film's plan (motion, then a short rest) is proven in explain-tools.property.test.ts.
+// Caption wrapping for the footer is proven in explain-tools.property.test.ts.
 test('caption timestamps round to the millisecond and carry into the next unit', () => {
   assert.equal(vttTime(0), '00:00:00.000');
   assert.equal(vttTime(3661.25), '01:01:01.250');
@@ -39,7 +38,7 @@ test('a caption with a blank line or "-->" stays one WebVTT cue', () => {
   );
 });
 test(
-  'real FFmpeg outputs silent H.264 video, subtitles, chapters, VTT and a truthful receipt',
+  'real FFmpeg outputs silent H.264 footer video, subtitles, chapters, VTT and a truthful receipt',
   { skip: process.env.EXPLAIN_VIDEO ? false : 'set EXPLAIN_VIDEO=1 to run FFmpeg integration' },
   async () => {
     const folder = await mkdtemp(join(tmpdir(), 'lantern-video-'));
@@ -51,35 +50,31 @@ test(
       );
       const project = await collectProject(file);
       const out = join(folder, 'test.mp4');
-      const receipt = await renderVideo(project, project.variants[0]!, out, { fps: 4 });
+      const receipt = await renderVideo(project, project.variants[0]!, out, { footer: true, fps: 4 });
       const probe = probeVideo(out);
       const video = probe.streams.find((s) => s.codec_type === 'video')!;
       assert.equal(video.codec_name, 'h264');
       assert.equal(video.width, 1280);
-      assert.equal(video.height, 720);
+      assert.equal(video.height, 960);
       assert.equal(Number(video.nb_frames), receipt.frames);
       assert.equal(receipt.systemFonts, false);
-      assert.ok(Number(receipt.rasterizedFrames) <= Number(receipt.frames));
+      assert.ok(Number(receipt.rasterizedFrames) < Number(receipt.frames));
       assert.ok(!probe.streams.some((s) => s.codec_type === 'audio'));
       assert.equal(probe.streams.find((s) => s.codec_name === 'mov_text')!.tags!.language, 'eng');
       // Chapters carry step titles and start at the motion. Step one plays 0.5 s of motion (2 frames
-      // at 4 fps), then rests the shortest beat (0.6 s: 2 frames), since a one-word title reads in
-      // less than its motion; the scene's own caption hold is skipped. Step two's 0.5 s wait plays,
-      // then the last step rests 2.5 s (10 frames) so the finished picture is seen.
+      // at 4 fps) under its title, then holds its resting picture under its caption for the reading
+      // time (3 words at 160 wpm: 5 frames); the scene's own hold is skipped. Step two's 0.5 s wait
+      // plays the same way.
       assert.deepEqual(
         probe.chapters.map((c) => [c.tags.title, Number(c.start_time)]),
-        [['First', 0], ['Second', 1]],
+        [['First', 0], ['Second', 1.75]],
       );
-      assert.equal(receipt.frames, 16);
-      assert.deepEqual(receipt.chapters, [
-        { step: 'one', motion: 0.5, beat: 0.5 },
-        { step: 'two', motion: 0.5, beat: 2.5 },
-      ]);
+      assert.equal(receipt.frames, 14);
+      assert.deepEqual(receipt.chapters, [{ step: 'one', captionHold: 1.25 }, { step: 'two', captionHold: 1.25 }]);
       assert.equal(receipt.language, 'en');
-      // The full caption is in the subtitles, across the step's whole stretch of film.
       assert.equal(
         await readFile(out.replace('.mp4', '.vtt'), 'utf8'),
-        'WEBVTT\nLanguage: en\n\n1\n00:00:00.000 --> 00:00:01.000\nA dot arrives.\n\n2\n00:00:01.000 --> 00:00:04.000\nThe dot stays.\n',
+        'WEBVTT\nLanguage: en\n\n1\n00:00:00.500 --> 00:00:01.750\nA dot arrives.\n\n2\n00:00:02.250 --> 00:00:03.500\nThe dot stays.\n',
       );
       assert.match(
         await readFile(join(folder, receipt.transcript as string), 'utf8'),
@@ -88,17 +83,26 @@ test(
       assert.equal(JSON.parse(await readFile(out + '.receipt.json', 'utf8')).frames, receipt.frames);
       const before = await readFile(out),
         beforeReceipt = await readFile(out + '.receipt.json');
-      // A step's line must fit one line under the heading: the stage refuses it before FFmpeg starts.
       class TooLong extends Scene {
         override async construct() {
-          stage(this);
-          await this.step('bad', { title: 'Bad', line: 'W'.repeat(200), caption: 'A caption.' });
+          await this.step('bad', { caption: 'W'.repeat(1000) });
           await this.wait(0.5);
         }
       }
       await assert.rejects(
-        renderVideo(project, { ...project.variants[0]!, Scene: TooLong }, out, { fps: 4 }),
-        /Step "bad": its line is .* longer than one line under the heading/,
+        renderVideo(project, { ...project.variants[0]!, Scene: TooLong }, out, { footer: true, fps: 4 }),
+        /exceeds footer/,
+      );
+      // Footer text is drawn as outlines: a character the fonts lack fails before FFmpeg starts.
+      class Han extends Scene {
+        override async construct() {
+          await this.step('han', { title: 'Han', caption: 'A caption with 中 in it.' });
+          await this.play(new FadeIn(new Dot(), { runTime: 0.5 }));
+        }
+      }
+      await assert.rejects(
+        renderVideo(project, { ...project.variants[0]!, Scene: Han }, out, { footer: true, fps: 4 }),
+        /han .*the title or caption has characters the fonts cannot draw: 中/,
       );
       // The film holds the first frame after the step's last play() under the caption, so a
       // picture still moving there fails the render (check fails it too: explain-gates.test.ts).

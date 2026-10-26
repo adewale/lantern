@@ -295,8 +295,8 @@ export default class LanternExplainer extends Scene {
         '$ explain build scenes/explainers/lantern',
         '  lantern.html               steps, cases, poster, transcript',
         '  lantern.html.receipt.json  source, engine and snapshot hashes',
-        '$ explain render scenes/explainers/lantern',
-        '  video paced by its motion, captions as subtitles',
+        '$ explain render scenes/explainers/lantern --footer',
+        '  captioned video, chapters from the same steps',
       ],
       { at: regionBox('bottom', { top: -0.85 }), fontSize: 0.24 },
     );

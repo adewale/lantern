@@ -61,23 +61,22 @@ How to put a built page on a website, and how to export the same scene as a vide
 
 ## Export a video
 
-Video is optional; the page is the main output. A video of a scene has the same steps as the page, paced by their motion rather than by reading time, with a chapter per step, the captions as subtitles, and a transcript. It is silent.
+Video is optional; the page is the main output. A video of a scene has the same steps and captions as the page, with a chapter per step, subtitles and a transcript. It is silent.
 
 You need FFmpeg on `PATH` and `@resvg/resvg-js` (`npm i @resvg/resvg-js@^2.6.2`; a checkout's `npm ci` already has it). `check` and `build` need neither.
 
 ```sh
-explain render scene.ts --out cache.mp4                                # 1280 × 720
-explain render scene.ts --out cache-miss.mp4 --case request=miss
-explain render scene.ts --out cache.mp4 --all                         # one file per case
-explain render scene.ts --out cache.webm --width 1920                 # VP9
-explain filmstrip scene.ts --out cache.film.png --every 0.5           # review it first
+explain render scene.ts --out cache.mp4 --footer                      # 1280 × 960, title and caption under the stage
+explain render scene.ts --out cache-miss.mp4 --footer --case request=miss
+explain render scene.ts --out cache.mp4 --footer --all                # one file per case
+explain render scene.ts --out cache.webm --width 1920                 # stage only, VP9
 ```
 
-Each step plays its motion under its heading (number, title and the step's `line`), then rests on its picture for up to 2 s while the view pushes in slightly. Write a `line` for every step: it is all the video says on screen besides the title. Look at the filmstrip before publishing: it samples the film mid-motion, where collisions, clipping and stray marks show that a resting picture hides.
+Each step plays its motion under its title, then holds its resting picture under the caption for the caption's reading time, so shorter captions make a shorter video.
 
 Publish `cache.transcript.html` beside the video: it is the text alternative, with each step's title, line, caption and what its picture shows.
 
-`render` stops with an error, naming the step and case, when a line is too wide for the heading or has a character the fonts cannot draw, or when the picture changes during a caption hold. Shorten the line, or finish every change before the step's last `play()` ends. `check` fails a film that stands still too long ([pacing](REFERENCE.md#checks)).
+`render` stops with an error, naming the step and case, when a footer title or caption needs more than four lines or has a character the fonts cannot draw, or when the picture changes during a caption hold. Shorten the caption, or finish every change before the step's last `play()` ends.
 
 Check a file before publishing it:
 
@@ -86,4 +85,4 @@ ffprobe -v error -show_streams -show_chapters -of json cache.mp4
 ffmpeg -v error -i cache.mp4 -f null -
 ```
 
-Expect one H.264 video stream at the size asked for, one `mov_text` subtitle stream, a data stream that carries the chapters, no audio, one chapter per step, a frame count equal to `frames` in `cache.mp4.receipt.json`, and a decode with no errors. `npm run demos:render` runs these checks for the demo collection. Video bytes can differ between FFmpeg and resvg builds; the receipt records both versions.
+Expect one H.264 video stream at the preset's size, one `mov_text` subtitle stream, a data stream that carries the chapters, no audio, one chapter per step, a frame count equal to `frames` in `cache.mp4.receipt.json`, and a decode with no errors. `npm run demos:render` runs these checks for the demo collection. Video bytes can differ between FFmpeg and resvg builds; the receipt records both versions.

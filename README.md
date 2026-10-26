@@ -39,7 +39,6 @@ The collection has 27 explainers with 142 cases between them, and uses all 15 Ag
 npm run explain -- init my-explainer
 npm run explain -- preview my-explainer/scene.ts --watch
 npm run explain -- check my-explainer/scene.ts
-npm run explain -- filmstrip my-explainer/scene.ts --every 0.5
 npm run explain -- build my-explainer/scene.ts --out public/my-explainer.html
 ```
 
@@ -77,7 +76,7 @@ export default class MyExplainer extends Scene {
 }
 ```
 
-`preview` opens it as a page with two steps, and "Follow a request" under the title switches between a cache hit and a miss. `preview` serves the page and rebuilds it on save. `check` runs every case through [the checks](docs/REFERENCE.md#checks), the video's pacing among them. `filmstrip` samples the video mid-motion, where a resting picture hides collisions and clipping. `build` writes the page and the response headers it needs; [publishing](docs/PUBLISHING.md) shows how to embed it.
+`preview` opens it as a page with two steps, and "Follow a request" under the title switches between a cache hit and a miss. `preview` serves the page and rebuilds it on save. `check` runs every case through [the checks](docs/REFERENCE.md#checks). `build` writes the page and the response headers it needs; [publishing](docs/PUBLISHING.md) shows how to embed it.
 
 A scene is an ordinary Rayner scene, so beside the helpers it can use the engine features the explainers use. Each has a guide:
 

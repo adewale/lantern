@@ -23,11 +23,10 @@ Commands:
   snapshots <scene>   Run every case, capture/verify diagrams and replay morph edits
   check <scene>       Every case: seek, motion, skipped trace, bare runtime, step
                       change, still after the caption hold, text collision,
-                      legibility, words for every drawing, film pacing, catch lint
+                      legibility, words for every drawing, catch lint
   build <scene>       HTML, receipt, header recipe, loader.js
   render <scene>      Silent MP4 (or .webm), captions, chapters and receipt
   shots <scene>       Step contact sheet as SVG and PNG
-  filmstrip <scene>   Frames sampled across the video, mid-motion included, as PNG
   describe <scene>    Every case and step as JSON for agents: words, state, what
                       changed, the picture in words and drawn as text
 
@@ -36,11 +35,11 @@ Every command fails on text the embedded fonts cannot draw.
 Options:
   --out <path>        Artifact destination
   --refresh           Re-render snapshots instead of using the pinned cache
-  --width <even>      Video width (default 1280)
+  --footer            1280 × 960 caption-footer video preset
+  --width <even>      Stage-only video width (default 1280)
   --fps <1–120>       Video frame rate (default 30)
   --all               Export videos for every declared case
-  --case id=value     Export (render) or show (shots, filmstrip) one case; repeat for multiple settings
-  --every <seconds>   Filmstrip: one frame every this many seconds of film (default 1)
+  --case id=value     Export (render) or show (shots) one case; repeat for multiple settings
   --port <integer>    Preview server port (default 5174)
   --watch             Preview: rebuild the page and contact sheet on save
 
@@ -66,7 +65,6 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
       port: { type: 'string', default: '5174' },
       refresh: { type: 'boolean' },
       footer: { type: 'boolean' },
-      every: { type: 'string', default: '1' },
       all: { type: 'boolean' },
       watch: { type: 'boolean' },
     },
@@ -112,12 +110,8 @@ export default class MyExplainer extends Scene {
     console.log(`Created ${join(dir, 'scene.ts')}`);
     return;
   }
-  if (!['preview', 'snapshots', 'check', 'build', 'render', 'shots', 'filmstrip', 'describe'].includes(command!))
+  if (!['preview', 'snapshots', 'check', 'build', 'render', 'shots', 'describe'].includes(command!))
     throw new Error(`Unknown command: ${command}`);
-  if (flags.footer)
-    throw new Error(
-      '--footer is gone: a video shows each step\'s title and line on the picture, and its full caption in the subtitles and transcript',
-    );
   const project = await collectProject(input, { refresh: flags.refresh });
   const slug = sceneSlug(project);
   if (command === 'snapshots') {
@@ -171,6 +165,7 @@ export default class MyExplainer extends Scene {
       console.log(
         JSON.stringify(
           await renderVideo(project, v, out, {
+            footer: !!flags.footer,
             width: Number(flags.width),
             fps: Number(flags.fps),
           }),
@@ -179,13 +174,6 @@ export default class MyExplainer extends Scene {
         ),
       );
     }
-    return;
-  }
-  if (command === 'filmstrip') {
-    const { filmstrip } = await import('./lib/explain-shots.ts');
-    console.log(
-      await filmstrip(project, flags.out ?? resolve('out/shots', slug + '.film.png'), selectedVariant(), Number(flags.every)),
-    );
     return;
   }
   if (command === 'shots') {
