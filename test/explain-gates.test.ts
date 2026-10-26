@@ -133,6 +133,42 @@ const gates: { gate: string; source: string; message: RegExp; snapshots?: () => 
     source: scene(`await this.step('one');${label('tiny', '[0,0]', 0.05)}`),
     message: /Labels never reach 14px at 1280px stage/,
   },
+  // Legibility is measured on screen: world size times the camera's zoom, inside the camera's view.
+  {
+    gate: 'native legibility on screen: a 20 px label with the camera zoomed out 2x',
+    source: scene(`this.frame.scale(2);await this.step('one',{caption:'Small.'});${label('far away', '[0,0]', 0.25)}`),
+    message: /Labels never reach 14px[^]*far away/,
+  },
+  {
+    // Zoomed 2x on the left half for the whole scene; the 10 px (world) label sits off camera on the right.
+    gate: 'native legibility on screen: a label the camera never shows is not read',
+    source: scene(`this.frame.scale(0.5).moveTo([-4,0]);await this.step('one',{caption:'Elsewhere.'});${label('in view', '[-4,0]', 0.4)}${label('off camera', '[5,0]', 0.125)}`),
+    message: /Labels never reach 14px[^]*off camera/,
+  },
+  {
+    // 8 px with the camera home; the camera passes 2x closer mid-step and comes back. A glide past is not a read.
+    gate: 'native legibility: a label readable only while the camera glides past',
+    source: scene(
+      `await this.step('one',{caption:'A small label.'});${label('eight pixel words', '[0,-1.6]', 0.1)}await this.step('two',{caption:'The camera passes close and comes back.'});await this.play(this.frame.animate.scale(0.5).moveTo([0,-1.6]),{runTime:0.6});await this.play(this.frame.animate.reset(),{runTime:0.6});${label('later', '[3,0]')}`,
+    ),
+    message: /Labels never reach 14px[^]*eight pixel words/,
+  },
+  {
+    // A camera stretched to 16 x 36 is letterboxed: 20 px per unit, so a label 16 px at home reads 4 px.
+    gate: 'native legibility on screen: a camera out of 16:9 is letterboxed',
+    source: scene(`this.frame.stretch(4,1);await this.step('one',{caption:'Tall.'});${label('tall view', '[0,0]', 0.2)}`),
+    message: /Labels never reach 14px[^]*tall view/,
+  },
+  {
+    gate: 'text in the camera’s view: a label the zoomed camera cuts in half',
+    source: scene(`await this.step('one',{caption:'Cut.'});${label('a rather long label here', '[0,0]', 0.4)}await this.play(this.frame.animate.scale(0.25).moveTo([2,0]));`),
+    message: /colliding or cut-off text[^]*cut off by the frame/,
+  },
+  {
+    gate: 'hold: the camera drifts after the step’s last play()',
+    source: scene(`await this.step('moves',{caption:'A caption long enough to need a hold of a few seconds at reading pace.'});${label('hello')}this.frame.addUpdater((m,dt)=>{m.shift([dt*0.5,0])});`),
+    message: /The picture changes after the caption hold begins/,
+  },
   {
     gate: 'picture descriptions: a drawing with no words',
     source: scene(`await this.step('one');await s.enter(new Rectangle({width:1,height:1}));`),
@@ -174,6 +210,10 @@ for (const { gate, source, message, snapshots } of gates)
   test(`gate fails with its own message: ${gate}`, async () => {
     await assert.rejects(checked(await write(source, snapshots?.())), message);
   });
+
+test('native legibility on screen: an 8 px label with the camera zoomed in 2x passes', async () => {
+  await checked(await write(scene(`this.frame.scale(0.5);await this.step('one',{caption:'Close.'});${label('close up', '[0,0]', 0.1)}`)));
+});
 
 test('explain check exits 1 and names the failing gate on stderr', async () => {
   const dir = await write(gates.find((g) => g.gate === 'seek = play')!.source);

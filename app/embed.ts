@@ -1,4 +1,4 @@
-import { DomSink, renderAt, traceScene, SeekSink } from '../src/index.ts';
+import { renderAt, traceScene, SeekSink } from '../src/index.ts';
 import type { Trace } from '../src/index.ts';
 import { StopScene } from '../src/index.ts';
 import { bindSnapshots, withSettings, resolveSettings } from '../explain/index.ts';
@@ -7,7 +7,7 @@ import { restingTime, pictureHtml, pictureSummary } from '../explain/trace.ts';
 import { reportHeight } from './embed-protocol.ts';
 import { icon } from './embed-icons.ts';
 import type { IconName } from './embed-icons.ts';
-import { StageZoom } from './embed-zoom.ts';
+import { ReaderSink, ReaderView, StageZoom } from './embed-zoom.ts';
 import type { Zoom } from './embed-zoom.ts';
 import { NARROW_PX, closeUps, stageScale, stepLayouts } from './embed-closeup.ts';
 import type { StepLayout } from './embed-closeup.ts';
@@ -201,13 +201,22 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     stop = (stop + 1) % tour.length;
     zoom.to(tour[stop]!, true);
   };
-  const zoom = new StageZoom(stage, () => {
-    zoomOut.disabled = zoom.k <= 1;
-    zoomIn.disabled = zoom.k >= zoom.max;
-    zoomFit.hidden = zoom.k <= 1;
-    closer.hidden = follow || !narrow();
-    drawOverview();
-  });
+  // The reader's zoom narrows the viewBox over the author's camera (app/embed-zoom.ts), so the
+  // drawing stays crisp, the layout never moves, a camera move keeps playing under a zoom, and
+  // Fit is the author's own frame. Close-ups are reader zooms over that frame too.
+  const reader = new ReaderView(stage),
+    readerView = (author: string) => reader.view(author);
+  const zoom = new StageZoom(
+    stage,
+    () => {
+      zoomOut.disabled = zoom.k <= 1;
+      zoomIn.disabled = zoom.k >= zoom.max;
+      zoomFit.hidden = zoom.k <= 1;
+      closer.hidden = follow || !narrow();
+      drawOverview();
+    },
+    reader.paint,
+  );
   zoomIn.onclick = () => zoom.zoomAt(1.6, undefined, undefined, true);
   zoomOut.onclick = () => zoom.zoomAt(1 / 1.6, undefined, undefined, true);
   /** The whole picture; on a narrow stage, for the steps that follow too. */
@@ -289,7 +298,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     link(push);
     const step = trace.steps[selected]!;
     const container = el('div'),
-      sink = new DomSink(container, { realtime: false });
+      sink = new ReaderSink(container, { realtime: false }, readerView);
     const [, target] = await Promise.all([renderAt(Active, restingTime(step, trace.fps), sink), framing(step)]);
     if (gen !== generation) return;
     // Reduced motion: no animation, but the old picture fades out over the new one, so the change is still seen.
@@ -323,7 +332,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       // Stop when the picture stops: the caption-reading hold is for video; here the reader sets the pace.
       end = step.hold ?? step.t1 ?? trace.duration;
     const container = el('div'),
-      seek = new SeekSink(new DomSink(container), start);
+      seek = new SeekSink(new ReaderSink(container, {}, readerView), start);
     const target = await framing(step);
     if (gen !== generation) return;
     let attached = false;

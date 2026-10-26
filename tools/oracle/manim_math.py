@@ -8,7 +8,8 @@ manim runs. Only numpy is needed; the rest of manim is never imported.
   MANIM_DIR=path/to/manim python3 -I tools/oracle/manim_math.py < request.json
 
 Request: { "rates": [t...], "distribute": [{ "lengths": [...], "n": k }],
-           "partial": [{ "points": [[x,y],...], "a": 0.2, "b": 0.7 }] }
+           "partial": [{ "points": [[x,y],...], "a": 0.2, "b": 0.7 }],
+           "same_shape": [[[x,y],...], ...] }
 """
 import ast, json, math, os, sys
 from functools import lru_cache
@@ -48,10 +49,20 @@ extract('manimlib/utils/bezier.py', ['bezier', 'partial_bezier_points', 'interpo
 extract('manimlib/utils/rate_functions.py', ['linear', 'smooth', 'rush_into', 'rush_from', 'there_and_back'], ns)
 extract('manimlib/utils/iterables.py', ['index_within_group'], ns)
 method('manimlib/mobject/types/vectorized_mobject.py', 'VMobject', 'insert_n_curves_to_point_list', ns)
+method('manimlib/mobject/mobject.py', 'Mobject', 'has_same_shape_as', ns)
 
 
 class Stub:
     tolerance_for_point_equality = 1e-8
+
+
+class Points:
+    """A mobject reduced to its points: what has_same_shape_as reads."""
+    def __init__(self, pts): self.p = np.array(pts, float)
+    def get_all_points(self): return self.p
+    def get_center(self): return (self.p.min(0) + self.p.max(0)) / 2
+    def get_height(self): return float(np.ptp(self.p[:, 1]))
+    def get_width(self): return float(np.ptp(self.p[:, 0]))
 
 
 req = json.load(sys.stdin)
@@ -77,4 +88,8 @@ if 'distribute' in req:
     out['distribute'] = res
 if 'partial' in req:
     out['partial'] = [[list(map(float, p)) for p in ns['partial_bezier_points']([np.array(q, float) for q in d['points']], d['a'], d['b'])] for d in req['partial']]
+if 'same_shape' in req:
+    # manim's TransformMatchingShapes pairs parts for which this holds; every ordered pair
+    shapes = [Points(p) for p in req['same_shape']]
+    out['same_shape'] = [[bool(ns['has_same_shape_as'](a, b)) for b in shapes] for a in shapes]
 json.dump(out, sys.stdout)

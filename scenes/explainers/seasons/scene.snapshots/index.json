@@ -2,12 +2,6 @@
   "version": 2,
   "importer": "725da4d8fc61bf77",
   "renderer": "agentic-mermaid@0.4.1",
-  "sourceHash": "3fec43e4195e6adf95979102e22c3df1cd9d873ad51b973c17682d411ddd2922",
-  "diagrams": {
-    "[\"xychart-beta\\n x-axis [Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec]\\n y-axis \\\"Daylight hours\\\" 0 --> 24\\n line [0,6.5,10.8,15.3,20.6,24,24,17.7,13,8.6,3.1,0]\",\"tokyo-night\"]": "5df4749e4aaeda07.json",
-    "[\"xychart-beta\\n x-axis [Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec]\\n y-axis \\\"Daylight hours\\\" 0 --> 24\\n line [0,6.5,10.8,15.3,20.6,24,24,17.7,13,8.6,3.1,0]\\n line [8,9.6,11.4,13.5,15.3,16.4,16,14.5,12.5,10.4,8.6,7.6]\\n line [12,12,12,12,12,12,12,12,12,12,12,12]\\n line [14,13.3,12.3,11.2,10.3,9.8,9.9,10.7,11.8,12.8,13.8,14.2]\",\"tokyo-night\"]": "42fc2304124e1d1e.json",
-    "[\"xychart-beta\\n x-axis [Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec]\\n y-axis \\\"Daylight hours\\\" 0 --> 24\\n line [12,12,12,12,12,12,12,12,12,12,12,12]\",\"tokyo-night\"]": "f62e655eb6f526f2.json",
-    "[\"xychart-beta\\n x-axis [Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec]\\n y-axis \\\"Daylight hours\\\" 0 --> 24\\n line [14,13.3,12.3,11.2,10.3,9.8,9.9,10.7,11.8,12.8,13.8,14.2]\",\"tokyo-night\"]": "1462f07f143be385.json",
-    "[\"xychart-beta\\n x-axis [Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec]\\n y-axis \\\"Daylight hours\\\" 0 --> 24\\n line [8,9.6,11.4,13.5,15.3,16.4,16,14.5,12.5,10.4,8.6,7.6]\",\"tokyo-night\"]": "73af8ebd6729aca8.json"
-  }
+  "sourceHash": "d01fe48fdc96e2cb816ed1259c3a70e22ed6490cf1f1e96a3603de1f495585f0",
+  "diagrams": {}
 }

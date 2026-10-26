@@ -1,5 +1,25 @@
-import { Scene } from '../../../src/index.ts';
+import {
+  Scene,
+  Code,
+  Text,
+  Rectangle,
+  Group,
+  Create,
+  FadeIn,
+  FadeOut,
+  Transform,
+  TransformDiff,
+  SurroundingRectangle,
+  Circumscribe,
+} from '../../../src/index.ts';
+import type { Box } from '../../../src/index.ts';
 import { stage, settingsOf } from '../../../explain/index.ts';
+import type { Palette } from '../../../explain/index.ts';
+import { soft, raised, rule } from '../../../explain/look.ts';
+// The merge request: the two texts TransformDiff animates, which
+// test/explain-fidelity.test.ts holds to the real git diff.
+import { BEFORE_CODE, AFTER_CODE, BEFORE_SPANS, AFTER_SPANS } from './code.ts';
+
 const STYLE = 'hand-drawn';
 const BEFORE = 'graph LR\nRequest[Request] --> H[Handler]\nH --> D1[(D1)]';
 const AFTER =
@@ -12,17 +32,6 @@ const OPS = [
   { kind: 'add_edge', from: 'KV', to: 'D1', label: 'miss' },
   { kind: 'add_edge', from: 'KV', to: 'Reply', label: 'hit' },
   { kind: 'add_edge', from: 'D1', to: 'Reply' },
-];
-// The merge request from Lantern's own example (scenes/mr-cache.ts).
-const OLD = ['async function getUser(id, env) {', '  return env.DB.prepare(SQL).bind(id).first();', '}'];
-const NEW = [
-  'async function getUser(id, env) {',
-  '  const hit = await env.KV.get(`user:${id}`, "json");',
-  '  if (hit) return hit;',
-  '  const row = await env.DB.prepare(SQL).bind(id).first();',
-  '  await env.KV.put(`user:${id}`, JSON.stringify(row), { expirationTtl: 300 });',
-  '  return row;',
-  '}',
 ];
 const PATH = {
   hit: [
@@ -37,11 +46,71 @@ const PATH = {
     ['D1', 'Reply'],
   ],
 } as const;
+const FONT = 0.21;
+/** Where the code sits: the bottom region, with a column on the right for what the diff did. */
+const CODE_BOX: Box = [-7.55, -4.25, 3.35, -0.65],
+  CARD_BOX: Box = [3.65, -4.25, 7.55, -0.65];
+const ADDED = '#2ea043',
+  CHANGED = '#bf8700';
+
+/**
+ * A code panel in the stage's colours, laid out as the helpers' CodeBlock lays
+ * one out, but with the native Code left on the scene by itself so
+ * TransformDiff can morph it. Centred in `box`, never above its top; or with
+ * `pin`, its top-left corner there.
+ */
+function panel(colors: Palette, code: Code, box: Box, title: string, pin?: readonly [left: number, top: number]) {
+  const pad = 0.3,
+    width = code.width() + 2 * pad + 0.1,
+    height = code.height() + 2 * pad + 0.42;
+  const cx = pin ? pin[0] + width / 2 : (box[0] + box[2]) / 2,
+    cy = pin ? pin[1] - height / 2 : Math.min(box[3] - height / 2, (box[1] + box[3]) / 2);
+  const rect = new Rectangle({
+    width,
+    height,
+    cornerRadius: 0.1,
+    fill: raised(colors),
+    stroke: rule(colors),
+    strokeWidth: 0.016,
+  }).moveTo([cx, cy]);
+  code.moveTo([cx, cy - 0.21]);
+  const label = new Text(title, { fontSize: 0.2, color: soft(colors), anchor: 'start' }).moveTo(
+    [cx - width / 2 + pad, cy + height / 2 - 0.3],
+    [-1, 0],
+  );
+  return { rect, label };
+}
+
+/** In words, a code panel as a reader sees it: its title and every line. */
+const inWords = (title: string, code: Code) =>
+  `Code “${title}”, ${code.lines.length} lines: ${code.lines.map((l, i) => `${i + 1}: ${l.text.trim()}`).join(' · ')}`;
+
+/** Lines a..b of a code block, the block's full width. */
+function linesBox(code: Code, a: number, b: number): Box {
+  const all = code.box()!,
+    top = code.lines[a]!.box()!,
+    bottom = code.lines[b]!.box()!;
+  return [all[0], bottom[1], all[2], top[3]];
+}
+
+/** A tinted bar behind line i of a code block, as wide as its panel. */
+function lineBar(code: Code, rect: Rectangle, i: number, color: string): Rectangle {
+  const lines = code.lines,
+    pitch = Math.abs(lines[1]!.anchorPoint()[1] - lines[0]!.anchorPoint()[1]);
+  return new Rectangle({
+    width: rect.width() - 0.14,
+    height: pitch,
+    cornerRadius: 0.05,
+    fill: color,
+    fillOpacity: 0.2,
+    stroke: 'none',
+  }).moveTo([rect.center()[0], lines[i]!.anchorPoint()[1]]);
+}
 
 export default class CacheMRExplainer extends Scene {
   static meta = {
     id: 'mr-cache',
-    title: 'Five added lines put a KV cache in front of D1',
+    title: 'Four added lines and one rewritten put a KV cache in front of D1',
     sources: ['https://github.com/ivarvong/lantern/blob/2c7bad5/scenes/mr-cache.ts'],
   };
   static settings = [
@@ -62,10 +131,25 @@ export default class CacheMRExplainer extends Scene {
     await this.step('before', {
       title: 'Before: every request reads D1',
       caption:
-        'getUser is a single D1 query, so the walked request goes from the handler straight to D1, and every lookup is a database read.',
+        'getUser is a single D1 query, the outlined line, so the walked request goes from the handler straight to D1, and every lookup is a database read.',
     });
     const flow = await s.show({ source: BEFORE }, { box: 'top' });
-    const code = await s.code(OLD, { at: 'bottom' });
+    const colors = s.palette,
+      hot = s.emphasis;
+    const before = new Code(BEFORE_CODE, { fontSize: FONT, color: colors.ink, spans: BEFORE_SPANS }),
+      after = new Code(AFTER_CODE, { fontSize: FONT, color: colors.ink, spans: AFTER_SPANS });
+    // The merged file's panel decides where the code sits, and the old file
+    // starts at its top-left corner: in the diff, the header line stays put and
+    // the other lines move only down, to where the hunks put them.
+    const merged = panel(colors, after, CODE_BOX, 'users.ts');
+    const [left, , , top] = merged.rect.box()!;
+    const shown = panel(colors, before, CODE_BOX, 'users.ts', [left, top]);
+    // One description for the panel, whichever code it holds: its title stays through the diff.
+    let held = before;
+    const panelWords = () => inWords('users.ts', held);
+    s.keep(shown.rect, shown.label, before, { describe: panelWords });
+    // Three objects on the scene, not a group: TransformDiff replaces the Code by itself.
+    await this.play(...[shown.rect, shown.label, before].map((m) => new FadeIn(m, { runTime: 0.4 })));
     await flow.walk(
       [
         ['Request', 'H'],
@@ -73,24 +157,68 @@ export default class CacheMRExplainer extends Scene {
       ],
       { trail: true },
     );
-    await code.focus(1);
+    const outline = { buff: 0.06, cornerRadius: 0.06, stroke: hot, strokeWidth: 0.03 };
+    const query = s.keep(new SurroundingRectangle(linesBox(before, 1, 1), outline), {
+      describe: 'Line 2, the D1 query, outlined',
+    });
+    await this.play(new Create(query, { runTime: 0.5 }));
     this.state.databaseReads = 'every request';
 
     await this.step('diff', {
       title: 'The merge request reads KV before D1',
       caption:
-        'The five marked lines are the diff: a KV lookup, keyed by the user’s id, now runs before the D1 query. Only a miss reads the database, and it then writes the row to KV with expirationTtl: 300, a five-minute time to live.',
+        'The first line stays and the closing brace moves down to make room. The old return keeps its D1 call inside const row = await, and the green lines grow in. The outlined lines check KV first, so only a miss reaches D1, and the row is then written to KV for 300 seconds.',
     });
     await flow.clearNotes();
     await flow.unmark();
-    await code.morph(NEW, { markAdded: true });
+    await this.play(new FadeOut(query, { runTime: 0.3 }));
+    s.keep(merged.rect, after, { describe: panelWords });
+    // The diff drives the morph: unchanged lines travel whole, the rewritten
+    // return keeps its shared tokens, added lines grow in. The hunks are
+    // recorded in the trace, where test/explain-fidelity.test.ts holds them to
+    // the real git CLI.
+    const diff = new TransformDiff(before, after, { runTime: 1.6 });
+    await this.play(diff, new Transform(shown.rect, merged.rect, { replace: true, runTime: 1.6 }));
+    held = after;
+    // What each line did, from the transform's own plan.
+    const { same, changed, removed, added } = diff.plan;
+    const bars = new Group(
+      ...changed.map(([, j]) => lineBar(after, merged.rect, j, CHANGED)),
+      ...added.map((j) => lineBar(after, merged.rect, j, ADDED)),
+    );
+    const numbers = (js: number[]) => js.map((j) => j + 1).join(', ');
+    s.keep(bars, {
+      describe: `Bars behind the lines the diff touched: line ${numbers(changed.map(([, j]) => j))} rewritten, lines ${numbers(added)} added`,
+    });
+    this.add(bars);
+    this.add(after); // the code stays in front of its bars
+    const lines = (n: number) => `${n} line${n === 1 ? '' : 's'}`;
+    const rows: [string, string][] = [
+      ['Unchanged', lines(same.length)],
+      ['Rewritten', lines(changed.length)],
+      ['Added', lines(added.length)],
+    ];
+    if (removed.length) rows.push(['Removed', lines(removed.length)]);
+    const card = await s.card(rows, { at: CARD_BOX, title: 'What the diff did', enter: false });
+    card.labels.get('Rewritten')!.setFill(CHANGED);
+    card.labels.get('Added')!.setFill(ADDED);
+    await this.play(new FadeIn(bars, { runTime: 0.5 }), new FadeIn(card, { runTime: 0.5 }));
+    const lookup = new Circumscribe(linesBox(after, 1, 2), {
+      keep: true,
+      color: hot,
+      buff: 0.06,
+      cornerRadius: 0.06,
+      strokeWidth: 0.03,
+    });
+    s.keep(lookup.outline, { describe: 'Lines 2 and 3, the KV lookup, outlined' });
+    await this.play(lookup);
 
     await this.step('after', {
       title: 'Replayed on the diagram, the diff adds KV and a hit path',
       caption:
         'The same edit, replayed as diagram operations, removes the handler’s edge to D1 and puts a KV cache between them. A hit goes from KV straight to Reply, while a miss falls through to D1 before replying.',
     });
-    await code.clearMarks();
+    await this.play(new FadeOut(bars, { runTime: 0.4 }), new FadeOut(lookup.outline, { runTime: 0.4 }));
     await flow.morph({ source: AFTER }, { ops: OPS });
     await flow.note('KV', 'TTL 300 s', { side: 'above' });
     this.state.databaseReads = 'misses only';
@@ -99,14 +227,19 @@ export default class CacheMRExplainer extends Scene {
       title: which === 'hit' ? 'A cache hit returns from KV with no D1 read' : 'A cache miss reads D1 once, then caches the row',
       caption:
         which === 'hit'
-          ? 'The user is already in KV, so getUser returns on line three, the second highlighted line, and the note under D1 shows 0 reads.'
-          : 'KV has no entry, so getUser runs the highlighted lines: it reads the row from D1, puts it in KV for 300 seconds and returns it. Lookups for the same user in that window are hits; D1 still serves every miss.',
+          ? 'The user is already in KV, so getUser returns on line three, the second outlined line, and the note under D1 shows 0 reads.'
+          : 'KV has no entry, so past the lookup getUser runs on into the outlined lines, which only a miss reaches: it reads the row from D1, puts it in KV for 300 seconds and returns it. Lookups for the same user in that window are hits; D1 still serves every miss.',
     });
     const path = PATH[which];
     await flow.clearNotes();
     await flow.dim([...new Set(path.flat())]);
     await flow.walk(path, { trail: true });
-    await code.focus(which === 'hit' ? [1, 2] : [3, 5]);
+    // A hit runs the lookup and returns; a miss runs the lookup too, then the lines outlined here.
+    const [a, b] = which === 'hit' ? [1, 2] : [3, 5];
+    const ran = s.keep(new SurroundingRectangle(linesBox(after, a, b), outline), {
+      describe: `Lines ${a + 1} to ${b + 1}, ${which === 'hit' ? 'the ones this request runs' : 'the ones only a miss runs'}, outlined`,
+    });
+    await this.play(new Create(ran, { runTime: 0.5 }));
     await flow.note('D1', which === 'hit' ? '0 reads' : '1 read', {
       side: 'below',
     });

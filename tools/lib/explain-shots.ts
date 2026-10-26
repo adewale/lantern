@@ -1,10 +1,20 @@
 import { writeFile, mkdir } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { basename, dirname, extname, join, resolve } from 'node:path';
 import { Scene, Text, NullSink, SnapshotSink, renderAt } from '../../src/index.ts';
 import { rasterize, band } from './explain-video.ts';
 import { defaultVariant } from './explain-project.ts';
 import { restingTime } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
+
+/**
+ * A scene's picture at `time` as PNG, `width` pixels wide. Culled: resvg 2.6.2 aborts on a
+ * fading element the camera has left outside the view, which a zoomed camera leaves often.
+ */
+export async function stillPng(Source: Project['Scene'], time: number, width: number): Promise<Buffer> {
+  const sink = new SnapshotSink({ width, cull: true });
+  await renderAt(Source, time, sink);
+  return (await rasterize(sink.svg)).asPng();
+}
 
 export async function contactSheet(
   project: Project,
@@ -20,9 +30,7 @@ export async function contactSheet(
   const tiles = [];
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i]!,
-      sink = new SnapshotSink({ width: w });
-    await renderAt(v.Scene, restingTime(step, v.trace.fps), sink);
-    const png = (await rasterize(sink.svg)).asPng();
+      png = await stillPng(v.Scene, restingTime(step, v.trace.fps), w);
     const labelScene = new Scene(new NullSink()),
       label = new Text(`${i + 1}. ${String(step.meta.title ?? step.step)}`, {
         fontSize: 0.36,
@@ -39,9 +47,10 @@ export async function contactSheet(
     );
   }
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w * cols}" height="${h * rows}"><rect width="100%" height="100%" fill="#101820"/>${tiles.join('')}</svg>`;
-  out = resolve(out);
+  // The PNG at `out` (given .png when it has no extension), the SVG beside it.
+  out = resolve(extname(out) ? out : out + '.png');
   await mkdir(dirname(out), { recursive: true });
-  await writeFile(out.replace(/\.[^.]+$/, '.svg'), svg);
+  await writeFile(join(dirname(out), basename(out, extname(out)) + '.svg'), svg);
   await writeFile(out, (await rasterize(svg)).asPng());
   return out;
 }

@@ -360,7 +360,43 @@ export class VMobject extends Mobject {
     }
     return { ints, lens, tx, ty };
   }
+
+  /**
+   * A string equal for paths of the same shape at any position, and almost
+   * always at any size: the same subpaths (point counts, closed flags) whose
+   * points coincide once each path is centered and scaled so its larger side
+   * is 1, to within a grid cell of 1/SHAPE_STEPS of that side (about 1.6%;
+   * manim's has_same_shape_as allows 1%). A moved copy always shares the key;
+   * a scaled copy can split from it when a point lands right on a grid-cell
+   * boundary (about 0.02% of scaled copies). "Same shape" is same path data,
+   * as in manim: a square drawn from another corner, or one with curves
+   * inserted by an earlier Transform, is a different shape. Own points only,
+   * not children. A pure function of the points; a zero-size path keys as a point.
+   */
+  shapeKey(): string {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const a of this.subpaths) {
+      for (let i = 0; i < a.length; i += 2) {
+        const x = a[i]!, y = a[i + 1]!;
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+      }
+    }
+    let key = this.subpaths.map((a, i) => a.length / 2 + (this.closed[i] ? 'z' : '')).join(',') + ':';
+    const size = Math.max(maxX - minX, maxY - minY);
+    if (!(size > 1e-6)) return key + 'point';
+    const k = SHAPE_STEPS / size, cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    for (const a of this.subpaths) for (let i = 0; i < a.length; i += 2) key += Math.round((a[i]! - cx) * k) + ' ' + Math.round((a[i + 1]! - cy) * k) + ' ';
+    return key;
+  }
 }
+
+// Grid cells per unit of a shape's larger side, for shapeKey(). Irrational on
+// purpose: with a rational pitch, common values (±1/2, ±1/8 of a side, ratios
+// of integer font units) land exactly on a cell boundary, where Float32 noise
+// from moving the shape decides which way they round and equal shapes split.
+// 100 and 50 steps split 0.04% and 8% of moved copies; this split none of 40k.
+const SHAPE_STEPS = 100 / 1.618033988749895;
 
 /**
  * How many pieces each of `k` curves becomes when `n` curves are added, given
