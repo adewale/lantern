@@ -46,6 +46,9 @@ try {
     `import{Scene,Text,FadeIn}from'rayner';import{stage,settingsOf}from'rayner/explain';export default class Outside extends Scene{static meta={id:'outside',title:'An outside author'};static settings=[{id:'case',label:'Case',default:'a',options:[{value:'a',label:'A'},{value:'b',label:'B'}]}];async construct(){const s=stage(this);await this.step('one',{title:'First step',caption:'A native scene outside the checkout.'});await this.play(new FadeIn(new Text(settingsOf(this).case,{color:s.palette.ink})));}}`,
   );
   await run(process.execPath, [cli, 'check', 'first'], { cwd: folder });
+  // `see` reads a step from the terminal with no browser or optional renderer installed.
+  const seen = await run(process.execPath, [cli, 'see', 'first', 'one', '--case', 'case=b'], { cwd: folder });
+  assert.match(seen.stdout, /^outside · step 1 of 1: one · Case: B$/m);
   await run(process.execPath, [cli, 'build', 'first', '--out', 'public/outside.html'], { cwd: folder });
   const html = await readFile(join(folder, 'public/outside.html'), 'utf8');
   assert.match(html, /An outside author/);
@@ -79,7 +82,7 @@ try {
     });
   }
   console.log(
-    'Package gate passed: archive install without optional peers, executable JS bin, install hint, external native author, settings, checks, build, describeExplainer, notices, one compiled engine' +
+    'Package gate passed: archive install without optional peers, executable JS bin, install hint, external native author, settings, checks, see, build, describeExplainer, notices, one compiled engine' +
       (process.env.EXPLAIN_VIDEO ? ', installed video export' : '') +
       (process.env.EXPLAIN_BROWSER ? ', installed diagram capture' : '') +
       '.',
