@@ -11,8 +11,9 @@
 // 10.0 -> 9.0 stays put at its left edge. Fonts are loaded by Scene.run();
 // outside a scene, await loadFonts() first.
 
-import { Mobject, Group } from './mobject.ts';
+import { Mobject, Group, animateBuilderBase } from './mobject.ts';
 import type { Style, PathFunc } from './mobject.ts';
+import type { Box, AnimateBuilder, AnimateBuilderBase } from './mobject.ts';
 import { VMobject } from './vmobject.ts';
 import { Rectangle } from './shapes.ts';
 import { shaperFor } from './fonts.ts';
@@ -68,7 +69,11 @@ function unitOutline(segments: Segment[]): UnitOutline {
 }
 
 class Glyph extends VMobject {
-  /** Source string index this glyph came from. */
+  /**
+   * Where this glyph's cluster starts in the Text's `text`, as a JS string
+   * (UTF-16) index into the source: tabs unexpanded, an astral character two
+   * units. See shapedForm().
+   */
   cluster: number | undefined;
   constructor(segments: Segment[], scale: number, ox: number, oy: number, style: Style) {
     super(style);
@@ -96,7 +101,7 @@ export class Text extends Group {
   fontSize: number;
   weight: 'normal' | 'bold';
   anchor: 'start' | 'middle' | 'end';
-  /** Tab stops every this many columns, or undefined: see TextOpts. `text` keeps the tabs; glyph clusters index the expanded string. */
+  /** Tab stops every this many columns, or undefined: see TextOpts. `text` keeps the tabs, and so do glyph clusters: they index `text`. */
   tabWidth: number | undefined;
   // Set by build(), which the constructor calls
   run!: RunMetrics;
@@ -127,7 +132,8 @@ export class Text extends Group {
 
   /** Lay out glyphs with the pen at the origin and the baseline at y = 0. */
   build(text: string, fontSize: number, style: Style): void {
-    const run = shaperFor(this.font)(this.tabWidth ? expandTabs(text, this.tabWidth) : text, fontSize);
+    const { shaped, source } = shapedForm(text, this.tabWidth);
+    const run = shaperFor(this.font)(shaped, fontSize);
     this.run = { width: run.width, ascent: run.ascent, descent: run.descent, fontSize };
     const scale = run.s ?? fontSize / 1000;
     for (const c of this.children) c.parent = null;
@@ -135,7 +141,7 @@ export class Text extends Group {
     for (const g of run.glyphs) {
       if (!g.path?.length) continue;
       const gl = new Glyph(g.path, g.s ?? scale, g.x + g.dx, g.dy, { ...style });
-      gl.cluster = g.cluster;
+      gl.cluster = source(g.cluster);
       gl.parent = this;
       this.children.push(gl);
     }
@@ -265,32 +271,80 @@ export class DecimalNumber extends Text {
   }
 }
 
-export interface CodeOpts { fontSize?: number; color?: string; lineHeight?: number; tabWidth?: number }
+/**
+ * Colour for part of one Code line: source indices [from, to) of line `line`,
+ * counted in UTF-16 code units (JS string indices into the line as given, tabs
+ * and all). Glyph.cluster holds the same index: the shaper counts code points
+ * in the tab-expanded string, and Text.build maps each back (shapedForm). The
+ * syntax-token data format: tools/tokens.ts writes it at build time.
+ */
+export interface ColorSpan { line: number; from: number; to: number; color: string }
+
+export interface CodeOpts {
+  fontSize?: number;
+  color?: string;
+  lineHeight?: number;
+  tabWidth?: number;
+  /**
+   * Token colours, painted once at construction over `color`. They belong to
+   * this construction only: Text.setText on a line restyles the whole line
+   * from its first glyph, so to change coloured code, build the next Code with
+   * its own spans and Transform to it.
+   */
+  spans?: ReadonlyArray<ColorSpan>;
+}
 
 const graphemes = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter() : null;
 
 /**
- * `line` with each tab replaced by the spaces up to the next multiple of `width` columns.
- * A column is a grapheme (an accent combined with its letter takes one). `width` must be a
- * positive integer.
+ * `line` with each tab replaced by the spaces up to the next multiple of `width` columns,
+ * and for each code point of the result the UTF-16 index in `line` it came from (a tab's
+ * spaces all come from the tab). A column is a grapheme (an accent combined with its
+ * letter takes one). `width` must be a positive integer.
  */
-function expandTabs(line: string, width = 4): string {
+function expandTabs(line: string, width = 4): { text: string; source: number[] } {
   if (!Number.isInteger(width) || width < 1) throw new RangeError(`tabWidth must be a positive integer, not ${width}`);
-  if (!line.includes('\t')) return line;
-  let out = '', col = 0;
+  let out = '', col = 0, at = 0;
+  const source: number[] = [];
   const units = graphemes ? Array.from(graphemes.segment(line), (g) => g.segment) : Array.from(line);
   for (const ch of units) {
-    if (ch === '\t') { const n = width - (col % width); out += ' '.repeat(n); col += n; }
-    else { out += ch; col++; }
+    if (ch === '\t') {
+      const n = width - (col % width);
+      out += ' '.repeat(n); col += n;
+      for (let k = 0; k < n; k++) source.push(at);
+      at += 1;
+    } else {
+      out += ch; col++;
+      for (const cp of ch) { source.push(at); at += cp.length; }
+    }
   }
-  return out;
+  return { text: out, source };
+}
+
+const SURROGATE = /[\uD800-\uDFFF]/;
+const same = (i: number): number => i;
+
+/**
+ * What Text shapes for `text`, and the map from a shaped cluster back to `text`.
+ * The shaper's clusters count code points of the string it shaped, which has
+ * the tabs expanded (with a tabWidth); `source` turns one into the UTF-16 index
+ * in `text` it came from, so a glyph's cluster, a span's from/to and a
+ * ColorSpan all count the same way. Plain BMP text without tabs maps to itself.
+ */
+function shapedForm(text: string, tabWidth: number | undefined): { shaped: string; source: (cluster: number) => number } {
+  const tabs = tabWidth != null && text.includes('\t');
+  if (!tabs && !SURROGATE.test(text)) return { shaped: text, source: same };
+  let shaped = text, map: number[];
+  if (tabs) ({ text: shaped, source: map } = expandTabs(text, tabWidth));
+  else { map = []; let at = 0; for (const cp of text) { map.push(at); at += cp.length; } }
+  return { shaped, source: (c) => map[c] ?? text.length };
 }
 
 /** Monospace lines, left-aligned on exact advances. Tabs advance to the next tab stop (every `tabWidth` columns). */
 export class Code extends Group {
   lines: Text[];
 
-  constructor(lines: readonly string[], { fontSize = 0.26, color = '#dddddd', lineHeight = 1.5, tabWidth = 4 }: CodeOpts = {}) {
+  constructor(lines: readonly string[], { fontSize = 0.26, color = '#dddddd', lineHeight = 1.5, tabWidth = 4, spans = [] }: CodeOpts = {}) {
     super();
     this.lines = lines.map((l, i) => {
       // `text` stays the source line, tabs and all; the glyphs are laid out with the tabs expanded
@@ -299,7 +353,17 @@ export class Code extends Group {
       return t;
     });
     this.add(...this.lines);
+    for (const s of spans) this.span(s.line, s.from, s.to).setFill(s.color);
     this.moveTo([0, 0]);
+  }
+  /** A copy whose `lines` are its own (Object.assign would share the original's). */
+  override copy(): this {
+    const c = super.copy();
+    c.lines = this.lines.map((l) => {
+      const i = this.children.indexOf(l);
+      return i < 0 ? l : (c.children[i] as Text);
+    });
+    return c;
   }
   /** A translucent bar behind line `i`, as wide as the block. */
   highlight(i: number, color = '#ffff00'): Rectangle {
@@ -308,4 +372,134 @@ export class Code extends Group {
   }
   /** Where a highlight bar for line `i` sits. */
   lineCenter(i: number): Vec { return [this.center()[0], this.lines[i]!.center()[1]]; }
+
+  /**
+   * The glyphs of line `line` whose source index is in [from, to): a live
+   * view, not a copy (see CodeSpan for what that allows and what it doesn't).
+   * Indices are JS string (UTF-16) indices into `lines[line].text`, the line as
+   * given: a tab is one index however many columns it takes.
+   */
+  span(line: number, from: number, to: number): CodeSpan {
+    const t = this.lines[line];
+    if (!t) throw new RangeError(`Code has no line ${line} (it has ${this.lines.length})`);
+    if (!(Number.isInteger(from) && Number.isInteger(to) && from >= 0 && from <= to && to <= t.text.length))
+      throw new RangeError(`span ${from}..${to} is outside line ${line} (length ${t.text.length}): ${JSON.stringify(t.text)}`);
+    return new CodeSpan(t, line, from, to);
+  }
+  /** The span of the `nth` (from 0) occurrence of `text` on line `line`, counting non-overlapping matches. */
+  token(line: number, text: string, nth = 0): CodeSpan {
+    const src = this.lines[line]?.text ?? '';
+    let at = -1;
+    for (let k = 0, from = 0; k <= nth; k++, from = at + Math.max(1, text.length)) {
+      at = text ? src.indexOf(text, from) : -1;
+      if (at < 0) throw new RangeError(`No ${JSON.stringify(text)} #${nth} on line ${line}: ${JSON.stringify(src)}`);
+    }
+    return this.span(line, at, at + text.length);
+  }
+  /** The whole of line `line`. */
+  lineSpan(line: number): CodeSpan { return this.span(line, 0, this.lines[line]?.text.length ?? 0); }
+}
+
+/**
+ * Part of one Code line, as returned by Code.span/token/lineSpan: the unit
+ * braces, boxes and diff-driven transforms address.
+ *
+ * A view. Its children are the line's live glyphs themselves (not copies, and
+ * not re-parented: they stay the line's), so `span.setFill(GOLD)` recolours
+ * the text on screen and `span.box()` is where that text is now.
+ *
+ * box() is the advance cells of [from, to) (pen position at `from` to pen
+ * position at `to`) by the line's ascent and descent, unioned with the glyphs'
+ * ink. So every span of a line has the same top and bottom, spans of adjacent
+ * ranges share an edge, and a box or brace around one token lines up with one
+ * around the next. Spaces count: a span of spaces has a box and no glyphs.
+ * The line is assumed unrotated (shifted and scaled are fine).
+ *
+ * A span is not a scene member. `span.animate` plays as a Transform of its
+ * line, so the span never joins the scene (two spans of one line can't then
+ * animate in one play(): recolour a copy of the Code and Transform to it). An
+ * animation built on the span itself (`new Indicate(span)`) would add the span
+ * to the scene and draw its glyphs twice; draw a shape from span.box() instead.
+ *
+ * Fixed at creation. Once the line's text changes (Text.setText, or a
+ * Transform landing another string on it) the span is `stale` and box()
+ * throws: take a new span from the Code now on screen.
+ */
+export class CodeSpan extends Group {
+  /** The line's Text, which owns the glyphs. */
+  readonly owner: Text;
+  /** Index of the line in its Code. */
+  readonly line: number;
+  readonly from: number;
+  readonly to: number;
+  /** The line's text when the span was taken. */
+  private readonly lineText: string;
+
+  constructor(owner: Text, line: number, from: number, to: number) {
+    super();
+    this.owner = owner; this.line = line; this.from = from; this.to = to;
+    this.lineText = owner.text;
+    this.children = owner.children.filter((g) => g instanceof Glyph && g.cluster != null && g.cluster >= from && g.cluster < to);
+  }
+
+  /** The source text the span covers. */
+  get source(): string { return this.lineText.slice(this.from, this.to); }
+
+  /** True once the line no longer holds the string (or the glyphs) this span was taken from. */
+  get stale(): boolean { return this.owner.text !== this.lineText || this.children.some((g) => g.parent !== this.owner); }
+
+  /** Advance cells by line metrics, unioned with ink; computed afresh, never cached (the glyphs aren't ours to watch). */
+  override box(): Box {
+    if (this.stale) throw new Error(`Stale span ${this.from}..${this.to} of line ${this.line}: the line is now ${JSON.stringify(this.owner.text)}; take a new span`);
+    // Shaped as build() shapes it (tabs expanded), clusters mapped back to source indices
+    const t = this.owner, f = t.frameBox, { shaped, source } = shapedForm(t.text, t.tabWidth);
+    const run = shaperFor(t.font)(shaped, t.run.fontSize);
+    // Shaped units to scene units along the line, however it has been scaled
+    const k = run.width ? (f[2]! - f[0]!) / run.width : 0;
+    const pen = (c: number): number => {
+      for (const g of run.glyphs) if (source(g.cluster) >= c) return g.x;
+      return run.width;
+    };
+    const b: Box = [f[0]! + pen(this.from) * k, f[1]!, f[0]! + pen(this.to) * k, f[3]!];
+    for (const g of this.children) {
+      const gb = g.box();
+      if (!gb) continue;
+      b[0] = Math.min(b[0], gb[0]); b[1] = Math.min(b[1], gb[1]); b[2] = Math.max(b[2], gb[2]); b[3] = Math.max(b[3], gb[3]);
+    }
+    return b;
+  }
+
+  // Moving a span moves glyphs the line owns: the line's boxes (and the block's) go stale too
+  override invalidateBox(): void { super.invalidateBox(); this.owner?.invalidateBox(); }
+  override applyAffine(...args: Parameters<Mobject['applyAffine']>): this {
+    super.applyAffine(...args);
+    this.owner.invalidateBox();
+    return this;
+  }
+
+  /**
+   * Chainable calls recorded and played as a Transform of the owning line to a
+   * copy of it with the calls applied to the same span: the span itself never
+   * joins the scene. `this.play(code.token(1, 'await').animate.setFill(GOLD))`.
+   */
+  override get animate(): AnimateBuilder<this> {
+    const calls: Array<[name: string, args: unknown[]]> = [];
+    const { owner, line, from, to } = this;
+    const builder: AnimateBuilderBase = animateBuilderBase(owner, () => {
+      const t = owner.copy();
+      const view = new CodeSpan(t, line, from, to);
+      for (const [name, args] of calls) (view as unknown as Record<string, (...a: unknown[]) => unknown>)[name]!(...args);
+      return t;
+    });
+    const proxy = new Proxy(builder, {
+      get(target, prop) {
+        if (prop in target) return target[prop as keyof typeof target];
+        if (typeof CodeSpan.prototype[prop as keyof CodeSpan] === 'function') {
+          return (...args: unknown[]) => { calls.push([prop as string, args]); return proxy; };
+        }
+        return undefined;
+      },
+    });
+    return proxy as unknown as AnimateBuilder<this>;
+  }
 }

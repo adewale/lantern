@@ -110,9 +110,11 @@ async function steps(id: string) {
 test('shipped explainers describe their steps: chart values, marks, focus, walks and what is new', async () => {
   const bucket = await steps('token-bucket');
   const summary = (name: string) => pictureSummary(bucket.get(name)!.after);
-  assert.match(summary('trace'), /^XY chart: Tokens remaining from 0 to 5, 10 categories from R1 to R10\./);
-  assert.match(summary('balance'), /Focused: 2: tokens = min\(5/);
-  assert.match(summary('burst'), /Marked: Last call: R6 at 0 s → 429/);
+  // The run is a native chart drawn from the same allow() calls that move the gauge
+  assert.match(summary('trace'), /A chart of the balance over time: it climbs at 1 a second between calls and drops one token for each 200\./);
+  assert.match(summary('trace'), /Grey lines are the same requests at 2 and 4 tokens a second/);
+  assert.match(summary('balance'), /Refill: 2: tokens = min\(5/);
+  assert.match(summary('burst'), /R6 at 0\.0 is under the one-token line and got 429/);
   // A step that changes only emphasis lists the rest as it was.
   const refill = bucket.get('refill')!;
   assert.match(pictureHtml(refill.after, refill.before), /the rest as in the previous step/);
@@ -121,9 +123,10 @@ test('shipped explainers describe their steps: chart values, marks, focus, walks
   const machine = await steps('state-machine');
   const connect = pictureSummary(machine.get('connect')!.after);
   assert.match(connect, /^State diagram: 4 states, 4 transitions; /);
-  assert.match(connect, /Travelled: idle → connecting: CONNECT; /);
-  // The focused line of the transition table ends in a comma; its sentence still ends in a full stop.
-  assert.match(connect, /focused: 2: 'idle:CONNECT': 'connecting'\. New in this step: /);
+  assert.match(connect, /Travelled: idle → connecting: CONNECT\. New in this step: /);
+  // The reducer row is boxed, not focused: the box's description names the line and what it means
+  assert.match(connect, /A box around line 2 of the reducer: 'idle:CONNECT': 'connecting', the row the reducer reads/);
+  assert.match(connect, /A ring around connecting, the state the session is in/);
 
   const pkce = await steps('oauth-pkce');
   assert.match(pictureSummary(pkce.get('authorize')!.after), /^Sequence diagram: 3 participants, 1 message; /);

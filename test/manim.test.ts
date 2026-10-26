@@ -7,21 +7,50 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { VMobject, linear, smooth, rushInto, rushFrom, thereAndBack } from '../src/index.ts';
+import { VMobject, Square, Rectangle, Circle, Polygon, linear, smooth, rushInto, rushFrom, thereAndBack } from '../src/index.ts';
 import type { Vec } from '../src/index.ts';
 
-interface Answers { rates: Record<string, number[]>; distribute: number[][]; partial: Array<Array<[number, number]>> }
+interface Answers { rates: Record<string, number[]>; distribute: number[][]; partial: Array<Array<[number, number]>>; same_shape: boolean[][] }
 interface Fixture {
   manim: string;
-  request: { rates: number[]; distribute: Array<{ lengths: number[]; n: number }>; partial: Array<{ points: Vec[]; a: number; b: number }> };
+  request: { rates: number[]; distribute: Array<{ lengths: number[]; n: number }>; partial: Array<{ points: Vec[]; a: number; b: number }>; same_shape: Vec[][] };
   answers: Answers;
 }
 const file = new URL('./manim-oracle.json', import.meta.url);
 const { request, answers, manim } = JSON.parse(readFileSync(file, 'utf8')) as Fixture;
 
+/**
+ * The shapes the same_shape request was made from, in its order. The request holds
+ * their points (every subpath's, as one array: what manim's get_all_points reads).
+ */
+function sameShapeCases(): Array<[string, VMobject]> {
+  const polyline = (pts: Vec[]) => { const v = new VMobject().startNewPath(pts[0]!); for (const p of pts.slice(1)) v.addLineTo(p); return v; };
+  // Float32 noise: the same square after a chain of moves and scales
+  const mapped = new Square({ side: 2 });
+  for (let i = 0; i < 5; i++) mapped.shift([1.37, -0.71]).scale(1.3);
+  return [
+    ['square', new Square({ side: 2 })],
+    ['square, moved and scaled', new Square({ side: 3 }).shift([4, -1])],
+    ['square, after five maps', mapped],
+    ['square, drawn from another corner', new Square({ side: 2 }).rotate(Math.PI / 2)],
+    ['rectangle 2:1', new Rectangle({ width: 2, height: 1 })],
+    ['rectangle 1:2', new Rectangle({ width: 1, height: 2 })],
+    ['circle', new Circle({ radius: 1 })],
+    ['circle, moved and scaled', new Circle({ radius: 0.3 }).shift([-5, 2])],
+    ['triangle', new Polygon([[0, 0], [2, 0], [0.5, 1.5]])],
+    ['triangle, mirrored', new Polygon([[0, 0], [-2, 0], [-0.5, 1.5]])],
+    ['open polyline', polyline([[0, 0], [1, 1], [2, 0.5]])],
+    ['open polyline, moved and scaled', polyline([[0, 0], [1, 1], [2, 0.5]]).scale(2.5).shift([-1, -3])],
+  ];
+}
+const allPoints = (m: VMobject): Vec[] => m.subpaths.flatMap((a) => Array.from({ length: a.length / 2 }, (_, i): Vec => [a[2 * i]!, a[2 * i + 1]!]));
+
 test('the frozen answers are what manim answers now', { skip: process.env.MANIM_DIR ? false : 'set MANIM_DIR to a checkout of 3b1b/manim' }, () => {
-  const live = JSON.parse(execFileSync('python3', ['-I', new URL('../tools/oracle/manim_math.py', import.meta.url).pathname], { input: JSON.stringify(request), encoding: 'utf8' })) as Answers;
-  if (process.env.UPDATE_ORACLE === '1') writeFileSync(file, JSON.stringify({ manim, request, answers: live }) + '\n');
+  const update = process.env.UPDATE_ORACLE === '1';
+  // The same_shape request is our shapes' points, so a refresh asks about the shapes as they are now
+  const ask = update ? { ...request, same_shape: sameShapeCases().map(([, m]) => allPoints(m)) } : request;
+  const live = JSON.parse(execFileSync('python3', ['-I', new URL('../tools/oracle/manim_math.py', import.meta.url).pathname], { input: JSON.stringify(ask), encoding: 'utf8' })) as Answers;
+  if (update) writeFileSync(file, JSON.stringify({ manim, request: ask, answers: live }) + '\n');
   assert.deepEqual(live, answers);
 });
 
@@ -77,4 +106,18 @@ test("splitting a cubic matches manim's partial_bezier_points piece by piece", (
       assert.ok(Math.abs(x - m[0]) < 1e-5 && Math.abs(y - m[1]) < 1e-5, `piece ${j} point ${q}: (${x}, ${y}) vs manim (${m})`);
     }
   }
+});
+
+test("shapeKey() groups shapes as manim's TransformMatchingShapes does (Mobject.has_same_shape_as)", () => {
+  const cases = sameShapeCases(), same = answers.same_shape;
+  assert.equal(request.same_shape.length, cases.length);
+  cases.forEach(([name, m], i) => assert.deepEqual(allPoints(m), request.same_shape[i], `${name}: the shape's points are the ones manim was asked about (UPDATE_ORACLE=1 refreshes them)`));
+  cases.forEach(([a, ma], i) => cases.forEach(([b, mb], j) => {
+    const manim = same[i]![j]!;
+    assert.equal(manim, same[j]![i]!, `manim's relation is symmetric here: ${a} / ${b}`);
+    assert.equal(ma.shapeKey() === mb.shapeKey(), manim, `${a} / ${b}: manim says ${manim ? 'same' : 'different'}`);
+  }));
+  // Not vacuous: some pairs are the same shape and some are not
+  const yes = same.flat().filter(Boolean).length;
+  assert.ok(yes > cases.length && yes < cases.length ** 2, `${yes} of ${cases.length ** 2} pairs`);
 });

@@ -28,9 +28,9 @@ Open http://127.0.0.1:5175/explainers/. Three to start with:
 
 - **Why stealing an authorization code is not enough** (OAuth with PKCE): another app intercepts the redirect, then fails to exchange the code because it cannot produce the verifier. Setting "Show an attacker" to No leaves that step out.
 - **Why June brings polar day to Tromsø and winter to Sydney**: switch the place, and the daylight chart is recomputed from the model.
-- **Five added lines put a KV cache in front of D1**: the diff, then the same edit replayed on the architecture diagram, then a cache hit or miss.
+- **Four added lines and one rewritten put a KV cache in front of D1**: the diff, then the same edit replayed on the architecture diagram, then a cache hit or miss.
 
-The collection has 26 explainers with 140 cases between them, and uses all 15 Agentic Mermaid diagram families in 10 of its styles; `out/explainers/evidence.json` lists them per explainer. Twenty have a video; six are pages only (`video: false` in `scenes/explainers/catalog.ts`).
+The collection has 26 explainers with 140 cases between them, and uses all 15 Agentic Mermaid diagram families. Captured diagrams use 8 styles, which `out/explainers/evidence.json` lists per explainer; ring-buffer (dusk), seasons (tokyo-night) and token-bucket (github-dark) use a style only as the stage palette. Twenty have a video; six are pages only (`video: false` in `scenes/explainers/catalog.ts`).
 
 ## Write one
 
@@ -43,6 +43,8 @@ npm run explain -- build my-explainer/scene.ts --out public/my-explainer.html
 
 `init` writes a working scene with one setting. `preview` serves the page and rebuilds it on save. `check` runs every case through [the checks](docs/REFERENCE.md#checks). `build` writes the page and the response headers it needs; [publishing](docs/PUBLISHING.md) shows how to embed it.
 
+A scene is ordinary Lantern, so beside the helpers it can use the general engine features the explainers use: a camera that zooms without moving a point (`this.frame`, which `d.focus` moves when given `{ camera: true }`; by default a focus still rescales the artwork), code that morphs along its own diff (`TransformDiff`), matching transforms, emphasis that stays on the resting picture, charts of the model's numbers (`Axes`), readouts rebuilt from `scene.state` (`view`), addressable and syntax-coloured code, and `Restore`, `TransformFromCopy` and `Succession`. [The engine map](docs/ENGINE.md) links a guide for each and says why the engine leaves out 3D, boolean path operations, runtime LaTeX, `transform` matrices, raster images and narration.
+
 Limits: lettering is the embedded Inter or JetBrains Mono, so styles lose their own fonts; beyond Latin, only numerals draw (Arabic-Indic, Devanagari and Chinese, from small Noto subsets), and other scripts fail the build; descriptions of the pictures are generated in English or French only; on a phone each step opens on a close-up of what it changed, so a reader pans for the rest; the models are small and cited, and no subject expert has reviewed the explainers.
 
 ## Documents
@@ -50,6 +52,7 @@ Limits: lettering is the embedded Inter or JetBrains Mono, so styles lose their 
 - [Tutorial](docs/TUTORIAL.md): a first explainer, from `init` to a built page
 - [Reference](docs/REFERENCE.md): helpers, checks, command line, URL and resize contract, accessibility, video files, scripts
 - [Publishing](docs/PUBLISHING.md): hosting a page and exporting a video
+- [Engine map](docs/ENGINE.md): the engine's guides (camera, matching and diff transforms, emphasis, graphing, views, code spans, animations) and what it leaves out
 - [Upstream](docs/UPSTREAM.md): the fork base, engine changes and Agentic Mermaid
 - [Design record](specs/rayner.md): why the project is shaped this way, and the open decisions
 - [Changelog](CHANGELOG.md)
