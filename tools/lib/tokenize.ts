@@ -67,7 +67,7 @@ export function tokenize(source: string, lang: Lang | string, { engine = 'auto',
 // The slice of shiki's API used here, typed locally: shiki is optional, so the
 // typecheck must not depend on it being installed.
 interface ShikiToken { content: string; color?: string }
-interface Highlighter { codeToTokensBase(code: string, opts: { lang: string; theme: string }): ShikiToken[][] }
+interface Highlighter { codeToTokensBase(code: string, opts: { lang: string; theme: string; tokenizeTimeLimit: number }): ShikiToken[][] }
 
 const SHIKI_LANG: Record<Lang, string> = { ts: 'typescript', js: 'javascript', python: 'python', bash: 'bash', elixir: 'elixir' };
 // github-dark's colours, by what they mark. Anything else (plain text, variables,
@@ -106,7 +106,9 @@ export function shikiTokens(source: string, lang: Lang): Token[] | null {
   const h = shiki();
   if (!h) return null;
   const out: Token[] = [];
-  h.codeToTokensBase(normalize(source), { lang: SHIKI_LANG[lang], theme: 'github-dark' }).forEach((toks, line) => {
+  // No time limit: shiki's default (500 ms a line) leaves the rest of a slow line
+  // uncoloured, so a busy build machine would change the page.
+  h.codeToTokensBase(normalize(source), { lang: SHIKI_LANG[lang], theme: 'github-dark', tokenizeTimeLimit: 0 }).forEach((toks, line) => {
     let at = 0;
     for (const t of toks) {
       const kind = SHIKI_KIND[(t.color ?? '').toUpperCase()];
