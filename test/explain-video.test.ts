@@ -45,7 +45,7 @@ test(
       const file = join(folder, 'scene.ts');
       await writeFile(
         file,
-        `import{Scene,Dot,FadeIn}from'manim-js';export default class Example extends Scene{static meta={id:'video-test',title:'Video test'};static settings=[{id:'first',label:'First',default:'a-b',options:[{value:'a-b',label:'One'},{value:'a',label:'Two'}]},{id:'second',label:'Second',default:'c',options:[{value:'c',label:'One'},{value:'b-c',label:'Two'}]}];async construct(){await this.step('one',{title:'First',caption:'A dot arrives.'});await this.play(new FadeIn(new Dot(),{runTime:.5}));await this.step('two',{title:'Second',caption:'The dot stays.'});await this.wait(.5)}}`,
+        `import{Scene,Dot,FadeIn}from'rayner';export default class Example extends Scene{static meta={id:'video-test',title:'Video test'};static settings=[{id:'first',label:'First',default:'a-b',options:[{value:'a-b',label:'One'},{value:'a',label:'Two'}]},{id:'second',label:'Second',default:'c',options:[{value:'c',label:'One'},{value:'b-c',label:'Two'}]}];async construct(){await this.step('one',{title:'First',caption:'A dot arrives.'});await this.play(new FadeIn(new Dot(),{runTime:.5}));await this.step('two',{title:'Second',caption:'The dot stays.'});await this.wait(.5)}}`,
       );
       const project = await collectProject(file);
       const out = join(folder, 'test.mp4');

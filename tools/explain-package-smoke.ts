@@ -24,7 +24,7 @@ try {
     cwd: folder,
     maxBuffer: 4 * 1024 * 1024,
   });
-  const cli = join(folder, 'node_modules/manim-js/dist/tools/explain.js');
+  const cli = join(folder, 'node_modules/rayner/dist/tools/explain.js');
   const bin = join(folder, 'node_modules/.bin/explain');
   assert.match((await run(bin, ['--help'], { cwd: folder })).stdout, /Lantern Explainers/);
   await run(process.execPath, [cli, 'init', 'first'], { cwd: folder });
@@ -43,7 +43,7 @@ try {
   // Use native objects only, so this distribution smoke needs no browser or optional renderer.
   await writeFile(
     join(folder, 'first/scene.ts'),
-    `import{Scene,Text,FadeIn}from'manim-js';import{stage,settingsOf}from'manim-js/explain';export default class Outside extends Scene{static meta={id:'outside',title:'An outside author'};static settings=[{id:'case',label:'Case',default:'a',options:[{value:'a',label:'A'},{value:'b',label:'B'}]}];async construct(){const s=stage(this);await this.step('one',{title:'First step',caption:'A native scene outside the checkout.'});await this.play(new FadeIn(new Text(settingsOf(this).case,{color:s.palette.ink})));}}`,
+    `import{Scene,Text,FadeIn}from'rayner';import{stage,settingsOf}from'rayner/explain';export default class Outside extends Scene{static meta={id:'outside',title:'An outside author'};static settings=[{id:'case',label:'Case',default:'a',options:[{value:'a',label:'A'},{value:'b',label:'B'}]}];async construct(){const s=stage(this);await this.step('one',{title:'First step',caption:'A native scene outside the checkout.'});await this.play(new FadeIn(new Text(settingsOf(this).case,{color:s.palette.ink})));}}`,
   );
   await run(process.execPath, [cli, 'check', 'first'], { cwd: folder });
   await run(process.execPath, [cli, 'build', 'first', '--out', 'public/outside.html'], { cwd: folder });
@@ -56,7 +56,7 @@ try {
     [
       '--input-type=module',
       '-e',
-      `import{Scene,NullSink}from'manim-js';import{stage}from'manim-js/explain';const scene=new Scene(new NullSink());await scene.run();stage(scene);console.log(scene.mobjects.length);`,
+      `import{Scene,NullSink}from'rayner';import{stage}from'rayner/explain';const scene=new Scene(new NullSink());await scene.run();stage(scene);console.log(scene.mobjects.length);`,
     ],
     { cwd: folder },
   );

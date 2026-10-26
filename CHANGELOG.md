@@ -4,6 +4,8 @@
 
 Newest first; all on 24–25 October 2026.
 
+- **Package name and maintainer**: Ade Oshineye maintains this fork (`author` in `package.json`). The npm package is `rayner`, replacing Lantern's `manim-js`; authors import from `rayner` and `rayner/explain`. It is not yet published. The design record moves from `specs/kyle.md` to `specs/rayner.md`. The `fork` explainer no longer says the fork has no named maintainer, and links to `docs/UPSTREAM.md` on `main`, not on the merged branch. `TODO.md` is removed; its one item was the name.
+
 - **Videos apart from CI**: `npm run videos` makes and tests everything video (`demos:render`, which first checks that every case's captions fit the footer; `test:video`; the package's installed render) and needs FFmpeg. CI no longer installs FFmpeg or renders; `demos:check` no longer runs the footer check, and `demos:review` checks video byte ranges only when videos have been built.
 
 - **Ten explainers, every diagram family, phone close-ups, French descriptions**: new explainers from real projects, each checked against its source by running it or by its own test vectors:
@@ -33,7 +35,7 @@ Newest first; all on 24–25 October 2026.
 
 ## Before the fork
 
-A prototype on the `agentic-mermaid` branch of a Lantern checkout at `2c7bad5` (commit `4904cfa`, not in this repository) rebuilt Lantern's examples with Agentic Mermaid capture; what it taught is in [the design record](specs/kyle.md#what-building-the-examples-taught-us). The proposal's first draft (24 October 2026) used four examples from a separate prototype (Cache, PDA, Keyboardia, Vaders) and flowcharts only, without Agentic Mermaid's styles, the helper library or reader settings.
+A prototype on the `agentic-mermaid` branch of a Lantern checkout at `2c7bad5` (commit `4904cfa`, not in this repository) rebuilt Lantern's examples with Agentic Mermaid capture; what it taught is in [the design record](specs/rayner.md#what-building-the-examples-taught-us). The proposal's first draft (24 October 2026) used four examples from a separate prototype (Cache, PDA, Keyboardia, Vaders) and flowcharts only, without Agentic Mermaid's styles, the helper library or reader settings.
 
 ## Lantern
 

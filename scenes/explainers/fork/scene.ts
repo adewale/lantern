@@ -29,7 +29,7 @@ export default class ForkExplainer extends Scene {
       'https://github.com/ivarvong/lantern/blob/2c7bad5/README.md',
       'https://github.com/ivarvong/lantern/blob/2c7bad5/app/worker.ts',
       'https://github.com/ivarvong/lantern/blob/2c7bad5/src/mermaid.ts',
-      'https://github.com/adewale/lantern/blob/explainers-reader-pass/docs/UPSTREAM.md',
+      'https://github.com/adewale/lantern/blob/main/docs/UPSTREAM.md',
     ],
   };
   override async construct() {
@@ -199,7 +199,7 @@ export default class ForkExplainer extends Scene {
     await this.step('cost', {
       title: 'What the fork gave up',
       caption:
-        'Agents lose the Worker’s endpoints, and every diagram style is lettered in Inter. Capturing a new diagram needs Chromium at build time, though a page built from stored snapshots needs nothing. No engine change has gone upstream, and the fork has no named maintainer.',
+        'Agents lose the Worker’s endpoints, and every diagram style is lettered in Inter. Capturing a new diagram needs Chromium at build time, though a page built from stored snapshots needs nothing. No engine change has gone upstream.',
     });
     await s.clearOverlays();
     await flow.dim(null);
@@ -210,7 +210,6 @@ export default class ForkExplainer extends Scene {
         ['Diagram lettering', 'Inter in every style'],
         ['New diagrams need', 'Chromium at build time'],
         ['Engine changes upstream', 'none yet'],
-        ['Named maintainer', 'none yet'],
       ],
       { at: BELOW },
     );

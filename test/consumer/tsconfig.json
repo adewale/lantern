@@ -1,5 +1,5 @@
 {
-  // Resolves 'manim-js' by package self-reference (package.json "exports" -> dist/),
+  // Resolves 'rayner' by package self-reference (package.json "exports" -> dist/),
   // the way a dependent package would. skipLibCheck is off so the emitted .d.ts
   // files are checked too; lib.dom because DomSink's signature names DOM types.
   "compilerOptions": {

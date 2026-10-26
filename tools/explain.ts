@@ -74,8 +74,8 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     const dir = resolve(input);
     await mkdir(dirname(dir), { recursive: true });
     await mkdir(dir, { recursive: false });
-    const template = `import { Scene } from 'manim-js';
-import { stage, settingsOf } from 'manim-js/explain';
+    const template = `import { Scene } from 'rayner';
+import { stage, settingsOf } from 'rayner/explain';
 
 const FLOW = 'graph LR\\nRequest[Request] --> Cache[Cache]\\nCache -->|hit| Reply[Reply]\\nCache -->|miss| Store[Database]\\nStore --> Reply';
 const PATH = {
