@@ -60,37 +60,9 @@ const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
 /** What `Scene` explains, every case and step, in one JSON-safe object. */
 export async function describeExplainer(Scene: ExplainerClass, options: DescribeOptions = {}): Promise<ExplainerDescription> {
-  const Source = options.snapshots ? bindSnapshots(Scene, options.snapshots) : Scene,
-    drawings = options.drawings ?? true,
-    meta = Scene.meta ?? {},
+  const meta = Scene.meta ?? {},
     cases: CaseDescription[] = [];
-  for (const values of variantsOf(Scene)) {
-    const Bound = withSettings(Source, values),
-      trace = await traceScene(Bound),
-      steps: StepDescription[] = [];
-    for (const s of trace.steps) {
-      const before = withoutPicture(s.before),
-        after = withoutPicture(s.after),
-        changed: StepDescription['changed'] = {};
-      for (const k of new Set([...Object.keys(before), ...Object.keys(after)]))
-        if (!same(before[k], after[k]))
-          changed[k] = { ...(k in before ? { before: before[k] } : {}), ...(k in after ? { after: after[k] } : {}) };
-      const d: StepDescription = {
-        step: s.step,
-        title: String(s.meta.title ?? s.step),
-        caption: String(s.meta.caption ?? ''),
-        start: s.t0,
-        end: s.t1 ?? trace.duration,
-        ...(s.hold == null ? {} : { hold: s.hold }),
-        state: after,
-        changed,
-        picture: pictureSummary(s.after),
-      };
-      if (drawings) d.drawing = await drawing(Bound, restingTime(s, trace.fps));
-      steps.push(d);
-    }
-    cases.push({ values, name: caseName(Scene, values), duration: trace.duration, steps });
-  }
+  for (const values of variantsOf(Scene)) cases.push(await describeCase(Scene, values, options));
   return {
     schema: 1,
     id: meta.id ?? '',
@@ -100,6 +72,36 @@ export async function describeExplainer(Scene: ExplainerClass, options: Describe
     settings: (Scene.settings ?? []).map((s) => ({ ...s, options: s.options.map((o) => ({ ...o })) })),
     cases,
   };
+}
+
+/** One case of `describeExplainer`, for a caller that needs only that case (`explain see`). */
+export async function describeCase(Scene: ExplainerClass, values: Settings, options: DescribeOptions = {}): Promise<CaseDescription> {
+  const Source = options.snapshots ? bindSnapshots(Scene, options.snapshots) : Scene,
+    Bound = withSettings(Source, values),
+    trace = await traceScene(Bound),
+    steps: StepDescription[] = [];
+  for (const s of trace.steps) {
+    const before = withoutPicture(s.before),
+      after = withoutPicture(s.after),
+      changed: StepDescription['changed'] = {};
+    for (const k of new Set([...Object.keys(before), ...Object.keys(after)]))
+      if (!same(before[k], after[k]))
+        changed[k] = { ...(k in before ? { before: before[k] } : {}), ...(k in after ? { after: after[k] } : {}) };
+    const d: StepDescription = {
+      step: s.step,
+      title: String(s.meta.title ?? s.step),
+      caption: String(s.meta.caption ?? ''),
+      start: s.t0,
+      end: s.t1 ?? trace.duration,
+      ...(s.hold == null ? {} : { hold: s.hold }),
+      state: after,
+      changed,
+      picture: pictureSummary(s.after),
+    };
+    if (options.drawings ?? true) d.drawing = await drawing(Bound, restingTime(s, trace.fps));
+    steps.push(d);
+  }
+  return { values, name: caseName(Scene, values), duration: trace.duration, steps };
 }
 
 /** The picture at `t` as text, without the heading that names the step, as `explain check` draws it. */

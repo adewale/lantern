@@ -7,6 +7,9 @@ import { execFileSync } from 'node:child_process';
 import { build } from 'esbuild';
 import { traceScene } from '../src/index.ts';
 import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
+import { seeStep, seeText } from '../tools/lib/explain-see.ts';
+import { describeExplainer } from '../explain/index.ts';
+import type { CaseDescription } from '../explain/index.ts';
 
 /** The error a child process failed with, or undefined when it succeeded. */
 const failure = (run: () => unknown) => {
@@ -107,4 +110,27 @@ test('`explain see` prints a step: its resting picture as text, title, caption, 
   } finally {
     await rm(folder, { recursive: true, force: true });
   }
+});
+
+test('`explain see` prints describeExplainer\'s words for the step, so the two cannot disagree', async () => {
+  const project = await collectProject(join(ROOT, 'scenes/explainers/oauth-pkce'), { write: false });
+  const d = await describeExplainer(project.Scene, { snapshots: project.store });
+  // The case without the attacker, so the case name is printed from the description too.
+  const v = project.variants.find((v) => v.values.attacker === 'no')!,
+    c = d.cases.find((c) => c.values.attacker === 'no')!;
+  for (const s of c.steps) assert.equal((await seeStep(project, v, s.step)).text, seeText('oauth-pkce', c, s.step));
+  // The text is the description's fields and nothing else: a made-up description prints as it says.
+  const step = { step: 'a', title: 'One', caption: '', start: 0, end: 1, state: {}, changed: {}, picture: '' };
+  const made: CaseDescription = {
+    values: {},
+    name: 'Size: 3',
+    duration: 2,
+    steps: [
+      step,
+      { ...step, step: 'b', title: 'Two', caption: 'Cap.', state: { n: 1 }, changed: { n: { after: 1 }, gone: { before: 'x' } }, picture: 'A box.', drawing: 'DRAWN' },
+    ],
+  };
+  assert.equal(seeText('x', made), 'DRAWN\n\nx · step 2 of 2: b · Size: 3\nTitle: Two\nCaption: Cap.\nPicture: A box.\nChanged: n: — → 1; gone: "x" → —');
+  assert.equal(seeText('x', made, 'a'), '\n\nx · step 1 of 2: a · Size: 3\nTitle: One\nChanged: nothing in scene.state');
+  assert.throws(() => seeText('x', made, 'c'), /No step "c"\. Steps: a, b/);
 });
