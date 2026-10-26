@@ -280,7 +280,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     let tallest = 0;
     for (const s of trace.steps) {
       ruler.textContent = String(s.meta.caption ?? '');
-      tallest = Math.max(tallest, ruler.offsetHeight);
+      // The exact height: offsetHeight rounds, and a 115.2 px caption would still move Next by a fraction.
+      tallest = Math.max(tallest, ruler.getBoundingClientRect().height);
     }
     ruler.textContent = '';
     caption.style.minHeight = `${tallest}px`;

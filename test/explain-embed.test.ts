@@ -170,7 +170,7 @@ test('stepping moves nothing below the caption: Next, the steps list and the tra
           await page.waitForFunction((i) => document.querySelectorAll('.steps button')[i]?.getAttribute('aria-current') === 'step', i);
           places.add(
             await page.evaluate(() =>
-              ['.controls', '.steps', '.transcript'].map((s) => Math.round(document.querySelector(s)!.getBoundingClientRect().top + scrollY)).join(' '),
+              ['.controls', '.steps', '.transcript'].map((s) => (document.querySelector(s)!.getBoundingClientRect().top + scrollY).toFixed(1)).join(' '),
             ),
           );
         }
