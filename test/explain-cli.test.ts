@@ -73,3 +73,15 @@ test('the README shows the scene `explain init` writes, byte for byte', async ()
     await rm(folder, { recursive: true, force: true });
   }
 });
+
+test('`explain describe` prints the explainer as JSON, every case and step', async () => {
+  const out = execFileSync(process.execPath, [join(ROOT, 'tools/explain.ts'), 'describe', join(ROOT, 'scenes/explainers/oauth-pkce/scene.ts')], {
+    encoding: 'utf8',
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  const d = JSON.parse(out) as { schema: number; id: string; cases: { values: Record<string, string>; steps: { step: string; drawing?: string }[] }[] };
+  assert.equal(d.schema, 1);
+  assert.equal(d.id, 'oauth-pkce');
+  assert.deepEqual(d.cases.map((c) => c.values.attacker).sort(), ['no', 'yes']);
+  assert.ok(d.cases.every((c) => c.steps.length && c.steps.every((s) => typeof s.drawing === 'string')));
+});
