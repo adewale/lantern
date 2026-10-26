@@ -176,13 +176,16 @@ export default class GitExplainer extends Scene {
       caption:
         'A tree entry stores a mode, the name hello.txt and the blob’s id. Hashing the tree’s own bytes gives it an id too. The name lives in the tree, never in the blob.',
     });
-    await s.clear();
+    // The bytes go; their id is carried into the tree entry that names it, where the tree's bytes take it up.
+    await this.play(...[...cells, headLabel, bodyLabel, arrow, how, abbrev].map((m) => new FadeOut(m, { runTime: 0.4 })));
     const t1 = repo.tree([['100644', 'hello.txt', hello]]);
+    const treeCode = await s.code(treeLines(repo, t1), { at: BOTTOM, enter: false });
+    await s.carry(idRow, treeCode.code.token(1, hello).box()!);
+    await this.play(new FadeIn(treeCode, { runTime: 0.4 }), new FadeOut(idRow, { runTime: 0.4 }));
     const B1 = `Hello["blob<br/>${short(hello)}"]`;
     const T1 = `T1["tree ${short(t1)}<br/>hello.txt"]`;
     const TREE = `graph LR\n${T1}\n${B1}\nT1 --> Hello`;
     const d = await s.show({ source: TREE }, { box: DIAGRAM });
-    const treeCode = await s.code(treeLines(repo, t1), { at: BOTTOM });
     await treeCode.focus(1);
 
     // ── commit: a commit names a tree; a branch names a commit ─────────
@@ -356,23 +359,17 @@ export default class GitExplainer extends Scene {
       title: 'Moving main to commit two changes one reference',
       line: 'refs/heads/main now holds commit two’s id; no object is copied.',
       caption:
-        'HEAD names refs/heads/main, and moving the branch rewrote the id main holds from commit one to commit two. No object was copied, and commit one stays reachable through commit two’s parent link.',
+        'HEAD names refs/heads/main, and moving the branch rewrote the id main holds from commit one to commit two, as the note under main says. No object was copied: both rows below are as they were, and commit one stays reachable through commit two’s parent link.',
     });
-    await s.clearOverlays();
-    const refs = await s.card(
-      [
-        ['HEAD', 'ref: refs/heads/main'],
-        ['refs/heads/main', c1],
-      ],
-      { at: BOTTOM, width: 10 },
-    );
+    await this.play(new FadeOut(morphNote, { runTime: 0.3 }));
     repo.refs['refs/heads/main'] = c2;
     repo.refs.HEAD = { symbolic: 'refs/heads/main' };
     this.state.head = repo.resolve('HEAD');
     const HEADS = `graph LR\nHEAD([HEAD])\nMain([main])\n${objects}\nHEAD --> Main\nMain --> C2`;
+    // Only the references change: each says what it holds, and both commits' rows stay below, untouched.
     await d.morph({ source: HEADS });
-    await refs.set({ 'refs/heads/main': c2 });
-    await refs.mark('refs/heads/main');
+    await d.note('HEAD', 'ref: refs/heads/main', { side: 'above' });
+    await d.note('Main', `${short(c1)} → ${short(c2)}`, { side: 'below' });
     await d.walk(
       [
         ['HEAD', 'Main'],
