@@ -30,7 +30,7 @@ Open http://127.0.0.1:5175/explainers/. Three to start with:
 - **Why June brings polar day to Tromsø and winter to Sydney**: switch the place, and the daylight chart is recomputed from the model.
 - **Five added lines put a KV cache in front of D1**: the diff, then the same edit replayed on the architecture diagram, then a cache hit or miss.
 
-The collection has 26 explainers with 140 cases between them, and uses all 15 Agentic Mermaid diagram families in 10 of its styles; `out/explainers/evidence.json` lists them per explainer. Twenty have a video; six are pages only (`video: false` in `scenes/explainers/catalog.ts`).
+The collection has 27 explainers with 142 cases between them, and uses all 15 Agentic Mermaid diagram families in 10 of its styles; `out/explainers/evidence.json` lists them per explainer. Twenty-one have a video; six are pages only (`video: false` in `scenes/explainers/catalog.ts`).
 
 ## Write one
 

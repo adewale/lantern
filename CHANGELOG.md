@@ -2,7 +2,9 @@
 
 ## Unreleased: 0.2.0-explainers.0
 
-Newest first; all on 24–25 October 2026.
+Newest first; all on 24–26 October 2026.
+
+- **Pen-and-pencil explainer**: `scenes/explainers/pen-and-pencil` models the method of [pele-art-diagrams](https://pele-art-diagrams.vercel.app/), which lays out Mermaid diagrams with pele and draws them in the browser with a simulated pen, coloured pencils and Hershey's single-stroke letters. Six steps on a world of its own (Agentic Mermaid stands in for pele): the text gives no positions; the layout fixes the boxes; a pen that strays at most 0.035 units from each laid-out edge; pencil hatching clipped to the box; Hershey letters against Inter's outlines; the whole plate redrawn from the captured geometry. Two cases draw the plate with two seeds. The model (`scenes/explainers/lib/pen-and-pencil.ts`) carries Hershey Simplex from Paul Bourke's public-domain transcription; `test/explain-pen-and-pencil.test.ts` holds the pen's bound and the hatching's clipping to properties, and the fidelity test holds the scene's numbers to the model. It is not the page's code, which could not be read from here.
 
 - **Package name and maintainer**: Ade Oshineye maintains this fork (`author` in `package.json`). The npm package is `rayner`, replacing Lantern's `manim-js`; authors import from `rayner` and `rayner/explain`. It is not yet published. The design record moves from `specs/kyle.md` to `specs/rayner.md`. The `fork` explainer no longer says the fork has no named maintainer, and links to `docs/UPSTREAM.md` on `main`, not on the merged branch. `TODO.md` is removed; its one item was the name.
 

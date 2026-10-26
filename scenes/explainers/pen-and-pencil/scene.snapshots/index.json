@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "importer": "725da4d8fc61bf77",
+  "renderer": "agentic-mermaid@0.4.1",
+  "sourceHash": "59aa5d770d4cb5a605edb6c2921f2f2aae472c8250a319eacf2a15a4505ec564",
+  "diagrams": {
+    "[\"graph TB\\n  Spring[Glass Spring] --> Mill[Windmill]\\n  Mill --> Ferry[Salt Ferry]\\n  Mill --> Orchard[Pear Orchard]\\n  Ferry --> Harbour[Harbour]\\n  Orchard --> Harbour\",\"pen-and-ink\"]": "9598fb5cc7d619b7.json"
+  }
+}
