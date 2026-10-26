@@ -26,7 +26,8 @@ test('a share page names the step, previews its picture by absolute URL and send
   assert.equal(meta(html, 'twitter:image'), 'https://example.org/projects/rayner/token-bucket/burst.png');
   assert.equal(meta(html, 'og:url'), 'https://example.org/projects/rayner/token-bucket/burst');
   assert.equal(meta(html, 'og:title'), 'Six at once: five 200s, then a 429 · A token bucket refills when a request arrives');
-  assert.equal(meta(html, 'twitter:title'), meta(html, 'og:title'));
+  // X cuts a title at 70 characters; this one is cut at a word first.
+  assert.equal(meta(html, 'twitter:title'), 'Six at once: five 200s, then a 429 · A token bucket refills when a…');
   // Quotes and ampersands in a caption cannot break out of the attribute.
   assert.equal(meta(html, 'og:description'), 'R1–R5 take &quot;the&quot; five tokens &amp; R6 finds none.');
   assert.equal(meta(html, 'twitter:description'), meta(html, 'og:description'));

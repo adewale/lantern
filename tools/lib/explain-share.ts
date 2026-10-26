@@ -15,8 +15,9 @@ import { htmlEscape } from '../../explain/trace.ts';
  * 300 × 157, and shows summary_large_image at 2:1.
  */
 export const CARD = { width: 1080, height: 540, inner: 960, background: '#1a1a1a' } as const;
-/** X's limit on twitter:image:alt. */
-const ALT_MAX = 420;
+/** X's limits: twitter:image:alt is at most 420 characters, and X cuts twitter:title at 70. */
+const ALT_MAX = 420,
+  TITLE_MAX = 70;
 
 /** A step of an explainer's default case, as the share pages need it. */
 export interface ShareStep {
@@ -67,7 +68,8 @@ function cardTags(c: { title: string; description: string; url: string; image: s
     ['property', 'og:image:height', String(CARD.height)],
     ['property', 'og:image:alt', alt],
     ['name', 'twitter:card', 'summary_large_image'],
-    ['name', 'twitter:title', c.title],
+    // Cut at a word here rather than mid-word by X.
+    ['name', 'twitter:title', clip(c.title, TITLE_MAX)],
     ['name', 'twitter:description', c.description],
     ['name', 'twitter:image', c.image],
     ['name', 'twitter:image:alt', alt],
@@ -165,6 +167,7 @@ export async function checkCards(
       if (n !== 1) say(`${n} ${key} tags`);
     }
     if (tags.get('twitter:card')?.[0] !== 'summary_large_image') say('twitter:card is not summary_large_image');
+    if ((tags.get('twitter:title')?.[0]?.length ?? 0) > TITLE_MAX) say(`twitter:title is over ${TITLE_MAX} characters`);
     for (const key of ['og:url', 'og:image', 'twitter:image'])
       for (const url of tags.get(key) ?? []) if (!url.startsWith('https://') || !url.startsWith(site + '/')) say(`${key} ${url} is not an https URL under ${site}`);
     const image = tags.get('og:image')?.[0];
