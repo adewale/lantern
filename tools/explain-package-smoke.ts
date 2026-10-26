@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Explicit distribution gate: pack, install in a fresh author project, run the installed CLI.
-import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, copyFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
@@ -51,6 +51,25 @@ try {
   assert.match(html, /An outside author/);
   assert.match(html, /id="licenses"/);
   assert.ok(!html.includes('node_modules/agentic-mermaid'));
+  // Lettering on request from the installed package: the fixture scene with its pinned cuts,
+  // so the build reads vendor/lettering/ and src/lettering.js from the archive and needs no fonttools.
+  const fixture = join(ROOT, 'test/fixtures/lettering');
+  await mkdir(join(folder, 'greek'));
+  await writeFile(
+    join(folder, 'greek/scene.ts'),
+    (await readFile(join(fixture, 'scene.ts'), 'utf8'))
+      .replace("'../../../src/index.ts'", "'rayner'")
+      .replace("'../../../explain/index.ts'", "'rayner/explain'")
+      .replace("'../../../src/lettering.ts'", "'rayner/lettering'"),
+  );
+  await copyFile(join(fixture, 'scene.lettering.json'), join(folder, 'greek/scene.lettering.json'));
+  await run(process.execPath, [cli, 'build', 'greek', '--out', 'public/greek.html'], {
+    cwd: folder,
+    env: { ...process.env, PYFTSUBSET: join(folder, 'no-fonttools-here') },
+  });
+  const lettered = JSON.parse(await readFile(join(folder, 'public/greek.html.receipt.json'), 'utf8'));
+  assert.deepEqual(lettered.lettering.scripts, ['Grek']);
+  assert.ok(!JSON.parse(await readFile(join(folder, 'public/outside.html.receipt.json'), 'utf8')).lettering);
   const result = await run(
     process.execPath,
     [
@@ -79,7 +98,7 @@ try {
     });
   }
   console.log(
-    'Package gate passed: archive install without optional peers, executable JS bin, install hint, external native author, settings, checks, build, describeExplainer, notices, one compiled engine' +
+    'Package gate passed: archive install without optional peers, executable JS bin, install hint, external native author, settings, checks, build, describeExplainer, notices, lettering on request, one compiled engine' +
       (process.env.EXPLAIN_VIDEO ? ', installed video export' : '') +
       (process.env.EXPLAIN_BROWSER ? ', installed diagram capture' : '') +
       '.',
