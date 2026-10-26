@@ -362,14 +362,16 @@ export class VMobject extends Mobject {
   }
 
   /**
-   * A string equal for paths of the same shape regardless of position and size:
-   * the same subpaths (point counts, closed flags) whose points coincide once
-   * each path is centered and scaled so its larger side is 1, to within a grid
-   * cell of 1/SHAPE_STEPS of that side (about 1.6%; manim's has_same_shape_as
-   * allows 1%). "Same shape" is same path data, as in manim: a square drawn
-   * from another corner, or one with curves inserted by an earlier Transform,
-   * is a different shape. Own points only, not children. A pure function of
-   * the points; a zero-size path keys as a point.
+   * A string equal for paths of the same shape at any position, and almost
+   * always at any size: the same subpaths (point counts, closed flags) whose
+   * points coincide once each path is centered and scaled so its larger side
+   * is 1, to within a grid cell of 1/SHAPE_STEPS of that side (about 1.6%;
+   * manim's has_same_shape_as allows 1%). A moved copy always shares the key;
+   * a scaled copy can split from it when a point lands right on a grid-cell
+   * boundary (about 0.02% of scaled copies). "Same shape" is same path data,
+   * as in manim: a square drawn from another corner, or one with curves
+   * inserted by an earlier Transform, is a different shape. Own points only,
+   * not children. A pure function of the points; a zero-size path keys as a point.
    */
   shapeKey(): string {
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;

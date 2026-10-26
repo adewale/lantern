@@ -69,7 +69,11 @@ function unitOutline(segments: Segment[]): UnitOutline {
 }
 
 class Glyph extends VMobject {
-  /** Source string index this glyph came from. */
+  /**
+   * Where this glyph's cluster starts in the Text's `text`, as a JS string
+   * (UTF-16) index into the source: tabs unexpanded, an astral character two
+   * units. See shapedForm().
+   */
   cluster: number | undefined;
   constructor(segments: Segment[], scale: number, ox: number, oy: number, style: Style) {
     super(style);
@@ -97,7 +101,7 @@ export class Text extends Group {
   fontSize: number;
   weight: 'normal' | 'bold';
   anchor: 'start' | 'middle' | 'end';
-  /** Tab stops every this many columns, or undefined: see TextOpts. `text` keeps the tabs; glyph clusters index the expanded string. */
+  /** Tab stops every this many columns, or undefined: see TextOpts. `text` keeps the tabs, and so do glyph clusters: they index `text`. */
   tabWidth: number | undefined;
   // Set by build(), which the constructor calls
   run!: RunMetrics;
@@ -128,7 +132,8 @@ export class Text extends Group {
 
   /** Lay out glyphs with the pen at the origin and the baseline at y = 0. */
   build(text: string, fontSize: number, style: Style): void {
-    const run = shaperFor(this.font)(this.tabWidth ? expandTabs(text, this.tabWidth) : text, fontSize);
+    const { shaped, source } = shapedForm(text, this.tabWidth);
+    const run = shaperFor(this.font)(shaped, fontSize);
     this.run = { width: run.width, ascent: run.ascent, descent: run.descent, fontSize };
     const scale = run.s ?? fontSize / 1000;
     for (const c of this.children) c.parent = null;
@@ -136,7 +141,7 @@ export class Text extends Group {
     for (const g of run.glyphs) {
       if (!g.path?.length) continue;
       const gl = new Glyph(g.path, g.s ?? scale, g.x + g.dx, g.dy, { ...style });
-      gl.cluster = g.cluster;
+      gl.cluster = source(g.cluster);
       gl.parent = this;
       this.children.push(gl);
     }
@@ -268,8 +273,10 @@ export class DecimalNumber extends Text {
 
 /**
  * Colour for part of one Code line: source indices [from, to) of line `line`,
- * counted in UTF-16 code units (JS string indices, which is what Glyph.cluster
- * holds). The syntax-token data format: tools/tokens.ts writes it at build time.
+ * counted in UTF-16 code units (JS string indices into the line as given, tabs
+ * and all). Glyph.cluster holds the same index: the shaper counts code points
+ * in the tab-expanded string, and Text.build maps each back (shapedForm). The
+ * syntax-token data format: tools/tokens.ts writes it at build time.
  */
 export interface ColorSpan { line: number; from: number; to: number; color: string }
 
@@ -290,20 +297,47 @@ export interface CodeOpts {
 const graphemes = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter() : null;
 
 /**
- * `line` with each tab replaced by the spaces up to the next multiple of `width` columns.
- * A column is a grapheme (an accent combined with its letter takes one). `width` must be a
- * positive integer.
+ * `line` with each tab replaced by the spaces up to the next multiple of `width` columns,
+ * and for each code point of the result the UTF-16 index in `line` it came from (a tab's
+ * spaces all come from the tab). A column is a grapheme (an accent combined with its
+ * letter takes one). `width` must be a positive integer.
  */
-function expandTabs(line: string, width = 4): string {
+function expandTabs(line: string, width = 4): { text: string; source: number[] } {
   if (!Number.isInteger(width) || width < 1) throw new RangeError(`tabWidth must be a positive integer, not ${width}`);
-  if (!line.includes('\t')) return line;
-  let out = '', col = 0;
+  let out = '', col = 0, at = 0;
+  const source: number[] = [];
   const units = graphemes ? Array.from(graphemes.segment(line), (g) => g.segment) : Array.from(line);
   for (const ch of units) {
-    if (ch === '\t') { const n = width - (col % width); out += ' '.repeat(n); col += n; }
-    else { out += ch; col++; }
+    if (ch === '\t') {
+      const n = width - (col % width);
+      out += ' '.repeat(n); col += n;
+      for (let k = 0; k < n; k++) source.push(at);
+      at += 1;
+    } else {
+      out += ch; col++;
+      for (const cp of ch) { source.push(at); at += cp.length; }
+    }
   }
-  return out;
+  return { text: out, source };
+}
+
+const SURROGATE = /[\uD800-\uDFFF]/;
+const same = (i: number): number => i;
+
+/**
+ * What Text shapes for `text`, and the map from a shaped cluster back to `text`.
+ * The shaper's clusters count code points of the string it shaped, which has
+ * the tabs expanded (with a tabWidth); `source` turns one into the UTF-16 index
+ * in `text` it came from, so a glyph's cluster, a span's from/to and a
+ * ColorSpan all count the same way. Plain BMP text without tabs maps to itself.
+ */
+function shapedForm(text: string, tabWidth: number | undefined): { shaped: string; source: (cluster: number) => number } {
+  const tabs = tabWidth != null && text.includes('\t');
+  if (!tabs && !SURROGATE.test(text)) return { shaped: text, source: same };
+  let shaped = text, map: number[];
+  if (tabs) ({ text: shaped, source: map } = expandTabs(text, tabWidth));
+  else { map = []; let at = 0; for (const cp of text) { map.push(at); at += cp.length; } }
+  return { shaped, source: (c) => map[c] ?? text.length };
 }
 
 /** Monospace lines, left-aligned on exact advances. Tabs advance to the next tab stop (every `tabWidth` columns). */
@@ -342,7 +376,8 @@ export class Code extends Group {
   /**
    * The glyphs of line `line` whose source index is in [from, to): a live
    * view, not a copy (see CodeSpan for what that allows and what it doesn't).
-   * Indices are JS string indices into `lines[line].text`.
+   * Indices are JS string (UTF-16) indices into `lines[line].text`, the line as
+   * given: a tab is one index however many columns it takes.
    */
   span(line: number, from: number, to: number): CodeSpan {
     const t = this.lines[line];
@@ -416,11 +451,13 @@ export class CodeSpan extends Group {
   /** Advance cells by line metrics, unioned with ink; computed afresh, never cached (the glyphs aren't ours to watch). */
   override box(): Box {
     if (this.stale) throw new Error(`Stale span ${this.from}..${this.to} of line ${this.line}: the line is now ${JSON.stringify(this.owner.text)}; take a new span`);
-    const t = this.owner, f = t.frameBox, run = shaperFor(t.font)(t.text, t.run.fontSize);
+    // Shaped as build() shapes it (tabs expanded), clusters mapped back to source indices
+    const t = this.owner, f = t.frameBox, { shaped, source } = shapedForm(t.text, t.tabWidth);
+    const run = shaperFor(t.font)(shaped, t.run.fontSize);
     // Shaped units to scene units along the line, however it has been scaled
     const k = run.width ? (f[2]! - f[0]!) / run.width : 0;
     const pen = (c: number): number => {
-      for (const g of run.glyphs) if (g.cluster >= c) return g.x;
+      for (const g of run.glyphs) if (source(g.cluster) >= c) return g.x;
       return run.width;
     };
     const b: Box = [f[0]! + pen(this.from) * k, f[1]!, f[0]! + pen(this.to) * k, f[3]!];

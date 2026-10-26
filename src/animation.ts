@@ -790,9 +790,13 @@ export interface MatchSummary { matched: number; morphed: number; removed: numbe
 interface MoveRow { sub: Mobject; start: Mobject; end: Mobject }
 /**
  * An unmatched part, scaled between its full size (`pts`) and the point
- * (tx, ty) as it fades: where it shrinks to, or grows from.
+ * (tx, ty) as it fades: where it shrinks to, or grows from. With `ride`, its
+ * center at full size (a glyph of a Text line, in TransformMatchingText), the
+ * center rides with the line instead, between that center and (tx, ty) as the
+ * whole animation runs, and the part scales about it as its own (lagged) share
+ * runs: a lagged glyph waits inside its line, not where the line was.
  */
-interface FadeRow { sub: Mobject; pts: Float32Array[]; opacity: number; tx: number; ty: number }
+interface FadeRow { sub: Mobject; pts: Float32Array[]; opacity: number; tx: number; ty: number; ride?: Vec }
 /** A container's own points (a Text's advance box), blended between two fixed snapshots. */
 interface FrameRow { node: Mobject; from: Float32Array[]; to: Float32Array[] }
 /** Where a source frame's contents go: p -> k * p + (bx, by). */
@@ -945,8 +949,8 @@ export class TransformMatching extends Animation {
     const n = this.moves.length + this.fadesOut.length + this.fadesIn.length;
     let i = 0;
     for (const { sub, start, end } of this.moves) sub.interpolate(start, end, this.subAlpha(alpha, i++, n), this.pathFunc);
-    for (const r of this.fadesOut) fade(r, 1 - this.subAlpha(alpha, i++, n));
-    for (const r of this.fadesIn) fade(r, this.subAlpha(alpha, i++, n));
+    for (const r of this.fadesOut) fade(r, 1 - this.subAlpha(alpha, i++, n), alpha, true);
+    for (const r of this.fadesIn) fade(r, this.subAlpha(alpha, i++, n), alpha, false);
     for (const { node, from, to } of this.frames) {
       const mine = node.pointArrays();
       for (let j = 0; j < mine.length; j++) {
@@ -976,24 +980,61 @@ export class TransformMatchingShapes extends TransformMatching {
  * Glyphs pair with glyphs of the same character in the same font and weight,
  * in reading order first, so 'cache' -> 'cached' keeps its five letters and
  * grows a d, and an inserted line of code leaves the others in place. Works
- * on Text, Code and groups of them; any other part matches by shape.
+ * on Text, Code and groups of them; any other part matches by shape. A glyph
+ * that fades stays inside its line (fadeInsideLines), so a line's extent
+ * never jumps.
+ *
+ * Cost: one scan of both texts per matching run found (longestRuns), so one
+ * edit is cheap but scattered edits over many lines cost seconds at begin();
+ * for code, prefer TransformDiff.
  */
 export class TransformMatchingText extends TransformMatching {
   constructor(mobject: Mobject, target: Mobject, opts: MatchingOpts = {}) { super(mobject, target, { ordered: true, ...opts, key: textKeyOf }); }
+
+  override begin(): void {
+    super.begin();
+    fadeInsideLines(this, true);
+  }
+}
+
+/**
+ * Keep a line's fading glyphs inside the line. A removed glyph shrinks to where
+ * its line carries it, which can be past the end of the line it becomes (`c a`
+ * -> `c`), and an added one grows from where the line was, which can be past
+ * the old line's end; invisible, but a Text is one unit to the motion verifier
+ * (MotionSink), so its extent would jump when the scene swaps in the target.
+ * Each fade's point is clamped into its line's x extent instead: a removed
+ * glyph's into the line it becomes (the frame's end), an added glyph's into the
+ * line it joins (the frame's start). With `ride`, each such fade also rides
+ * with its line (FadeRow), so a lagged one waits inside the line as it moves.
+ * Parts not in a Text line are untouched. Runs after begin() and re-poses frame 0.
+ */
+function fadeInsideLines(t: TransformMatching, ride: boolean): void {
+  const edges = new Map(t.frames.map((f) => [f.node, f]));
+  // A Text's advance box is a point array (four corners since the reader pass; two before):
+  // clamp to its x extent whatever its length, or the growing glyphs start outside the line
+  const inside = (r: FadeRow, box: Float32Array | undefined) => {
+    if (!box || box.length < 4) return;
+    let x0 = Infinity, x1 = -Infinity;
+    for (let i = 0; i < box.length; i += 2) { x0 = Math.min(x0, box[i]!); x1 = Math.max(x1, box[i]!); }
+    r.tx = Math.min(Math.max(r.tx, x0), x1);
+    if (ride) { const b = pointsBox(r.pts); if (b) r.ride = [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]; }
+  };
+  for (const r of t.fadesIn) inside(r, edges.get(r.sub.parent!)?.from[0]);
+  for (const r of t.fadesOut) inside(r, edges.get(frameOf(r.sub, t.mobject))?.to[0]);
+  t.interpolate(0);
 }
 
 const IDENTITY: Carry = { k: 1, bx: 0, by: 0 };
 
 const shapeKeyOf: MatchKey = (p) => (p instanceof VMobjectClass ? p.shapeKey() : undefined);
 
-// A Text's characters by code point (glyph clusters index code points), cached per string
-const charsOf = new WeakMap<Text, [string, string[]]>();
+// A glyph's cluster is the UTF-16 index in its Text's source string where its character starts
 const textKeyOf: MatchKey = (p) => {
   const t = p.parent, cluster = (p as { cluster?: number }).cluster;
   if (t instanceof Text && cluster != null) {
-    let c = charsOf.get(t);
-    if (!c || c[0] !== t.text) charsOf.set(t, (c = [t.text, Array.from(t.text)]));
-    return `${t.font} ${t.weight} ${c[1][cluster] ?? ''}`;
+    const cp = t.text.codePointAt(cluster);
+    return `${t.font} ${t.weight} ${cp === undefined ? '' : String.fromCodePoint(cp)}`;
   }
   const k = shapeKeyOf(p);
   return k === undefined ? undefined : 'shape ' + k;
@@ -1024,9 +1065,11 @@ function bare<M extends Mobject>(m: M): M {
 }
 
 /** Box of a mobject's own points (not its children's), or null. */
-function ownBox(m: Mobject): Box | null {
+function ownBox(m: Mobject): Box | null { return pointsBox(m.pointArrays()); }
+/** Box of point arrays, or null. */
+function pointsBox(arrays: readonly Float32Array[]): Box | null {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const a of m.pointArrays()) {
+  for (const a of arrays) {
     for (let i = 0; i < a.length; i += 2) {
       const x = a[i]!, y = a[i + 1]!;
       if (x < minX) minX = x; if (x > maxX) maxX = x;
@@ -1085,7 +1128,13 @@ function matchParts(src: Mobject[], tgt: Mobject[], key: MatchKey, ordered: bool
   return pairOf;
 }
 
-/** Repeatedly pair the longest run of equal, unpaired keys (manim's SequenceMatcher loop). */
+/**
+ * Repeatedly pair the longest run of equal, unpaired keys (manim's SequenceMatcher loop).
+ * Each run found costs one O(N·M) scan of both sides, so the whole is O(runs·N·M):
+ * one edit in 80 lines of code takes about 90 ms, but scattered edits (a change
+ * on every line) leave many short runs and cost seconds (1.2 s for 80 lines).
+ * The scan order and tie-breaks decide the pairing, which traces record: keep them.
+ */
 function longestRuns(ks: number[], kt: number[], pairOf: Int32Array, taken: Uint8Array, dist2: (i: number, j: number) => number): void {
   const n = ks.length, m = kt.length;
   let prev = new Int32Array(m + 1), cur = new Int32Array(m + 1);
@@ -1143,9 +1192,26 @@ function assign(cost: number[][]): number[] {
   return out;
 }
 
-/** An unmatched part at `size` (0: the point (tx, ty), invisible; 1: as it was), written over its snapshot. */
-function fade(r: FadeRow, size: number): void {
+/**
+ * An unmatched part at `size` (0: the point (tx, ty), invisible; 1: as it was), written over its snapshot.
+ * A riding row (see FadeRow) is placed by the whole animation's `alpha` too: `out` says whether it fades out.
+ */
+function fade(r: FadeRow, size: number, alpha: number, out: boolean): void {
   const mine = r.sub.pointArrays(), k = 1 - size;
+  const c = r.ride;
+  if (c) {
+    // Where its center is now: on the way, with the line, from where it starts to where it ends
+    const [x0, y0, x1, y1] = out ? [c[0], c[1], r.tx, r.ty] : [r.tx, r.ty, c[0], c[1]];
+    const cx = alpha >= 1 ? x1 : alpha <= 0 ? x0 : x0 + (x1 - x0) * alpha, cy = alpha >= 1 ? y1 : alpha <= 0 ? y0 : y0 + (y1 - y0) * alpha;
+    for (let j = 0; j < mine.length; j++) {
+      const m = mine[j]!, x = r.pts[j]!;
+      if (size >= 1 && cx === c[0] && cy === c[1]) { m.set(x); continue; }
+      for (let q = 0; q < m.length; q += 2) { m[q] = (x[q]! - c[0]) * size + cx; m[q + 1] = (x[q + 1]! - c[1]) * size + cy; }
+    }
+    r.sub.style.opacity = size >= 1 ? r.opacity : r.opacity * Math.max(0, size);
+    r.sub.touchPoints();
+    return;
+  }
   for (let j = 0; j < mine.length; j++) {
     const m = mine[j]!, x = r.pts[j]!;
     if (size >= 1) { m.set(x); continue; }
@@ -1238,21 +1304,9 @@ export class TransformDiff extends TransformMatching {
     super.begin();
     // A rewritten line that grows past its old ends (`return x` -> `const y = await x`)
     // would start its new glyphs, carried back with the line, beyond the old
-    // line, and end its removed ones beyond the new: invisible, but the line's
-    // extent would jump on the first frame. They start (and end) inside the
-    // line instead, at its nearest edge, so the line grows and shrinks smoothly.
-    const edges = new Map(this.frames.map((f) => [f.node, f]));
-    // A Text's advance box is a point array (four corners since the reader pass; two before):
-    // clamp to its x extent whatever its length, or the growing glyphs start outside the line
-    const inside = (r: FadeRow, box: Float32Array | undefined) => {
-      if (!box || box.length < 4) return;
-      let x0 = Infinity, x1 = -Infinity;
-      for (let i = 0; i < box.length; i += 2) { x0 = Math.min(x0, box[i]!); x1 = Math.max(x1, box[i]!); }
-      r.tx = Math.min(Math.max(r.tx, x0), x1);
-    };
-    for (const r of this.fadesIn) inside(r, edges.get(r.sub.parent!)?.from[0]);
-    for (const r of this.fadesOut) inside(r, edges.get(frameOf(r.sub, this.mobject))?.to[0]);
-    this.interpolate(0);
+    // line, and end its removed ones beyond the new: they start (and end) inside
+    // the line instead, at its nearest edge, so the line grows and shrinks smoothly.
+    fadeInsideLines(this, false);
   }
 
   override evidence(): Evidence {
