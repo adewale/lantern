@@ -7,6 +7,7 @@ import { restingTime } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
 import { CARD } from './explain-share.ts';
 import { useProjectLettering } from './explain-lettering.ts';
+import { withSceneLettering } from '../../src/lettering-outlines.ts';
 
 /**
  * A scene's picture at `time` as PNG, `width` pixels wide. Culled: resvg 2.6.2 aborts on a
@@ -61,17 +62,19 @@ export async function contactSheet(
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i]!,
       png = await stillPng(v.Scene, restingTime(step, v.trace.fps), w);
-    const labelScene = new Scene(new NullSink()),
-      label = new Text(`${i + 1}. ${String(step.meta.title ?? step.step)}`, {
-        fontSize: 0.36,
-        color: '#eef3fa',
-        anchor: 'start',
-      });
-    if (label.width() > 15.2) label.setWidth(15.2);
-    label.moveTo([-7.6, 0], [-1, 0]);
-    labelScene.add(label);
-    // A 40-pixel band: one scene unit at 640 pixels wide.
-    const labelSvg = band(labelScene, w, 1, '#101820');
+    const labelSvg = await withSceneLettering(v.Scene, async () => {
+      const labelScene = new Scene(new NullSink()),
+        label = new Text(`${i + 1}. ${String(step.meta.title ?? step.step)}`, {
+          fontSize: 0.36,
+          color: '#eef3fa',
+          anchor: 'start',
+        });
+      if (label.width() > 15.2) label.setWidth(15.2);
+      label.moveTo([-7.6, 0], [-1, 0]);
+      labelScene.add(label);
+      // A 40-pixel band: one scene unit at 640 pixels wide.
+      return band(labelScene, w, 1, '#101820');
+    });
     tiles.push(
       `<g transform="translate(${(i % cols) * w} ${Math.floor(i / cols) * h})"><image width="${w}" height="360" href="data:image/png;base64,${png.toString('base64')}"/><g transform="translate(0 360)">${labelSvg}</g></g>`,
     );

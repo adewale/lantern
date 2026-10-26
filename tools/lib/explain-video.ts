@@ -1,3 +1,4 @@
+import { withSceneLettering } from '../../src/lettering-outlines.ts';
 import { spawn, execFileSync } from 'node:child_process';
 import { once } from 'node:events';
 import { mkdir, writeFile, readFile, mkdtemp, rename, rm } from 'node:fs/promises';
@@ -18,7 +19,7 @@ export const FOOTER_TEXT_WIDTH = 13.6;
 /** Footer height in scene units: a 1280 × 720 stage over a 240 px footer is 1280 × 960. */
 const FOOTER_HEIGHT = 3;
 /** MP4 tags a stream with an ISO 639-2 code (the terminology code, as MP4 uses); WebM and WebVTT take the scene's BCP 47 tag as is. */
-const ISO_639_2: Record<string, string> = { en: 'eng', fr: 'fra' };
+const ISO_639_2: Record<string, string> = { ar: 'ara', hi: 'hin', he: 'heb', zh: 'zho', ja: 'jpn', ko: 'kor', el: 'ell', ru: 'rus', en: 'eng', fr: 'fra' };
 /** The subtitle stream's language tag: the BCP 47 tag for WebM, an ISO 639-2 code for MP4. */
 export function trackLanguage(lang: string, webm = false): string {
   if (webm) return lang;
@@ -218,7 +219,7 @@ export async function renderVideo(
   const steps = filmSteps(trace);
   if (!steps.length) throw new Error('A video needs at least one step');
   // The footer must hold every title and caption; fail before FFmpeg starts, naming the step and case.
-  const footerText = withFooter ? await footerLines(trace, variant.values) : steps.map((): string[][] => [[], []]);
+  const footerText = withFooter ? await withSceneLettering(variant.Scene, () => footerLines(trace, variant.values)) : steps.map((): string[][] => [[], []]);
   out = resolve(out);
   await mkdir(dirname(out), { recursive: true });
   const temp = await mkdtemp(join(dirname(out), '.lantern-video-'));
@@ -288,7 +289,7 @@ export async function renderVideo(
     if (withFooter) {
       // Light or dark tokens to match the stage, judged by its top-left pixel.
       colours ??= await footerColours(0.2126 * stage[0]! + 0.7152 * stage[1]! + 0.0722 * stage[2]! < 128);
-      const pixels = (footers[step]![part] ??= await footer(footerText[step]![part]!, width, colours));
+      const pixels = (footers[step]![part] ??= await withSceneLettering(variant.Scene, () => footer(footerText[step]![part]!, width, colours!)));
       frame = Buffer.concat([stage, pixels]);
     }
     for (let i = 0; i < count; i++) {

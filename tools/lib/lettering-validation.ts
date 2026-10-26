@@ -1,0 +1,43 @@
+// Cached lettering is executable drawing data. Reject damaged snapshots before
+// they reach Text, the browser, or a video renderer, even if their metadata is fresh.
+import type { LetteringSnapshot } from '../../src/lettering-outlines.ts';
+
+const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
+const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+const digest = (value: unknown): value is string => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+
+export function validateLetteringSnapshot(value: unknown): asserts value is LetteringSnapshot {
+  const fail = (part: string): never => { throw new Error(`Invalid lettering snapshot ${part}; run explain snapshots to rebuild it`); };
+  if (!object(value) || value.version !== 1 || !digest(value.sourceHash) || !digest(value.builderHash) ||
+      !digest(value.payloadHash) || !object(value.request) || !object(value.runs) || !object(value.faces) || typeof value.shaper !== 'string') fail('header');
+  const snapshot = value as Record<string, unknown> & { runs: Record<string, unknown>; faces: Record<string, unknown> };
+  for (const [key, value] of Object.entries(snapshot.runs)) {
+    let parts: unknown;
+    try { parts = JSON.parse(key); } catch { fail('run key'); }
+    if (!Array.isArray(parts) || parts.length !== 3 || !['sans', 'mono', 'math'].includes(String(parts[0])) ||
+        typeof parts[1] !== 'string' || typeof parts[2] !== 'boolean') fail('run key');
+    const text = (parts as [string, string, boolean])[1];
+    if (!object(value)) fail('run');
+    const run = value as Record<string, unknown>;
+    if (![run.width, run.ascent, run.descent].every(finite) || Number(run.width) < 0 ||
+        (run.s !== undefined && (!finite(run.s) || run.s <= 0)) || !Array.isArray(run.glyphs)) fail('run metrics');
+    for (const raw of run.glyphs as unknown[]) {
+      if (!object(raw)) fail('glyph');
+      const glyph = raw as Record<string, unknown>;
+      if (!Number.isInteger(glyph.gid) || Number(glyph.gid) < -1 || !Number.isInteger(glyph.cluster) || Number(glyph.cluster) < 0 ||
+          Number(glyph.cluster) > [...text].length || ![glyph.x, glyph.dx, glyph.dy, glyph.ax].every(finite) ||
+          (glyph.s !== undefined && (!finite(glyph.s) || glyph.s <= 0)) || !Array.isArray(glyph.path)) fail('glyph');
+      for (const raw of glyph.path as unknown[]) {
+        if (!object(raw)) fail('outline');
+        const segment = raw as Record<string, unknown>;
+        const coordinates = segment.tag === 'Close' ? [] : segment.tag === 'MoveTo' || segment.tag === 'LineTo' ? ['x', 'y'] :
+          segment.tag === 'QuadTo' ? ['x1', 'y1', 'x', 'y'] : segment.tag === 'CubicTo' ? ['x1', 'y1', 'x2', 'y2', 'x', 'y'] : undefined;
+        if (!coordinates || !coordinates.every((name) => finite(segment[name]))) fail('outline');
+      }
+    }
+  }
+  for (const value of Object.values(snapshot.faces)) {
+    if (!object(value) || !digest(value.hash) || typeof value.license !== 'string' || typeof value.data !== 'string' ||
+        !value.data.length || value.data.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(value.data)) fail('face');
+  }
+}
