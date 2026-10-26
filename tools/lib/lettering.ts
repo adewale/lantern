@@ -7,10 +7,11 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { loadFont } from '../../vendor/glyph.js';
 import { SANS, MONO, FALLBACK } from '../../src/font-data.ts';
-import { bindLettering, letteringOf, runKey, scaledRun, snapshotProvider, usesLettering } from '../../src/lettering-outlines.ts';
+import { bindLettering, letteringOf, numericAlphabet, runKey, scaledRun, snapshotProvider, usesLettering } from '../../src/lettering-outlines.ts';
 import type { LetteringSnapshot, LetteringProvider, LetteringRequest } from '../../src/lettering-outlines.ts';
 import type { ExplainerClass } from '../../explain/settings.ts';
 import type { Run } from '../../vendor/glyph.js';
+import { validateLetteringSnapshot } from './lettering-validation.ts';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const hash = (s: string | Uint8Array) => createHash('sha256').update(s).digest('hex');
@@ -59,7 +60,10 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
   if (!request) return undefined;
   validateLettering(request);
   if (!Object.keys(request.faces ?? {}).length && !request.scripts?.length && !request.math) return undefined;
-  const builderHash = hash((await Promise.all(['src/lettering-outlines.ts', 'src/math.ts', 'tools/lib/lettering.ts', 'tools/lettering.py', 'tools/lettering-requirements.txt', 'vendor/glyph-math.js'].map((name) => readFile(join(root, name), 'utf8')))).join('\n'));
+  // Default faces and the core shaper are inputs too: requested runs may contain
+  // glyphs from the existing fallback chain, and Text determines the strings
+  // handed to the shaper (for example after tab expansion).
+  const builderHash = hash((await Promise.all(['src/lettering-outlines.ts', 'src/math.ts', 'src/font-data.ts', 'src/fonts.ts', 'src/text.ts', 'tools/lib/lettering.ts', 'tools/lib/lettering-validation.ts', 'tools/lettering.py', 'tools/lettering-requirements.txt', 'vendor/glyph.js', 'vendor/glyph-math.js'].map((name) => readFile(join(root, name), 'utf8')))).join('\n'));
   const path = file.replace(/\.[^.]+$/, '') + '.lettering.json';
   if (!capture) {
     const snapshot: LetteringSnapshot | undefined = await readFile(path, 'utf8').then(JSON.parse).catch((e: NodeJS.ErrnoException) => {
@@ -68,6 +72,9 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
     });
     if (!snapshot || snapshot.version !== 1 || snapshot.sourceHash !== sourceHash || snapshot.builderHash !== builderHash || json(snapshot.request) !== json(request))
       throw new Error('Missing or stale lettering snapshot; run explain snapshots ' + file);
+    validateLetteringSnapshot(snapshot);
+    if (!snapshot.payloadHash || snapshot.payloadHash !== hash(JSON.stringify({ ...snapshot, payloadHash: undefined })))
+      throw new Error('Invalid lettering snapshot payload checksum; run explain snapshots ' + file);
     return { Scene: bindLettering(Source, snapshot), snapshot, async finish() {} };
   }
   const folder = resolve(process.env.RAYNER_LETTERING_FONTS ?? join(root, 'out/lettering-fonts'));
@@ -112,10 +119,11 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
     fonts.set('latin-modern-math', { file, hash: hash(bytes), license: await readFile(join(root, 'vendor/licenses/LatinModernMath-GUST.txt'), 'utf8') });
   }
   const { typeset } = request.math ? await import('../../vendor/glyph-math.js') : { typeset: undefined };
-  let finished = false;
+  let replay: LetteringProvider | undefined;
   const provider: LetteringProvider = {
+    async prepare() { await replay?.prepare?.(); },
     shape(font, text, size, fallback) {
-      if (finished) return snapshotProvider(snapshot).shape(font, text, size, fallback);
+      if (replay) return replay.shape(font, text, size, fallback);
       if (!request.faces?.[font] && !request.scripts?.length) return fallback(text, size);
       const key = runKey(font, text);
       let r = snapshot.runs[key];
@@ -129,13 +137,13 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
         }
         if (!usesLettering(request, font, text)) return fallback(text, size);
         const chain = [...new Set([request.faces?.[font] ?? font, ...(request.scripts ?? []).flatMap((s) => scriptFaces[s] ?? []), font, 'sans', ...FALLBACK.map(([name]) => name)])];
-        r = python({ command: 'shape', fonts: chain.map((n) => fonts.get(n)!.file), text, mono: font === 'mono', preferred: Object.fromEntries((request.scripts ?? []).filter((s) => scriptFaces[s]).map((s) => [s, chain.indexOf(scriptFaces[s]!)])) }) as Run;
+        r = python({ command: 'shape', fonts: chain.map((n) => fonts.get(n)!.file), text, mono: font === 'mono', explicitPrimary: !!request.faces?.[font], preferred: Object.fromEntries((request.scripts ?? []).filter((s) => ['Arab', 'Deva', 'Hebr', 'Hani'].includes(s)).map((s) => [s, chain.indexOf(scriptFaces[s]!)])) }) as Run;
         Object.defineProperty(snapshot.runs, key, { value: r, enumerable: true });
       }
       return scaledRun(r, size);
     },
     math(text, size, display) {
-      if (finished) return snapshotProvider(snapshot).math(text, size, display);
+      if (replay) return replay.math(text, size, display);
       if (!request.math || !typeset || mathFont?.tag !== 'Ok') throw new Error('Math requires meta.lettering.math: true');
       const key = runKey('math', text, display);
       let run = snapshot.runs[key];
@@ -161,12 +169,19 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
   return { Scene: bindLettering(Source, provider), snapshot,
     async finish() {
       for (const [name, face] of fonts) if (face.license) {
-        const data = python({ command: 'subset', font: face.file, codepoints: [...used].sort((a, b) => a - b), gids: name === 'latin-modern-math' ? [...usedMath] : [] }) as string;
+        // Numeric animations visit values between their endpoints and may be
+        // replayed at different video frame rates. Keep their bounded alphabet
+        // in replacement faces so the runtime can shape these values without
+        // accepting arbitrary new captions or scripts.
+        const points = new Set(used);
+        if (Object.values(request.faces ?? {}).includes(name)) for (const ch of numericAlphabet) points.add(ch.codePointAt(0)!);
+        const data = python({ command: 'subset', font: face.file, codepoints: [...points].sort((a, b) => a - b), gids: name === 'latin-modern-math' ? [...usedMath] : [] }) as string;
         snapshot.faces[name] = { hash: face.hash, data, license: face.license };
       }
       // Stable run order, regardless of which case first visits a string.
       snapshot.runs = Object.fromEntries(Object.entries(snapshot.runs).sort(([a], [b]) => a.localeCompare(b)));
-      finished = true;
+      snapshot.payloadHash = hash(JSON.stringify({ ...snapshot, payloadHash: undefined }));
+      replay = snapshotProvider(snapshot);
       if (persist) {
         await mkdir(dirname(path), { recursive: true });
         await writeFile(path, json(snapshot));

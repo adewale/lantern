@@ -132,7 +132,16 @@ async function loadScene(
         : null;
   if (!exportName) throw new Error('Export one Scene subclass (or a default Scene export)');
   const Explainer = module[exportName] as ExplainerClass;
-  return { Scene: Explainer, exportName, file, sourceHash, engineHash: await engineHash(usesOutlineLettering(Explainer) || letteringRequest(Explainer) !== undefined) };
+  const outlines = usesOutlineLettering(Explainer);
+  // A captured run must survive installing the package: the same engine imports
+  // resolve to src/*.ts in a checkout and dist/src/*.js in the compiled CLI.
+  // Preserve the historical fingerprint exactly for every existing plain scene.
+  const portableSourceHash = outlines ? hash(
+    code.replaceAll(pathToFileURL(ROOT).href, 'lantern:/').replaceAll(dirname(file), '<author>')
+      .replace(/lantern:\/dist\/(src|explain|integrations)\//g, 'lantern:/$1/')
+      .replace(/(lantern:\/(?:src|explain|integrations)\/[^"'\n]+)\.js(?=["'])/g, '$1.ts'),
+  ) : sourceHash;
+  return { Scene: Explainer, exportName, file, sourceHash: portableSourceHash, engineHash: await engineHash(outlines || letteringRequest(Explainer) !== undefined) };
 }
 export interface Project {
   Scene: ExplainerClass;
@@ -323,16 +332,20 @@ export async function collectProject(
       if (outline) await withSceneLettering(Bound, async () => {
         const { Text } = await import('../../src/index.ts');
         const { wrapCaption, FOOTER_TEXT_WIDTH } = await import('./explain-video.ts');
-        for (const s of trace.steps) for (const text of [s.meta.title ?? s.step, s.meta.caption ?? '']) {
+        for (const [i, s] of trace.steps.entries()) {
           step = s.step;
-          new Text(String(text));
-          try { wrapCaption(String(text), FOOTER_TEXT_WIDTH); }
-          catch (error) {
-            // Long captions may still be valid on a page. Video reports its own
-            // footer limits; script/face/snapshot errors must always fail closed.
-            if (!/^Caption (word exceeds|exceeds four)/.test((error as Error).message)) throw error;
+          // Contact sheets draw this numbered title outside the authored scene.
+          new Text(`${i + 1}. ${String(s.meta.title ?? s.step)}`);
+          for (const text of [s.meta.title ?? s.step, s.meta.caption ?? '']) {
+            new Text(String(text));
+            try { wrapCaption(String(text), FOOTER_TEXT_WIDTH); }
+            catch (error) {
+              // Long captions may still be valid on a page. Video reports its own
+              // footer limits; script/face/snapshot errors must always fail closed.
+              if (!/^Caption (word exceeds|exceeds four)/.test((error as Error).message)) throw error;
+            }
+            blanks();
           }
-          blanks();
         }
       });
       variants.push({ values, Scene: Bound, trace });

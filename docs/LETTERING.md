@@ -58,14 +58,13 @@ Commit `scene.lettering.json` beside the scene, just like diagram snapshots.
 Capture visits every settings case, including text built during replay and
 caption/footer wrapping. HarfBuzz shapes each distinct string once at unit em;
 runs retain glyph IDs, logical source clusters, advances, offsets, and outlines.
-The subset keeps the used code points plus layout/glyph dependencies. Each
+The subset keeps the used code points plus layout/glyph dependencies. Replacement faces also retain a bounded numeric alphabet for animated values, whose intermediate strings depend on playback FPS. Each
 requested font's licence travels with its subset into the page's licence block.
 
 `check`, `build`, `shots`, and `render` require a fresh snapshot and never
 silently recapture. Changing a caption, imported scene code, the request, or the
-lettering builder invalidates the snapshot. Run `snapshots` to refresh it.
-`preview` refreshes during authoring. A string not in the store fails closed;
-seek and playback cannot start an unrecorded language case. Missing characters
+lettering builder, embedded fallback fonts or core shaping code invalidates the snapshot. Cached snapshots validate their run structure and payload checksum before drawing. Run `snapshots` to refresh it.
+`preview` refreshes during authoring. Unrecorded prose fails closed; seek and playback cannot start an unrecorded language case. Formatted numeric values and known simple-script prefix/suffix templates can replay through the existing glyph shaper with the requested subset, so counters work at arbitrary video frame rates. Missing characters
 in an unrequested script still fail, including during capture.
 
 `explain check` reports `lettering.bytes` (serialized snapshot payload), the
@@ -112,10 +111,7 @@ face must still request `Grek`. Faces outside this licensed registry are rejecte
 The proposed `stage(..., { lettering: 'style' })` shorthand is not implemented;
 explicit face selection keeps the request visible in `meta`.
 
-Bidi resolves logical runs before shaping; clusters always address the original
-string, even when the visual glyph order is right to left. The current bidi
-backend handles explicit embeddings/overrides and rejects unsupported isolate
-controls. Complex scripts beyond the registered faces remain unsupported.
+Bidi resolves logical runs before shaping, including paired brackets in mixed-direction text; clusters always address the original string, even when the visual glyph order is right to left. The pinned Rust backend exposed by python-bidi supplies resolved UTF-8 levels; the builder validates that metadata and maps it to source code-point indices. It handles explicit embeddings/overrides, preserves shaping joiners, and rejects unsupported isolate controls. Complex scripts beyond the registered faces remain unsupported.
 Picture descriptions still use the existing English/French vocabulary.
 
 `Write` reveals stored glyphs; a ligature/conjunct is an indivisible outline.
@@ -123,13 +119,15 @@ Picture descriptions still use the existing English/French vocabulary.
 a glyph's cluster start, including multiple glyphs at that start. Use `Transform`
 for whole-formula or ligature/conjunct changes where character pairing is not
 the intended motion. Maths has no character-to-glyph correspondence and uses
-a single source cluster. All replacement strings must be built into a case.
+a single source cluster. Replacement prose must be built into a case; numeric animations use the bounded exception described above.
+
+`Code.span`, `token` and `lineSpan` keep logical UTF-16 source ranges while their boxes cover the corresponding visual RTL cells, including complete combining clusters. For colour changes, select the entire source cluster; one glyph outline cannot be split into independently styled characters. Ordinary scenes and overlapping independent renders keep separate font leases; nested runs using the same lettering provider are supported. Awaiting a nested `Scene.run()` with a different provider (including an unlettered child) is unsupported: render those scenes independently before composing their output.
 
 ## Verification
 
 ```sh
 node --test test/lettering-outlines.test.ts
-EXPLAIN_LETTERING=1 node --test test/lettering-outlines.test.ts
+EXPLAIN_LETTERING=1 node --test test/lettering-outlines.test.ts test/lettering-*-audit.test.ts
 EXPLAIN_BROWSER=1 node --test test/lettering-outlines.test.ts
 ```
 

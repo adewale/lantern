@@ -1,7 +1,7 @@
 {
   "version": 1,
   "sourceHash": "55448a5629a303adbca8f30ca08043cc4a8788eff57d72491bc4428c42f95a97",
-  "builderHash": "56d2fa657ba496185b7f786f7c4acaa5fb0da6731716fe096eb3a07326fe6675",
+  "builderHash": "8b8d7fcf42a6db6cab98b2db15fdf45d86db50b09c2995c82a308cbc1f27482d",
   "request": {
     "math": true
   },
@@ -902,5 +902,6 @@
       "license": "% This is a preliminary version (2006-09-30), barring acceptance from\n% the LaTeX Project Team and other feedback, of the GUST Font License.\n% (GUST is the Polish TeX Users Group, http://www.gust.org.pl)\n%\n% For the most recent version of this license see\n% http://www.gust.org.pl/fonts/licenses/GUST-FONT-LICENSE.txt\n% or\n% http://tug.org/fonts/licenses/GUST-FONT-LICENSE.txt\n%\n% This work may be distributed and/or modified under the conditions\n% of the LaTeX Project Public License, either version 1.3c of this\n% license or (at your option) any later version.\n% \n% Please also observe the following clause:\n% 1) it is requested, but not legally required, that derived works be\n%    distributed only after changing the names of the fonts comprising this\n%    work and given in an accompanying \"manifest\", and that the\n%    files comprising the Work, as listed in the manifest, also be given\n%    new names. Any exceptions to this request are also given in the\n%    manifest.\n%    \n%    We recommend the manifest be given in a separate file named\n%    MANIFEST-<fontid>.txt, where <fontid> is some unique identification\n%    of the font family. If a separate \"readme\" file accompanies the Work, \n%    we recommend a name of the form README-<fontid>.txt.\n%\n% The latest version of the LaTeX Project Public License is in\n% http://www.latex-project.org/lppl.txt and version 1.3c or later\n% is part of all distributions of LaTeX version 2006/05/20 or later.\n\n"
     }
   },
-  "shaper": "uharfbuzz+python-bidi/fonttools; glyph-math@6398654"
+  "shaper": "uharfbuzz+python-bidi/fonttools; glyph-math@6398654",
+  "payloadHash": "397b16c71fb8f9cc7384afe55598f50c4753d8d30003100b040b85524f578bb7"
 }

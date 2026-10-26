@@ -64,6 +64,7 @@
     "skills",
     "tools/lettering.py",
     "tools/lib/lettering.ts",
+    "tools/lib/lettering-validation.ts",
     "vendor/glyph-math.js",
     "vendor/glyph-math.d.ts",
     "tools/lettering-outline-fonts.sh",
