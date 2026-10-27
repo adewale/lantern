@@ -1,106 +1,106 @@
 {
   "seasons": {
     "page": "345657e4041586bd360db270ca7a8368d19b51673114aeeca1828c33ed3d0469",
-    "receipt": "837c4d5ebe9fe5d3d3945b87f90e1fede97dfa3645f6a295478285ba47fbfaa3"
+    "receipt": "eff746ec02f487f9b8cb48877e0dbf1a1094931869e2ac7678b918f30d212dd0"
   },
   "oauth-pkce": {
     "page": "2d11d2835d2ae01dbca0695660fae759776f9f87fd57e3db5969da44077678f5",
-    "receipt": "2d9bd7b6885b6ab6aa349505ff5dab7789526fd766d2360bf9d79619345fa84c"
+    "receipt": "cc085ae3435d82cd4ee17702927b3a12dd27e4a6be1ff5bacdcb639656310a1e"
   },
   "exgit": {
     "page": "de8da0bddd4bb8fedea3865eb15ed9da31cdc6cb94d32d234af25d8b8990b554",
-    "receipt": "adaf5d4c2f17c6cf9237ee2f37103282735a55f0e46fea5361192658965215f1"
+    "receipt": "4de4c5f05b9423a1c8b4b028be6aa60ea4e32d7b786ee65a8454713b64415b0f"
   },
   "token-bucket": {
-    "page": "6b1424ddf28c2854121d0779a40faa005e44afec649c0ac4118ecf2e15c81833",
-    "receipt": "ca0e76a05352fff8fa1d50cbbc1a20a455181b143c5e61045b26c08354ba321c"
+    "page": "5c34b6175535b61c0d170af2dcc2cd4ff75c723e1bddf4baa087607f1c99dc3b",
+    "receipt": "30550b7af112b9bafb06792147df6b0e23b0c9301ed619ac671d3d671c254771"
   },
   "mr-cache": {
     "page": "c08227c0ea3aeba573c3b7a3812d1b70bd88d8614ce1483454bf506210598901",
-    "receipt": "503373fbfb3c7af9e6ebd98c6f92775408a91d933dd4019350d0e145d499392c"
+    "receipt": "3f7038a068851e264c3d7d18ac20cd856e8bbba949cb597294c072004d40de34"
   },
   "state-machine": {
     "page": "d93a5ba28c6345b0165fa7a2319d07b4eb7f716066c4b3755c32dee8a8caad81",
-    "receipt": "4f4b26ae2e743b8eb4ad29185e0f9b2090adc3128a4df945bf788a4f78074f96"
+    "receipt": "5062700825c13934f9bd8beddb22001e5d59e9b04013d75c3adeabd8a335eb17"
   },
   "ring-buffer": {
     "page": "ea42e1a387931d730b4284bd78ec9acf440a96aaac6d347ed9fc2f55cfd07b85",
-    "receipt": "ea2a8d8e140f4beb49c74a430f1809a9d66f4c1382541992712018546bf9422e"
+    "receipt": "2c4bdb275207c7bf8db10c6e123edb4aadc8fdf4d77781311b5f38e160e22d63"
   },
   "2password": {
     "page": "a6d8c030743ad111042b3e877f4e5006501abace82e194690f97579db8c26e70",
-    "receipt": "ecc21f8d46cbe22db43cf55732e420986ae8c683704893f670b967c8bf319922"
+    "receipt": "e9780ae8f4e48357560e997b8087696d656d9e5422f5428ba8aff591a87fa8a8"
   },
   "just-bash": {
     "page": "ebf3f2fe1950176be014b1d594e785d16abe0c45b3b746c280ca3c6537195d5f",
-    "receipt": "447577635b08d654df3ac4e0cefa6f3d3b58c870807e268554e427fe540e3c03"
+    "receipt": "323d8d7b291492395ff1c0745deb3998c682a12c094d541f47ce24587be73891"
   },
   "cert-renewal": {
     "page": "97256028c06a4311c25b7ff2cc642302674958abf129b95dba117ba5de924903",
-    "receipt": "295146c353bce5d97cf880b83010103f0012dc062d76cdd5cad028a1d5bb503c"
+    "receipt": "b42bae9da0fa16b908bbb95c0cec7241e93da89ec01a0a1d9d7d2162c7b28de4"
   },
   "quotient-familial": {
     "page": "0cd237fe077a751810d1c6f46fc7fa0085ce17a5ebedcac01c6813641e17d29a",
-    "receipt": "d0ac2fccf14bcfebaa174b391000e594c0e6f6594e0e77e3c198a0dc4d56cad9"
+    "receipt": "df25b590ef6c3f3ccd597c8c59b4092c670de624d863f1f249660ab0ddfd538e"
   },
   "send-sync": {
     "page": "3752512ee2d0407d232480379290f5aff311a9d4a9e542d6554f46f059add24e",
-    "receipt": "4b34f2f394a4dfe2d04c83c7802429016f5df5acc164cfa9bdb236c9775dccbd"
+    "receipt": "50d626bb5aebd09aca0f5c8b444418f82f65ab291b578bdbf9a7828095c1bee0"
   },
   "gtfs": {
     "page": "9dd82cc0b742dd48624ff208f71113045ea41d577d7cca1fd6b77b158e2cad1c",
-    "receipt": "8dea69f09f6918d12978975f52853f649a975b071bec5b542dccb8fe172f5610"
+    "receipt": "be5a674f67a07adc6686068366e835d0f2a482b8766dddece7f7144ffecf2fcb"
   },
   "pg-page": {
     "page": "9fab89b08714df2c6a699b83034d3b4e12c79860ecf1fe6d8e12a32db7edb7b0",
-    "receipt": "1da227359d38f42caa0e9e204757178ebba2be9e4569005968593bf28381a443"
+    "receipt": "2300045cddc6965c4df0fce9028f35af295f6615341f5be46490b4c08a99606c"
   },
   "traffic-policy": {
     "page": "1a73077c572a30f7da556436c9d5e63b9363c9ce53dea40f9f30d42c988435c3",
-    "receipt": "5fbd211e546f729b0e7b48377f3bd83c2b06c91bd032e1fca2ed2847af7e48aa"
+    "receipt": "403641d11f3e476d4ac21442e8cee291ac3ab44cca03f19764a35d8375c0cab5"
   },
   "isdigit": {
     "page": "c10fa6c5820d3c891d3b5bfb712f0661d44b938b7b73ac15f61ec4808153d528",
-    "receipt": "937a6b5f52cec910a641ed4506f28c96d61f43f2e8b296d723c88a5a713fe40a"
+    "receipt": "981c76810a89825bf56eeb887ff55dafecae690a46c8cc09b6884f94074082d8"
   },
   "ical-recurrence": {
     "page": "38a633e355bcb907b6a270fbdccb016735f7995d6d1d2b96d1e8e000a249ff44",
-    "receipt": "46a33e4073f5a9bd3a0188b6b29ef591f64d7a3f2adb5148a57d188d12fa84a7"
+    "receipt": "4b5e5651e2e0b143324940a6a192b7d548d985a9f08d298e3cc3c9c9419edf53"
   },
   "ext4-space": {
     "page": "6d4434ec723f53cae87426c963c9354d6e1ee82297433f0538a6c08c65349814",
-    "receipt": "d1b78409b7d85817a07adaba73da22cc3a9f1a5f632c61d48a1e29f6255b6789"
+    "receipt": "c84bcb95c27588c12341671f1dbe014837286d56c2728eb56516a93bf740687b"
   },
   "trust-proxy": {
     "page": "d19a277aa0adf04c2ad5894ca32aa70b0f98d90a9ceb55e5369480251bc3a31d",
-    "receipt": "fffa233485159def14db8cbc4908921fb1ddadbdc4439f210878037eb4a68ec5"
+    "receipt": "7eceb671ce1983e8d33bc34a2178e7ee1d6c9dbf42be1c16c0e3b20ff69468cc"
   },
   "tailwind-gamut": {
     "page": "95b2e213171767b756474d93f4d89c6400fc25f448f4ae3877cd17376d7da5ca",
-    "receipt": "19a19e2b4bed708bedfe7cb0174fecaf1fd53f751bb54cbbf50a3ae6ba113be0"
+    "receipt": "20f7378c7eb5b15004b95c28201da49ac938f196760e55948c48f1f149aa1de5"
   },
   "gnome-files": {
     "page": "aa2ac045402ab3873030ba45df438c1cfcefbf0c50cded46897afc0a00231fd9",
-    "receipt": "7f4bad313b40b7ae133f556c65283b4175038e5d108490827558d213152f3df6"
+    "receipt": "b119d4798f542020577c6aa84f84a27513df059fdcb4761544bfa5d1e39d9c14"
   },
   "wcag-map": {
     "page": "c5d2d3a446d40f9b31f0c066ea56022b0daf23419654a7a6ab9d9b341a2b30d9",
-    "receipt": "31a6a9848f9ac1ec33908c8c4eb402c0fff78a70a2f7c62a50f4cee630298c2e"
+    "receipt": "a5c53d2b287dd852a1d5cd1a82fd38e00eff048c7a689e7a05c00759694229a4"
   },
   "lantern": {
     "page": "448a04133f7fbccdce3b6c491c57b7d195a858555c1d10c6f08e763390696382",
-    "receipt": "769237080bbb21ef255e87742e01539e4e9cb7791bfad46250b650d8adea6d1d"
+    "receipt": "5e62c145dffb60f36017d6c87a052b8a467f78e006100628175e37de6aabffe0"
   },
   "fork": {
     "page": "15279de0ea2b6785783e2e02a8415559e6d5b596cc3ae803cb5f16b944688dce",
-    "receipt": "df50a5dd29bfa48cc966ec1e16f11f76e8dec147071b1aac60d70ca2c49e31e7"
+    "receipt": "b8e2bc86eb2f32235334156d6d9c670b284da60289267b8fd38d23491ea2930d"
   },
   "agentic-mermaid": {
     "page": "cdc25e63001c733fe52bac88d2889890216d4f33da36c8e2e4b2f3f396bcf09a",
-    "receipt": "42aed8bf23d17b1306ccee6bdac99533a6b3ab362c30e54923e0365a7cf611d0"
+    "receipt": "df0537b1e6555956b8190b54301639b36c84d899bb070a81379325025297d92a"
   },
   "glyph": {
     "page": "e8c0776b56121ee8775fba61cc31f6ecdf6ffc763095b49a54d1fbe18281a9bf",
-    "receipt": "08f6c92d877bf183cf1363964ffb606e390fa045df37d877a6f9d9dc2a1c9457"
+    "receipt": "cd12a40e9e8c364869542897186ce8edaafeda29c95b379ebf9f4f883afdb000"
   }
 }
