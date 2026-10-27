@@ -185,6 +185,17 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   overview.hidden = true;
   overview.append(map);
   frame.append(stage, overview);
+  // Keep view navigation beside the picture and separate from the step controls.
+  const views = el('div', undefined, 'view-controls'),
+    viewCount = el('span'),
+    nextView = el('button', t.nextView, 'button'),
+    wholePicture = el('button', t.wholePicture, 'button'),
+    viewHelp = el('p', t.viewHelp, 'view-help');
+  nextView.type = wholePicture.type = 'button';
+  viewCount.setAttribute('aria-live', 'polite');
+  views.hidden = true;
+  views.append(viewCount, nextView, wholePicture, viewHelp);
+  frame.after(views);
   const narrow = () => stage.clientWidth > 0 && stage.clientWidth < NARROW_PX;
   let shownLayout: StepLayout | undefined,
     // The close-ups of the step on show, where it opened first; `stop` is the one last visited.
@@ -197,6 +208,11 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     stage.classList.toggle('narrow', narrow());
     player.classList.toggle('narrow', narrow());
     overview.hidden = !on;
+    views.hidden = !narrow();
+    wholePicture.disabled = !on;
+    nextView.disabled = tour.length < 2;
+    const count = on ? t.viewCount(stop + 1, Math.max(1, tour.length)) : t.wholePicture;
+    if (viewCount.textContent !== count) viewCount.textContent = count;
     if (!on) return;
     overview.disabled = tour.length < 2;
     const label = t.nextCloseUp(((stop + 1) % Math.max(1, tour.length)) + 1, Math.max(1, tour.length));
@@ -214,8 +230,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     });
     map.replaceChildren(...parts, view);
   }
-  overview.onclick = () => {
+  overview.onclick = nextView.onclick = () => {
     if (tour.length < 2) return;
+    if (zoom.k <= 1) { closer.click(); return; }
     stop = (stop + 1) % tour.length;
     zoom.to(tour[stop]!, true);
   };
@@ -237,6 +254,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     },
     reader.paint,
   );
+  wholePicture.onclick = () => { zoomFit.click(); stage.focus(); };
   zoomIn.onclick = () => zoom.zoomAt(1.6, undefined, undefined, true);
   zoomOut.onclick = () => zoom.zoomAt(1 / 1.6, undefined, undefined, true);
   /** The whole picture; on a narrow stage, for the steps that follow too. */

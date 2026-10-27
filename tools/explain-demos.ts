@@ -119,7 +119,7 @@ ${tokens}
 @media(prefers-color-scheme:dark){:root{--outline:rgb(255 255 255/.1)}}
 body{margin:0;background:var(--bg);color:var(--fg)}
 main{max-width:1180px;margin:0 auto;padding:40px 16px 64px}
-h1{font-size:clamp(1.75rem,4vw,2.5rem);line-height:1.15;letter-spacing:-.02em;font-weight:650;margin:0 0 32px;text-wrap:balance}
+.intro{max-width:68ch;line-height:1.6;margin:0 0 16px}.intro a{color:var(--accent);text-underline-offset:.2em}h1{font-size:clamp(1.75rem,4vw,2.5rem);line-height:1.15;letter-spacing:-.02em;font-weight:650;margin:0 0 32px;text-wrap:balance}
 h2{font-size:1.125rem;font-weight:650;margin:64px 0 16px;padding-top:24px;border-top:1px solid var(--line)}
 ul.tiles{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:32px 24px}
 ul.tiles .lead{grid-column:1/-1}
@@ -135,7 +135,7 @@ ul.tiles .lead{grid-column:1/-1}
 footer{margin-top:64px;font-size:.875rem;color:var(--muted)}
 footer a{color:inherit}
 @media(prefers-reduced-motion:reduce){.tiles img{transition:none}}
-</style></head><body><main><h1>Rayner</h1><ul class="tiles">${topics.map((t, i) => tile(t, i === 0)).join('')}</ul><h2>How these are made</h2><ul class="tiles">${toolchain.map((t) => tile(t)).join('')}</ul><ul class="more"><li><a href="embed-lab.html">Two embeds on one host page</a></li><li><a href="evidence.json">Build evidence</a></li></ul><footer>Built on <a href="https://github.com/ivarvong/lantern">Lantern</a> by Ivar Vong (MIT) and <a href="https://github.com/adewale/agentic-mermaid">Agentic Mermaid</a>.</footer></main></body></html>`;
+</style></head><body><main><h1>Rayner</h1><p class="intro">Interactive explanations of protocols, algorithms and code changes. Step through a picture at your own pace, or change a setting to follow another case.</p><p class="intro">For engineers and technical educators who write TypeScript: <a href="https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md">write your first explainer</a>, use the <a href="https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md">authoring reference</a>, or follow the <a href="https://github.com/adewale/rayner/blob/main/skills/rayner-explainers/SKILL.md">agent authoring skill</a>.</p><ul class="tiles">${topics.map((t, i) => tile(t, i === 0)).join('')}</ul><h2>How these are made</h2><ul class="tiles">${toolchain.map((t) => tile(t)).join('')}</ul><ul class="more"><li><a href="embed-lab.html">Two embeds on one host page</a></li><li><a href="evidence.json">Build evidence</a></li></ul><footer>Built on <a href="https://github.com/ivarvong/lantern">Lantern</a> by Ivar Vong (MIT) and <a href="https://github.com/adewale/agentic-mermaid">Agentic Mermaid</a>.</footer></main></body></html>`;
 await writeFile(join(directory, 'index.html'), html);
 await writeFile(
   join(directory, 'embed-lab.html'),
