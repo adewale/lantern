@@ -7,11 +7,13 @@ import { createHash } from 'node:crypto';
 import { takeMissingGlyphs } from '../src/lettering.ts';
 import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
 import { contactSheet } from '../tools/lib/explain-shots.ts';
+import { unpackLettering } from '../src/lettering-outlines.ts';
 
 const fixture = join(ROOT, 'test/lettering/arabic');
 const sourceAt = async (folder: string) => {
   await writeFile(join(folder, 'scene.ts'), await readFile(join(fixture, 'scene.ts'), 'utf8'));
-  const snapshot = JSON.parse(await readFile(join(fixture, 'scene.lettering.json'), 'utf8'));
+  // Unpacked, so a damaged outline is the glyph's own and not an index into the shared table
+  const snapshot = unpackLettering(JSON.parse(await readFile(join(fixture, 'scene.lettering.json'), 'utf8')));
   return snapshot;
 };
 

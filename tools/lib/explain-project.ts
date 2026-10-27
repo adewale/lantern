@@ -1,4 +1,4 @@
-import { prepareLettering as prepareOutlineLettering } from './lettering.ts';
+import { offPage, prepareLettering as prepareOutlineLettering } from './lettering.ts';
 import { usesOutlineLettering, withSceneLettering } from '../../src/lettering-outlines.ts';
 import type { LetteringSnapshot } from '../../src/lettering-outlines.ts';
 import { build } from 'esbuild';
@@ -354,16 +354,18 @@ export async function collectProject(
         throw new Error(`Each case needs non-empty named steps: ${JSON.stringify(values)}`);
       if (new Set(names).size !== names.length)
         throw new Error(`Duplicate step names prevent stable links: ${JSON.stringify(values)}`);
-      if (outline) await withSceneLettering(Bound, async () => {
+      // The page never draws these (offPage): they stay out of what it carries
+      if (outline) await withSceneLettering(Bound, () => offPage(async () => {
         const { Text } = await import('../../src/index.ts');
-        const { wrapCaption, FOOTER_TEXT_WIDTH } = await import('./explain-video.ts');
+        const { footerParagraph } = await import('./explain-video.ts');
         for (const [i, s] of trace.steps.entries()) {
           step = s.step;
           // Contact sheets draw this numbered title outside the authored scene.
           new Text(`${i + 1}. ${String(s.meta.title ?? s.step)}`);
           for (const text of [s.meta.title ?? s.step, s.meta.caption ?? '']) {
             new Text(String(text));
-            try { wrapCaption(String(text), FOOTER_TEXT_WIDTH); }
+            // The footer's lines, as it shapes them (a right-to-left paragraph's lines lead with a mark)
+            try { for (const line of footerParagraph(String(text))) new Text(line); }
             catch (error) {
               // Long captions may still be valid on a page. Video reports its own
               // footer limits; script/face/snapshot errors must always fail closed.
@@ -372,7 +374,7 @@ export async function collectProject(
             blanks();
           }
         }
-      });
+      }));
       variants.push({ values, Scene: Bound, trace });
     }
     if (undrawable.length)

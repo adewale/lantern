@@ -9,6 +9,8 @@ import type { Font, Run } from '../vendor/glyph.js';
 import { SANS, MONO, FALLBACK } from './font-data.ts';
 import { Text, CodeSpan } from './text.ts';
 import type { Style, Box } from './mobject.ts';
+import { TransformMatchingText } from './animation.ts';
+import type { MatchKey } from './animation.ts';
 
 /** Real cuts an explainer can ask for, instead of the stroked faux bold and no italic. */
 export type LetteringStyle = 'bold' | 'italic';
@@ -37,6 +39,60 @@ export interface LetteringSnapshot {
   faces: Record<string, { hash: string; data: string; license: string }>;
   shaper: string;
   payloadHash?: string;
+  /**
+   * Run keys only the build draws (video footer lines, contact-sheet titles and the
+   * wrapping that measures them), which a page leaves out. Absent when there are none.
+   */
+  offPage?: string[];
+  /**
+   * Packed form only (packLettering): each distinct glyph outline once. A packed
+   * glyph has `o`, its outline's index here, in place of `path`.
+   */
+  outlines?: unknown[][];
+}
+
+/**
+ * A snapshot as written to disk and shipped in a page: each distinct glyph
+ * outline stored once. A caption wrapped for the video footer is measured line
+ * by line, so its glyphs recur in many runs; packing stores each outline once.
+ */
+export function packLettering(snapshot: LetteringSnapshot): LetteringSnapshot {
+  const outlines: unknown[][] = [], index = new Map<string, number>();
+  const runs = Object.fromEntries(Object.entries(snapshot.runs).map(([key, run]) => [key, {
+    ...run, glyphs: run.glyphs.map(({ path, ...glyph }) => {
+      const id = JSON.stringify(path);
+      let o = index.get(id);
+      if (o === undefined) { index.set(id, o = outlines.length); outlines.push(path as unknown[]); }
+      return { ...glyph, o };
+    }),
+  }])) as unknown as LetteringSnapshot['runs'];
+  return { ...snapshot, runs, outlines };
+}
+/**
+ * A packed snapshot made whole again: its runs are replaced by new ones with
+ * each glyph's outline back in `path`, and `outlines` is dropped. Glyph objects
+ * are new, so a shallow copy of a packed snapshot leaves the original packed.
+ * An unpacked snapshot is returned as it is. Every stored outline must be used.
+ */
+export function unpackLettering(snapshot: LetteringSnapshot): LetteringSnapshot {
+  const outlines = snapshot.outlines;
+  if (outlines === undefined) return snapshot;
+  const fail = (): never => { throw new Error('Invalid lettering snapshot outlines; run rayner snapshots to rebuild it'); };
+  if (!Array.isArray(outlines) || !outlines.every(Array.isArray) || !snapshot.runs || typeof snapshot.runs !== 'object') fail();
+  const used = new Set<number>();
+  const runs: LetteringSnapshot['runs'] = {};
+  for (const [key, run] of Object.entries(snapshot.runs)) {
+    if (!run || !Array.isArray(run.glyphs)) fail();
+    runs[key] = { ...run, glyphs: (run.glyphs as (Run['glyphs'][number] & { o?: number })[]).map(({ o, ...glyph }) => {
+      if (!Number.isInteger(o) || !(o! >= 0 && o! < outlines.length)) fail();
+      used.add(o!);
+      return { ...glyph, path: outlines[o!] as Run['glyphs'][number]['path'] };
+    }) };
+  }
+  if (used.size !== outlines.length) fail();
+  snapshot.runs = runs;
+  delete snapshot.outlines;
+  return snapshot;
 }
 export interface LetteringProvider {
   /** What the scene asked for; styles decide which cuts Text may use. */
@@ -47,8 +103,22 @@ export interface LetteringProvider {
 }
 export const letteringOf = (Source: object): LetteringRequest | undefined =>
   (Source as { meta?: { lettering?: LetteringRequest } }).meta?.lettering;
+/** The registered scripts that run right to left, and a letter of one of them. */
+export const RTL_SCRIPTS: readonly string[] = ['Arab', 'Hebr'];
+export const RTL_LETTER = /[\p{Script=Arabic}\p{Script=Hebrew}]/u;
+/**
+ * Whether a paragraph reads right to left, as UAX #9 rules P2 and P3 decide:
+ * by its first strong character, a letter or a bidi mark (RLM and ALM are
+ * right to left, LRM left to right). tools/lettering.py resolves the same way.
+ */
+export function rightToLeft(text: string): boolean {
+  const first = text.match(/[\p{L}\u200e\u200f\u061c]/u)?.[0];
+  return !!first && (first === '\u200f' || first === '\u061c' || RTL_LETTER.test(first));
+}
+/** Bidi marks (LRM, RLM, ALM): only the build-time bidi resolver gives them meaning, so their strings are stored runs. */
+const BIDI_MARK = /[\u200e\u200f\u061c]/;
 export const usesLettering = (request: LetteringRequest, font: FontName, text: string, cut: LetteringCut = ''): boolean =>
-  !!cut || !!request.faces?.[font] || (request.scripts ?? []).some((s) => new RegExp(`\\p{Script_Extensions=${s}}`, 'u').test(text));
+  !!cut || !!request.faces?.[font] || (!!request.scripts?.length && BIDI_MARK.test(text)) || (request.scripts ?? []).some((s) => new RegExp(`\\p{Script_Extensions=${s}}`, 'u').test(text));
 export const runKey = (font: string, text: string, display = false): string => JSON.stringify([font, text, display]);
 export function scaledRun(run: Run, size: number): Run {
   return { ...run, width: run.width * size, ascent: run.ascent * size, descent: run.descent * size,
@@ -118,6 +188,7 @@ export function requestCuts(request: LetteringRequest): LetteringCut[] {
   return ['', ...(bold ? ['bold' as const] : []), ...(italic ? ['italic' as const] : []), ...(bold && italic ? ['bold-italic' as const] : [])];
 }
 export function snapshotProvider(snapshot: LetteringSnapshot): LetteringProvider {
+  unpackLettering(snapshot);
   let replay = replays.get(snapshot);
   if (!replay) replays.set(snapshot, replay = { chains: {}, templates: {}, memo: new Map() });
   const state = replay;
@@ -203,6 +274,8 @@ let building: LetteringCut = '';
 let slanting = false;
 /** Set by withFontRun: the Text draws a given run, so it has no cut. */
 let fixedRun = false;
+/** Texts drawn from a given run (maths): their clusters are not indices into their text. */
+const fixedTexts = new WeakSet<Text>();
 
 /**
  * Build an ItalicText. Italic has no faux form, so a scene that did not ask for
@@ -270,10 +343,63 @@ function spanForm(text: Text): { shaped: string; source: number[] } {
 // Preserve the core module's source and all legacy geometry. Only a Text built
 // with an optional provider needs the adapter; remember that provider for spans
 // queried after the run has released its fonts, or on a copied Code line.
+/**
+ * Matching keys for the glyphs of a Text built from lettering runs: the whole
+ * cluster each glyph draws (a conjunct, a ligature, a letter with its marks),
+ * and how many glyphs draw it. TransformMatchingText then pairs a glyph only
+ * with a glyph of the same cluster drawn the same way, so a cluster whose
+ * glyphs change (क to the conjunct क्ष) fades out and in instead of morphing
+ * one glyph into another. Keys by source index into the Text's text; recomputed
+ * when the text changes.
+ */
+const clusterKeys = new WeakMap<Text, { text: string; keys: Map<number, string> }>();
+/**
+ * A Text's run as its build shaped it, with each glyph's cluster as a source
+ * index into its text; undefined for a Text built with no provider, or drawn
+ * from a given run (maths), whose clusters are not source indices.
+ */
+function sourceRun(text: Text): { run: Run; clusters: number[] } | undefined {
+  const provider = textProviders.get(text);
+  if (!provider || fixedTexts.has(text)) return undefined;
+  const form = spanForm(text);
+  const run = provider.shape(text.font, form.shaped, text.run.fontSize, normalShapers?.[text.font] ?? shaperFor(text.font), textCuts.get(text) ?? '');
+  return { run, clusters: run.glyphs.map((g) => form.source[g.cluster] ?? text.text.length) };
+}
+function clusterKey(text: Text, cluster: number): string | undefined {
+  let memo = clusterKeys.get(text);
+  if (!memo || memo.text !== text.text) {
+    const shaped = sourceRun(text);
+    if (!shaped) return undefined;
+    const { run, clusters: starts } = shaped, cut = textCuts.get(text) ?? '';
+    const sorted = [...new Set(starts)].sort((a, b) => a - b);
+    // Only glyphs with outlines become the Text's children, so only they count
+    const counts = new Map<number, number>();
+    run.glyphs.forEach((g, i) => { if (g.path?.length) counts.set(starts[i]!, (counts.get(starts[i]!) ?? 0) + 1); });
+    const keys = new Map<number, string>();
+    sorted.forEach((start, i) => keys.set(start,
+      `${text.font} ${text.weight}${cut ? ' ' + cut : ''} ${text.text.slice(start, sorted[i + 1] ?? text.text.length)} ×${counts.get(start) ?? 0}`));
+    clusterKeys.set(text, memo = { text: text.text, keys });
+  }
+  return memo.keys.get(cluster);
+}
+
 function installSpanAdapter(): void {
+  const begin = TransformMatchingText.prototype.begin;
+  TransformMatchingText.prototype.begin = function (this: TransformMatchingText) {
+    const plain: MatchKey = this.key;
+    // Cluster keys never equal plain ones, so use them only when every Text on both sides has them
+    const texts = [...this.mobject.family(), ...this.target.family()].filter((m): m is Text => m instanceof Text && m.children.length > 0);
+    if (texts.length && texts.every((t) => textProviders.has(t) && !fixedTexts.has(t)))
+      this.key = (part) => {
+        const text = part.parent, cluster = (part as { cluster?: number }).cluster;
+        return text instanceof Text && cluster != null ? clusterKey(text, cluster) ?? plain(part) : plain(part);
+      };
+    try { begin.call(this); } finally { this.key = plain; }
+  };
   const build = Text.prototype.build, copy = Text.prototype.copy, box = CodeSpan.prototype.box, setFill = Text.prototype.setFill;
   Text.prototype.build = function (text: string, size: number, style: Style) {
     if (active) textProviders.set(this, active); else textProviders.delete(this);
+    if (fixedRun) fixedTexts.add(this); else fixedTexts.delete(this);
     const cut = cutOf(this, active);
     if (cut) textCuts.set(this, cut); else textCuts.delete(this);
     // A real Bold cut replaces the stroke that fakes bold in text.ts.
@@ -292,14 +418,15 @@ function installSpanAdapter(): void {
     const result = copy.call(this), provider = textProviders.get(this), cut = textCuts.get(this);
     if (provider) textProviders.set(result, provider);
     if (cut) textCuts.set(result, cut);
+    if (fixedTexts.has(this)) fixedTexts.add(result);
     return result;
   } as typeof Text.prototype.copy;
   CodeSpan.prototype.box = function (): Box {
     const provider = textProviders.get(this.owner);
     if (!provider || this.stale) return box.call(this);
-    const text = this.owner, form = spanForm(text);
-    const run = provider.shape(text.font, form.shaped, text.run.fontSize, normalShapers?.[text.font] ?? shaperFor(text.font), textCuts.get(text) ?? '');
-    const clusters = run.glyphs.map((g) => form.source[g.cluster] ?? text.text.length);
+    const text = this.owner, form = spanForm(text), shaped = sourceRun(text);
+    if (!shaped) return box.call(this);
+    const { run, clusters } = shaped;
     const rtl = clusters.some((cluster, i) => i > 0 && cluster < clusters[i - 1]!);
     if (!rtl) {
       if (!loadedFonts) return box.call(this);
@@ -330,7 +457,7 @@ function installSpanAdapter(): void {
       const nextDelta = next === undefined ? undefined : position(next)! - here;
       const delta = previousDelta === undefined ? nextDelta : nextDelta === undefined ? previousDelta
         : Math.abs(previousDelta) < Math.abs(nextDelta) ? previousDelta : nextDelta;
-      const backwards = (/[\p{Script=Arabic}\p{Script=Hebrew}]/u.test(clusterText) && /\p{L}/u.test(clusterText)) || (delta ?? 0) < 0;
+      const backwards = (RTL_LETTER.test(clusterText) && /\p{L}/u.test(clusterText)) || (delta ?? 0) < 0;
       const x0 = cell.length ? Math.min(...cell.map((g) => g.x)) : 0;
       const x1 = cell.length ? Math.max(...cell.map((g) => g.x + g.ax)) : run.width;
       const atEnd = this.from >= (logical === undefined ? 0 : endOf(logical));

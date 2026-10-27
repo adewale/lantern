@@ -70,9 +70,14 @@ in an unrequested script still fail, including during capture.
 `rayner check` reports `lettering.bytes` (serialized snapshot payload),
 `lettering.pageBytes` (what the page's script carries of it), the binary subset
 size per face, and the distinct run count. A page carries the request and the
-runs, which hold every outline it draws, and only the subsets its counters shape
-with at runtime; hashes and licences stay in the snapshot, and each distinct
-licence notice joins the page's licence block once. Subsets keep the layout
+runs its scene draws, which hold every outline it shows, and only the subsets its
+counters shape with at runtime; hashes and licences stay in the snapshot, and each
+distinct licence notice joins the page's licence block once. Runs that only the
+build draws, the video footer's lines, the wrapping that measured them and the
+contact sheet's numbered titles, are listed in the snapshot's `offPage` and left
+out of the page. The snapshot file and the page store each distinct glyph outline
+once (`outlines`, with each glyph's `o` indexing it): a wrapped caption is
+measured line by line, so its glyphs recur in many runs. Subsets keep the layout
 features glyph's shaper applies when a counter replays (without ligatures for
 JetBrains Mono, which capture shapes as literal code) and no hinting. A cut's
 subset holds only the characters that cut drew, and a cut that drew nothing is
@@ -175,36 +180,78 @@ this.add(new ItalicText('Both', { weight: 'bold' }));       // the Bold Italic c
 - `test/lettering/styles` is the fixture: heading, bold, italic, bold italic,
   bold code, bold and italic Arabic, and a bold counter.
 
-## Bidi and matching
+## Shaping and bidi
 
-Bidi resolves logical runs before shaping, including paired brackets in mixed-direction text; clusters always address the original string, even when the visual glyph order is right to left. The pinned Rust backend exposed by python-bidi supplies resolved UTF-8 levels; the builder validates that metadata and maps it to source code-point indices. It handles explicit embeddings/overrides, preserves shaping joiners, and rejects unsupported isolate controls. Complex scripts beyond the registered faces remain unsupported.
-Picture descriptions still use the existing English/French vocabulary.
+HarfBuzz shapes at capture through `uharfbuzz` (pinned in
+`tools/lettering-requirements.txt`). The build already needs Python and
+fontTools to subset faces, so the Python binding adds one wheel; harfbuzzjs
+would add a WASM dependency to the Node build for the same shaping. The page
+and the video never shape: they draw the stored runs.
+
+Bidi resolves logical runs before shaping, including paired brackets in mixed-direction text; clusters always address the original string, even when the visual glyph order is right to left. The Unicode Bidi Algorithm comes from python-bidi 0.6.12, whose Rust backend is the `unicode-bidi` crate; it supplies resolved UTF-8 levels, and the builder validates that metadata, maps it to source code-point indices and reorders each line (rules L1 and L2). It handles explicit embeddings/overrides, preserves shaping joiners, and rejects unsupported isolate controls. Complex scripts beyond the registered faces remain unsupported.
+
+A paragraph's direction is its first strong letter's (rules P2 and P3): a string
+that starts with Hebrew or Arabic letters runs right to left, and Latin words and
+numbers inside it keep their own order. `test/lettering/hebrew` is the fixture.
+
+- **In the picture**, a Text is its advance box; `anchor` names a side of that
+  box (`start` is the left edge) whatever the direction, so panels and counters
+  lay out as before. Panels lay out left to right: a right-to-left label sits
+  where a left-to-right one would.
+- **In the video footer**, a right-to-left title or caption is wrapped as before,
+  each of its lines is led by a right-to-left mark (U+200F), so a wrapped line
+  that starts with a Latin word keeps the paragraph's direction, and the line
+  ends at the right edge of the text column. The video's HTML transcript marks
+  those lines `dir="rtl"`.
+- **On the page**, captions, titles, the steps list and the transcript are
+  HTML text. A page whose request includes `Arab` or `Hebr` gives them
+  `unicode-bidi: plaintext` and `text-align: start`, so each takes its direction
+  from its own text and a Hebrew caption aligns right. The player's controls are
+  unchanged. Pages that ask for no right-to-left script carry no such rule.
+
+## Changes between strings
+
+Every case is built ahead of time, so every string a case shows is shaped at
+capture and must be in a requested script; a case cannot switch to an unrequested
+language at runtime, and an unrecorded string fails closed. Counters are the one
+bounded exception described above.
 
 `Write` reveals stored glyphs; a ligature/conjunct is an indivisible outline.
-`TransformMatchingText` retains its existing pairing by the source character at
-a glyph's cluster start, including multiple glyphs at that start. Use `Transform`
-for whole-formula or ligature/conjunct changes where character pairing is not
-the intended motion. A formula's glyphs are not characters of its source, so
-they carry no cluster, and both matching transforms pair them by shape
-([Maths](REFERENCE.md#maths)). Replacement prose must be built into a case; numeric animations use the bounded exception described above.
+`TransformMatchingText` pairs glyphs of lettered text by cluster: a glyph pairs
+only with a glyph whose cluster holds the same characters, in the same face and
+cut, drawn with the same number of glyphs. A cluster whose glyphs change fades
+out and in instead of morphing: `क` to the conjunct `क्ष` fades, while `नम` to
+`नमस्ते` keeps न and म and fades in the conjunct `स्ते`, and `سلم` to `سلام` keeps its
+three letters, which change joining form as they morph (`test/lettering/matching`).
+Text in pages without lettering keeps the old pairing by the character at a
+glyph's cluster start. Use `Transform` for whole-formula changes. A formula's
+glyphs are not characters of its source, so they carry no cluster, and both
+matching transforms pair them by shape ([Maths](REFERENCE.md#maths)).
+Replacement prose must be built into a case; numeric animations use the bounded
+exception described above.
+
+Picture descriptions are generated in English or French only. Describing the
+pictures in Arabic, Hebrew, Hindi or Chinese is outside lettering on request.
 
 `Code.span`, `token` and `lineSpan` keep logical UTF-16 source ranges while their boxes cover the corresponding visual RTL cells, including complete combining clusters. For colour changes, select the entire source cluster; one glyph outline cannot be split into independently styled characters. Ordinary scenes and overlapping independent renders keep separate font leases; nested runs using the same lettering provider are supported. Awaiting a nested `Scene.run()` with a different provider (including an unlettered child) is unsupported: render those scenes independently before composing their output.
 
 ## Verification
 
 ```sh
-node --test test/lettering-outlines.test.ts test/lettering-styles.test.ts
-EXPLAIN_LETTERING=1 node --test test/lettering-outlines.test.ts test/lettering-styles.test.ts test/lettering-*-audit.test.ts
+node --test test/lettering-outlines.test.ts test/lettering-styles.test.ts test/lettering-rtl.test.ts
+EXPLAIN_LETTERING=1 node --test test/lettering-outlines.test.ts test/lettering-styles.test.ts test/lettering-rtl.test.ts test/lettering-*-audit.test.ts
 EXPLAIN_BROWSER=1 node --test test/lettering-browser.test.ts
 ```
 
-The first command uses committed Arabic, Devanagari, maths and serif fixtures
-and runs the legacy cost and bare-runtime/seek gates. The second also compares
-stored IDs, clusters and placement with a separate direct HarfBuzz oracle
-(for each bold and italic cut too),
+The first command uses the committed Arabic, Devanagari, Hebrew, maths, serif,
+bold-and-italic and matching fixtures, and runs the legacy cost and bare-runtime/seek
+gates, the visual order of bidi runs, the right-aligned footer and the
+cluster pairing. The second also compares stored IDs, clusters and placement with
+a separate direct HarfBuzz oracle (for Hebrew and each bold and italic cut too),
 checks maths symbol glyphs and fraction/script layout, deterministic refresh,
 and script rejection. It needs the capture dependencies above. The last builds
 each fixture's page, opens every step in Chromium and asserts the live stage
 draws the same path data Node draws from the same runs (`npm run test:embeds`
-runs it; `CHROMIUM_EXECUTABLE_PATH` may select a system browser). No screenshot or browser assertion substitutes for the outline and
+runs it; `CHROMIUM_EXECUTABLE_PATH` may select a system browser). It also checks
+that a Hebrew caption aligns right on the page and an English one left. No screenshot or browser assertion substitutes for the outline and
 receipt comparisons.

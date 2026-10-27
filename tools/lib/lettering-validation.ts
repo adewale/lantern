@@ -36,6 +36,8 @@ export function validateLetteringSnapshot(value: unknown): asserts value is Lett
       }
     }
   }
+  if (snapshot.offPage !== undefined && (!Array.isArray(snapshot.offPage) ||
+      snapshot.offPage.some((key) => typeof key !== 'string' || !Object.hasOwn(snapshot.runs, key)))) fail('off-page runs');
   for (const [name, value] of Object.entries(snapshot.faces)) {
     if (!object(value) || !digest(value.hash) || typeof value.license !== 'string' || typeof value.data !== 'string' ||
         !value.data.length || value.data.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(value.data)) fail('face');

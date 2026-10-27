@@ -2,13 +2,14 @@
 // lettering snapshot; check/build/video from a fresh snapshot need none of them.
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { execFileSync } from 'node:child_process';
 import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { loadFont } from '../../vendor/glyph.js';
 import { SANS, MONO, FALLBACK } from '../../src/font-data.ts';
-import { bindLettering, cutFace, defaultCutFace, letteringOf, numericAlphabet, requestCuts, runKey, scaledRun, scriptCuts, scriptFaceNames, snapshotProvider, usesLettering } from '../../src/lettering-outlines.ts';
+import { bindLettering, cutFace, defaultCutFace, letteringOf, packLettering, unpackLettering, numericAlphabet, requestCuts, runKey, scaledRun, scriptCuts, scriptFaceNames, snapshotProvider, usesLettering } from '../../src/lettering-outlines.ts';
 import type { LetteringCut, LetteringSnapshot, LetteringProvider, LetteringRequest } from '../../src/lettering-outlines.ts';
 import type { ExplainerClass } from '../../explain/settings.ts';
 import type { Run } from '../../vendor/glyph.js';
@@ -57,6 +58,14 @@ const GLYPH_FEATURES = ['rvrn', 'ccmp', 'locl', 'rlig', 'calt', 'clig', 'liga', 
 const subsetFeatures = (name: string) =>
   name.startsWith('jetbrains-mono') ? GLYPH_FEATURES.filter((f) => !['calt', 'clig', 'liga'].includes(f)) : GLYPH_FEATURES;
 const STYLES = ['bold', 'italic'];
+/**
+ * Text the build shapes but no page draws (video footer lines, the wrapping that
+ * measures them, contact-sheet titles) is shaped inside offPage(), so capture
+ * lists its runs in the snapshot's offPage. Scoped to the async work it wraps.
+ */
+const offPageWork = new AsyncLocalStorage<true>();
+export const offPage = <T>(work: () => Promise<T>): Promise<T> => offPageWork.run(true, work);
+const isOffPage = (): boolean => offPageWork.getStore() === true;
 export function validateLettering(request: LetteringRequest): void {
   if (!request || typeof request !== 'object' || Array.isArray(request)) throw new Error('lettering must be an object');
   for (const k of Object.keys(request)) if (!['faces', 'scripts', 'math', 'styles'].includes(k)) throw new Error(`Unknown lettering option: ${k}`);
@@ -103,10 +112,15 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
   const builderHash = hash((await Promise.all(['src/lettering-outlines.ts', 'src/math.ts', 'src/italic.ts', 'src/font-data.ts', 'src/fonts.ts', 'src/text.ts', 'tools/lib/lettering.ts', 'tools/lib/lettering-validation.ts', 'tools/lettering.py', 'tools/lettering-requirements.txt', 'vendor/glyph.js', 'vendor/glyph-math.js'].map((name) => readFile(join(root, name), 'utf8')))).join('\n'));
   const path = file.replace(/\.[^.]+$/, '') + '.lettering.json';
   if (!capture) {
-    const snapshot: LetteringSnapshot | undefined = await readFile(path, 'utf8').then(JSON.parse).catch((e: NodeJS.ErrnoException) => {
+    const raw: unknown = await readFile(path, 'utf8').then(JSON.parse).catch((e: NodeJS.ErrnoException) => {
       if (e.code === 'ENOENT') return undefined;
       throw e;
     });
+    let snapshot: LetteringSnapshot | undefined;
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      try { snapshot = unpackLettering(raw as LetteringSnapshot); }
+      catch (e) { throw new Error(`${(e as Error).message.replace(/; run rayner snapshots.*$/, '')}; run rayner snapshots ${file}`); }
+    }
     if (!snapshot || snapshot.version !== 1 || snapshot.sourceHash !== sourceHash || snapshot.builderHash !== builderHash || json(snapshot.request) !== json(request))
       throw new Error('Missing or stale lettering snapshot; run rayner snapshots ' + file);
     validateLetteringSnapshot(snapshot);
@@ -187,6 +201,9 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
   }
   const { typeset } = request.math ? await import('../../vendor/glyph-math.js') : { typeset: undefined };
   let replay: LetteringProvider | undefined;
+  // Which runs the scene draws, and which only the build's footers and contact sheets do
+  const onPage = new Set<string>(), offPageOnly = new Set<string>();
+  const seen = (key: string) => (isOffPage() ? offPageOnly : onPage).add(key);
   const provider: LetteringProvider = {
     async prepare() { await replay?.prepare?.(); },
     request,
@@ -196,6 +213,7 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
       if (!cut && !request.faces?.[font] && !request.scripts?.length) return fallback(text, size);
       const key = runKey(cutFace(font, cut), text);
       let r = snapshot.runs[key];
+      if (r || usesLettering(request, font, text, cut)) seen(key);
       if (!r) {
         for (const ch of text) {
           // Existing coverage remains free, including the existing numeral faces.
@@ -228,6 +246,7 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
       if (replay) return replay.math(text, size, display);
       if (!request.math || !typeset || mathFont?.tag !== 'Ok') throw new Error('Math requires meta.lettering.math: true');
       const key = runKey('math', text, display);
+      seen(key);
       let run = snapshot.runs[key];
       if (!run) {
         const result = typeset(mathFont.value, 'latin-modern-math', text, { size: 1, display });
@@ -268,18 +287,35 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
       }
       // Stable run order, regardless of which case first visits a string.
       snapshot.runs = Object.fromEntries(Object.entries(snapshot.runs).sort(([a], [b]) => a.localeCompare(b)));
+      const off = Object.keys(snapshot.runs).filter((key) => offPageOnly.has(key) && !onPage.has(key));
+      if (off.length) snapshot.offPage = off;
       snapshot.payloadHash = hash(JSON.stringify({ ...snapshot, payloadHash: undefined }));
       replay = snapshotProvider(snapshot);
       if (persist) {
         await mkdir(dirname(path), { recursive: true });
-        await writeFile(path, json(snapshot));
+        await writeFile(path, snapshotFile(packLettering(snapshot)));
       }
     },
   };
 }
+/**
+ * A packed snapshot as committed: indented JSON, but each run and each outline
+ * on one line, so the file stays small and a recapture's diff names the runs
+ * that changed.
+ */
+function snapshotFile(snapshot: LetteringSnapshot): string {
+  const lines = (entries: [string, unknown][]) => entries.map(([key, value]) => `    ${JSON.stringify(key)}: ${JSON.stringify(value)}`).join(',\n');
+  const body = Object.entries(snapshot).filter(([, value]) => value !== undefined).map(([key, value]) => {
+    if (key === 'runs') return `  "runs": {\n${lines(Object.entries(value as object))}\n  }`;
+    if (key === 'outlines') return `  "outlines": [\n${(value as unknown[]).map((o) => '    ' + JSON.stringify(o)).join(',\n')}\n  ]`;
+    return `  ${JSON.stringify(key)}: ${JSON.stringify(value, null, 2).replace(/\n/g, '\n  ')}`;
+  });
+  return `{\n${body.join(',\n')}\n}\n`;
+}
 export async function letteringWeight(snapshot: LetteringSnapshot) {
   return {
-    bytes: Buffer.byteLength(JSON.stringify(snapshot)),
+    /** The snapshot as stored: packed, each outline once. */
+    bytes: Buffer.byteLength(JSON.stringify(packLettering(snapshot))),
     /** What the page's script carries of it (pageSnapshot). */
     pageBytes: Buffer.byteLength(JSON.stringify(await pageSnapshot(snapshot))),
     faceBytes: Object.fromEntries(Object.entries(snapshot.faces).map(([name, face]) => [name, Buffer.from(face.data, 'base64').length])),
@@ -287,9 +323,10 @@ export async function letteringWeight(snapshot: LetteringSnapshot) {
   };
 }
 /**
- * What a page carries of a snapshot: the request and the runs, which hold every
- * outline it draws, and only the subsets its counters shape with (the faces
- * snapshotProvider decodes). Hashes and licences stay in the snapshot; the
+ * What a page carries of a snapshot, packed: the request and the runs its scene
+ * draws, which hold every outline it shows, each distinct outline once, and only
+ * the subsets its counters shape with (the faces snapshotProvider decodes). Runs
+ * only the build draws (offPage), hashes and licences stay in the snapshot; the
  * licences go to the page's licence block, once each.
  */
 export async function pageSnapshot(snapshot: LetteringSnapshot): Promise<LetteringSnapshot> {
@@ -300,11 +337,13 @@ export async function pageSnapshot(snapshot: LetteringSnapshot): Promise<Letteri
       return Reflect.get(target, key);
     },
   });
-  await snapshotProvider({ ...snapshot, faces }).prepare!();
-  return {
-    version: 1, sourceHash: '', builderHash: '', request: snapshot.request, runs: snapshot.runs, shaper: '',
+  const off = new Set(snapshot.offPage);
+  const runs = Object.fromEntries(Object.entries(snapshot.runs).filter(([key]) => !off.has(key)));
+  await snapshotProvider({ ...snapshot, runs, faces }).prepare!();
+  return packLettering({
+    version: 1, sourceHash: '', builderHash: '', request: snapshot.request, runs, shaper: '',
     faces: Object.fromEntries([...used].sort().map((name) => [name, { hash: '', data: snapshot.faces[name]!.data, license: '' }])),
-  };
+  });
 }
 /** The face licences a lettered page adds to its licence block: each distinct notice once. */
 export const letteringLicences = (snapshot: LetteringSnapshot): string[] =>

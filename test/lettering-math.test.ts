@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { Scene, NullSink, MathTex, TransformMatchingShapes, TransformMatchingText, SnapshotSink, renderAt, renderElements } from '../src/index.ts';
 import type { Mobject, VMobject } from '../src/index.ts';
-import { bindLettering, snapshotProvider } from '../src/lettering-outlines.ts';
+import { bindLettering, snapshotProvider, unpackLettering } from '../src/lettering-outlines.ts';
 import type { LetteringSnapshot } from '../src/lettering-outlines.ts';
 import { loadFont } from '../vendor/glyph.js';
 import type { Font } from '../vendor/glyph.js';
@@ -28,7 +28,7 @@ import type { Expected } from '../tools/oracle/glyph-math.ts';
 
 const fixture = join(ROOT, 'test/lettering/math');
 const expected: Expected = JSON.parse(await readFile(EXPECTED, 'utf8'));
-const snapshot: LetteringSnapshot = JSON.parse(await readFile(join(fixture, 'scene.lettering.json'), 'utf8'));
+const snapshot: LetteringSnapshot = unpackLettering(JSON.parse(await readFile(join(fixture, 'scene.lettering.json'), 'utf8')));
 const mathRuns = Object.entries(snapshot.runs).filter(([key]) => JSON.parse(key)[0] === 'math');
 const mathFont = process.env.RAYNER_MATH_FONT ?? '/usr/share/texmf/fonts/opentype/public/lm-math/latinmodern-math.otf';
 // Capture accepts only the pinned file, so the font-gated tests skip any other

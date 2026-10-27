@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { Scene, Text, NullSink, toSvgString } from '../src/index.ts';
-import { runKey, bindLettering, snapshotProvider } from '../src/lettering-outlines.ts';
+import { runKey, bindLettering, snapshotProvider, unpackLettering } from '../src/lettering-outlines.ts';
 import type { LetteringSnapshot } from '../src/lettering-outlines.ts';
 import { collectProject, hash, ROOT } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
@@ -15,7 +15,7 @@ import { launch } from '../tools/lib/browser.ts';
 
 const fixtures = join(ROOT, 'test/lettering');
 const ids = ['arabic', 'devanagari', 'math', 'style'] as const;
-const snapshot = async (id: string): Promise<LetteringSnapshot> => JSON.parse(await readFile(join(fixtures, id, 'scene.lettering.json'), 'utf8'));
+const snapshot = async (id: string): Promise<LetteringSnapshot> => unpackLettering(JSON.parse(await readFile(join(fixtures, id, 'scene.lettering.json'), 'utf8')));
 
 test('all 26 unrequested explainers keep their original page bytes and receipt hashes', async () => {
   const expected = JSON.parse(await readFile(join(fixtures, 'legacy-builds.json'), 'utf8'));

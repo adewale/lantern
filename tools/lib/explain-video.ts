@@ -1,4 +1,4 @@
-import { withSceneLettering } from '../../src/lettering-outlines.ts';
+import { rightToLeft, withSceneLettering } from '../../src/lettering-outlines.ts';
 import { spawn, execFileSync } from 'node:child_process';
 import { once } from 'node:events';
 import { mkdir, writeFile, readFile, mkdtemp, rename, rm } from 'node:fs/promises';
@@ -18,6 +18,8 @@ const CAPTION = { size: 0.34, leading: 0.5, lines: 4 };
 export const FOOTER_TEXT_WIDTH = 13.6;
 /** Footer height in scene units: a 1280 × 720 stage over a 240 px footer is 1280 × 960. */
 const FOOTER_HEIGHT = 3;
+/** The footer's top edge, in the footer band's scene units. */
+const FOOTER_TEXT_TOP = FOOTER_HEIGHT / 2;
 /** MP4 tags a stream with an ISO 639-2 code (the terminology code, as MP4 uses); WebM and WebVTT take the scene's BCP 47 tag as is. */
 const ISO_639_2: Record<string, string> = { ar: 'ara', hi: 'hin', he: 'heb', zh: 'zho', ja: 'jpn', ko: 'kor', el: 'ell', ru: 'rus', en: 'eng', fr: 'fra' };
 /** The subtitle stream's language tag: the BCP 47 tag for WebM, an ISO 639-2 code for MP4. */
@@ -32,12 +34,27 @@ export function trackLanguage(lang: string, webm = false): string {
  * picture shows. Descriptions follow the page's language where explain/words.ts has it; otherwise they are English and marked so.
  */
 export function videoTranscript(title: string, lang: string, steps: Trace['steps']): string {
-  return `<!doctype html><html lang="${htmlEscape(lang)}"><meta charset="utf-8"><title>${htmlEscape(title)}</title><h1>${htmlEscape(title)}</h1><ol>${steps
+  // A right-to-left title or caption is marked so, as the footer aligns it
+  const dir = (text: unknown) => (rightToLeft(String(text)) ? ' dir="rtl"' : '');
+  return `<!doctype html><html lang="${htmlEscape(lang)}"><meta charset="utf-8"><title>${htmlEscape(title)}</title><h1${dir(title)}>${htmlEscape(title)}</h1><ol>${steps
     .map((s) => {
       const shows = pictureHtml(s.after);
-      return `<li><h2>${htmlEscape(s.meta.title ?? s.step)}</h2><p>${htmlEscape(s.meta.caption ?? '')}</p>${shows && descriptionLang(lang) ? `<div${descriptionLang(lang)}>${shows}</div>` : shows}</li>`;
+      return `<li><h2${dir(s.meta.title ?? s.step)}>${htmlEscape(s.meta.title ?? s.step)}</h2><p${dir(s.meta.caption ?? '')}>${htmlEscape(s.meta.caption ?? '')}</p>${shows && descriptionLang(lang) ? `<div${descriptionLang(lang)}>${shows}</div>` : shows}</li>`;
     })
     .join('')}</ol></html>\n`;
+}
+
+export { rightToLeft };
+/** Right-to-left mark: a line that starts with it keeps its paragraph's direction when shaped alone. */
+const RLM = '\u200f';
+/**
+ * A title or caption as the footer draws it: wrapped, and for a right-to-left
+ * paragraph each line led by a right-to-left mark, so a wrapped line that starts
+ * with a Latin word still reads right to left and the footer aligns it right.
+ */
+export function footerParagraph(text: string, width = FOOTER_TEXT_WIDTH, size = CAPTION.size): string[] {
+  const lines = wrapCaption(text, width, size);
+  return rightToLeft(text) ? lines.map((line) => RLM + line) : lines;
 }
 
 /** Breakable white space: every \s except the no-break spaces, which hold their words together. */
@@ -73,7 +90,9 @@ export async function footerLines(trace: Trace, values: Settings): Promise<strin
   takeMissingGlyphs();
   return trace.steps.map((s) => {
     try {
-      const lines = [s.meta.title ?? s.step, s.meta.caption ?? ''].map((t) => wrapCaption(String(t), FOOTER_TEXT_WIDTH));
+      const lines = [s.meta.title ?? s.step, s.meta.caption ?? ''].map((t) => footerParagraph(String(t)));
+      // wrapCaption shaped each line as it measured it; a right-to-left line is drawn with its mark, so shape that too
+      for (const line of lines.flat()) if (line.startsWith(RLM)) new Text(line, { fontSize: CAPTION.size });
       // Footer text is drawn as outlines too, so a character the fonts lack would be blank.
       const lost = [...takeMissingGlyphs().values()].join('');
       if (lost) throw new Error(`the title or caption has characters the fonts cannot draw: ${[...new Set(lost)].join(' ')}`);
@@ -170,18 +189,27 @@ async function footerColours(dark: boolean) {
 
 async function footer(lines: string[], width: number, colours: { bg: string; fg: string; line: string }) {
   const scene = new Scene(new NullSink()),
-    top = FOOTER_HEIGHT / 2;
+    top = FOOTER_TEXT_TOP;
   // A hairline divides stage from footer when their backgrounds are close.
   scene.add(new Rectangle({ width: 16, height: 0.025, fill: colours.line, stroke: 'none' }).moveTo([0, top - 0.0125]));
-  lines.forEach((line, i) =>
-    scene.add(
-      new Text(line, { fontSize: CAPTION.size, color: colours.fg, anchor: 'start' }).moveTo(
-        [-FOOTER_TEXT_WIDTH / 2, top - 0.62 - i * CAPTION.leading],
-        [-1, 0],
-      ),
-    ),
-  );
+  footerText(scene, lines, colours.fg);
   return (await rasterize(band(scene, width, FOOTER_HEIGHT, colours.bg))).pixels;
+}
+/**
+ * The footer's lines on `scene`: each starts at the left edge of the text column,
+ * or for a right-to-left paragraph (footerParagraph), ends at its right edge.
+ */
+export function footerText(scene: Scene, lines: string[], color: string): Text[] {
+  const top = FOOTER_TEXT_TOP;
+  return lines.map((line, i) => {
+    const rtl = line.startsWith(RLM);
+    const text = new Text(line, { fontSize: CAPTION.size, color, anchor: rtl ? 'end' : 'start' }).moveTo(
+      [(rtl ? 1 : -1) * FOOTER_TEXT_WIDTH / 2, top - 0.62 - i * CAPTION.leading],
+      [rtl ? 1 : -1, 0],
+    );
+    scene.add(text);
+    return text;
+  });
 }
 
 export async function renderVideo(
@@ -219,7 +247,7 @@ export async function renderVideo(
   const steps = filmSteps(trace);
   if (!steps.length) throw new Error('A video needs at least one step');
   // The footer must hold every title and caption; fail before FFmpeg starts, naming the step and case.
-  const footerText = withFooter ? await withSceneLettering(variant.Scene, () => footerLines(trace, variant.values)) : steps.map((): string[][] => [[], []]);
+  const footerLinesByStep = withFooter ? await withSceneLettering(variant.Scene, () => footerLines(trace, variant.values)) : steps.map((): string[][] => [[], []]);
   out = resolve(out);
   await mkdir(dirname(out), { recursive: true });
   const temp = await mkdtemp(join(dirname(out), '.rayner-video-'));
@@ -289,7 +317,7 @@ export async function renderVideo(
     if (withFooter) {
       // Light or dark tokens to match the stage, judged by its top-left pixel.
       colours ??= await footerColours(0.2126 * stage[0]! + 0.7152 * stage[1]! + 0.0722 * stage[2]! < 128);
-      const pixels = (footers[step]![part] ??= await withSceneLettering(variant.Scene, () => footer(footerText[step]![part]!, width, colours!)));
+      const pixels = (footers[step]![part] ??= await withSceneLettering(variant.Scene, () => footer(footerLinesByStep[step]![part]!, width, colours!)));
       frame = Buffer.concat([stage, pixels]);
     }
     for (let i = 0; i < count; i++) {
