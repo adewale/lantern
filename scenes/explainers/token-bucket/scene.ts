@@ -282,10 +282,10 @@ export default class TokenBucketExplainer extends Scene {
     ], {
       fontSize: 0.26,
       gap: 0.42,
-      at: [3.85, -2.78],
+      at: [4.9, -2.78],
     }));
     this.readout = readout;
-    const readoutTitle = new Text('Bucket balance', { fontSize: 0.2, color: soft }).moveTo([2.25, -2.4], [-1, 0]);
+    const readoutTitle = new Text('Bucket balance', { fontSize: 0.2, color: soft }).moveTo([3.3, -2.4], [-1, 0]);
     s.keep(readout, readoutTitle, {
       describe: () =>
         `Bucket balance: ${formatState(this.state.tokens)} tokens left, last refill at ${formatState(this.state.lastRefill)} seconds, ${formatState(this.state.allowed)} accepted; rejected requests: ${formatState(this.state.rejected)}`,

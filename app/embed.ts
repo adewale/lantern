@@ -140,8 +140,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   controls.append(prev, next, tools);
   const notice = el('p', undefined, 'notice');
   notice.setAttribute('role', 'status');
-  // The stage and, over its corner on a narrow stage, the overview: a control outside the
-  // stage, whose role of img makes everything inside it a picture.
+  // Keep navigation outside the picture so controls cannot cover its lettering.
   const frame = el('div', undefined, 'frame');
   // Unseen copies of the caption and the lede, at their width and in their type, measure
   // every step's words so each keeps the room its case's longest needs: the steps list and
@@ -175,7 +174,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const framed = window.parent !== window && !params.has('parentOrigin');
   root.replaceChildren(head, player, steps, transcript, ...(framed ? [standalone] : []));
 
-  // A map of the whole picture over the stage's corner while a narrow stage is zoomed:
+  // A map beside the picture while a narrow stage is zoomed:
   // where the view is, and where the step changed. Pressing it moves to the step's next
   // close-up, so the reader can see every change in turn without hunting for it.
   const overview = el('button', undefined, 'overview'),
@@ -184,7 +183,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   overview.type = 'button';
   overview.hidden = true;
   overview.append(map);
-  frame.append(stage, overview);
+  frame.append(stage);
   // Keep view navigation beside the picture and separate from the step controls.
   const views = el('div', undefined, 'view-controls'),
     viewCount = el('span'),
@@ -194,7 +193,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   nextView.type = wholePicture.type = 'button';
   viewCount.setAttribute('aria-live', 'polite');
   views.hidden = true;
-  views.append(viewCount, nextView, wholePicture, viewHelp);
+  views.append(viewCount, nextView, wholePicture, overview, viewHelp);
   frame.after(views);
   const narrow = () => stage.clientWidth > 0 && stage.clientWidth < NARROW_PX;
   let shownLayout: StepLayout | undefined,

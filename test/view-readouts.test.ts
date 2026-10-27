@@ -22,6 +22,14 @@ async function readoutAtSteps(S: SceneClass): Promise<Array<{ step: string; stat
       const v = (scene as unknown as { readout?: View | null }).readout;
       if (scene instanceof TokenBucketExplainer) {
         assert.ok(!scene.familyMembers().some((m) => 'text' in m && m.text === 'scene.state'), 'author debug title must not reach the reader');
+        if (v) {
+          const own = new Set(v.family()), b = v.box()!;
+          for (const m of scene.familyMembers()) {
+            if (own.has(m) || !('text' in m)) continue;
+            const other = m.box();
+            if (other) assert.ok(Math.min(b[2], other[2]) - Math.max(b[0], other[0]) < 0.001 || Math.min(b[3], other[3]) - Math.max(b[1], other[1]) < 0.001, `readout overlaps ${m.text}`);
+          }
+        }
       }
       out.push({ step: s.path, state: this.events.at(-1)!.state, shown: v ? v.shown : null });
     }

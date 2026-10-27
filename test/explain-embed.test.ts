@@ -1888,6 +1888,9 @@ test('the PKCE attack opens with the stolen-code, guessed-verifier and rejection
       await page.goto(`${embed}/oauth-pkce.html?attacker=yes&step=attack`);
       await page.waitForSelector('[data-ready=true]');
       await quiet(page);
+      const stageRect = await page.locator('.stage').boundingBox();
+      const mapRect = await page.locator('.overview').boundingBox();
+      assert.ok(stageRect && mapRect && mapRect.y >= stageRect.y + stageRect.height, 'the map must not cover any part of the picture');
       const seen = await page.locator('.stage svg:not(.leaving)').evaluate((svg, b) => {
         const matrix = (svg as SVGSVGElement).getScreenCTM()!;
         const stage = svg.parentElement!.getBoundingClientRect();

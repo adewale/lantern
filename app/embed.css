@@ -40,8 +40,8 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .view-controls[hidden]{display:none}
 .view-controls>span{font-size:.875rem;color:var(--muted);margin-right:auto}
 .view-help{flex-basis:100%;margin:0;font-size:.875rem;line-height:1.5;color:var(--muted)}
-.overview{position:absolute;right:2px;bottom:2px;z-index:1;display:block;width:76px;height:48px;padding:6px;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.overview[hidden]{display:none}
+.overview{flex:none;display:block;width:76px;height:48px;padding:6px;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.overview[hidden]{display:block;visibility:hidden}
 .overview:disabled{cursor:default}
 .overview .map{position:relative;display:block;width:64px;height:36px;border-radius:3px;background:color-mix(in srgb,var(--surface) 82%,transparent);box-shadow:0 0 0 1px var(--line-strong),0 1px 3px rgb(0 0 0/.15);overflow:hidden}
 .overview .map span{position:absolute;display:block}
