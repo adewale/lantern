@@ -13,7 +13,7 @@ import {
   Text,
 } from '../src/index.ts';
 import type { Scene, Mobject, Box, Vec, Style } from '../src/index.ts';
-import { regionBox, boxCenter, raised, emphasis, dimOpacity } from './look.ts';
+import { regionBox, boxCenter, raised, emphasis, dimOpacity, emphasises } from './look.ts';
 import type { Region } from './look.ts';
 import { diagramsOf, findingsOf, SVG_PX_PER_UNIT } from '../integrations/agentic-mermaid/snapshot.ts';
 import { outlineText } from '../integrations/agentic-mermaid/text.ts';
@@ -342,6 +342,7 @@ export class Diagram {
     this.root.clipBox = [...box];
     this.accent = emphasis(snapshot.palette);
     this.dimmed = dimOpacity(snapshot.palette);
+    emphasises(scene, () => this.emphasised());
     for (const info of partsOf(snapshot)) {
       const mob = new Group();
       mob.key = info.id;
@@ -617,6 +618,20 @@ export class Diagram {
       : '';
     return `${y}${range}${x ? ` ${w.by(x)}` : ''}${over}`;
   }
+  /** The parts in focus: a camera focus holds only while the camera stays where it put it. */
+  private inFocus(): string[] | null {
+    const view = this.scene.frame.box();
+    return this.focusView && !(view && view.every((v, i) => Math.abs(v - this.focusView![i]!) < 1e-6)) ? null : this.focused;
+  }
+  /** What the diagram emphasises now, for the player's phone close-ups (`emphasises` in look.ts). */
+  private emphasised(): [Mobject, string][] {
+    const part = (id: string) => this.parts.get(id)?.mob;
+    return [
+      ...[...this.marks].flatMap(([id, m]): [Mobject, string][] => (part(id) ? [[part(id)!, `mark ${m.color} ${m.as}`]] : [])),
+      ...(this.inFocus() ?? []).flatMap((id): [Mobject, string][] => (part(id) ? [[part(id)!, 'focus']] : [])),
+      ...this.notes.map((n): [Mobject, string] => [n.mob, `note ${n.text}`]),
+    ];
+  }
   /**
    * What a reader sees of this diagram: what it is and how big, then each shown part
    * by its words in reading order (participants and lanes first), with its emphasis,
@@ -635,10 +650,7 @@ export class Diagram {
     const step = this.scene.steps.at(-1)?.name;
     // A trail already marks the path; a walk without one names it.
     const walked = this.walked;
-    // A camera focus holds only while the camera stays where it put it.
-    const view = this.scene.frame.box(),
-      focused =
-        this.focusView && !(view && view.every((v, i) => Math.abs(v - this.focusView![i]!) < 1e-6)) ? null : this.focused;
+    const focused = this.inFocus();
     if (walked && walked.step === step && !walked.trail) parts.push({ name: walked.hops.join(', '), mark: w.path });
     for (const n of this.notes) parts.push({ name: w.beside(n.text, this.nameOf(n.id)), mark: w.note });
     const order = [...this.order].sort((a, b) => +!isScaffold(this.parts.get(a)!.info) - +!isScaffold(this.parts.get(b)!.info));

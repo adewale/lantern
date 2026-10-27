@@ -7,7 +7,10 @@ import {
   Scene, Rectangle, Circle, Arrow, Line, Dot, Text, Code, DecimalNumber,
   FadeIn, FadeOut, Write, Create, Transform, Indicate, MoveAlongPath, LaggedStart, TEAL, GOLD, GREY,
 } from '../../src/index.ts';
-import type { SceneClass } from '../../src/index.ts';
+import type { Box, Mobject, SceneClass } from '../../src/index.ts';
+import { labelOf } from '../../explain/diagrams.ts';
+import { Card } from '../../explain/panels.ts';
+import { toView } from '../../app/embed-closeup.ts';
 import { EXPLAINERS } from '../../scenes/explainers/catalog.ts';
 import { collectProject, defaultVariant, ROOT } from '../../tools/lib/explain-project.ts';
 
@@ -53,3 +56,41 @@ export const explainer = (id: string): Promise<SceneClass> => {
 };
 export const explainers = (): Promise<[string, SceneClass][]> =>
   Promise.all(EXPLAINERS.map(async ({ id }): Promise<[string, SceneClass]> => [id, await explainer(id)]));
+
+/**
+ * The box around what `pick` finds in a step's resting picture, in the camera's view units
+ * (stage units while the camera is home), where close-ups are worked out.
+ */
+export async function restingBox(Source: SceneClass, step: string, pick: (scene: Scene) => Mobject[]): Promise<Box> {
+  let box: Box | null = null;
+  await new Source(
+    {
+      async frame() {},
+      async stepEnd(scene, s) {
+        if (s.name !== step) return;
+        const found = pick(scene);
+        if (!found.length) throw new Error(`nothing picked at the end of ${step}`);
+        const view = scene.frame.box() ?? ([-8, -4.5, 8, 4.5] as Box);
+        const boxes = found.map((m) => toView(m.box()!, view));
+        box = [Math.min(...boxes.map((b) => b[0])), Math.min(...boxes.map((b) => b[1])), Math.max(...boxes.map((b) => b[2])), Math.max(...boxes.map((b) => b[3]))];
+      },
+    },
+    { skipUntil: Infinity },
+  ).run();
+  if (!box) throw new Error(`no step ${step}`);
+  return box;
+}
+/** A shown card's row: its label and value. */
+export const cardRow = (scene: Scene, label: string, value: string): Mobject[] => {
+  const card = scene.familyMembers().find(
+    (m): m is Card => m instanceof Card && (m.style.opacity ?? 1) > 0.5 && m.values.get(label)?.text === value,
+  );
+  return card ? [card.labels.get(label)!, card.values.get(label)!] : [];
+};
+/** Shown labels with these words, outside cards (a diagram's, say). */
+export const wordsOutsideCards = (scene: Scene, ...words: string[]): Mobject[] =>
+  scene.familyMembers().filter((m) => {
+    if (!words.includes(labelOf(m)?.text ?? '')) return false;
+    for (let a: Mobject | null = m; a; a = a.parent) if (a instanceof Card) return false;
+    return true;
+  });
