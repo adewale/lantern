@@ -111,11 +111,15 @@ test('fresh Text is centred on its advance box before any positioning', () => {
   // The contract is an absolute origin, not agreement with a second Text or
   // moveTo(), both of which can hide the same constructor offset.
   fc.assert(fc.property(
-    fc.string({ unit: 'binary', maxLength: 32 }),
+    fc.string({ unit: 'binary' }),
     fc.constantFrom('sans' as const, 'mono' as const),
-    fc.float({ min: Math.fround(1e-40), max: Math.fround(1e30), noNaN: true }),
-    (text, font, fontSize) => {
-      const t = new Text(text, { font, fontSize });
+    fc.double({ min: Number.MIN_VALUE, max: Number.MAX_VALUE, noNaN: true }),
+    fc.constantFrom('normal' as const, 'bold' as const),
+    (text, font, requestedSize, weight) => {
+      // Draw all positive finite magnitudes, including subnormals. Bound only
+      // materialization: outlines use Float32 storage, not unbounded reals.
+      const fontSize = Math.min(requestedSize, 1e30);
+      const t = new Text(text.slice(0, 32), { font, fontSize, weight });
       const f = t.frameBox;
       const anchor = t.anchorPoint();
       // Float32 points undergo a cast and a translation; allow their rounding
@@ -124,7 +128,7 @@ test('fresh Text is centred on its advance box before any positioning', () => {
       assert.ok(Math.abs((f[0]! + f[2]!) / 2) <= tolerance, 'advance box x centre is zero');
       assert.ok(Math.abs((f[1]! + f[3]!) / 2) <= tolerance, 'advance box y centre is zero');
       assert.ok(anchor.every((v) => Math.abs(v) <= tolerance), 'public default anchor is the origin');
-    }), params(500, { examples: [['Label', 'sans', 0.4], ['', 'mono', 1]] }));
+    }), params(500, { examples: [['Label', 'sans', 0.4, 'normal'], ['', 'mono', Number.MIN_VALUE, 'bold']] }));
 });
 
 test('scene admission methods render each descendant once across orders and batches', () => {

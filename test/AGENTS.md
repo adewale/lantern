@@ -17,3 +17,5 @@ Generate rejection inputs at JavaScript boundaries as well as valid TypeScript v
 Imported labels have the same visible collision contract as native labels. Source provenance is not an exemption. Route checks must account for glyph ink, stroke width, camera and descendant clips, actual paint order and genuine endpoint attachments. Do not excuse a crossing using a plate clipped away from it, or a global overlap opt-out.
 
 A live DOM record test must vary text independently of shared immutable attribute objects, and check own attribute removal. Keep this browser boundary separate from SVG/XML parser proof. Larger run counts cannot discover operation classes or contracts absent from the generator.
+
+Collection browser review visits one selected step per settings case at both widths. It does not cover every step or prove that a caption's named objects are visible. Protect a new story claim with named screen-space targets at the affected step and viewport; retain wording/value assertions for reader readouts.
