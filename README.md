@@ -4,7 +4,7 @@ Rayner turns a TypeScript program into an explainer that a reader steps through 
 
 Rayner is for engineers and technical educators who write TypeScript and want readers to explore a protocol, algorithm or code change. It works best when changing a setting changes the explanation: a cache hit takes a different path from a miss, or exchanging an intercepted authorization code fails without the verifier. Authors need to test the model and review the pictures; the build checks cannot establish whether the explanation is true.
 
-Start with [Your first explainer](docs/TUTORIAL.md), then use the [reference](docs/REFERENCE.md) while writing and [publishing guide](docs/PUBLISHING.md) when the page is ready. The [authoring skill](skills/rayner-explainers/SKILL.md) gives agents the same workflow, including how to test the model and review every case. The published examples are at [oshineye.dev/projects/rayner](https://oshineye.dev/projects/rayner). Work from a checkout for now; the npm package `rayner` has not been published.
+Start with [Your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md), then use the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) while writing and [publishing guide](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) when the page is ready. The [authoring skill](https://github.com/adewale/rayner/blob/main/skills/rayner-explainers/SKILL.md) gives agents the same workflow, including how to test the model and review every case. The published examples are at [oshineye.dev/projects/rayner](https://oshineye.dev/projects/rayner). Work from a checkout for now; the npm package `rayner` has not been published.
 
 ## Requirements
 
@@ -18,7 +18,7 @@ Node 26 or later. CI is configured for Ubuntu 24.04; other platforms have not be
 
 `check` and `build` from committed snapshots need none of them.
 
-Optional per-scene fonts, Arabic/Devanagari shaping, and typeset maths are documented in [Lettering on request](docs/LETTERING.md). Existing scenes retain their original output.
+Optional per-scene fonts, Arabic/Devanagari shaping, and typeset maths are documented in [Lettering on request](https://github.com/adewale/rayner/blob/main/docs/LETTERING.md). Existing scenes retain their original output.
 
 ## Install after the first release
 
@@ -51,7 +51,7 @@ The collection has 26 explainers with 140 cases between them, and uses all 15 Ag
 
 ## Write one
 
-For a guided walkthrough, follow [Your first explainer](docs/TUTORIAL.md). These are the commands it uses:
+For a guided walkthrough, follow [Your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md). These are the commands it uses:
 
 ```sh
 npm run rayner -- init my-explainer
@@ -94,43 +94,44 @@ export default class MyExplainer extends Scene {
 }
 ```
 
-`preview` opens it as a page with two steps, and "Follow a request" under the title switches between a cache hit and a miss. `preview` serves the page and rebuilds it on save. `check` runs every case through [the checks](docs/REFERENCE.md#checks). `build` writes the page and the response headers it needs; [publishing](docs/PUBLISHING.md) shows how to embed it.
+`preview` opens it as a page with two steps, and "Follow a request" under the title switches between a cache hit and a miss. `preview` serves the page and rebuilds it on save. `check` runs every case through [the checks](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md#checks). `build` writes the page and the response headers it needs; [publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) shows how to embed it.
 
 A scene is an ordinary Rayner scene, so beside the helpers it can use the engine features the explainers use. Each has a guide:
 
-- [Camera](docs/CAMERA.md): `this.frame` zooms without moving a point; `d.focus` moves it when given `{ camera: true }`, and by default a focus still rescales the artwork
-- [Matching and diff transforms](docs/MATCHING.md): code that morphs along its own diff (`TransformDiff`), and shapes and text matched by key
-- [Emphasis](docs/EMPHASIS.md): emphasis that stays on the resting picture
-- [Graphing](docs/GRAPHING.md): charts of the model's numbers (`Axes`)
-- [Views](docs/VIEWS.md): readouts rebuilt from `scene.state` (`view`)
-- [Code](docs/CODE.md): addressable, syntax-coloured code
-- [Animations](docs/ANIMATIONS.md): `Restore`, `TransformFromCopy` and `Succession`
+- [Camera](https://github.com/adewale/rayner/blob/main/docs/CAMERA.md): `this.frame` zooms without moving a point; `d.focus` moves it when given `{ camera: true }`, and by default a focus still rescales the artwork
+- [Matching and diff transforms](https://github.com/adewale/rayner/blob/main/docs/MATCHING.md): code that morphs along its own diff (`TransformDiff`), and shapes and text matched by key
+- [Emphasis](https://github.com/adewale/rayner/blob/main/docs/EMPHASIS.md): emphasis that stays on the resting picture
+- [Graphing](https://github.com/adewale/rayner/blob/main/docs/GRAPHING.md): charts of the model's numbers (`Axes`)
+- [Views](https://github.com/adewale/rayner/blob/main/docs/VIEWS.md): readouts rebuilt from `scene.state` (`view`)
+- [Code](https://github.com/adewale/rayner/blob/main/docs/CODE.md): addressable, syntax-coloured code
+- [Animations](https://github.com/adewale/rayner/blob/main/docs/ANIMATIONS.md): `Restore`, `TransformFromCopy` and `Succession`
 
-[The engine map](docs/ENGINE.md) says why the engine leaves out 3D, boolean path operations, runtime LaTeX, `transform` matrices, raster images and narration.
+[The engine map](https://github.com/adewale/rayner/blob/main/docs/ENGINE.md) says why the engine leaves out 3D, boolean path operations, runtime LaTeX, `transform` matrices, raster images and narration.
 
 ## Limits
 
 - Default lettering uses embedded Inter and JetBrains Mono, with Noto subsets for Arabic-Indic, Devanagari and Chinese numerals. A diagram style does not select its own font.
-- Scenes can request Latin Extended, Greek and Cyrillic, or opt into Arabic, Devanagari, Hebrew and Chinese letters, registered replacement faces and typeset maths. The [lettering guide](docs/LETTERING.md) lists the supported requests, capture dependencies and snapshot rules. Unrequested characters and unsupported scripts fail the build.
+- Scenes can request Latin Extended, Greek and Cyrillic, or opt into Arabic, Devanagari, Hebrew and Chinese letters, registered replacement faces and typeset maths. The [lettering guide](https://github.com/adewale/rayner/blob/main/docs/LETTERING.md) lists the supported requests, capture dependencies and snapshot rules. Unrequested characters and unsupported scripts fail the build.
 - Descriptions of the pictures are generated in English or French only.
 - On a phone each step opens on a close-up of what it changed, so a reader pans for the rest.
 - The models are small and cited, and no subject expert has reviewed the explainers.
 
 ## Documents
 
-- [Tutorial](docs/TUTORIAL.md): a first explainer, from `init` to a built page
-- [Reference](docs/REFERENCE.md): helpers, checks, command line, URL and resize contract, accessibility, video files, scripts
-- [Publishing](docs/PUBLISHING.md): hosting a page and exporting a video
-- [Engine map](docs/ENGINE.md): the engine's guides (camera, matching and diff transforms, emphasis, graphing, views, code spans, animations) and what it leaves out
-- [Upstream](docs/UPSTREAM.md): the fork base, engine changes and Agentic Mermaid
-- [Design record](specs/rayner.md): why the project is shaped this way, and the open decisions
-- [Changelog](CHANGELOG.md)
-- [Lettering](docs/LETTERING.md): requested scripts, fonts, maths and snapshot capture
-- [Authoring skill](skills/rayner-explainers/SKILL.md): the authoring and review workflow for agents
+- [Tutorial](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md): a first explainer, from `init` to a built page
+- [Reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md): helpers, checks, command line, URL and resize contract, accessibility, video files, scripts
+- [Publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md): hosting a page and exporting a video
+- [Engine map](https://github.com/adewale/rayner/blob/main/docs/ENGINE.md): the engine's guides (camera, matching and diff transforms, emphasis, graphing, views, code spans, animations) and what it leaves out
+- [Upstream](https://github.com/adewale/rayner/blob/main/docs/UPSTREAM.md): the fork base, engine changes and Agentic Mermaid
+- [Design record](https://github.com/adewale/rayner/blob/main/specs/rayner.md): why the project is shaped this way, and the open decisions
+- [Changelog](https://github.com/adewale/rayner/blob/main/CHANGELOG.md)
+- [npm releases](https://github.com/adewale/rayner/blob/main/docs/RELEASING.md): maintainer validation, tested archives and trusted publishing
+- [Lettering](https://github.com/adewale/rayner/blob/main/docs/LETTERING.md): requested scripts, fonts, maths and snapshot capture
+- [Authoring skill](https://github.com/adewale/rayner/blob/main/skills/rayner-explainers/SKILL.md): the authoring and review workflow for agents
 
 ## Fork and engine
 
-Rayner is a fork of Ivar Vong's [Lantern](https://github.com/ivarvong/lantern) at commit `2c7bad5`, maintained by [Ade Oshineye](https://github.com/adewale). It keeps Lantern's engine: shapes and glyphs stored as Bézier points, a fixed clock, and seeking by replay. [Upstream](docs/UPSTREAM.md) lists each engine change with the test that proves it. It deletes Lantern's development player, Cloudflare Worker, JSON scene format and flowchart parser. In their place, a build sits between the scene and the reader: Agentic Mermaid draws the diagrams, every reader setting becomes a case that is checked before it ships, and the output is a portable HTML page or a captioned video. Agents lose the Worker's endpoints in that trade.
+Rayner is a fork of Ivar Vong's [Lantern](https://github.com/ivarvong/lantern) at commit `2c7bad5`, maintained by [Ade Oshineye](https://github.com/adewale). It keeps Lantern's engine: shapes and glyphs stored as Bézier points, a fixed clock, and seeking by replay. [Upstream](https://github.com/adewale/rayner/blob/main/docs/UPSTREAM.md) lists each engine change with the test that proves it. It deletes Lantern's development player, Cloudflare Worker, JSON scene format and flowchart parser. In their place, a build sits between the scene and the reader: Agentic Mermaid draws the diagrams, every reader setting becomes a case that is checked before it ships, and the output is a portable HTML page or a captioned video. Agents lose the Worker's endpoints in that trade.
 
 ## License and attribution
 

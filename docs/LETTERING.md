@@ -74,6 +74,22 @@ engine fingerprint deliberately excludes optional modules and type-only
 metadata, so opting out preserves receipts as well as page bytes. A regression
 test pins all 26 pre-feature pages and receipts, across their 140 cases.
 
+## Capture from an installed package
+
+The preceding commands run in a Rayner checkout. In an author project with the package installed, keep the optional Python environment and source fonts in your own `out/` directory:
+
+```sh
+python3 -m venv out/lettering-venv
+out/lettering-venv/bin/pip install -r node_modules/rayner/tools/lettering-requirements.txt
+export RAYNER_LETTERING_PYTHON="$PWD/out/lettering-venv/bin/python"
+export RAYNER_LETTERING_FONTS="$PWD/out/lettering-fonts"
+bash node_modules/rayner/tools/lettering-outline-fonts.sh
+npx rayner snapshots path/to/scene.ts
+npx rayner check path/to/scene.ts
+```
+
+Maths capture also needs the checksum-pinned Latin Modern Math face described above. Cached snapshots build without these capture dependencies. Commit the refreshed `scene.lettering.json` with the scene.
+
 ## Supported requests
 
 `scripts` uses ISO 15924 codes. These select build-time fallbacks, without

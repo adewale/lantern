@@ -21,7 +21,8 @@
     "pack:smoke": "node tools/explain-package-smoke.ts",
     "site:export": "node tools/explain-site.ts",
     "test:embeds": "EXPLAIN_BROWSER=1 node --test test/explain-capture.test.ts test/explain-embed.test.ts test/lettering-browser.test.ts",
-    "test:video": "EXPLAIN_VIDEO=1 node --test test/explain-video.test.ts"
+    "test:video": "EXPLAIN_VIDEO=1 node --test test/explain-video.test.ts",
+    "release:check": "node tools/prepare-release.ts"
   },
   "devDependencies": {
     "@resvg/resvg-js": "2.6.2",
@@ -120,5 +121,9 @@
   "homepage": "https://oshineye.dev/projects/rayner",
   "bugs": {
     "url": "https://github.com/adewale/rayner/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
   }
 }

@@ -1,7 +1,3 @@
-## Unreleased
-
-- Add opt-in `meta.lettering`: licensed, per-scene font subsets; build-time HarfBuzz and bidi outline snapshots; and `Math`/`MathTex` using glyph's optional TeX/MATH typesetter. Fresh snapshots build offline without those tools. Checks report lettering weight and fail on stale snapshots or unrequested scripts. All 26 existing explainer pages and receipts remain byte-identical.
-
 # Changelog
 
 ## 0.1.0 (unreleased)
@@ -13,14 +9,18 @@ What the package provides:
 - `rayner`: Lantern's engine at `2c7bad5`, with the fixes [Upstream](docs/UPSTREAM.md) lists, plus a camera, matching and diff transforms, emphasis, graphing, views and addressable code.
 - `rayner/explain`: helpers for diagrams, cards and code panels; reader settings that rerun the scene as checked cases; and `describeExplainer`.
 - `rayner/lettering`: Latin Extended, Greek and Cyrillic for the explainers that ask for them.
-- The `rayner` command: `init`, `preview`, `snapshots`, `check`, `build`, `render`, `shots` and `describe`, and `--version`. Install with `npm i -D rayner` and run with `npx rayner`.
+- The `rayner` command: `init`, `preview`, `snapshots`, `check`, `build`, `render`, `shots`, `describe` and `see`, and `--version`. Install with `npm i -D rayner` and run with `npx rayner`.
 - Portable HTML pages with a loader and header recipes, and silent captioned video.
 - An agent skill, `skills/rayner-explainers/SKILL.md`.
 
 Changes in this release, for anyone using a checkout from before it:
 
+- **Requested lettering:** per-scene licensed fonts, build-time HarfBuzz and bidi outline snapshots, and `Math`/`MathTex` using glyph's optional TeX/MATH typesetter. Fresh snapshots build without Python or source fonts; checks report lettering weight and reject stale snapshots or unrequested scripts.
+- **Phone navigation and authoring:** visible Next view and Whole picture controls distinguish close-ups from steps; the gallery states its purpose and links the authoring guides.
+- **Release validation:** install and test the exact packed archive, compile a consumer against its exports, and retain its integrity manifest. The manual publishing workflow reuses CI and supports npm trusted publishing after account setup.
+
 - **The command is `rayner`**, not `explain`. In a checkout, `npm run explain -- …` is now `npm run rayner -- …`, and errors start `rayner:`. `--version` prints the version.
-- **Lantern's name is left only where it means Lantern.** Built SVG clip ids are `rayner-clip-…` (were `lantern-clip-…`); diagram capture marks parts with `data-rayner-part` and names its backend `backend:rayner-capture`; `demos:serve` prints "Rayner demos"; temporary folders and the docs call the engine Rayner's. Because the engine's source and every page's licence notices changed, every explainer's engine hash and page bytes change once, so run `npm run videos` before publishing videos again. The receipt's `engine` field still says `lantern@2c7bad5+explainer`, which records where the engine came from.
+- **Lantern's name is left only where it means Lantern.** Built SVG clip ids are `rayner-clip-…` (were `lantern-clip-…`); `demos:serve` prints "Rayner demos"; temporary folders and the docs call the engine Rayner's. Because the engine's source and every page's licence notices changed, every explainer's engine hash and page bytes change once, so run `npm run videos` before publishing videos again. The receipt's `engine` field still says `lantern@2c7bad5+explainer`, which records where the engine came from. Internal capture markers remain `data-lantern-part` and `backend:lantern-capture` so committed diagram snapshots stay usable.
 - **Licences**: `LICENSE` adds the fork's copyright line beside Lantern's, and `vendor/licenses/glyph-MIT.txt` carries the notice for the bundled glyph. The package now includes this changelog.
 - **CI** can be started by hand (`workflow_dispatch`).
 
