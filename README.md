@@ -101,7 +101,7 @@ A scene is an ordinary Rayner scene, so beside the helpers it can use the engine
 - Default lettering uses embedded Inter and JetBrains Mono, with Noto subsets for Arabic-Indic, Devanagari and Chinese numerals. Bold is the Regular outline stroked, and there is no italic. A diagram style does not select its own font.
 - Scenes can request Latin Extended, Greek and Cyrillic, or opt into Arabic, Devanagari, Hebrew and Chinese letters, registered replacement faces (such as a style's own face), real bold and italic, and typeset maths. The [lettering guide](docs/LETTERING.md) lists the supported requests, capture dependencies and snapshot rules. Unrequested characters and unsupported scripts fail the build.
 - Descriptions of the pictures are generated in English or French only.
-- On a phone each step opens on a close-up of what it changed, so a reader pans for the rest.
+- On a phone each step opens on a close-up of what it changed; **Next view** under the picture shows the rest, starting with what the step emphasised.
 - The models are small and cited, and no subject expert has reviewed the explainers.
 
 ## Documents
