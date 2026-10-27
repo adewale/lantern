@@ -1,7 +1,7 @@
 import { Group, Rectangle, Text, Code, FadeIn, FadeOut, Transform } from '../src/index.ts';
 import type { Scene, Vec, Box } from '../src/index.ts';
 import type { Palette } from '../integrations/agentic-mermaid/snapshot.ts';
-import { soft, raised, rule, boxCenter, emphasis, good, bad, regionBox, REGIONS } from './look.ts';
+import { soft, raised, rule, boxCenter, emphasis, good, bad, regionBox, REGIONS, emphasises } from './look.ts';
 import type { Region } from './look.ts';
 import type { Seen } from './trace.ts';
 import { wordsOf } from './words.ts';
@@ -124,6 +124,7 @@ export class Card extends Group {
     this.panel = panelRect(colors, width, height);
     this.bar = tint(emphasis(colors), width - 0.12, pitch * 0.92).setOpacity(0);
     this.add(this.panel, this.bar);
+    emphasises(scene, () => (this.lit ? [[this.bar, `row ${this.lit.label}`]] : []));
     const left = -width / 2 + PAD;
     this.valueEdge = width / 2 - PAD;
     let y = height / 2 - PAD - size * 0.5;
@@ -282,6 +283,10 @@ export class CodeBlock extends Group {
     this.head = head;
     this.bar = tint(emphasis(colors), width - 0.14, 0.1).setOpacity(0);
     this.add(this.panel);
+    emphasises(scene, () => [
+      ...(this.focused ? [[this.bar, `lines ${this.focused.lines.join('-')}`] as const] : []),
+      ...this.marks.map((m) => [m.mob, `${m.kind} ${m.line}`] as const),
+    ]);
     if (options.diff)
       lines.forEach((line, i) => {
         if (!/^[+-] /.test(line)) return;
