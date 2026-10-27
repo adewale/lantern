@@ -227,7 +227,7 @@ test('whatever the validator accepts, a Diagram can draw and describe without in
           assert.ok(!/NaN/.test(JSON.stringify(m.style) + String(m.style.dashArray)), `${path.join('.')} = ${JSON.stringify(value)}: ${JSON.stringify(m.style)}`);
         }
     }),
-    params(300, { examples: ['valueOf', 'constructor', '__proto__', 'toString', 'hasOwnProperty'].map((family): [[DiagramSnapshot, (string | number)[], string]] => [[fixture(), ['family'], family]]) }),
+    params<[fc.ArbitraryValue<typeof mutated>]>(300, { examples: ['valueOf', 'constructor', '__proto__', 'toString', 'hasOwnProperty'].map((family): [fc.ArbitraryValue<typeof mutated>] => [[fixture(), ['family'], family]]) }),
   );
 });
 
