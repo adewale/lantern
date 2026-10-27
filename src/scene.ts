@@ -374,7 +374,7 @@ export class Scene {
     // A Succession begins its members (adding their mobjects) as it interpolates, so in
     // a play holding one, skipped frames still interpolate, and the first member to bring
     // an updater ends the skipping: the full run integrates it from the frame it joins.
-    const sequenced = canSkip && anims.some(function holds(a: Animation): boolean {
+    const sequenced = anims.some(function holds(a: Animation): boolean {
       return a instanceof Succession || (a instanceof AnimationGroup && a.animations.some(holds));
     });
     const interpolate = (t: number): void => perf.span('interpolate', () => {
@@ -387,6 +387,10 @@ export class Scene {
     for (let f = 1; f <= n; f++) {
       // The last frame draws the finished animation even when runTime·fps rounded down.
       const t = f === n ? runTime : Math.min(f * dt, runTime);
+      // skipUntil raised after this play began (the player sending a run on to a later step):
+      // skip from here, as a play begun before it would. With skipUntil fixed, as in every other
+      // run, this never holds: time only grows.
+      if (!canSkip && this.time + dt + 1e-9 < this.skipUntil && !this.hasUpdaters()) canSkip = true;
       // Same comparison SeekSink uses to drop a frame, so the first frame shown is identical
       if (canSkip && this.time + dt + 1e-9 < this.skipUntil) {
         if (!sequenced) { this.tick(); skipped++; continue; }
@@ -425,8 +429,10 @@ export class Scene {
     this.throwIfStopped();
     const dt = 1 / this.fps;
     const n = Math.round(seconds * this.fps);
-    const canSkip = this.skipUntil > this.time && !this.hasUpdaters();
+    let canSkip = this.skipUntil > this.time && !this.hasUpdaters();
     for (let f = 0; f < n; f++) {
+      // As in play: skipUntil raised during the wait skips from here.
+      if (!canSkip && this.time + dt + 1e-9 < this.skipUntil && !this.hasUpdaters()) canSkip = true;
       if (canSkip && this.time + dt + 1e-9 < this.skipUntil) { this.tick(); continue; }
       await this.emitFrame(dt);
     }

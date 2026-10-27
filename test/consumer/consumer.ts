@@ -91,3 +91,9 @@ export function cameraRecords(scene: Scene): number {
   const opts: RenderOptions = { relative: false, cull: true };
   return renderElements(scene, opts).length;
 }
+
+// The optional outline request and maths mobject are public exports too.
+import { Math as Formula } from 'rayner';
+import type { LetteringRequest as OutlineRequest } from 'rayner';
+export const outlineRequest = { scripts: ['Arab'], math: true, faces: { sans: 'inter' } } satisfies OutlineRequest;
+export const formula = () => new Formula('x^2');

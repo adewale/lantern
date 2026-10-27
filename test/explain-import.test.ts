@@ -1,5 +1,5 @@
 // SVG import (integrations/agentic-mermaid): text runs lowered to glyph
-// outlines (text.ts) and SVG path data read as Lantern paths (build/read-svg.ts).
+// outlines (text.ts) and SVG path data read as engine paths (build/read-svg.ts).
 // The browser-side capture is in explain-capture.test.ts.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

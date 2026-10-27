@@ -98,9 +98,10 @@ test('a note follows its part through focus; clear() leaves paper and heading, a
       assert.ok(Math.abs(gap()) < 1e-6 && note.center()[1] > d.get('C').box()![3]);
       await s.card([['k', 1]]);
       await s.clear();
+      // Paper, the heading's band (invisible at home) and the heading stay.
       assert.deepEqual(
         this.mobjects.map((m) => m.key),
-        ['__paper', '__heading'],
+        ['__paper', '__chrome', '__heading'],
       );
       await d.reveal(['A']);
       assert.ok(this.familyMembers().includes(d.get('A')));

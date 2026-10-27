@@ -182,6 +182,7 @@ export default class RingBufferExplainer extends Scene {
 
     await this.step('slots', {
       title: 'Two cursors and a length on five slots',
+      line: 'Head and tail both start at slot 0; length tells empty from full.',
       caption:
         'Head is the next value to pop; tail is the next slot to write. Both start at slot 0 and meet again when the ring is full, so length is what tells empty from full. The middle of the ring shows the buffer’s own three fields.',
     });
@@ -302,6 +303,16 @@ export default class RingBufferExplainer extends Scene {
               : g === 1
                 ? 'push 6 throws Full before changing anything'
                 : 'push 7 is refused and the ring is unchanged',
+        line:
+          g === 0
+            ? 'Tail is back at 0 with head; only length 5 says full.'
+            : which === 'wrap'
+              ? g === 1
+                ? 'Head moves on to 2; tail stays at 0 for the next push.'
+                : '6 and 7 go into slots 0 and 1; no stored value moves.'
+              : g === 1
+                ? 'The first line of push finds length === capacity, both 5.'
+                : 'Head, tail and length still read 0, 0 and 5.',
         caption:
           g === 0
             ? 'Each push outlines the slot at tail, copies v into it, then moves tail on modulo five and adds one to length. After five pushes tail is back at 0 with head, and only length, 5, says the ring is full.'

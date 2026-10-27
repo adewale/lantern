@@ -4,7 +4,7 @@
 //   this.state.len++;
 //   await this.play(readout.sync());     // rebuilt from the state as it is now, morphed into place
 //
-// manim's always_redraw idea in Lantern's endpoint-based form. A View is a
+// manim's always_redraw idea in the engine's endpoint-based form. A View is a
 // Group with one child, the current picture. sync() is an animation: when the
 // play begins it calls build() for the new picture and morphs the current one
 // into it with a matching transform; when it lands, the View swaps its child.

@@ -20,7 +20,7 @@ await this.play(new TransformMatching(before, after, { key: (part) => part.style
 
 | | pairs parts that | use for |
 |---|---|---|
-| `TransformMatchingText` | are the same character in the same font and weight; anything else by shape | `Text`, `Code`, groups of them |
+| `TransformMatchingText` | are the same character in the same font and weight; anything else by shape. In an explainer with outline lettering, the same whole cluster drawn with the same number of glyphs ([lettering](LETTERING.md#changes-between-strings)) | `Text`, `Code`, groups of them |
 | `TransformMatchingShapes` | have the same `shapeKey()`: same path up to position and size | diagrams, symbols, anything drawn |
 | `TransformMatching` + `key` | map to the same string (`undefined` never matches) | identity you know: a node id, a color, a role |
 

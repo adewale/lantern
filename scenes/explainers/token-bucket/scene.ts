@@ -258,6 +258,7 @@ export default class TokenBucketExplainer extends Scene {
     // ------------------------------------------------------------- balance
     await this.step('balance', {
       title: 'Five tokens of burst capacity',
+      line: 'allow(now) adds refill on each call; no timer runs.',
       caption:
         'The bucket starts full at five tokens, and each accepted request spends one. allow(now) adds refill for the time since the last call, so no background timer runs. The chart will plot the balance over time; the dashed line is the one token a request needs.',
     });
@@ -327,6 +328,11 @@ export default class TokenBucketExplainer extends Scene {
     const verdict = !low.length
       ? 'All three dots stay at or above the dashed line, so all three get 200.'
       : `${lowNames} ${low.length > 1 ? 'are' : 'is'} under the dashed line, so ${low.length > 1 ? 'they get' : 'it gets'} 429.`;
+    const lines = [
+      `No time passes, so no refill: R6 finds ${f(5)} tokens.`,
+      `Between calls the balance climbs ${perSecond(rate)}.`,
+      `R10 finds ${f(9)}; min(5, …) keeps the balance at five or below.`,
+    ];
     const captions = [
       `Six requests arrive at time zero. No time has passed, so refill adds nothing and the line drops one token per request. The sixth finds ${f(5)} tokens, under the dashed line, and gets 429.`,
       `Between calls the line climbs at ${rate} a second: (now − lastRefill) × ${rate}. R7 at 0.5 s finds ${f(6)} and R8 at 1 s finds ${f(7)}; R9 arrives at the same instant as R8 and finds what R8 left. ${verdict}`,
@@ -335,6 +341,7 @@ export default class TokenBucketExplainer extends Scene {
     for (const [index, [from, to]] of GROUPS.entries()) {
       await this.step(['burst', 'refill', 'later'][index]!, {
         title: titles[index],
+        line: lines[index],
         caption: captions[index],
       });
       // Ask the program, one request at a time; each call's members show its answer.
@@ -395,6 +402,7 @@ export default class TokenBucketExplainer extends Scene {
     const refused = RATES.map((r) => `${perSecond(r)}, ${list(refusedAt(r))}`);
     await this.step('trace', {
       title: 'The same ten requests at 1, 2 and 4 tokens a second',
+      line: `429s at 4 / s: ${list(refusedAt(4))}; at 1 / s: ${list(refusedAt(1))}.`,
       caption: `Each line is one run of allow() over the same ten requests, and the bright one is this case. A faster refill climbs back over one token sooner: at ${refused[2]} gets 429, and at ${refused[0]} do.`,
     });
     const others = RATES.filter((r) => r !== rate).map((r) => {

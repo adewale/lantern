@@ -81,6 +81,7 @@ export default class StateMachineExplainer extends Scene {
       s = stage(this, { style: 'dracula' });
     await this.step('machine', {
       title: 'Four reducer rows, one per arrow',
+      line: 'The session starts idle; a pair with no row throws.',
       caption:
         'A session starts idle, and the ring shows where it is. Each arrow is one row of the table named next, and reduceSession throws for any state and event pair without a row.',
     });
@@ -142,6 +143,7 @@ export default class StateMachineExplainer extends Scene {
       const next = reduceSession(state, event);
       await this.step(event.toLowerCase(), {
         title: `${event}: ${state} → ${next}`,
+        line: `Row ${state}:${event} returns ${next}, and the ring moves there.`,
         caption: `${event} arrives while the session is ${state}. The reducer finds the boxed row ${state}:${event} and returns ${next}, where the ring now sits.`,
       });
       // The row the reducer reads, found by its key; the value on it must be what reduceSession returned.
@@ -177,6 +179,7 @@ export default class StateMachineExplainer extends Scene {
     }
     await this.step('terminal', {
       title: 'Closed has no row, so OPENED throws',
+      line: `reduceSession throws InvalidTransition; the ring stays on ${state}.`,
       caption:
         'No row starts at closed. A late OPENED finds no closed:OPENED entry, so reduceSession throws InvalidTransition at the boxed line and the ring stays on closed.',
     });

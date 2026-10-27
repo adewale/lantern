@@ -1,5 +1,5 @@
 {
-  // Browser code: the embed (app/, bundled into each page by `explain build`)
+  // Browser code: the embed (app/, bundled into each page by `rayner build`)
   // and the explainer scenes. Checked only; nothing is emitted.
   "extends": "./tsconfig.base.json",
   "compilerOptions": {

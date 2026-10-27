@@ -153,6 +153,7 @@ export default class TrafficPolicyExplainer extends Scene {
     // ------------------------------------------------------------------ topology
     await this.step('topology', {
       title: `${n} pods on three nodes behind one load balancer`,
+      line: 'The load balancer sends to nodes; each node’s rules pick a pod.',
       caption: `A Service of type LoadBalancer: a cloud load balancer sends outside requests to the nodes, and rules that kube-proxy writes on each node hand every request to a pod. ${placementWords(counts)}. The setting chooses externalTrafficPolicy: ${POLICY[policy]}.`,
     });
     const d = await s.show({ source: cluster(counts, policy) }, { box: DIAGRAM });
@@ -179,6 +180,10 @@ export default class TrafficPolicyExplainer extends Scene {
         policy === 'cluster'
           ? `Each node’s rules pick one of all ${n} pods`
           : `Under Local, each node’s rules list only its own pods`,
+      line:
+        chainPods.length === 1
+          ? 'Node 1’s single rule always matches, so its one pod gets it all.'
+          : `Probabilities 1/(n−i) give each pod ${frac(each[0]!)} of the node’s requests.`,
       // proxier.go:1464-1471: rule i of n has --probability 1/(n-i); the last has none and always matches.
       caption:
         `In iptables mode kube-proxy writes one rule per pod. Rule i of n matches with probability 1/(n−i), and the last always matches, so each pod gets 1/n. ` +
@@ -219,6 +224,7 @@ export default class TrafficPolicyExplainer extends Scene {
       const leave = counts.map((c) => q(n - c, n));
       await this.step('second-hop', {
         title: `Under Cluster, ${inN(hop)} requests leave the node they reach`,
+        line: `Node 3 sends this request on to pod ${target} on Node 2.`,
         // source-ip.md:204-209: the node that receives the packet sends it on to the node with the endpoint.
         caption: `Each node gets a third of the requests and picks among all ${n} pods. A request leaves its node when the pick runs elsewhere: ${counts
           .map((c, j) => `${inN(leave[j]!)} on ${NODES[j]}`)
@@ -243,6 +249,7 @@ export default class TrafficPolicyExplainer extends Scene {
       // ---------------------------------------------------------------- snat
       await this.step('snat', {
         title: 'The pod sees the node’s address, not the client’s',
+        line: `Node 3 swaps ${CLIENT_IP} for its own address, ${nodeIp(2)}.`,
         // proxier.go:1104-1110: under Cluster every packet in the external chain is marked for masquerade,
         // "in case we cross nodes"; source-ip.md:205 "node2 replaces the source IP address (SNAT)".
         caption: `Under Cluster, kube-proxy marks every outside request for source NAT, in case it crosses nodes. Node 3 replaces the client’s address, ${CLIENT_IP}, with its own, ${nodeIp(2)}, and pod ${target} sees that. Requests that stay on their node are rewritten too.`,
@@ -265,6 +272,7 @@ export default class TrafficPolicyExplainer extends Scene {
         title: failing.length
           ? `${nodeList(failing)} runs no pod, so it fails the health check`
           : 'Every node runs a pod, so every node passes the health check',
+        line: `${nodeList(healthy)} answer 200 and each get ${frac(node[healthy[0]!]!)} of requests.`,
         // service_health.go:257-261: 200 when the node has local endpoints, 503 when it has none.
         // source-ip.md:362-363: nodes without endpoints fail the load balancer's health checks.
         caption: `Under Local, kube-proxy answers the load balancer’s health check on each node: 200 when the node runs a pod of the Service, 503 when it runs none. ${
@@ -284,6 +292,7 @@ export default class TrafficPolicyExplainer extends Scene {
       // ---------------------------------------------------------------- local path
       await this.step('local-path', {
         title: 'The request stays on its node and keeps the client’s address',
+        line: `Pod a sees ${CLIENT_IP}: no source NAT and no second hop.`,
         // proxier.go:1104-1146: under Local no masquerade rule applies to outside traffic, which goes to
         // the local chain; source-ip.md:219-222 "kube-proxy only proxies proxy requests to local endpoints".
         caption: `Node 1’s rules list only its own pods, so the request never leaves Node 1, and kube-proxy adds no source NAT for it. Pod a sees the client’s address, ${CLIENT_IP}. Under Local no outside request takes a second hop.`,
@@ -320,6 +329,10 @@ export default class TrafficPolicyExplainer extends Scene {
       title: even
         ? `Each pod gets ${frac(top[0])} of the requests`
         : `${podList(top[1]).replace(/^p/, 'P')} ${top[1].length > 1 ? 'get' : 'gets'} ${frac(top[0])} of the requests; ${podList(low[1])} ${low[1].length > 1 ? `get ${frac(low[0])} each` : `gets ${frac(low[0])}`}`,
+      line:
+        policy === 'cluster'
+          ? `Each node splits its 1/3 among all ${n} pods.`
+          : `Split by node, not pod: each node with pods gets ${frac(node[0]!)}.`,
       caption:
         policy === 'cluster'
           ? `The load balancer gives each node 1/3, and each node’s rules give each of the ${n} pods 1/${n} of that. Summed over the three nodes, each pod gets 1/${n} of all requests, wherever it runs.`
@@ -357,6 +370,7 @@ export default class TrafficPolicyExplainer extends Scene {
       title: uneven
         ? `With ${counts.join(', ')} pods, Local trades even load for the client’s address`
         : `With ${counts.join(', ')} pods, Local keeps both even load and the client’s address`,
+      line: `Cluster sends ${inN(secondHop(counts, 'cluster'))} requests to another node; Local sends none.`,
       caption:
         `Cluster spreads requests evenly over the pods, but ${inN(secondHop(counts, 'cluster'))} cross to another node and every pod sees a node’s address. Local keeps each request on its node with the client’s address. ` +
         (uneven
@@ -385,6 +399,7 @@ export default class TrafficPolicyExplainer extends Scene {
     // ------------------------------------------------------------------ caveats
     await this.step('caveats', {
       title: 'What these shares leave out',
+      line: 'Shares are iptables-mode averages; IPVS defaults to round robin.',
       // ipvs/proxier.go:91-92 defaultScheduler "rr"; service_health.go:255 the weight header;
       // create-external-load-balancer.md:161 "some cloud providers do not let you configure different weights".
       caption:

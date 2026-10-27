@@ -6,7 +6,7 @@ const LANTERN =
   'graph LR\nDoc[JSON doc]\nParser[Flowchart parser]\nScene[Scene class]\nClock[Fixed dt clock]\nPlayer[Dev player]\nWorker[Worker]\nFrames[SVG frames]\nDoc --> Scene\nParser --> Scene\nScene --> Clock\nClock --> Player\nClock --> Worker\nClock --> Frames';
 // The fork: docs/UPSTREAM.md and the design record's table of what is inherited and what changes.
 const FORK =
-  'graph LR\nSettings[Settings]\nCapture[Agentic Mermaid]\nSnaps[Snapshots]\nScene[Scene class]\nClock[Fixed dt clock]\nPage[Embed page]\nFrames[SVG frames]\nVideo[Captioned video]\nCheck[explain check]\nSettings --> Scene\nCapture --> Snaps\nSnaps --> Scene\nScene --> Clock\nClock --> Page\nClock --> Frames\nFrames --> Video\nClock --> Check';
+  'graph LR\nSettings[Settings]\nCapture[Agentic Mermaid]\nSnaps[Snapshots]\nScene[Scene class]\nClock[Fixed dt clock]\nPage[Embed page]\nFrames[SVG frames]\nVideo[Captioned video]\nCheck[rayner check]\nSettings --> Scene\nCapture --> Snaps\nSnaps --> Scene\nScene --> Clock\nClock --> Page\nClock --> Frames\nFrames --> Video\nClock --> Check';
 // scenes/explainers/token-bucket/scene.ts.
 const SETTINGS = [
   'static settings = [{',
@@ -38,6 +38,7 @@ export default class ForkExplainer extends Scene {
 
     await this.step('lantern', {
       title: 'Lantern plays a scene in a live player and a Worker',
+      line: 'A fixed clock feeds the dev player and the Worker alike.',
       caption:
         'Lantern, at commit 2c7bad5, runs a Scene class on a fixed clock. A development player shows it with links to any step, and a Cloudflare Worker serves one frame as SVG or as text, or the whole trace as JSON, to people and agents alike.',
     });
@@ -62,6 +63,7 @@ export default class ForkExplainer extends Scene {
 
     await this.step('engine', {
       title: 'The fork keeps the engine',
+      line: 'Bézier points, fixed endpoints and seek by replay all stay.',
       caption:
         'The scene still runs on Lantern’s src/: shapes and glyphs stored as Bézier points, animations whose endpoints are fixed when they begin, the fixed clock and seeking by replay. The fork changed the engine only to fix a fault or add a hook the helpers need, and docs/UPSTREAM.md lists each change with its regression test.',
     });
@@ -81,6 +83,7 @@ export default class ForkExplainer extends Scene {
 
     await this.step('removed', {
       title: 'Four parts of Lantern are deleted',
+      line: 'The JSON doc, parser, dev player and Worker are gone.',
       caption:
         'The fork deleted the JSON scene format, the flowchart parser, the development player and the Worker, along with the nine original scenes, which the explainers rebuild. The player and the parser have replacements; the JSON format and the Worker’s endpoints have none.',
     });
@@ -100,8 +103,9 @@ export default class ForkExplainer extends Scene {
 
     await this.step('fork', {
       title: 'The fork puts a build between the scene and the reader',
+      line: 'Diagrams are captured once; the page runs no renderer.',
       caption:
-        'Agentic Mermaid draws each diagram in Chromium at build time, and the snapshot is stored beside the scene, so the page runs no diagram renderer. The same scene and clock then feed an embed page, a captioned video and explain check.',
+        'Agentic Mermaid draws each diagram in Chromium at build time, and the snapshot is stored beside the scene, so the page runs no diagram renderer. The same scene and clock then feed an embed page, a captioned video and rayner check.',
     });
     await s.clearOverlays();
     await flow.morph({ source: FORK });
@@ -125,6 +129,7 @@ export default class ForkExplainer extends Scene {
 
     await this.step('settings', {
       title: 'A reader setting is a case built ahead of time',
+      line: 'Each option of the refill rate is a case, checked in advance.',
       caption:
         'A scene may declare a few settings, like the token bucket’s refill rate. Every combination of options is a case: the build runs each one, captures its diagrams and checks it, so choosing 4 tokens opens a page that was already tested.',
     });
@@ -148,7 +153,8 @@ export default class ForkExplainer extends Scene {
       held = shown.hold == null ? 0 : shown.t1! - shown.hold;
     await this.step('video', {
       title: 'The same steps become a silent, captioned video',
-      caption: `explain render draws every frame with resvg and encodes them with FFmpeg. In the video, each step shows its title while it moves, then holds still under its caption long enough to read it at ${Scene.captionWpm} words a minute. Lantern’s render stops at numbered SVG frames.`,
+      line: `Moving ${motion.toFixed(1)} s under its title, then still ${held.toFixed(1)} s under its caption.`,
+      caption: `rayner render draws every frame with resvg and encodes them with FFmpeg. In the video, each step shows its title while it moves, then holds still under its caption long enough to read it at ${Scene.captionWpm} words a minute. Lantern’s render stops at numbered SVG frames.`,
     });
     await s.clearOverlays();
     await flow.dim(['Clock', 'Frames', 'Video']);
@@ -176,9 +182,10 @@ export default class ForkExplainer extends Scene {
     this.state.video = { motion: Number(motion.toFixed(2)), held: Number(held.toFixed(2)), words };
 
     await this.step('checks', {
-      title: 'Every case passes explain check before it ships',
+      title: 'Every case passes rayner check before it ships',
+      line: 'Two checks come from Lantern; the fork adds four.',
       caption:
-        'Lantern’s own tests compared a seeked frame with a played one and looked for jumps in motion. explain check runs both on every case and adds the fork’s checks: text at least 14 px, no letters the fonts lack, words for every drawing, and a still picture while the caption is read.',
+        'Lantern’s own tests compared a seeked frame with a played one and looked for jumps in motion. rayner check runs both on every case and adds the fork’s checks: text at least 14 px, no letters the fonts lack, words for every drawing, and a still picture while the caption is read.',
     });
     await s.clearOverlays();
     await flow.focus('all');
@@ -198,6 +205,7 @@ export default class ForkExplainer extends Scene {
 
     await this.step('cost', {
       title: 'What the fork gave up',
+      line: 'No agent endpoints, Inter everywhere, Chromium to capture.',
       caption:
         'Agents lose the Worker’s endpoints, and every diagram style is lettered in Inter. Capturing a new diagram needs Chromium at build time, though a page built from stored snapshots needs nothing. No engine change has gone upstream.',
     });

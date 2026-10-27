@@ -24,7 +24,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .segments label:has(input:checked){background:var(--surface);color:var(--fg);font-weight:600;box-shadow:0 1px 2px rgb(0 0 0/.08),0 0 0 1px rgb(0 0 0/.04)}
 .segments label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:1px}
 
-/* Player: picture, caption, controls. */
+/* Player: picture, controls, then the step's words. */
 .stage{position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);touch-action:pan-y}
 .stage svg{width:100%;height:100%;display:block}
 .stage svg.glide{transition:transform 220ms var(--ease-out)}
@@ -49,7 +49,16 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .overview .view{box-shadow:inset 0 0 0 1.5px var(--fg);border-radius:1px;transition:left 220ms var(--ease-out),top 220ms var(--ease-out)}
 @keyframes leave{to{opacity:0}}
 .caption,.ruler{margin:16px 0 0;max-width:68ch;min-height:3.2em;font-size:1.125rem;line-height:1.6;text-wrap:pretty}
-.ruler{position:absolute;top:0;left:0;margin:0;min-height:0;visibility:hidden;pointer-events:none}
+.ruler,.lede-ruler{position:absolute;top:0;left:0;margin:0;min-height:0;visibility:hidden;pointer-events:none}
+/* On a narrow stage, the heading the stage draws, as text: number and title, then the line. */
+.lede,.lede-ruler{max-width:68ch;font-size:1rem;line-height:1.45;text-wrap:pretty}
+.lede{display:none;margin:16px 0 0}
+.player.narrow .lede{display:block}
+.player.narrow .lede+.caption{margin-top:6px}
+.lede strong,.lede span,.lede-ruler strong,.lede-ruler span{display:block}
+.lede strong,.lede-ruler strong{font-weight:650}
+.lede span,.lede-ruler span{color:var(--muted)}
+.lede span[hidden]{display:none}
 .controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:16px}
 .tools{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:2px;margin-left:auto}
 .described{margin:8px 0 0;max-width:68ch;font-size:.9375rem;color:var(--muted)}
@@ -76,12 +85,13 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 @media(pointer:coarse){.button{min-width:44px;min-height:44px}.segments label{min-height:40px}}
 
 /* Steps: where the reader is, and where else they can go. */
-.steps{list-style:none;margin:24px 0 0;padding:16px 0 0;border-top:1px solid var(--line);display:grid;gap:2px}
-.steps button{font:inherit;position:relative;display:grid;align-items:center;width:100%;min-height:44px;padding:8px 12px 8px 32px;border:0;border-radius:8px;background:none;color:var(--muted);text-align:left;text-wrap:pretty;cursor:pointer;transition:background-color 150ms ease,color 150ms ease}
-.steps button::before{content:"";position:absolute;left:13px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;border:1.5px solid currentColor;opacity:.6}
+.steps{list-style:none;margin:24px 0 0;padding:16px 0 0;border-top:1px solid var(--line);display:grid;gap:2px;counter-reset:step}
+.steps li{counter-increment:step}
+.steps button{font:inherit;position:relative;display:grid;align-items:center;width:100%;min-height:44px;padding:8px 12px 8px 40px;border:0;border-radius:8px;background:none;color:var(--muted);text-align:left;text-wrap:pretty;cursor:pointer;transition:background-color 150ms ease,color 150ms ease}
+.steps button::before{content:counter(step);content:counter(step)/"";position:absolute;left:10px;top:50%;width:22px;height:22px;margin-top:-11px;border-radius:50%;border:1.5px solid currentColor;display:grid;place-items:center;font-size:.75rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1;opacity:.75}
 .steps [aria-current=step]{color:var(--fg);font-weight:600}
 .steps button>span{grid-area:1/1}.steps button>.bold{font-weight:600;visibility:hidden}
-.steps [aria-current=step]::before{background:var(--accent);border-color:var(--accent);opacity:1}
+.steps [aria-current=step]::before{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);opacity:1}
 
 /* Transcript: the whole explanation as text. */
 .transcript{margin-top:24px;padding-top:8px;border-top:1px solid var(--line);line-height:1.6}
@@ -100,7 +110,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 /* Enlarge: the player alone, sized to the screen. */
 .player:fullscreen{display:flex;flex-direction:column;justify-content:center;padding:16px;background:var(--bg);overflow:auto}
 .player:fullscreen .frame{width:min(100%,calc((100dvh - 180px)*16/9));margin:0 auto}.player:fullscreen .stage{border-radius:0}
-.player:fullscreen .caption,.player:fullscreen .described,.player:fullscreen .controls,.player:fullscreen .notice{width:min(100%,calc((100dvh - 180px)*16/9));margin-left:auto;margin-right:auto}
+.player:fullscreen .lede,.player:fullscreen .caption,.player:fullscreen .described,.player:fullscreen .controls,.player:fullscreen .notice{width:min(100%,calc((100dvh - 180px)*16/9));margin-left:auto;margin-right:auto}
 
 @media(max-width:480px){.caption,.ruler{font-size:1.0625rem}.controls{gap:6px}}
 @media(prefers-reduced-motion:reduce){.button,.stage svg.glide,.overview .view,.segments label,.steps button{transition:none}.button:active:not(:disabled){transform:none}}

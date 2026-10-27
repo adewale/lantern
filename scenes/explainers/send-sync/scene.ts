@@ -141,6 +141,7 @@ export default class SendSyncExplainer extends Scene {
     // ------------------------------------------------------------------ the two questions
     await this.step('questions', {
       title: 'Send and Sync are two separate questions',
+      line: 'Send: move it to another thread. Sync: share &T between threads.',
       caption:
         'Send asks whether a value can move to another thread. Sync asks whether several threads can hold a shared reference to it at once: the standard library defines T as Sync exactly when &T is Send. The compiler answers both for every type, so each type falls in one of four quadrants.',
     });
@@ -161,10 +162,11 @@ export default class SendSyncExplainer extends Scene {
     this.state.singles = Object.fromEntries(singles.map((p) => [p.name, { send: p.send, sync: p.sync }]));
 
     // ------------------------------------------------------------------ one type per quadrant
-    const SINGLE_STEPS: Record<string, { id: string; title: string; caption: string; source: string }> = {
+    const SINGLE_STEPS: Record<string, { id: string; title: string; line: string; caption: string; source: string }> = {
       i32: {
         id: 'i32',
         title: 'i32 is Send and Sync',
+        line: 'Auto traits: a type built from Send and Sync parts gets both.',
         // marker.rs:92 and :657 declare both as auto traits; :521 says primitive types are Sync;
         // the Nomicon (lines 20-23) says almost all primitives are Send and Sync.
         caption:
@@ -174,6 +176,7 @@ export default class SendSyncExplainer extends Scene {
       'Rc<i32>': {
         id: 'rc',
         title: 'Rc<i32> is neither Send nor Sync',
+        line: 'Rc counts its owners with a plain integer, not an atomic one.',
         // marker.rs:74-79: two threads cloning Rcs to one value could update the count at once,
         // undefined behaviour because Rc does not use atomic operations. rc.rs:334 and :342.
         caption:
@@ -183,6 +186,7 @@ export default class SendSyncExplainer extends Scene {
       'Cell<i32>': {
         id: 'cell',
         title: 'Cell<i32> can move but cannot be shared',
+        line: 'Cell::set takes &self and does no synchronisation: not Sync.',
         // marker.rs:541-548: Cell::set takes &self and performs no synchronization, so Cell cannot
         // be Sync. cell.rs:320 Send where T: Send; cell.rs:328 !Sync.
         caption:
@@ -192,6 +196,7 @@ export default class SendSyncExplainer extends Scene {
       'MutexGuard<i32>': {
         id: 'guard',
         title: 'MutexGuard<i32> can be shared but cannot move',
+        line: 'Dropping it must unlock on the thread that locked: not Send.',
         // mutex.rs:282-289: not Send because with POSIX threads a lock must be released on the thread
         // that acquired it. mutex.rs:291-294: Sync if T: Sync, because &MutexGuard gives &T.
         caption:
@@ -201,7 +206,7 @@ export default class SendSyncExplainer extends Scene {
     };
     for (const p of singles) {
       const meta = SINGLE_STEPS[p.name]!;
-      await this.step(meta.id, { title: meta.title, caption: meta.caption });
+      await this.step(meta.id, { title: meta.title, line: meta.line, caption: meta.caption });
       await s.clearOverlays();
       await d.reveal([`point:${p.name}`, `point:${p.name}:label`]);
       await d.focus([`plate:${p.q}`], { zoom: ZOOM });
@@ -220,6 +225,12 @@ export default class SendSyncExplainer extends Scene {
     const ctors = WRAPS[wrapper];
     await this.step('rules', {
       title: 'Arc needs Send and Sync inside; Mutex needs Send',
+      line:
+        wrapper === 'arc'
+          ? 'Arc clones on several threads reach one T with no added safety.'
+          : wrapper === 'mutex'
+            ? 'One thread at a time holds the lock, so T need not be Sync.'
+            : 'With T: Send, Mutex<T> is Send and Sync, as Arc needs.',
       // sync.rs:135-147: Arc gives shared ownership of the data but adds no thread safety to it.
       // mutex.rs:240-256: Mutex gives one thread at a time access to T, so T need not be Sync.
       caption:
@@ -260,6 +271,7 @@ export default class SendSyncExplainer extends Scene {
             : '';
       await this.step(`wrap-${ctor.toLowerCase()}`, {
         title: `${now.name} is ${traits(now.send, now.sync)}`,
+        line: `${ctor} needs T: ${ctor === 'Arc' ? 'Send + Sync' : 'Send'}; ${was.name} is ${traits(was.send, was.sync)}.`,
         caption:
           `Wrapping ${was.name} in ${ctor} gives ${now.name}. ${ctor} needs the type inside to be ${needs}, and ${was.name} is ${traits(was.send, was.sync)}, so ${now.name} is ${traits(now.send, now.sync)}.${why} ` +
           (moved
@@ -300,6 +312,7 @@ export default class SendSyncExplainer extends Scene {
           : run.spawnMove
             ? 'thread::spawn accepts x; thread::scope cannot share it'
             : 'thread::scope can share x; thread::spawn cannot take it',
+      line: `Here x is ${traits(run.spawnMove, run.scopeBorrow)}: spawn needs Send, scope Sync.`,
       // functions.rs:125-129: spawn needs F: Send + 'static. scoped.rs:201-204: Scope::spawn needs
       // F: Send + 'scope. The Reference (types/closure.md:734): a closure is Send if values it captures
       // by shared reference are Sync and values it captures by move are Send (marker.rs:105, :537).

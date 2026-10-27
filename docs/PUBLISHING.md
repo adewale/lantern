@@ -7,10 +7,10 @@ How to put a built page on a website, and how to export the same scene as a vide
 1. Build it:
 
    ```sh
-   explain build scene.ts --out public/cache.html
+   rayner build scene.ts --out public/cache.html
    ```
 
-   In a checkout, use `npm run explain -- build ...`. The HTML file is the whole explainer: every case, poster, transcript, sources and licence notices. It makes no network requests at runtime.
+   In a checkout, use `npm run rayner -- build ...`. The HTML file is the whole explainer: every case, poster, transcript, sources and licence notices. It makes no network requests at runtime.
 
 2. Upload `cache.html` to any static host, with `loader.js` if you will use the loader.
 
@@ -20,7 +20,7 @@ How to put a built page on a website, and how to export the same scene as a vide
    - The page that embeds it needs the artifact's origin in its own `frame-src`, and the loader's in `script-src` if it uses the loader.
    - The recipe's `Cache-Control` revalidates on every load. Long-lived caching is safe only for a URL that changes when the content does, such as one with the receipt's `artifactHash` in it.
 
-   For the demo collection, `npm run demos:build && npm run site:export -- <site-root>` copies every page, poster, video and the loader into a site and writes the matching `_headers` block to `out/site-headers.txt`. For agents it also writes each explainer's [`describeExplainer`](REFERENCE.md#describe) object as `<id>.json` beside its page, and `llms.txt` at the site root listing every page and its JSON.
+   For the demo collection, `npm run demos:build && npm run site:export -- <site-root>` copies every page, poster, video and the loader into a site and writes the matching `_headers` block to `out/site-headers.txt`. For agents it also writes each explainer's [`describeExplainer`](REFERENCE.md#describe) object as `<id>.json` beside its page, and `llms.txt` at the site root listing every page and its JSON. `demos:build` writes that object as `out/explainers/<id>/describe.json`, and `site:export` copies it. Before it writes anything, `site:export` checks each explainer's `out/explainers/<id>/inputs.json`, where `demos:build` records the scene's code hash, the engine hash and a hash of the scene's folder. If any of them changed since the build, it fails and says to run `demos:build`. It does not notice a change to the player (`app/`) or the build tools, so run `demos:build` after those too.
 
 4. Embed it with a plain iframe:
 
@@ -66,15 +66,15 @@ Video is optional; the page is the main output. A video of a scene has the same 
 You need FFmpeg on `PATH` and `@resvg/resvg-js` (`npm i @resvg/resvg-js@^2.6.2`; a checkout's `npm ci` already has it). `check` and `build` need neither.
 
 ```sh
-explain render scene.ts --out cache.mp4 --footer                      # 1280 × 960, title and caption under the stage
-explain render scene.ts --out cache-miss.mp4 --footer --case request=miss
-explain render scene.ts --out cache.mp4 --footer --all                # one file per case
-explain render scene.ts --out cache.webm --width 1920                 # stage only, VP9
+rayner render scene.ts --out cache.mp4 --footer                      # 1280 × 960, title and caption under the stage
+rayner render scene.ts --out cache-miss.mp4 --footer --case request=miss
+rayner render scene.ts --out cache.mp4 --footer --all                # one file per case
+rayner render scene.ts --out cache.webm --width 1920                 # stage only, VP9
 ```
 
 Each step plays its motion under its title, then holds its resting picture under the caption for the caption's reading time, so shorter captions make a shorter video.
 
-Publish `cache.transcript.html` beside the video: it is the text alternative, with each step's title, caption and what its picture shows.
+Publish `cache.transcript.html` beside the video: it is the text alternative, with each step's title, line, caption and what its picture shows.
 
 `render` stops with an error, naming the step and case, when a footer title or caption needs more than four lines or has a character the fonts cannot draw, or when the picture changes during a caption hold. Shorten the caption, or finish every change before the step's last `play()` ends.
 

@@ -57,6 +57,7 @@ export default class BashExplainer extends Scene {
     // ── command: a line of text and a shell value ──────────────────────
     await this.step('command', {
       title: 'A command line and the empty shell it runs on',
+      line: 'Two commands, a pipe and a redirect; the shell starts with no files.',
       caption:
         'This executable model follows the JustBash example: a pipeline transforms strings and a redirect writes an in-memory filesystem. The shell starts as a plain value with no files.',
     });
@@ -93,6 +94,7 @@ export default class BashExplainer extends Scene {
     // ── parse: the command is a tree ────────────────────────────────────
     await this.step('parse', {
       title: 'The command line parses into a tree',
+      line: 'Echo and tr sit under the pipeline; the redirect is not a command.',
       caption:
         'A script holds a pipeline of two commands, echo and tr; the redirect records where the final output goes. The tree becomes the arguments the executor receives.',
     });
@@ -113,14 +115,15 @@ export default class BashExplainer extends Scene {
     await ast.note('Redirect', 'not a command', { side: 'below' });
 
     // ── reduce: stdout threads through the builtins ─────────────────────
+    const afterEcho = exec(old, [PIPELINE[0]]).stdout,
+      afterTr = exec(old, PIPELINE).stdout;
     await this.step('reduce', {
       title: 'A pipeline is a reduce over strings',
+      line: `Echo sets stdout to ${q(afterEcho)}; tr turns it into ${q(afterTr)}.`,
       caption:
         'Start with empty text. Echo replaces it with hello and a newline, and tr uppercases it. The note under each builtin is stdout after it runs: one string handed to the next, with no kernel pipe between them.',
     });
     await s.clear();
-    const afterEcho = exec(old, [PIPELINE[0]]).stdout,
-      afterTr = exec(old, PIPELINE).stdout;
     const flow = await s.show(
       {
         source: `graph LR\nInput[empty stdin] --> Echo[echo hello]\nEcho --> Tr[tr a-z A-Z]\nTr --> Output[stdout]`,
@@ -151,6 +154,7 @@ export default class BashExplainer extends Scene {
     // ── redirect: the write lands in a new value ────────────────────────
     await this.step('redirect', {
       title: 'The redirect writes into a new shell',
+      line: `The returned shell holds ${FILE}; the original has no files.`,
       caption:
         'The redirect stores HELLO in shout.txt and empties stdout. Exec copies the filesystem into a new shell value and returns it, so the original shell on the left still has no files.',
     });
@@ -187,6 +191,7 @@ export default class BashExplainer extends Scene {
     // ── lookup: names resolve through a policy ──────────────────────────
     await this.step('lookup', {
       title: 'The model runs echo, tr and cat and refuses ls',
+      line: 'A name with no branch falls to the last line and throws.',
       caption:
         'Exec dispatches on the command name: echo, tr and cat each have a branch, and any other name, such as ls, falls through to the last line and throws “Unknown model command”.',
     });
@@ -239,8 +244,13 @@ export default class BashExplainer extends Scene {
     const chosen = which === 'new' ? run.shell : old,
       result = exec(chosen, [['cat', FILE]]),
       other = exec(which === 'new' ? old : run.shell, [['cat', FILE]]);
+    const prints = (out: string) => (out ? `prints ${out.trim()}` : 'prints nothing');
     await this.step('cat', {
       title: which === 'new' ? 'cat reads the returned shell' : 'cat reads the original shell',
+      line:
+        which === 'new'
+          ? `The returned shell has ${FILE}, so cat ${prints(result.stdout)}.`
+          : `The original shell has no ${FILE}, so cat ${prints(result.stdout)}.`,
       caption:
         which === 'new'
           ? 'Cat receives the returned shell, finds shout.txt and prints HELLO. The write is visible only because the caller passed exec’s returned shell to this call.'
@@ -274,15 +284,15 @@ export default class BashExplainer extends Scene {
     this.state.cat = result.stdout;
 
     // ── lesson: the shell as a chain of values ──────────────────────────
+    const viaNew = exec(run.shell, [['cat', FILE]]).stdout,
+      viaOld = exec(old, [['cat', FILE]]).stdout;
     await this.step('lesson', {
       title: 'The caller holds both shells and can cat either',
+      line: `On s1 cat ${prints(viaNew)}, on s0 it ${prints(viaOld)}; s0.fs is still ${JSON.stringify(old.fs)}.`,
       caption:
         'Every exec returns the next shell and leaves its input alone. Because the caller holds s0 and s1 at once, it can cat either: s1 prints HELLO and s0 prints nothing.',
     });
     await s.clear();
-    const viaNew = exec(run.shell, [['cat', FILE]]).stdout,
-      viaOld = exec(old, [['cat', FILE]]).stdout;
-    const prints = (out: string) => (out ? `prints ${out.trim()}` : 'prints nothing');
     const chain = await s.show(
       {
         source:

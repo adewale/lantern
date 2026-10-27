@@ -2,34 +2,45 @@
 // Explicit distribution gate: pack, install in a fresh author project, run the installed CLI.
 import { mkdtemp, mkdir, writeFile, readFile, copyFile, cp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
+import { parseArgs } from 'node:util';
 import { existsSync } from 'node:fs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import assert from 'node:assert/strict';
 import { ROOT } from './lib/explain-project.ts';
 const run = promisify(execFile),
-  folder = await mkdtemp(join(tmpdir(), 'lantern-package-'));
+  folder = await mkdtemp(join(tmpdir(), 'rayner-package-'));
 try {
-  const packed = await run('npm', ['pack', '--json', '--pack-destination', folder], {
+  const { values } = parseArgs({ options: { archive: { type: 'string' } } });
+  const packed = values.archive ? undefined : await run('npm', ['pack', '--json', '--pack-destination', folder], {
     cwd: ROOT,
     maxBuffer: 4 * 1024 * 1024,
   });
-  const file = JSON.parse(packed.stdout)[0].filename;
+  const archive = values.archive ? resolve(values.archive) : join(folder, JSON.parse(packed!.stdout)[0].filename);
   await writeFile(
     join(folder, 'package.json'),
     JSON.stringify({ name: 'outside-author', private: true, type: 'module' }),
   );
-  await run('npm', ['install', '--no-audit', '--no-fund', join(folder, file)], {
+  await run('npm', ['install', '--no-audit', '--no-fund', archive], {
     cwd: folder,
     maxBuffer: 4 * 1024 * 1024,
   });
   const cli = join(folder, 'node_modules/rayner/dist/tools/explain.js');
-  const bin = join(folder, 'node_modules/.bin/explain');
-  assert.match((await run(bin, ['--help'], { cwd: folder })).stdout, /Rayner \(Node 26\+\)/);
+  const bin = join(folder, 'node_modules/.bin/rayner');
+  const { version, peerDependencies: peers } = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8'));
+  assert.ok((await run(bin, ['--help'], { cwd: folder })).stdout.startsWith(`Rayner ${version} (Node 26+)`));
+  assert.equal((await run(bin, ['--version'], { cwd: folder })).stdout.trim(), version);
+  const installed = join(folder, 'node_modules/rayner');
+  assert.equal(JSON.parse(await readFile(join(installed, 'package.json'), 'utf8')).version, version);
+  for (const file of ['tools/lettering.py', 'tools/lettering-requirements.txt', 'tools/lettering-outline-fonts.sh', 'tools/lib/lettering.ts', 'vendor/glyph-math.js', 'vendor/licenses/LatinModernMath-GUST.txt', 'vendor/licenses/glyph-MIT.txt', 'LICENSE'])
+    assert.ok(existsSync(join(installed, file)), `archive is missing ${file}`);
+  await copyFile(join(ROOT, 'test/consumer/consumer.ts'), join(folder, 'consumer.ts'));
+  await copyFile(join(ROOT, 'test/consumer/tsconfig.json'), join(folder, 'tsconfig.json'));
+  await run(join(folder, 'node_modules/.bin/tsc'), ['-p', 'tsconfig.json'], { cwd: folder });
+
   await run(process.execPath, [cli, 'init', 'first'], { cwd: folder });
   // A default install leaves the optional peers out; the template's diagram then names what to install.
-  const peers = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8')).peerDependencies;
   for (const name of Object.keys(peers)) assert.ok(!existsSync(join(folder, 'node_modules', name)), `${name} installed by default`);
   const refused: string = await run(bin, ['snapshots', 'first'], { cwd: folder }).then(() => '', (e) => e.stderr);
   const install = /Install: npm (i .+)/.exec(refused)?.[1];
@@ -73,7 +84,7 @@ try {
   assert.ok(!JSON.parse(await readFile(join(folder, 'public/outside.html.receipt.json'), 'utf8')).lettering);
   // Outline snapshots captured against source .ts must remain fresh against
   // the archive's compiled .js engine, without Python or source font caches.
-  for (const name of ['arabic', 'devanagari', 'math', 'style']) {
+  for (const name of ['arabic', 'devanagari', 'hebrew', 'math', 'matching', 'style', 'styles']) {
     const source = join(ROOT, 'test/lettering', name);
     const target = join(folder, 'outline-' + name);
     await mkdir(target);
@@ -92,6 +103,20 @@ try {
     const receipt = JSON.parse(await readFile(join(folder, `public/outline-${name}.html.receipt.json`), 'utf8'));
     assert.ok(receipt.letteringHash, name);
   }
+  if (process.env.EXPLAIN_LETTERING === '1') {
+    const target = join(folder, 'captured-lettering');
+    await mkdir(target);
+    await writeFile(join(target, 'scene.ts'), `import{Scene,Text,Math as Formula}from'rayner';import{stage}from'rayner/explain';export default class L extends Scene{static meta={id:'captured-lettering',title:'Captured lettering',lettering:{scripts:['Arab'],math:true}};async construct(){const s=stage(this,{heading:false});await this.step('arabic',{caption:'Arabic'});await s.enter(new Text('السَّلَامُ عَلَيْكُمْ',{color:s.palette.ink}));await this.step('math',{caption:'Maths'});await s.clear();await s.enter(new Formula('\\\\frac{1}{2}+x^2',{color:s.palette.ink}));}}`);
+    await run(bin, ['snapshots', target, '--refresh'], {
+      cwd: folder,
+      env: { ...process.env, RAYNER_LETTERING_FONTS: process.env.RAYNER_LETTERING_FONTS ?? join(ROOT, 'out/lettering-fonts') },
+    });
+    const env = { ...process.env, RAYNER_LETTERING_PYTHON: join(folder, 'no-python-here'), RAYNER_LETTERING_FONTS: join(folder, 'no-source-fonts-here') };
+    await run(bin, ['check', target], { cwd: folder, env });
+    await run(bin, ['build', target, '--out', 'public/captured-lettering.html'], { cwd: folder, env });
+    const receipt = JSON.parse(await readFile(join(folder, 'public/captured-lettering.html.receipt.json'), 'utf8'));
+    assert.ok(receipt.letteringHash);
+  }
   const result = await run(
     process.execPath,
     [
@@ -101,7 +126,8 @@ try {
     ],
     { cwd: folder },
   );
-  assert.equal(result.stdout.trim(), '2');
+  // The stage adds the paper, the heading's band and the heading.
+  assert.equal(result.stdout.trim(), '3');
   // describeExplainer from the installed package: the outside author's scene, both cases.
   const described = await run(
     process.execPath,
@@ -113,7 +139,7 @@ try {
     { cwd: folder },
   );
   assert.equal(described.stdout.trim(), 'a:one b:one');
-  // The example in REFERENCE "Describe", verbatim: on the `explain init` template and its captured
+  // The example in REFERENCE "Describe", verbatim: on the `rayner init` template and its captured
   // diagram when capture is installed, else on the native scene with an empty snapshot index.
   const describeSection = (await readFile(join(ROOT, 'docs/REFERENCE.md'), 'utf8')).split(/^## /m).find((s) => s.startsWith('Describe\n')),
     example = /^```ts\n([\s\S]*?)^```/m.exec(describeSection ?? '')?.[1];
@@ -134,7 +160,8 @@ try {
     });
   }
   console.log(
-    'Package gate passed: archive install without optional peers, executable JS bin, install hint, external native author, settings, checks, see, build, describeExplainer and its REFERENCE example, notices, lettering on request, one compiled engine' +
+    'Package gate passed: tested archive install without optional peers, installed TypeScript consumer, executable JS bin, install hint, external native author, settings, checks, see, build, describeExplainer and its REFERENCE example, notices, lettering on request, one compiled engine' +
+      (process.env.EXPLAIN_LETTERING === '1' ? ', installed Arabic and maths capture' : '') +
       (process.env.EXPLAIN_VIDEO ? ', installed video export' : '') +
       (process.env.EXPLAIN_BROWSER ? ', installed diagram capture' : '') +
       '.',

@@ -1,4 +1,5 @@
-import { letteringWeight } from './lettering.ts';
+import { letteringWeight, pageSnapshot } from './lettering.ts';
+import { isHeading } from '../../explain/stage.ts';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -15,6 +16,7 @@ import {
   renderText,
   Text,
 } from '../../src/index.ts';
+import { Card } from '../../explain/panels.ts';
 import { ROOT, engineAlias, sceneSlug } from './explain-project.ts';
 import { caseName } from '../../explain/index.ts';
 import { restingFrame, undescribed } from '../../explain/trace.ts';
@@ -124,6 +126,7 @@ export function restingTextProblems(scene: Viewed): string[] {
     zoomed = !isHome(view);
   const texts: { m: Mobject; box: Box; native: boolean; text: string }[] = [];
   const problems: string[] = [];
+  const chromeBoxes: { box: Box; text: string }[] = [];
   const visible = (m: Mobject) => {
     for (let a: Mobject | null = m; a; a = a.parent) if ((a.style.opacity ?? 1) < 0.5) return false;
     // Text is drawn by the fill (and any stroke) of its paths: with neither it shows nothing.
@@ -151,11 +154,18 @@ export function restingTextProblems(scene: Viewed): string[] {
     const shown = box[0] < view[2] && box[2] > view[0] && box[1] < view[3] && box[3] > view[1];
     if (zoomed && !shown) continue; // off screen while the camera looks elsewhere
     const native = m instanceof Text;
-    const heading = m.key === '__heading';
+    // The heading, and its number and line: stage furniture, kept clear of the picture by the stage itself.
+    const heading = isHeading(m);
     if (zoomed && (native || heading) && (box[0] < view[0] || box[1] < view[1] || box[2] > view[2] || box[3] > view[3]))
       problems.push(`"${text}" is cut off by the frame`);
     if (!heading) texts.push({ m, box, native, text });
+    else chromeBoxes.push({ box, text });
   }
+  // The heading's line takes room under the title: content text must stay clear of all of it.
+  for (const t of texts)
+    for (const c of chromeBoxes)
+      if (t.box[0] < c.box[2] && t.box[2] > c.box[0] && t.box[1] < c.box[3] && t.box[3] > c.box[1])
+        problems.push(`"${t.text}" runs into the heading's "${c.text}"`);
   for (const t of texts)
     if (t.native && (t.box[0] < FRAME[0] || t.box[1] < FRAME[1] || t.box[2] > FRAME[2] || t.box[3] > FRAME[3]))
       problems.push(`"${t.text}" crosses the stage edge`);
@@ -225,6 +235,8 @@ export async function checkProject(project: Project, out: string): Promise<Recor
   await mkdir(out, { recursive: true });
   await useProjectLettering(project);
   const variants = [];
+  // The lettering the page carries, once for every case: the bare runtime below runs it
+  const shipped = project.outlineLettering ? JSON.stringify(await pageSnapshot(project.outlineLettering)) : '';
   for (const v of project.variants) {
     const where = `in ${caseName(project.Scene, v.values) || 'the scene'}`;
     const motion = new MotionSink(),
@@ -274,6 +286,8 @@ export async function checkProject(project: Project, out: string): Promise<Recor
     );
     const held = new Map<string, string>(),
       moved = new Set<string>();
+    // Cards on screen at each resting picture: a step that ends on a card says its values in a panel.
+    const cardsAtRest: Record<string, number> = {};
     await new v.Scene({
       async frame(scene, dt) {
         await motion.frame(scene);
@@ -285,12 +299,14 @@ export async function checkProject(project: Project, out: string): Promise<Recor
         }
         if (targets.has(scene.frameCount)) frames.set(scene.frameCount, toSvgString(scene));
         if (completedFrames.has(scene.frameCount)) {
-          // The resting picture of a step, without the heading that names it.
+          // The resting picture of a step, without the heading (number, title, line) that names it.
           const all = scene.mobjects;
-          scene.mobjects = all.filter((m) => m.key !== '__heading');
+          scene.mobjects = all.filter((m) => !isHeading(m));
           resting.set(scene.frameCount, toSvgString(scene));
           scene.mobjects = all;
           restingText.set(scene.frameCount, renderText(scene));
+          if (scene.currentStep)
+            cardsAtRest[scene.currentStep.name] = scene.familyMembers().filter((m) => m instanceof Card && (m.style.opacity ?? 1) >= 0.5).length;
           collisions.push(...restingTextProblems(scene).map((p) => `${scene.currentStep?.name}: ${p}`));
         }
         // Sizes on screen: world size times the camera's zoom, inside the camera's view
@@ -368,7 +384,7 @@ export async function checkProject(project: Project, out: string): Promise<Recor
     const lettered = project.lettering
       ? [`import{useLettering}from ${JSON.stringify(join(ROOT, 'src/lettering.ts'))};`, `await useLettering(${JSON.stringify(pageFaces(project.lettering))});`]
       : ['', ''];
-    const contents = `${project.outlineLettering ? `import{bindLettering}from ${JSON.stringify(join(ROOT, 'src/lettering-outlines.ts'))};` : ''}import * as author from ${JSON.stringify(project.file)};import{bindSnapshots,withSettings}from ${JSON.stringify(join(ROOT, 'explain/index.ts'))};import{Scene,NullSink,toSvgString}from ${JSON.stringify(join(ROOT, 'src/index.ts'))};${lettered[0]}const Source=author[${JSON.stringify(project.exportName)}];export async function run(){${lettered[1]}const Lettered=${project.outlineLettering ? `bindLettering(Source,${JSON.stringify(project.outlineLettering)})` : 'Source'};const C=withSettings(bindSnapshots(Lettered,${JSON.stringify(project.store)}),${JSON.stringify(v.values)});const s=await new C(new NullSink(),{skipUntil:Infinity}).run();return{steps:s.steps.map(s=>s.name),state:s.describe(),svg:toSvgString(s)}}`;
+    const contents = `${project.outlineLettering ? `import{bindLettering}from ${JSON.stringify(join(ROOT, 'src/lettering-outlines.ts'))};` : ''}import * as author from ${JSON.stringify(project.file)};import{bindSnapshots,withSettings}from ${JSON.stringify(join(ROOT, 'explain/index.ts'))};import{Scene,NullSink,toSvgString}from ${JSON.stringify(join(ROOT, 'src/index.ts'))};${lettered[0]}const Source=author[${JSON.stringify(project.exportName)}];export async function run(){${lettered[1]}const Lettered=${project.outlineLettering ? `bindLettering(Source,${shipped})` : 'Source'};const C=withSettings(bindSnapshots(Lettered,${JSON.stringify(project.store)}),${JSON.stringify(v.values)});const s=await new C(new NullSink(),{skipUntil:Infinity}).run();return{steps:s.steps.map(s=>s.name),state:s.describe(),svg:toSvgString(s)}}`;
     const b = await build({
       stdin: { contents, resolveDir: ROOT, loader: 'ts' },
       bundle: true,
@@ -398,6 +414,8 @@ export async function checkProject(project: Project, out: string): Promise<Recor
       completedStepLabels: staticLabels.size,
       // What a reader sees: the labels at 1280 px, and on a 390 px phone in each step's close-up.
       legibility: legibilityReport([...labels.values(), ...staticLabels.values()]),
+      // Cards in each step's resting picture: values said in a panel rather than on the drawing.
+      cardsAtRest,
       // Each step's resting frame as text, so an author can read it without a browser.
       restingFrames: Object.fromEntries(v.trace.steps.map((step) => [step.step, restingText.get(restingFrame(step)) ?? ''])),
     });
@@ -407,7 +425,7 @@ export async function checkProject(project: Project, out: string): Promise<Recor
     variants,
     diagrams: Object.keys(project.store).length,
     replayedEdits: project.edits,
-    ...(project.outlineLettering ? { lettering: letteringWeight(project.outlineLettering) } : {}),
+    ...(project.outlineLettering ? { lettering: await letteringWeight(project.outlineLettering) } : {}),
     // What the requested lettering adds to the page; only an explainer that asked has it.
     ...(project.lettering ? { lettering: letteringReport(project.lettering) } : {}),
   };

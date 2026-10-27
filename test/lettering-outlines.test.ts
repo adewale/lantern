@@ -5,17 +5,18 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { Scene, Text, NullSink, SnapshotSink, renderAt, renderElements, toSvgString } from '../src/index.ts';
-import { runKey, bindLettering, snapshotProvider } from '../src/lettering-outlines.ts';
+import { runKey, bindLettering, snapshotProvider, unpackLettering } from '../src/lettering-outlines.ts';
 import type { LetteringSnapshot } from '../src/lettering-outlines.ts';
 import { collectProject, defaultVariant, ROOT } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
 import { checkProject } from '../tools/lib/explain-check.ts';
+import { pageSnapshot } from '../tools/lib/lettering.ts';
 import { launch } from '../tools/lib/browser.ts';
 import { htmlEscape, restingTime } from '../explain/trace.ts';
 
 const fixtures = join(ROOT, 'test/lettering');
 const ids = ['arabic', 'devanagari', 'math', 'style'] as const;
-const snapshot = async (id: string): Promise<LetteringSnapshot> => JSON.parse(await readFile(join(fixtures, id, 'scene.lettering.json'), 'utf8'));
+const snapshot = async (id: string): Promise<LetteringSnapshot> => unpackLettering(JSON.parse(await readFile(join(fixtures, id, 'scene.lettering.json'), 'utf8')));
 
 for (const id of ids) test(`${id}: committed snapshots pass seek, motion, bare runtime and readability gates`, async () => {
   const out = await mkdtemp(join(tmpdir(), 'lettering-check-'));
@@ -24,7 +25,8 @@ for (const id of ids) test(`${id}: committed snapshots pass seek, motion, bare r
     const report = await checkProject(project, out);
     const lettering = project.outlineLettering!;
     assert.deepEqual(report.lettering, {
-      bytes: Buffer.byteLength(JSON.stringify(lettering)),
+      bytes: Buffer.byteLength(JSON.stringify(JSON.parse(await readFile(join(fixtures, id, 'scene.lettering.json'), 'utf8')))),
+      pageBytes: Buffer.byteLength(JSON.stringify(await pageSnapshot(lettering))),
       faceBytes: Object.fromEntries(Object.entries(lettering.faces).map(([name, face]) => [name, Buffer.from(face.data, 'base64').byteLength])),
       runs: Object.keys(lettering.runs).length,
     });

@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { spawn } from 'node:child_process';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
-import { collectProject, defaultVariant, ROOT, baseReceipt } from './lib/explain-project.ts';
-import { restingTime, htmlEscape, pictureSummary } from '../explain/trace.ts';
+import { collectProject, defaultVariant, ROOT, baseReceipt, sceneInputs } from './lib/explain-project.ts';
+import { describeProject } from './lib/explain-site-describe.ts';
+import { restingTime, htmlEscape, pictureSummary, stepWords } from '../explain/trace.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
 import { contactSheet, stillPng, cardPng } from './lib/explain-shots.ts';
 import { exporterHash, probeVideo, footerLines } from './lib/explain-video.ts';
@@ -33,7 +34,13 @@ const evidence: {
   snapshotHashes: string[];
 }[] = [];
 for (const item of EXPLAINERS) {
+  // Remove the record of what this explainer's files were built from now and write it last (below),
+  // so a build that stops part way leaves no record for site:export to trust.
+  await rm(join(directory, item.id, 'inputs.json'), { force: true });
   const project = await collectProject(join(ROOT, 'scenes/explainers', item.id));
+  // For agents: what site:export publishes as <id>.json, described right after the run, as
+  // `rayner describe` does.
+  const described = await describeProject(project);
   await buildExplainer(project, join(directory, item.id + '.html'));
   // The tile links to the default case, so it shows that case's picture.
   const variant = defaultVariant(project),
@@ -56,9 +63,10 @@ for (const item of EXPLAINERS) {
   await useProjectLettering(project);
   for (const s of pictured) {
     await writeFile(join(directory, item.id, s.step + '.png'), await cardPng(variant.Scene, restingTime(s, variant.trace.fps)));
-    share.steps.push({ step: s.step, title: String(s.meta.title ?? s.step), caption: String(s.meta.caption ?? ''), picture: pictureSummary(s.after) });
+    share.steps.push({ step: s.step, title: stepWords(s).title, caption: stepWords(s).caption, picture: pictureSummary(s.after) });
   }
   await writeFile(join(directory, item.id, 'steps.json'), JSON.stringify(share, null, 2) + '\n');
+  await writeFile(join(directory, item.id, 'describe.json'), described);
   if (check) await checkProject(project, join(ROOT, 'out/checks', item.id));
   // Videos only: every case of an explainer with video must export with the caption footer.
   if (render && item.video !== false)
@@ -66,6 +74,9 @@ for (const item of EXPLAINERS) {
       await footerLines(v.trace, v.values).catch((error: Error) => {
         throw new Error(`${item.id}: ${error.message}`);
       });
+  // Last, after the checks, so it vouches for every file above: what they were built from, which
+  // site:export compares with the checkout.
+  await writeFile(join(directory, item.id, 'inputs.json'), JSON.stringify(await sceneInputs(project), null, 2) + '\n');
   evidence.push({
     id: item.id,
     title: project.Scene.meta?.title ?? item.id,

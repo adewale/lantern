@@ -1,12 +1,13 @@
 // An explainer as data, for agents: every case and every step, with the words a reader gets,
 // the state the scene recorded, what each step changed and its resting picture drawn as text.
-// One definition behind `explain describe` and anything an agent imports; it runs the scene in
+// One definition behind `rayner describe` and anything an agent imports; it runs the scene in
 // Node or a browser, with no Chromium, given the diagrams' pinned snapshots.
 import { renderAt, renderText, traceScene } from '../src/index.ts';
 import type { Scene, SceneState, Sink } from '../src/index.ts';
 import { variantsOf, withSettings, caseName } from './settings.ts';
 import type { ExplainerClass, Setting, Settings } from './settings.ts';
-import { pictureSummary, restingTime } from './trace.ts';
+import { pictureSummary, restingTime, stepWords } from './trace.ts';
+import { isHeading } from './stage.ts';
 import { bindSnapshots } from './index.ts';
 import type { SnapshotStore, DiagramResolver } from '../integrations/agentic-mermaid/snapshot.ts';
 
@@ -14,6 +15,8 @@ import type { SnapshotStore, DiagramResolver } from '../integrations/agentic-mer
 export interface StepDescription {
   step: string;
   title: string;
+  /** The few words under the title, drawn on the picture; empty when the step has none. */
+  line: string;
   caption: string;
   start: number;
   end: number;
@@ -25,7 +28,7 @@ export interface StepDescription {
   changed: Record<string, { before?: unknown; after?: unknown }>;
   /** The resting picture in words, as the page's description gives it; empty if the scene gives none. */
   picture: string;
-  /** The resting picture drawn as text (heading left out), when `drawings` is on. */
+  /** The resting picture drawn as text (heading left out), when `drawings` asks for this step. */
   drawing?: string;
 }
 /** One case: a combination of setting values, as a reader picks it under the title. */
@@ -49,8 +52,11 @@ export interface ExplainerDescription {
 export interface DescribeOptions {
   /** Where the scene's diagrams come from: its pinned snapshots, or a resolver that captures them. */
   snapshots?: SnapshotStore | DiagramResolver;
-  /** Draw each resting picture as text (default true); off is faster, a trace only. */
-  drawings?: boolean;
+  /**
+   * Draw each resting picture as text (default true); false is faster, a trace only. A step's name
+   * draws only that step, for a caller that shows one step (`rayner see`).
+   */
+  drawings?: boolean | string;
 }
 
 const PICTURE = 'picture';
@@ -74,11 +80,12 @@ export async function describeExplainer(Scene: ExplainerClass, options: Describe
   };
 }
 
-/** One case of `describeExplainer`, for a caller that needs only that case (`explain see`). */
+/** One case of `describeExplainer`, for a caller that needs only that case (`rayner see`). */
 export async function describeCase(Scene: ExplainerClass, values: Settings, options: DescribeOptions = {}): Promise<CaseDescription> {
   const Source = options.snapshots ? bindSnapshots(Scene, options.snapshots) : Scene,
     Bound = withSettings(Source, values),
     trace = await traceScene(Bound),
+    draw = options.drawings ?? true,
     steps: StepDescription[] = [];
   for (const s of trace.steps) {
     const before = withoutPicture(s.before),
@@ -87,10 +94,12 @@ export async function describeCase(Scene: ExplainerClass, values: Settings, opti
     for (const k of new Set([...Object.keys(before), ...Object.keys(after)]))
       if (!same(before[k], after[k]))
         changed[k] = { ...(k in before ? { before: before[k] } : {}), ...(k in after ? { after: after[k] } : {}) };
+    const words = stepWords(s);
     const d: StepDescription = {
       step: s.step,
-      title: String(s.meta.title ?? s.step),
-      caption: String(s.meta.caption ?? ''),
+      title: words.title,
+      line: words.line,
+      caption: words.caption,
       start: s.t0,
       end: s.t1 ?? trace.duration,
       ...(s.hold == null ? {} : { hold: s.hold }),
@@ -98,16 +107,16 @@ export async function describeCase(Scene: ExplainerClass, values: Settings, opti
       changed,
       picture: pictureSummary(s.after),
     };
-    if (options.drawings ?? true) d.drawing = await drawing(Bound, restingTime(s, trace.fps));
+    if (draw === true || draw === s.step) d.drawing = await drawing(Bound, restingTime(s, trace.fps));
     steps.push(d);
   }
   return { values, name: caseName(Scene, values), duration: trace.duration, steps };
 }
 
-/** The picture at `t` as text, without the heading that names the step, as `explain check` draws it. */
+/** The picture at `t` as text, without the heading that names the step, as `rayner check` draws it. */
 async function drawing(Bound: ExplainerClass, t: number): Promise<string> {
   const sink: Sink = { async frame() {} };
   const scene: Scene = await renderAt(Bound, t, sink);
-  scene.mobjects = scene.mobjects.filter((m) => m.key !== '__heading');
+  scene.mobjects = scene.mobjects.filter((m) => !isHeading(m));
   return renderText(scene);
 }
