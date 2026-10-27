@@ -132,6 +132,7 @@ export default class Ext4SpaceExplainer extends Scene {
     // ------------------------------------------------------------------ the whole
     await this.step('blocks', {
       title: `mkfs.ext4 makes ${name} into ${count(l.blocks)} blocks of 4 KiB`,
+      line: `${of(l.metadata)} of the blocks hold metadata before any file is written.`,
       // mke2fs.conf.in:5 blocksize = 4096; initialize.c:266 blocks per group = blocksize * 8.
       caption: `mke2fs.conf sets ${BLOCK}-byte blocks, so ${name} is ${count(l.blocks)} blocks in ${count(l.groups)} groups of ${count(
         BLOCKS_PER_GROUP,
@@ -156,6 +157,7 @@ export default class Ext4SpaceExplainer extends Scene {
     const perInode = l.inodeRatio / 1024;
     await this.step('inodes', {
       title: `Inode tables are ${ofMeta(l.inodeTables)} of the metadata`,
+      line: `One ${INODE_SIZE}-byte inode per ${perInode} KiB of disk: ${count(l.inodes)} inodes.`,
       // mke2fs.c:1433-1443 size types; mke2fs.conf.in:7, 24-29 inode_ratio; mke2fs.c:2811-2812.
       caption: `This pie’s whole is the ${count(l.metadata)} metadata blocks. mke2fs makes one inode per 16 KiB of disk from 512 MiB to under 4 TiB, per 32 KiB to under 16 TiB, and per 64 KiB above. ${name} gets ${count(
         l.inodes,
@@ -189,6 +191,7 @@ export default class Ext4SpaceExplainer extends Scene {
     // ------------------------------------------------------------------ journal
     await this.step('journal', {
       title: l.journal === 262144 ? `The journal stops growing at 1 GiB` : `The journal is ${bytesOf(l.journal)}, ${ofMeta(l.journal)} of the metadata`,
+      line: `It doubles with disk size from 16 MiB to 1 GiB; here ${of(l.journal)} of the disk.`,
       // mkjournal.c:359-378.
       caption: `mke2fs sizes the journal in steps of disk size, doubling from 16 MiB at 128 MiB to 1 GiB at 128 GiB, and no larger after that. ${name} gets ${count(
         l.journal,
@@ -208,6 +211,7 @@ export default class Ext4SpaceExplainer extends Scene {
     const perCopy = 1 + l.descBlocks + l.reservedGdt;
     await this.step('other', {
       title: `The other ${count(l.other)} blocks: copies, bitmaps and the first files`,
+      line: `Superblock copies in ${l.superGroups} of ${count(l.groups)} groups; two bitmaps in every group.`,
       // closefs.c:23-55 (sparse_super); initialize.c:58-86 (reserved GDT); mke2fs.c:475-555, 3656-3667.
       caption: `Group 0, group 1 and groups that are powers of 3, 5 or 7 keep a copy of the superblock and group descriptors: ${l.superGroups} of ${count(
         l.groups,
@@ -249,6 +253,7 @@ export default class Ext4SpaceExplainer extends Scene {
     ];
     await this.step('reserve', {
       title: `The default 5% reserve is ${count(sp.root)} blocks, ${times(sp.root, l.metadata)} the metadata`,
+      line: `The kernel holds back ${count(sp.kernel)} more blocks; both come out of free blocks.`,
       // mke2fs.c:2375-2378, 2832-2833; mke2fs.8.in:637-644; Linux super.c:4255-4283.
       caption: `Without -m, mke2fs reserves 5% of the blocks for root: ${count(
         sp.root,
@@ -275,6 +280,7 @@ export default class Ext4SpaceExplainer extends Scene {
     // ------------------------------------------------------------------ what users can write
     await this.step('users', {
       title: `Users can write ${of(sp.users)} of ${name}: ${count(sp.users)} blocks`,
+      line: 'statfs f_bavail: the free blocks less the root and kernel reserves.',
       // Linux balloc.c:620-665, super.c:6807-6831; measured with statfs on the mounted filesystem.
       caption: `A user other than root can allocate blocks until only the two reserves are left: ${count(l.free)} - ${count(sp.root)} - ${count(
         sp.kernel,
@@ -300,6 +306,10 @@ export default class Ext4SpaceExplainer extends Scene {
       const gained = chosen.users - sp.users;
       await this.step('chosen', {
         title: `With -m ${m}, users can write ${of(chosen.users)}`,
+        line:
+          m === 0
+            ? `Only the kernel’s ${count(chosen.kernel)} blocks are held back; users gain ${bytesOf(gained)}.`
+            : `Root keeps ${count(chosen.root)} blocks; users gain ${bytesOf(gained)}.`,
         // mke2fs.c:1905-1907 reads -m; mke2fs.c:2832-2833; tune2fs.8.in:475-477 for tune2fs -m.
         caption:
           m === 0
@@ -341,6 +351,7 @@ export default class Ext4SpaceExplainer extends Scene {
     const share = (x: Space, n: number) => percent(n, x.layout.blocks);
     await this.step('sizes', {
       title: `At -m ${m}, users can write ${all.map((a) => share(a.x, a.x.users)).join(', ')} of ${all.map((a) => a.label).join(', ')}`,
+      line: `Metadata falls from ${all.map((a) => share(a.x, a.x.layout.metadata)).join(' to ')} of the disk as disks grow.`,
       caption: `Metadata shrinks as a share of the disk, from ${all.map((a) => share(a.x, a.x.layout.metadata)).join(' to ')}, because the journal stops at 1 GiB and larger disks get fewer inodes per byte. ${
         m === 0
           ? 'With no root reserve, almost everything else is for users.'

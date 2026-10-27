@@ -189,11 +189,30 @@ test('collisions do not depend on the order texts are listed in', () => {
   );
 });
 
-test('texts nobody can see, the heading, and text inside text never collide', () => {
+test('texts nobody can see and text inside text never collide', () => {
   fc.assert(
-    fc.property(fc.array(placedText, { maxLength: 5 }), fc.array(placedText.filter((p) => p.hide !== 'none'), { maxLength: 4 }), (shown, hidden) => {
+    fc.property(fc.array(placedText, { maxLength: 5 }), fc.array(placedText.filter((p) => p.hide !== 'none' && p.hide !== 'heading'), { maxLength: 4 }), (shown, hidden) => {
       const visible = build(shown.map((p) => ({ ...p, hide: 'none' as const })));
       assert.deepEqual(restingTextProblems(sceneOf([...visible, ...build(hidden)])), restingTextProblems(sceneOf(visible)));
+    }),
+    params(),
+  );
+});
+
+test('the heading collides with no text, but a text runs into it exactly when their boxes overlap', () => {
+  fc.assert(
+    fc.property(placedText.map((p) => ({ ...p, hide: 'none' as const })), placedText.map((p) => ({ ...p, hide: 'heading' as const })), (shown, head) => {
+      fc.pre(shown.text.trim() !== '' && head.text.trim() !== '');
+      const [m] = build([shown]),
+        [h] = build([head]);
+      const without = restingTextProblems(sceneOf([m!]));
+      const problems = restingTextProblems(sceneOf([m!, h!]));
+      const a = m!.box()!,
+        b = h!.box()!;
+      const overlap = a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
+      // Nothing about the heading itself is judged: only what runs into it.
+      assert.deepEqual(problems.filter((x) => !x.includes('runs into the heading')), without);
+      assert.equal(problems.some((x) => x.includes('runs into the heading')), overlap && !!m!.box() && !!h!.box());
     }),
     params(),
   );
@@ -272,7 +291,7 @@ const store = fc.dictionary(storeKey, snapshotValue, { maxKeys: 5 }).map((d) => 
   return out as unknown as SnapshotStore;
 });
 async function folder<T>(run: (base: string) => Promise<T>): Promise<T> {
-  const dir = await mkdtemp(join(tmpdir(), 'lantern-pbt-snapshots-'));
+  const dir = await mkdtemp(join(tmpdir(), 'rayner-pbt-snapshots-'));
   try {
     return await run(join(dir, 'scene'));
   } finally {
@@ -494,6 +513,22 @@ test('scriptEscape changes nothing in code without those tokens', () => {
   );
 });
 
+/**
+ * A raw template of `t`, or null when its body holds what no escape can keep (`<!--`, U+2028/9).
+ * The body is checked after the backticks and `$` come out: `<!\`--` holds no `<!--` until then.
+ */
+const rawTemplate = (t: string): string | null => {
+  const body = t.replace(/[`$]/g, '').replace(/\\+$/, '');
+  return /<!--|\u2028|\u2029/.test(body) ? null : 'String.raw`' + body + '`';
+};
+
+test('raw-template fragments never hold <!--, even once a backtick between its characters is removed', () => {
+  // test:full drew String.raw`<!--` from "<!`--": the old filter ran before the backtick came out.
+  assert.equal(rawTemplate('<!`--'), null);
+  assert.equal(rawTemplate('<!$--'), null);
+  assert.equal(rawTemplate('a<!-x'), 'String.raw`a<!-x`');
+});
+
 /** Expression fragments as bundled code contains them: strings, templates, regexes (with u/v), raw templates. */
 const regexToken = fc.constantFrom('<', '!', '-', 'a', '<!--', '<\\/script', '\\/', 's', '>', 'x*');
 const fragment = fc.oneof(
@@ -508,7 +543,7 @@ const fragment = fc.oneof(
   ),
   // Raw templates keep their backslashes, so no textual escape of `<!--` or U+2028/9 can preserve them
   // (ledger: scriptEscape, String.raw). esbuild itself rewrites raw templates holding </script.
-  hostile.filter((t) => !/<!--|\u2028|\u2029/.test(t)).map((t) => 'String.raw`' + t.replace(/[`$]/g, '').replace(/\\+$/, '') + '`'),
+  hostile.map(rawTemplate).filter((t): t is string => t !== null),
 );
 const runOut = (code: string) => {
   const context = vm.createContext({});

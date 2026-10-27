@@ -1,3 +1,4 @@
+import { rightToLeft, withSceneLettering } from '../../src/lettering-outlines.ts';
 import { spawn, execFileSync } from 'node:child_process';
 import { once } from 'node:events';
 import { mkdir, writeFile, readFile, mkdtemp, rename, rm } from 'node:fs/promises';
@@ -8,7 +9,7 @@ import type { Trace } from '../../src/index.ts';
 import { FRAME } from '../../src/svg.ts';
 import { caseNameIn, descriptionLang } from '../../app/embed-strings.ts';
 import type { ExplainerClass, Settings } from '../../explain/index.ts';
-import { pictureHtml, htmlEscape } from '../../explain/trace.ts';
+import { pictureHtml, htmlEscape, stepWords, wordsHtml } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
 import { ROOT, hash, baseReceipt } from './explain-project.ts';
 
@@ -17,8 +18,10 @@ const CAPTION = { size: 0.34, leading: 0.5, lines: 4 };
 export const FOOTER_TEXT_WIDTH = 13.6;
 /** Footer height in scene units: a 1280 × 720 stage over a 240 px footer is 1280 × 960. */
 const FOOTER_HEIGHT = 3;
+/** The footer's top edge, in the footer band's scene units. */
+const FOOTER_TEXT_TOP = FOOTER_HEIGHT / 2;
 /** MP4 tags a stream with an ISO 639-2 code (the terminology code, as MP4 uses); WebM and WebVTT take the scene's BCP 47 tag as is. */
-const ISO_639_2: Record<string, string> = { en: 'eng', fr: 'fra' };
+const ISO_639_2: Record<string, string> = { ar: 'ara', hi: 'hin', he: 'heb', zh: 'zho', ja: 'jpn', ko: 'kor', el: 'ell', ru: 'rus', en: 'eng', fr: 'fra' };
 /** The subtitle stream's language tag: the BCP 47 tag for WebM, an ISO 639-2 code for MP4. */
 export function trackLanguage(lang: string, webm = false): string {
   if (webm) return lang;
@@ -31,12 +34,28 @@ export function trackLanguage(lang: string, webm = false): string {
  * picture shows. Descriptions follow the page's language where explain/words.ts has it; otherwise they are English and marked so.
  */
 export function videoTranscript(title: string, lang: string, steps: Trace['steps']): string {
-  return `<!doctype html><html lang="${htmlEscape(lang)}"><meta charset="utf-8"><title>${htmlEscape(title)}</title><h1>${htmlEscape(title)}</h1><ol>${steps
+  // A right-to-left title or caption is marked so, as the footer aligns it
+  const dir = (text: unknown) => (rightToLeft(String(text)) ? ' dir="rtl"' : '');
+  return `<!doctype html><html lang="${htmlEscape(lang)}"><meta charset="utf-8"><title>${htmlEscape(title)}</title><h1${dir(title)}>${htmlEscape(title)}</h1><ol>${steps
     .map((s) => {
-      const shows = pictureHtml(s.after);
-      return `<li><h2>${htmlEscape(s.meta.title ?? s.step)}</h2><p>${htmlEscape(s.meta.caption ?? '')}</p>${shows && descriptionLang(lang) ? `<div${descriptionLang(lang)}>${shows}</div>` : shows}</li>`;
+      const shows = pictureHtml(s.after),
+        words = stepWords(s);
+      return `<li><h2${dir(words.title)}>${htmlEscape(words.title)}</h2>${wordsHtml(words, dir)}${shows && descriptionLang(lang) ? `<div${descriptionLang(lang)}>${shows}</div>` : shows}</li>`;
     })
     .join('')}</ol></html>\n`;
+}
+
+export { rightToLeft };
+/** Right-to-left mark: a line that starts with it keeps its paragraph's direction when shaped alone. */
+const RLM = '\u200f';
+/**
+ * A title or caption as the footer draws it: wrapped, and for a right-to-left
+ * paragraph each line led by a right-to-left mark, so a wrapped line that starts
+ * with a Latin word still reads right to left and the footer aligns it right.
+ */
+export function footerParagraph(text: string, width = FOOTER_TEXT_WIDTH, size = CAPTION.size): string[] {
+  const lines = wrapCaption(text, width, size);
+  return rightToLeft(text) ? lines.map((line) => RLM + line) : lines;
 }
 
 /** Breakable white space: every \s except the no-break spaces, which hold their words together. */
@@ -65,14 +84,17 @@ export function wrapCaption(text: string, width: number, size = CAPTION.size): s
 /**
  * Each step's title and caption wrapped for the caption-footer preset. Throws, naming the step
  * and case, when one does not fit four lines or has a character the embedded fonts cannot draw.
- * `explain render --footer` runs it before FFmpeg starts; `demos:check` runs it on every case.
+ * `rayner render --footer` runs it before FFmpeg starts; `npm run videos` runs it on every case it renders.
  */
 export async function footerLines(trace: Trace, values: Settings): Promise<string[][][]> {
   await loadFonts();
   takeMissingGlyphs();
   return trace.steps.map((s) => {
     try {
-      const lines = [s.meta.title ?? s.step, s.meta.caption ?? ''].map((t) => wrapCaption(String(t), FOOTER_TEXT_WIDTH));
+      const words = stepWords(s);
+      const lines = [words.title, words.caption].map((t) => footerParagraph(t));
+      // wrapCaption shaped each line as it measured it; a right-to-left line is drawn with its mark, so shape that too
+      for (const line of lines.flat()) if (line.startsWith(RLM)) new Text(line, { fontSize: CAPTION.size });
       // Footer text is drawn as outlines too, so a character the fonts lack would be blank.
       const lost = [...takeMissingGlyphs().values()].join('');
       if (lost) throw new Error(`the title or caption has characters the fonts cannot draw: ${[...new Set(lost)].join(' ')}`);
@@ -99,7 +121,12 @@ export function band(scene: Scene, width: number, height: number, background?: s
   const full = Math.round((width * FRAME.h) / FRAME.w),
     px = Math.round((width * height) / FRAME.w);
   // cull: resvg 2.6.2 aborts on a fading element the camera has left outside the view.
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${px}" viewBox="0 ${(full - px) / 2} ${width} ${px}">${toSvgString(scene, { width, background, cull: true })}</svg>`;
+  // overflow="visible": resvg 2.6.2 also panics (geom.rs, unwrap on None) on a translucent element
+  // inside a nested svg that clips its viewport when something there reaches past it, as the paper
+  // does under a zoomed camera. The outer svg crops the band, which lies inside the inner viewport,
+  // so letting the inner one overflow shows nothing more.
+  const stage = toSvgString(scene, { width, background, cull: true }).replace(/^<svg /, '<svg overflow="visible" ');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${px}" viewBox="0 ${(full - px) / 2} ${width} ${px}">${stage}</svg>`;
 }
 
 export function vttTime(seconds: number): string {
@@ -114,10 +141,10 @@ export function captionsVtt(trace: Trace, lang = 'en'): string {
   return (
     `WEBVTT\nLanguage: ${lang}\n\n` +
     trace.steps
-      .filter((s) => s.meta.caption)
+      .filter((s) => stepWords(s).caption)
       .map(
         (s, i) =>
-          `${i + 1}\n${vttTime(s.t0)} --> ${vttTime(s.t1 ?? trace.duration)}\n${String(s.meta.caption).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n\s*\n/g, '\n').trim()}\n`,
+          `${i + 1}\n${vttTime(s.t0)} --> ${vttTime(s.t1 ?? trace.duration)}\n${stepWords(s).caption.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n\s*\n/g, '\n').trim()}\n`,
       )
       .join('\n')
   );
@@ -133,7 +160,7 @@ function filmSteps(trace: Trace) {
   const { fps } = trace;
   let start = 0;
   return trace.steps.map((s) => {
-    const caption = typeof s.meta.caption === 'string' ? s.meta.caption.trim() : '';
+    const caption = stepWords(s).caption;
     const read = Math.ceil(((caption ? caption.split(/\s+/).length : 0) / Scene.captionWpm) * 60 * fps - 1e-6);
     const last = s.frame1 ?? trace.frames,
       moveEnd = s.hold == null ? last : Math.round(s.hold * fps);
@@ -169,18 +196,27 @@ async function footerColours(dark: boolean) {
 
 async function footer(lines: string[], width: number, colours: { bg: string; fg: string; line: string }) {
   const scene = new Scene(new NullSink()),
-    top = FOOTER_HEIGHT / 2;
+    top = FOOTER_TEXT_TOP;
   // A hairline divides stage from footer when their backgrounds are close.
   scene.add(new Rectangle({ width: 16, height: 0.025, fill: colours.line, stroke: 'none' }).moveTo([0, top - 0.0125]));
-  lines.forEach((line, i) =>
-    scene.add(
-      new Text(line, { fontSize: CAPTION.size, color: colours.fg, anchor: 'start' }).moveTo(
-        [-FOOTER_TEXT_WIDTH / 2, top - 0.62 - i * CAPTION.leading],
-        [-1, 0],
-      ),
-    ),
-  );
+  footerText(scene, lines, colours.fg);
   return (await rasterize(band(scene, width, FOOTER_HEIGHT, colours.bg))).pixels;
+}
+/**
+ * The footer's lines on `scene`: each starts at the left edge of the text column,
+ * or for a right-to-left paragraph (footerParagraph), ends at its right edge.
+ */
+export function footerText(scene: Scene, lines: string[], color: string): Text[] {
+  const top = FOOTER_TEXT_TOP;
+  return lines.map((line, i) => {
+    const rtl = line.startsWith(RLM);
+    const text = new Text(line, { fontSize: CAPTION.size, color, anchor: rtl ? 'end' : 'start' }).moveTo(
+      [(rtl ? 1 : -1) * FOOTER_TEXT_WIDTH / 2, top - 0.62 - i * CAPTION.leading],
+      [rtl ? 1 : -1, 0],
+    );
+    scene.add(text);
+    return text;
+  });
 }
 
 export async function renderVideo(
@@ -218,10 +254,10 @@ export async function renderVideo(
   const steps = filmSteps(trace);
   if (!steps.length) throw new Error('A video needs at least one step');
   // The footer must hold every title and caption; fail before FFmpeg starts, naming the step and case.
-  const footerText = withFooter ? await footerLines(trace, variant.values) : steps.map((): string[][] => [[], []]);
+  const footerLinesByStep = withFooter ? await withSceneLettering(variant.Scene, () => footerLines(trace, variant.values)) : steps.map((): string[][] => [[], []]);
   out = resolve(out);
   await mkdir(dirname(out), { recursive: true });
-  const temp = await mkdtemp(join(dirname(out), '.lantern-video-'));
+  const temp = await mkdtemp(join(dirname(out), '.rayner-video-'));
   const temporaryVideo = join(temp, basename(out));
   const vtt = temporaryVideo.replace(/\.[^.]+$/, '.vtt'),
     metadata = temporaryVideo + '.chapters.ffmeta';
@@ -234,7 +270,7 @@ export async function renderVideo(
       steps
         .map(
           (s) =>
-            `[CHAPTER]\nTIMEBASE=1/1000\nSTART=${Math.round(s.t0 * 1000)}\nEND=${Math.round(s.t1 * 1000)}\ntitle=${escape(String(s.meta.title ?? s.step))}\n`,
+            `[CHAPTER]\nTIMEBASE=1/1000\nSTART=${Math.round(s.t0 * 1000)}\nEND=${Math.round(s.t1 * 1000)}\ntitle=${escape(stepWords(s).title)}\n`,
         )
         .join(''),
   );
@@ -288,7 +324,7 @@ export async function renderVideo(
     if (withFooter) {
       // Light or dark tokens to match the stage, judged by its top-left pixel.
       colours ??= await footerColours(0.2126 * stage[0]! + 0.7152 * stage[1]! + 0.0722 * stage[2]! < 128);
-      const pixels = (footers[step]![part] ??= await footer(footerText[step]![part]!, width, colours));
+      const pixels = (footers[step]![part] ??= await withSceneLettering(variant.Scene, () => footer(footerLinesByStep[step]![part]!, width, colours!)));
       frame = Buffer.concat([stage, pixels]);
     }
     for (let i = 0; i < count; i++) {
@@ -343,7 +379,7 @@ export async function renderVideo(
     await rm(temp, { recursive: true, force: true });
     throw error;
   }
-  // The text alternative to the video (WCAG 1.2.1): each step's title, caption and what its picture shows.
+  // The text alternative to the video (WCAG 1.2.1): each step's title, line, caption and what its picture shows.
   const title = [project.Scene.meta?.title ?? basename(out), caseNameIn(lang, project.Scene, variant.values)].filter(Boolean).join(' · '),
     transcript = out.replace(/\.[^.]+$/, '.transcript.html');
   const receipt = {

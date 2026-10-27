@@ -130,6 +130,7 @@ export default class CacheMRExplainer extends Scene {
 
     await this.step('before', {
       title: 'Before: every request reads D1',
+      line: 'getUser is one D1 query, the outlined line 2.',
       caption:
         'getUser is a single D1 query, the outlined line, so the walked request goes from the handler straight to D1, and every lookup is a database read.',
     });
@@ -166,6 +167,7 @@ export default class CacheMRExplainer extends Scene {
 
     await this.step('diff', {
       title: 'The merge request reads KV before D1',
+      line: 'The old return keeps its D1 call; green lines check KV first.',
       caption:
         'The first line stays and the closing brace moves down to make room. The old return keeps its D1 call inside const row = await, and the green lines grow in. The outlined lines check KV first, so only a miss reaches D1, and the row is then written to KV for 300 seconds.',
     });
@@ -215,6 +217,7 @@ export default class CacheMRExplainer extends Scene {
 
     await this.step('after', {
       title: 'Replayed on the diagram, the diff adds KV and a hit path',
+      line: 'A hit goes from KV to Reply; a miss falls through to D1.',
       caption:
         'The same edit, replayed as diagram operations, removes the handler’s edge to D1 and puts a KV cache between them. A hit goes from KV straight to Reply, while a miss falls through to D1 before replying.',
     });
@@ -225,6 +228,10 @@ export default class CacheMRExplainer extends Scene {
 
     await this.step('request', {
       title: which === 'hit' ? 'A cache hit returns from KV with no D1 read' : 'A cache miss reads D1 once, then caches the row',
+      line:
+        which === 'hit'
+          ? 'getUser returns on line 3, and D1’s note shows 0 reads.'
+          : 'Lines 4 to 6 read D1, put the row in KV for 300 s, return it.',
       caption:
         which === 'hit'
           ? 'The user is already in KV, so getUser returns on line three, the second outlined line, and the note under D1 shows 0 reads.'

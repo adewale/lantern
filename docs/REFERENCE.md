@@ -6,12 +6,16 @@ Words used throughout: a **setting** is a choice a scene declares (an id, a labe
 
 ## Scene
 
-An explainer is a Lantern `Scene` exported from a TypeScript or ESM file, preferably as the default export. A module with exactly one exported `Scene` subclass also works.
+An explainer is a Rayner `Scene` exported from a TypeScript or ESM file, preferably as the default export. A module with exactly one exported `Scene` subclass also works.
 
 ```ts
 static meta = { id: 'cache', title: 'Why a cache changes the request path', lang: 'en', sources: ['https://example.com/spec'] };
 
-await this.step('stable-name', { title: 'A claim the picture can prove', caption: 'The value, part or mechanism on screen.' });
+await this.step('stable-name', {
+  title: 'A claim the picture can prove',
+  line: 'The one thing to see, in a few words.',       // under the title, drawn on the picture
+  caption: 'The value, part or mechanism on screen.',  // under the stage on the page; the video's footer and subtitles
+});
 this.state.reads = reads;   // program state, recorded at each step boundary
 ```
 
@@ -19,11 +23,67 @@ this.state.reads = reads;   // program state, recorded at each step boundary
 - `meta.lang` (BCP 47, default `en`) is the language of the page, the transcripts and the subtitles. The player's own words (`app/embed-strings.ts`) and the generated picture descriptions (`explain/words.ts`, whose `families` name each diagram family and its parts) exist in English and French. On a page in any other language both are English, and the descriptions are marked `lang="en"`; `Picture.lang` in the trace records a description's language when it is not English.
 - Step names are URL identifiers. They must be unique and non-empty in every case.
 - `this.state` is recorded before and after each step. Compute values with a model, show its result, and test that each step's state equals the model's (`assertStepState` in `test/lib/explainer-state.ts`).
+- `line` is one short line under the heading: what to see, in about ten words or fewer. The stage draws it in the soft colour and fails every command on a line wider than the heading (14.6 units at 0.3). It is part of the picture, so a video shows it too, and both transcripts give it.
 - A captioned step holds until its caption could be read at 160 words a minute (`Scene.captionWpm`), counting the step's motion as reading time. The page stops when the picture stops; the [video](#video-files) holds the caption. The picture must not change once the hold begins.
 - Do not put awaited animations inside `try`/`catch` or `.catch()` in `construct()`. Seeking stops a scene by throwing `StopScene`, and a broad catch swallows it, so a jump to a step would show a different picture from playing to it. Handle a known model error in plain code before animating. The engine limits the damage: a `StopScene` from a sink sets `this.stopped`, and from then on `play()`, `wait()`, `step()` and every frame rethrow it before doing anything, so a swallowed stop emits no further frame. Plain code between the catch and the next scene call (a `shift()`, a write to `this.state`) still runs, which is why `check` keeps the lint.
 - `this.frame` is the camera: the box of the stage on screen. `this.play(this.frame.animate.fit(target, { margin }))` zooms onto a mobject or a box, `this.frame.animate.reset()` returns to the whole stage, and `this.frame.zoom` is the magnification. Moving it moves no point; [the camera guide](CAMERA.md) has the rest, and [`d.focus`](#diagrams) moves the same camera with `camera: true`.
 - `this.record(kind, data)` adds `{ kind, ...data }` (copied as JSON) to the step's evidence. Step evidence records what an animation did, where `state` is what the program is; it has nothing to do with the build's `evidence.json`. Steps in the trace carry it as `evidence`, only when they recorded something; seeks record the same evidence as full runs; `this.evidence` holds every record so far. Matching transforms and `TransformDiff` record themselves ([evidence](MATCHING.md#evidence)), so counts on screen can be read from what the transform did; a View's internal morph (`view.sync()`) does not record evidence.
-- All lettering is the embedded fonts, drawn as outlines. JetBrains Mono falls back to Inter, and both fall back to Noto Sans Arabic, Devanagari and SC subsets that hold numerals only (Arabic-Indic and Devanagari digits, Chinese numerals, fullwidth digits). Diagram labels are Inter stretched to each label's width, so styles with their own fonts differ in letterforms. Every command fails on a character these fonts cannot draw and names the case, the step and the code point.
+- By default, lettering uses the embedded fonts, drawn as outlines. JetBrains Mono falls back to Inter, and both fall back to Noto Sans Arabic, Devanagari and SC subsets that hold numerals only (Arabic-Indic and Devanagari digits, Chinese numerals, fullwidth digits). Default diagram labels are Inter stretched to each label's width, so styles with their own fonts differ in letterforms. Bold is the Regular outline stroked, and there is no italic. Every command rejects characters outside the default fonts and requested lettering, naming the case, step and code point. An explainer can request additional scripts, registered faces, real bold and italic, or maths with `meta.lettering`, below.
+
+### Lettering on request
+
+Requests for Arabic (`Arab`), Devanagari (`Deva`), Hebrew (`Hebr`), Chinese (`Hani`), replacement `faces`, `styles` (real bold and italic) or `math: true` use the [outline snapshot workflow](LETTERING.md). That guide covers setup, the font registry, bold and italic, shaping and bidi limits, maths, and refreshing snapshots.
+
+Plain Latin Extended (`Latn`), Greek (`Grek`) and Cyrillic (`Cyrl`) requests use the subset workflow below; only the requesting page carries the additional lettering:
+
+```ts
+import type { LetteringRequest } from 'rayner/lettering';
+
+static meta = { id: 'alphabet', title: 'Αλφάβητο', lettering: { scripts: ['Grek'] } satisfies LetteringRequest };
+```
+
+- `scripts` takes ISO 15924 codes: `Latn` (Latin Extended-A, -B and Additional, U+0100–024F and U+1E00–1EFF), `Grek` (U+0370–03FF and U+1F00–1FFF) and `Cyrl` (U+0400–052F). These scripts need no shaping beyond what the shaper already does for Latin. Adding a registered script outside this group, `faces`, `styles` or `math` selects the outline workflow instead. Unknown codes and keys fail validation.
+- The build runs every case once with Inter's and JetBrains Mono's own letters in those scripts (`vendor/lettering/`, the same releases as the embedded faces, made by `npm run fonts:lettering`). It records which letters each face drew, on stage and in the step titles and captions the video footer draws. It keeps only the letters of the requested scripts, and cuts each face to them with fonttools' subsetter. The page embeds the cuts as WOFF2 in its script, and puts them in place (`useLettering`) before the player draws.
+- A requested face joins its family's chain after the embedded face and before the Noto fallbacks, so everything the embedded faces draw looks as it did. Code tries JetBrains Mono's cut, then Inter's: JetBrains Mono has no ῶ, so code draws it in Inter.
+- The cuts are pinned beside the scene in `scene.lettering.json`, keyed by the source face's hash and the letters. A build reuses them. When the letters change it cuts again, which needs `pip install fonttools brotli` (or `PYFTSUBSET` set to the path of `pyftsubset`). Commit the file with the scene.
+- A letter outside the request still fails every command, as before. So does a combining mark after a letter the embedded faces draw: write the precomposed letter.
+- A lettered page's receipt and its `check` report have a `lettering` entry: the scripts and, for each cut, its source, letter count, WOFF2 bytes and SHA-256, plus `pageBytes`, the base64 the page carries. The Greek test fixture's two cuts hold 24 letters in 6,740 bytes of base64.
+- An explainer that asks for nothing builds the same page, header recipe and receipt as before lettering on request existed, engine hash included: `src/lettering.ts` counts toward the engine hash only of an explainer that asks. `test/lettering.test.ts` holds the explainers to pins taken before the feature.
+- The subset workflow does not replace faces, shape complex scripts or draw real bold and italic. For those requests and typeset maths, use the [outline workflow](LETTERING.md#supported-requests): `faces` (such as `eb-garamond` for the pen-and-ink style), `styles: ['bold', 'italic']` with `ItalicText` ([bold and italic](LETTERING.md#bold-and-italic)), and `math`. Neither workflow implicitly selects a diagram style's font. Only OFL and Apache-2.0 faces may be embedded, and their notices join the page's licence block automatically.
+
+### Maths
+
+An explainer that sets formulas asks for `math: true`, and draws each one with `MathTex`:
+
+```ts
+import { Scene, MathTex } from 'rayner';
+import { stage } from 'rayner/explain';
+
+export default class Roots extends Scene {
+  static meta = { id: 'roots', title: 'The quadratic formula', lettering: { math: true } };
+  override async construct() {
+    const s = stage(this);
+    await this.step('formula', { title: 'Two roots', caption: 'Both roots of a quadratic, from its three coefficients.' });
+    const roots = new MathTex('x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}', { display: true, fontSize: 0.6, color: s.palette.ink });
+    await s.enter(roots, { describe: 'x equals minus b, plus or minus the square root of b squared minus 4 a c, all over 2 a.' });
+  }
+}
+```
+
+```sh
+export RAYNER_MATH_FONT=/path/to/latinmodern-math.otf   # Latin Modern Math 1.959, from CTAN
+npm run rayner -- snapshots roots.ts                    # typesets each formula once
+npm run rayner -- check roots.ts
+```
+
+- `MathTex` is also exported as `Math`. Importing it as `Math` hides JavaScript's `Math` in that file, so prefer `MathTex` or `Math as Formula`. It is a `Text`: it takes `fontSize` (0.4 by default), `color` and the other text options. `display: true` sets display style: limits above and below large operators, full-size fractions.
+- `snapshots` typesets each distinct formula once, with `glyph`'s TeX typesetter (`vendor/glyph-math.js`, glyph at `6398654`) on Latin Modern Math. It stores the outlines in `scene.lettering.json`, with a cut of the font to the glyphs drawn, and adds the font's GUST licence to the page's licence block. Capture needs `RAYNER_MATH_FONT` (the file's SHA-256 is checked) and Python with fonttools and brotli ([LETTERING.md](LETTERING.md#capture-check-build)). Commit the file with the scene.
+- `check`, `build`, `shots` and `render` draw the stored outlines and run no typesetter, and neither does the page. A formula changed without running `snapshots` fails every command with "stale lettering snapshot". `MathTex` without `math: true` fails too.
+- The TeX is `glyph`'s subset: scripts and primes; `\frac \dfrac \tfrac \cfrac \binom`; `\sqrt` and `\sqrt[n]`; `\left \middle \right` and `\big` to `\Bigg`; large operators with `\limits` and `\nolimits`; `\sin`, `\lim` and `\operatorname`; accents, `\widehat \widetilde \overline \underline \overbrace \underbrace`; `\overset \underset \stackrel`; `\text`; Greek; about 125 relations, arrows and binary operators, and `\not`; `\mathbb \mathcal \mathfrak \mathbf \mathit \mathrm \mathsf \mathtt \boldsymbol`; spacing and style commands; `matrix pmatrix bmatrix Bmatrix vmatrix Vmatrix cases`.
+- Anything else fails `snapshots` with `glyph`'s error and its offset in the source, for example `Math: {"tag":"Tex","error":{"tag":"UnknownCommand","name":"\\color","at":0}}`. Not supported: `\color`, `\phantom`, `\substack`, `\pmod`, `align` and the other multi-line environments, line breaking, and right-to-left maths. Latin Modern Math has no lowercase script letters, so `\mathcal{a}` fails as a missing glyph.
+- Morphs: a formula's glyphs are not characters of its source, so `TransformMatchingText` and `TransformMatchingShapes` both pair them by shape. `TransformMatchingText` pairs the longest runs of same-shaped glyphs first, in the order the typesetter lists them (reading order, then fraction bars and radical rules). When a formula grows at the end, every old glyph keeps its place. Glyphs of one shape are interchangeable, whatever their size: swapping `\frac{1}{2}+x^2` to `x^2+\frac{1}{2}` turns the denominator 2 into x's exponent. Inserting `y^2+` into `x^2+\frac{1}{2}` moves x's exponent and its `+` to the new term and grows new ones beside x; the formula still ends right. Use `TransformMatchingText` when terms are added or removed: new glyphs grow inside the formula, so it stays one piece for the motion check. `TransformMatchingShapes` passes when every glyph is matched, as when terms swap places. When glyphs are added, it grows them from outside the formula's box, and `check` reports the formula jumping, as it does for plain `Text`. `Transform` morphs a whole formula into another.
+- A kept formula with no `describe` is described as "1 label.", so say it in words.
+- An explainer without maths builds the same page and receipt as before. Each formula costs its outlines. The four-step fixture in `test/lettering/math` stores 7 formulas in a 46 KB snapshot (each outline stored once; 90 KB of runs unpacked), with a 4.5 KB font cut, and its page carries 37 KB of that. Its page is 34 KB larger than the same scene drawn as plain `Text` (9.6 KB gzipped). `test/lettering-math.test.ts` compares the stored outlines with upstream `glyph`'s own results (`test/lettering/glyph-math.json`, made by `tools/oracle/glyph-math.ts`), and in Chromium compares the page's paths with Node's at every step.
 
 ## Stage
 
@@ -32,7 +92,7 @@ import { stage } from 'rayner/explain';
 const s = stage(this, { style: 'nord' });
 ```
 
-`stage(scene, options)` adds the paper and a heading that follows each step's `title`.
+`stage(scene, options)` adds the paper and a heading that follows each step's `title`: a circled step number, the title, and the step's `line` under it. The heading draws over everything, and while the camera is away from home it stays put on screen at its size, over a paper band that zoomed content passes under.
 
 | Option | Effect |
 | --- | --- |
@@ -40,6 +100,7 @@ const s = stage(this, { style: 'nord' });
 | `palette` | Colours for the stage, for example `palette('dusk')` in a scene with no diagrams |
 | `heading` | `'step'` (default), a fixed string, or `false` for no heading |
 | `headingSize` | The heading's font size, 0.36 by default; at 0.54 it reads at 12 px on a 390 px page without a close-up |
+| `numbered` | A circled step number before the title; on by default when the heading follows the steps |
 
 With neither `style` nor `palette`, the stage adopts the first diagram's palette.
 
@@ -53,8 +114,16 @@ With neither `style` nor `palette`, the stage adopts the first diagram's palette
 | `s.keep(...mobs, { describe })` | Keep native objects without animating them; returns the first |
 | `s.clearOverlays()` | Fade out cards, code, notes (the stage's and the diagrams') and kept objects |
 | `s.clear({ runTime })` | Fade out everything except paper and heading, and bring the camera home, in one play |
+| `s.focus(target \| 'all', { margin, runTime, exact, with })` | Move the camera so a mobject, mobjects or a box fill the stage below the heading, with `margin`; `'all'` goes home. Never zooms out past the stage or shows beyond its edges. `exact: true` takes a 16:9 box as the view as it is; `with` plays other animations in the same play |
+| `s.carry(m, to, { runTime })` | Glide a kept object to a point, or into a box or region it is shrunk to fit (never enlarged): carry an idea on instead of clearing it |
+| `s.draw(m, { tool, color, runTime, describe })` | Draw `m` stroke by stroke at an even speed with a `'pen'` or `'pencil'` riding the tip (`false` for none), and keep it. Between strokes the tool travels at drawing speed, so it never jumps. `m` must not be on stage yet |
+| `s.dimension(a, b, label, { offset, color, size })` | A dimension line from `a` to `b` with ticks, arrowheads and `label`, set off by `offset`; drawn in and kept |
+| `s.pin(at, { label, color, size })` | A pin stuck in at `at`, with an optional label |
+| `s.callout(target, text, { side, gap, color, size })` | Words beside a point, box or mobject, with a leader line ending in a dot on its nearest edge |
 | `s.emphasis`, `s.soft`, `s.good`, `s.bad` | Colours that read on this paper: emphasis, secondary text, accepted, rejected |
 | `s.palette`, `s.paper`, `s.heading` | The current palette, paper rectangle and heading text |
+
+Annotations say a value where it is. Prefer a dimension, pin or callout on the drawing to a card beside it, and `carry` to `clear` when the next step builds on this one: `check` reports how many cards each resting picture holds (`cardsAtRest`).
 
 `{ enter: false }` creates a card or code panel without playing it, so `s.enter(card, code)` can bring several in together.
 
@@ -76,7 +145,7 @@ Emphasis is the style's accent, or orange for styles whose accent is grey or nea
 
 ### Regions
 
-Stage coordinates are 16 × 9 with the origin at the centre and y up. The heading sits at y = 3.8; content belongs below y = 3.25. `at` and `box` accept a region name, a point `[x, y]`, or a box `[minX, minY, maxX, maxY]`.
+Stage coordinates are 16 × 9 with the origin at the centre and y up. The heading sits at y = 3.8 (3.98 with a line, which sits under it); content belongs below y = 3.25, and `check` fails text that runs into the heading's number or line. `at` and `box` accept a region name, a point `[x, y]`, or a box `[minX, minY, maxX, maxY]`.
 
 | Region | Box |
 | --- | --- |
@@ -121,7 +190,7 @@ const d = await s.show({ source: 'graph LR\nA --> B', style: 'nord' }, { box: 'm
 
 ## Engine features
 
-These are plain Lantern, imported from `rayner` and used beside the helpers. Each guide explains one feature and ends with "In the explainers", what the scenes named here do with it; [the engine map](ENGINE.md) lists the guides by module. What you draw with them is a native drawing: keep it with `s.keep` or `s.enter`, with `describe` when it has no text of its own ([stage](#stage)).
+These are the engine's own features, imported from `rayner` and used beside the helpers. Each guide explains one feature and ends with "In the explainers", what the scenes named here do with it; [the engine map](ENGINE.md) lists the guides by module. What you draw with them is a native drawing: keep it with `s.keep` or `s.enter`, with `describe` when it has no text of its own ([stage](#stage)).
 
 | Feature | What a scene uses | Guide | Used by |
 | --- | --- | --- | --- |
@@ -150,15 +219,43 @@ Every case is built and checked ahead of time; a scene may have at most 64. Ids 
 
 Other exports: `withSettings(Scene, values)` binds a case without mutating the class; `resolveSettings` validates; `variantsOf(Scene)` lists every case; `caseName(Scene, values)` gives "Label: option · Label: option"; `bindSnapshots(Scene, store)` binds a snapshot store.
 
+## Describe
+
+`describeExplainer(Scene, { snapshots?, drawings? })`, from `rayner/explain`, returns the explainer as one JSON-safe object for agents and tools: `schema` (1), `id`, `title`, `lang`, `sources`, `settings`, and `cases`. Each case has its setting `values`, its `name` ("Label: option"), its `duration` and its `steps`. Each step has its `step` name, `title`, `caption`, `start`, `end` and `hold` in seconds, the `state` the scene recorded (`scene.state` when the step ends), `changed` (each value the step changed, as `{ before, after }`, with a side left out when the value was not set), the resting `picture` in words, and its `drawing` as text unless `drawings: false`. `drawings: 'name'` draws only the step of that name, which is how `rayner see` draws the one step it prints.
+
+It runs the scene once per case, in Node or a browser, with no Chromium. A scene with diagrams needs its pinned snapshots (`snapshots`, as `rayner` reads them from `scene.snapshots/`) or it throws. `rayner describe <scene>` prints the same object; `--out file.json` writes it. Diagram labels are outlines, so the text drawing shows them as strokes; their words are in `picture`.
+
+In a script, load the snapshots from `scene.snapshots/` (`index.json` names each diagram's file) and walk the cases and steps. This prints each step's caption and the state keys it changed:
+
+```ts
+import { readFile } from 'node:fs/promises';
+import { describeExplainer } from 'rayner/explain';
+import type { SnapshotStore } from 'rayner/explain';
+import Scene from './my-explainer/scene.ts';
+
+const folder = new URL('./my-explainer/scene.snapshots/', import.meta.url);
+const index = JSON.parse(await readFile(new URL('index.json', folder), 'utf8'));
+const snapshots: SnapshotStore = {};
+for (const [key, file] of Object.entries<string>(index.diagrams))
+  snapshots[key] = JSON.parse(await readFile(new URL(file, folder), 'utf8'));
+
+const d = await describeExplainer(Scene, { snapshots });
+for (const c of d.cases)
+  for (const s of c.steps)
+    console.log(`${c.name || d.title} · ${s.step}: ${s.caption}\n  changed: ${Object.keys(s.changed).join(', ') || 'nothing'}`);
+```
+
+`npm run pack:smoke` runs this block against the packed package. `rayner see <scene> [step]` prints one step of the same description for a person at a terminal. `npm run site:export` publishes the description beside each page as `<id>.json`, and lists every explainer in `llms.txt` at the site root.
+
 ## Snapshots
 
-Every command except `init` runs every case, captures any diagram missing from `scene.snapshots/` beside the scene, and deletes unused ones; `explain snapshots` stops there. Commit the folder; `index.json` maps each diagram's key to its own file. A change to the capture code invalidates the whole cache; `--refresh` recaptures everything. Capture needs Chromium and the optional packages in [the README](../README.md#requirements).
+Every command except `init` runs every case, captures any diagram missing from `scene.snapshots/` beside the scene, and deletes unused ones; `rayner snapshots` stops there. Commit the folder; `index.json` maps each diagram's key to its own file. A change to the capture code invalidates the whole cache; `--refresh` recaptures everything. Capture needs Chromium and the optional packages in [the README](../README.md#requirements).
 
 Capture asserts that its output equals Agentic Mermaid's `renderMermaidSVG` byte for byte, and fails on SVG it cannot convert (unsupported paint, masks, filters). Chromium resolves CSS, transforms and markers at build time with network requests blocked. The page receives resolved geometry and text runs; it never runs Agentic Mermaid.
 
 ## Checks
 
-`explain check` runs every case and fails on:
+`rayner check` runs every case and fails on:
 
 | Check | Rule |
 | --- | --- |
@@ -168,11 +265,11 @@ Capture asserts that its output equals Agentic Mermaid's `renderMermaidSVG` byte
 | Seek | A seeked frame differs from the played frame, at two frames per step |
 | Trace | The trace with frames skipped differs from the played trace |
 | Step change | A step's resting picture, ignoring the heading, equals the previous step's. The camera's view is part of the picture, so a camera move alone is a change |
-| Text | Native text in a resting picture overlaps other text, or is cut by the stage edge or the edge of the camera's view; text wholly outside the view is off screen and not judged |
+| Text | Native text in a resting picture overlaps other text, runs into the heading's number or line, or is cut by the stage edge or the edge of the camera's view; text wholly outside the view is off screen and not judged |
 | Legibility | A native label never reaches 14 px at a 1280 px stage in a frame where it is drawn (opacity and draw fraction at least 0.95) and inside the camera's view; an imported label never reaches 14 px in a resting picture inside its diagram's viewport. Sizes are on screen: world size × the camera's zoom, min(16 ÷ view width, 9 ÷ view height). A native label counts at that zoomed size only in a step's completed frame; in other frames it counts at no more than its size with the camera home, so a camera gliding past does not make it read |
 | Words | A kept drawing with no text and no `describe` |
 | Bare runtime | The scene, bundled, gives different steps or state in a context with no DOM, Node, timers or console |
-| Glyphs | Any text the embedded fonts cannot draw (every command checks this) |
+| Glyphs | Any text the embedded fonts, and the lettering the explainer asked for, cannot draw (every command checks this) |
 
 The report goes to `out/checks/<id>/report.json`. For each case it holds the full step trace, each step's resting picture as a rough text drawing (`restingFrames`: boxes and lines, with diagram labels as bars), and label sizes (`legibility`):
 
@@ -183,6 +280,8 @@ The report goes to `out/checks/<id>/report.json`. For each case it holds the ful
 | `labelsOutsideCloseUpsAt390` | Labels no close-up shows whole, which a reader reaches by panning |
 | `minLabelPx390WholeStage` | Smallest label on that phone without close-ups |
 
+`cardsAtRest` counts the cards in each step's resting picture.
+
 The phone sizes are reported, not gated; every demo case reports no label under 12 px. A close-up zooms on top of the author's camera, so its sizes multiply the camera zoom by the close-up's.
 
 Motion is measured on screen, after the camera: a smooth camera move reports nothing, and moving `this.frame` without `.animate` (a cut) reports a teleport for everything in view. A shape that appears over a shape that stays and is no less opaque is not a cut-in when it is a `TransformFromCopy` copy of that shape, or when every shown part of it has the same outline (`shapeKey()`) and the same fill and stroke presence as a part of the staying one. A brighter shape over a faint one, a filled shape popping inside an outline, a hand-made `Transform(t.copy(), other)` that changes glyph shapes on its first frame, and a shape appearing elsewhere are cut-ins.
@@ -191,7 +290,7 @@ These checks establish deterministic behaviour and readable pictures. They do no
 
 ## Command line
 
-`explain <command> <scene.ts | directory> [options]`. In a checkout, run `npm run explain -- <command> ...`. `explain --help` prints the commands and the install lines for the optional packages.
+`rayner <command> <scene.ts | directory> [options]`. In a checkout, run `npm run rayner -- <command> ...`. `rayner --help` prints the commands and the install lines for the optional packages.
 
 | Command | What it does |
 | --- | --- |
@@ -202,12 +301,14 @@ These checks establish deterministic behaviour and readable pictures. They do no
 | `build <scene>` | The page, its receipt, its header recipe and `loader.js` |
 | `render <scene>` | A video with subtitles, chapters, transcript and receipt |
 | `shots <scene>` | A contact sheet of every step, as SVG and PNG |
+| `describe <scene>` | [`describeExplainer`](#describe) as JSON: every case and step, with words, state, what changed and the picture in words and as text |
+| `see <scene> [step]` | One step of [`describeExplainer`](#describe)'s description: its resting picture drawn as text, then its title, caption, the picture in words and what it changed in `scene.state` (`key: before → after`). The last step by default; needs no browser, so an agent can read a scene from a terminal |
 
 | Option | Applies to | Effect |
 | --- | --- | --- |
-| `--out <path>` | all but `init` and `snapshots` | The output file; for `check`, the report's directory. Defaults under `out/` in the current directory |
+| `--out <path>` | all but `init` and `snapshots` | The output file; for `check`, the report's directory; for `see`, the resting picture as SVG (nothing is written without it). Defaults under `out/` in the current directory |
 | `--refresh` | all but `init` | Recapture every diagram |
-| `--case id=value` | `render`, `shots` | One case; repeat for several settings |
+| `--case id=value` | `render`, `shots`, `see` | One case; repeat for several settings |
 | `--all` | `render` | Every case, each file suffixed `-id=value` |
 | `--footer` | `render` | The 1280 × 960 caption-footer preset |
 | `--width <even>` | `render` | Stage-only width, default 1280 |
@@ -234,15 +335,15 @@ The transcript lists, for every case, each step as a link to it, its caption, an
 | `theme=light\|dark\|auto` | Player chrome only; default `auto` |
 | `parentOrigin=<origin>` | Set by the loader; the exact HTTP(S) origin that receives resize messages |
 
-An unknown setting or value resets every setting to its default, and a notice names what was wrong. A step the case lacks opens the first step, with a notice. Switching cases keeps the step by name. Back and forward restore case and step. Copy link keeps case and step and drops `parentOrigin`.
+An unknown setting or value resets every setting to its default, and a notice names what was wrong. A step the case lacks opens the first step, with a notice. Switching cases keeps the step by name. Back and forward restore case and step. Copy link keeps case and step and drops `parentOrigin`. On a page `site:export --origin` published, which carries `<meta name="rayner:share">`, Copy link on a step of the default case gives that step's share page, `<origin><path>/<id>/<step>`, whose link preview is the step; another case, or a step whose name is not letters, digits, `-` and `_`, keeps `?step=`. A share link drops `theme`.
 
 ### Controls and accessibility
 
-**Next** plays the step and stops on its resting picture. Icon buttons: previous, zoom out, zoom in, fit (only while zoomed), replay, copy link, and enlarge (full screen, when the iframe allows it). Cases are a segmented choice under the title; steps are a list under the controls.
+**Next** plays the step and stops on its resting picture; pressed while a step plays, it carries that run on to the next step without replaying the scene from its start. The controls sit straight under the stage, the step's words under them, so a long caption never moves Next. Icon buttons: previous, zoom out, zoom in, fit (only while zoomed), replay, copy link, and enlarge (full screen, when the iframe allows it). Cases are a segmented choice under the title; steps are a numbered list under the caption, with the numbers the stage's heading draws. The stage's accessible name is the explainer's title, the step's title and its line; both transcripts give each step's title, line and caption.
 
 The stage's accessible description is a one-sentence summary of the picture. "What the picture shows", under the caption, opens the full description: each diagram, card, code panel and described drawing, with what is marked, dimmed or changed in this step.
 
-The stage takes focus from Tab or a click. With the stage focused, `+`, `-` and `0` zoom and reset, and arrow keys pan when zoomed. Otherwise left and right arrows change step, except on a button, link or field. Pinch, Ctrl-scroll and double-click zoom; when zoomed, drag pans and a click recentres on the point clicked. Zoom goes up to 6×, keeps its place across steps, and resets when the case changes. It narrows the stage's SVG `viewBox` inside the author's camera (`ReaderSink` in `app/embed-zoom.ts`) rather than scaling the element, so the drawing stays sharp, the page does not move, an author's camera move keeps playing under it, and Fit shows the author's frame. On a stage under 600 px wide, each step opens on a close-up of what it changed, zoomed whenever a label near the change is under 12 px so that it reads at 12 px; a small map in the corner shows the whole frame and steps through the step's other close-ups, Fit keeps the whole picture for later steps, and the crosshair button brings close-ups back. A vertical swipe scrolls the page; a sideways drag or a pinch moves the view. With reduced motion, the previous picture crossfades into the step's resting picture instead of playing.
+The stage takes focus from Tab or a click. With the stage focused, `+`, `-` and `0` zoom and reset, and arrow keys pan when zoomed. Otherwise left and right arrows change step, except on a button, link or field. Pinch, Ctrl-scroll and double-click zoom; when zoomed, drag pans and a click recentres on the point clicked. Zoom goes up to 6×, keeps its place across steps, and resets when the case changes. It narrows the stage's SVG `viewBox` inside the author's camera (`ReaderSink` in `app/embed-zoom.ts`) rather than scaling the element, so the drawing stays sharp, the page does not move, an author's camera move keeps playing under it, and Fit shows the author's frame. On a stage under 600 px wide, each step opens on a close-up of what it changed (what it brought new before what it only moved or scaled, such as a panel carried aside), zoomed whenever a label near the change is under 12 px so that it reads at 12 px, and kept below the heading the stage draws, zooming a little further when that is what it takes, and the step's number, title and line then show as text above the caption; a view count and **Next view** button below the picture let readers inspect its other close-ups without advancing the step. The close-ups that show what the step newly emphasised with the stage's helpers (a lit card row, a code focus or diff line, a marked, travelled or focused diagram part, a note) come right after the first, then the rest of the change, each group in reading order from the first. The small corner map moves through the same views. **Whole picture** (or Fit) shows the author's frame and keeps it for later steps, and the crosshair button brings close-ups back. A vertical swipe scrolls the page; a sideways drag or a pinch moves the view. With reduced motion, the previous picture crossfades into the step's resting picture instead of playing.
 
 Inside an iframe without `parentOrigin` (a raw iframe), the page adds its own "Open in a new tab" link.
 
@@ -258,11 +359,11 @@ Inside an iframe without `parentOrigin` (a raw iframe), the page adds its own "O
 
 ### Headers
 
-`<page>.html.headers.json` is the response-header recipe: a CSP that pins the inline script and style by SHA-256, `connect-src 'none'`, no fonts, base or objects, and `frame-ancestors *`, plus `Cache-Control: public, max-age=0, must-revalidate`. `<page>.html.receipt.json` records source, engine and snapshot hashes, the artifact hash and each case's steps.
+`<page>.html.headers.json` is the response-header recipe: a CSP that pins the inline script and style by SHA-256, `connect-src 'none'`, no fonts, base or objects, and `frame-ancestors *`, plus `Cache-Control: public, max-age=0, must-revalidate`. `<page>.html.receipt.json` records source, engine and snapshot hashes, the artifact hash and each case's steps, and, for a page that asked for lettering, what its lettering weighs ([lettering on request](#lettering-on-request)).
 
 ## Video files
 
-`explain render` runs the scene at a fixed frame rate, rasterises each frame with resvg and the embedded fonts, and pipes it to FFmpeg. Each frame is written with `toSvgString(scene, { cull: true })`, which leaves out what the camera cannot show (`shots`, `preview`'s contact sheet and the gallery tiles render culled too), because resvg 2.6.2 aborts on an element with `opacity` whose visible box is empty, such as a fading label outside a zoomed view ([camera](CAMERA.md#rendering-off-screen-content)).
+`rayner render` runs the scene at a fixed frame rate, rasterises each frame with resvg and the embedded fonts, and pipes it to FFmpeg. Each frame is written with `toSvgString(scene, { cull: true })`, which leaves out what the camera cannot show (`shots`, `preview`'s contact sheet and the gallery tiles render culled too), because resvg 2.6.2 aborts on an element with `opacity` whose visible box is empty, such as a fading label outside a zoomed view ([camera](CAMERA.md#rendering-off-screen-content)).
 
 Each step plays its motion with the step's title in the footer, then holds its resting picture under the full caption for the caption's reading time at 160 words a minute. Chapters start at each step's motion; subtitle cues cover the caption holds. Reading time sets the length, so most of a video is a still picture: over the 20 demo videos, 82% of frames repeat the stage picture before them (1 − `rasterizedFrames` / `frames` in the receipts); on the earlier collection, the order that put each caption before its motion gave 69%.
 
@@ -271,7 +372,7 @@ Each step plays its motion with the step's title in the footer, then holds its r
 | `.mp4` | Silent H.264, `yuv420p`; one `mov_text` subtitle stream tagged with the ISO 639-2 code for `meta.lang`; chapters |
 | `.webm` | Silent VP9; WebVTT subtitle stream tagged with `meta.lang` |
 | `.vtt` | One cue per captioned step, with a `Language:` header |
-| `.transcript.html` | The video's text alternative: title and case, then each step's title, caption and what its picture shows |
+| `.transcript.html` | The video's text alternative: title and case, then each step's title, line, caption and what its picture shows |
 | `.chapters.ffmeta` | One chapter per step, titled by the step title |
 | `.receipt.json` | Hashes, settings, versions of resvg and FFmpeg, size, fps, `frames`, `rasterizedFrames`, preset, `chapters` (each step with its `captionHold` in seconds), `transcript` |
 
@@ -289,37 +390,22 @@ With `--footer`, `render` fails before FFmpeg starts on a title or caption that 
 | `npm run check` | TypeScript over every project, then a consumer compile against `dist/` |
 | `npm test` | The test suite; browser, video and live tests skip unless enabled |
 | `npm run test:full` | `FULL=1`: every frame and ten times as many property cases |
-| `npm run test:embeds` | Real Chromium: capture fidelity, cross-origin embeds, history, phone layout, offline, no JavaScript |
+| `npm run test:embeds` | Real Chromium: capture fidelity, cross-origin embeds, history, phone layout, offline, no JavaScript, a lettered page drawing its requested letters |
 | `npm run test:video` | Real FFmpeg: H.264 and VP9 exports, subtitles, chapters, decode, receipts |
-| `npm run demos:build` | Build every explainer, the gallery, `evidence.json` and a two-embed page into `out/explainers/` |
-| `npm run demos:check` | `demos:build` plus `check` and the footer check on every case |
+| `npm run demos:build` | Build every explainer, the gallery, `evidence.json` and a two-embed page into `out/explainers/`, with each explainer's `describeExplainer` JSON in `<id>/describe.json` for `site:export` |
+| `npm run demos:check` | `demos:build` plus `check` on every case |
 | `npm run demos:render` | `demos:build` plus a caption-footer video of each default case in `out/videos/`, verified with ffprobe, after checking that every case's captions fit the footer; unchanged videos are skipped unless `-- --force`; a catalog entry with `video: false` ships as a page only |
 | `npm run videos` | Everything video, kept out of CI: `demos:render`, `test:video` and the package smoke test's installed render. Needs FFmpeg |
 | `npm run demos:serve` | Serve `out/` on port 5175 with each page's headers and byte ranges; `-- --port n` |
 | `npm run demos:review` | Open every served case at 390 px and 1180 px in Chromium and check captions, artwork, errors, outside requests and headers, and video byte ranges when `out/videos/` has videos; screenshots in `out/review/` |
-| `npm run bench` | Reader speed of four built explainers, the working tree against `origin/main` (`-- --base <rev>`), in Chromium; fails on a slowdown seen on two separate rounds, or on any layout shift while stepping. Run it before merging a change to `app/`, `src/` or `explain/`; not in CI (below) |
-| `npm run site:export -- <site-root>` | Copy the built pages, posters, videos and loader under `<site-root>/projects/rayner` (`--path` changes it) and write their `_headers` block to `out/site-headers.txt` |
+| `npm run bench` | Manual interleaved BASE/HEAD browser measurements; validates inputs, skips identical built pages, and reports insufficient samples as inconclusive |
+| `npm run site:export -- <site-root>` | Copy the built pages, posters, videos and loader under `<site-root>/projects/rayner` (`--path` changes it), with every step's preview picture of the default case as `<id>/<step>.png` (the 960 × 540 still centred on a 1080 × 540 canvas of the stage's paper, since X shows these cards at 2:1; a palette PNG of at most 256 colours taken from the picture, each channel within a few levels of the render), and write their `_headers` block to `out/site-headers.txt`. `--origin https://example.org` also writes a share page per step, `<id>/<step>.html`, which sends a reader to the player at `<id>?step=<step>`, and adds the same link-preview tags to each explainer page, for its gallery tile's step: `description`, Open Graph (`og:type`, `og:title`, `og:description`, `og:url`, `og:image`, `og:image:width`, `og:image:height`, `og:image:alt`) and Twitter card (`twitter:card` = `summary_large_image`, `twitter:title`, cut at a word to the 70 characters X shows, `twitter:description`, `twitter:image`, `twitter:image:alt`), with absolute URLs, and `<meta name="rayner:share" content="<origin><path>/<id>/">`, which the player's Copy link reads; then it checks every page has each tag once and each picture exists at the declared size. Link previews come from the HTML a crawler fetches, and a static host sends the same HTML for every `?step=`, so a step needs its own URL to preview. Each explainer's `<id>.json` is copied from `demos:build`'s `describe.json`. The export fails before writing anything if a scene's code, its folder or the engine changed since `demos:build` ran |
 | `npm run pack:smoke` | Pack, install into a fresh project without the optional packages, build an outside scene; `EXPLAIN_BROWSER=1` adds capture, `EXPLAIN_VIDEO=1` a render |
 | `npm run build:lib` | Compile `dist/` (runs on `npm pack`) |
 | `npm run fonts` | Regenerate `src/font-data.ts` from Inter, JetBrains Mono and the Noto numeral subsets, reproducibly (needs `fonttools` and `brotli`) |
+| `npm run fonts:lettering` | Regenerate `vendor/lettering/`, the Latin Extended, Greek and Cyrillic of the same Inter and JetBrains Mono that [lettering on request](#lettering-on-request) cuts from; leaves `src/font-data.ts` alone (needs `fonttools` and `brotli`) |
 
-`npm run bench` builds BASE's pages with BASE's own `explain build`, from a temporary git worktree, and HEAD's from the working tree, so `--base HEAD` measures the uncommitted change alone. It serves both and opens each page in a fresh browser context at 390 × 844 with the CPU slowed 4× (`--cpu`), taking BASE and HEAD in turn, in alternating order, `--reps` times (default 7; fewer than 5 are shown but not judged). Each opening loads the page, waits a second as a reader would, presses Next, waits again and jumps to the last step through the steps list, a step it has not drawn yet. From what the page records about itself it takes:
-
-| Metric | From | To | Slower by more than |
-| --- | --- | --- | --- |
-| load → ready | navigation | the player's `data-ready` | 10% and 100 ms |
-| Next → first motion | the click event | the stage's first change | 25% and 40 ms |
-| Next → resting | the click event | the `rayner:step` event | 3% and 100 ms (mostly the step's authored motion) |
-| Next: longest gap | the click event | the `rayner:step` event: the longest wait between animation frames | 50% and 50 ms |
-| jump to last step | the click event | the `rayner:step` event | 20% and 60 ms |
-| blocking | both windows above | | 25% and 60 ms: each long task's time over 50 ms, as Total Blocking Time counts it |
-| layout shift | the player's `data-ready` | the jump's `rayner:step` event | any: every `layout-shift` entry counts, including those just after a click, which CLS excuses |
-
-The four defaults differ where the player's costs differ: mr-cache is short (4 steps) with captured diagrams; seasons is the longest scene of the four (8 steps, 131 s of scene time) and draws its charts natively; oauth-pkce and exgit carry the most captured diagrams (3 and 6), and exgit is the slowest of the four to load and to jump (about 2.2 s and 540 ms at 4×). mr-cache and exgit are also the layout test's, and all but seasons are the embed tests'. Each explainer adds about 2 minutes to a run, so the set is small; `--explainers a,b` measures others. A metric regresses when HEAD's median is slower than BASE's by both its margins and HEAD was the slower of the pair in at least 70% of pairs; an explainer with such a metric is measured again, and the gate fails only on a metric that regresses both times. Single openings on a shared machine move by ±30% (ready 1.2–2.1 s for one page), so there is no stored baseline. `out/bench/samples.json` keeps every sample. A run of the defaults takes about 9 minutes, and up to twice that when something is measured again.
-
-It is not in CI: it would add 9 to 18 minutes to a job that takes about 20 of its 35, a push to `main` has no BASE to compare with, and its margins were set from runs on one shared 4-core VM, not on a CI runner.
-
-Test environment: `FC_RUNS=n` sets the property cases, and `FC_SEED` with `FC_PATH` replays a fast-check failure. `UPDATE_GOLDEN=1` rewrites `test/golden-traces.json` after a deliberate change. `EXPLAIN_BROWSER=1` and `EXPLAIN_VIDEO=1` enable the browser and video tests. `test/explain-gates.test.ts` gives each check one seeded defect.
+Test environment: `FC_RUNS=n` sets the property cases, and `FC_SEED` with `FC_PATH` replays a fast-check failure. `UPDATE_GOLDEN=1` rewrites `test/golden-traces.json` and `test/lettering-baseline.json` after a deliberate change; re-pin the second in a commit that changes no lettering code. `EXPLAIN_BROWSER=1` and `EXPLAIN_VIDEO=1` enable the browser and video tests. `test/explain-gates.test.ts` gives each check one seeded defect.
 
 Tests that hold a model to an outside tool compare against frozen answers, and also run the tool when it is present:
 

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  Rectangle, Line, Arrow, Text, Dot, Transform, AnimationGroup, FadeIn, linear, thereAndBack,
+  Rectangle, Square, VMobject, Line, Arrow, Text, Dot, Transform, AnimationGroup, FadeIn, linear, thereAndBack,
   Scene, NullSink, toSvgString, UP, DOWN, UR, rotate,
   loadFonts,
 } from '../src/index.ts';
@@ -79,4 +79,29 @@ test('Transform adds and removes optional SVG paint at exact endpoints, there-an
   assert.deepEqual(mark.style, returnToStart.style);
   await scene.play(new Transform(mark, native));
   assert.deepEqual(mark.style, native.style);
+});
+
+test('alignData pads a path at its centre as the points stand, whether or not its box was cached', () => {
+  // A path with no subpaths of its own whose shape sits in a child (alignFamily leaves a path so
+  // after a Transform into a container) is padded to a two-subpath target. The first pad sits on the
+  // target's first point; the second at the centre of the path with that pad. A box cached before
+  // alignment (any layout call does it) used to give the second pad the old centre instead, so a
+  // property test found frames that differed with and without a box() call (random-scene tape).
+  const build = () => {
+    const holder = new VMobject();
+    holder.add(new Square({ side: 1 }).moveTo([-4, 0]));
+    const target = new VMobject();
+    target.startNewPath([4, 2]).addLineTo([5, 2]);
+    target.startNewPath([4, -2]).addLineTo([5, -2]);
+    return { holder, target };
+  };
+  const fresh = build(), cached = build();
+  cached.holder.box();
+  fresh.holder.alignData(fresh.target);
+  cached.holder.alignData(cached.target);
+  assert.deepEqual(cached.holder.subpaths.map((a) => Array.from(a)), fresh.holder.subpaths.map((a) => Array.from(a)));
+  // The second pad is at the centre of the child square (-4.5..-3.5, -0.5..0.5) and the first pad
+  // (4, 2), not at the square's own centre (-4, 0).
+  assert.deepEqual(Array.from(fresh.holder.subpaths[0]!.slice(0, 2)), [4, 2]);
+  assert.deepEqual(Array.from(fresh.holder.subpaths[1]!.slice(0, 2)), [-0.25, 0.75]);
 });

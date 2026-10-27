@@ -174,6 +174,7 @@ export default class GtfsExplainer extends Scene {
     ];
     await this.step('files', {
       title: 'The GTFS sample feed is a folder of CSV tables',
+      line: 'Seven of its 11 files, each with its count of rows.',
       caption:
         'The GTFS Schedule reference publishes a sample feed for an invented Demo Transit Authority: 11 CSV files, each one table with a header row. This explainer reads the seven listed here. Each count is the file’s rows below its header.',
     });
@@ -215,6 +216,7 @@ export default class GtfsExplainer extends Scene {
     // ------------------------------------------------------------------ schema
     await this.step('schema', {
       title: 'Seven tables joined by shared IDs',
+      line: 'Each line joins two files by the ID column named on it.',
       caption:
         'Each box is one file, with the columns this explainer uses. Each line joins two files by the column named on it. The marks at a line’s ends say how many rows of the table at that end can match one row at the other end; the list on the right reads them.',
     });
@@ -233,6 +235,7 @@ export default class GtfsExplainer extends Scene {
     const tripsByRoute = FEED.routes.map((r) => [r.route_id!, FEED.trips.filter((t) => t.route_id === r.route_id).map((t) => t.trip_id!)] as const);
     await this.step('route-trip', {
       title: 'A route has no times; its trips do',
+      line: 'Each row of trips.txt names one route in route_id.',
       // reference.md:120 and :260.
       caption:
         'routes.txt gives a route its names, vehicle type, colours and web page, and nothing about when it runs. Each row of trips.txt names one route in route_id, so a route has zero or more trips. The reference defines a route as “a group of trips that are displayed to riders as a single service”.',
@@ -255,6 +258,7 @@ export default class GtfsExplainer extends Scene {
       stbaBands = bandsOf(FEED, 'STBA');
     await this.step('trip-stops', {
       title: 'A trip’s times are rows of stop_times.txt',
+      line: 'One row per stop a trip makes, in stop_sequence order.',
       // reference.md:121, :306, :309; frequencies :657, :664-667.
       caption: `stop_times.txt joins trips to stops: one row for each stop a trip makes, in stop_sequence order, with its times. AB1 leaves ${stopName(ab1First.stop_id!)} at ${clock(seconds(ab1First.departure_time!))} and reaches ${stopName(ab1Last.stop_id!)} at ${clock(seconds(ab1Last.arrival_time!))}. A trip listed in frequencies.txt repeats through the day on a headway.`,
     });
@@ -287,6 +291,7 @@ export default class GtfsExplainer extends Scene {
       x.calendar && x.dates ? 'calendar.txt and calendar_dates.txt' : x.calendar ? 'calendar.txt only' : 'calendar_dates.txt only';
     await this.step('service', {
       title: 'A trip’s service_id may point into either of two tables',
+      line: 'calendar.txt sets weekdays; calendar_dates.txt changes single dates.',
       // reference.md:261, :356-357, :361, :363.
       caption: `A trip’s service_id must match a row of calendar.txt, of calendar_dates.txt, or both. calendar.txt sets weekdays between a start and an end date; calendar_dates.txt adds or removes single dates. Here ${services
         .map((x) => `${x.id} (${x.trips} trips) is in ${where(x).replace(' only', ' alone')}`)
@@ -309,6 +314,9 @@ export default class GtfsExplainer extends Scene {
       title: running.length
         ? `On ${longDate(date)}, ${list(running)} ${running.length > 1 ? 'run' : 'runs'}`
         : `On ${longDate(date)}, no service runs`,
+      line: removed.length
+        ? `An exception_type 2 row removes ${list(removed.map((x) => x.serviceId))}, overriding the ${day} column.`
+        : `The ${day} column decides; no exception row matches this date.`,
       // reference.md:338-346 (weekday columns, range with end_date included) and :361-363 (exceptions).
       caption: `${longDate(date)} lies between start_date and end_date for ${today.every((x) => x.inRange) ? (today.length === 2 ? 'both services' : 'every service') : 'some services'}. ${today
         .map((x) =>
@@ -340,6 +348,10 @@ export default class GtfsExplainer extends Scene {
     const of = (n: number) => (n === FEED.trips.length ? `all ${n} trips` : n ? `${n} of the ${FEED.trips.length} trips` : `none of the ${FEED.trips.length} trips`);
     await this.step('day-before', {
       title: `The day before, ${longDate(before)}, runs ${of(was.length)}`,
+      line:
+        was.length < FEED.trips.length
+          ? 'One bar per trip, grouped by service_id; grey bars do not run.'
+          : 'One bar per trip, grouped by service_id; every bar runs.',
       caption: `One bar per trip, grouped by service_id and labelled with its route. A trip that runs once spans its first departure to its last arrival; a trip in frequencies.txt spans the hours its vehicles leave the first stop. Grey bars, marked “no service”, do not run that day. On ${shortDate(before)} ${
         wasServices.length ? `${list(wasServices)} ${wasServices.length > 1 ? 'run' : 'runs'}` : 'no service runs'
       }.`,
@@ -357,6 +369,15 @@ export default class GtfsExplainer extends Scene {
     const services2 = (trips: readonly Row[]) => [...new Set(trips.map((t) => t.service_id!))];
     await this.step('day', {
       title: `${longDate(date)} runs ${of(tripsToday.length)}`,
+      line:
+        started.length || stopped.length
+          ? `${upper(
+              [
+                ...(started.length ? [`${number(started.length)} ${list(services2(started))} trips start`] : []),
+                ...(stopped.length ? [`${number(stopped.length)} ${list(services2(stopped))} trips stop`] : []),
+              ].join(' and '),
+            )}; each gets a new label and colour.`
+          : 'No trip starts or stops, so the chart is unchanged.',
       caption: `The same chart, edited for ${shortDate(date)}: each trip that starts or stops running gets a new label and colour, ${edits.length} edits in all. ${
         started.length
           ? `${upper(number(started.length))} trips with service_id ${list(services2(started))} start, on route${routesOf(started).length > 1 ? 's' : ''} ${list(routesOf(started))}.`
@@ -389,6 +410,13 @@ export default class GtfsExplainer extends Scene {
         : at.headways.length && !at.departures.length
           ? `${upper(number(at.headways.length))} frequency trips leave ${name} on ${shortDate(date)}`
           : `${upper(number(at.departures.length))} departure${at.departures.length > 1 ? 's' : ''} from ${name} on ${shortDate(date)}`,
+      line: !leaving.length
+        ? removedBy.length
+          ? `The card shows what calendar.txt alone would send; ${list(removedBy)} ${removedBy.length > 1 ? 'are' : 'is'} removed.`
+          : 'No trip runs that day, so no stop_times row counts.'
+        : at.headways.length
+          ? 'Headways with exact_times empty: the card gives gaps, not times.'
+          : 'Each is a stop_times row here that is not its trip’s last.',
       // frequencies: reference.md:657 ("operators attempt to strictly maintain predetermined headways"),
       // :665 (end_time: when "service changes to a different headway (or ceases)"), :667 (exact_times empty).
       caption: !leaving.length

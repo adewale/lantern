@@ -1,7 +1,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Browser, Page, Frame } from 'playwright-core';
@@ -10,13 +10,17 @@ import { collectProject } from '../tools/lib/explain-project.ts';
 import type { Project } from '../tools/lib/explain-project.ts';
 import { buildExplainer, buildLoader } from '../tools/lib/explain-build.ts';
 import { serve } from '../tools/lib/explain-serve.ts';
+import { publishedPage } from '../tools/lib/explain-share.ts';
 import { fc, params } from './lib/pbt.ts';
 import { resolveSettings } from '../explain/index.ts';
 import type { Settings } from '../explain/index.ts';
-import { pictureHtml, pictureSummary } from '../explain/trace.ts';
-import { NARROW_PX, READ_PX, closeUps, labelsToRead, stageScale, stepLayouts, viewBox } from '../app/embed-closeup.ts';
+import { pictureHtml, pictureSummary, stepWords } from '../explain/trace.ts';
+import { NARROW_PX, READ_PX, closeUps, labelsToRead, stageScale, stepLayouts, toView, viewBox } from '../app/embed-closeup.ts';
 import type { StepLayout } from '../app/embed-closeup.ts';
+import { labelOf } from '../explain/diagrams.ts';
 import { zoomOfView } from '../app/embed-zoom.ts';
+import { cardRow, restingBox, wordsOutsideCards } from './lib/scenes.ts';
+import type { Box } from '../src/index.ts';
 
 const enabled = !!process.env.EXPLAIN_BROWSER,
   options = { skip: enabled ? false : 'set EXPLAIN_BROWSER=1 for real cross-origin browser checks' };
@@ -31,7 +35,7 @@ let embedServer: { url: string; close(): void } | undefined;
 const projects = new Map<string, Project>();
 before(async () => {
   if (!enabled) return;
-  folder = await mkdtemp(join(tmpdir(), 'lantern-embed-test-'));
+  folder = await mkdtemp(join(tmpdir(), 'rayner-embed-test-'));
   browser = await launch();
   await new Promise<void>((r) => hostServer.listen(0, '127.0.0.1', r));
   host = `http://127.0.0.1:${(hostServer.address() as { port: number }).port}`;
@@ -150,6 +154,68 @@ test('?theme=dark, light and auto (following the reader\'s colour scheme) set th
     assert.deepEqual(await background('dark'), { theme: 'dark', background: 'rgb(15, 22, 29)' });
     assert.deepEqual(await background('light'), { theme: 'light', background: 'rgb(246, 247, 249)' });
     assert.deepEqual(await background('auto'), { theme: 'auto', background: 'rgb(15, 22, 29)' });
+  } finally {
+    await context.close();
+  }
+});
+// site:export --origin gives each step of the default case a share page, <path>/<id>/<step>, and
+// marks the player; Copy link then gives that page, whose link preview is the step. Any other case,
+// a step whose name is not path-safe, or a page published without share pages copies ?step=.
+test('Copy link gives the step\'s share page when site:export published one, else the player URL', options, async () => {
+  const site = join(folder, 'site');
+  await mkdir(site, { recursive: true });
+  // As site:export --origin publishes a page: publishedPage, from the steps demos:build lists.
+  const publish = async (id: string, from: string, steps: string[]) => {
+    const manifest = { id, title: id, lang: 'en', cover: steps[0]!, steps: steps.map((step) => ({ step, title: step, caption: '', picture: '' })) };
+    await writeFile(join(site, id + '.html'), publishedPage(await readFile(from + '.html', 'utf8'), manifest, 'https://example.org', '/projects/rayner'));
+    await copyFile(from + '.html.headers.json', join(site, id + '.html.headers.json'));
+  };
+  await publish('mr-cache', join(folder, 'mr-cache'), ['before', 'diff', 'after', 'request']);
+  // A scene whose second step has a name no share page can have.
+  const odd = join(folder, 'odd-steps');
+  await mkdir(odd, { recursive: true });
+  await writeFile(
+    join(odd, 'scene.ts'),
+    `import{Scene,Text,FadeIn}from'rayner';export default class Odd extends Scene{static meta={title:'Odd steps'};async construct(){` +
+      `await this.step('one',{title:'One',caption:'A word.'});await this.play(new FadeIn(new Text('one')));` +
+      `await this.step('two words',{title:'Two',caption:'Two words.'});await this.play(new FadeIn(new Text('two').moveTo([0,-2])));}}`,
+  );
+  await buildExplainer(await collectProject(odd, { write: false }), join(folder, 'odd-steps.html'));
+  await publish('odd-steps', join(folder, 'odd-steps'), ['one']);
+  const context = await browser.newContext({ permissions: ['clipboard-read', 'clipboard-write'], reducedMotion: 'reduce' });
+  const page = await context.newPage();
+  const copied = async () => {
+    await page.evaluate(() => {
+      document.querySelector('.notice')!.textContent = '';
+      return navigator.clipboard.writeText('');
+    });
+    await page.locator('button[aria-label="Copy link"]').click();
+    await page.waitForFunction(() => document.querySelector('.notice')?.textContent === 'Link copied.');
+    return page.evaluate(() => navigator.clipboard.readText());
+  };
+  const open = async (url: string) => {
+    await page.goto(url);
+    await page.waitForSelector('[data-ready=true]');
+  };
+  try {
+    await open(`${embed}/site/mr-cache.html?step=diff`);
+    assert.equal(await copied(), 'https://example.org/projects/rayner/mr-cache/diff');
+    // The share page sends readers to the default case, so another case keeps the player URL.
+    const pick = (value: string) => page.locator(`input[name="request"][value="${value}"]`).locator('xpath=..').click();
+    await pick('miss');
+    await page.waitForURL(/request=miss/);
+    assert.equal(await copied(), `${embed}/site/mr-cache.html?step=diff&request=miss`);
+    await pick('hit');
+    await page.waitForURL(/request=hit/);
+    assert.equal(await copied(), 'https://example.org/projects/rayner/mr-cache/diff');
+    await open(`${embed}/site/odd-steps.html?step=one`);
+    assert.equal(await copied(), 'https://example.org/projects/rayner/odd-steps/one');
+    await page.locator('button[aria-label="Next step"]').click();
+    await page.waitForURL(/step=two/);
+    assert.equal(await copied(), `${embed}/site/odd-steps.html?step=two+words`);
+    // Built without site:export: no share pages, so the player URL, as before.
+    await open(`${embed}/mr-cache.html?step=diff`);
+    assert.equal(await copied(), `${embed}/mr-cache.html?step=diff&request=hit`);
   } finally {
     await context.close();
   }
@@ -450,6 +516,7 @@ interface StepSpec {
   step: string;
   caption: string;
   title: string;
+  line: string;
   summary: string;
   picture: string;
 }
@@ -485,8 +552,9 @@ function stepsOf(p: Project, values: Settings): StepSpec[] {
   assert.ok(v, `no prebuilt case ${JSON.stringify(values)}`);
   return v.trace.steps.map((s) => ({
     step: s.step,
-    caption: String(s.meta.caption ?? ''),
-    title: String(s.meta.title ?? s.step),
+    caption: stepWords(s).caption,
+    title: stepWords(s).title,
+    line: stepWords(s).line,
     summary: pictureSummary(s.after),
     picture: pictureHtml(s.after),
   }));
@@ -542,6 +610,7 @@ function observe(ids: string[]) {
     current: [...document.querySelectorAll<HTMLElement>('.steps [aria-current=step]')].map((b) => b.dataset.step),
     list: [...document.querySelectorAll<HTMLElement>('.steps button')].map((b) => b.dataset.step),
     caption: document.querySelector('.caption')!.textContent,
+    lede: [...document.querySelectorAll('.lede > *')].map((e) => ((e as HTMLElement).hidden ? null : e.textContent)),
     stageLabel: stage.getAttribute('aria-label'),
     // The resting picture in words: a summary as the stage's description, the full list under a disclosure.
     summary: document.getElementById(stage.getAttribute('aria-describedby') ?? '')?.textContent,
@@ -664,7 +733,8 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   eq('step list', seen.list, list.map((s) => s.step));
   eq('aria-current', seen.current, [entry.step]);
   eq('caption', seen.caption, spec.caption);
-  eq('stage label', seen.stageLabel, `${seen.title}: ${spec.title}`);
+  eq('stage label', seen.stageLabel, `${seen.title}: ${spec.title}${spec.line ? ` — ${spec.line}` : ''}`);
+  eq('lede', seen.lede, [`${i + 1}. ${spec.title}`, spec.line || null]);
   eq('stage description', seen.summary, spec.summary);
   eq('computed stage description', await stageDescription(r.page), spec.summary.replace(/\s+/g, ' ').trim());
   // Compared as the browser serializes it, which writes &quot; in text as a plain quote.
@@ -1137,10 +1207,11 @@ test(
   'phone close-ups: at 390 × 844 every step opens on its close-up, by link or by Next with motion; at 1280 × 900 none is zoomed',
   options,
   async () => {
-    for (const name of ['mr-cache', 'exgit']) {
+    for (const name of ['mr-cache', 'exgit', 'oauth-pkce']) {
       const p = projects.get(name)!;
-      // mr-cache's two cases, and exgit's first: diagram, code and card changes, kept to a minute.
-      for (const v of name === 'exgit' ? p.variants.slice(0, 1) : p.variants) {
+      // mr-cache's two cases, exgit's first and PKCE's with the attacker (issue #21): diagram, code and card changes.
+      const cases = name === 'mr-cache' ? p.variants : name === 'exgit' ? p.variants.slice(0, 1) : p.variants.filter((v) => v.values.attacker === 'yes');
+      for (const v of cases) {
         const list = v.trace.steps,
           layouts = await stepLayouts(v.Scene);
         const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'no-preference' });
@@ -1191,6 +1262,59 @@ test(
   },
 );
 
+// Issue #21: at 390 × 844, PKCE's `authorize` caption says the verifier stays with the client
+// "as the card's last row shows", and the first step's caption describes deriving the
+// challenge; both were close-ups the reader had to hunt for (7th of 7, 4th of 6). Next view
+// now goes first to what the step emphasised, so one press, by touch or by keyboard, shows each.
+test('phone: one press of Next view shows what PKCE\'s captions point at, emphasised close-ups first', options, async () => {
+  const p = projects.get('oauth-pkce')!,
+    v = p.variants.find((c) => c.values.attacker === 'yes')!,
+    layouts = await stepLayouts(v.Scene);
+  const evidence: Record<string, Box> = {
+    secret: await restingBox(v.Scene, 'secret', (scene) => wordsOutsideCards(scene, 'code_verifier', 'SHA-256')),
+    authorize: await restingBox(v.Scene, 'authorize', (scene) => cardRow(scene, 'code_verifier', 'not sent')),
+  };
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, reducedMotion: 'no-preference' });
+  try {
+    const { page, errors } = await counted(context, `${embed}/oauth-pkce.html`);
+    await quiet(page);
+    const { w, h } = await page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
+    const count = page.locator('.view-controls>span'),
+      nextView = page.getByRole('button', { name: 'Next view', exact: true });
+    const near = (a: ReturnType<typeof zoomOf>, b: { k: number; x: number; y: number }) =>
+      !!a && Math.abs(a.k - b.k) < 1e-4 * b.k && Math.abs(a.x - b.x) < 0.01 && Math.abs(a.y - b.y) < 0.01;
+    const shows = async (box: Box) => {
+      const z = await settledZoom(page),
+        view = z && viewBox(z, w, h);
+      return !!view && box[0] >= view[0] - 1e-3 && box[2] <= view[2] + 1e-3 && box[1] >= view[1] - 1e-3 && box[3] <= view[3] + 1e-3;
+    };
+    for (const [i, step] of ['secret', 'authorize'].entries()) {
+      if (i > 0) {
+        // Next, with motion: it moves to the next step, as before.
+        await page.getByRole('button', { name: 'Next step', exact: true }).click();
+        await page.waitForURL(/step=authorize/);
+        await quiet(page);
+      }
+      const tour = closeUps(layouts.get(step), w, h);
+      assert.ok(near(await settledZoom(page), tour[0]!), `${step} opens on its first close-up`);
+      assert.equal(await count.innerText(), `View 1 of ${tour.length}`);
+      // One press, a tap on the first step and the keyboard on the second, shows what the caption points at.
+      if (i === 0) await nextView.tap();
+      else {
+        await nextView.focus();
+        await page.keyboard.press('Enter');
+      }
+      await until(async () => near(zoomOf(await paintedView(page)), tour[1]!), `${step}: view 2`);
+      assert.equal(await count.innerText(), `View 2 of ${tour.length}`);
+      assert.equal(new URL(page.url()).searchParams.get('step'), step, 'Next view keeps the step');
+      assert.ok(await shows(evidence[step]!), `${step}: view 2 shows ${JSON.stringify(evidence[step])}`);
+    }
+    assert.deepEqual(errors, []);
+  } finally {
+    await context.close();
+  }
+});
+
 // Regression (ledger P5): Next used to stop the animation where the caption hold
 // begins, before anything a step adds after its last play(), so the picture the
 // reader rested on differed from the one a link to that step shows.
@@ -1224,6 +1348,46 @@ test(
         }
       }),
       params(5),
+    );
+  },
+);
+
+// Next pressed while a step plays sends the playing run on to the next step, undrawn,
+// instead of replaying the scene from its start; it must still rest on the link's picture.
+test(
+  'player, motion on: Next pressed mid-motion rests on exactly the picture a link to the step after shows',
+  options,
+  async () => {
+    const all = ['oauth-pkce', 'exgit'].flatMap((name) =>
+      projects.get(name)!.variants.slice(0, 1).flatMap((v) =>
+        v.trace.steps.slice(0, -2).map((_, i) => ({ name, values: v.values, i })),
+      ),
+    );
+    await fc.assert(
+      fc.asyncProperty(fc.constantFrom(...all), fc.constantFrom(60, 250, 600), async ({ name, values, i }, after) => {
+        const p = projects.get(name)!,
+          list = stepsOf(p, values);
+        const context = await browser.newContext({ reducedMotion: 'no-preference' });
+        try {
+          const a = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i]!.step)}`);
+          await quiet(a.page);
+          await a.page.locator('button[aria-label="Next step"]').click();
+          await a.page.waitForTimeout(after);
+          await a.page.locator('button[aria-label="Next step"]').click();
+          await a.page.waitForFunction((step) => (window as unknown as { __last: { step: string } | null }).__last?.step === step, list[i + 2]!.step, {
+            timeout: 30_000,
+          });
+          await quiet(a.page);
+          const b = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i + 2]!.step)}`);
+          const where = `${name} ${list[i]!.step} → Next, ${after} ms, Next`;
+          assert.equal(new URL(a.page.url()).searchParams.get('step'), list[i + 2]!.step, where);
+          assert.equal(await stagePicture(a.page), await stagePicture(b.page), where);
+          assert.deepEqual([...a.errors, ...b.errors], []);
+        } finally {
+          await context.close();
+        }
+      }),
+      params(6),
     );
   },
 );
@@ -1608,3 +1772,71 @@ test(
     );
   },
 );
+
+// #21: readable labels are insufficient when a caption's evidence is in another view.
+// Exercise the visible route to that evidence, rather than only asserting the zoom scale.
+test('PKCE mobile views expose the derivation and the unsent verifier without advancing the step', options, async () => {
+  const project = projects.get('oauth-pkce')!;
+  for (const variant of project.variants) {
+    const targets = new Map<string, number[][]>();
+    await new variant.Scene({
+      async frame() {},
+      async stepEnd(scene, step) {
+        if (!['secret', 'authorize'].includes(step.name)) return;
+        const found: number[][] = [];
+        const walk = (m: import('../src/index.ts').Mobject) => {
+          const label = labelOf(m);
+          if (label && (step.name === 'secret' ? ['code_verifier', 'code_challenge'].includes(label.text) : label.text === 'not sent')) {
+            const box = m.box();
+            if (box) found.push(toView(box, scene.frame.box()!));
+          }
+          for (const child of m.children) walk(child);
+        };
+        for (const m of scene.mobjects) walk(m);
+        targets.set(step.name, found);
+      },
+    }, { skipUntil: Infinity }).run();
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: variant.values.attacker === 'yes' ? 'no-preference' : 'reduce' });
+    try {
+      const page = await context.newPage();
+      await page.goto(`${embed}/oauth-pkce.html?attacker=${variant.values.attacker}`);
+      await page.waitForSelector('[data-ready=true]');
+      for (const step of ['secret', 'authorize']) {
+        if (step === 'authorize') await page.getByRole('button', { name: 'Next step', exact: true }).click();
+        await quiet(page);
+        assert.equal(new URL(page.url()).searchParams.get('step'), step);
+        assert.ok(await page.locator('.view-help').isVisible());
+        assert.match(await page.locator('.view-help').innerText(), /Next below advances the step/);
+        const size = await page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
+        const count = Number((await page.locator('.view-controls>span').innerText()).match(/of (\d+)/)![1]);
+        assert.ok(count > 1);
+        const evidence = targets.get(step)!;
+        assert.ok(evidence.length > 0, `${step}: the fixture must contain the named evidence`);
+        const seen = new Set<number>();
+        for (let i = 0; i < count; i++) {
+          assert.equal(await page.locator('.view-controls>span').innerText(), `View ${i + 1} of ${count}`);
+          const zoom = await settledZoom(page);
+          assert.ok(zoom, 'the view is zoomed');
+          const visible = viewBox(zoom, size.w, size.h);
+          for (const [j, box] of evidence.entries()) {
+            const x = (box[0]! + box[2]!) / 2, y = (box[1]! + box[3]!) / 2;
+            if (x >= visible[0] && x <= visible[2] && y >= visible[1] && y <= visible[3]) seen.add(j);
+          }
+          const control = page.getByRole('button', { name: 'Next view', exact: true });
+          const rect = await control.boundingBox();
+          assert.ok(rect && rect.height >= 44, 'touch target is at least 44 px tall');
+          await control.focus();
+          await page.keyboard.press('Enter');
+          await settledZoom(page);
+          assert.equal(new URL(page.url()).searchParams.get('step'), step, 'view navigation keeps the step');
+        }
+        assert.equal(seen.size, evidence.length, `${step}: every referenced label is reachable`);
+      }
+      await page.getByRole('button', { name: 'Whole picture', exact: true }).click();
+      await settledZoom(page);
+      assert.ok(await page.locator('.view-controls').isVisible());
+      assert.ok(await page.getByRole('button', { name: 'Whole picture', exact: true }).isDisabled());
+      assert.equal(zoomOf(await paintedView(page)), null);
+    } finally { await context.close(); }
+  }
+});

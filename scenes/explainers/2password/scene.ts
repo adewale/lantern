@@ -55,6 +55,7 @@ export default class PasswordExplainer extends Scene {
 
     await this.step('boundary', {
       title: 'find starts by listing item titles',
+      line: `The agent's find asks op, which lists ${ITEMS.length} sample items.`,
       caption: `2password lets a coding agent find and use 1Password secrets without seeing them. Here the agent runs find with two queries, ${hitQuery} and the typo ${missQuery}, against three sample items from 2password’s own tests.`,
     });
     const boundary = await s.show({ source: BOUNDARY }, { box: 'top' });
@@ -77,6 +78,7 @@ export default class PasswordExplainer extends Scene {
 
     await this.step('match', {
       title: 'A title matches when it contains every query word',
+      line: `${match.title} contains “${hitQuery}”; no title contains “${missQuery}”.`,
       caption: `find lowercases each query and keeps a title only if it contains every word; tags and fields are not searched. Cloud API matches ${hitQuery}. No title contains ${missQuery}, so that query is a miss.`,
     });
     await boundary.dim(['Agent', 'Find']);
@@ -100,6 +102,7 @@ export default class PasswordExplainer extends Scene {
       longer = Math.max(missQuery.length, word.length);
     await this.step('suggest', {
       title: `A miss returns titles that score at least ${SUGGESTION_THRESHOLD}`,
+      line: `${near.title} is ${edits} edit${edits === 1 ? '' : 's'} from ${missQuery}: 1 − ${edits}/${longer} = ${closeness(terms(missQuery), near.title)}.`,
       caption: `For a query with no match, find scores each query word against each title word: 1 if one contains the other, otherwise 1 − edit distance ÷ the longer word’s length. A title scores the average of each query word’s best. ${near.title} is ${edits} edit${edits === 1 ? '' : 's'} from ${missQuery}, so it scores 1 − ${edits}/${longer} = ${closeness(terms(missQuery), near.title)} and comes back as a suggestion.`,
     });
     await listing.morph([
@@ -116,6 +119,7 @@ export default class PasswordExplainer extends Scene {
 
     await this.step('fetch', {
       title: 'One op item get fetches the match and the suggestion',
+      line: `Item list, then one item get for ${found.fetched.join(' and ')}; ${service ? 'no approval' : 'one approval'}.`,
       caption: service
         ? `find makes two op calls: item list for titles, then one item get for every item a match or suggestion needs, here ${found.fetched.join(' and ')}. With a service-account token in the environment, op asks for no approval.`
         : `find makes two op calls: item list for titles, then one item get for every item a match or suggestion needs, here ${found.fetched.join(' and ')}. 2password’s README says the whole command costs one desktop approval.`,
@@ -152,6 +156,7 @@ export default class PasswordExplainer extends Scene {
 
     await this.step('reference', {
       title: 'find prints references and drops the values',
+      line: 'A reference names vault, item and field; no secret value is printed.',
       caption:
         'find returns a reference for each match and suggestion, and drops field values while it decodes op’s reply. A reference names a vault, an item and a field: the underlined parts of the Cloud API reference.',
     });
@@ -194,6 +199,9 @@ export default class PasswordExplainer extends Scene {
       title: service
         ? 'env -u keeps the service token out of the app'
         : 'op run starts the app with the secret',
+      line: service
+        ? 'The app gets PATH and the API_KEY value, not the service token.'
+        : 'op resolves the API_KEY reference; the app gets its value and PATH.',
       caption: service
         ? 'run hands op the reference, and op puts the secret into the app’s environment. With a service-account token, 2password has op start env -u OP_SERVICE_ACCOUNT_TOKEN app, so the app gets the secret and not the token.'
         : 'run hands op the reference, and op puts the secret into the app’s environment. With desktop approval op holds no token, so it starts the app directly. The app inherits the environment 2password started with, shown here as PATH, plus the secret.',

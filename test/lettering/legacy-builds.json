@@ -1,0 +1,110 @@
+{
+  "2password": {
+    "page": "4400c2f3afa3e8de5d3bdf2f0e2ad08ed56bf80bdc966a9dd6ca2798b9a53c57",
+    "receipt": "8db994accd6761b32a9cf21447365a41e929a04df15568d7f59eef7c8b70dd55"
+  },
+  "agentic-mermaid": {
+    "page": "f820ecb9ed40de87db2a7093700e847de303861e9a27ad92a6cfb460d67cacf3",
+    "receipt": "cd745338aa34d1262f39be121dbbd26d6afbaa033f93f62379bf4f3c1b923dd6"
+  },
+  "cert-renewal": {
+    "page": "5dbd76be75cf7959a5fa970a1f952febcd12f7e09314bdd0ca8f01148c112d73",
+    "receipt": "a84660e7cefbf4ef07d3f3342d93f4b0169a8527ad8fd118e5f9e5932bf9bb8d"
+  },
+  "exgit": {
+    "page": "f11e8c45ea6125982cea46bcd419d92363a9f36a9a226aaed6c7525d1f108f44",
+    "receipt": "a192d99b0a56b814e732a5e46be4b34a7c9dfe9cd1f9d6718a0607288f3d0785"
+  },
+  "ext4-space": {
+    "page": "b4cf1dd20a6befbc4151ad4986618853a987e03c5091ee24f6422b246d565021",
+    "receipt": "e86aa517201a0aa36ba1d5cb90be9e572d902ab43caaa6ba99947c5326e1ae35"
+  },
+  "fork": {
+    "page": "a4870761d39cf02180dce884144123fd4d55026e81eaeef6a5ffe0f556b8f554",
+    "receipt": "7fddf12b194797adc5fd87b7b0101f30f179b3c7343f50bfe6e58b52b7963029"
+  },
+  "glyph": {
+    "page": "2103f612d7d53c43d8dd1677f0362ce8c86460b848875ab809dce3e781eeb8b6",
+    "receipt": "5652a43ce541dde80b888e137d09226b91f86ae36b3f58967fe95a842bfe0c46"
+  },
+  "gnome-files": {
+    "page": "6fcd971b95177f92c0bfff91f5d12d6d1e1bc29e31e9a0aee2a3913575c10d60",
+    "receipt": "00c47ae8bc274988ae704659265cd1344a987715373a035a094de71586bdd2e3"
+  },
+  "gtfs": {
+    "page": "c1dd5ffd66109a955d07158af24cd85a10e873116b1e8b6bfdb191f684f9886c",
+    "receipt": "257064625db454860b984f4062336f4e42a3e7c9acfa202f76470734062b2983"
+  },
+  "ical-recurrence": {
+    "page": "4d895867d3c898cee11574bc6bd28831883a3677c177e4cc68d7f0168ea37c68",
+    "receipt": "b5200ba5df3e1c0fa353db8ca649f099860b3d340e6b20ad24ad199edcf02858"
+  },
+  "isdigit": {
+    "page": "aaa597653ea29f32745b3894fb6c89a4ff1915c539e902e08aa47a33b9b08e56",
+    "receipt": "380715548dc49b0ffe4987e151ffadc820f0bbbc3491b1132280d0e5261a0eea"
+  },
+  "just-bash": {
+    "page": "c12c19d41743b702a884686fbd1fd0e252addf83d9eeb89b3d7ab83a0c9612f1",
+    "receipt": "257a69576df7ec4be6386db4a55ab7cf209914f36d47f19a9634037c825dcc85"
+  },
+  "lantern": {
+    "page": "279d01d03281c206c63f7c427114dbede72cd7a3b3deceed3c9fe4274e74912e",
+    "receipt": "e3b39e32aefe70a237c157f373196c0b0c7884df61af2a37fc408b57dfe41047"
+  },
+  "mr-cache": {
+    "page": "1061dcb8fcf50c47377134e1171cc8936bb69488c4bf0dda88d6b65f42686bc3",
+    "receipt": "62a86d83db3f67b4201af432d7c4ef785718b2bf24be98384f13d77dfabb5143"
+  },
+  "oauth-pkce": {
+    "page": "01e2a1249e4178f36375cb349760a386864b3839056801167bce8e4e134191f1",
+    "receipt": "f05c9120816aab64929f5094f8e617ab107b3ef6eb685a643307405331e4e2de"
+  },
+  "pg-page": {
+    "page": "1720afc2d6be149f48907638b099c4fdae5df45ee633aa74129018d13e6df069",
+    "receipt": "3ea373aba5f4ae646af2506944f6bedbd2445bb2029b98b83d304cf8913cba1d"
+  },
+  "quotient-familial": {
+    "page": "70c27b3cbde223ec5ff3e147c5d155cd78291e724fc72f9f5b847cb795cd879b",
+    "receipt": "b0d6f065d83b2abd926915263643261b19c461896572e8e1ed80423030f5fd0c"
+  },
+  "ring-buffer": {
+    "page": "38f32e8985d9863e4ba2d3518843b060bef71d72d3e16512d159d3078c94b0be",
+    "receipt": "b33d9b4d399ff497e2c1728bf762c5c49a5b291c729c1571366674b16f2f6507"
+  },
+  "seasons": {
+    "page": "279dd0f5f1f326dffa0a1e9539271d1d69601556482c517b7719bbe8af1bce84",
+    "receipt": "35710272f2f102f30439d31c2ae036c12e04e410362a265fb10da00498cd6211"
+  },
+  "send-sync": {
+    "page": "fb6a3ae187d8dface5a11054f8ad2e8532e0c1bc6376c1fbff82aa940fb99697",
+    "receipt": "3af450ea17ed2fc8232672a04c78a6737ee46503a986026049dbb536e90d17ed"
+  },
+  "state-machine": {
+    "page": "38e78529547c5fcb60dfc50bbd2b64c72a1cbdc1e1b376b2f3110fb19642d191",
+    "receipt": "8857242f355443459eeed50826aed567af3412b9d7d49b2d268f7e7a8abcc798"
+  },
+  "tailwind-gamut": {
+    "page": "d94ce1324e6c56cb45619f30fc535e28a854e22c5bcdb9befaa6204e57cf2faa",
+    "receipt": "b09dc06b12ed7aa2f21e2f0d7a76d6de806c0dbc66093fd52f1abcbab808bb54"
+  },
+  "token-bucket": {
+    "page": "4670ffd94569370626ea8b7c132b35bc685298dab5f0c7fdc8239167d6234cae",
+    "receipt": "694e707b302bba2d5f121687f68a85b5e0d3505e652218294a1cae0b23bb2ee7"
+  },
+  "traffic-policy": {
+    "page": "18a228cf2ce869a994da40ae63c900ca9619f31214c691c3a1b778d9c2e15759",
+    "receipt": "4f012a5bfa1c92fd3544bcbd441613c4fc4f61b9deea6330ec1608ad42c5d66a"
+  },
+  "trust-proxy": {
+    "page": "8c24872833dffa473ea8414988738155747cf0939a61f0db7744564ef3cd3ec5",
+    "receipt": "63d75452749e5a777d4e1487d96f8b7e6fa9c571c5df73a07b64ebcd3665f0c9"
+  },
+  "wcag-map": {
+    "page": "e80b5fe608fc5e10321977ab93dd3a1f2c2aa125d1332f1756d8ec07e9750c03",
+    "receipt": "071264630c5f761683c233f09998afeb2a2f8730b01c75d07acc29ba3dd4420d"
+  },
+  "pen-and-pencil": {
+    "page": "95c851b858a7b91868b26c5f85d49c99e90e37cbe9fd2478ac4ca981cdc07db2",
+    "receipt": "a676ed40b4944b3555b1ac08814a90c939643b5feee5cb1b1d02a322ea7f66d5"
+  }
+}

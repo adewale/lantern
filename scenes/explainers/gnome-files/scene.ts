@@ -93,6 +93,7 @@ export default class GnomeFilesExplainer extends Scene {
     // ------------------------------------------------------------------ the test and its key
     await this.step('test', {
       title: 'Six first-time users, eleven tasks, one colour each',
+      line: 'The report’s colours become scores: green 5 down to black 1.',
       // Page 2: "the design team wanted to assess the effectiveness of these updates… we executed a user
       // research project". Page 5: "six first-time GNOME users aged twenty-one to forty-seven". ARTICLE
       // §2.3: "development versions of Files, specifically, versions 47.rc-7925df1ba and 47.rc-3faeec25e".
@@ -148,6 +149,9 @@ export default class GnomeFilesExplainer extends Scene {
             }.`;
       await this.step(STEPS[g]!, {
         title: `${p}, ${RANGE[g]}: ${quit.length ? `gave up on ${and(quit.map(said))}` : 'no give-ups'}`,
+        line: quit.length
+          ? 'Each marked task is a give-up, scored 1, the lowest.'
+          : `${p} finished all ${shown.length}; the lowest score here is ${lowest}.`,
         caption: intro + saying + gray,
       });
       if (!d) {
@@ -167,6 +171,7 @@ export default class GnomeFilesExplainer extends Scene {
       worst = SESSION.filter((n) => quitters(n).length === most).sort((a, b) => a - b);
     await this.step('give-ups', {
       title: 'All six gave up at least once, always in the menus',
+      line: `All ${all.length} give-ups score 1, and all fall in tasks 1 to 9.`,
       // Ranking by black cells is this page's rule. ARTICLE §6.1 names icon size and Bookmarks the
       // worst tasks without saying how it ranks them.
       caption: `Rows are tasks in session order, columns participants; ${p}’s is outlined. ${p} gave up on ${series(

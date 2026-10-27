@@ -50,6 +50,7 @@ export default class OAuthExplainer extends Scene {
 
     await this.step('secret', {
       title: 'The client keeps the verifier and sends only its challenge',
+      line: 'The challenge is the base64url SHA-256 of the verifier.',
       caption:
         'PKCE protects public clients, such as mobile and desktop apps, which cannot keep a client secret. The client generates a random verifier, and the S256 challenge is the base64url SHA-256 of it. The card starts from RFC 7636’s example verifier.',
     });
@@ -81,6 +82,7 @@ export default class OAuthExplainer extends Scene {
 
     await this.step('authorize', {
       title: 'The authorization request carries the challenge and S256',
+      line: 'The card’s last row: the code_verifier is not sent.',
       caption:
         'The client sends the challenge and the S256 method in the authorization request, through the user’s browser, while the verifier stays with the client, as the card’s last row shows. The user then signs in and consents at the auth server.',
     });
@@ -96,10 +98,12 @@ export default class OAuthExplainer extends Scene {
     );
     await seq.reveal(['message:C->S#0']);
     await seq.mark(['message:C->S#0'], { color: CHALLENGE, as: 'carries the challenge' });
-    await request.mark('code_challenge');
+    // The caption points at this row, so the step lights it: the request carries the challenge, not the verifier.
+    await request.mark('code_verifier');
 
     await this.step('code', {
       title: 'The redirect carries a short-lived code bound to the challenge',
+      line: 'An interceptor gets only the code; the verifier is not in it.',
       caption:
         'The server stores the challenge with a short-lived code and redirects the browser back to the client. Because the verifier never travelled, anyone who intercepts this redirect gets only the code, which must still be exchanged for an access token.',
     });
@@ -118,6 +122,7 @@ export default class OAuthExplainer extends Scene {
     if (attacker) {
       await this.step('attack', {
         title: 'A stolen code fails without the verifier',
+        line: 'S256 of the guess differs from the challenge: invalid_grant.',
         caption:
           'Another app on the device registered the client’s custom URI scheme, so the operating system handed it the redirect and its code (RFC 7636 §1). It has to guess the verifier; S256 of the guess does not match the bound challenge, so the server answers invalid_grant.',
       });
@@ -141,6 +146,7 @@ export default class OAuthExplainer extends Scene {
 
     await this.step('exchange', {
       title: 'The token endpoint returns a token only when S256(verifier) matches',
+      line: 'The real verifier hashes to the bound challenge: match is true.',
       caption:
         'The real client sends the code with the original verifier. The server computes S256 of the verifier, finds that it matches the challenge stored with the code, and returns an access token once its usual code and client checks also pass.',
     });
@@ -163,6 +169,7 @@ export default class OAuthExplainer extends Scene {
 
     await this.step('channels', {
       title: 'The verifier never travels where the code does',
+      line: 'Challenge and code pass the browser; the verifier goes by TLS.',
       caption:
         'The challenge and the code pass through the browser and the operating system, where another app can read them. The verifier, 32 random bytes, goes only in the client’s own TLS request to the token endpoint. S256 cannot be reversed, so the challenge and the code alone cannot be exchanged.',
     });

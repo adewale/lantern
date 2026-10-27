@@ -5,20 +5,49 @@ description: Author, check and publish Rayner explainers as reader-paced HTML em
 
 # Rayner explainers
 
-An explainer is one Rayner `Scene`. The CLI builds it into a step-through HTML page and, optionally, a video. It needs no server or MCP. Read the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) before you host a page or export a video.
+An explainer is one Rayner `Scene`. The CLI builds it into a step-through HTML page and, optionally, a video. It needs no server or MCP. Start with [Your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md) for a worked cache example. Read the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) before you host a page or export a video.
 
 ## Loop
 
-Commands are `explain <command>`, or `npm run explain -- <command>` in a checkout; `explain --help` prints the install lines for capture and video.
+Commands are `rayner <command>`, or `npm run rayner -- <command>` in a checkout; `rayner --help` prints the install lines for capture and video.
 
-1. `explain init <directory>` writes a working `scene.ts`. Keep one default-exported `Scene` subclass with static `meta` (id, title, sources, and `lang` if not English) and, if a second case teaches something, static `settings`.
-2. Derive every value on screen from a small model of the system. Test the model against its cited source; the checks cannot tell whether a caption is true.
-3. Give each idea a step with a stable name, a title the picture can prove and a short caption naming what is on screen.
-4. Call `stage(this, { style })` once. Put diagrams (`s.show`), cards (`s.card`) and code (`s.code`) in named regions (`main`, `side`, `top`, `bottom`) so nothing overlaps. Native Rayner objects mix freely; bring several in together with `s.enter(...)`, and pass `{ describe: '…' }` to `s.enter` or `s.keep` so readers who cannot see the drawing get it in words.
-5. Design each step's resting picture, what the step leaves on screen, because the reader looks at it while reading the caption. Leave the idea there with `walk(..., { trail: true })`, `mark`, `dim`, `note`, `card.set`, `card.mark` and `code.focus`; give marks an `as` word ("rejected") when they mean something. A token that walks and vanishes leaves nothing.
-6. `explain preview scene.ts --watch` and `explain shots scene.ts --case id=value`: look at every step of every case. A passing build is not a visual review.
-7. `explain check scene.ts`. Fix failures at their cause; `out/checks/<id>/report.json` draws each resting picture roughly in text. Its `legibility.labelsUnder12PxAt390` counts labels a phone reader sees under 12 px in the step's close-up; get it to 0 in every case (a heading at `stage(this, { headingSize: 0.54 })` reads at 12 px).
-8. `explain build scene.ts --out public/<id>.html`; optionally `explain render scene.ts --out public/<id>.mp4 --footer`, which also writes `<id>.transcript.html`.
+1. `rayner init <directory>` writes a working `scene.ts`. Keep one default-exported `Scene` subclass with static `meta` (id, title, sources, and `lang` if not English) and, if a second case teaches something, static `settings`.
+2. Derive every value on screen from a small model of the system, kept apart from the drawing code, and test it; the checks cannot tell whether a caption is true. See [Test the model](#test-the-model).
+3. Give each idea a step with a stable name, a title the picture can prove, a `line` (about ten words: the one thing to see, never a repeat of the title) and a caption naming what is on screen. The page shows all three; the line is drawn on the picture under the title.
+4. Before you hand-roll motion, read the [engine map](https://github.com/adewale/rayner/blob/main/docs/ENGINE.md): it already has a camera that zooms without moving a point, code that morphs along its own diff (`TransformDiff`), morphs matched by text or shape, emphasis that stays, charts of the model's numbers (`Axes`), pictures rebuilt from `scene.state` (`view`), addressable code spans, and `Restore`, `TransformFromCopy` and `Succession`. [The reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md#engine-features) names an explainer that uses each.
+5. Call `stage(this, { style })` once. Put diagrams (`s.show`), cards (`s.card`) and code (`s.code`) in named regions (`main`, `side`, `top`, `bottom`) so nothing overlaps. Native Rayner objects mix freely; bring several in together with `s.enter(...)`, and pass `{ describe: '…' }` to `s.enter` or `s.keep` so readers who cannot see the drawing get it in words.
+6. Design each step's resting picture, what the step leaves on screen, because the reader looks at it while reading the caption. Leave the idea there with `walk(..., { trail: true })`, `mark`, `dim`, `note`, `card.set`, `card.mark` and `code.focus`; give marks an `as` word ("rejected") when they mean something. A token that walks and vanishes leaves nothing. Say a value where it is, with `s.dimension`, `s.pin` or `s.callout`, rather than in a card beside it; keep cards for a few values that belong together (`check` reports `cardsAtRest`).
+7. Make the drawing the show. `s.draw(m, { tool: 'pen' })` draws a mobject stroke by stroke with the tool on its tip; `s.focus(target)` moves the camera close while the heading stays put; `s.carry(m, region)` moves something the next step builds on, instead of clearing and redrawing it.
+8. `rayner preview scene.ts --watch` and `rayner shots scene.ts --case id=value`: look at every step of every case. A passing build is not a visual review.
+9. `rayner check scene.ts`. Fix failures at their cause; `out/checks/<id>/report.json` draws each resting picture roughly in text. Its `legibility.labelsUnder12PxAt390` counts labels a phone reader sees under 12 px in the step's close-up; get it to 0 in every case (a heading at `stage(this, { headingSize: 0.54 })` reads at 12 px). Making text larger so it reads at 12 px fixes the problem; changing the check, its threshold, or hiding labels so they are not counted is weakening it.
+10. `rayner describe scene.ts --out out/<id>.json` and read each step of each case: does the caption claim only what that step's `changed` and `picture` show? Rewrite a caption that names a value, mark or path the step does not show, or change the step so it shows it. `rayner see scene.ts <step> --case id=value` prints one step.
+11. `rayner build scene.ts --out public/<id>.html`; optionally `rayner render scene.ts --out public/<id>.mp4 --footer`, which also writes `<id>.transcript.html`.
+
+## Start from an example
+
+Each explainer in [`scenes/explainers/`](https://github.com/adewale/rayner/blob/main/scenes/explainers) shows a technique. Copy the nearest one rather than starting blank:
+
+| You are explaining | Start from | It shows |
+| --- | --- | --- |
+| A code change and what it does to a system | `mr-cache` | `TransformDiff` on the code, the same edit replayed on the diagram with `ops`, a setting for hit or miss |
+| A protocol or request flow | `oauth-pkce` | A sequence diagram revealed message by message (`build: 'frame'`, `reveal`); a setting that adds the attacker's step |
+| A data structure changing step by step | `ring-buffer` | No diagram: native shapes, `Succession`, a `view` of `scene.state` |
+| A state machine | `state-machine` | A state diagram driven by the real reducer, code spans, `Restore` |
+| A rate or a model's numbers over time | `token-bucket`, `seasons` | `token-bucket`: `Axes`, `lineGraph`, `stateView`; `seasons`: `Axes.plot`; a setting that reruns the model |
+| Identity, hashing or text that changes | `exgit` | `TransformMatchingText`, `TransformMatchingShapes`, `TransformFromCopy` |
+| A real tool's behaviour, checked against it | `isdigit`, `gtfs`, `traffic-policy` | A model checked against the tool's own output, with a fidelity test |
+| Records, schedules or shares | `gtfs` (ER, gantt), `pg-page` (pie), `cert-renewal` (timeline) | Diagram families beyond flowcharts |
+| A subject in another language | `quotient-familial` | `meta.lang: 'fr'`; descriptions in French |
+| A drawing made by hand, values said on it | `pen-and-pencil` | `s.draw` with a pen and pencil, `s.focus` on the camera, `s.carry`, `s.dimension` and `s.callout` instead of cards |
+
+## Test the model
+
+The scene asks the model; it never states an answer it did not get from one. These steps apply when you write or change an explainer's model; a change to layout, captions or publishing needs none of them.
+
+1. Put the model in its own module, with no drawing in it. In this repository, a model of an outside tool or format gets `scenes/explainers/lib/<id>.ts`; the small models behind `ring-buffer`, `state-machine`, `token-bucket` and `seasons` share `scenes/explainers/lib/models.ts`.
+2. Check the model against its source: run the real program or library, or use its published test vectors, and pin the version you ran in the `meta.sources` links (`isdigit` links CPython at tag `v3.15.1`). If you cannot run the source, pin exactly what you relied on instead (the tagged source file, the RFC section or the published test vectors) and say in your report that you read it but did not run it. Never leave a placeholder where a pin belongs.
+3. At each step, record what the picture shows on `this.state` (`isdigit` sets `this.state.outcome = run.outcome` from the model's run).
+4. Add a test that runs every case and asserts each step's state equals the model. In this repository, a model of an outside tool gets `test/lib/fidelity/<id>.ts`, using `assertStepState(trace, step, { … })`, called from `test/explain-fidelity.test.ts`; a model in `lib/models.ts` is tested in `test/explain-models.test.ts`, and a picture built with `view` adds `assertViewFollowsState`. Make the test fail first: break the model and watch it go red.
 
 ## Rules
 
@@ -29,7 +58,8 @@ Commands are `explain <command>`, or `npm run explain -- <command>` in a checkou
 - Finish every change before a step's last `play()` ends: the picture must not move during the caption hold.
 - A setting may change diagrams, captions, numbers and which steps exist; keep the palette fixed. Keep cases few; the limit is 64.
 - Do not weaken a check, bless a corrupt snapshot or skip a case to get a pass. Add a regression test that fails before the fix.
-- Lettering is embedded Inter or JetBrains Mono, plus Arabic-Indic, Devanagari and Chinese numerals; any other script fails every command. Picture descriptions are generated in English or French.
+- Default lettering uses embedded Inter and JetBrains Mono, plus Arabic-Indic, Devanagari and Chinese numerals, with faux bold and no italic. Request additional scripts with `lettering: { scripts: ['Grek'] }` in `static meta`. Plain `Latn`, `Grek` and `Cyrl` requests use font subsets; requests for `Arab`, `Deva`, `Hebr`, `Hani`, replacement `faces` (such as `eb-garamond` for pen-and-ink), `styles: ['bold', 'italic']` (real cuts; `ItalicText` needs `'italic'`) or `math: true` use outline snapshots. Follow [Lettering on request](https://github.com/adewale/rayner/blob/main/docs/LETTERING.md) for supported faces and capture dependencies. Commit `scene.lettering.json`; refresh outline snapshots with `rayner snapshots scene.ts` after changing source or captions. Unsupported or unrequested characters fail the build. Picture descriptions are generated in English or French.
+- For formulas, set `lettering: { math: true }` and draw `new MathTex('\\frac{a}{b}', { display: true })`. `snapshots` typesets each one once (it needs `RAYNER_MATH_FONT`); commit `scene.lettering.json`. TeX outside `glyph`'s subset (`\color`, `align`, `\substack` …) fails capture. Give each kept formula a `describe` in words, and morph a formula that gains or loses terms with `TransformMatchingText`. See REFERENCE, Maths.
 - Leave out panel titles and asides that repeat the heading, caption or values. Write titles and captions with [anti-slop-writing](https://github.com/adewale/anti-slop-writing): name the value or mechanism on screen, and state contrasts with because, although or so.
 
 ## Reporting

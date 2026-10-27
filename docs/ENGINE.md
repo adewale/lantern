@@ -20,6 +20,8 @@ them below say so.
 | `verify.ts`, `trace.ts`, `timeline.ts` | [The reference, "Checks"](REFERENCE.md#checks); Lantern's [VERIFY.md](https://github.com/ivarvong/lantern/blob/2c7bad533be25fbd56d26a9a2b6c5651743f011e/docs/VERIFY.md) (at `2c7bad5`) | Is the animation true, correct and smooth, and how is each checked? |
 | `perf.ts`, `svg.ts` | Lantern's [PERF.md](https://github.com/ivarvong/lantern/blob/2c7bad533be25fbd56d26a9a2b6c5651743f011e/docs/PERF.md) (at `2c7bad5`); run merging in [CODE.md](CODE.md#cost-elements-per-line) | Where does a frame's time go, and what made it faster? |
 | `fonts.ts`, `font-data.ts` | [The reference, "Scene"](REFERENCE.md#scene) (the fallback chain) and [upstream](UPSTREAM.md#engine-changes) | Which face draws a character, and what fails? |
+| `lettering.ts` | [The reference, "Lettering on request"](REFERENCE.md#lettering-on-request) | How does an explainer draw Greek or Cyrillic, and what does that cost the explainers that do not? |
+| `lettering-outlines.ts`, `italic.ts`, `math.ts` | [LETTERING.md](LETTERING.md) | How does an explainer draw another face, real bold and italic, Arabic, Devanagari, Hebrew or maths from runs shaped at build time, and why does no other page carry that code? |
 
 Lantern's Mermaid flowchart layout and its JSON document format were deleted in this fork
 ([upstream](UPSTREAM.md) lists what went); diagrams come from Agentic Mermaid capture instead.
@@ -35,7 +37,7 @@ Each for a reason:
 
 - **3D.** The model is 2D point buffers drawn as SVG paths; depth sorting and a 3D camera would be a second engine.
 - **Boolean path operations** (union, intersection, difference). Robust curve clipping is a geometry library in itself; an approximate one would break exact points, and a dependency would break zero runtime dependencies.
-- **Runtime LaTeX.** A TeX engine and its fonts are a large runtime dependency. The only acceptable route is a build-time Typst-to-outlines snapshot, checked in like the diagram snapshots.
+- **Runtime LaTeX.** A TeX engine and its fonts are a large runtime dependency, so neither a page nor a build runs one. Maths is typeset once, when its snapshot is captured, by `glyph`'s TeX subset on Latin Modern Math, and stored as outlines in `scene.lettering.json`, checked in like the diagram snapshots. `MathTex` draws those outlines ([Maths](REFERENCE.md#maths)).
 - **`transform` matrices on the model.** Every move rewrites points, because points are the truth that traces, the verifiers and matching transforms read. The string serializer already writes shape-relative path data plus a `translate`, so a pure move keeps its `d` without a matrix in the model.
 - **Raster images.** A bitmap has no points to morph, would be fetched or embedded as bytes, and would make frames depend on a decoder; everything on stage is paths and glyph outlines.
 - **Narration.** Videos are silent, with a caption footer, subtitles and WebVTT. A voice track would need its own timing and a speech dependency, and [the design record](../specs/rayner.md#risks-and-scope) leaves it out of the first release.

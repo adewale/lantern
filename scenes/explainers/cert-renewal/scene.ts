@@ -200,6 +200,7 @@ export default class CertRenewalExplainer extends Scene {
     // ------------------------------------------------------------------ limit
     await this.step('limit', {
       title: 'Public certificates shrink from 398 days to 47',
+      line: `${BR_PHASES[0].days} days, then ${BR_PHASES[1].days} from ${BR_PHASES[1].from.slice(0, 4)}, ${BR_PHASES[2].days} from ${BR_PHASES[2].from.slice(0, 4)} and ${BR_PHASES[3].days} from ${BR_PHASES[3].from.slice(0, 4)}.`,
       caption: `The CA/Browser Forum’s Baseline Requirements cap how long a publicly trusted TLS certificate may be valid. The cap was ${BR_PHASES[0].days} days until 15 March 2026 and ${BR_PHASES[1].days} days from then. It falls to ${BR_PHASES[2].days} days in March 2027 and to ${BR_PHASES[3].days} in March 2029.`,
     });
     const line = await s.show({ source: BR_SOURCE }, { box: regionBox('full', { top: 3.1 }) });
@@ -208,6 +209,7 @@ export default class CertRenewalExplainer extends Scene {
     // ------------------------------------------------------------ letsencrypt
     await this.step('letsencrypt', {
       title: 'Let’s Encrypt’s default reaches 45 days in 2028',
+      line: `The classic profile: 90 days, then ${LE_DATES[1].days} from ${LE_DATES[1].date.slice(0, 4)} and ${LE_DATES[2].days} from ${LE_DATES[2].date.slice(0, 4)}.`,
       caption:
         'The same timeline, edited to Let’s Encrypt’s schedule. Its opt-in tlsserver profile has issued 45-day certificates since May 2026. The default classic profile issues 90-day certificates until February 2027, then 64-day ones, and 45-day ones from February 2028, a year before the 47-day cap.',
     });
@@ -232,6 +234,7 @@ export default class CertRenewalExplainer extends Scene {
     );
     await this.step('old-rule', {
       title: 'Certbot 3.3 renews 30 days before expiry',
+      line: `A 90-day certificate is replaced by the run at day ${days(ninety.renewsAt)}.`,
       caption: `Certbot 3.3 renews when the certificate expires within renew_before_expiry, 30 days unless the renewal file sets it. Let’s Encrypt dates a certificate 58.5 minutes before it issues it, so a 90-day one falls due just before the run at day ${days(ninety.renewsAt)}, which replaces it.`,
     });
     await s.clear();
@@ -244,6 +247,7 @@ export default class CertRenewalExplainer extends Scene {
     // --------------------------------------------------------------- new-rule
     await this.step('new-rule', {
       title: 'Certbot 4.1 renews two thirds of the way through',
+      line: `Two thirds of 90 days is day ${days(ninetyNew.due)}; the replacement does not move.`,
       caption: `Since 4.1, with renew_before_expiry unset and no ARI answer, Certbot renews two thirds of the way through a certificate’s life, or half way for certificates shorter than ten days. Two thirds of 90 days is day ${days(ninetyNew.due)}, the day the old rule chose, so for 90-day certificates nothing moved.`,
     });
     await chart.clearNotes();
@@ -330,6 +334,10 @@ export default class CertRenewalExplainer extends Scene {
     })();
     await this.step('year', {
       title: `${life.label} under ${RULES[rule].short}: ${count(rule)} renewals in ${span}`,
+      line:
+        limitedGaps && mine.firstRefused != null
+          ? `Every run renews until hour ${mine.firstRefused}; then most are refused (red).`
+          : `Each certificate is ${dueWords(rule)}.`,
       caption: `Each blue tick is a renewal, over ${span} from a first certificate on 1 March 2028. Under ${RULES[rule].short} a certificate is ${dueWords(rule)}, ${
         limitedGaps && mine.firstRefused != null
           ? `so every run renews until, at hour ${mine.firstRefused}, Let’s Encrypt starts refusing most runs (red). Later ticks are ${limitedGaps[0]} to ${limitedGaps[1]} hours apart.`
@@ -352,6 +360,9 @@ export default class CertRenewalExplainer extends Scene {
       title: same
         ? `${RULES[other].name}: the same ${count(other)} renewals`
         : `${RULES[other].name}: ${count(other)} renewals instead`,
+      line: same
+        ? `Over 365 days both rules renew ${f30.renewalsPerYear} times.`
+        : `In 365 days: ${f30.renewalsPerYear} under ${RULES.fixed30.short}, ${frac.renewalsPerYear} under ${RULES.fraction.short}.`,
       caption: `The lower strip is the same ${short ? 'two weeks' : 'year'} under ${RULES[other].short}: a certificate is ${dueWords(other)}, and ${replacedBy(other)} replaces it. ${
         same
           ? `Over 365 days both rules renew ${f30.renewalsPerYear} times.`
@@ -367,6 +378,9 @@ export default class CertRenewalExplainer extends Scene {
       title: limited
         ? `Renewing at every run, Let’s Encrypt refuses at hour ${mine.firstRefused}`
         : `A failed renewal leaves ${length(mine.slack, short)} to retry`,
+      line: limited
+        ? `${LIMIT.burst} per 7 days, one back every ${EMISSION} h; ${mine.refusedPerYear} refused in 365 days.`
+        : `Room for ${mine.retries} twice-daily runs; ${RULES[other].short} leaves ${length(theirs.slack, short)}.`,
       caption: limited
         ? `Every run renews, and Let’s Encrypt allows 5 certificates for the same names in 7 days, giving one back every ${EMISSION} hours. After ${perWindow(rule).issued.filter((t) => t < mine.firstRefused!).length - 1} renewals the run at hour ${mine.firstRefused} is refused. In 365 days ${mine.refusedPerYear} attempts are refused and ${mine.renewalsPerYear} succeed.`
         : `When a renewal falls due the certificate still has ${length(mine.slack, short)} to run, time for ${mine.retries} twice-daily runs to try again if the CA or the challenge fails. ${upper(RULES[other].short)} leaves ${length(theirs.slack, short)}.`,
@@ -428,6 +442,11 @@ export default class CertRenewalExplainer extends Scene {
       yearly = fewest === most ? `${fewest}` : `${fewest} ${most - fewest === 1 ? 'or' : 'to'} ${most}`;
     await this.step('ari', {
       title: `Let’s Encrypt’s ARI window: ${when(ari.start)} to ${when(ari.end)}`,
+      line: settingFirst
+        ? `The 30-day setting renews at ${at(ari.runs[0]!.at, short)}, before the window opens.`
+        : ari.runs.length === 1 && ari.runs[0]!.at + BACKDATE >= ari.end
+          ? `No run falls inside it; the next run, at ${at(ari.runs[0]!.at, short)}, renews.`
+          : `Each run draws a random time in it; ${yearly} renewals in 365 days.`,
       caption: `Certbot 4.1 and later ask Let’s Encrypt when to renew; the answer is a window 1% of the life either side of ${short ? 'half way' : 'two thirds'}. ${
         settingFirst
           ? `The 30-day setting still renews on its own, at ${at(ari.runs[0]!.at, short)}, before the window opens, so the answer changes nothing.`
@@ -452,6 +471,7 @@ export default class CertRenewalExplainer extends Scene {
     // --------------------------------------------------------------- replaces
     await this.step('replaces', {
       title: 'Certbot’s renewals still count against the limit',
+      line: 'Certbot’s order names no predecessor, so the limit check runs.',
       caption:
         'Boulder skips the 5-in-7-days check only for an order that names the certificate it replaces and arrives inside that certificate’s window. Certbot 5.8’s order carries identifiers and a profile, nothing more, so every renewal is checked. A refused order costs nothing; an issued certificate takes a token.',
     });

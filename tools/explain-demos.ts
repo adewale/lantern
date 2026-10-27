@@ -1,15 +1,19 @@
 #!/usr/bin/env node
-import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { spawn } from 'node:child_process';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
-import { collectProject, defaultVariant, ROOT, baseReceipt } from './lib/explain-project.ts';
-import { restingTime, htmlEscape } from '../explain/trace.ts';
+import { collectProject, defaultVariant, ROOT, baseReceipt, sceneInputs } from './lib/explain-project.ts';
+import { describeProject } from './lib/explain-site-describe.ts';
+import { restingTime, htmlEscape, pictureSummary, stepWords } from '../explain/trace.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
-import { contactSheet, stillPng } from './lib/explain-shots.ts';
+import { contactSheet, stillPng, cardPng } from './lib/explain-shots.ts';
 import { exporterHash, probeVideo, footerLines } from './lib/explain-video.ts';
 import { checkProject } from './lib/explain-check.ts';
+import { shareable } from './lib/explain-share.ts';
+import { useProjectLettering } from './lib/explain-lettering.ts';
+import type { ShareManifest } from './lib/explain-share.ts';
 
 const directory = join(ROOT, 'out/explainers');
 await mkdir(directory, { recursive: true });
@@ -30,13 +34,39 @@ const evidence: {
   snapshotHashes: string[];
 }[] = [];
 for (const item of EXPLAINERS) {
+  // Remove the record of what this explainer's files were built from now and write it last (below),
+  // so a build that stops part way leaves no record for site:export to trust.
+  await rm(join(directory, item.id, 'inputs.json'), { force: true });
   const project = await collectProject(join(ROOT, 'scenes/explainers', item.id));
+  // For agents: what site:export publishes as <id>.json, described right after the run, as
+  // `rayner describe` does.
+  const described = await describeProject(project);
   await buildExplainer(project, join(directory, item.id + '.html'));
   // The tile links to the default case, so it shows that case's picture.
   const variant = defaultVariant(project),
     step = variant.trace.steps.find((s) => s.step === item.step) ?? variant.trace.steps[0]!;
   await writeFile(join(directory, item.id + '.png'), await stillPng(variant.Scene, restingTime(step, variant.trace.fps), 960));
   await contactSheet(project, join(directory, item.id + '.steps.png'));
+  // Share pages (tools/lib/explain-share.ts): a picture and the words for every step of the default
+  // case, so site:export can give each step a URL whose link preview is that step.
+  await mkdir(join(directory, item.id), { recursive: true });
+  const pictured = variant.trace.steps.filter((x) => shareable(x.step));
+  const share: ShareManifest = {
+    id: item.id,
+    title: project.Scene.meta?.title ?? item.id,
+    lang: project.Scene.meta?.lang ?? 'en',
+    // The explainer's own page previews as its gallery tile's step.
+    cover: (pictured.find((x) => x.step === step.step) ?? pictured[0])?.step ?? '',
+    steps: [],
+  };
+  // The pictures draw with the project's lettering, as its page and contact sheet do.
+  await useProjectLettering(project);
+  for (const s of pictured) {
+    await writeFile(join(directory, item.id, s.step + '.png'), await cardPng(variant.Scene, restingTime(s, variant.trace.fps)));
+    share.steps.push({ step: s.step, title: stepWords(s).title, caption: stepWords(s).caption, picture: pictureSummary(s.after) });
+  }
+  await writeFile(join(directory, item.id, 'steps.json'), JSON.stringify(share, null, 2) + '\n');
+  await writeFile(join(directory, item.id, 'describe.json'), described);
   if (check) await checkProject(project, join(ROOT, 'out/checks', item.id));
   // Videos only: every case of an explainer with video must export with the caption footer.
   if (render && item.video !== false)
@@ -44,6 +74,9 @@ for (const item of EXPLAINERS) {
       await footerLines(v.trace, v.values).catch((error: Error) => {
         throw new Error(`${item.id}: ${error.message}`);
       });
+  // Last, after the checks, so it vouches for every file above: what they were built from, which
+  // site:export compares with the checkout.
+  await writeFile(join(directory, item.id, 'inputs.json'), JSON.stringify(await sceneInputs(project), null, 2) + '\n');
   evidence.push({
     id: item.id,
     title: project.Scene.meta?.title ?? item.id,
@@ -97,7 +130,7 @@ ${tokens}
 @media(prefers-color-scheme:dark){:root{--outline:rgb(255 255 255/.1)}}
 body{margin:0;background:var(--bg);color:var(--fg)}
 main{max-width:1180px;margin:0 auto;padding:40px 16px 64px}
-h1{font-size:clamp(1.75rem,4vw,2.5rem);line-height:1.15;letter-spacing:-.02em;font-weight:650;margin:0 0 32px;text-wrap:balance}
+.intro{max-width:68ch;line-height:1.6;margin:0 0 16px}.intro a{color:var(--accent);text-underline-offset:.2em}h1{font-size:clamp(1.75rem,4vw,2.5rem);line-height:1.15;letter-spacing:-.02em;font-weight:650;margin:0 0 32px;text-wrap:balance}
 h2{font-size:1.125rem;font-weight:650;margin:64px 0 16px;padding-top:24px;border-top:1px solid var(--line)}
 ul.tiles{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:32px 24px}
 ul.tiles .lead{grid-column:1/-1}
@@ -113,7 +146,7 @@ ul.tiles .lead{grid-column:1/-1}
 footer{margin-top:64px;font-size:.875rem;color:var(--muted)}
 footer a{color:inherit}
 @media(prefers-reduced-motion:reduce){.tiles img{transition:none}}
-</style></head><body><main><h1>Rayner</h1><ul class="tiles">${topics.map((t, i) => tile(t, i === 0)).join('')}</ul><h2>How these are made</h2><ul class="tiles">${toolchain.map((t) => tile(t)).join('')}</ul><ul class="more"><li><a href="embed-lab.html">Two embeds on one host page</a></li><li><a href="evidence.json">Build evidence</a></li></ul><footer>Built on <a href="https://github.com/ivarvong/lantern">Lantern</a> by Ivar Vong (MIT) and <a href="https://github.com/adewale/agentic-mermaid">Agentic Mermaid</a>.</footer></main></body></html>`;
+</style></head><body><main><h1>Rayner</h1><p class="intro">Interactive explanations of protocols, algorithms and code changes. Step through a picture at your own pace, or change a setting to follow another case.</p><p class="intro">For engineers and technical educators who write TypeScript: <a href="https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md">write your first explainer</a>, use the <a href="https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md">authoring reference</a>, or follow the <a href="https://github.com/adewale/rayner/blob/main/skills/rayner-explainers/SKILL.md">agent authoring skill</a>.</p><ul class="tiles">${topics.map((t, i) => tile(t, i === 0)).join('')}</ul><h2>How these are made</h2><ul class="tiles">${toolchain.map((t) => tile(t)).join('')}</ul><ul class="more"><li><a href="embed-lab.html">Two embeds on one host page</a></li><li><a href="evidence.json">Build evidence</a></li></ul><footer>Built on <a href="https://github.com/ivarvong/lantern">Lantern</a> by Ivar Vong (MIT) and <a href="https://github.com/adewale/agentic-mermaid">Agentic Mermaid</a>.</footer></main></body></html>`;
 await writeFile(join(directory, 'index.html'), html);
 await writeFile(
   join(directory, 'embed-lab.html'),

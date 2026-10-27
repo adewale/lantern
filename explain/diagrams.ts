@@ -13,7 +13,7 @@ import {
   Text,
 } from '../src/index.ts';
 import type { Scene, Mobject, Box, Vec, Style } from '../src/index.ts';
-import { regionBox, boxCenter, raised, emphasis, dimOpacity } from './look.ts';
+import { regionBox, boxCenter, raised, emphasis, dimOpacity, emphasises } from './look.ts';
 import type { Region } from './look.ts';
 import { diagramsOf, findingsOf, SVG_PX_PER_UNIT } from '../integrations/agentic-mermaid/snapshot.ts';
 import { outlineText } from '../integrations/agentic-mermaid/text.ts';
@@ -342,6 +342,7 @@ export class Diagram {
     this.root.clipBox = [...box];
     this.accent = emphasis(snapshot.palette);
     this.dimmed = dimOpacity(snapshot.palette);
+    emphasises(scene, () => this.emphasised());
     for (const info of partsOf(snapshot)) {
       const mob = new Group();
       mob.key = info.id;
@@ -464,7 +465,7 @@ export class Diagram {
   private end(id: string): string {
     return this.find(id) ? this.top(id) : id;
   }
-  /** Put the root on stage. Hidden marks are never added: opacity on a Group does not mask its descendants in Lantern. */
+  /** Put the root on stage. Hidden marks are never added: opacity on a Group does not mask its descendants in the engine. */
   private attach(): void {
     if (!this.scene.mobjects.includes(this.root)) this.scene.add(this.root);
   }
@@ -617,6 +618,20 @@ export class Diagram {
       : '';
     return `${y}${range}${x ? ` ${w.by(x)}` : ''}${over}`;
   }
+  /** The parts in focus: a camera focus holds only while the camera stays where it put it. */
+  private inFocus(): string[] | null {
+    const view = this.scene.frame.box();
+    return this.focusView && !(view && view.every((v, i) => Math.abs(v - this.focusView![i]!) < 1e-6)) ? null : this.focused;
+  }
+  /** What the diagram emphasises now, for the player's phone close-ups (`emphasises` in look.ts). */
+  private emphasised(): [Mobject, string][] {
+    const part = (id: string) => this.parts.get(id)?.mob;
+    return [
+      ...[...this.marks].flatMap(([id, m]): [Mobject, string][] => (part(id) ? [[part(id)!, `mark ${m.color} ${m.as}`]] : [])),
+      ...(this.inFocus() ?? []).flatMap((id): [Mobject, string][] => (part(id) ? [[part(id)!, 'focus']] : [])),
+      ...this.notes.map((n): [Mobject, string] => [n.mob, `note ${n.text}`]),
+    ];
+  }
   /**
    * What a reader sees of this diagram: what it is and how big, then each shown part
    * by its words in reading order (participants and lanes first), with its emphasis,
@@ -635,10 +650,7 @@ export class Diagram {
     const step = this.scene.steps.at(-1)?.name;
     // A trail already marks the path; a walk without one names it.
     const walked = this.walked;
-    // A camera focus holds only while the camera stays where it put it.
-    const view = this.scene.frame.box(),
-      focused =
-        this.focusView && !(view && view.every((v, i) => Math.abs(v - this.focusView![i]!) < 1e-6)) ? null : this.focused;
+    const focused = this.inFocus();
     if (walked && walked.step === step && !walked.trail) parts.push({ name: walked.hops.join(', '), mark: w.path });
     for (const n of this.notes) parts.push({ name: w.beside(n.text, this.nameOf(n.id)), mark: w.note });
     const order = [...this.order].sort((a, b) => +!isScaffold(this.parts.get(a)!.info) - +!isScaffold(this.parts.get(b)!.info));
@@ -915,7 +927,7 @@ export class Diagram {
    * With `camera: true` the stage's camera (`scene.frame`) moves instead, onto the parts,
    * their notes and any native objects in `also`, with `margin` scene units around them;
    * `zoom` above 1 goes closer, below 1 shows more. No point moves: labels keep their size
-   * in the world and the camera enlarges them on screen, which is how `explain check` and
+   * in the world and the camera enlarges them on screen, which is how `rayner check` and
    * the player's close-ups measure them. The view never leaves the 16 × 9 stage, but it
    * shows less of it: the heading, cards and code are world objects too, so keep what the
    * step's last frame needs inside the view with `also`.

@@ -30,7 +30,8 @@ test('a caption with a blank line or "-->" stays one WebVTT cue', () => {
       const steps = caps.map((caption, i) => ({ step: `s${i}`, t0: i, t1: i + 1, frame0: i * 30, meta: { caption }, before: {} }));
       const vtt = captionsVtt({ fps: 30, duration: caps.length, frames: caps.length * 30, steps });
       const blocks = vtt.trim().split(/\n\s*\n/).slice(1); // after the WEBVTT header
-      assert.equal(blocks.length, caps.filter((c) => c).length, vtt);
+      // A caption of only spaces and newlines says nothing, so it gets no cue.
+      assert.equal(blocks.length, caps.filter((c) => c.trim()).length, vtt);
       for (const b of blocks) assert.match(b, /^\d+\n\d\d:\d\d:\d\d\.\d{3} --> \d\d:\d\d:\d\d\.\d{3}(\n|$)/);
     }),
     params(300),
@@ -40,7 +41,7 @@ test(
   'real FFmpeg outputs silent H.264 footer video, subtitles, chapters, VTT and a truthful receipt',
   { skip: process.env.EXPLAIN_VIDEO ? false : 'set EXPLAIN_VIDEO=1 to run FFmpeg integration' },
   async () => {
-    const folder = await mkdtemp(join(tmpdir(), 'lantern-video-'));
+    const folder = await mkdtemp(join(tmpdir(), 'rayner-video-'));
     try {
       const file = join(folder, 'scene.ts');
       await writeFile(

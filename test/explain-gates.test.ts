@@ -1,4 +1,4 @@
-// One seeded defect per gate, through the entry points `explain check` uses:
+// One seeded defect per gate, through the entry points `rayner check` uses:
 // collectProject (load, cases, named steps, drawable text) and checkProject
 // (every check on every case). Each scene breaks exactly one rule and must fail
 // with that gate's own message; the clean scene shows the same shape passes.
@@ -15,7 +15,7 @@ import { diagramKey } from '../integrations/agentic-mermaid/snapshot.ts';
 import type { DiagramSnapshot } from '../explain/index.ts';
 import { fixedSnapshot, square } from './lib/random-snapshot.ts';
 
-const folder = await mkdtemp(join(tmpdir(), 'lantern-gates-'));
+const folder = await mkdtemp(join(tmpdir(), 'rayner-gates-'));
 after(() => rm(folder, { recursive: true, force: true }));
 
 const HEAD = `import{Scene,Text,Dot,Rectangle,FadeIn}from'rayner';import{stage,settingsOf}from'rayner/explain';`;
@@ -111,6 +111,12 @@ const gates: { gate: string; source: string; message: RegExp; snapshots?: () => 
     gate: 'hold: the picture moves after the step’s last play()',
     source: scene(`await this.step('moves',{caption:'A caption long enough to need a hold of a few seconds at reading pace.'});const d=new Dot();await s.enter(d,{describe:'a dot'});d.addUpdater((m,dt)=>{m.shift([dt*0.5,0])});`),
     message: /The picture changes after the caption hold begins/,
+  },
+  {
+    // A step line takes the band under the title; content must stay below it.
+    gate: 'text: content runs into the heading’s line',
+    source: scene(`await this.step('one',{title:'One',line:'A line under the title.'});${label('too high', '[0,3.45]', 0.3)}`),
+    message: /runs into the heading's "A line under the title\."/,
   },
   {
     gate: 'step change: a step that ends on the same picture',
@@ -215,7 +221,7 @@ test('native legibility on screen: an 8 px label with the camera zoomed in 2x pa
   await checked(await write(scene(`this.frame.scale(0.5);await this.step('one',{caption:'Close.'});${label('close up', '[0,0]', 0.1)}`)));
 });
 
-test('explain check exits 1 and names the failing gate on stderr', async () => {
+test('rayner check exits 1 and names the failing gate on stderr', async () => {
   const dir = await write(gates.find((g) => g.gate === 'seek = play')!.source);
   let refused: { status: number; stderr: Buffer } | undefined;
   try {
@@ -224,5 +230,5 @@ test('explain check exits 1 and names the failing gate on stderr', async () => {
     refused = error as { status: number; stderr: Buffer };
   }
   assert.equal(refused?.status, 1, 'check must exit 1 on a scene whose seek differs from play');
-  assert.match(String(refused?.stderr), /^explain: Seek mismatch at frame \d+/);
+  assert.match(String(refused?.stderr), /^rayner: Seek mismatch at frame \d+/);
 });

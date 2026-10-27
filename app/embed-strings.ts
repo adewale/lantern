@@ -30,6 +30,10 @@ export interface Chrome {
   closeUp: string;
   /** The corner map's name: the step's next close-up, i of n. */
   nextCloseUp: (i: number, n: number) => string;
+  viewCount: (i: number, n: number) => string;
+  nextView: string;
+  wholePicture: string;
+  viewHelp: string;
   replay: string;
   stop: string;
   copy: string;
@@ -46,8 +50,8 @@ export interface Chrome {
   noStep: (step: string) => string;
   /** A notice when the URL's settings are invalid. */
   fallback: (problem: SettingsProblem) => string;
-  /** The stage's accessible name: the explainer's title and the step's. */
-  stageLabel: (title: string, step: string) => string;
+  /** The stage's accessible name: the explainer's title, the step's, and the line under it. */
+  stageLabel: (title: string, step: string, line: string) => string;
   /** "Label: option", the way a case is named in headings. */
   setting: (label: string, option: string) => string;
   transcript: string;
@@ -68,6 +72,10 @@ const EN: Chrome = {
   fit: 'Fit stage',
   closeUp: 'Close-up of each step',
   nextCloseUp: (i, n) => `Next close-up of this step (${i} of ${n})`,
+  viewCount: (i, n) => `View ${i} of ${n}`,
+  nextView: 'Next view',
+  wholePicture: 'Whole picture',
+  viewHelp: 'Use Next view to explore this picture. Next below advances the step.',
   replay: 'Replay step',
   stop: 'Stop animation',
   copy: 'Copy link',
@@ -81,7 +89,7 @@ const EN: Chrome = {
   noStep: (step) => `This case has no “${step}” step, so it opens at the first step.`,
   fallback: (p) =>
     `${p.kind === 'option' ? `Unknown ${p.id} option: ${p.value}` : p.kind === 'setting' ? `Unknown setting: ${p.id}` : p.message}. Showing the default case.`,
-  stageLabel: (title, step) => `${title}: ${step}`,
+  stageLabel: (title, step, line) => `${title}: ${step}${line ? ` — ${line}` : ''}`,
   setting: (label, option) => `${label}: ${option}`,
   transcript: 'Transcript',
   sources: 'Sources',
@@ -100,6 +108,10 @@ const FR: Chrome = {
   fit: 'Adapter à la page',
   closeUp: 'Gros plan sur chaque étape',
   nextCloseUp: (i, n) => `Gros plan suivant de cette étape (${i} sur ${n})`,
+  viewCount: (i, n) => `Vue ${i} sur ${n}`,
+  nextView: 'Vue suivante',
+  wholePicture: 'Image entière',
+  viewHelp: 'Vue suivante explore cette image. Suivant, plus bas, passe à l’étape suivante.',
   replay: 'Rejouer l’étape',
   stop: 'Arrêter l’animation',
   copy: 'Copier le lien',
@@ -119,7 +131,7 @@ const FR: Chrome = {
           ? `Cette explication n’a pas de réglage « ${p.id} »`
           : 'Les réglages de l’adresse ne sont pas valides'
     }. Le cas par défaut est affiché.`,
-  stageLabel: (title, step) => `${title} : ${step}`,
+  stageLabel: (title, step, line) => `${title} : ${step}${line ? ` — ${line}` : ''}`,
   setting: (label, option) => `${label} : ${option}`,
   transcript: 'Transcription',
   sources: 'Sources',

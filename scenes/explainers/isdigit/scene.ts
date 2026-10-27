@@ -151,6 +151,7 @@ export default class IsDigitExplainer extends Scene {
     // ------------------------------------------------------------------ the lineup
     await this.step('lineup', {
       title: 'Eight numerals; int() accepts only the top four',
+      line: 'Four ways to write 3 on top; isnumeric() is True for all eight.',
       // UnicodeData.txt lines 52, 1598, 2337, 16765, 179, 190, 7719; Unihan_NumericValues.txt line 29.
       caption: `The Unicode Character Database gives each of these a numeric value. The top row is four ways to write 3; below are superscript two, one half, Roman twelve and the Chinese numeral three. isnumeric() is True for all eight; int() accepts only the top row. This case follows ${c.char}.`,
     });
@@ -189,6 +190,10 @@ export default class IsDigitExplainer extends Scene {
             : type === 'Digit'
               ? `${c.char} has a value in fields 7 and 8, not 6`
               : `${c.char} has a value only in field 8: ${valueOf(c)}`,
+      line:
+        id === 'han'
+          ? 'Fields 6, 7 and 8 are empty; Unihan’s kPrimaryNumeric gives 3.'
+          : `Fields 6, 7, 8 hold decimal, digit, numeric values: ${c.char} is ${type}.`,
       // UAX #44 rev. 38, the UnicodeData.txt field table: field 6 is filled only for Numeric_Type=Decimal,
       // field 7 for Decimal and Digit, field 8 for every numeric character; #Numeric_Type derives the type
       // from which fields are filled, and gives Numeric_Type=Numeric to Unihan's numeric ideographs.
@@ -223,6 +228,7 @@ export default class IsDigitExplainer extends Scene {
     const set = MASKS.filter((m) => fl[m]);
     await this.step('flags', {
       title: set.length === 3 ? `CPython gives ${c.char} all three flags` : `CPython gives ${c.char} ${list(set)}`,
+      line: 'Each filled field sets one flag; each predicate tests one flag.',
       // makeunicodedata.py:595-603; lines 998-1000 name fields 6, 7 and 8; lines 1210-1222 copy Unihan's
       // value into field 8. unicodectype.c:105-144: each predicate tests one flag.
       caption: `When CPython builds its character tables, makeunicodedata.py sets one flag for each filled field${
@@ -251,6 +257,7 @@ export default class IsDigitExplainer extends Scene {
     // ------------------------------------------------------------------ the nested sets
     await this.step('sets', {
       title: 'Each predicate’s set holds the one inside it',
+      line: `${c.char} sits in ${type === 'Decimal' ? 'the innermost set' : type === 'Digit' ? 'the middle set, not the innermost' : 'the outer set only'}.`,
       caption: `Run over every code point, CPython 3.15.1 with Unicode 17.0.0 finds ${grouped(COUNTS.isdecimal)} decimals, ${grouped(COUNTS.isdigit)} digits and ${grouped(
         COUNTS.isnumeric,
       )} numeric characters. A decimal always has a digit value too, and a digit a numeric value, so each set holds the one inside it. ${c.char} is in ${
@@ -264,6 +271,9 @@ export default class IsDigitExplainer extends Scene {
     // ------------------------------------------------------------------ the guard
     await this.step('guard', {
       title: run.passes ? `${q(c)}.${guard}() is True, so int() runs` : `${q(c)}.${guard}() is False, so int() never runs`,
+      line: run.passes
+        ? `The code checks s.${guard}() first and calls int() only on True.`
+        : 'The code skips int() and treats the text as not a number.',
       caption: `This code checks the text first and calls int() only if the check passes. The check here is ${guard}(). For ${q(c)} it returns ${
         run.passes ? 'True, so the next line calls int()' : 'False, so the code skips int() and treats the text as not a number'
       }.`,
@@ -277,6 +287,7 @@ export default class IsDigitExplainer extends Scene {
     // ------------------------------------------------------------------ int()
     await this.step('int', {
       title: parsed ? `int() reads field 6, so int(${q(c)}) is ${int.value}` : `int() reads only field 6, so int(${q(c)}) fails`,
+      line: `${q(c)} becomes '${asciiFor(c)}' before parsing${parsed ? '' : `, and no number contains '?'`}.`,
       // longobject.c:3193 calls _PyUnicode_TransformDecimalAndSpaceToASCII before parsing;
       // unicodeobject.c:9538-9552 rewrites each character; longobject.c:3209 is the error message.
       caption: `Before parsing, int() rewrites each non-ASCII character: a space as ' ', a character with a decimal value as that ASCII digit, anything else as '?', which no number contains. ${q(c)} becomes '${asciiFor(
@@ -308,6 +319,12 @@ export default class IsDigitExplainer extends Scene {
           : run.outcome === 'raised'
             ? `${guard}() let ${c.char} through to a ValueError`
             : `${guard}() turned ${c.char} away, as int() would`,
+      line:
+        run.outcome === 'parsed'
+          ? `${c.char} is in the innermost box, so every check passes it.`
+          : run.outcome === 'raised'
+            ? `${c.char} is inside the ${guard}() box but outside the innermost.`
+            : `${c.char} is outside the ${guard}() box and has no decimal value.`,
       caption:
         run.outcome === 'parsed'
           ? `${c.char} is in the innermost box, so every check passes it, and int() returns ${parsed ? int.value : ''}. The decimal characters are the only single characters int() accepts.`
@@ -326,6 +343,7 @@ export default class IsDigitExplainer extends Scene {
     // ------------------------------------------------------------------ the check that matches int()
     await this.step('match', {
       title: 'For one character, only isdecimal() matches int()',
+      line: 'To test a whole string, call int() and catch ValueError.',
       // UAX #44 rev. 38, field 7: no character encoded since Unicode 6.3.0 gets Numeric_Type=Digit.
       // functions.rst:1078-1082: int() takes a sign, surrounding whitespace and single underscores.
       caption: `Each row counts the single characters a check accepts and int() rejects; isdecimal() accepts exactly the ${grouped(

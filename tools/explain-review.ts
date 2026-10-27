@@ -1,8 +1,11 @@
 // Review the built collection as served, not just its source. Run demos:build (or demos:check) first;
 // if demos:render has made videos, their byte ranges are checked too.
+import { stepWords } from '../explain/trace.ts';
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import type { Browser } from 'playwright-core';
 import { launch } from './lib/browser.ts';
 import { collectProject, defaultVariant, ROOT } from './lib/explain-project.ts';
@@ -51,7 +54,7 @@ try {
         });
       });
       assert.equal(await page.locator('[aria-current=step]').getAttribute('data-step'), step.step);
-      assert.equal(await page.locator('.caption').innerText(), String(step.meta?.caption ?? ''));
+      assert.equal(await page.locator('.caption').innerText(), stepWords(step).caption);
       assert.ok((await page.locator('.stage path').count()) > 0, entry.id + ' has no stage artwork');
       for (const viewport of [
         { width: 390, height: 844 },
@@ -101,6 +104,16 @@ try {
     }),
   );
   await page.screenshot({ path: join(review, 'embed-lab.png'), fullPage: true, animations: 'disabled' });
+  // Link previews: site:export --origin checks every explainer page and share page for its Open
+  // Graph and Twitter card tags, with absolute https URLs and pictures at the declared size.
+  const site = await mkdtemp(join(tmpdir(), 'rayner-site-'));
+  try {
+    const exported = spawnSync(process.execPath, [join(ROOT, 'tools/explain-site.ts'), site, '--origin', 'https://example.org'], { encoding: 'utf8' });
+    assert.equal(exported.status, 0, `site:export --origin failed:\n${exported.stderr.slice(-4000)}`);
+    console.log(exported.stdout.split('\n').find((line) => line.includes('Twitter card')));
+  } finally {
+    await rm(site, { recursive: true, force: true });
+  }
   await mkdir(join(ROOT, 'out/validation'), { recursive: true });
   await writeFile(
     join(ROOT, 'out/validation/browser-review.json'),
@@ -118,7 +131,7 @@ try {
   assert.deepEqual(errors, []);
   assert.deepEqual(connections, []);
   console.log(
-    `${cases.length} served cases passed desktop/mobile, caption, artwork, no-error and no-external-connection checks. Response headers${videos ? ', video byte ranges' : ''} and the two-embed host page passed${videos ? '' : '; no videos were built, so their delivery was not checked'}. Screenshots: ${review}`,
+    `${cases.length} served cases passed desktop/mobile, caption, artwork, no-error and no-external-connection checks. Response headers${videos ? ', video byte ranges' : ''}, link preview tags and the two-embed host page passed${videos ? '' : '; no videos were built, so their delivery was not checked'}. Screenshots: ${review}`,
   );
 } finally {
   await browser?.close();
