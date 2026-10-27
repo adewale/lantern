@@ -44,6 +44,27 @@ function wrapped(text: string, w: number, s: number): string[] | null {
   }
 }
 
+test('a guaranteed-fitting caption is accepted with every word intact, including no-break spaces', () => {
+  fc.assert(fc.property(caption, fc.array(word, { minLength: 2, maxLength: 3 }), fc.constantFrom(' ', ' ', ' '), size,
+    (text, group, nb, fontSize) => {
+      const expected = [...words(text), group.join(nb)];
+      // One unbroken rendered line fits this width; accepting it requires no line-breaking oracle.
+      const line = expected.join(' ');
+      const w = new Text(line, { fontSize }).width() + 1;
+      assert.deepEqual(wrapCaption(line, w, fontSize), [line]);
+      const wide = wrapCaption(line, w * 2, fontSize);
+      assert.deepEqual(wide, [line]);
+    }), params());
+});
+
+test('one to four guaranteed-fitting caption lines are accepted without splitting words', () => {
+  fc.assert(fc.property(fc.array(word, { minLength: 1, maxLength: 4 }), size, (ws, fontSize) => {
+    const w = Math.max(...ws.map((text) => new Text(text, { fontSize }).width()));
+    fc.pre(w > 0 && ws.slice(1).every((text, i) => new Text(ws[i] + ' ' + text, { fontSize }).width() > w));
+    assert.deepEqual(wrapCaption(ws.join(' '), w, fontSize), ws);
+  }), params());
+});
+
 test('wrapped caption lines each fit the width', () => {
   fc.assert(
     fc.property(caption, width, size, (text, w, s) => {
@@ -409,17 +430,9 @@ test('snapshotFileName is the first 16 hex digits of the key\'s SHA-256, so neve
   );
 });
 
-test('snapshotFileName gives different diagram keys different files', () => {
-  // Real keys: diagramKey output, which JSON-escapes lone surrogates, so distinct keys are distinct UTF-8.
-  const key = fc.record({ source: fc.string({ unit: 'binary' }), style: fc.constantFrom('nord', 'default', 'blueprint') }).map((s) => diagramKey(s));
-  fc.assert(
-    fc.property(key, key, (a, b) => {
-      fc.pre(a !== b);
-      assert.notEqual(snapshotFileName(a), snapshotFileName(b));
-    }),
-    params(),
-  );
-});
+// The exact SHA-256-prefix property above owns filename derivation. A 64-bit prefix
+// cannot promise injectivity; random distinct-key checks cannot prove absence of collisions.
+// Real-disk store properties above retain key preservation and file-isolation behavior.
 
 // ---- lintConstruct ---------------------------------------------------------------
 

@@ -12,7 +12,7 @@ import {
   SurroundingRectangle,
   Circumscribe,
 } from '../../../src/index.ts';
-import type { Box } from '../../../src/index.ts';
+import type { Box, Mobject } from '../../../src/index.ts';
 import { stage, settingsOf } from '../../../explain/index.ts';
 import type { Palette } from '../../../explain/index.ts';
 import { soft, raised, rule } from '../../../explain/look.ts';
@@ -47,9 +47,9 @@ const PATH = {
   ],
 } as const;
 const FONT = 0.21;
-/** Where the code sits: the bottom region, with a column on the right for what the diff did. */
+/** Where the code sits: the bottom region, with a column on the right for callouts on what the diff did. */
 const CODE_BOX: Box = [-7.55, -4.25, 3.35, -0.65],
-  CARD_BOX: Box = [3.65, -4.25, 7.55, -0.65];
+  NOTES_BOX: Box = [3.65, -4.25, 7.55, -0.65];
 const ADDED = '#2ea043',
   CHANGED = '#bf8700';
 
@@ -194,17 +194,32 @@ export default class CacheMRExplainer extends Scene {
     });
     this.add(bars);
     this.add(after); // the code stays in front of its bars
+    await this.play(new FadeIn(bars, { runTime: 0.5 }));
+    // What the diff did, said beside the bars it put there: each run of rewritten or added lines
+    // gets a callout in the column right of the code. Unchanged lines have no bar and no callout.
     const lines = (n: number) => `${n} line${n === 1 ? '' : 's'}`;
-    const rows: [string, string][] = [
-      ['Unchanged', lines(same.length)],
-      ['Rewritten', lines(changed.length)],
-      ['Added', lines(added.length)],
-    ];
-    if (removed.length) rows.push(['Removed', lines(removed.length)]);
-    const card = await s.card(rows, { at: CARD_BOX, title: 'What the diff did', enter: false });
-    card.labels.get('Rewritten')!.setFill(CHANGED);
-    card.labels.get('Added')!.setFill(ADDED);
-    await this.play(new FadeIn(bars, { runTime: 0.5 }), new FadeIn(card, { runTime: 0.5 }));
+    const runs: { from: number; to: number; what: string; color: string }[] = [];
+    for (const [js, what, color] of [
+      [changed.map(([, j]) => j), 'rewritten', CHANGED],
+      [added, 'added', ADDED],
+    ] as const)
+      for (const j of [...js].sort((a, b) => a - b)) {
+        const last = runs.at(-1);
+        if (last && last.what === what && last.to === j - 1) last.to = j;
+        else runs.push({ from: j, to: j, what, color });
+      }
+    if (removed.length) throw new Error('The merge request removes no line; a removed line would need its own callout');
+    const right = merged.rect.box()![2],
+      said: Mobject[] = [];
+    for (const r of runs.sort((a, b) => a.from - b.from)) {
+      const box = linesBox(after, r.from, r.to);
+      said.push(await s.callout([right - 0.1, box[1], right - 0.1, box[3]], `${lines(r.to - r.from + 1)} ${r.what}`, {
+        side: 'right',
+        gap: NOTES_BOX[0] - right + 0.15,
+        color: r.color,
+        size: 0.24,
+      }));
+    }
     const lookup = new Circumscribe(linesBox(after, 1, 2), {
       keep: true,
       color: hot,
@@ -221,7 +236,8 @@ export default class CacheMRExplainer extends Scene {
       caption:
         'The same edit, replayed as diagram operations, removes the handler’s edge to D1 and puts a KV cache between them. A hit goes from KV straight to Reply, while a miss falls through to D1 before replying.',
     });
-    await this.play(new FadeOut(bars, { runTime: 0.4 }), new FadeOut(lookup.outline, { runTime: 0.4 }));
+    // The diff's bars and what they said go; the diagram takes the same edit.
+    await this.play(...[bars, lookup.outline, ...said].map((m) => new FadeOut(m, { runTime: 0.4 })));
     await flow.morph({ source: AFTER }, { ops: OPS });
     await flow.note('KV', 'TTL 300 s', { side: 'above' });
     this.state.databaseReads = 'misses only';

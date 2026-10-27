@@ -40,29 +40,28 @@ async function built(project: Project, name: string) {
   return { html, receipt, headers: await readFile(join(folder, name + '.html.headers.json'), 'utf8') };
 }
 
-// The pins began as what main built at 6b90d83, before lettering on request; `git log
-// test/lettering-baseline.json` gives each deliberate re-pin since. They change only when an
-// explainer, the engine or the player changes on purpose: re-pin with UPDATE_GOLDEN=1 (FULL=1 for
-// all of them), in a commit that touches no lettering code, so a lettering change cannot hide in a
-// re-pin. The engine hash is checked by rule below instead of pinned: any edit under src/ moves it.
-// exgit and gnome-files are in the short list because each changed when a first draft added an
-// unused export to src/fonts.ts or a type to explain/settings.ts: esbuild's minifier names
-// identifiers by character counts over each bundled file's whole source.
+// Immutable output pins from the pre-lettering builds, deliberately refreshed only
+// for reviewed engine/player changes in commits that do not modify lettering code.
+// The full serialized receipt pin includes engineHash; the older canonical receipt
+// pin excludes it. Both historical contracts and the header recipe share one build.
 const PINS = new URL('./lettering-baseline.json', import.meta.url);
-const SHORT = ['exgit', 'gnome-files', 'glyph'];
 test('explainers that ask for no lettering build the page, headers and receipt they built before it existed', async () => {
-  const pins: Record<string, { html: string; bytes: number; headers: string; receipt: string }> = JSON.parse(
+  const pins: Record<string, { html: string; bytes: number; headers: string; receipt: string; fullReceipt: string }> = JSON.parse(
     readFileSync(PINS, 'utf8'),
   );
-  const ids = process.env.FULL || process.env.UPDATE_GOLDEN === '1' ? EXPLAINERS.map((e) => e.id) : SHORT;
+  const ids = EXPLAINERS.map((e) => e.id);
+  assert.deepEqual(Object.keys(pins).sort(), [...ids].sort(), 'the pins cover exactly the catalog');
   const now: typeof pins = {};
   for (const id of ids) {
     const project = await collectProject(join(ROOT, 'scenes/explainers', id), { write: false });
     assert.equal(project.lettering, undefined, id);
+    assert.equal(project.outlineLettering, undefined, id);
     const { html, receipt, headers } = await built(project, id);
     assert.equal('lettering' in receipt, false, `${id}: only a lettered page reports lettering`);
+    assert.equal('letteringHash' in receipt, false, `${id}: an opt-out page has no outline hash`);
     const { engineHash: _, ...rest } = receipt;
-    now[id] = { html: sha256(html), bytes: receipt.bytes as number, headers: sha256(headers), receipt: sha256(JSON.stringify(rest)) };
+    assert.equal(Buffer.byteLength(html), receipt.bytes, `${id}: receipt reports actual page bytes`);
+    now[id] = { html: sha256(html), bytes: Buffer.byteLength(html), headers: sha256(headers), receipt: sha256(JSON.stringify(rest)), fullReceipt: sha256(JSON.stringify(receipt, null, 2) + '\n') };
   }
   if (process.env.UPDATE_GOLDEN === '1') writeFileSync(PINS, JSON.stringify(now, null, 2) + '\n');
   for (const id of ids) assert.deepEqual(now[id], pins[id], `${id} no longer builds what it built before lettering on request`);
@@ -137,7 +136,7 @@ test('an explainer that asks for Greek still fails on a Cyrillic letter, naming 
   assert.deepEqual([...takeMissingGlyphs()], [['ж', 'ж']]);
 });
 
-test('a request Rayner cannot serve fails with what it can', () => {
+test('the legacy subset request parser rejects unsupported fields and scripts', () => {
   const ask = (lettering: unknown) => () => letteringRequest({ meta: { lettering } });
   assert.throws(ask({ scripts: ['Arab'] }), /unknown script "Arab".*Latn, Grek, Cyrl/);
   assert.throws(ask({ scripts: [] }), /non-empty scripts/);

@@ -375,7 +375,7 @@ test('the motion verifier finds no teleport, pop or cut in these animations', as
   assert.deepEqual(analyzeMotion(saved), []);
 });
 
-test('a copy over its source is no cut, but a brighter shape over a faint one still is', async () => {
+test('brighter shapes over faint ones and far-away arrivals are cut-ins', async () => {
   const kinds = async (body: (s: Scene) => Promise<void>) => {
     const sink = new MotionSink();
     await run(body, sink);

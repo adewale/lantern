@@ -1,5 +1,5 @@
-import { Scene, Group, Rectangle, Text, Arrow } from '../../../src/index.ts';
-import type { Box } from '../../../src/index.ts';
+import { Scene, Group, Rectangle, Text, Arrow, FadeOut } from '../../../src/index.ts';
+import type { Box, Vec } from '../../../src/index.ts';
 import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
 import type { Diagram } from '../../../explain/index.ts';
 import {
@@ -165,16 +165,11 @@ export default class PgPageExplainer extends Scene {
       caption: `By default Postgres stores a table in pages of ${BLCKSZ} bytes, and every page starts with a ${PAGE_HEADER}-byte header. Two of its fields, pd_lower and pd_upper, mark where the free space starts and ends. On an empty page they are ${PAGE_HEADER} and ${BLCKSZ}, so ${BLCKSZ - PAGE_HEADER} bytes are free.`,
     });
     await s.enter(outline, header, headerLabel, freeLabel, pageSize, { describe: pageWords });
-    await s.card(
-      [
-        ['Page size', `${BLCKSZ} bytes`],
-        ['Page header', `${PAGE_HEADER} bytes`],
-        ['pd_lower', `${PAGE_HEADER}`],
-        ['pd_upper', `${BLCKSZ}`],
-        ['Free', `${BLCKSZ - PAGE_HEADER} bytes`],
-      ],
-      { at: ROW_RIGHT, fontSize: SIZE, title: 'An empty page' },
-    );
+    // pd_lower and pd_upper, said where they point: the free space's top and bottom edges.
+    const lowerAt = (x: number, y: number, value: number) => s.callout([x, y], `pd_lower ${value}`, { side: 'below', gap: 0.35, size: SMALL });
+    const upperAt = (x: number, y: number, value: number) => s.callout([x, y], `pd_upper ${value}`, { side: 'above', gap: 0.45, size: SMALL });
+    const mid = PAGE[0] + pw / 2;
+    const emptyMarks = [await lowerAt(mid, PAGE[3] - HEADER_H, PAGE_HEADER), await upperAt(mid, PAGE[1], BLCKSZ)];
     this.state.empty = { lower: PAGE_HEADER, upper: BLCKSZ, free: BLCKSZ - PAGE_HEADER };
 
     // ------------------------------------------------------------------ one row
@@ -187,8 +182,8 @@ export default class PgPageExplainer extends Scene {
         t.lpLen === t.stored ? `which ${t.lpLen} already is` : `here ${t.stored}`
       }, so a row costs ${t.perRow} bytes.`,
     });
-    await s.clearOverlays();
-    await s.enter(outline, header, headerLabel, pageSize, { describe: pageWords });
+    // The same page carries on: only the free-space label and the two offsets give way.
+    await this.play(...[freeLabel, ...emptyMarks].map((m) => new FadeOut(m, { runTime: 0.3 })));
     // The pointer sits under the header; the tuple fills the last bytes of the page.
     // Widths in the two strips share one scale, so the pointer is an eighth of an int4 tuple.
     const perByte = (pw - 0.2) / 48;
@@ -200,11 +195,9 @@ export default class PgPageExplainer extends Scene {
     const tupleW = t.stored * perByte;
     const tupleBox = box(PAGE[2] - tupleW, PAGE[1], PAGE[2], PAGE[1] + ROW_H, COLORS.data);
     const tupleLabel = text(`tuple, ${t.stored} bytes`, { size: SMALL, color: s.palette.paper }).moveTo(tupleBox.center());
-    const link = new Arrow(
-      [PAGE[0] + (LINE_POINTER * perByte) / 2, PAGE[3] - HEADER_H - ROW_H - 0.05],
-      [PAGE[2] - tupleW + 0.3, PAGE[1] + ROW_H + 0.05],
-      { stroke: ink, strokeWidth: 0.025, tipLength: 0.18 },
-    );
+    const linkFrom: Vec = [PAGE[0] + (LINE_POINTER * perByte) / 2, PAGE[3] - HEADER_H - ROW_H - 0.05],
+      linkTo: Vec = [PAGE[2] - tupleW + 0.3, PAGE[1] + ROW_H + 0.05];
+    const link = new Arrow(linkFrom, linkTo, { stroke: ink, strokeWidth: 0.025, tipLength: 0.18 });
     const free2 = text(`${BLCKSZ - PAGE_HEADER - t.perRow} bytes free`, { color: s.soft }).moveTo([PAGE[0] + pw / 2 + 0.5, PAGE[1] + ph * 0.42]);
     rowShown = true;
     // The tuple byte by byte, eight to a line: every row of the grid is one MAXALIGN unit.
@@ -248,17 +241,18 @@ export default class PgPageExplainer extends Scene {
     };
     await s.enter(pointer, pointerLabel, tupleBox, tupleLabel, link, free2, { describe: pageWords });
     await s.enter(...cells, ...offsets, ...keys, { describe: gridWords });
-    // pageinspect on Postgres 18.6: heap_page_items and page_header of the table's block 0 after one insert.
-    await s.card(
-      [
-        ['Tuple starts at, lp_off', `${BLCKSZ - t.stored}`],
-        ['Tuple length, lp_len', `${t.lpLen}`],
-        ['Data starts at, t_hoff', `${t.hoff}`],
-        ['pd_lower', `${PAGE_HEADER + LINE_POINTER}`],
-        ['pd_upper', `${BLCKSZ - t.stored}`],
-      ],
-      { at: regionBox(ROW_RIGHT, { top: GY - (t.stored / 8) * CELL - 0.35 }), fontSize: SIZE, title: 'pageinspect on Postgres 18.6' },
-    );
+    // pageinspect on Postgres 18.6 (heap_page_items and page_header of block 0 after one insert),
+    // each value said where it points: the new free-space edges, the pointer's target and the data's start.
+    await lowerAt(mid, PAGE[3] - HEADER_H - ROW_H, PAGE_HEADER + LINE_POINTER);
+    await upperAt(PAGE[2] - tupleW / 2, PAGE[1] + ROW_H, BLCKSZ - t.stored);
+    const [l0, l1] = [linkFrom, linkTo],
+      along: Vec = [l0[0] + 0.3 * (l1[0] - l0[0]), l0[1] + 0.3 * (l1[1] - l0[1])];
+    await s.callout(along, `lp_off ${BLCKSZ - t.stored}, lp_len ${t.lpLen}`, { side: 'right', gap: 0.3, size: SMALL });
+    await s.callout(cells[t.hoff]!, `t_hoff ${t.hoff}: data starts here`, {
+      side: 'below',
+      gap: cells[t.hoff]!.box()![1] - (GY - (t.stored / 8) * CELL) + 0.35,
+      size: SMALL,
+    });
     this.state.row = { lpOff: BLCKSZ - t.stored, lpLen: t.lpLen, hoff: t.hoff, stored: t.stored, perRow: t.perRow, lower: PAGE_HEADER + LINE_POINTER, upper: BLCKSZ - t.stored };
 
     // ------------------------------------------------------------------ a full page

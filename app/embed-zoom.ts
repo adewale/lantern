@@ -48,11 +48,6 @@ export function panBy(z: Zoom, dx: number, dy: number, w: number, h: number, max
   return clampZoom({ k: z.k, x: Number.isNaN(dx) ? z.x : z.x + dx, y: Number.isNaN(dy) ? z.y : z.y + dy }, w, h, max);
 }
 
-/** The CSS transform that paints `z` (with transform-origin 0 0); empty at the identity. */
-export function zoomTransform(z: Zoom): string {
-  return z.k === 1 ? '' : `translate(${z.x}px, ${z.y}px) scale(${z.k})`;
-}
-
 // ---------------------------------------------------------------------------
 // The reader's zoom over the author's camera. The player paints a zoom the way the
 // author's camera (`scene.frame`) zooms: by narrowing the SVG viewBox, never by scaling
@@ -84,15 +79,6 @@ export function readerViewBox(author: string, z: Zoom, w: number, h: number): st
   // A thousandth of a user unit (a millionth of a scene unit): exact enough to read the zoom back.
   return box.map((n) => +n.toFixed(3)).join(' ');
 }
-/** The zoom that shows `shown` of the `author` viewBox on a `w`×`h` stage: `readerViewBox` read back. */
-export function zoomOfView(author: string, shown: string, w: number, h: number): Zoom {
-  if (shown === author) return { ...IDENTITY };
-  const [ax, ay, aw, ah] = rect(author),
-    [vx, vy, vw] = rect(shown);
-  const { s, ox, oy } = fitted(aw, ah, w, h);
-  const k = w / (vw * s);
-  return { k, x: -k * ((vx - ax) * s + ox), y: -k * ((vy - ay) * s + oy) };
-}
 /** The author's frame of a stage SVG: what its camera shows, recorded on first sight for a poster. */
 export function cameraOf(svg: SVGSVGElement): string {
   let author = svg.getAttribute('data-camera');
@@ -101,16 +87,6 @@ export function cameraOf(svg: SVGSVGElement): string {
 }
 /** Paints a zoom on the stage's picture; `glide` eases a discrete step. */
 export type Painter = (z: Zoom, glide: boolean) => void;
-/** A CSS transform on the stage's SVG, eased by the `.glide` class: StageZoom's own painter, for a stage without a camera. */
-export const cssPainter =
-  (stage: HTMLElement): Painter =>
-  (z, glide) => {
-    const svg = stage.querySelector('svg');
-    if (!svg) return;
-    svg.classList.toggle('glide', glide);
-    svg.style.transformOrigin = '0 0';
-    svg.style.transform = zoomTransform(z);
-  };
 /** A glide's length, as the CSS transition it replaces, and its ease-out. */
 const GLIDE_MS = 220;
 const easeOut = (a: number) => 1 - (1 - a) ** 3;
@@ -180,8 +156,8 @@ export class StageZoom {
   private readonly changed: () => void;
   private readonly paint: Painter;
 
-  /** `paint` puts the zoom on the picture: by default a CSS transform; the player narrows the viewBox (ReaderView). */
-  constructor(stage: HTMLElement, changed: () => void, paint: Painter = cssPainter(stage)) {
+  /** `paint` puts the zoom on the picture; the player supplies ReaderView.paint. */
+  constructor(stage: HTMLElement, changed: () => void, paint: Painter) {
     this.stage = stage;
     this.changed = changed;
     this.paint = paint;

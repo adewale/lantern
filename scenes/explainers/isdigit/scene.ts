@@ -281,7 +281,14 @@ export default class IsDigitExplainer extends Scene {
     await s.clear();
     const prog = await s.code([`s = "${c.char}"`, `if s.${guard}():`, '    n = int(s)'], { at: [-7.55, 0.2, 7.55, TOP], fontSize: SIZE * 1.2 });
     await prog.focus(run.passes ? [1, 2] : 1, { as: run.passes ? 'run' : 'the check that fails' });
-    await s.card([[`s.${guard}()`, TF(run.passes)]], { at: [-7.55, -3.6, 7.55, -0.4], fontSize: SIZE * 1.2, width: 8 });
+    // What the check returns, said at the end of its line, just outside the panel.
+    const check = prog.code.lines[1]!.box()!;
+    await s.callout(check, `returns ${TF(run.passes)}`, {
+      side: 'right',
+      gap: prog.panel.box()![2] - check[2] + 0.35,
+      color: run.passes ? s.good : s.bad,
+      size: SIZE * 1.2,
+    });
     this.state.guard = { predicate: guard, passes: run.passes };
 
     // ------------------------------------------------------------------ int()

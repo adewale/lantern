@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fc, params } from './lib/pbt.ts';
-import { clampZoom, zoomAt, panBy, zoomTransform, IDENTITY, ZOOM_MAX } from '../app/embed-zoom.ts';
+import { clampZoom, zoomAt, panBy, readerViewBox, IDENTITY, ZOOM_MAX } from '../app/embed-zoom.ts';
 import type { Zoom } from '../app/embed-zoom.ts';
 
 const EPS = Number.EPSILON;
@@ -62,7 +62,6 @@ test('zoom: after any gesture sequence, hostile numbers included, the scale is f
     fc.property(session(any), ({ ops, w, h, max }) => {
       const { z, w: W, h: H } = play(ops, w, h, max);
       assert.ok(Number.isFinite(z.k) && Number.isFinite(z.x) && Number.isFinite(z.y), JSON.stringify(z));
-      assert.doesNotMatch(zoomTransform(z), /NaN|Infinity/);
       assert.ok(z.k >= 1 && z.k <= max, `k=${z.k} max=${max}`);
       assert.ok(z.x <= 0 && z.y <= 0, `left/top gap: ${JSON.stringify(z)}`);
       assert.ok(z.x + W * z.k >= W && z.y + H * z.k >= H, `right/bottom gap: ${JSON.stringify({ z, W, H })}`);
@@ -141,12 +140,11 @@ test('zoom: zoomAt(f) then zoomAt(1/f) about the same point returns to the start
   );
 });
 
-test('zoom: reset from any state and any stage is exactly the identity, painted as no transform', () => {
+test('zoom: clamping the identity at any stage keeps the identity', () => {
   fc.assert(
     fc.property(size, size, cap, (w, h, max) => {
       const z = clampZoom(IDENTITY, w, h, max);
       assert.ok(z.k === 1 && z.x === 0 && z.y === 0, JSON.stringify(z));
-      assert.equal(zoomTransform(z), '');
     }),
     params(),
   );
@@ -157,7 +155,6 @@ test('zoom: zooming all the way out (any factor at or below 1/k) is exactly the 
     fc.property(reachableWith(cap), fc.double({ min: 0, max: 1, noNaN: true }), finite, finite, ({ z, w, h, max }, t, px, py) => {
       const out = zoomAt(z, t / z.k, px, py, w, h, max);
       assert.ok(out.k === 1 && out.x === 0 && out.y === 0, JSON.stringify(out));
-      assert.equal(zoomTransform(out), '');
     }),
     params(),
   );
@@ -227,20 +224,6 @@ test('zoom: a NaN pan delta leaves that axis exactly where it was', () => {
   );
 });
 
-test('zoom: the painted transform reads back as exactly the zoom it paints', () => {
-  // Parsed, not compared with zoomTransform itself: rounding the pan would pass that comparison.
-  fc.assert(
-    fc.property(reachableWith(cap), ({ z }) => {
-      const t = zoomTransform(z);
-      if (z.k === 1) return assert.equal(t, '');
-      const m = t.match(/^translate\((\S+)px, (\S+)px\) scale\((\S+)\)$/);
-      assert.ok(m, t);
-      assert.ok(Number(m[1]) === z.x && Number(m[2]) === z.y && Number(m[3]) === z.k, t);
-    }),
-    params(),
-  );
-});
-
 test('zoom: clamping is idempotent (re-clamping on a resize to the same size changes nothing)', () => {
   fc.assert(
     fc.property(session(any), ({ ops, w, h, max }) => {
@@ -262,7 +245,6 @@ const { StageZoom } = await import('../app/embed-zoom.ts');
 type Handler = (e: Record<string, unknown>) => void;
 function fakeStage(w: number, h: number) {
   const handlers: Record<string, Handler[]> = {};
-  const svg = { classList: { toggle() {} }, style: { transform: '', transformOrigin: '' } };
   const classes = new Set<string>();
   const stage = {
     clientWidth: w,
@@ -271,14 +253,13 @@ function fakeStage(w: number, h: number) {
       (handlers[name] ??= []).push(f);
     },
     getBoundingClientRect: () => ({ left: 0, top: 0, width: w, height: h }),
-    querySelector: () => svg,
     classList: { toggle: (c: string, on: boolean) => (on ? classes.add(c) : classes.delete(c)) },
     setPointerCapture() {},
   };
   const fire = (name: string, e: Record<string, unknown>) => {
     for (const f of handlers[name] ?? []) f({ preventDefault() {}, ...e });
   };
-  return { stage: stage as unknown as HTMLElement, svg, classes, fire };
+  return { stage: stage as unknown as HTMLElement, classes, fire };
 }
 type Gesture =
   | { kind: 'down' | 'move'; id: number; x: number; y: number }
@@ -315,7 +296,7 @@ test('StageZoom: after any pointer, wheel, double-click and button sequence the 
   fc.assert(
     fc.property(gestures, ({ list, w, h }) => {
       const { stage, fire } = fakeStage(w, h);
-      const z = new StageZoom(stage, () => {});
+      const z = new StageZoom(stage, () => {}, () => {});
       const down = new Set<number>();
       for (const g of list) perform(z, fire, g, down);
       assert.ok(Number.isFinite(z.k) && Number.isFinite(z.x) && Number.isFinite(z.y), JSON.stringify(z));
@@ -328,15 +309,23 @@ test('StageZoom: after any pointer, wheel, double-click and button sequence the 
 test('StageZoom: what it paints, the zoomed class and the callback always describe its current zoom', () => {
   fc.assert(
     fc.property(gestures, ({ list, w, h }) => {
-      const { stage, svg, classes, fire } = fakeStage(w, h);
+      const { stage, classes, fire } = fakeStage(w, h);
+      let painted: Zoom | null = null;
+      let paintedGlide: boolean | null = null;
+      let paintCount = 0;
+      let callbackCount = 0;
       let seen: { k: number; x: number; y: number } | null = null;
-      const z: InstanceType<typeof StageZoom> = new StageZoom(stage, () => (seen = { k: z.k, x: z.x, y: z.y }));
+      const z: InstanceType<typeof StageZoom> = new StageZoom(stage, () => { callbackCount++; seen = { k: z.k, x: z.x, y: z.y }; }, (target, glide) => { painted = { ...target }; paintedGlide = glide; paintCount++; });
       const down = new Set<number>();
       for (const g of list) {
+        const beforePaint = paintCount, beforeCallback = callbackCount;
         perform(z, fire, g, down);
-        if (seen === null) continue; // nothing has been applied yet
+        if (paintCount === beforePaint && callbackCount === beforeCallback) continue; // a gesture that does not apply
+        assert.equal(paintCount, beforePaint + 1, 'each applied state is painted once');
+        assert.equal(callbackCount, beforeCallback + 1, 'each painted state notifies once');
         assert.deepEqual(seen, { k: z.k, x: z.x, y: z.y }, 'the callback saw the final state');
-        assert.equal(svg.style.transform, zoomTransform(z));
+        assert.deepEqual(painted, seen, 'the injected painter received the final state');
+        if (paintCount > beforePaint) assert.equal(paintedGlide, ['dblclick', 'zoomIn', 'zoomOut', 'reset'].includes(g.kind));
         assert.equal(classes.has('zoomed'), z.k > 1);
       }
     }),
@@ -350,7 +339,7 @@ test('StageZoom: a motionless move while exactly two pointers are down never cha
   fc.assert(
     fc.property(gestures, fc.tuple(coord, coord, coord, coord), ({ list, w, h }, [ax, ay, bx, by]) => {
       const { stage, fire } = fakeStage(w, h);
-      const z = new StageZoom(stage, () => {});
+      const z = new StageZoom(stage, () => {}, () => {});
       const down = new Set<number>();
       for (const g of list) perform(z, fire, g, down);
       // Bring the set of fingers to exactly two by ordinary gestures: lift extras, add new ones.
@@ -373,23 +362,144 @@ test('StageZoom: a motionless move while exactly two pointers are down never cha
 // Regression (manim-web #389, #838, #871: https://github.com/maloyan/manim-web/pull/389,
 // https://github.com/maloyan/manim-web/issues/838, https://github.com/maloyan/manim-web/pull/871).
 // Turning a phone while zoomed used to slide the view; the pan now scales with the stage.
-test('StageZoom: after a resize the drawing point at the stage centre stays at the centre', () => {
+test('StageZoom: anisotropic resize preserves the normalized view after noncentral zoom and pan', () => {
   fc.assert(
-    fc.property(fc.integer({ min: 200, max: 2000 }), fc.integer({ min: 200, max: 2000 }), fc.double({ min: 1.5, max: 6, noNaN: true }), fc.double({ min: 0.5, max: 2, noNaN: true }), (w, h, k, r) => {
+    fc.property(fc.integer({ min: 200, max: 2000 }), fc.integer({ min: 200, max: 2000 }), fc.double({ min: 1.5, max: 6, noNaN: true }), fc.double({ min: 0.5, max: 2, noNaN: true }), fc.double({ min: 0.5, max: 2, noNaN: true }), fc.double({ min: 0, max: 1, noNaN: true }), fc.double({ min: 0, max: 1, noNaN: true }), (w, h, k, rx, ry, u, v) => {
       const { stage } = fakeStage(w, h);
-      const z = new StageZoom(stage, () => {});
+      const z = new StageZoom(stage, () => {}, () => {});
       z.apply();
-      z.zoomAt(k); // about the centre, as the + button does
+      z.zoomAt(k, w * u, h * v);
+      z.pan(-w * 0.13, h * 0.17);
       const size = stage as unknown as { clientWidth: number; clientHeight: number };
       // The fraction of the drawing's width (height) under the stage centre.
       const centre = (side: number, pan: number) => (side / 2 - pan) / z.k / side;
       const before = [centre(w, z.x), centre(h, z.y)];
-      size.clientWidth = Math.round(w * r);
-      size.clientHeight = Math.round(h * r);
+      size.clientWidth = Math.round(w * rx);
+      size.clientHeight = Math.round(h * ry);
       z.apply(); // what the ResizeObserver callback does
       const after = [centre(size.clientWidth, z.x), centre(size.clientHeight, z.y)];
-      assert.ok(Math.abs(after[0]! - before[0]!) <= 1e-6 && Math.abs(after[1]! - before[1]!) <= 1e-6, `centre moved from ${before} to ${after}`);
+      assert.ok(Math.abs(after[0]! - before[0]!) <= 16 * EPS && Math.abs(after[1]! - before[1]!) <= 16 * EPS, `centre moved from ${before} to ${after}`);
     }),
     params(300),
   );
+});
+
+// Independent screen-space oracle: project world points through the SVG fit, then
+// apply reader scale/pan. Each serialized viewBox component rounds by <=0.0005
+// user units. Projecting normalized points in [0,1] accumulates <=0.001 units.
+const cameraCase = fc.record({
+  ax: fc.integer({ min: -100000, max: 100000 }), ay: fc.integer({ min: -100000, max: 100000 }),
+  aw: fc.integer({ min: 1, max: 100000 }), ah: fc.integer({ min: 1, max: 100000 }),
+  w: fc.integer({ min: 1, max: 4000 }), h: fc.integer({ min: 1, max: 4000 }),
+  k: fc.double({ min: 1, max: 6, noNaN: true }),
+  u: fc.double({ min: 0, max: 1, noNaN: true }), v: fc.double({ min: 0, max: 1, noNaN: true }),
+});
+test('readerViewBox composes arbitrary author origins and aspect ratios with stage zoom and letterboxing', () => {
+  fc.assert(fc.property(cameraCase, ({ ax, ay, aw, ah, w, h, k, u, v }) => {
+    const author = `${ax} ${ay} ${aw} ${ah}`;
+    const z = { k, x: -w * (k - 1) * u, y: -h * (k - 1) * v };
+    if (k === 1) return assert.equal(readerViewBox(author, z, w, h), author);
+    const [vx, vy, vw, vh] = readerViewBox(author, z, w, h).split(/\s+/).map(Number);
+    const pxPerUnit = Math.min(w / aw, h / ah);
+    for (const [fx, fy] of [[0, 0], [1, 1], [u, v]]) {
+      // Reconstruct world point at a chosen stage fraction from the painted view.
+      const worldX = vx! + fx! * vw!, worldY = vy! + fy! * vh!;
+      const screenX = (((worldX - ax) * pxPerUnit + (w - aw * pxPerUnit) / 2) * k + z.x);
+      const screenY = (((worldY - ay) * pxPerUnit + (h - ah * pxPerUnit) / 2) * k + z.y);
+      const roundoff = 64 * EPS * (Math.abs(ax) + Math.abs(ay) + aw + ah) * pxPerUnit * k;
+      const budget = 0.001 * pxPerUnit * k + roundoff;
+      assert.ok(Math.abs(screenX - fx! * w) <= budget, `x projection error ${screenX - fx! * w} > ${budget}`);
+      assert.ok(Math.abs(screenY - fy! * h) <= budget, `y projection error ${screenY - fy! * h} > ${budget}`);
+    }
+  }), params(1000));
+});
+test('readerViewBox preserves author spelling at identity and when the stage has no area', () => {
+  fc.assert(fc.property(cameraCase, fc.constantFrom(' ', ', ', '\t'), ({ ax, ay, aw, ah, w, h, k }, sep) => {
+    const author = `  ${[ax, ay, aw, ah].join(sep)}  `;
+    assert.equal(readerViewBox(author, IDENTITY, w, h), author);
+    for (const [width, height] of [[0, h], [w, 0], [-1, h], [w, -1]])
+      assert.equal(readerViewBox(author, { k, x: -1, y: -2 }, width!, height!), author);
+  }), params(500));
+});
+test('StageZoom reset paints exact identity after generated gestures', () => {
+  fc.assert(fc.property(gestures, ({ list, w, h }) => {
+    const { stage, fire } = fakeStage(w, h);
+    const paints: { z: Zoom; glide: boolean }[] = [];
+    const z = new StageZoom(stage, () => {}, (value, glide) => paints.push({ z: { ...value }, glide }));
+    const down = new Set<number>();
+    for (const g of list) perform(z, fire, g, down);
+    z.reset(true);
+    assert.deepEqual({ k: z.k, x: z.x, y: z.y }, IDENTITY);
+    assert.deepEqual(paints.at(-1), { z: IDENTITY, glide: true });
+  }), params(500));
+});
+
+// A controlled RAF tests cancellation and exact endpoints without sleeping or
+// replacing the browser proof of camera writes during real scene animation.
+test('ReaderView captures the author camera, follows updates through a glide, and cancels it on Fit', async (t) => {
+  const { ReaderView, cameraOf, HOME_VIEW } = await import('../app/embed-zoom.ts');
+  let now = 0, next = 0, reduced = false;
+  const frames = new Map<number, FrameRequestCallback>();
+  const saved = ['requestAnimationFrame', 'cancelAnimationFrame', 'matchMedia'].map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)] as const);
+  t.mock.method(performance, 'now', () => now);
+  Object.assign(globalThis, {
+    requestAnimationFrame: (f: FrameRequestCallback) => { frames.set(++next, f); return next; },
+    cancelAnimationFrame: (id: number) => frames.delete(id),
+    matchMedia: () => ({ matches: reduced }),
+  });
+  try {
+    const attrs = new Map<string, string>([['viewBox', HOME_VIEW]]);
+    const svg = { getAttribute: (key: string) => attrs.get(key) ?? null, setAttribute: (key: string, value: string) => attrs.set(key, value) };
+    let present = false;
+    const stage = { clientWidth: 800, clientHeight: 450, querySelector: () => present ? svg : null } as unknown as HTMLElement;
+    const reader = new ReaderView(stage);
+    reader.paint({ k: 2, x: -200, y: -100 }, false); // SVG can be inserted after the reader exists.
+    present = true;
+    assert.equal(cameraOf(svg as unknown as SVGSVGElement), HOME_VIEW);
+    attrs.set('viewBox', 'changed externally');
+    assert.equal(cameraOf(svg as unknown as SVGSVGElement), HOME_VIEW, 'first captured author frame remains stable');
+    reader.paint({ k: 3, x: -300, y: -200 }, true);
+    const tick = (time: number) => {
+      now = time;
+      const pending = [...frames.values()]; frames.clear();
+      for (const f of pending) f(time);
+    };
+    const author = '-1200 700 8000 4500';
+    attrs.set('data-camera', author); // Author frame changed while reader zoom is moving.
+    tick(110);
+    assert.equal(attrs.get('data-camera'), author);
+    // Halfway through cubic ease-out is 7/8 of the journey: k=23/8,
+    // pan=(-287.5,-187.5). Independently project the painted corners through
+    // the latest author's 0.1 px/unit camera, then this reader transform.
+    const midpoint = attrs.get('viewBox')!.split(/\s+/).map(Number);
+    const budget = 0.001 * 0.1 * (23 / 8) + 64 * EPS * 800;
+    for (const fraction of [0, 1]) {
+      const worldX = midpoint[0]! + fraction * midpoint[2]!;
+      const worldY = midpoint[1]! + fraction * midpoint[3]!;
+      assert.ok(Math.abs((worldX + 1200) * 0.1 * (23 / 8) - 287.5 - fraction * 800) <= budget,
+        'mid-glide x uses the latest author camera');
+      assert.ok(Math.abs((worldY - 700) * 0.1 * (23 / 8) - 187.5 - fraction * 450) <= budget,
+        'mid-glide y uses the latest author camera');
+    }
+    tick(220);
+    assert.equal(attrs.get('viewBox'), readerViewBox(author, { k: 3, x: -300, y: -200 }, 800, 450));
+    assert.equal(frames.size, 0, 'the endpoint does not schedule another frame');
+    reader.paint({ k: 5, x: -500, y: -300 }, true);
+    assert.equal(frames.size, 1);
+    reader.paint(IDENTITY, false);
+    assert.equal(frames.size, 0, 'Fit cancels the pending glide');
+    tick(440);
+    assert.equal(attrs.get('viewBox'), author, 'a cancelled glide cannot overwrite Fit');
+    reduced = true;
+    reader.paint({ k: 2, x: -100, y: -50 }, true);
+    assert.equal(frames.size, 0, 'reduced motion paints the target immediately');
+    assert.equal(attrs.get('viewBox'), readerViewBox(author, { k: 2, x: -100, y: -50 }, 800, 450));
+    attrs.delete('data-camera'); attrs.delete('viewBox');
+    assert.equal(cameraOf(svg as unknown as SVGSVGElement), HOME_VIEW, 'an SVG without a frame uses home');
+  } finally {
+    for (const [key, descriptor] of saved) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+      else Reflect.deleteProperty(globalThis, key);
+    }
+  }
 });

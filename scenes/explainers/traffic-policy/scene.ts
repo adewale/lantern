@@ -205,13 +205,11 @@ export default class TrafficPolicyExplainer extends Scene {
         `# ${chainName} chain on ${policy === 'cluster' ? 'every node' : 'Node 1'}, one rule per pod`,
         ...chain.map((r) => (r.probability ? `-m statistic --mode random --probability ${r.probability} -j pod ${r.pod}` : `-j pod ${r.pod}`)),
       ],
-      { at: regionBox(BELOW, { right: 2.6 }), fontSize: 0.22, enter: false },
+      { at: BELOW, fontSize: 0.22, enter: false },
     );
-    const odds = await s.card(
-      chainPods.map((id, i) => [`Pod ${id}`, frac(each[i]!)] as const),
-      { at: regionBox(BELOW, { left: 3.0 }), fontSize: SIZE, title: 'Share of the node’s requests', enter: false },
-    );
-    await s.enter(code, odds);
+    await s.enter(code);
+    // Each pod in the chain says its share of the node's requests.
+    for (const [i, id] of chainPods.entries()) await d.note(id, frac(each[i]!), { side: 'above', size: SIZE });
     this.state.chain = chain.map((r) => r.probability);
     this.state.chainShares = each.map(frac);
 
@@ -240,10 +238,8 @@ export default class TrafficPolicyExplainer extends Scene {
         ],
         { trail: true },
       );
-      await s.card(
-        [...counts.map((_, j) => [`Leave ${NODES[j]}`, inN(leave[j]!)] as const), ['All requests', inN(hop)]],
-        { at: BELOW, fontSize: SIZE, title: 'Requests sent on to another node' },
-      );
+      // The two nodes in view say how many of the requests they get they send on (Node 1's share is in the caption).
+      for (const j of [1, 2]) await d.note(`k${j + 1}`, `${inN(leave[j]!)} leave`, { side: 'below', size: SIZE });
       this.state.secondHop = frac(hop);
 
       // ---------------------------------------------------------------- snat
@@ -255,14 +251,8 @@ export default class TrafficPolicyExplainer extends Scene {
         caption: `Under Cluster, kube-proxy marks every outside request for source NAT, in case it crosses nodes. Node 3 replaces the client’s address, ${CLIENT_IP}, with its own, ${nodeIp(2)}, and pod ${target} sees that. Requests that stay on their node are rewritten too.`,
       });
       await s.clearOverlays();
+      await d.note('lb', `from ${CLIENT_IP}`, { side: 'below', size: SIZE });
       await d.note(target, `from ${seenSource('cluster', 2)}`, { side: 'above', size: SIZE });
-      await s.card(
-        [
-          ['Client sends from', CLIENT_IP],
-          [`Pod ${target} sees`, seenSource('cluster', 2)],
-        ],
-        { at: BELOW, fontSize: SIZE },
-      );
       this.state.seen = seenSource('cluster', 2);
     } else {
       // ---------------------------------------------------------------- health check
@@ -283,10 +273,9 @@ export default class TrafficPolicyExplainer extends Scene {
       await d.unmark();
       await d.focus('all');
       if (failing.length) await d.mark(failing.flatMap((j) => [groups[j]!, `k${j + 1}`]), { color: s.bad, as: 'fails the health check' });
-      await s.card(
-        counts.map((c, j) => [NODES[j]!, `${passes(counts, 'local', j) ? '200' : '503'}, ${c} local pod${c === 1 ? '' : 's'}`] as const),
-        { at: BELOW, fontSize: SIZE, title: 'Health check answer' },
-      );
+      // Each node's health check answer, said under the node.
+      for (const [j, c] of counts.entries())
+        await d.note(`k${j + 1}`, `${passes(counts, 'local', j) ? '200' : '503'}, ${c} local pod${c === 1 ? '' : 's'}`, { side: 'below', size: SIZE });
       this.state.passes = counts.map((_, j) => passes(counts, 'local', j));
 
       // ---------------------------------------------------------------- local path
@@ -308,14 +297,6 @@ export default class TrafficPolicyExplainer extends Scene {
         { trail: true },
       );
       await d.note('a', `from ${seenSource('local', 0)}`, { side: 'above', size: SIZE });
-      await s.card(
-        [
-          ['Client sends from', CLIENT_IP],
-          ['Pod a sees', seenSource('local', 0)],
-          ['Second hop', 'none'],
-        ],
-        { at: BELOW, fontSize: SIZE },
-      );
       this.state.seen = seenSource('local', 0);
     }
 
@@ -356,7 +337,6 @@ export default class TrafficPolicyExplainer extends Scene {
     await d.unmark();
     await d.focus('all');
     for (const id of ids) await d.note(id, percent(share[id]!), { side: 'above', size: SIZE });
-    await s.card(shareRows(share), { at: BELOW, fontSize: SIZE, title: `Share of all requests under ${POLICY[policy]}` });
     this.state.shares = Object.fromEntries(ids.map((id) => [id, frac(share[id]!)]));
 
     // ------------------------------------------------------------------ compare

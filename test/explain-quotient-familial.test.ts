@@ -128,25 +128,25 @@ test('around rounds halves to the even neighbour, like numpy.around', () => {
 
 const income = fc.double({ min: 0, max: 400000, noNaN: true });
 const children = fc.integer({ min: 0, max: 6 });
-test('the cap: the children never lower the tax by more than 1 791 € per half-part', () => {
+test('each year’s cap bounds the children’s tax advantage per half-part', () => {
   fc.assert(
-    fc.property(income, children, (rni, n) => {
-      const r = impot(rni, n);
+    fc.property(income, children, fc.constantFrom<Year>(2024, 2025), (rni, n, year) => {
+      const r = impot(rni, n, year);
       // ir_plaf_qf = max(ir_brut, ir_ss_qf − plafond): never under either.
       assert.ok(r.plafQf >= r.brut - 1e-9 && r.plafQf >= r.sansEnfants - r.plafond - 1e-9);
-      assert.ok(r.sansEnfants - r.plafQf <= PARAMS[2024].plafond * (r.parts - 2) * 2 + 1e-6);
+      assert.ok(r.sansEnfants - r.plafQf <= (year === 2024 ? 1791 : 1807) * (r.parts - 2) * 2 + 1e-6);
       // The quotient can only help: dividing before a progressive barème never raises the tax.
-      assert.ok(r.brut <= r.sansEnfants + 1e-6 && r.sansEnfants <= bareme(rni).total + 1e-6);
+      assert.ok(r.brut <= r.sansEnfants + 1e-6 && r.sansEnfants <= bareme(rni, year).total + 1e-6);
     }),
     params(500),
   );
 });
 test('more income never lowers the tax, and another child never raises it', () => {
   fc.assert(
-    fc.property(income, income, children, (a, b, n) => {
+    fc.property(income, income, children, fc.constantFrom<Year>(2024, 2025), (a, b, n, year) => {
       const [lo, hi] = a < b ? [a, b] : [b, a];
-      assert.ok(impot(lo, n).impot <= impot(hi, n).impot);
-      assert.ok(impot(a, n + 1).impot <= impot(a, n).impot);
+      assert.ok(impot(lo, n, year).impot <= impot(hi, n, year).impot);
+      assert.ok(impot(a, n + 1, year).impot <= impot(a, n, year).impot);
     }),
     params(500),
   );

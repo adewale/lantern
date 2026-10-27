@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { setImmediate as nextTurn } from 'node:timers/promises';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
@@ -126,10 +127,14 @@ test('RTL/mixed Code token boxes use visual advance cells, including after the l
   assert.equal(code.span(0, 0, 1).box()[2] - code.span(0, 0, 1).box()[0], 1, 'LTR part of mixed text stays one cell');
 });
 
-test('LTR spans keep their original geometry after the optional adapter is installed', async () => {
+test('ordinary LTR spans keep their geometry after explicitly installing the optional adapter', async () => {
   await loadFonts();
+  class Install extends Scene { override async construct() {} }
+  const mono = shaperFor('mono');
+  const provider: LetteringProvider = { shape: (_, text, size) => mono(text, size), math: () => { throw new Error('unused'); } };
+  await new (bindLettering(Install, provider))(new NullSink()).run();
   const code = new Code(['abc def'], { fontSize: .5 });
-  const line = code.lines[0]!, width = shaperFor('mono')('abc', .5).width;
+  const line = code.lines[0]!, width = mono('abc', .5).width;
   const span = code.span(0, 0, 3).box();
   assert.ok(Math.abs(span[0] - line.frameBox[0]!) < 1e-6);
   assert.ok(Math.abs((span[2] - span[0]) - width) < 1e-6);
@@ -185,9 +190,16 @@ test('a lease waits for overlapping same-provider tasks before restoring the fon
   const first = new (bindLettering(First, provider))(new NullSink()).run();
   await started.promise;
   const second = new (bindLettering(Second, provider))(new NullSink()).run();
+  let firstSettled = false;
+  void first.then(() => { firstSettled = true; });
   firstEnd.resolve();
-  await Promise.resolve(); await Promise.resolve();
+  // First has no I/O left: drain a whole turn while Second deliberately holds
+  // the shared provider. The lease must not settle or restore embedded fonts.
+  await nextTurn();
+  const settledBeforeSecond = firstSettled;
   secondEnd.resolve();
   const [, done] = await bounded(Promise.all([first, second]));
+  assert.equal(settledBeforeSecond, false, 'the first lease waits for its overlapping task');
+  assert.equal(firstSettled, true);
   assert.ok(Math.abs((done.mobjects[0] as Text).run.width - mono('WWW', .4).width) < 1e-8);
 });

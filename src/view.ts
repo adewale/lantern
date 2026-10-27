@@ -56,7 +56,7 @@ export class View<M extends Mobject = Mobject> extends Group {
   /** The same picture as a function of a state snapshot, when the View was made from a scene's state: what the fidelity check calls. */
   render: ((state: SceneState) => M) | null;
   place: ViewPlace | false;
-  /** Layout size [w, h] of the last picture build() returned, before placing: how much the View has been scaled since is current / this. */
+  /** Unplaced build size [w, h] used as the scale basis; a returning sync restores the retained picture’s basis. */
   builtSize: [number, number];
   /** The scale the last sync applied: kept while the measured one only differs from it in the last bits. */
   scaleK: number;
@@ -138,6 +138,8 @@ export class ViewSync<M extends Mobject = Mobject> extends Animation {
   inner!: Animation | null;
   /** Set by begin(): the built, placed picture, swapped in at finish(). */
   next!: M | null;
+  private previousSize!: [number, number];
+  private previousScale!: number;
 
   constructor(v: View<M>, { match, ...opts }: SyncOpts = {}) {
     super(v, opts);
@@ -146,6 +148,8 @@ export class ViewSync<M extends Mobject = Mobject> extends Animation {
 
   override begin(): void {
     const v = this.view, old = v.current;
+    this.previousSize = v.builtSize;
+    this.previousScale = v.scaleK;
     const next = v.fit(fresh(v.build(), old));
     if (samePicture(old, next)) { this.inner = null; this.next = null; return; }
     const match = this.match ?? (hasText(old) || hasText(next) ? 'text' : 'index');
@@ -171,6 +175,11 @@ export class ViewSync<M extends Mobject = Mobject> extends Animation {
     // parts inside the old one, a Transform leaves it aligned). A rate function that
     // comes back leaves the old picture: the View did not sync.
     if (end === 1) this.view.swap(this.next!);
+    else {
+      // The fitted target was discarded; keep the scale basis of the retained child.
+      this.view.builtSize = this.previousSize;
+      this.view.scaleK = this.previousScale;
+    }
   }
 
   /** What the matching transform paired, once begun; null for 'index' or when nothing changed. */

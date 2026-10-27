@@ -10,6 +10,7 @@ import {
   TRUST_KEYS,
   arrivals,
   atExpress,
+  compileTrust,
   forwarded,
   inRange,
   readAddresses,
@@ -122,17 +123,61 @@ test('inRange matches IPv4 prefixes', () => {
   assert.equal(inRange('1.2.3.5', '1.2.3.4'), false);
   assert.equal(inRange('200.1.1.1', '128.0.0.0/1'), true);
   assert.equal(inRange('not an ip', '0.0.0.0/1'), false);
+  // proxy-addr 2.0.8 index.js:191 rejects range <= 0, despite CIDR's general /0 notation.
+  assert.equal(inRange('203.0.113.7', '0.0.0.0/0'), false);
 });
 
 const octet = fc.integer({ min: 0, max: 255 });
 const ip = fc.tuple(octet, octet, octet, octet).map((p) => p.join('.'));
 const header = fc.array(ip, { minLength: 1, maxLength: 6 });
 
+// proxy-addr 2.0.8 package.json pins ipaddr.js 1.9.1. Its own index.js:153-195
+// requires decimal digits and range > 0 through 32. ipaddr.IPv4.parseCIDR permits
+// /0, but Express uses proxy-addr's stricter configuration parser, not that API.
+const ipv4Value = (address: string) => address.split('.').reduce((n, part) => n * 256 + Number(part), 0);
+const inNetwork = (address: string, base: string, prefix: number) => {
+  const size = 2 ** (32 - prefix);
+  return Math.floor(ipv4Value(address) / size) === Math.floor(ipv4Value(base) / size);
+};
+
+test('IPv4 range membership follows independent network arithmetic; proxy-addr rejects prefix zero', () => {
+  fc.assert(fc.property(ip, ip, fc.integer({ min: 0, max: 32 }), (address, base, prefix) => {
+    const range = `${base}/${prefix}`;
+    const expected = prefix !== 0 && inNetwork(address, base, prefix);
+    assert.equal(inRange(address, range), expected);
+    assert.equal(compileTrust([range])(address, 0), expected);
+    // Matching the base forces the positive direction even for rare /32 matches.
+    assert.equal(inRange(base, range), prefix !== 0);
+    assert.equal(compileTrust([range])(base, 5), prefix !== 0);
+  }), params(300));
+});
+
+test('malformed IPv4 ranges never trust an address, including through compileTrust', () => {
+  const rejects = (base: string, prefix: string) => {
+    const range = `${base}/${prefix}`;
+    assert.equal(inRange(base, range), false, range);
+    assert.equal(compileTrust([range])(base, 0), false, range);
+    assert.deepEqual(readAddresses(base, '203.0.113.7', [range]), [
+      { addr: base, index: 0, verdict: 'answer' },
+      { addr: '203.0.113.7', index: 1, verdict: 'unread' },
+    ]);
+  };
+  // Enumerate finite lexical classes; random sampling is for octets/fractions.
+  for (const prefix of ['', ' ', '8e0', '+8', '-1', 'Infinity', 'NaN', '33', '8/garbage', '8/', '8junk']) rejects('10.1.2.3', prefix);
+  fc.assert(fc.property(ip, fc.integer({ min: 0, max: 31 }), (base, n) => rejects(base, `${n}.5`)), params(200));
+  for (const range of ['256.0.0.1/8', '10.0.0/8', '10.0.0.1//8']) {
+    assert.equal(inRange('10.0.0.1', range), false, range);
+    assert.equal(compileTrust([range])('10.0.0.1', 0), false, range);
+  }
+});
+
 test('a hop count n answers the address at position n, or the last one', () => {
   fc.assert(
     fc.property(ip, fc.option(header, { nil: null }), fc.integer({ min: 0, max: 8 }), (socket, xs, n) => {
-      const addrs = forwarded(socket, xs ? xs.join(', ') : null);
-      assert.equal(reqIp(socket, xs ? xs.join(', ') : null, n), addrs[Math.min(n, addrs.length - 1)]);
+      const addrs = [socket, ...(xs ?? []).toReversed()];
+      const last = Math.min(n, addrs.length - 1);
+      assert.equal(reqIp(socket, xs ? xs.join(', ') : null, n), addrs[last]);
+      assert.deepEqual(reqIps(socket, xs ? xs.join(', ') : null, n), addrs.slice(1, last + 1).reverse());
     }),
     params(),
   );
@@ -149,15 +194,21 @@ test('true answers the left-most entry (guide l.26), or the socket with no heade
 
 test('an address list answers the nearest untrusted address (guide l.53)', () => {
   const ranges = ['10.0.0.0/8', '192.0.2.0/24'];
-  const trusted = (a: string) => ranges.some((r) => inRange(a, r));
+  const trusted = (a: string) => inNetwork(a, '10.0.0.0', 8) || inNetwork(a, '192.0.2.0', 24);
+  // Exercise trusted runs as well as the usually-untrusted arbitrary socket.
+  const mixedIp = fc.oneof(ip, fc.tuple(octet, octet, octet).map((p) => `10.${p.join('.')}`), octet.map((p) => `192.0.2.${p}`));
   fc.assert(
-    fc.property(ip, fc.option(header, { nil: null }), (socket, xs) => {
+    fc.property(mixedIp, fc.option(fc.array(mixedIp, { minLength: 1, maxLength: 6 }), { nil: null }), (socket, xs) => {
       const xff = xs ? xs.join(', ') : null;
-      const addrs = forwarded(socket, xff);
-      const nearest = addrs.find((a) => !trusted(a)) ?? addrs.at(-1);
-      assert.equal(reqIp(socket, xff, ranges), nearest);
-      const read = readAddresses(socket, xff, ranges);
-      assert.equal(read.filter((r) => r.verdict === 'answer').length, 1);
+      const addrs = [socket, ...(xs ?? []).toReversed()];
+      const firstUntrusted = addrs.slice(0, -1).findIndex((a) => !trusted(a));
+      const last = firstUntrusted < 0 ? addrs.length - 1 : firstUntrusted;
+      assert.equal(reqIp(socket, xff, ranges), addrs[last]);
+      assert.deepEqual(reqIps(socket, xff, ranges), addrs.slice(1, last + 1).reverse());
+      assert.deepEqual(readAddresses(socket, xff, ranges), addrs.map((addr, index) => ({
+        addr, index, verdict: index < last ? 'trusted' : index === last ? 'answer' : 'unread',
+      })));
+      for (const address of addrs) assert.equal(compileTrust(ranges)(address, 0), trusted(address));
     }),
     params(),
   );

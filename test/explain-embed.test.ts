@@ -18,8 +18,7 @@ import { pictureHtml, pictureSummary, stepWords } from '../explain/trace.ts';
 import { NARROW_PX, READ_PX, closeUps, labelsToRead, stageScale, stepLayouts, toView, viewBox } from '../app/embed-closeup.ts';
 import type { StepLayout } from '../app/embed-closeup.ts';
 import { labelOf } from '../explain/diagrams.ts';
-import { zoomOfView } from '../app/embed-zoom.ts';
-import { cardRow, restingBox, wordsOutsideCards } from './lib/scenes.ts';
+import { labelsSaying, restingBox, wordsOutsideCards } from './lib/scenes.ts';
 import type { Box } from '../src/index.ts';
 
 const enabled = !!process.env.EXPLAIN_BROWSER,
@@ -227,13 +226,29 @@ test('stepping moves nothing below the caption: Next, the steps list and the tra
     for (const scene of ['exgit', 'mr-cache', 'send-sync']) {
       const page = await browser.newPage({ viewport: { width, height } });
       try {
+        await page.addInitScript(() => {
+          (window as unknown as { __layoutSettles: number }).__layoutSettles = 0;
+          document.addEventListener('rayner:step', (event) => {
+            const w = window as unknown as { __layoutSettles: number; __layoutStep: string };
+            w.__layoutSettles++;
+            w.__layoutStep = (event as CustomEvent<{ step: string }>).detail.step;
+          });
+        });
         await page.goto(`${embed}/${scene}.html`);
         await page.waitForSelector('[data-ready=true]');
         const places = new Set<string>();
         const n = await page.locator('.steps button').count();
         for (let i = 0; i < n; i++) {
+          const before = await page.evaluate(() => (window as unknown as { __layoutSettles: number }).__layoutSettles);
+          const step = await page.locator('.steps button').nth(i).getAttribute('data-step');
+          assert.ok(step, 'the clicked step button identifies its target');
           await page.locator('.steps button').nth(i).evaluate((b: HTMLElement) => b.click());
-          await page.waitForFunction((i) => document.querySelectorAll('.steps button')[i]?.getAttribute('aria-current') === 'step', i);
+          await page.waitForFunction(({ before, step, i }) => {
+            const w = window as unknown as { __layoutSettles: number; __layoutStep: string };
+            return w.__layoutSettles > before && w.__layoutStep === step &&
+              document.querySelectorAll('.steps button')[i]?.getAttribute('aria-current') === 'step';
+          }, { before, step, i });
+          await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
           places.add(
             await page.evaluate(() =>
               ['.controls', '.steps', '.transcript'].map((s) => (document.querySelector(s)!.getBoundingClientRect().top + scrollY).toFixed(1)).join(' '),
@@ -675,7 +690,13 @@ const paintedView = (page: Page | Frame): Promise<Painted> =>
 /** The reader's zoom painted over the author's frame; null when the stage shows the author's frame (Fit). */
 function zoomOf(p: Painted | null) {
   if (!p || p.view === p.camera) return null;
-  return zoomOfView(p.camera, p.view, p.w, p.h);
+  // Read the world interval under the stage independently of the painter.
+  const [ax, ay, aw, ah] = p.camera.trim().split(/[\s,]+/).map(Number);
+  const [left, top, width] = p.view.trim().split(/[\s,]+/).map(Number);
+  const pixels = Math.min(p.w / aw!, p.h / ah!);
+  const k = p.w / width! / pixels;
+  return { k, x: -((left! - ax!) * pixels + (p.w - aw! * pixels) / 2) * k,
+    y: -((top! - ay!) * pixels + (p.h - ah! * pixels) / 2) * k };
 }
 /** The zoom painted once any glide (220 ms) has landed: two reads a frame apart agree. */
 async function settledZoom(page: Page | Frame) {
@@ -1178,14 +1199,16 @@ async function counted(context: import('playwright-core').BrowserContext, url: s
 }
 /** Quiet: nothing loading, no animation playing, and no step settled for `ms`. */
 async function quiet(page: Page, ms = 300) {
+  const deadline = Date.now() + 30_000;
   for (;;) {
+    assert.ok(Date.now() < deadline, `reader did not become quiet within 30 seconds: ${page.url()}`);
     const n = await page.evaluate(() => (window as unknown as { __settles: number }).__settles);
     await page.waitForFunction(
       () =>
         !document.getElementById('content')!.classList.contains('loading') &&
         !!document.querySelector('button[aria-label="Replay step"]'),
       undefined,
-      { timeout: 20_000 },
+      { timeout: Math.max(1, deadline - Date.now()) },
     );
     await page.waitForTimeout(ms);
     if ((await page.evaluate(() => (window as unknown as { __settles: number }).__settles)) === n) return;
@@ -1263,7 +1286,7 @@ test(
 );
 
 // Issue #21: at 390 × 844, PKCE's `authorize` caption says the verifier stays with the client
-// "as the card's last row shows", and the first step's caption describes deriving the
+// and is not sent, as the note under the request says, and the first step's caption describes deriving the
 // challenge; both were close-ups the reader had to hunt for (7th of 7, 4th of 6). Next view
 // now goes first to what the step emphasised, so one press, by touch or by keyboard, shows each.
 test('phone: one press of Next view shows what PKCE\'s captions point at, emphasised close-ups first', options, async () => {
@@ -1272,7 +1295,7 @@ test('phone: one press of Next view shows what PKCE\'s captions point at, emphas
     layouts = await stepLayouts(v.Scene);
   const evidence: Record<string, Box> = {
     secret: await restingBox(v.Scene, 'secret', (scene) => wordsOutsideCards(scene, 'code_verifier', 'SHA-256')),
-    authorize: await restingBox(v.Scene, 'authorize', (scene) => cardRow(scene, 'code_verifier', 'not sent')),
+    authorize: await restingBox(v.Scene, 'authorize', (scene) => labelsSaying(scene, 'verifier not sent')),
   };
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, reducedMotion: 'no-preference' });
   try {
@@ -1298,7 +1321,9 @@ test('phone: one press of Next view shows what PKCE\'s captions point at, emphas
       const tour = closeUps(layouts.get(step), w, h);
       assert.ok(near(await settledZoom(page), tour[0]!), `${step} opens on its first close-up`);
       assert.equal(await count.innerText(), `View 1 of ${tour.length}`);
-      // One press, a tap on the first step and the keyboard on the second, shows what the caption points at.
+      // What the caption points at is in the opening close-up, or one press away.
+      const atOnce = await shows(evidence[step]!);
+      // One press, a tap on the first step and the keyboard on the second, moves to the next close-up.
       if (i === 0) await nextView.tap();
       else {
         await nextView.focus();
@@ -1307,7 +1332,7 @@ test('phone: one press of Next view shows what PKCE\'s captions point at, emphas
       await until(async () => near(zoomOf(await paintedView(page)), tour[1]!), `${step}: view 2`);
       assert.equal(await count.innerText(), `View 2 of ${tour.length}`);
       assert.equal(new URL(page.url()).searchParams.get('step'), step, 'Next view keeps the step');
-      assert.ok(await shows(evidence[step]!), `${step}: view 2 shows ${JSON.stringify(evidence[step])}`);
+      assert.ok(atOnce || (await shows(evidence[step]!)), `${step}: view 1 or 2 shows ${JSON.stringify(evidence[step])}`);
     }
     assert.deepEqual(errors, []);
   } finally {
@@ -1786,7 +1811,8 @@ test('PKCE mobile views expose the derivation and the unsent verifier without ad
         const found: number[][] = [];
         const walk = (m: import('../src/index.ts').Mobject) => {
           const label = labelOf(m);
-          if (label && (step.name === 'secret' ? ['code_verifier', 'code_challenge'].includes(label.text) : label.text === 'not sent')) {
+          // The unsent verifier is said in the authorize message's note ("verifier not sent").
+          if (label && (step.name === 'secret' ? ['code_verifier', 'code_challenge'].includes(label.text) : label.text.includes('not sent'))) {
             const box = m.box();
             if (box) found.push(toView(box, scene.frame.box()!));
           }
@@ -1819,8 +1845,11 @@ test('PKCE mobile views expose the derivation and the unsent verifier without ad
           assert.ok(zoom, 'the view is zoomed');
           const visible = viewBox(zoom, size.w, size.h);
           for (const [j, box] of evidence.entries()) {
-            const x = (box[0]! + box[2]!) / 2, y = (box[1]! + box[3]!) / 2;
-            if (x >= visible[0] && x <= visible[2] && y >= visible[1] && y <= visible[3]) seen.add(j);
+            // Include the full referenced label, not only its centre. The viewBox
+            // serializer rounds by 0.001 SVG units (0.000001 scene units).
+            const slack = 1e-6;
+            if (box[0]! >= visible[0] - slack && box[2]! <= visible[2] + slack &&
+                box[1]! >= visible[1] - slack && box[3]! <= visible[3] + slack) seen.add(j);
           }
           const control = page.getByRole('button', { name: 'Next view', exact: true });
           const rect = await control.boundingBox();

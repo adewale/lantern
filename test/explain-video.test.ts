@@ -26,15 +26,20 @@ test('WebVTT names the language and escapes markup in cues', () => {
 // A blank line inside a caption used to end the cue, and players dropped the rest.
 test('a caption with a blank line or "-->" stays one WebVTT cue', () => {
   fc.assert(
-    fc.property(fc.array(fc.string({ unit: fc.constantFrom('a', ' ', '\n', '-', '>', 'é'), minLength: 1, maxLength: 12 }), { minLength: 1, maxLength: 4 }), (caps) => {
+    fc.property(fc.array(fc.string({ unit: fc.constantFrom('a', ' ', '\n', '-', '>', 'é', '&', '<', '中', '😀'), minLength: 1, maxLength: 12 }), { minLength: 1, maxLength: 4 }), (caps) => {
       const steps = caps.map((caption, i) => ({ step: `s${i}`, t0: i, t1: i + 1, frame0: i * 30, meta: { caption }, before: {} }));
       const vtt = captionsVtt({ fps: 30, duration: caps.length, frames: caps.length * 30, steps });
       const blocks = vtt.trim().split(/\n\s*\n/).slice(1); // after the WEBVTT header
       // A caption of only spaces and newlines says nothing, so it gets no cue.
       assert.equal(blocks.length, caps.filter((c) => c.trim()).length, vtt);
       for (const b of blocks) assert.match(b, /^\d+\n\d\d:\d\d:\d\d\.\d{3} --> \d\d:\d\d:\d\d\.\d{3}(\n|$)/);
+      const decoded = blocks.map((block) => block.split('\n').slice(2).join('\n')
+        .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'));
+      // Blank separator lines collapse, while each nonblank line and its text survive.
+      const expected = caps.map((caption) => caption.split('\n').filter((line) => line.trim()).join('\n').trim()).filter(Boolean);
+      assert.deepEqual(decoded, expected, 'every cue retains its caption payload');
     }),
-    params(300),
+    { ...params(300), examples: [[[' ', 'a']], [['a', ' ']], [[' ', '\n']]] },
   );
 });
 test(
