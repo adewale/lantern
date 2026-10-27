@@ -184,8 +184,9 @@ Picture descriptions still use the existing English/French vocabulary.
 `TransformMatchingText` retains its existing pairing by the source character at
 a glyph's cluster start, including multiple glyphs at that start. Use `Transform`
 for whole-formula or ligature/conjunct changes where character pairing is not
-the intended motion. Maths has no character-to-glyph correspondence and uses
-a single source cluster. Replacement prose must be built into a case; numeric animations use the bounded exception described above.
+the intended motion. A formula's glyphs are not characters of its source, so
+they carry no cluster, and both matching transforms pair them by shape
+([Maths](REFERENCE.md#maths)). Replacement prose must be built into a case; numeric animations use the bounded exception described above.
 
 `Code.span`, `token` and `lineSpan` keep logical UTF-16 source ranges while their boxes cover the corresponding visual RTL cells, including complete combining clusters. For colour changes, select the entire source cluster; one glyph outline cannot be split into independently styled characters. Ordinary scenes and overlapping independent renders keep separate font leases; nested runs using the same lettering provider are supported. Awaiting a nested `Scene.run()` with a different provider (including an unlettered child) is unsupported: render those scenes independently before composing their output.
 
