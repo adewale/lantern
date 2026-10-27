@@ -97,7 +97,7 @@ export function letteringReport(l: Lettering) {
 
 /**
  * Work out an explainer's lettering. `draw` runs every case once and shapes
- * whatever else is drawn as outlines (the video footer's titles and captions),
+ * other build-time text drawn as outlines,
  * with the whole source faces in place; what each face drew, in the requested
  * scripts, is what its cut holds. Letters outside the request are left out, so
  * they still fail the build. The cuts are pinned in `<base>.lettering.json`.

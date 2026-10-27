@@ -1,12 +1,12 @@
 # Releasing the npm package
 
-This is the maintainer's npm release procedure. [Publishing](PUBLISHING.md) covers an author's HTML pages and videos.
+This is the maintainer's npm release procedure. [Publishing](PUBLISHING.md) covers an author's HTML pages.
 
 The package is not published yet. The `rayner` name returned a registry 404 during preparation; that does not reserve it or prove ownership. Do not announce an installable version until the registry confirms it.
 
 ## Validate the archive
 
-Use Node 26 and a clean checkout of the release commit. Install the optional Chromium, Python and font dependencies listed in the CI workflow and [lettering guide](LETTERING.md), then run:
+Use Node 24 and a clean checkout of the release commit. Install the optional Chromium, Python and font dependencies listed in the CI workflow and [lettering guide](LETTERING.md), then run:
 
 ```sh
 npm ci
@@ -22,7 +22,11 @@ npm run demos:review
 
 The command retains `out/release/rayner-<version>.tgz` and `manifest.json`, which records the archive's SHA-512 integrity, source commit, dirty-tree status, file list and gates run. A dirty checkout can be tested locally, but cannot be published by the workflow. Review the file list and licence notices. Do not repack after testing.
 
-`pack:smoke -- --archive <path>` can retest an existing archive without packing again. Consumer installs compile no package source and download no fonts; capture dependencies stay optional.
+`pack:smoke -- --archive <path>` can retest an existing archive without packing again. Consumer installs compile no package source and download no fonts; capture and PNG dependencies are included.
+
+The compatibility job checks Node 24 on macOS as well as Ubuntu, including an installed starter preview with the normal authoring dependencies. A configured matrix is not evidence of a successful Mac run: require both platforms to pass before tagging.
+
+Video export is deferred to 0.3 in [PR #36](https://github.com/adewale/rayner/pull/36). It is absent from the 0.1 CLI and archive.
 
 ## Enable publishing
 
@@ -33,7 +37,7 @@ Before using `.github/workflows/publish.yml`:
 3. In npm's package settings, add GitHub Actions as a trusted publisher for owner `adewale`, repository `rayner`, workflow `publish.yml`, environment `npm-publish`. Permit direct `npm publish` for this workflow. Do not create a long-lived publish token.
 4. Create the GitHub environment `npm-publish` with required reviewers and release-tag deployment restrictions before enabling the publishing workflow. Naming an environment in YAML does not configure those protections.
 
-Trusted publishing requires npm 11.5.1+; the workflow checks that floor and uses Node 26. Its publishing job alone gets `id-token: write`. The normal CI jobs have read-only repository access. The archive gate also runs on Node 26.0.0 to check the declared minimum; the full browser and capture gates run on the current Node 26 release. npm automatically generates provenance for trusted publishing; `repository.url` must match this public repository.
+Trusted publishing requires npm 11.5.1+; the workflow checks that floor and uses Node 24. Its publishing job alone gets `id-token: write`. The normal CI jobs have read-only repository access. The archive gate also runs on Node 24.0.0 to check the declared minimum; the full browser and capture gates run on the current Node 24 release. npm automatically generates provenance for trusted publishing; `repository.url` must match this public repository.
 
 ## Publish a tested version
 

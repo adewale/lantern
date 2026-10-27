@@ -22,7 +22,7 @@ export interface StageOptions {
   palette?: Palette;
   /**
    * What the heading shows. By default it follows each step's `title`, so the
-   * stage itself (poster, still, stage-only video) says which idea is on screen.
+   * stage itself (poster, still) says which idea is on screen.
    * A string fixes it; `false` leaves the whole frame to the scene.
    */
   heading?: 'step' | string | false;

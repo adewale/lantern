@@ -11,7 +11,7 @@ await build({
   splitting: true,
   format: 'esm',
   platform: 'node',
-  target: 'node26',
+  target: 'node24',
   packages: 'external',
   logLevel: 'silent',
   plugins: [

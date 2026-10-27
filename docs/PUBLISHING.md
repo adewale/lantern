@@ -1,6 +1,6 @@
 # Publishing
 
-How to put a built page on a website, and how to export the same scene as a video. The contracts behind both (URL parameters, the resize message, header and video formats) are in [the reference](REFERENCE.md).
+How to put a built page on a website. The contracts (URL parameters, the resize message and headers) are in [the reference](REFERENCE.md).
 
 ## Publish a page
 
@@ -20,7 +20,7 @@ How to put a built page on a website, and how to export the same scene as a vide
    - The page that embeds it needs the artifact's origin in its own `frame-src`, and the loader's in `script-src` if it uses the loader.
    - The recipe's `Cache-Control` revalidates on every load. Long-lived caching is safe only for a URL that changes when the content does, such as one with the receipt's `artifactHash` in it.
 
-   For the demo collection, `npm run demos:build && npm run site:export -- <site-root>` copies every page, poster, video and the loader into a site and writes the matching `_headers` block to `out/site-headers.txt`. For agents it also writes each explainer's [`describeExplainer`](REFERENCE.md#describe) object as `<id>.json` beside its page, and `llms.txt` at the site root listing every page and its JSON. `demos:build` writes that object as `out/explainers/<id>/describe.json`, and `site:export` copies it. Before it writes anything, `site:export` checks each explainer's `out/explainers/<id>/inputs.json`, where `demos:build` records the scene's code hash, the engine hash and a hash of the scene's folder. If any of them changed since the build, it fails and says to run `demos:build`. It does not notice a change to the player (`app/`) or the build tools, so run `demos:build` after those too.
+   For the demo collection, `npm run demos:build && npm run site:export -- <site-root>` copies every page, poster and the loader into a site and writes the matching `_headers` block to `out/site-headers.txt`. For agents it also writes each explainer's [`describeExplainer`](REFERENCE.md#describe) object as `<id>.json` beside its page, and `llms.txt` at the site root listing every page and its JSON. `demos:build` writes that object as `out/explainers/<id>/describe.json`, and `site:export` copies it. Before it writes anything, `site:export` checks each explainer's `out/explainers/<id>/inputs.json`, where `demos:build` records the scene's code hash, the engine hash and a hash of the scene's folder. If any of them changed since the build, it fails and says to run `demos:build`. It does not notice a change to the player (`app/`) or the build tools, so run `demos:build` after those too.
 
 4. Embed it with a plain iframe:
 
@@ -58,31 +58,3 @@ How to put a built page on a website, and how to export the same scene as a vide
    - The page opens at the step and case in its URL, Next plays, and the transcript opens.
    - With two embeds on one page, opening one transcript resizes only that iframe.
    - Record the `artifactHash` from the receipt beside the URL you published.
-
-## Export a video
-
-Video is optional; the page is the main output. A video of a scene has the same steps and captions as the page, with a chapter per step, subtitles and a transcript. It is silent.
-
-You need FFmpeg on `PATH` and `@resvg/resvg-js` (`npm i @resvg/resvg-js@^2.6.2`; a checkout's `npm ci` already has it). `check` and `build` need neither.
-
-```sh
-rayner render scene.ts --out cache.mp4 --footer                      # 1280 × 960, title and caption under the stage
-rayner render scene.ts --out cache-miss.mp4 --footer --case request=miss
-rayner render scene.ts --out cache.mp4 --footer --all                # one file per case
-rayner render scene.ts --out cache.webm --width 1920                 # stage only, VP9
-```
-
-Each step plays its motion under its title, then holds its resting picture under the caption for the caption's reading time, so shorter captions make a shorter video.
-
-Publish `cache.transcript.html` beside the video: it is the text alternative, with each step's title, line, caption and what its picture shows.
-
-`render` stops with an error, naming the step and case, when a footer title or caption needs more than four lines or has a character the fonts cannot draw, or when the picture changes during a caption hold. Shorten the caption, or finish every change before the step's last `play()` ends.
-
-Check a file before publishing it:
-
-```sh
-ffprobe -v error -show_streams -show_chapters -of json cache.mp4
-ffmpeg -v error -i cache.mp4 -f null -
-```
-
-Expect one H.264 video stream at the preset's size, one `mov_text` subtitle stream, a data stream that carries the chapters, no audio, one chapter per step, a frame count equal to `frames` in `cache.mp4.receipt.json`, and a decode with no errors. `npm run demos:render` runs these checks for the demo collection. Video bytes can differ between FFmpeg and resvg builds; the receipt records both versions.

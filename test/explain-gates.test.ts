@@ -2,7 +2,6 @@
 // collectProject (load, cases, named steps, drawable text) and checkProject
 // (every check on every case). Each scene breaks exactly one rule and must fail
 // with that gate's own message; the clean scene shows the same shape passes.
-// Render's own gates (footer fit, hold, footer glyphs) are in explain-video.test.ts.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';

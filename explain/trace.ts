@@ -65,7 +65,7 @@ export const htmlEscape = (value: unknown) =>
   );
 /**
  * A step's words: its title, the line under it and its caption. Every surface that shows a
- * step in words (the player, the page's transcript, the video's transcript) reads them here,
+ * step in words (the player and the page's transcript) reads them here,
  * so a word the stage draws is never missing from the text.
  */
 export function stepWords(s: { step: string; meta: Record<string, unknown> }): { title: string; line: string; caption: string } {

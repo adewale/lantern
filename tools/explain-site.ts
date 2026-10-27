@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Copy the built collection into a static site, with the response headers it needs.
 //   npm run demos:build && npm run site:export -- <site-root> [--path /projects/rayner] [--origin https://example.org]
-// Writes <site-root><path>/{<id>.html, <id>.png, <id>.mp4, <id>.vtt, loader.js}, each step's resting
+// Writes <site-root><path>/{<id>.html, <id>.png, loader.js}, each step's resting
 // picture as <id>/<step>.png, and the `_headers` block for those files to out/site-headers.txt (each
 // page's CSP pins its own inline script and style). With --origin (https), also a share page per
 // step, <id>/<step>.html, whose link preview is that step, and the same Open Graph and Twitter card
@@ -29,8 +29,7 @@ const origin = values.origin;
 if (origin && !/^https:\/\/[^/]+\/?$/.test(origin)) throw new Error(`--origin must be an https site origin like https://example.org, not ${origin}`);
 const path = values.path.replace(/\/$/, '');
 const target = join(resolve(root), path);
-const built = join(ROOT, 'out/explainers'),
-  videos = join(ROOT, 'out/videos');
+const built = join(ROOT, 'out/explainers');
 const exists = (file: string) => access(file).then(() => true, () => false);
 
 // Refuse an explainer whose scene, scene folder or engine changed since demos:build built it;
@@ -40,7 +39,7 @@ for (const { id } of EXPLAINERS) await checkBuilt(join(built, id), join(ROOT, 's
 await mkdir(target, { recursive: true });
 const blocks: string[] = [];
 let shared = 0;
-for (const { id, video } of EXPLAINERS) {
+for (const { id } of EXPLAINERS) {
   const page = join(built, id + '.html');
   if (!(await exists(page))) throw new Error(`Missing ${page}: run npm run demos:build first`);
   const share = JSON.parse(await readFile(join(built, id, 'steps.json'), 'utf8')) as ShareManifest;
@@ -54,7 +53,6 @@ for (const { id, video } of EXPLAINERS) {
     if (origin) await writeFile(join(target, id, s.step + '.html'), sharePage(share, s, origin, path));
     shared++;
   }
-  for (const ext of video === false ? [] : ['.mp4', '.vtt']) if (await exists(join(videos, id + ext))) await copyFile(join(videos, id + ext), join(target, id + ext));
   const headers = JSON.parse(await readFile(join(built, id + '.html.headers.json'), 'utf8')) as Record<string, string>;
   const lines = Object.entries(headers).map(([k, v]) => `  ${k}: ${v}`).join('\n');
   // The host serves /x.html at /x, so the rule covers both spellings.

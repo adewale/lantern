@@ -19,7 +19,6 @@ import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
 import { loadFonts, shaperFor, SnapshotSink, renderAt } from '../src/index.ts';
 import { useLettering, takeMissingGlyphs } from '../src/lettering.ts';
 import { takeMissingGlyphs as takeEmbeddedMissing } from '../src/index.ts';
-import { footerLines } from '../tools/lib/explain-video.ts';
 import { loadFont } from '../vendor/glyph.js';
 import { restingTime } from '../explain/trace.ts';
 
@@ -146,13 +145,14 @@ test('the legacy subset request parser rejects unsupported fields and scripts', 
   assert.deepEqual(letteringRequest({ meta: { lettering: { scripts: ['Cyrl', 'Latn'] } } }), { scripts: ['Cyrl', 'Latn'] });
 });
 
-// The fixture asks for Greek and draws it in Inter (a card's title, free text, the captions the
-// video footer draws) and in JetBrains Mono (a card's values and code). JetBrains Mono has no ῶ,
+// The fixture asks for Greek and draws it in Inter (a card's title and free text) and in
+// JetBrains Mono (a card's values and code). JetBrains Mono has no ῶ,
 // so code's ῶ comes from the Inter cut: the mono chain tries mono's cut, then sans's.
 const greek = (s: string) => [...new Set([...s].filter((c) => SCRIPTS.Grek.some(([a, b]) => c.codePointAt(0)! >= a && c.codePointAt(0)! <= b)))];
 const cps = (chars: string[]) => chars.map((c) => c.codePointAt(0)!).sort((a, b) => a - b);
 const EXPECTED = {
-  sans: cps(greek('Αλφάβητο Ελληνικά λόγος φῶς')),
+  // Sans draws the title/free text and the mono face’s missing omega-with-circumflex.
+  sans: cps(greek('Αλφάβητο Ελληνικά ῶ')),
   mono: cps(greek('λόγος φς αβγ')),
 };
 
@@ -230,17 +230,9 @@ test('a lettered explainer passes every check, its bare runtime included, and re
   assert.equal('lettering' in plain, false);
 });
 
-test('the video footer of a lettered explainer draws its Greek and still fails on a letter nobody asked for', async () => {
+test('a requested face records only the glyphs absent from every available face', async () => {
   const project = await collectProject(FIXTURE, { write: false });
-  const v = defaultVariant(project);
-  const captioned = (caption: string) => ({ ...v.trace, steps: v.trace.steps.map((s) => ({ ...s, meta: { ...s.meta, caption } })) });
-  // Its own titles and captions: the cuts hold their letters
-  assert.equal((await footerLines(v.trace, v.values))[0]![1]!.join(' '), 'The word λόγος means word.');
-  // A Greek letter the explainer never drew is not in the cut, so it fails like any other. The
-  // footer reads the engine's record, which names every letter of the string the embedded faces lack.
-  await assert.rejects(footerLines(captioned('λέξη'), v.values), /cannot draw: λ έ ξ η/);
-  // tools/lib/explain-video.ts reads the engine's record, which a lettered string with a missing letter reaches too
-  await assert.rejects(footerLines(captioned('λόγος жук'), v.values), /cannot draw: ж у к/);
+  await useProjectLettering(project);
   takeMissingGlyphs();
   shaperFor('sans')('λж', 1);
   assert.deepEqual([...takeEmbeddedMissing()], [['λж', 'λж']], 'the engine names all the embedded faces lack');

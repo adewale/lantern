@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { existsSync } from 'node:fs';
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import assert from 'node:assert/strict';
 import { ROOT } from './lib/explain-project.ts';
@@ -28,8 +28,8 @@ try {
   });
   const cli = join(folder, 'node_modules/rayner/dist/tools/explain.js');
   const bin = join(folder, 'node_modules/.bin/rayner');
-  const { version, peerDependencies: peers } = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8'));
-  assert.ok((await run(bin, ['--help'], { cwd: folder })).stdout.startsWith(`Rayner ${version} (Node 26+)`));
+  const { version, dependencies: peers } = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8'));
+  assert.ok((await run(bin, ['--help'], { cwd: folder })).stdout.startsWith(`Rayner ${version} (Node 24+)`));
   assert.equal((await run(bin, ['--version'], { cwd: folder })).stdout.trim(), version);
   const installed = join(folder, 'node_modules/rayner');
   assert.equal(JSON.parse(await readFile(join(installed, 'package.json'), 'utf8')).version, version);
@@ -40,22 +40,74 @@ try {
   await run(join(folder, 'node_modules/.bin/tsc'), ['-p', 'tsconfig.json'], { cwd: folder });
 
   await run(process.execPath, [cli, 'init', 'first'], { cwd: folder });
-  // A default install leaves the optional peers out; the template's diagram then names what to install.
-  for (const name of Object.keys(peers)) assert.ok(!existsSync(join(folder, 'node_modules', name)), `${name} installed by default`);
-  const refused: string = await run(bin, ['snapshots', 'first'], { cwd: folder }).then(() => '', (e) => e.stderr);
-  const install = /Install: npm (i .+)/.exec(refused)?.[1];
-  assert.ok(install, refused);
+  // Diagram capture and PNG tools ship in the default authoring install.
+  assert.ok(existsSync(join(folder, 'node_modules/@resvg/resvg-js')));
   if (process.env.EXPLAIN_BROWSER) {
-    await run('npm', [...install.split(' '), '--no-audit', '--no-fund'], { cwd: folder, maxBuffer: 4 * 1024 * 1024 });
     await run(bin, ['snapshots', 'first', '--refresh'], { cwd: folder });
     const cache = JSON.parse(await readFile(join(folder, 'first/scene.snapshots/index.json'), 'utf8'));
     assert.equal(Object.keys(cache.diagrams).length, 1);
+    await run(bin, ['check', 'first'], { cwd: folder });
+    await run(bin, ['build', 'first', '--out', 'public/first.html'], { cwd: folder });
+    // The documented starter must actually serve with the normal authoring dependencies.
+    const preview = spawn(bin, ['preview', 'first', '--watch', '--port', '0'], { cwd: folder, env: process.env });
+    let browser: Awaited<ReturnType<typeof import('./lib/browser.ts').launch>> | undefined;
+    let log = '';
+    try {
+      const url = await new Promise<string>((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error(`Installed starter preview timed out: ${log}`)), 30_000);
+        const finish = (error?: Error, url?: string) => {
+          clearTimeout(timeout);
+          error ? reject(error) : resolve(url!);
+        };
+        preview.on('error', (error) => finish(error));
+        preview.on('exit', (code) => finish(new Error(`Installed starter preview exited ${code}: ${log}`)));
+        preview.stderr.on('data', (data) => { log += String(data); });
+        preview.stdout.on('data', (data) => {
+          log += String(data);
+          const match = /Preview (http:\/\/127\.0\.0\.1:\d+)\//.exec(log);
+          if (match) finish(undefined, match[1]);
+        });
+      });
+      browser = await (await import('./lib/browser.ts')).launch();
+      const page = await browser.newPage();
+      const errors: string[] = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      await page.goto(url);
+      await page.waitForSelector('[data-ready=true]');
+      await page.getByRole('button', { name: 'Next step', exact: true }).click();
+      await page.waitForFunction(() => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === 'request');
+      assert.match(await page.locator('.caption').innerText(), /without reading the database/);
+      await page.goto(url + '/my-explainer.html?request=miss&step=request');
+      await page.waitForSelector('[data-ready=true]');
+      assert.match(await page.locator('.caption').innerText(), /reads the database once/);
+      const source = join(folder, 'first/scene.ts');
+      await writeFile(source, (await readFile(source, 'utf8')).replace('reads the database once and then returns.', 'reads the database once, then replies.'));
+      // Wait for the watch rebuild before reload; this also covers macOS fs.watch.
+      const deadline = Date.now() + 30_000;
+      while (!log.includes('Rebuilt')) {
+        assert.ok(Date.now() < deadline, `Installed watch rebuild timed out: ${log}`);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      await page.reload();
+      await page.waitForSelector('[data-ready=true]');
+      assert.match(await page.locator('.caption').innerText(), /then replies/);
+      assert.deepEqual(errors, []);
+    } finally {
+      try { await browser?.close(); }
+      finally {
+        if (preview.exitCode === null && preview.signalCode === null) {
+          const stopped = new Promise<void>((resolve) => preview.once('exit', () => resolve()));
+          preview.kill('SIGTERM');
+          await stopped;
+        }
+      }
+    }
   }
-  // Use native objects only, so this distribution smoke needs no browser or optional renderer.
+  // Use native objects only, so this distribution smoke needs no browser.
   const native = `import{Scene,Text,FadeIn}from'rayner';import{stage,settingsOf}from'rayner/explain';export default class Outside extends Scene{static meta={id:'outside',title:'An outside author'};static settings=[{id:'case',label:'Case',default:'a',options:[{value:'a',label:'A'},{value:'b',label:'B'}]}];async construct(){const s=stage(this);await this.step('one',{title:'First step',caption:'A native scene outside the checkout.'});await this.play(new FadeIn(new Text(settingsOf(this).case,{color:s.palette.ink})));}}`;
   await writeFile(join(folder, 'first/scene.ts'), native);
   await run(process.execPath, [cli, 'check', 'first'], { cwd: folder });
-  // `see` reads a step from the terminal with no browser or optional renderer installed.
+  // `see` reads a step from the terminal with no browser installed.
   const seen = await run(process.execPath, [cli, 'see', 'first', 'one', '--case', 'case=b'], { cwd: folder });
   assert.match(seen.stdout, /^outside · step 1 of 1: one · Case: B$/m);
   await run(process.execPath, [cli, 'build', 'first', '--out', 'public/outside.html'], { cwd: folder });
@@ -153,16 +205,10 @@ try {
     walked,
     process.env.EXPLAIN_BROWSER ? /^Follow a request: Cache miss · request: .+\n  changed: .*\breads\b/m : /^Case: B · one: .+\n  changed: nothing$/m,
   );
-  if (process.env.EXPLAIN_VIDEO) {
-    await run('npm', ['i', `@resvg/resvg-js@${peers['@resvg/resvg-js']}`, '--no-audit', '--no-fund'], { cwd: folder });
-    await run(bin, ['render', 'first', '--out', 'public/outside.mp4', '--footer', '--fps', '4'], {
-      cwd: folder,
-    });
-  }
+
   console.log(
-    'Package gate passed: tested archive install without optional peers, installed TypeScript consumer, executable JS bin, install hint, external native author, settings, checks, see, build, describeExplainer and its REFERENCE example, notices, lettering on request, one compiled engine' +
+    'Package gate passed: tested archive install with diagram and PNG authoring, installed TypeScript consumer, executable JS bin, external native author, settings, checks, see, build, describeExplainer and its REFERENCE example, notices, lettering on request, one compiled engine' +
       (process.env.EXPLAIN_LETTERING === '1' ? ', installed Arabic and maths capture' : '') +
-      (process.env.EXPLAIN_VIDEO ? ', installed video export' : '') +
       (process.env.EXPLAIN_BROWSER ? ', installed diagram capture' : '') +
       '.',
   );

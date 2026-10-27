@@ -75,7 +75,7 @@ export interface RenderOptions {
   relative?: boolean;
   /**
    * Leave out what the camera cannot show. Off by default: sinks that patch a DOM
-   * keep one element per mobject. The video exporter turns it on, because resvg
+   * keep one element per mobject. PNG output turns it on, because resvg
    * 2.6 aborts on an element with `opacity` whose visible box is empty, and with a
    * camera a fading mobject can sit entirely outside the view. A pure function of
    * the state, like everything else here: seeks are unaffected.

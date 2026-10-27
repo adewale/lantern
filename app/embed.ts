@@ -423,7 +423,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       return {
         index,
         start: step.t0,
-        // Stop when the picture stops: the caption-reading hold is for video; here the reader sets the pace.
+        // Stop when the picture stops: the reader sets the pace instead of waiting through the caption-reading hold.
         end: step.hold ?? step.t1 ?? at.trace.duration,
         rest: restingTime(step, at.trace.fps),
         container,

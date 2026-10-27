@@ -280,13 +280,13 @@ for (const entry of EXPLAINERS)
           break;
         }
         case 'fork': {
-          // The timeline drawn in 'video' is the trace's own timing of the 'fork' step,
+          // The page timeline drawn in 'timing' is the trace's own timing of the 'fork' step,
           // and that step lasts its caption's reading time at Scene.captionWpm, to the frame.
           const fork = trace.steps.find((s) => s.step === 'fork')!;
           const words = String(fork.meta.caption).trim().split(/\s+/).length;
           assert.ok(fork.hold != null && fork.t1 != null, 'the fork step holds for its caption');
-          assertStepState(trace, 'video', {
-            video: { motion: +(fork.hold - fork.t0).toFixed(2), held: +(fork.t1 - fork.hold).toFixed(2), words },
+          assertStepState(trace, 'timing', {
+            timing: { motion: +(fork.hold - fork.t0).toFixed(2), held: +(fork.t1 - fork.hold).toFixed(2), words },
           });
           assert.ok(Math.abs(fork.t1 - fork.t0 - (words / Scene.captionWpm) * 60) <= 1 / trace.fps + 1e-9);
           break;

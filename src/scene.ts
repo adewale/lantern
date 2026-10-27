@@ -32,7 +32,7 @@ export interface Step {
   frame0: number;
   t1: number | null;
   frame1: number | null;
-  /** When the caption-reading hold began, if the step needed one. Players stop here; video plays on to t1. */
+  /** When the caption-reading hold began, if the step needed one. Players stop here; timed playback continues to t1. */
   hold?: number;
   meta: StepMeta;
   /**

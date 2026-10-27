@@ -1,6 +1,6 @@
 # Testing Rayner
 
-Run `npm run check` and `npm test` on Node 26 or later. `npm run test:full` increases generated-case counts. `npm run test:embeds` enables the real Chromium reader tests; set `CHROMIUM_EXECUTABLE_PATH` when Chromium is installed outside Playwright's cache. Lettering capture tests additionally need the pinned fonts and Python requirements described in [LETTERING.md](LETTERING.md). Video checks require FFmpeg and `EXPLAIN_VIDEO=1`. A skipped optional check supplies no pass evidence.
+Run `npm run check` and `npm test` on Node 24 or later. `npm run test:full` increases generated-case counts. `npm run test:embeds` enables the real Chromium reader tests; set `CHROMIUM_EXECUTABLE_PATH` when Chromium is installed outside Playwright's cache. Lettering capture tests additionally need the pinned fonts and Python requirements described in [LETTERING.md](LETTERING.md). A skipped optional check supplies no pass evidence.
 
 The suite uses fast-check for generated inputs and shrinking. `test/lib/pbt.ts` owns the seed and run-count policy. Generated tests complement the checked-in upstream vectors, Manim/raster references, browser integration and installed-package checks. These boundaries catch different failures; agreement between two calls to the same implementation is a weak substitute for an independent expected value.
 

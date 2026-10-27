@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { sharePage, publishedPage, checkCards, clip, shareable, pngSize, CARD, CARD_TAGS } from '../tools/lib/explain-share.ts';
 import type { ShareManifest } from '../tools/lib/explain-share.ts';
 import { cardPng } from '../tools/lib/explain-shots.ts';
-import { rasterize } from '../tools/lib/explain-video.ts';
+import { rasterize } from '../tools/lib/explain-raster.ts';
 import { Scene, Text, FadeIn } from '../src/index.ts';
 import { stage } from '../explain/index.ts';
 

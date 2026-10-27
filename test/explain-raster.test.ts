@@ -1,4 +1,4 @@
-// PNG output (rayner shots and preview's contact sheet, the gallery tiles, the film)
+// PNG output (rayner shots, contact sheets and gallery tiles)
 // rasterises with resvg 2.6.2, which aborts the whole process (a Rust panic, exit 134)
 // on a translucent element the camera has left outside its view. Every path culls what
 // the camera cannot show first. The shots path runs in a child process: an abort would
@@ -12,7 +12,7 @@ import { spawnSync } from 'node:child_process';
 import { Scene, NullSink, Rectangle, Text, toSvgString, loadFonts } from '../src/index.ts';
 import type { Box } from '../src/index.ts';
 import { ROOT, collectProject } from '../tools/lib/explain-project.ts';
-import { band } from '../tools/lib/explain-video.ts';
+import { band } from '../tools/lib/explain-raster.ts';
 import { contactSheet } from '../tools/lib/explain-shots.ts';
 
 // resvg is a devDependency here and an optional peer for users: without it there is no PNG to make.
@@ -20,7 +20,7 @@ const resvg = await import('@resvg/resvg-js').then(
   () => true,
   () => false,
 );
-const skip = resvg ? false : '@resvg/resvg-js is not installed (PNG and video only)';
+const skip = resvg ? false : '@resvg/resvg-js is not installed (PNG output only)';
 
 const folder = await mkdtemp(join(tmpdir(), 'rayner-raster-'));
 after(() => rm(folder, { recursive: true, force: true }));
@@ -49,15 +49,15 @@ test('rayner shots draws a zoomed frame with a translucent label outside the vie
   assert.match(await readFile(join(dir, 'sheet.svg'), 'utf8'), /^<svg /);
 });
 
-test('the film leaves out what the camera cannot show', async () => {
-  // explain-video's band() is every film frame's SVG; resvg aborts on this frame uncut.
+test('a raster band leaves out what the camera cannot show', async () => {
+  // A contact sheet's band() must cull; resvg aborts on this frame uncut.
   await loadFonts();
   const scene = new Scene(new NullSink());
   scene.add(new Rectangle({ width: 1, height: 1 }));
   scene.add(new Text('label', { fontSize: 0.3, color: '#ab1234' }).moveTo([6.5, 3.8]).setOpacity(0.3));
   scene.frame.fit([-2, -1.125, 2, 1.125] as Box, { margin: 0 });
   assert.match(toSvgString(scene, { width: 640 }), /#ab1234/, 'uncut, the label is drawn');
-  assert.doesNotMatch(band(scene, 640, 9), /#ab1234/, 'the film frame leaves the off-view label out');
+  assert.doesNotMatch(band(scene, 640, 9), /#ab1234/, 'the raster band leaves the off-view label out');
 });
 
 test('a contact sheet --out with no extension writes NAME.png and NAME.svg beside it', { skip }, async () => {
@@ -77,7 +77,7 @@ test('a contact sheet --out with no extension writes NAME.png and NAME.svg besid
 
 // resvg 2.6.2 also panics (geom.rs: unwrap on None) on a translucent element inside a nested svg
 // that clips its viewport while something there reaches past it: under a zoomed camera the paper
-// does, and any fading element (a pen tool, a leader line) then took the film down. band() lets the
+// does, and any fading element (a pen tool, a leader line) then aborted rasterisation. band() lets the
 // inner svg overflow; the outer one still crops.
 test('a translucent element under a zoomed camera rasterises through band()', { skip }, async () => {
   const scene = new Scene(new NullSink());

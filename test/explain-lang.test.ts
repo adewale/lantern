@@ -7,7 +7,6 @@ import { pathToFileURL } from 'node:url';
 import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
 import type { Project } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
-import { trackLanguage, videoTranscript } from '../tools/lib/explain-video.ts';
 import { chromeFor, caseNameIn, CHROME, descriptionLang, descriptionsLang, settingsProblem } from '../app/embed-strings.ts';
 import type { SettingsProblem } from '../app/embed-strings.ts';
 import { caseName, resolveSettings } from '../explain/index.ts';
@@ -101,16 +100,6 @@ const ENGLISH = (() => {
   return new Set(wordsIn(said.join(' ')).filter((w) => !same.has(w)));
 })();
 const englishIn = (t: string) => [...new Set(wordsIn(t).filter((w) => ENGLISH.has(w)))];
-
-test('an MP4 subtitle stream for meta.lang fr is tagged fra; WebM keeps the BCP 47 tag', () => {
-  assert.equal(trackLanguage('fr'), 'fra');
-  assert.equal(trackLanguage('fr-CA'), 'fra');
-  assert.equal(trackLanguage('en'), 'eng');
-  assert.equal(trackLanguage('en-GB'), 'eng');
-  assert.equal(trackLanguage('fra'), 'fra');
-  assert.equal(trackLanguage('fr', true), 'fr');
-  assert.throws(() => trackLanguage('de'), /No ISO 639-2 code for language de/);
-});
 
 test('page words come from a table by primary language, English when there is none', () => {
   assert.equal(chromeFor('fr').transcript, 'Transcription');
@@ -386,17 +375,6 @@ test('an English page is unchanged: English chrome and no lang attribute on its 
   assert.ok(html.includes('The interactive player could not start. The transcript is available below.'));
   assert.equal([...html.matchAll(/<\/p><div><ul>/g)].length, 2);
   assert.doesNotMatch(html, /<div lang="en">/);
-});
-
-test('the video transcript marks descriptions lang="en" only on a page in a language they lack', () => {
-  const fr = videoTranscript('Titre', 'fr', built.fr.project.variants[0]!.trace.steps);
-  assert.match(fr, /^<!doctype html><html lang="fr">.*<\/p><ul><li>1 valeur étiquetée/s);
-  assert.doesNotMatch(fr, /lang="en"/);
-  const de = videoTranscript('Titel', 'de', built.de.project.variants[0]!.trace.steps);
-  assert.match(de, /<\/p><div lang="en"><ul><li>1 labelled value/);
-  const en = videoTranscript('Title', 'en', built.en.project.variants[0]!.trace.steps);
-  assert.match(en, /<\/p><ul>/);
-  assert.doesNotMatch(en, /lang="en"><ul>|<div/);
 });
 
 test(
