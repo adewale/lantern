@@ -139,7 +139,7 @@ test('`explain see` prints describeExplainer\'s words for the step, so the two c
 
 // `see` draws only the step it shows; its text must still be what the whole description gives.
 test(
-  '`explain see` prints what the whole description gives: each case\'s last step, and a named step in other cases, for every explainer',
+  '`explain see` prints what the whole description gives: each case\'s last step, and the first step by name in other cases, for every explainer',
   { skip: !process.env.FULL && 'set FULL=1 (npm run test:full): it describes every case of every explainer' },
   async () => {
     for (const { id } of EXPLAINERS) {
@@ -147,7 +147,7 @@ test(
       for (const v of project.variants) {
         const c = await describeCase(project.Scene, v.values, { snapshots: project.store });
         assert.equal(await seeStep(project, v), seeText(id, c), `${id} ${JSON.stringify(v.values)}: the last step`);
-        // In a case other than the default, a step that is not the last, by name.
+        // In a case other than the default, its first step, by name.
         const named = c.steps[0]!.step;
         if (v !== defaultVariant(project)) assert.equal(await seeStep(project, v, named), seeText(id, c, named), `${id} ${JSON.stringify(v.values)}: ${named}`);
       }

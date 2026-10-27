@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { spawn } from 'node:child_process';
@@ -34,6 +34,9 @@ const evidence: {
   snapshotHashes: string[];
 }[] = [];
 for (const item of EXPLAINERS) {
+  // Remove the record of what this explainer's files were built from now and write it last (below),
+  // so a build that stops part way leaves no record for site:export to trust.
+  await rm(join(directory, item.id, 'inputs.json'), { force: true });
   const project = await collectProject(join(ROOT, 'scenes/explainers', item.id));
   // For agents: what site:export publishes as <id>.json, described right after the run, as
   // `explain describe` does.
@@ -64,8 +67,6 @@ for (const item of EXPLAINERS) {
   }
   await writeFile(join(directory, item.id, 'steps.json'), JSON.stringify(share, null, 2) + '\n');
   await writeFile(join(directory, item.id, 'describe.json'), described);
-  // Last, so it vouches for every file above: what they were built from, which site:export checks.
-  await writeFile(join(directory, item.id, 'inputs.json'), JSON.stringify(await sceneInputs(project), null, 2) + '\n');
   if (check) await checkProject(project, join(ROOT, 'out/checks', item.id));
   // Videos only: every case of an explainer with video must export with the caption footer.
   if (render && item.video !== false)
@@ -73,6 +74,9 @@ for (const item of EXPLAINERS) {
       await footerLines(v.trace, v.values).catch((error: Error) => {
         throw new Error(`${item.id}: ${error.message}`);
       });
+  // Last, after the checks, so it vouches for every file above: what they were built from, which
+  // site:export compares with the checkout.
+  await writeFile(join(directory, item.id, 'inputs.json'), JSON.stringify(await sceneInputs(project), null, 2) + '\n');
   evidence.push({
     id: item.id,
     title: project.Scene.meta?.title ?? item.id,

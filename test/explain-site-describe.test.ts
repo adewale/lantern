@@ -96,6 +96,10 @@ test("site:export refuses an explainer's built files when demos:build has not ru
     // What demos:build records after writing the folder's other files.
     await writeFile(join(folder, 'inputs.json'), JSON.stringify(await sceneInputs(await loadScene(scene))));
     await checkBuilt(folder, scene);
+    // What file browsers and editors leave in a folder is not an input.
+    await writeFile(join(scene, '.DS_Store'), 'x');
+    await writeFile(join(scene, 'scene.ts~'), 'x');
+    await checkBuilt(folder, scene);
     // A data file or pinned snapshot in the scene's folder, then the scene's code.
     await writeFile(join(scene, 'data.txt'), 'b');
     await assert.rejects(checkBuilt(folder, scene), /out\/x is stale: the scene's folder changed since it was built\. Run npm run demos:build$/);

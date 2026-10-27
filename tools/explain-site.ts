@@ -33,7 +33,8 @@ const built = join(ROOT, 'out/explainers'),
   videos = join(ROOT, 'out/videos');
 const exists = (file: string) => access(file).then(() => true, () => false);
 
-// Every explainer's built files must come from this checkout: check them all before copying any.
+// Refuse an explainer whose scene, scene folder or engine changed since demos:build built it;
+// check them all before copying any.
 for (const { id } of EXPLAINERS) await checkBuilt(join(built, id), join(ROOT, 'scenes/explainers', id));
 
 await mkdir(target, { recursive: true });

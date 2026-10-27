@@ -4,7 +4,7 @@ import type { LetteringSnapshot } from '../../src/lettering-outlines.ts';
 import { build } from 'esbuild';
 import type { Plugin } from 'esbuild';
 import { readFile, writeFile, mkdir, stat, readdir, rm } from 'node:fs/promises';
-import { dirname, resolve, join, basename, relative } from 'node:path';
+import { dirname, resolve, join, basename, relative, sep } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
@@ -170,18 +170,20 @@ export const IMPORTER = await (async () => {
 })();
 /**
  * What an explainer's built files come from: the scene's code, the engine, the snapshot importer,
- * and a hash of every file in the scene's folder (its pinned snapshots, lettering and data).
- * demos:build records it in out/explainers/<id>/inputs.json, and site:export compares it with the
- * checkout's to refuse files built from an older checkout. Needs only `loadScene`, not a run.
+ * and a hash of every file in the scene's folder (its pinned snapshots, lettering and data), leaving
+ * out dotfiles and names ending in `~`, which editors and file browsers leave there. demos:build
+ * records it in out/explainers/<id>/inputs.json, and site:export compares it with the checkout's.
+ * The player (app/) and the build tools are not in it, as they are not in a page's receipt.
+ * Needs only `loadScene`, not a run.
  */
 export async function sceneInputs(p: { file: string; sourceHash: string; engineHash: string }): Promise<Record<string, string>> {
   const folder = dirname(p.file),
     files: string[] = [];
-  for (const entry of await readdir(folder, { recursive: true, withFileTypes: true }))
-    if (entry.isFile()) {
-      const path = join(entry.parentPath, entry.name);
-      files.push(relative(folder, path) + '\n' + hash(await readFile(path)));
-    }
+  for (const entry of await readdir(folder, { recursive: true, withFileTypes: true })) {
+    const path = relative(folder, join(entry.parentPath, entry.name));
+    if (entry.isFile() && !path.split(sep).some((part) => part.startsWith('.')) && !entry.name.endsWith('~'))
+      files.push(path + '\n' + hash(await readFile(join(folder, path))));
+  }
   return { sourceHash: p.sourceHash, engineHash: p.engineHash, importer: IMPORTER, files: hash(files.sort().join('\n')) };
 }
 /** File name for one diagram's snapshot: a short hash of its cache key. */

@@ -23,19 +23,23 @@ export async function describeProject(project: Project): Promise<string> {
   return JSON.stringify(await describeExplainer(project.Scene, { snapshots: project.store }));
 }
 
+/** A file demos:build writes, or an error that says to run it. */
+async function readBuilt(file: string): Promise<Buffer> {
+  return readFile(file).catch((error: NodeJS.ErrnoException) => {
+    throw error.code === 'ENOENT' ? new Error(`Missing ${file}: run npm run demos:build first`) : error;
+  });
+}
+
 const CHANGED: Record<string, string> = { sourceHash: "the scene's code", engineHash: 'the engine', importer: 'the snapshot importer', files: "the scene's folder" };
 
 /**
  * Throw unless demos:build built the explainer's folder in out/explainers (`folder`) from the scene in
- * `scene` as the checkout has it now. demos:build records what it built from in <folder>/inputs.json,
- * after the folder's other files.
+ * `scene` as the checkout has it now (see sceneInputs for what that covers). demos:build records what
+ * it built from in <folder>/inputs.json, after the folder's other files and its checks.
  */
 export async function checkBuilt(folder: string, scene: string): Promise<void> {
   const record = join(folder, 'inputs.json'),
-    text = await readFile(record, 'utf8').catch((error: NodeJS.ErrnoException) => {
-      throw error.code === 'ENOENT' ? new Error(`Missing ${record}: run npm run demos:build first`) : error;
-    }),
-    was = JSON.parse(text) as Record<string, string>,
+    was = JSON.parse((await readBuilt(record)).toString('utf8')) as Record<string, string>,
     now = await sceneInputs(await loadScene(scene)),
     changed = Object.keys(now).filter((k) => was[k] !== now[k]);
   if (changed.length)
@@ -93,9 +97,7 @@ export async function writeDescriptions(
   let json = 0;
   for (const item of items) {
     const file = join(built, item.id, 'describe.json'),
-      body = await readFile(file).catch((error: NodeJS.ErrnoException) => {
-        throw error.code === 'ENOENT' ? new Error(`Missing ${file}: run npm run demos:build first`) : error;
-      }),
+      body = await readBuilt(file),
       d = JSON.parse(body.toString('utf8')) as ExplainerDescription;
     // The bytes demos:build wrote, unchanged.
     await writeFile(join(siteRoot, path, item.id + '.json'), body);

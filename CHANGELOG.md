@@ -6,7 +6,7 @@
 
 ## Unreleased: 0.2.0-explainers.0
 
-Newest first; all on 24–26 October 2026.
+Newest first; all on 24–27 October 2026.
 
 - **`explain see` and `site:export` do less work**: `explain see` describes its case with only the step it prints drawn (`describeExplainer`'s `drawings` option now takes a step name), and draws the SVG only with `--out`. Its printed text is unchanged. `demos:build` writes each explainer's `describeExplainer` JSON to `out/explainers/<id>/describe.json`, and `site:export` copies it instead of running every scene again; the published `<id>.json` files are byte-identical. `demos:build` also records what it built each explainer from in `out/explainers/<id>/inputs.json`. `site:export` checks those records before it writes anything and fails, telling you to run `demos:build`, when one is missing or a scene's code, its folder or the engine changed since the build. Measured on a 4-CPU machine: `see` on gtfs takes 3.1 s instead of 4.0 s, `site:export` 1 s instead of 65 s, and `demos:build` 97 s instead of 61 s.
 
