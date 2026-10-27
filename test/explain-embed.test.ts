@@ -35,7 +35,7 @@ let embedServer: { url: string; close(): void } | undefined;
 const projects = new Map<string, Project>();
 before(async () => {
   if (!enabled) return;
-  folder = await mkdtemp(join(tmpdir(), 'lantern-embed-test-'));
+  folder = await mkdtemp(join(tmpdir(), 'rayner-embed-test-'));
   browser = await launch();
   await new Promise<void>((r) => hostServer.listen(0, '127.0.0.1', r));
   host = `http://127.0.0.1:${(hostServer.address() as { port: number }).port}`;

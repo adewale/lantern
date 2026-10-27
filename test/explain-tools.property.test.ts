@@ -272,7 +272,7 @@ const store = fc.dictionary(storeKey, snapshotValue, { maxKeys: 5 }).map((d) => 
   return out as unknown as SnapshotStore;
 });
 async function folder<T>(run: (base: string) => Promise<T>): Promise<T> {
-  const dir = await mkdtemp(join(tmpdir(), 'lantern-pbt-snapshots-'));
+  const dir = await mkdtemp(join(tmpdir(), 'rayner-pbt-snapshots-'));
   try {
     return await run(join(dir, 'scene'));
   } finally {

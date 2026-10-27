@@ -43,7 +43,7 @@ Lantern supplies the execution and rendering model. Agentic Mermaid supplies lay
 | Diagrams | `flowchart()` and Lantern's own Mermaid layout | Replaced by Agentic Mermaid capture, which honours its styles across families |
 | Player | `app/player.ts` | Replaced by the embed player (`app/embed.ts`): stepper first, cases, zoom, accessibility |
 | Builds | Bundled HTML | External scenes, snapshot build, portable pages, receipts |
-| Video | Frame execution and SVG sinks | `explain render` (`tools/lib/explain-video.ts`): MP4 and WebM, caption footer, receipts |
+| Video | Frame execution and SVG sinks | `rayner render` (`tools/lib/explain-video.ts`): MP4 and WebM, caption footer, receipts |
 | Inspection | Traces, text views, motion verifier | Kept; the helpers record every walk in the trace so tests can check it |
 
 The owner chose to delete the inherited player, Lantern's Mermaid layout and the nine original scenes once the explainers rebuilt them, so the repository has one of each.
@@ -153,7 +153,7 @@ It is an npm package with a command-line tool, plus an agent skill. An explainer
 
 | Who | What they use | Why this form |
 | --- | --- | --- |
-| Author, by hand | `npm i -D <name>`: the engine, helpers and Agentic Mermaid integration as one package with a pinned engine | Scenes are TypeScript; editor, types, tests and git all apply |
+| Author, by hand | `npm i -D rayner`: the engine, helpers and Agentic Mermaid integration as one package with a pinned engine | Scenes are TypeScript; editor, types, tests and git all apply |
 | Author or CI | The CLI | Snapshots, checks, pages and videos are build steps |
 | Coding agent | The agent skill in `skills/rayner-explainers/` | Agents already have a shell and an editor; a skill costs nothing to run |
 | Agent with no shell | An optional MCP server wrapping the same CLI, later | Useful only where an agent cannot run the CLI |
@@ -172,7 +172,7 @@ To reduce the split, each step in the video plays its motion under the step's ti
 
 | Decision | What it unblocks | Prepared so far |
 | --- | --- | --- |
-| Publishing the npm package | The `explain` CLI for authors outside this repository | The package is named `rayner` (chosen 25 October 2026) |
+| Publishing the npm package | The `rayner` CLI for authors outside this repository | The package is named `rayner` (chosen 25 October 2026); 0.1.0 is prepared, with the CLI named `rayner` |
 | Upstream relationship: write to Ivar Vong, then offer the engine fixes or declare a hard fork | Merging future upstream work without guesswork | [Upstream](../docs/UPSTREAM.md) lists the fixes with their tests |
 | Subject-matter review of the published explainers, and video delivery on oshineye.dev | Trusting the explainers; videos in Safari | All 26 are live at oshineye.dev since 25 October 2026. No explainer has been reviewed by an expert in its subject. The site answers a byte-range request with the whole video (200, not 206), which Safari needs for video |
 | First outside author, and their topic | Evidence that the docs and skill work for someone other than the owner | A clean-machine trial can run once the topic is chosen |

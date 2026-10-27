@@ -11,7 +11,7 @@
  *
  * `stepLayouts` runs a scene once and records, for each step, where its picture
  * changed and every visible label's size; `closeUps` turns one step's layout into the
- * zooms for a stage of a given size. `explain check` uses both, so its phone number
+ * zooms for a stage of a given size. `rayner check` uses both, so its phone number
  * is the size the player draws.
  *
  * A close-up is the reader's zoom, and it sits on top of the author's camera
@@ -101,7 +101,7 @@ const fixed = (m: Mobject) => m.key === '__paper' || m.key === '__heading';
 
 /**
  * A world box in the units of the camera's view `view`: 16 wide, centred on the origin.
- * The identity at home. `explain check` maps its labels the same way (inView there).
+ * The identity at home. `rayner check` maps its labels the same way (inView there).
  */
 export function toView(box: Box, view: Box): Box {
   const z = viewZoom(view),
@@ -343,7 +343,7 @@ export function stressStarts(layout: StepLayout): [number, number][] {
  * changes at READ_PX (up to `max`), so a label read in one close-up, or found by
  * panning, reads the same in any other. When every such label already reads at
  * READ_PX, there is one: the whole picture. Any label under it is enlarged, however
- * little it needs: a label at 11 px is still under the floor `explain check` measures.
+ * little it needs: a label at 11 px is still under the floor `rayner check` measures.
  */
 export function closeUps(layout: StepLayout | undefined, w: number, h: number, max = ZOOM_MAX): Zoom[] {
   const whole = [clampZoom(IDENTITY, w, h, max)];

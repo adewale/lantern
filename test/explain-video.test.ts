@@ -40,7 +40,7 @@ test(
   'real FFmpeg outputs silent H.264 footer video, subtitles, chapters, VTT and a truthful receipt',
   { skip: process.env.EXPLAIN_VIDEO ? false : 'set EXPLAIN_VIDEO=1 to run FFmpeg integration' },
   async () => {
-    const folder = await mkdtemp(join(tmpdir(), 'lantern-video-'));
+    const folder = await mkdtemp(join(tmpdir(), 'rayner-video-'));
     try {
       const file = join(folder, 'scene.ts');
       await writeFile(

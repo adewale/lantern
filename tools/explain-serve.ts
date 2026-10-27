@@ -8,4 +8,4 @@ import { serve } from './lib/explain-serve.ts';
 // Not 5174, the preview's port, so both can run at once.
 const { values } = parseArgs({ options: { port: { type: 'string', default: '5175' } } });
 const { url } = await serve(resolve(ROOT, 'out'), Number(values.port), 'explainers/');
-console.log(`Lantern demos: ${url}/explainers/ (Ctrl-C to stop)`);
+console.log(`Rayner demos: ${url}/explainers/ (Ctrl-C to stop)`);

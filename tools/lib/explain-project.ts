@@ -47,7 +47,7 @@ const legacySource = (source: string) => source
   .replace(/\n\/\/ Optional lettering: tree-shaken[\s\S]*?\/\/ End optional lettering\.\n/, '');
 export function engineAlias(node = false, outlines = false): Plugin {
   return {
-    name: 'one-lantern-engine',
+    name: 'one-rayner-engine',
     setup(b) {
       if (!outlines) b.onLoad({ filter: /[/\\]src[/\\]index\.ts$/ }, async (args) => ({
         contents: legacySource(await readFile(args.path, 'utf8')), loader: 'ts',
@@ -111,11 +111,13 @@ async function loadScene(
     plugins: [engineAlias(true)],
     logLevel: 'silent',
   });
+  // 'lantern:/' is an internal placeholder for the checkout path, kept from Lantern:
+  // it never reaches output, and renaming it would make every committed snapshot stale.
   const code = result.outputFiles[0]!.text,
     sourceHash = hash(
       code.replaceAll(pathToFileURL(ROOT).href, 'lantern:/').replaceAll(dirname(file), '<author>'),
     );
-  const folder = join(tmpdir(), 'lantern-explain');
+  const folder = join(tmpdir(), 'rayner-explain');
   await mkdir(folder, { recursive: true });
   const output = join(folder, hash(code) + '.mjs');
   // Other processes (parallel test files, two builds) import this same content-addressed file.
@@ -254,7 +256,7 @@ export async function collectProject(
     const key = diagramKey(snapshot.spec);
     if (!warned.has(key)) {
       warned.add(key);
-      for (const warning of lostLabelWarnings(snapshot)) console.warn('explain: ' + warning);
+      for (const warning of lostLabelWarnings(snapshot)) console.warn('rayner: ' + warning);
     }
     return snapshot;
   };
