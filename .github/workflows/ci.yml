@@ -58,9 +58,11 @@ jobs:
         os: [ubuntu-24.04, macos-15, macos-15-intel]
         node: [24.0.0, 24]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30  # npm ci, two typechecks and the full package smoke
+    timeout-minutes: 30  # types, standard suite, browser checks and installed starter
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # retain the fork-base source oracle on every platform
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}

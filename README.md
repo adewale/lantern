@@ -21,6 +21,7 @@ Install a published release in a new author project. For an unreleased checkout,
 ```sh
 mkdir my-rayner-project && cd my-rayner-project
 npm init -y
+npm pkg set type=module
 npm install --save-dev rayner
 npx playwright-core install chromium
 npx rayner init my-explainer
@@ -104,7 +105,7 @@ A scene is an ordinary Rayner scene, so beside the helpers it can use the engine
 - [Code](https://github.com/adewale/rayner/blob/main/docs/CODE.md): addressable, syntax-coloured code
 - [Animations](https://github.com/adewale/rayner/blob/main/docs/ANIMATIONS.md): `Restore`, `TransformFromCopy` and `Succession`
 
-[The engine map](https://github.com/adewale/rayner/blob/main/docs/ENGINE.md) says why the engine leaves out 3D, boolean path operations, runtime LaTeX, `transform` matrices, raster images and other engine features.
+[The engine map](https://github.com/adewale/rayner/blob/main/docs/ENGINE.md) says why the engine leaves out 3D, boolean path operations, runtime LaTeX, `transform` matrices and raster images.
 
 ## Limits
 

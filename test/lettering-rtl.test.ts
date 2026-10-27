@@ -103,6 +103,7 @@ test('cluster keys pair a match only when every Text in it has them; a Text buil
 test('a page leaves out the runs only the build draws, and every snapshot stores each outline once', async () => {
   const raw = JSON.parse(await readFile(join(ROOT, 'test/lettering/hebrew/scene.lettering.json'), 'utf8'));
   assert.ok(Array.isArray(raw.outlines), 'the committed snapshot is packed');
+  assert.equal(new Set(raw.outlines.map((outline: unknown) => JSON.stringify(outline))).size, raw.outlines.length, 'the snapshot stores each distinct outline once');
   const s = await stored('hebrew');
   // Contact sheets draw numbered titles outside the authored scene. Pages omit those runs.
   for (const text of ['1. ניקוד', '2. כיוונים']) assert.ok(s.offPage!.includes(runKey('sans', text)), text);
@@ -111,7 +112,8 @@ test('a page leaves out the runs only the build draws, and every snapshot stores
   const page = await pageSnapshot(s);
   for (const key of s.offPage!) assert.equal(page.runs[key], undefined, key);
   assert.ok(Array.isArray(page.outlines));
-  const unpacked = JSON.stringify(s.runs).length, shipped = JSON.stringify(page).length;
+  assert.equal(new Set(page.outlines.map((outline: unknown) => JSON.stringify(outline))).size, page.outlines.length, 'the page stores each distinct outline once');
+  const unpacked = Buffer.byteLength(JSON.stringify(s.runs)), shipped = Buffer.byteLength(JSON.stringify(page));
   // Removing footer-only runs changes the fixture’s redundancy, so compare actual packed
   // page bytes with its unpacked runs without promising a fixture-specific compression ratio.
   assert.ok(shipped < unpacked, `the page carries ${shipped} bytes of the ${unpacked} the runs take unpacked`);
