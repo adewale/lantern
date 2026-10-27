@@ -96,7 +96,7 @@ async function engineHash(lettered: boolean): Promise<string> {
   inputs.push(await readFile(join(ROOT, 'vendor/glyph.js'), 'utf8'));
   return hash(inputs.join('\n'));
 }
-async function loadScene(
+export async function loadScene(
   file: string,
 ): Promise<{ Scene: ExplainerClass; exportName: string; file: string; sourceHash: string; engineHash: string }> {
   file = await scenePath(file);
@@ -168,6 +168,22 @@ export const IMPORTER = await (async () => {
   const files = (await readdir(dir)).filter((n) => n.endsWith('.ts')).sort();
   return hash((await Promise.all(files.map(async (n) => n + '\n' + (await readFile(join(dir, n), 'utf8'))))).join('\n')).slice(0, 16);
 })();
+/**
+ * What an explainer's built files come from: the scene's code, the engine, the snapshot importer,
+ * and a hash of every file in the scene's folder (its pinned snapshots, lettering and data).
+ * demos:build records it in out/explainers/<id>/inputs.json, and site:export compares it with the
+ * checkout's to refuse files built from an older checkout. Needs only `loadScene`, not a run.
+ */
+export async function sceneInputs(p: { file: string; sourceHash: string; engineHash: string }): Promise<Record<string, string>> {
+  const folder = dirname(p.file),
+    files: string[] = [];
+  for (const entry of await readdir(folder, { recursive: true, withFileTypes: true }))
+    if (entry.isFile()) {
+      const path = join(entry.parentPath, entry.name);
+      files.push(relative(folder, path) + '\n' + hash(await readFile(path)));
+    }
+  return { sourceHash: p.sourceHash, engineHash: p.engineHash, importer: IMPORTER, files: hash(files.sort().join('\n')) };
+}
 /** File name for one diagram's snapshot: a short hash of its cache key. */
 export const snapshotFileName = (key: string) => hash(key).slice(0, 16) + '.json';
 const json = (value: unknown) => JSON.stringify(value, null, 2) + '\n';

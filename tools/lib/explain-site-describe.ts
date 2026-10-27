@@ -1,11 +1,14 @@
 // What `site:export` publishes for agents: each explainer's describeExplainer object as <id>.json
 // beside its page, and one llms.txt at the site root that lists them (https://llmstxt.org). Lantern's
 // Worker served the same facts at /index.json, /trace.json and /text; these are static files.
+// demos:build already runs every scene, so it writes the JSON as out/explainers/<id>/describe.json
+// and site:export copies it.
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describeExplainer } from '../../explain/describe.ts';
 import type { ExplainerDescription } from '../../explain/describe.ts';
-import { collectProject, ROOT } from './explain-project.ts';
+import { loadScene, sceneInputs } from './explain-project.ts';
+import type { Project } from './explain-project.ts';
 
 export interface SiteItem {
   id: string;
@@ -15,10 +18,28 @@ export interface SiteItem {
 const TITLE = '# Rayner explainers';
 const GROUPS = { topic: 'Explainers', toolchain: 'How these are made' } as const;
 
-/** The explainer as `explain describe` prints it, drawings included, from its pinned snapshots. */
-export async function describeById(id: string): Promise<ExplainerDescription> {
-  const project = await collectProject(join(ROOT, 'scenes/explainers', id), { write: false });
-  return describeExplainer(project.Scene, { snapshots: project.store });
+/** What demos:build writes as <id>/describe.json: the explainer as `explain describe` gives it, drawings included. */
+export async function describeProject(project: Project): Promise<string> {
+  return JSON.stringify(await describeExplainer(project.Scene, { snapshots: project.store }));
+}
+
+const CHANGED: Record<string, string> = { sourceHash: "the scene's code", engineHash: 'the engine', importer: 'the snapshot importer', files: "the scene's folder" };
+
+/**
+ * Throw unless demos:build built the explainer's folder in out/explainers (`folder`) from the scene in
+ * `scene` as the checkout has it now. demos:build records what it built from in <folder>/inputs.json,
+ * after the folder's other files.
+ */
+export async function checkBuilt(folder: string, scene: string): Promise<void> {
+  const record = join(folder, 'inputs.json'),
+    text = await readFile(record, 'utf8').catch((error: NodeJS.ErrnoException) => {
+      throw error.code === 'ENOENT' ? new Error(`Missing ${record}: run npm run demos:build first`) : error;
+    }),
+    was = JSON.parse(text) as Record<string, string>,
+    now = await sceneInputs(await loadScene(scene)),
+    changed = Object.keys(now).filter((k) => was[k] !== now[k]);
+  if (changed.length)
+    throw new Error(`${folder} is stale: ${changed.map((k) => CHANGED[k] ?? k).join(', ')} changed since it was built. Run npm run demos:build`);
 }
 
 /** The explainer's opening words: the first sentence of the default case's first caption. */
@@ -52,14 +73,16 @@ export function llmsTxt(entries: { item: SiteItem; d: ExplainerDescription }[], 
 }
 
 /**
- * Write <siteRoot><path>/<id>.json for each explainer and <siteRoot>/llms.txt, and return their sizes in
- * bytes. Links are absolute with `origin`, else root-relative. An llms.txt that this did not write is the
- * site's own, so it is left alone and the export fails.
+ * Copy each explainer's <built>/<id>/describe.json to <siteRoot><path>/<id>.json, write
+ * <siteRoot>/llms.txt, and return their sizes in bytes. Links are absolute with `origin`, else
+ * root-relative. An llms.txt that this did not write is the site's own, so it is left alone and the
+ * export fails.
  */
 export async function writeDescriptions(
   siteRoot: string,
   path: string,
   items: readonly SiteItem[],
+  built: string,
   origin?: string,
 ): Promise<{ json: number; llms: number }> {
   const llmsFile = join(siteRoot, 'llms.txt'),
@@ -69,10 +92,14 @@ export async function writeDescriptions(
   const entries: { item: SiteItem; d: ExplainerDescription }[] = [];
   let json = 0;
   for (const item of items) {
-    const d = await describeById(item.id),
-      body = JSON.stringify(d);
+    const file = join(built, item.id, 'describe.json'),
+      body = await readFile(file).catch((error: NodeJS.ErrnoException) => {
+        throw error.code === 'ENOENT' ? new Error(`Missing ${file}: run npm run demos:build first`) : error;
+      }),
+      d = JSON.parse(body.toString('utf8')) as ExplainerDescription;
+    // The bytes demos:build wrote, unchanged.
     await writeFile(join(siteRoot, path, item.id + '.json'), body);
-    json += Buffer.byteLength(body);
+    json += body.byteLength;
     entries.push({ item, d });
   }
   const llms = llmsTxt(entries, (origin ?? '').replace(/\/$/, '') + path);
