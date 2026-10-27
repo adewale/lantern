@@ -189,11 +189,30 @@ test('collisions do not depend on the order texts are listed in', () => {
   );
 });
 
-test('texts nobody can see, the heading, and text inside text never collide', () => {
+test('texts nobody can see and text inside text never collide', () => {
   fc.assert(
-    fc.property(fc.array(placedText, { maxLength: 5 }), fc.array(placedText.filter((p) => p.hide !== 'none'), { maxLength: 4 }), (shown, hidden) => {
+    fc.property(fc.array(placedText, { maxLength: 5 }), fc.array(placedText.filter((p) => p.hide !== 'none' && p.hide !== 'heading'), { maxLength: 4 }), (shown, hidden) => {
       const visible = build(shown.map((p) => ({ ...p, hide: 'none' as const })));
       assert.deepEqual(restingTextProblems(sceneOf([...visible, ...build(hidden)])), restingTextProblems(sceneOf(visible)));
+    }),
+    params(),
+  );
+});
+
+test('the heading collides with no text, but a text runs into it exactly when their boxes overlap', () => {
+  fc.assert(
+    fc.property(placedText.map((p) => ({ ...p, hide: 'none' as const })), placedText.map((p) => ({ ...p, hide: 'heading' as const })), (shown, head) => {
+      fc.pre(shown.text.trim() !== '' && head.text.trim() !== '');
+      const [m] = build([shown]),
+        [h] = build([head]);
+      const without = restingTextProblems(sceneOf([m!]));
+      const problems = restingTextProblems(sceneOf([m!, h!]));
+      const a = m!.box()!,
+        b = h!.box()!;
+      const overlap = a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
+      // Nothing about the heading itself is judged: only what runs into it.
+      assert.deepEqual(problems.filter((x) => !x.includes('runs into the heading')), without);
+      assert.equal(problems.some((x) => x.includes('runs into the heading')), overlap && !!m!.box() && !!h!.box());
     }),
     params(),
   );

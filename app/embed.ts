@@ -3,7 +3,7 @@ import type { Trace } from '../src/index.ts';
 import { StopScene } from '../src/index.ts';
 import { bindSnapshots, withSettings, resolveSettings } from '../explain/index.ts';
 import type { ExplainerClass, Settings, SnapshotStore } from '../explain/index.ts';
-import { restingTime, pictureHtml, pictureSummary } from '../explain/trace.ts';
+import { restingTime, pictureHtml, pictureSummary, stepWords } from '../explain/trace.ts';
 import { reportHeight } from './embed-protocol.ts';
 import { icon } from './embed-icons.ts';
 import type { IconName } from './embed-icons.ts';
@@ -99,6 +99,12 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const poster = root.querySelector('svg');
   if (poster) stage.append(poster);
   stage.tabIndex = 0;
+  // On a narrow stage the heading the stage draws is too small to read, and a close-up
+  // leaves it out, so the step's number, title and line show here as text.
+  const lede = el('p', undefined, 'lede'),
+    ledeTitle = el('strong'),
+    ledeLine = el('span');
+  lede.append(ledeTitle, ledeLine);
   const caption = el('p', undefined, 'caption');
   caption.setAttribute('aria-live', 'polite');
   // The resting picture in words, for readers who cannot see it or cannot read its labels:
@@ -137,15 +143,17 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   // The stage and, over its corner on a narrow stage, the overview: a control outside the
   // stage, whose role of img makes everything inside it a picture.
   const frame = el('div', undefined, 'frame');
-  // An unseen copy of the caption, at its width and in its type, measures every step's
-  // caption so the caption can keep the room its case's longest needs: the steps list
-  // and the transcript then stay put as the reader steps. It is not a .caption, so
-  // the page still has one.
-  const ruler = el('p', undefined, 'ruler');
+  // Unseen copies of the caption and the lede, at their width and in their type, measure
+  // every step's words so each keeps the room its case's longest needs: the steps list and
+  // the transcript then stay put as the reader steps. They are not a .caption or a .lede,
+  // so the page still has one of each.
+  const ruler = el('p', undefined, 'ruler'),
+    ledeRuler = el('p', undefined, 'lede-ruler');
   ruler.setAttribute('aria-hidden', 'true');
+  ledeRuler.setAttribute('aria-hidden', 'true');
   // The controls sit straight under the picture, above the words, so however long a
   // caption runs, Next stays beside what it moves.
-  player.append(frame, controls, notice, summary, caption, described, ruler);
+  player.append(frame, controls, notice, summary, lede, caption, described, ruler, ledeRuler);
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', t.stepList);
@@ -198,6 +206,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       h = stage.clientHeight,
       on = narrow() && zoom.k > 1;
     stage.classList.toggle('narrow', narrow());
+    player.classList.toggle('narrow', narrow());
     overview.hidden = !on;
     views.hidden = !narrow();
     wholePicture.disabled = !on;
@@ -279,13 +288,15 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     standalone.href = out.href;
   }
   function chrome() {
-    const step = trace.steps[selected]!;
-    caption.textContent = String(step.meta.caption ?? '');
+    const step = trace.steps[selected]!,
+      words = stepWords(step);
+    caption.textContent = words.caption;
+    fillLede(ledeTitle, ledeLine, selected, words);
     prev.disabled = selected === 0;
     next.disabled = selected === trace.steps.length - 1;
     for (const b of steps.querySelectorAll('button'))
       b.setAttribute('aria-current', b.dataset.step === step.step ? 'step' : 'false');
-    stage.setAttribute('aria-label', t.stageLabel(title.textContent!, String(step.meta.title ?? step.step)));
+    stage.setAttribute('aria-label', t.stageLabel(title.textContent!, words.title, words.line));
     summary.textContent = pictureSummary(step.after);
     picture.innerHTML = pictureHtml(step.after);
     described.hidden = !picture.innerHTML;
@@ -293,20 +304,36 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   }
   let shownCase = '',
     reservedFor = '';
+  /** The lede's words for step `i`: its number and title, then its line when it has one. */
+  function fillLede(strong: HTMLElement, span: HTMLElement, i: number, words: { title: string; line: string }) {
+    strong.textContent = `${i + 1}. ${words.title}`;
+    span.textContent = words.line;
+    span.hidden = !words.line;
+  }
   function reserve() {
+    player.classList.toggle('narrow', narrow());
     if (!trace || !caption.clientWidth) return;
     const key = `${caption.clientWidth} ${shownCase}`;
     if (key === reservedFor) return;
     reservedFor = key;
-    ruler.style.width = `${caption.clientWidth}px`;
-    let tallest = 0;
-    for (const s of trace.steps) {
-      ruler.textContent = String(s.meta.caption ?? '');
+    ruler.style.width = ledeRuler.style.width = `${caption.clientWidth}px`;
+    const strong = el('strong'),
+      span = el('span');
+    ledeRuler.replaceChildren(strong, span);
+    let tallest = 0,
+      tallestLede = 0;
+    for (const [i, s] of trace.steps.entries()) {
+      const words = stepWords(s);
+      ruler.textContent = words.caption;
+      fillLede(strong, span, i, words);
       // The exact height: offsetHeight rounds, and a 115.2 px caption would still move the steps list by a fraction.
       tallest = Math.max(tallest, ruler.getBoundingClientRect().height);
+      tallestLede = Math.max(tallestLede, ledeRuler.getBoundingClientRect().height);
     }
     ruler.textContent = '';
+    ledeRuler.replaceChildren();
     caption.style.minHeight = `${tallest}px`;
+    lede.style.minHeight = `${tallestLede}px`;
   }
   new ResizeObserver(reserve).observe(player);
   /**
@@ -554,7 +581,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       ...trace.steps.map((s, i) => {
         const li = el('li'),
           b = el('button'),
-          label = String(s.meta.title ?? s.step),
+          label = stepWords(s).title,
           // The current step is bold; an unseen bold copy in the same grid cell gives every
           // item the bold one's height, so the list keeps its height from step to step.
           bold = el('span', label, 'bold');

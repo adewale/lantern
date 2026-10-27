@@ -74,7 +74,7 @@ rayner render scene.ts --out cache.webm --width 1920                 # stage onl
 
 Each step plays its motion under its title, then holds its resting picture under the caption for the caption's reading time, so shorter captions make a shorter video.
 
-Publish `cache.transcript.html` beside the video: it is the text alternative, with each step's title, caption and what its picture shows.
+Publish `cache.transcript.html` beside the video: it is the text alternative, with each step's title, line, caption and what its picture shows.
 
 `render` stops with an error, naming the step and case, when a footer title or caption needs more than four lines or has a character the fonts cannot draw, or when the picture changes during a caption hold. Shorten the caption, or finish every change before the step's last `play()` ends.
 

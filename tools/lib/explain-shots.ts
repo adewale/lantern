@@ -3,7 +3,7 @@ import { basename, dirname, extname, join, resolve } from 'node:path';
 import { Scene, Text, NullSink, SnapshotSink, renderAt } from '../../src/index.ts';
 import { rasterize, band } from './explain-video.ts';
 import { defaultVariant } from './explain-project.ts';
-import { restingTime } from '../../explain/trace.ts';
+import { restingTime, stepWords } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
 import { CARD } from './explain-share.ts';
 import { useProjectLettering } from './explain-lettering.ts';
@@ -75,7 +75,7 @@ export async function contactSheet(
       png = await stillPng(v.Scene, restingTime(step, v.trace.fps), w);
     const labelSvg = await withSceneLettering(v.Scene, async () => {
       const labelScene = new Scene(new NullSink()),
-        label = new Text(`${i + 1}. ${String(step.meta.title ?? step.step)}`, {
+        label = new Text(`${i + 1}. ${stepWords(step).title}`, {
           fontSize: 0.36,
           color: '#eef3fa',
           anchor: 'start',
@@ -98,3 +98,4 @@ export async function contactSheet(
   await writeFile(out, (await rasterize(svg)).asPng());
   return out;
 }
+

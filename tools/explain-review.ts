@@ -1,5 +1,6 @@
 // Review the built collection as served, not just its source. Run demos:build (or demos:check) first;
 // if demos:render has made videos, their byte ranges are checked too.
+import { stepWords } from '../explain/trace.ts';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -53,7 +54,7 @@ try {
         });
       });
       assert.equal(await page.locator('[aria-current=step]').getAttribute('data-step'), step.step);
-      assert.equal(await page.locator('.caption').innerText(), String(step.meta?.caption ?? ''));
+      assert.equal(await page.locator('.caption').innerText(), stepWords(step).caption);
       assert.ok((await page.locator('.stage path').count()) > 0, entry.id + ' has no stage artwork');
       for (const viewport of [
         { width: 390, height: 844 },

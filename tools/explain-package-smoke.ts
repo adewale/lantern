@@ -126,7 +126,8 @@ try {
     ],
     { cwd: folder },
   );
-  assert.equal(result.stdout.trim(), '2');
+  // The stage adds the paper, the heading's band and the heading.
+  assert.equal(result.stdout.trim(), '3');
   // describeExplainer from the installed package: the outside author's scene, both cases.
   const described = await run(
     process.execPath,

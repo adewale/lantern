@@ -17,7 +17,7 @@ const fixtures = join(ROOT, 'test/lettering');
 const ids = ['arabic', 'devanagari', 'math', 'style'] as const;
 const snapshot = async (id: string): Promise<LetteringSnapshot> => unpackLettering(JSON.parse(await readFile(join(fixtures, id, 'scene.lettering.json'), 'utf8')));
 
-test('all 26 unrequested explainers keep their original page bytes and receipt hashes', async () => {
+test('every unrequested explainer keeps its pinned page bytes and receipt hash', async () => {
   const expected = JSON.parse(await readFile(join(fixtures, 'legacy-builds.json'), 'utf8'));
   const out = await mkdtemp(join(tmpdir(), 'lettering-cost-'));
   try {

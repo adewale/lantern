@@ -135,17 +135,17 @@ test('`rayner see` prints describeExplainer\'s words for the step, so the two ca
     c = d.cases.find((c) => c.values.attacker === 'no')!;
   for (const s of c.steps) assert.equal(await seeStep(project, v, s.step), seeText('oauth-pkce', c, s.step));
   // The text is the description's fields and nothing else: a made-up description prints as it says.
-  const step = { step: 'a', title: 'One', caption: '', start: 0, end: 1, state: {}, changed: {}, picture: '' };
+  const step = { step: 'a', title: 'One', line: '', caption: '', start: 0, end: 1, state: {}, changed: {}, picture: '' };
   const made: CaseDescription = {
     values: {},
     name: 'Size: 3',
     duration: 2,
     steps: [
       step,
-      { ...step, step: 'b', title: 'Two', caption: 'Cap.', state: { n: 1 }, changed: { n: { after: 1 }, gone: { before: 'x' } }, picture: 'A box.', drawing: 'DRAWN' },
+      { ...step, step: 'b', title: 'Two', line: 'A line.', caption: 'Cap.', state: { n: 1 }, changed: { n: { after: 1 }, gone: { before: 'x' } }, picture: 'A box.', drawing: 'DRAWN' },
     ],
   };
-  assert.equal(seeText('x', made), 'DRAWN\n\nx · step 2 of 2: b · Size: 3\nTitle: Two\nCaption: Cap.\nPicture: A box.\nChanged: n: — → 1; gone: "x" → —');
+  assert.equal(seeText('x', made), 'DRAWN\n\nx · step 2 of 2: b · Size: 3\nTitle: Two\nLine: A line.\nCaption: Cap.\nPicture: A box.\nChanged: n: — → 1; gone: "x" → —');
   assert.equal(seeText('x', made, 'a'), '\n\nx · step 1 of 2: a · Size: 3\nTitle: One\nChanged: nothing in scene.state');
   assert.throws(() => seeText('x', made, 'c'), /No step "c"\. Steps: a, b/);
 });

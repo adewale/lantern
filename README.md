@@ -47,7 +47,7 @@ Open http://127.0.0.1:5175/explainers/. Three to start with:
 - **Why June brings polar day to Tromsø and winter to Sydney**: switch the place, and the daylight chart is recomputed from the model.
 - **Four added lines and one rewritten put a KV cache in front of D1**: the diff, then the same edit replayed on the architecture diagram, then a cache hit or miss.
 
-The collection has 26 explainers with 140 cases between them, and uses all 15 Agentic Mermaid diagram families. Captured diagrams use 8 styles, which `out/explainers/evidence.json` lists per explainer; ring-buffer (dusk), seasons (tokyo-night) and token-bucket (github-dark) use a style only as the stage palette. Twenty have a video; six are pages only (`video: false` in `scenes/explainers/catalog.ts`).
+The collection has 27 explainers with 142 cases between them, and uses all 15 Agentic Mermaid diagram families. Captured diagrams use 8 styles, which `out/explainers/evidence.json` lists per explainer; ring-buffer (dusk), seasons (tokyo-night) and token-bucket (github-dark) use a style only as the stage palette. Twenty-one have a video; six are pages only (`video: false` in `scenes/explainers/catalog.ts`).
 
 ## Write one
 
@@ -80,10 +80,10 @@ export default class MyExplainer extends Scene {
     const s = stage(this, { style: 'nord' });
     const which = settingsOf(this).request as 'hit' | 'miss';
 
-    await this.step('architecture', { title: 'A cache in front of storage', caption: 'A request checks the cache first and reads the database only on a miss.' });
+    await this.step('architecture', { title: 'A cache in front of storage', line: 'The cache sits between the request and the database.', caption: 'A request checks the cache first and reads the database only on a miss.' });
     const d = await s.show({ source: FLOW }, { box: 'top' });
 
-    await this.step('request', { title: which === 'hit' ? 'A cache hit' : 'A cache miss', caption: which === 'hit' ? 'The value is already cached, so the request returns without reading the database.' : 'The value is absent, so the request reads the database once and then returns.' });
+    await this.step('request', { title: which === 'hit' ? 'A cache hit' : 'A cache miss', line: which === 'hit' ? 'The reply comes from the cache: no database read.' : 'The cache misses, so the database is read once.', caption: which === 'hit' ? 'The value is already cached, so the request returns without reading the database.' : 'The value is absent, so the request reads the database once and then returns.' });
     // Ask the program, then show its answer: here the path and the read count.
     const reads = which === 'hit' ? 0 : 1;
     await d.dim([...new Set(PATH[which].flat())]);

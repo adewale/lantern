@@ -9,7 +9,7 @@ import type { Trace } from '../../src/index.ts';
 import { FRAME } from '../../src/svg.ts';
 import { caseNameIn, descriptionLang } from '../../app/embed-strings.ts';
 import type { ExplainerClass, Settings } from '../../explain/index.ts';
-import { pictureHtml, htmlEscape } from '../../explain/trace.ts';
+import { pictureHtml, htmlEscape, stepWords, wordsHtml } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
 import { ROOT, hash, baseReceipt } from './explain-project.ts';
 
@@ -38,8 +38,9 @@ export function videoTranscript(title: string, lang: string, steps: Trace['steps
   const dir = (text: unknown) => (rightToLeft(String(text)) ? ' dir="rtl"' : '');
   return `<!doctype html><html lang="${htmlEscape(lang)}"><meta charset="utf-8"><title>${htmlEscape(title)}</title><h1${dir(title)}>${htmlEscape(title)}</h1><ol>${steps
     .map((s) => {
-      const shows = pictureHtml(s.after);
-      return `<li><h2${dir(s.meta.title ?? s.step)}>${htmlEscape(s.meta.title ?? s.step)}</h2><p${dir(s.meta.caption ?? '')}>${htmlEscape(s.meta.caption ?? '')}</p>${shows && descriptionLang(lang) ? `<div${descriptionLang(lang)}>${shows}</div>` : shows}</li>`;
+      const shows = pictureHtml(s.after),
+        words = stepWords(s);
+      return `<li><h2${dir(words.title)}>${htmlEscape(words.title)}</h2>${wordsHtml(words, dir)}${shows && descriptionLang(lang) ? `<div${descriptionLang(lang)}>${shows}</div>` : shows}</li>`;
     })
     .join('')}</ol></html>\n`;
 }
@@ -90,7 +91,8 @@ export async function footerLines(trace: Trace, values: Settings): Promise<strin
   takeMissingGlyphs();
   return trace.steps.map((s) => {
     try {
-      const lines = [s.meta.title ?? s.step, s.meta.caption ?? ''].map((t) => footerParagraph(String(t)));
+      const words = stepWords(s);
+      const lines = [words.title, words.caption].map((t) => footerParagraph(t));
       // wrapCaption shaped each line as it measured it; a right-to-left line is drawn with its mark, so shape that too
       for (const line of lines.flat()) if (line.startsWith(RLM)) new Text(line, { fontSize: CAPTION.size });
       // Footer text is drawn as outlines too, so a character the fonts lack would be blank.
@@ -139,10 +141,10 @@ export function captionsVtt(trace: Trace, lang = 'en'): string {
   return (
     `WEBVTT\nLanguage: ${lang}\n\n` +
     trace.steps
-      .filter((s) => s.meta.caption)
+      .filter((s) => stepWords(s).caption)
       .map(
         (s, i) =>
-          `${i + 1}\n${vttTime(s.t0)} --> ${vttTime(s.t1 ?? trace.duration)}\n${String(s.meta.caption).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n\s*\n/g, '\n').trim()}\n`,
+          `${i + 1}\n${vttTime(s.t0)} --> ${vttTime(s.t1 ?? trace.duration)}\n${stepWords(s).caption.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n\s*\n/g, '\n').trim()}\n`,
       )
       .join('\n')
   );
@@ -158,7 +160,7 @@ function filmSteps(trace: Trace) {
   const { fps } = trace;
   let start = 0;
   return trace.steps.map((s) => {
-    const caption = typeof s.meta.caption === 'string' ? s.meta.caption.trim() : '';
+    const caption = stepWords(s).caption;
     const read = Math.ceil(((caption ? caption.split(/\s+/).length : 0) / Scene.captionWpm) * 60 * fps - 1e-6);
     const last = s.frame1 ?? trace.frames,
       moveEnd = s.hold == null ? last : Math.round(s.hold * fps);
@@ -268,7 +270,7 @@ export async function renderVideo(
       steps
         .map(
           (s) =>
-            `[CHAPTER]\nTIMEBASE=1/1000\nSTART=${Math.round(s.t0 * 1000)}\nEND=${Math.round(s.t1 * 1000)}\ntitle=${escape(String(s.meta.title ?? s.step))}\n`,
+            `[CHAPTER]\nTIMEBASE=1/1000\nSTART=${Math.round(s.t0 * 1000)}\nEND=${Math.round(s.t1 * 1000)}\ntitle=${escape(stepWords(s).title)}\n`,
         )
         .join(''),
   );
@@ -377,7 +379,7 @@ export async function renderVideo(
     await rm(temp, { recursive: true, force: true });
     throw error;
   }
-  // The text alternative to the video (WCAG 1.2.1): each step's title, caption and what its picture shows.
+  // The text alternative to the video (WCAG 1.2.1): each step's title, line, caption and what its picture shows.
   const title = [project.Scene.meta?.title ?? basename(out), caseNameIn(lang, project.Scene, variant.values)].filter(Boolean).join(' · '),
     transcript = out.replace(/\.[^.]+$/, '.transcript.html');
   const receipt = {

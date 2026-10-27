@@ -113,6 +113,12 @@ const gates: { gate: string; source: string; message: RegExp; snapshots?: () => 
     message: /The picture changes after the caption hold begins/,
   },
   {
+    // A step line takes the band under the title; content must stay below it.
+    gate: 'text: content runs into the heading’s line',
+    source: scene(`await this.step('one',{title:'One',line:'A line under the title.'});${label('too high', '[0,3.45]', 0.3)}`),
+    message: /runs into the heading's "A line under the title\."/,
+  },
+  {
     gate: 'step change: a step that ends on the same picture',
     source: `import{Scene,Text,FadeIn}from'rayner';import{stage}from'rayner/explain';export default class Same extends Scene{async construct(){const s=stage(this);await this.step('one',{title:'One'});await this.play(new FadeIn(new Text('hello',{color:s.palette.ink})));await this.step('two',{title:'Two',caption:'Nothing new is drawn.'});await this.wait(.5);}}`,
     message: /Each step must change the picture[^]*two/,

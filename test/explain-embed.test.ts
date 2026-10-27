@@ -14,7 +14,7 @@ import { publishedPage } from '../tools/lib/explain-share.ts';
 import { fc, params } from './lib/pbt.ts';
 import { resolveSettings } from '../explain/index.ts';
 import type { Settings } from '../explain/index.ts';
-import { pictureHtml, pictureSummary } from '../explain/trace.ts';
+import { pictureHtml, pictureSummary, stepWords } from '../explain/trace.ts';
 import { NARROW_PX, READ_PX, closeUps, labelsToRead, stageScale, stepLayouts, toView, viewBox } from '../app/embed-closeup.ts';
 import type { StepLayout } from '../app/embed-closeup.ts';
 import { labelOf } from '../explain/diagrams.ts';
@@ -516,6 +516,7 @@ interface StepSpec {
   step: string;
   caption: string;
   title: string;
+  line: string;
   summary: string;
   picture: string;
 }
@@ -551,8 +552,9 @@ function stepsOf(p: Project, values: Settings): StepSpec[] {
   assert.ok(v, `no prebuilt case ${JSON.stringify(values)}`);
   return v.trace.steps.map((s) => ({
     step: s.step,
-    caption: String(s.meta.caption ?? ''),
-    title: String(s.meta.title ?? s.step),
+    caption: stepWords(s).caption,
+    title: stepWords(s).title,
+    line: stepWords(s).line,
     summary: pictureSummary(s.after),
     picture: pictureHtml(s.after),
   }));
@@ -608,6 +610,7 @@ function observe(ids: string[]) {
     current: [...document.querySelectorAll<HTMLElement>('.steps [aria-current=step]')].map((b) => b.dataset.step),
     list: [...document.querySelectorAll<HTMLElement>('.steps button')].map((b) => b.dataset.step),
     caption: document.querySelector('.caption')!.textContent,
+    lede: [...document.querySelectorAll('.lede > *')].map((e) => ((e as HTMLElement).hidden ? null : e.textContent)),
     stageLabel: stage.getAttribute('aria-label'),
     // The resting picture in words: a summary as the stage's description, the full list under a disclosure.
     summary: document.getElementById(stage.getAttribute('aria-describedby') ?? '')?.textContent,
@@ -730,7 +733,8 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   eq('step list', seen.list, list.map((s) => s.step));
   eq('aria-current', seen.current, [entry.step]);
   eq('caption', seen.caption, spec.caption);
-  eq('stage label', seen.stageLabel, `${seen.title}: ${spec.title}`);
+  eq('stage label', seen.stageLabel, `${seen.title}: ${spec.title}${spec.line ? ` — ${spec.line}` : ''}`);
+  eq('lede', seen.lede, [`${i + 1}. ${spec.title}`, spec.line || null]);
   eq('stage description', seen.summary, spec.summary);
   eq('computed stage description', await stageDescription(r.page), spec.summary.replace(/\s+/g, ' ').trim());
   // Compared as the browser serializes it, which writes &quot; in text as a plain quote.

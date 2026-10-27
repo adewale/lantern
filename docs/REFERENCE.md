@@ -11,7 +11,11 @@ An explainer is a Rayner `Scene` exported from a TypeScript or ESM file, prefera
 ```ts
 static meta = { id: 'cache', title: 'Why a cache changes the request path', lang: 'en', sources: ['https://example.com/spec'] };
 
-await this.step('stable-name', { title: 'A claim the picture can prove', caption: 'The value, part or mechanism on screen.' });
+await this.step('stable-name', {
+  title: 'A claim the picture can prove',
+  line: 'The one thing to see, in a few words.',       // under the title, drawn on the picture
+  caption: 'The value, part or mechanism on screen.',  // under the stage on the page; the video's footer and subtitles
+});
 this.state.reads = reads;   // program state, recorded at each step boundary
 ```
 
@@ -19,6 +23,7 @@ this.state.reads = reads;   // program state, recorded at each step boundary
 - `meta.lang` (BCP 47, default `en`) is the language of the page, the transcripts and the subtitles. The player's own words (`app/embed-strings.ts`) and the generated picture descriptions (`explain/words.ts`, whose `families` name each diagram family and its parts) exist in English and French. On a page in any other language both are English, and the descriptions are marked `lang="en"`; `Picture.lang` in the trace records a description's language when it is not English.
 - Step names are URL identifiers. They must be unique and non-empty in every case.
 - `this.state` is recorded before and after each step. Compute values with a model, show its result, and test that each step's state equals the model's (`assertStepState` in `test/lib/explainer-state.ts`).
+- `line` is one short line under the heading: what to see, in about ten words or fewer. The stage draws it in the soft colour and fails every command on a line wider than the heading (14.6 units at 0.3). It is part of the picture, so a video shows it too, and both transcripts give it.
 - A captioned step holds until its caption could be read at 160 words a minute (`Scene.captionWpm`), counting the step's motion as reading time. The page stops when the picture stops; the [video](#video-files) holds the caption. The picture must not change once the hold begins.
 - Do not put awaited animations inside `try`/`catch` or `.catch()` in `construct()`. Seeking stops a scene by throwing `StopScene`, and a broad catch swallows it, so a jump to a step would show a different picture from playing to it. Handle a known model error in plain code before animating. The engine limits the damage: a `StopScene` from a sink sets `this.stopped`, and from then on `play()`, `wait()`, `step()` and every frame rethrow it before doing anything, so a swallowed stop emits no further frame. Plain code between the catch and the next scene call (a `shift()`, a write to `this.state`) still runs, which is why `check` keeps the lint.
 - `this.frame` is the camera: the box of the stage on screen. `this.play(this.frame.animate.fit(target, { margin }))` zooms onto a mobject or a box, `this.frame.animate.reset()` returns to the whole stage, and `this.frame.zoom` is the magnification. Moving it moves no point; [the camera guide](CAMERA.md) has the rest, and [`d.focus`](#diagrams) moves the same camera with `camera: true`.
@@ -87,7 +92,7 @@ import { stage } from 'rayner/explain';
 const s = stage(this, { style: 'nord' });
 ```
 
-`stage(scene, options)` adds the paper and a heading that follows each step's `title`.
+`stage(scene, options)` adds the paper and a heading that follows each step's `title`: a circled step number, the title, and the step's `line` under it. The heading draws over everything, and while the camera is away from home it stays put on screen at its size, over a paper band that zoomed content passes under.
 
 | Option | Effect |
 | --- | --- |
@@ -95,6 +100,7 @@ const s = stage(this, { style: 'nord' });
 | `palette` | Colours for the stage, for example `palette('dusk')` in a scene with no diagrams |
 | `heading` | `'step'` (default), a fixed string, or `false` for no heading |
 | `headingSize` | The heading's font size, 0.36 by default; at 0.54 it reads at 12 px on a 390 px page without a close-up |
+| `numbered` | A circled step number before the title; on by default when the heading follows the steps |
 
 With neither `style` nor `palette`, the stage adopts the first diagram's palette.
 
@@ -108,8 +114,16 @@ With neither `style` nor `palette`, the stage adopts the first diagram's palette
 | `s.keep(...mobs, { describe })` | Keep native objects without animating them; returns the first |
 | `s.clearOverlays()` | Fade out cards, code, notes (the stage's and the diagrams') and kept objects |
 | `s.clear({ runTime })` | Fade out everything except paper and heading, and bring the camera home, in one play |
+| `s.focus(target \| 'all', { margin, runTime, exact, with })` | Move the camera so a mobject, mobjects or a box fill the stage below the heading, with `margin`; `'all'` goes home. Never zooms out past the stage or shows beyond its edges. `exact: true` takes a 16:9 box as the view as it is; `with` plays other animations in the same play |
+| `s.carry(m, to, { runTime })` | Glide a kept object to a point, or into a box or region it is shrunk to fit (never enlarged): carry an idea on instead of clearing it |
+| `s.draw(m, { tool, color, runTime, describe })` | Draw `m` stroke by stroke at an even speed with a `'pen'` or `'pencil'` riding the tip (`false` for none), and keep it. Between strokes the tool travels at drawing speed, so it never jumps. `m` must not be on stage yet |
+| `s.dimension(a, b, label, { offset, color, size })` | A dimension line from `a` to `b` with ticks, arrowheads and `label`, set off by `offset`; drawn in and kept |
+| `s.pin(at, { label, color, size })` | A pin stuck in at `at`, with an optional label |
+| `s.callout(target, text, { side, gap, color, size })` | Words beside a point, box or mobject, with a leader line ending in a dot on its nearest edge |
 | `s.emphasis`, `s.soft`, `s.good`, `s.bad` | Colours that read on this paper: emphasis, secondary text, accepted, rejected |
 | `s.palette`, `s.paper`, `s.heading` | The current palette, paper rectangle and heading text |
+
+Annotations say a value where it is. Prefer a dimension, pin or callout on the drawing to a card beside it, and `carry` to `clear` when the next step builds on this one: `check` reports how many cards each resting picture holds (`cardsAtRest`).
 
 `{ enter: false }` creates a card or code panel without playing it, so `s.enter(card, code)` can bring several in together.
 
@@ -131,7 +145,7 @@ Emphasis is the style's accent, or orange for styles whose accent is grey or nea
 
 ### Regions
 
-Stage coordinates are 16 × 9 with the origin at the centre and y up. The heading sits at y = 3.8; content belongs below y = 3.25. `at` and `box` accept a region name, a point `[x, y]`, or a box `[minX, minY, maxX, maxY]`.
+Stage coordinates are 16 × 9 with the origin at the centre and y up. The heading sits at y = 3.8 (3.98 with a line, which sits under it); content belongs below y = 3.25, and `check` fails text that runs into the heading's number or line. `at` and `box` accept a region name, a point `[x, y]`, or a box `[minX, minY, maxX, maxY]`.
 
 | Region | Box |
 | --- | --- |
@@ -251,7 +265,7 @@ Capture asserts that its output equals Agentic Mermaid's `renderMermaidSVG` byte
 | Seek | A seeked frame differs from the played frame, at two frames per step |
 | Trace | The trace with frames skipped differs from the played trace |
 | Step change | A step's resting picture, ignoring the heading, equals the previous step's. The camera's view is part of the picture, so a camera move alone is a change |
-| Text | Native text in a resting picture overlaps other text, or is cut by the stage edge or the edge of the camera's view; text wholly outside the view is off screen and not judged |
+| Text | Native text in a resting picture overlaps other text, runs into the heading's number or line, or is cut by the stage edge or the edge of the camera's view; text wholly outside the view is off screen and not judged |
 | Legibility | A native label never reaches 14 px at a 1280 px stage in a frame where it is drawn (opacity and draw fraction at least 0.95) and inside the camera's view; an imported label never reaches 14 px in a resting picture inside its diagram's viewport. Sizes are on screen: world size × the camera's zoom, min(16 ÷ view width, 9 ÷ view height). A native label counts at that zoomed size only in a step's completed frame; in other frames it counts at no more than its size with the camera home, so a camera gliding past does not make it read |
 | Words | A kept drawing with no text and no `describe` |
 | Bare runtime | The scene, bundled, gives different steps or state in a context with no DOM, Node, timers or console |
@@ -265,6 +279,8 @@ The report goes to `out/checks/<id>/report.json`. For each case it holds the ful
 | `minLabelPx390`, `labelsUnder12PxAt390` | Smallest label, and labels under 12 px, in each step's phone close-up (see [controls](#controls-and-accessibility)) on a 390 px page, whose stage is 358 px wide |
 | `labelsOutsideCloseUpsAt390` | Labels no close-up shows whole, which a reader reaches by panning |
 | `minLabelPx390WholeStage` | Smallest label on that phone without close-ups |
+
+`cardsAtRest` counts the cards in each step's resting picture.
 
 The phone sizes are reported, not gated; every demo case reports no label under 12 px. A close-up zooms on top of the author's camera, so its sizes multiply the camera zoom by the close-up's.
 
@@ -323,11 +339,11 @@ An unknown setting or value resets every setting to its default, and a notice na
 
 ### Controls and accessibility
 
-**Next** plays the step and stops on its resting picture; pressed while a step plays, it carries that run on to the next step without replaying the scene from its start. The controls sit straight under the stage, the caption under them, so a long caption never moves Next. Icon buttons: previous, zoom out, zoom in, fit (only while zoomed), replay, copy link, and enlarge (full screen, when the iframe allows it). Cases are a segmented choice under the title; steps are a list under the caption.
+**Next** plays the step and stops on its resting picture; pressed while a step plays, it carries that run on to the next step without replaying the scene from its start. The controls sit straight under the stage, the step's words under them, so a long caption never moves Next. Icon buttons: previous, zoom out, zoom in, fit (only while zoomed), replay, copy link, and enlarge (full screen, when the iframe allows it). Cases are a segmented choice under the title; steps are a numbered list under the caption, with the numbers the stage's heading draws. The stage's accessible name is the explainer's title, the step's title and its line; both transcripts give each step's title, line and caption.
 
 The stage's accessible description is a one-sentence summary of the picture. "What the picture shows", under the caption, opens the full description: each diagram, card, code panel and described drawing, with what is marked, dimmed or changed in this step.
 
-The stage takes focus from Tab or a click. With the stage focused, `+`, `-` and `0` zoom and reset, and arrow keys pan when zoomed. Otherwise left and right arrows change step, except on a button, link or field. Pinch, Ctrl-scroll and double-click zoom; when zoomed, drag pans and a click recentres on the point clicked. Zoom goes up to 6×, keeps its place across steps, and resets when the case changes. It narrows the stage's SVG `viewBox` inside the author's camera (`ReaderSink` in `app/embed-zoom.ts`) rather than scaling the element, so the drawing stays sharp, the page does not move, an author's camera move keeps playing under it, and Fit shows the author's frame. On a stage under 600 px wide, each step opens on a close-up of what it changed (what it brought new before what it only moved or scaled), zoomed whenever a label near the change is under 12 px so that it reads at 12 px, and kept below the heading the stage draws, zooming a little further when that is what it takes; a view count and **Next view** button below the picture let readers inspect its other close-ups without advancing the step. The close-ups that show what the step newly emphasised with the stage's helpers (a lit card row, a code focus or diff line, a marked, travelled or focused diagram part, a note) come right after the first, then the rest of the change, each group in reading order from the first. The small corner map moves through the same views. **Whole picture** (or Fit) shows the author's frame and keeps it for later steps, and the crosshair button brings close-ups back. A vertical swipe scrolls the page; a sideways drag or a pinch moves the view. With reduced motion, the previous picture crossfades into the step's resting picture instead of playing.
+The stage takes focus from Tab or a click. With the stage focused, `+`, `-` and `0` zoom and reset, and arrow keys pan when zoomed. Otherwise left and right arrows change step, except on a button, link or field. Pinch, Ctrl-scroll and double-click zoom; when zoomed, drag pans and a click recentres on the point clicked. Zoom goes up to 6×, keeps its place across steps, and resets when the case changes. It narrows the stage's SVG `viewBox` inside the author's camera (`ReaderSink` in `app/embed-zoom.ts`) rather than scaling the element, so the drawing stays sharp, the page does not move, an author's camera move keeps playing under it, and Fit shows the author's frame. On a stage under 600 px wide, each step opens on a close-up of what it changed (what it brought new before what it only moved or scaled, such as a panel carried aside), zoomed whenever a label near the change is under 12 px so that it reads at 12 px, and kept below the heading the stage draws, zooming a little further when that is what it takes, and the step's number, title and line then show as text above the caption; a view count and **Next view** button below the picture let readers inspect its other close-ups without advancing the step. The close-ups that show what the step newly emphasised with the stage's helpers (a lit card row, a code focus or diff line, a marked, travelled or focused diagram part, a note) come right after the first, then the rest of the change, each group in reading order from the first. The small corner map moves through the same views. **Whole picture** (or Fit) shows the author's frame and keeps it for later steps, and the crosshair button brings close-ups back. A vertical swipe scrolls the page; a sideways drag or a pinch moves the view. With reduced motion, the previous picture crossfades into the step's resting picture instead of playing.
 
 Inside an iframe without `parentOrigin` (a raw iframe), the page adds its own "Open in a new tab" link.
 
@@ -356,7 +372,7 @@ Each step plays its motion with the step's title in the footer, then holds its r
 | `.mp4` | Silent H.264, `yuv420p`; one `mov_text` subtitle stream tagged with the ISO 639-2 code for `meta.lang`; chapters |
 | `.webm` | Silent VP9; WebVTT subtitle stream tagged with `meta.lang` |
 | `.vtt` | One cue per captioned step, with a `Language:` header |
-| `.transcript.html` | The video's text alternative: title and case, then each step's title, caption and what its picture shows |
+| `.transcript.html` | The video's text alternative: title and case, then each step's title, line, caption and what its picture shows |
 | `.chapters.ffmeta` | One chapter per step, titled by the step title |
 | `.receipt.json` | Hashes, settings, versions of resvg and FFmpeg, size, fps, `frames`, `rasterizedFrames`, preset, `chapters` (each step with its `captionHold` in seconds), `transcript` |
 

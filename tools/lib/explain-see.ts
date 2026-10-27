@@ -26,6 +26,7 @@ export function seeText(id: string, c: CaseDescription, step?: string): string {
     '',
     `${id} · step ${names.indexOf(s.step) + 1} of ${names.length}: ${s.step}${c.name ? ` · ${c.name}` : ''}`,
     `Title: ${s.title}`,
+    ...(s.line ? [`Line: ${s.line}`] : []),
     ...(s.caption ? [`Caption: ${s.caption}`] : []),
     ...(s.picture ? [`Picture: ${s.picture}`] : []),
     changed.length ? `Changed: ${changed.join('; ')}` : 'Changed: nothing in scene.state',

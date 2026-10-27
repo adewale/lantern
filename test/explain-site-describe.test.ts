@@ -65,7 +65,7 @@ test('site:export copies each explainer\'s describe.json from demos:build as <id
 });
 
 test("an explainer's llms.txt summary is the first sentence of its default case's first caption", () => {
-  const step = (caption: string) => ({ step: 's', title: 'T', caption, start: 0, end: 1, state: {}, changed: {}, picture: '' });
+  const step = (caption: string) => ({ step: 's', title: 'T', line: '', caption, start: 0, end: 1, state: {}, changed: {}, picture: '' });
   const d: ExplainerDescription = {
     schema: 1,
     id: 'x',

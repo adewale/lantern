@@ -19,6 +19,7 @@ test('describeExplainer gives every case and step: the words, the state the trac
     c.steps.forEach((s, i) => {
       const t = trace.steps[i]!;
       assert.equal(s.title, t.meta.title);
+      assert.equal(s.line, t.meta.line ?? '', `${s.step}: the line under the title`);
       assert.equal(s.caption, t.meta.caption);
       const { picture, ...state } = t.after ?? {};
       assert.deepEqual(s.state, state, `${s.step}: state is the trace's, without the picture`);
@@ -32,6 +33,8 @@ test('describeExplainer gives every case and step: the words, the state the trac
         assert.notDeepEqual(change.before, change.after);
       }
       assert.match(s.drawing!, /[┌─│]/, `${s.step}: the resting picture drawn as text`);
+      // The heading is left out whole: its title, and the line and number drawn with it.
+      for (const words of [s.title, s.line].filter(Boolean)) assert.ok(!s.drawing!.includes(words), `${s.step}: "${words}" is in the drawing`);
     });
   }
   // The ring after the last pushes, as `rayner see` reports it.

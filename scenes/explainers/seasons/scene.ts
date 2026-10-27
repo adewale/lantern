@@ -150,6 +150,7 @@ export default class SeasonsExplainer extends Scene {
     // ---------------------------------------------------------------- tilt
     await this.step('tilt', {
       title: 'The axis keeps its direction all year',
+      line: 'At 23.44°, north leans sunward in June and away in December.',
       caption:
         'Earth’s axis is tilted 23.44° from the normal to its orbit and points the same way all year, so the north end leans toward the Sun in June and away from it in December. Sizes and distances are not to scale.',
     });
@@ -340,6 +341,7 @@ export default class SeasonsExplainer extends Scene {
 
     await this.step('june', {
       title: `June: ${place.name}’s noon Sun at ${degrees(june.altitude)}`,
+      line: `The lit part of ${place.name}’s circle gives ${hours(june.daylight)} of daylight.`,
       caption:
         place.lat < 0
           ? `In June the north end of the axis leans toward the Sun. Sydney is south of the equator, so its noon Sun is low and most of its latitude circle, the line through the dot, is on the night side: ${hours(june.daylight)} of daylight in its winter.`
@@ -364,6 +366,7 @@ export default class SeasonsExplainer extends Scene {
     // noon ray and the angle between them fill the stage.
     await this.step('noon', {
       title: `June noon: the Sun stands ${degrees(june.altitude)} above ${place.name}’s horizon`,
+      line: `The angle is 90° − |${exactly(place.lat)} − ${exactly(TILT)}| = ${exactly(june.altitude)}.`,
       caption: `Zoomed in on the red dot. The white line is ${place.name}’s horizon, and noon sunlight arrives parallel to the Sun’s direction. The angle between them is 90° minus the gap between the latitude, ${exactly(place.lat)}, and the latitude where the June Sun is overhead, ${exactly(TILT)}.`,
     });
     const notes = new Group();
@@ -375,11 +378,13 @@ export default class SeasonsExplainer extends Scene {
         w = 16 / ZOOM,
         h = 9 / ZOOM,
         p = J.place,
-        // The ray comes in from the left: keep its start in view, with room beside
-        // the globe for the formula, and the heading out of the view.
+        // The ray comes in from the left: keep its start in view, with room beside the globe for
+        // the formula. The heading and its line stay on screen over a band 1.25 units deep (the
+        // stage above y = 3.25), so the view may reach that much higher, a band's depth at this
+        // zoom, and still show nothing from above y = 3.25 except under the band.
         start = Math.min(1.45, p[0] - 0.9),
         cx = JUNE_C[0] - 0.9,
-        cy = Math.min(p[1], 3.45 - h / 2);
+        cy = Math.min(p[1], 3.25 - h / 2 + 1.25 / ZOOM);
       const view: Box = [cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2];
       // Labels that read at 14 px even judged without the zoom, which doubles them.
       const small = 0.18;
@@ -404,11 +409,8 @@ export default class SeasonsExplainer extends Scene {
           edge: [-1, -1],
         }),
       );
-      await this.play(
-        ...[juneCard, sun].map((m) => new FadeOut(m)),
-        this.frame.animate.fit(view, { margin: 0 }),
-        { runTime: 1.2 },
-      );
+      // The stage's camera: the heading and its line stay on screen, over the band.
+      await s.focus(view, { exact: true, runTime: 1.2, with: [juneCard, sun].map((m) => new FadeOut(m)) });
       await s.enter(notes, {
         describe: `Close-up on ${place.name} at noon in June: its horizon, the noon sunlight, and the ${degrees(june.altitude)} angle between them, ${formula}`,
       });
@@ -417,6 +419,10 @@ export default class SeasonsExplainer extends Scene {
     // ------------------------------------------------------------ december
     await this.step('december', {
       title: `December: the same axis, ${place.name}’s Sun at ${degrees(december.altitude)}`,
+      line:
+        Math.abs(june.daylight - december.daylight) > 0.05
+          ? `The south end leans sunward; daylight goes ${hours(june.daylight)} to ${hours(december.daylight)}.`
+          : `The south end leans sunward; daylight stays ${hours(december.daylight)}.`,
       caption:
         'Half an orbit later Earth is on the far side of the Sun, but the axis still points the same way, so the south end now leans sunward and the hemispheres swap seasons. ' +
         (Math.abs(june.daylight - december.daylight) > 0.05
@@ -424,13 +430,7 @@ export default class SeasonsExplainer extends Scene {
           : `${place.name}’s noon Sun stands at the same ${degrees(december.altitude)}, now to the south, and its daylight stays at ${hours(december.daylight)}.`),
     });
     // Back to the whole stage: the same Sun and June Earth, with the June card again.
-    await this.play(
-      this.frame.animate.reset(),
-      new FadeOut(notes),
-      new FadeIn(sun),
-      new FadeIn(juneCard),
-      { runTime: 1 },
-    );
+    await s.focus('all', { runTime: 1, with: [new FadeOut(notes), new FadeIn(sun), new FadeIn(juneCard)] });
     const D = season('December', DEC_C, 1, december);
     await s.enter(D.drawing, { describe: D.drawn });
     await s.enter(D.ray, { describe: D.noon });
@@ -443,6 +443,7 @@ export default class SeasonsExplainer extends Scene {
     // ------------------------------------------------------------ latitude
     await this.step('latitude', {
       title: 'Latitude sets how much of each circle is lit',
+      line: 'Tromsø’s circle is all lit in June; the equator’s is half lit.',
       caption:
         'Each line is one place’s latitude circle, yellow where it is in daylight. Tromsø’s circle is all day in June and all night in December, while the equator’s is always cut in half. The model’s day length in hours is acos(−tan latitude × tan declination) in degrees, divided by 7.5.',
     });
@@ -507,6 +508,13 @@ export default class SeasonsExplainer extends Scene {
     const flat = Math.abs(june.daylight - december.daylight) < 0.05;
     await this.step('year', {
       title: `A computed year of daylight in ${place.name}`,
+      line: polarDay
+        ? `24 h for ${polarDay} days, 0 h for ${polarNight}; 12 h at the equinoxes.`
+        : flat
+          ? 'Flat at 12 hours all year, solstices and equinoxes alike.'
+          : june.daylight < december.daylight
+            ? `Shortest ${hours(shortest)} in June, longest ${hours(longest)} in December.`
+            : `From ${hours(shortest)} in December to ${hours(longest)} in June.`,
       caption:
         'The curve samples the same model through the year, with the Sun’s declination on each day; the card’s counts run it on all 365 days. ' +
         (polarDay
@@ -594,6 +602,10 @@ export default class SeasonsExplainer extends Scene {
     const mirror = daylightYear(-place.lat);
     await this.step('distance', {
       title: 'Earth is nearest the Sun in January, during the northern winter',
+      line:
+        place.lat !== 0
+          ? `15 January: ${place.name} gets ${hours(year[0]!)}, latitude ${degrees(-place.lat)} gets ${hours(mirror[0]!)}.`
+          : `${place.name} gets ${hours(year[0]!)} in January and July: no distance term.`,
       caption:
         place.lat !== 0
           ? `Earth is nearest the Sun in early January. On 15 January ${place.name} gets ${hours(year[0]!)} of daylight and latitude ${degrees(-place.lat)}, the second curve, gets ${hours(mirror[0]!)}. Both are the same distance from the Sun that day, so the opposite seasons must come from the tilt.`
@@ -688,6 +700,7 @@ export default class SeasonsExplainer extends Scene {
     // ------------------------------------------------------------- compare
     await this.step('compare', {
       title: 'The same formula draws all four daylight curves',
+      line: 'London and Sydney peak six months apart; Quito stays at 12 h.',
       caption:
         'The chart runs the same model at four latitudes. Tromsø’s curve sits flat at 24 h and at 0 h for weeks, London and Sydney peak six months apart, and Quito stays at 12 hours.',
     });

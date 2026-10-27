@@ -409,7 +409,7 @@ test('stepLayouts records where the stage heading ends, and a phone close-up of 
   class Headed extends Scene {
     override async construct() {
       const s = stage(this);
-      await this.step('one', { title: 'A title over the picture' });
+      await this.step('one', { title: 'A title over the picture', line: 'A line under the title.' });
       const small = new Text('a small label near the top', { fontSize: 0.2 }).moveTo([-4, 2.9]);
       await s.enter(small, { describe: 'a label' });
     }

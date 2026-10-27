@@ -159,6 +159,7 @@ export default class PgPageExplainer extends Scene {
     let rowShown = false;
     await this.step('page', {
       title: 'An empty 8 KB page has 8168 bytes free',
+      line: `pd_lower ${PAGE_HEADER} and pd_upper ${BLCKSZ} mark where free space starts and ends.`,
       // bufpage.h:121-122 "pd_lower - offset to start of free space", "pd_upper - offset to end of free space";
       // bufpage.c:55-57 PageInit sets pd_lower = SizeOfPageHeaderData and pd_upper = pageSize - specialSize (0 for a table).
       caption: `By default Postgres stores a table in pages of ${BLCKSZ} bytes, and every page starts with a ${PAGE_HEADER}-byte header. Two of its fields, pd_lower and pd_upper, mark where the free space starts and ends. On an empty page they are ${PAGE_HEADER} and ${BLCKSZ}, so ${BLCKSZ - PAGE_HEADER} bytes are free.`,
@@ -180,6 +181,7 @@ export default class PgPageExplainer extends Scene {
     const valueWords = isText ? `the int4, then ${TEXT_CHARS} characters after a 1-byte length` : `the ${c.label}`;
     await this.step('row', {
       title: `One ${c.label} row takes ${t.perRow} bytes of the page`,
+      line: `A ${LINE_POINTER}-byte line pointer, plus a ${t.stored}-byte tuple at the page’s end.`,
       // heap_form_tuple (heaptuple.c:1151-1160); PageAddItemExtended (bufpage.c:310-316).
       caption: `An insert adds a ${LINE_POINTER}-byte line pointer after the header and a tuple at the end of the page: a ${TUPLE_HEADER}-byte header padded to ${t.hoff}, then ${valueWords}, ${t.lpLen} bytes. A 64-bit build stores each tuple in a multiple of 8 bytes, ${
         t.lpLen === t.stored ? `which ${t.lpLen} already is` : `here ${t.stored}`
@@ -264,6 +266,7 @@ export default class PgPageExplainer extends Scene {
       p = c.page;
     await this.step('full', {
       title: `A full page holds ${p.rows} ${c.label} rows; ${percent(sh.data)} of it is data`,
+      line: `Tuple headers take ${percent(sh.headers)} of the page${sh.headers > sh.data ? ', more than the data' : ''}.`,
       caption: `Inserts fill the page until the next row no longer fits: ${p.rows} rows at the default fillfactor. The pie splits the ${BLCKSZ} bytes, with each part’s bytes in brackets. The ${p.rows} tuple headers take ${percent(sh.headers)}, ${
         sh.headers > sh.data ? 'more than' : 'next to'
       } the ${percent(sh.data)} that is the values${isText ? ', counting the text’s length byte' : ''}.`,
@@ -284,6 +287,7 @@ export default class PgPageExplainer extends Scene {
     const used = p.rows * t.perRow;
     await this.step('why', {
       title: `Row ${p.rows + 1} would need ${t.stored} bytes and a pointer; ${p.free} are left`,
+      line: `Free space less a ${LINE_POINTER}-byte pointer is ${p.heapFree} bytes, too few.`,
       // hio.c:520, 553, 703 and bufpage.c:906-921 (PageGetFreeSpace subtracts one ItemIdData).
       caption: `${p.rows} rows of ${t.perRow} bytes use ${used} of the ${BLCKSZ - PAGE_HEADER} free bytes, leaving ${p.free}; pageinspect reports pd_lower ${p.lower} and pd_upper ${p.upper}. Before an insert, hio.c asks for the tuple’s ${t.stored} bytes, and bufpage.c counts the free space less a ${LINE_POINTER}-byte pointer: ${p.heapFree} bytes, too few.`,
     });
@@ -314,6 +318,12 @@ export default class PgPageExplainer extends Scene {
       title: same
         ? `An ${w.label} row takes the same ${w.tuple.perRow} bytes`
         : `As ${w.label}, a row takes ${w.tuple.perRow} bytes, not ${t.perRow}`,
+      line:
+        column === 'int4'
+          ? 'The 4 extra bytes fill the int4 tuple’s 4 bytes of padding.'
+          : column === 'int8'
+            ? 'The 4 bytes saved become padding: the tuple still rounds to 32.'
+            : `After an int8 the text starts at 32; the tuple rounds up to ${w.tuple.stored}.`,
       caption: `The same pie, edited to ${w.label}${isText ? '' : `: the data goes from ${t.data} to ${w.tuple.data} bytes a row`}. ${swapWhy} ${
         same ? `The slices change size; the page still holds ${w.page.rows} rows.` : `A full page drops from ${c.page.rows} rows to ${w.page.rows}.`
       }`,
@@ -340,6 +350,10 @@ export default class PgPageExplainer extends Scene {
         ff === 100
           ? `Fillfactor 100, the default, holds nothing back: ${f.page.rows} rows`
           : `Fillfactor ${ff} holds ${f.page.reserve} bytes back: ${f.page.rows} rows`,
+      line:
+        ff === 100
+          ? `Fillfactor 70 would hold ${reserveFor(70)} bytes back and stop at ${r70.page.rows} rows.`
+          : `The next row needs ${t.stored} + ${f.page.reserve} bytes; ${f.page.heapFree} are free.`,
       // rel.h:389-390; hio.c:539-553 and 703; hio.c:493-496 says the space is for updates that keep a row on its page.
       caption:
         ff === 100
@@ -366,6 +380,7 @@ export default class PgPageExplainer extends Scene {
     const [i4, i8, i4t, i8t] = all as [Case, Case, Case, Case];
     await this.step('compare', {
       title: `int4 and int8 fill ${i4.pagesFor10000} pages alike; with text after them, ${i4t.pagesFor10000} and ${i8t.pagesFor10000}`,
+      line: `Both integer rows take ${i4.tuple.perRow} bytes; with text, ${i4t.tuple.perRow} and ${i8t.tuple.perRow}.`,
       caption: `Each line is a table of 10 000 rows at fillfactor ${ff}, as measured on Postgres 18.6. int4 and int8 rows both take ${i4.tuple.perRow} bytes, so both tables take ${i4.pagesFor10000} pages. With an ${TEXT_CHARS}-character text column after the integer, the int8 table takes ${i8t.pagesFor10000} pages to the int4 table’s ${i4t.pagesFor10000}.`,
     });
     await s.clear();

@@ -2,7 +2,7 @@
   "version": 2,
   "importer": "725da4d8fc61bf77",
   "renderer": "agentic-mermaid@0.4.1",
-  "sourceHash": "16f453f01a3572e0dd61d761a2f5b688adaca9e523541cc342363e9d3269a67f",
+  "sourceHash": "c4885acd23aff9a58f0abf24ccc811f76ab7c309febe72776f46d0a9f5ed5d0e",
   "diagrams": {
     "[\"---\\nconfig:\\n  pie:\\n    legendPosition: right\\n    textPosition: 0.68\\n  themeVariables:\\n    pie1: '#6e7781'\\n    pie2: '#4ac26b'\\n    pie3: '#cf222e'\\n    pieLegendTextSize: 17px\\n    pieSectionTextSize: 15px\\n    pieTitleTextSize: 18px\\n---\\npie\\n  title Every 4 KiB block of 1 TiB\\n  \\\"Metadata\\\" : 4495258\\n  \\\"Free\\\" : 250514330\\n  \\\"Root reserve\\\" : 13421772\",\"github-light\"]": "2039a26a4ebe15da.json",
     "[\"---\\nconfig:\\n  pie:\\n    legendPosition: right\\n    textPosition: 0.68\\n  themeVariables:\\n    pie1: '#6e7781'\\n    pie2: '#4ac26b'\\n    pie3: '#cf222e'\\n    pieLegendTextSize: 17px\\n    pieSectionTextSize: 15px\\n    pieTitleTextSize: 18px\\n---\\npie\\n  title Every 4 KiB block of 1 TiB\\n  \\\"Metadata\\\" : 4495258\\n  \\\"Free\\\" : 263940198\",\"github-light\"]": "592da16034641dc2.json",
