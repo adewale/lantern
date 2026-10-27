@@ -1348,6 +1348,46 @@ test(
   },
 );
 
+// Next pressed while a step plays sends the playing run on to the next step, undrawn,
+// instead of replaying the scene from its start; it must still rest on the link's picture.
+test(
+  'player, motion on: Next pressed mid-motion rests on exactly the picture a link to the step after shows',
+  options,
+  async () => {
+    const all = ['oauth-pkce', 'exgit'].flatMap((name) =>
+      projects.get(name)!.variants.slice(0, 1).flatMap((v) =>
+        v.trace.steps.slice(0, -2).map((_, i) => ({ name, values: v.values, i })),
+      ),
+    );
+    await fc.assert(
+      fc.asyncProperty(fc.constantFrom(...all), fc.constantFrom(60, 250, 600), async ({ name, values, i }, after) => {
+        const p = projects.get(name)!,
+          list = stepsOf(p, values);
+        const context = await browser.newContext({ reducedMotion: 'no-preference' });
+        try {
+          const a = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i]!.step)}`);
+          await quiet(a.page);
+          await a.page.locator('button[aria-label="Next step"]').click();
+          await a.page.waitForTimeout(after);
+          await a.page.locator('button[aria-label="Next step"]').click();
+          await a.page.waitForFunction((step) => (window as unknown as { __last: { step: string } | null }).__last?.step === step, list[i + 2]!.step, {
+            timeout: 30_000,
+          });
+          await quiet(a.page);
+          const b = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i + 2]!.step)}`);
+          const where = `${name} ${list[i]!.step} → Next, ${after} ms, Next`;
+          assert.equal(new URL(a.page.url()).searchParams.get('step'), list[i + 2]!.step, where);
+          assert.equal(await stagePicture(a.page), await stagePicture(b.page), where);
+          assert.deepEqual([...a.errors, ...b.errors], []);
+        } finally {
+          await context.close();
+        }
+      }),
+      params(6),
+    );
+  },
+);
+
 // Every scene run draws into an SVG root the page creates, and a kept picture is a copy
 // (cloneNode creates nothing). So when a stage picture was created tells whether the
 // player re-ran the scene for it: Next should play a run prepared while the reader was

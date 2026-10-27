@@ -74,3 +74,27 @@ test('a contact sheet --out with no extension writes NAME.png and NAME.svg besid
   assert.deepEqual((await readFile(join(sheets, 'sheet.png'))).subarray(0, 8), PNG);
   assert.deepEqual((await readdir(dir)).sort(), ['scene.ts', 'v1.2']);
 });
+
+// resvg 2.6.2 also panics (geom.rs: unwrap on None) on a translucent element inside a nested svg
+// that clips its viewport while something there reaches past it: under a zoomed camera the paper
+// does, and any fading element (a pen tool, a leader line) then took the film down. band() lets the
+// inner svg overflow; the outer one still crops.
+test('a translucent element under a zoomed camera rasterises through band()', { skip }, async () => {
+  const scene = new Scene(new NullSink());
+  scene.add(new Rectangle({ width: 16, height: 9, fill: '#faf6ec', stroke: 'none' }));
+  const mark = new Rectangle({ width: 0.5, height: 0.5, fill: '#68645d', stroke: '#241f1a', strokeWidth: 0.02 }).moveTo([-1.7, -1.3]);
+  mark.style.opacity = 0.5;
+  scene.add(mark);
+  scene.frame.fit([-3.3, -2.4, -0.2, -0.6], { margin: 0 });
+  const svg = band(scene, 1280, 9);
+  assert.match(svg, /<svg overflow="visible" /);
+  // In a child process: an abort would take the test runner down.
+  const file = join(folder, 'zoomed.svg');
+  await writeFile(file, svg);
+  const run = spawnSync(process.execPath, ['-e', `import('@resvg/resvg-js').then(({Resvg})=>{new Resvg(require('node:fs').readFileSync(${JSON.stringify(file)},'utf8')).render();console.log('ok')})`], { cwd: ROOT, encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr);
+  // Without the overflow, the same picture panics: the test reproduces the cause, not just the fix.
+  await writeFile(file, svg.replace('<svg overflow="visible" ', '<svg '));
+  const bare = spawnSync(process.execPath, ['-e', `import('@resvg/resvg-js').then(({Resvg})=>{new Resvg(require('node:fs').readFileSync(${JSON.stringify(file)},'utf8')).render();console.log('ok')})`], { cwd: ROOT, encoding: 'utf8' });
+  assert.notEqual(bare.status, 0, 'resvg no longer panics here: the overflow workaround may be dropped');
+});

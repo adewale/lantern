@@ -2,6 +2,7 @@
 // the state the scene recorded, what each step changed and its resting picture drawn as text.
 // One definition behind `rayner describe` and anything an agent imports; it runs the scene in
 // Node or a browser, with no Chromium, given the diagrams' pinned snapshots.
+import { isHeading } from './stage.ts';
 import { renderAt, renderText, traceScene } from '../src/index.ts';
 import type { Scene, SceneState, Sink } from '../src/index.ts';
 import { variantsOf, withSettings, caseName } from './settings.ts';
@@ -112,6 +113,6 @@ export async function describeCase(Scene: ExplainerClass, values: Settings, opti
 async function drawing(Bound: ExplainerClass, t: number): Promise<string> {
   const sink: Sink = { async frame() {} };
   const scene: Scene = await renderAt(Bound, t, sink);
-  scene.mobjects = scene.mobjects.filter((m) => m.key !== '__heading');
+  scene.mobjects = scene.mobjects.filter((m) => !isHeading(m));
   return renderText(scene);
 }
