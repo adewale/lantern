@@ -1,9 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { fc, params } from './lib/pbt.ts';
 import {
-  Rectangle, Square, VMobject, Line, Arrow, Text, Dot, Transform, AnimationGroup, FadeIn, linear, thereAndBack,
+  Rectangle, Group, Square, VMobject, Line, Arrow, Text, Dot, Transform, AnimationGroup, FadeIn, linear, thereAndBack,
   Scene, NullSink, toSvgString, UP, DOWN, UR, rotate,
-  loadFonts,
+  loadFonts, renderElements,
 } from '../src/index.ts';
 
 // Text shapes on glyph outlines; scenes load fonts in run(), bare tests do it here
@@ -104,4 +105,102 @@ test('alignData pads a path at its centre as the points stand, whether or not it
   // (4, 2), not at the square's own centre (-4, 0).
   assert.deepEqual(Array.from(fresh.holder.subpaths[0]!.slice(0, 2)), [4, 2]);
   assert.deepEqual(Array.from(fresh.holder.subpaths[1]!.slice(0, 2)), [-0.25, 0.75]);
+});
+
+test('fresh Text is centred on its advance box before any positioning', () => {
+  // The contract is an absolute origin, not agreement with a second Text or
+  // moveTo(), both of which can hide the same constructor offset.
+  fc.assert(fc.property(
+    fc.string({ unit: 'binary' }),
+    fc.constantFrom('sans' as const, 'mono' as const),
+    fc.double({ min: Number.MIN_VALUE, max: Number.MAX_VALUE, noNaN: true }),
+    fc.constantFrom('normal' as const, 'bold' as const),
+    (text, font, requestedSize, weight) => {
+      // Draw all positive finite magnitudes, including subnormals. Bound only
+      // materialization: outlines use Float32 storage, not unbounded reals.
+      const fontSize = Math.min(requestedSize, 1e30);
+      const t = new Text(text.slice(0, 32), { font, fontSize, weight });
+      const f = t.frameBox;
+      const anchor = t.anchorPoint();
+      // Float32 points undergo a cast and a translation; allow their rounding
+      // error, including the fixed subnormal quantum, rather than a scene-unit epsilon.
+      const tolerance = 4 * 2 ** -23 * Math.max(t.run.width, t.run.ascent + t.run.descent) + 2 ** -149;
+      assert.ok(Math.abs((f[0]! + f[2]!) / 2) <= tolerance, 'advance box x centre is zero');
+      assert.ok(Math.abs((f[1]! + f[3]!) / 2) <= tolerance, 'advance box y centre is zero');
+      assert.ok(anchor.every((v) => Math.abs(v) <= tolerance), 'public default anchor is the origin');
+    }), params(500, { examples: [['Label', 'sans', 0.4, 'normal'], ['', 'mono', Number.MIN_VALUE, 'bold']] }));
+});
+
+test('scene admission methods render each descendant once across orders and batches', () => {
+  const a = new Square(), b = new Square(), c = new Square(), parent = new Group(a, b);
+  const ordered = new Scene(new NullSink()).add(parent, c, parent);
+  assert.deepEqual(ordered.mobjects, [c, parent], 'last root occurrence is in front');
+  ordered.add(a);
+  assert.deepEqual(ordered.mobjects, [c, parent], 'adding a covered child is a no-op');
+  ordered.bringToBack(parent, c);
+  assert.deepEqual(ordered.mobjects, [parent, c], 'back batches retain argument order');
+
+  const op = fc.record({ method: fc.constantFrom('add' as const, 'bringToFront' as const, 'bringToBack' as const), batch: fc.array(fc.integer({ min: 0, max: 4 }), { maxLength: 5 }) });
+  fc.assert(fc.property(fc.array(op, { maxLength: 30 }), (batches) => {
+    const a = new Square(), b = new Square().shift([2, 0]), c = new Square().shift([4, 0]);
+    const inner = new Group(a, b), outer = new Group(inner, c);
+    const choices = [a, b, c, inner, outer];
+    // Independent input tree, including each node itself: no production
+    // traversal or renderer supplies the expected ownership relation.
+    const descendants = [[0], [1], [2], [0, 1, 3], [0, 1, 2, 3, 4]];
+    const scene = new Scene(new NullSink());
+    let admitted: number[] = [];
+    for (const { method, batch } of batches) {
+      scene[method](...batch.map((i) => choices[i]!));
+      for (const index of method === 'bringToBack' ? [...batch].reverse() : batch) {
+        if (admitted.some((i) => i !== index && descendants[i]!.includes(index))) continue;
+        admitted = admitted.filter((i) => !descendants[index]!.includes(i));
+        if (method === 'bringToBack') admitted.unshift(index); else admitted.push(index);
+      }
+      assert.deepEqual(scene.mobjects, admitted.map((i) => choices[i]!), 'admission keeps root draw order, including re-add to front');
+      const ids = renderElements(scene).map((e) => e.id);
+      const expected = admitted.flatMap((i) => descendants[i]!.filter((leaf) => leaf < 3));
+      assert.equal(ids.length, new Set(ids).size, 'one rendered occurrence per shape');
+      assert.deepEqual(ids, expected.map((i) => choices[i]!.id), 'all and only admitted leaves are painted, in order');
+    }
+  }), params(500, { examples: [[[ {method:'add',batch:[3,2,3]} ]], [[{method:'add',batch:[0]},{method:'add',batch:[4]}]], [[{method:'bringToBack',batch:[4,0]}]]] }));
+});
+
+test('replacement admission does not duplicate promoted subtrees or delete a self-replaced sibling', () => {
+  const a = new Square(), b = new Square(), old = new Square();
+  const parent = new Group(a, b);
+  const s = new Scene(new NullSink()).add(old, a, b);
+  s.replace(old, parent, a);
+  assert.deepEqual(s.mobjects, [parent]);
+  assert.deepEqual(renderElements(s).map((e) => e.id), [a.id, b.id]);
+  s.replace(a, a);
+  assert.deepEqual(parent.children, [a, b]);
+  const other = new Square(); s.add(other);
+  s.replace(other, a);
+  assert.deepEqual(parent.children, [b]);
+  assert.deepEqual(renderElements(s).map((e) => e.id), [b.id, a.id]);
+  assert.throws(() => s.replace(b, parent), /ancestor/);
+  assert.deepEqual(parent.children, [b], 'invalid replacement leaves the hierarchy intact');
+});
+
+test('nested replacement preserves earlier siblings, retained old objects and backlinks', () => {
+  const a = new Square(), old = new Square(), b = new Square();
+  const parent = new Group(a, old, b), s = new Scene(new NullSink()).add(parent);
+  s.replace(old, a);
+  assert.deepEqual(parent.children, [a, b]);
+  assert.equal(old.parent, null);
+  assert.equal(a.parent, parent);
+  const x = new Square(), y = new Square(), second = new Group(x, y);
+  s.clear().add(second);
+  s.replace(x, x, y);
+  assert.deepEqual(second.children, [x, y]);
+  assert.equal(x.parent, second);
+  assert.equal(y.parent, second);
+  const replacement = new Square(), source = new Group(replacement), targetOld = new Square();
+  const target = new Group(targetOld);
+  s.clear().add(target).replace(targetOld, replacement);
+  assert.deepEqual(source.children, [], 'an off-screen source parent releases the replacement');
+  assert.equal(replacement.parent, target);
+  s.add(source);
+  assert.equal(renderElements(s).filter((r) => r.id === replacement.id).length, 1);
 });

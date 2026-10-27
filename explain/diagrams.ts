@@ -47,6 +47,13 @@ interface Note {
   text: string;
   mob: Group;
 }
+const connectorPart = Symbol('diagram connector part');
+/** Whether a drawn path belongs to a diagram connector (not a glyph or node). */
+export function isDiagramConnector(m: Mobject): boolean {
+  for (let a: Mobject | null = m; a; a = a.parent)
+    if ((a as Mobject & { [connectorPart]?: boolean })[connectorPart]) return true;
+  return false;
+}
 /** Route tokens: the dot that travels a link, and how fast it appears and goes. */
 const TOKEN = { radius: 0.08, fade: 0.18 };
 /**
@@ -346,6 +353,7 @@ export class Diagram {
     for (const info of partsOf(snapshot)) {
       const mob = new Group();
       mob.key = info.id;
+      if (info.from != null && info.to != null) Object.assign(mob, { [connectorPart]: true });
       for (const shape of info.shapes) {
         const paths = shape.textRun ? outlineText(shape.textRun, shape.style) : [new VMobject(shape.style)];
         if (!shape.textRun) {

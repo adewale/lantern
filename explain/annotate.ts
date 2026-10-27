@@ -1,9 +1,13 @@
 // Annotations that sit on the picture instead of in a panel: a dimension line, a pin, a callout
 // with a leader line, and a drawing tool that rides the tip of a stroke as it is drawn. They are
 // native mobjects, so they seek, trace and check like everything else.
-import { Group, Line, Circle, Polygon, Text, Create, VMobject } from '../src/index.ts';
+import { Group, Line, Circle, Rectangle, Polygon, Text, Create, VMobject } from '../src/index.ts';
 import type { Box as BoxT } from '../src/index.ts';
 import type { Mobject, Vec, Box } from '../src/index.ts';
+
+const paperFor = (text: Text, fill: string): Rectangle => new Rectangle({
+  width: text.width() + 0.12, height: text.height() + 0.08, fill, stroke: 'none',
+}).moveTo(text.center());
 
 const sub = (a: Vec, b: Vec): Vec => [a[0] - b[0], a[1] - b[1]];
 const unit = (v: Vec): Vec => {
@@ -16,13 +20,15 @@ export interface AnnotationLook {
   color: string;
   /** Text size in scene units; 0.24 is about 19 px on a 1280 px stage. */
   size?: number;
+  /** Opaque paper behind an annotation, when it sits over other artwork. */
+  background?: string;
 }
 
 /**
  * A dimension line between `a` and `b`, set off to one side by `offset` (positive: to the left
  * of a→b), with ticks at both ends and `label` at its middle, outside the line.
  */
-export function dimension(a: Vec, b: Vec, label: string, { color, size = 0.24, offset = 0.3 }: AnnotationLook & { offset?: number }): Group {
+export function dimension(a: Vec, b: Vec, label: string, { color, background, size = 0.24, offset = 0.3 }: AnnotationLook & { offset?: number }): Group {
   const d = unit(sub(b, a)),
     n: Vec = [-d[1], d[0]];
   const o: Vec = [n[0] * offset, n[1] * offset];
@@ -42,6 +48,7 @@ export function dimension(a: Vec, b: Vec, label: string, { color, size = 0.24, o
     side = Math.sign(offset || 1),
     gap = 0.08 + (Math.abs(n[0]) * t.width() + Math.abs(n[1]) * t.height()) / 2;
   t.moveTo([mid[0] + n[0] * side * gap, mid[1] + n[1] * side * gap]);
+  if (background) g.add(paperFor(t, background));
   g.add(t);
   return g;
 }
@@ -72,7 +79,7 @@ const boxOf = (target: Vec | Box | Mobject): Box => {
 export function callout(
   target: Vec | Box | Mobject,
   text: string,
-  { color, size = 0.24, side = 'right', gap = 0.55 }: AnnotationLook & { side?: Side; gap?: number },
+  { color, background, size = 0.24, side = 'right', gap = 0.55 }: AnnotationLook & { side?: Side; gap?: number },
 ): Group {
   const b = boxOf(target),
     cx = (b[0] + b[2]) / 2,
@@ -89,6 +96,7 @@ export function callout(
   return new Group(
     new Line(from, edge, { stroke: color, strokeWidth: 0.02 }),
     new Circle({ radius: 0.04, fill: color, fillOpacity: 1, stroke: 'none' }).moveTo(edge),
+    ...(background ? [paperFor(t, background)] : []),
     t,
   );
 }

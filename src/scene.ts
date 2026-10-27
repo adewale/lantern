@@ -95,6 +95,21 @@ function assertDisjoint(anims: readonly Animation[]): void {
   }
 }
 
+/** Maintain one root per subtree while preserving the requested draw order. */
+function admitRoots(current: readonly Mobject[], incoming: readonly Mobject[], back = false): Mobject[] {
+  let roots = [...current];
+  const owner = new Map<Mobject, Mobject>();
+  for (const root of roots) for (const member of root.family()) owner.set(member, root);
+  for (const m of back ? [...incoming].reverse() : incoming) {
+    if (owner.has(m) && owner.get(m) !== m) continue;
+    const family = m.family(), covered = new Set(family);
+    roots = roots.filter((root) => !covered.has(root));
+    if (back) roots.unshift(m); else roots.push(m);
+    for (const member of family) owner.set(member, m);
+  }
+  return roots;
+}
+
 export class Scene {
   sink: Sink;
   fps: number;
@@ -291,9 +306,8 @@ export class Scene {
   familyMembers(): Mobject[] { return this.mobjects.flatMap((m) => m.family()); }
 
   add(...mobs: Mobject[]): this {
-    // Re-adding moves to the front; adding a child of something present is a no-op
-    this.mobjects = this.mobjects.filter((m) => !mobs.includes(m));
-    this.mobjects.push(...mobs);
+    // Re-adding a root moves it last; a child of a visible parent is a no-op.
+    this.mobjects = admitRoots(this.mobjects, mobs);
     return this;
   }
 
@@ -312,27 +326,40 @@ export class Scene {
   }
 
   replace(old: Mobject, ...replacements: Mobject[]): this {
-    // A replacement already on screen moves to old's place rather than being listed twice.
-    this.mobjects = this.mobjects.filter((m) => m === old || !replacements.includes(m));
-    const parent = old.parent;
+    if (replacements.length === 1 && replacements[0] === old) return this;
+    replacements = admitRoots([], replacements);
+    const parent = this.mobjects.includes(old) ? null : this.familyMembers().find((m) => m.children.includes(old)) ?? null;
+    if (parent && replacements.some((m) => m.family().includes(parent)))
+      throw new Error('replace() cannot insert an ancestor into its descendant');
+    const covered = new Set(replacements.flatMap((m) => m.family()));
+    this.mobjects = this.mobjects.filter((m) => m === old || !covered.has(m));
     if (parent && !this.mobjects.includes(old)) {
-      // old lives inside a group: swap the replacements into the group at old's index.
-      const at = parent.children.indexOf(old);
-      for (const r of replacements) { r.parent?.remove(r); r.parent = parent; }
-      parent.children.splice(at, 1, ...replacements);
-      old.parent = null;
+      // Work from the original neighbours. Detaching an earlier sibling
+      // changes indices, and retaining old among the replacements must keep
+      // its backlink rather than detach it after insertion.
+      const original = [...parent.children], at = original.indexOf(old);
+      for (const r of replacements) {
+        const other = r.parent !== parent ? r.parent : null;
+        other?.remove(r);
+        r.parent = parent;
+      }
+      const before = original.slice(0, at).filter((m) => !covered.has(m));
+      const after = original.slice(at + 1).filter((m) => !covered.has(m));
+      parent.children = [...before, ...replacements, ...after];
+      if (!covered.has(old)) old.parent = null;
       parent.invalidateBox();
       return this;
     }
     const i = this.mobjects.indexOf(old);
     if (i < 0) { this.add(...replacements); return this; }
+    for (const m of replacements) m.parent?.remove(m);
     this.mobjects.splice(i, 1, ...replacements);
     return this;
   }
 
   bringToFront(...mobs: Mobject[]): this { return this.add(...mobs); }
   bringToBack(...mobs: Mobject[]): this {
-    this.mobjects = [...mobs, ...this.mobjects.filter((m) => !mobs.includes(m))];
+    this.mobjects = admitRoots(this.mobjects, mobs, true);
     return this;
   }
   clear(): this { this.mobjects = []; return this; }

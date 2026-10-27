@@ -125,19 +125,20 @@ test('a display formula is typeset once, in display style', async () => {
   const display = mathRuns.map(([key]) => JSON.parse(key) as [string, string, boolean]).filter(([, , d]) => d);
   assert.ok(display.length >= 4);
   for (const [, tex] of display) assert.ok(!snapshot.runs[JSON.stringify(['math', tex, false])], `no inline run for ${tex}`);
-  const built: { width: number; middle: number; ascent: number }[] = [];
+  const built: { width: number; middle: number }[] = [];
   class Display extends Scene {
     override async construct() {
       for (const [, tex] of display) {
         const m = new MathTex(tex, { display: true }), f = m.frameBox;
-        built.push({ width: m.run.width, middle: (f[1]! + f[3]!) / 2, ascent: m.run.ascent });
+        built.push({ width: m.run.width, middle: (f[1]! + f[3]!) / 2 });
       }
     }
   }
   await new (bindLettering(Display, snapshot))(new NullSink()).run();
   assert.deepEqual(built.map((b) => b.width), display.map(([, tex]) => snapshot.runs[JSON.stringify(['math', tex, true])]!.width * 0.4));
-  // Placed as Text's constructor places any run, by the display metrics: the box's middle at y = ascent
-  for (const b of built) assert.ok(Math.abs(b.middle - b.ascent) < 1e-6, JSON.stringify(b));
+  // Display runs have their own metrics, but share Text's absolute origin
+  // contract. The old assertion copied the constructor's ascent offset.
+  for (const b of built) assert.ok(Math.abs(b.middle) < 1e-6, JSON.stringify(b));
 });
 
 test('morphs: TransformMatchingShapes and TransformMatchingText both pair a formula\'s glyphs by shape', async () => {

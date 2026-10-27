@@ -6,8 +6,8 @@ First release of the `rayner` package, a fork of Ivar Vong's Lantern.
 
 - Author technical explainers as TypeScript scenes with reader settings, named steps and captions.
 - Build portable HTML pages with transcripts, picture descriptions, linkable steps, embedding support and response-header recipes. The browser runtime has no dependencies.
-- Capture Agentic Mermaid diagrams at build time and animate their parts by id. Check every declared case before publishing.
-- Use native shapes, camera movement, charts, code diffs and matching transforms alongside diagrams.
+- Capture Agentic Mermaid diagrams at build time and animate their parts by id. Check every declared case, including imported-label collisions and visible route crossings, before publishing.
+- Use native shapes, camera movement, charts, code diffs and matching transforms alongside diagrams. Text starts centred on its advance box; scene admission avoids duplicate subtree painting.
 - Request additional scripts, replacement faces, real bold and italic, and typeset maths through committed lettering snapshots. See [supported requests](docs/LETTERING.md).
 - Use the `rayner` CLI to initialise, preview, capture, check, build and inspect scenes. PNG contact sheets are included.
 

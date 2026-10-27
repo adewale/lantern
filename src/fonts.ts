@@ -72,9 +72,11 @@ export function loadFonts(): Promise<Record<FontName, Shaper>> {
 /** The shaper for 'sans' or 'mono'. Throws if fonts haven't been loaded. */
 export function shaperFor(font: FontName): Shaper {
   if (!shapers) throw new Error('Fonts are not loaded: await loadFonts() first (Scene.run() does this for scenes)');
-  const s = shapers[font] as Shaper | undefined;
-  if (!s) throw new Error(`Unknown font "${font}": use 'sans' or 'mono'`);
-  return s;
+  switch (font) {
+    case 'sans': return shapers.sans;
+    case 'mono': return shapers.mono;
+    default: throw new Error("Unknown font: use 'sans' or 'mono'");
+  }
 }
 
 /** Characters that draw with the character before them, whatever face it took: marks, joiners, variation selectors. */
