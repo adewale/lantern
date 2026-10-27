@@ -22,8 +22,11 @@ export interface LetteringRequest {
 }
 /** The cut a run is shaped in: '' for the regular cut. */
 export type LetteringCut = '' | 'bold' | 'italic' | 'bold-italic';
-/** A run's family as snapshots key it: 'sans', or 'sans/bold' for a cut. */
-export const cutFamily = (font: FontName, cut: LetteringCut): string => cut ? font + '/' + cut : font;
+/**
+ * The name of one cut of a family or face, as snapshots key runs ('sans/bold')
+ * and faces ('inter/bold'): the name alone for the regular cut.
+ */
+export const cutFace = (name: string, cut: LetteringCut): string => cut ? name + '/' + cut : name;
 export interface LetteringSnapshot {
   version: 1;
   sourceHash: string;
@@ -102,8 +105,6 @@ export const scriptFaceNames: Readonly<Record<string, string>> = {
 };
 /** The registry face a family's cuts come from when the request names none. */
 export const defaultCutFace: Readonly<Record<FontName, string>> = { sans: 'inter', mono: 'jetbrains-mono' };
-/** A face's name for one of its cuts, as snapshots and the registry key it: 'inter/bold'. */
-export const cutFace = (name: string, cut: LetteringCut): string => cut ? name + '/' + cut : name;
 /**
  * The cuts a script face may stand in with for `cut`, best first. Scripts in
  * the registry have no italic, so italic text in them draws upright; bold has
@@ -141,7 +142,7 @@ export function snapshotProvider(snapshot: LetteringSnapshot): LetteringProvider
     prepare() {
       return state.ready ??= (async () => {
         const families = requestCuts(snapshot.request).flatMap((cut) => (['sans', 'mono'] as const).flatMap((font) => {
-          const family = cutFamily(font, cut);
+          const family = cutFace(font, cut);
           state.templates[family] = numericTemplates(snapshot, family);
           return (cut ? state.templates[family].length : snapshot.request.faces?.[font] || state.templates[family].length)
             ? [{ font, cut, family }] : [];
@@ -174,7 +175,7 @@ export function snapshotProvider(snapshot: LetteringSnapshot): LetteringProvider
     },
     request: snapshot.request,
     shape: (font, text, size, fallback, cut = '') => usesLettering(snapshot.request, font, text, cut)
-      ? lookup(cutFamily(font, cut), text, size) : fallback(text, size),
+      ? lookup(cutFace(font, cut), text, size) : fallback(text, size),
     math: (text, size, display) => lookup('math', text, size, display),
   };
 }
@@ -200,6 +201,8 @@ const textCuts = new WeakMap<Text, LetteringCut>();
 let building: LetteringCut = '';
 /** Set by ItalicText around its build. */
 let slanting = false;
+/** Set by withFontRun: the Text draws a given run, so it has no cut. */
+let fixedRun = false;
 
 /**
  * Build an ItalicText. Italic has no faux form, so a scene that did not ask for
@@ -214,6 +217,7 @@ export function withItalic<T>(draw: () => T): T {
 }
 /** The cut a Text is shaped in under `provider`: real bold only when the scene asked for it. */
 function cutOf(text: Text, provider: LetteringProvider | undefined): LetteringCut {
+  if (fixedRun) return '';
   const bold = text.weight === 'bold' && !!provider?.request?.styles?.includes('bold');
   return slanting ? (bold ? 'bold-italic' : 'italic') : bold ? 'bold' : '';
 }
@@ -225,9 +229,11 @@ function withinLease<T>(work: () => Promise<T>): Promise<T> {
 }
 export function withFontRun<T>(font: FontName, run: Run, draw: () => T): T {
   if (!currentFonts) throw new Error('Lettering requires a running scene');
-  const saved = currentFonts[font];
+  const saved = currentFonts[font], fixed = fixedRun;
   currentFonts[font] = () => run;
-  try { return draw(); } finally { currentFonts[font] = saved; }
+  // The run is drawn as given (maths): no cut applies, so bold keeps its faux stroke.
+  fixedRun = true;
+  try { return draw(); } finally { currentFonts[font] = saved; fixedRun = fixed; }
 }
 export function mathRun(text: string, size: number, display: boolean): Run {
   if (!active) throw new Error('Math requires meta.lettering.math and a fresh lettering snapshot');

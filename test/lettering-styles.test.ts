@@ -10,7 +10,7 @@ import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { Scene, Text, ItalicText, NullSink, loadFonts, shaperFor } from '../src/index.ts';
+import { Scene, Text, ItalicText, MathTex, NullSink, loadFonts, shaperFor } from '../src/index.ts';
 import { bindLettering, runKey, snapshotProvider } from '../src/lettering-outlines.ts';
 import type { LetteringSnapshot } from '../src/lettering-outlines.ts';
 import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
@@ -52,6 +52,14 @@ test('bold Text draws the stored Bold cut, with no faux-bold stroke, and recolou
   assert.notEqual(faux.children[0]!.style.stroke, 'none');
   assert.ok(Math.abs(faux.run.width - shaperFor('sans')('Bold', 0.6).width) < 1e-9);
   assert.notEqual(outline(bold), outline(faux));
+});
+
+test('bold maths keeps its faux stroke: a formula is drawn from its own run, with no cut', async () => {
+  const math: LetteringSnapshot = JSON.parse(await readFile(join(ROOT, 'test/lettering/math/scene.lettering.json'), 'utf8'));
+  const both = { ...math, request: { ...math.request, styles: ['bold'] as const } };
+  const formula = await built(both, () => new MathTex('\\frac{1}{2}+x^2', { weight: 'bold', color: '#112233' }));
+  assert.ok(formula.children.length > 0);
+  for (const g of formula.children) assert.equal(g.style.stroke, '#112233', 'the Regular maths outline keeps the stroke that fakes bold');
 });
 
 test('ItalicText draws the Italic and Bold Italic cuts; Arabic in it stays upright', async () => {
@@ -157,10 +165,15 @@ test('a face without the asked cut fails capture, naming it; a script without Bo
   await writeFile(join(dir, 'scene.ts'), scene(`{scripts:['Hebr'],styles:['bold','italic']}`, `new (await import('rayner')).ItalicText('שלום',{weight:'bold'})`));
   const hebrew = await collectProject(dir, { captureLettering: true, write: false });
   assert.ok(hebrew.outlineLettering!.faces['noto-sans-hebrew/bold'], 'Hebrew bold italic stands in with the Bold cut');
+  // A cut carries only what it drew: bold Latin beside regular Arabic leaves the Arabic Bold cut out
+  await writeFile(join(dir, 'scene.ts'), scene(`{scripts:['Arab'],styles:['bold']}`, `new Text('Total 12',{weight:'bold'}),new Text('مرحبا')`));
+  const latin = await collectProject(dir, { captureLettering: true, write: false });
+  assert.ok(latin.outlineLettering!.faces['inter/bold']);
+  assert.equal(latin.outlineLettering!.faces['noto-naskh-arabic/bold'], undefined, 'the Arabic Bold cut drew nothing, so it is left out');
   // Noto Sans SC has no Bold cut in the registry, so bold Chinese has no face (LETTERING_CJK=1 fetches it)
   if (!existsSync(join(fonts, 'noto-sans-sc.ttf'))) return;
   await writeFile(join(dir, 'scene.ts'), scene(`{scripts:['Hani'],styles:['bold']}`, `new Text('中文',{weight:'bold'})`));
-  await assert.rejects(collectProject(dir, { captureLettering: true, write: false }), /No requested face draws cluster/);
+  await assert.rejects(collectProject(dir, { captureLettering: true, write: false }), /noto-sans-sc has no bold cut/);
 });
 
 test('capture of the styles fixture is deterministic', { skip: !capture && 'set EXPLAIN_LETTERING=1 to capture' }, async () => {

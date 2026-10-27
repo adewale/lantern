@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { loadFont } from '../../vendor/glyph.js';
 import { SANS, MONO, FALLBACK } from '../../src/font-data.ts';
-import { bindLettering, cutFace, cutFamily, defaultCutFace, letteringOf, numericAlphabet, requestCuts, runKey, scaledRun, scriptCuts, scriptFaceNames, snapshotProvider, usesLettering } from '../../src/lettering-outlines.ts';
+import { bindLettering, cutFace, defaultCutFace, letteringOf, numericAlphabet, requestCuts, runKey, scaledRun, scriptCuts, scriptFaceNames, snapshotProvider, usesLettering } from '../../src/lettering-outlines.ts';
 import type { LetteringCut, LetteringSnapshot, LetteringProvider, LetteringRequest } from '../../src/lettering-outlines.ts';
 import type { ExplainerClass } from '../../explain/settings.ts';
 import type { Run } from '../../vendor/glyph.js';
@@ -33,20 +33,29 @@ const registry: Record<string, RegistryFace> = {
   'noto-sans-devanagari': fontsource('noto-sans-devanagari', 'devanagari', { '': '400-normal', bold: '700-normal' }),
   'noto-sans-hebrew': fontsource('noto-sans-hebrew', 'hebrew', { '': '400-normal', bold: '700-normal' }),
   'inter': {
-    cuts: { '': 'Regular', bold: 'Bold', italic: 'Italic', 'bold-italic': 'BoldItalic' },
+    cuts: Object.fromEntries((['', 'bold', 'italic', 'bold-italic'] as const).map((cut, i) =>
+      [cut, `inter-ui-4.1.1/package/web/Inter-${['Regular', 'Bold', 'Italic', 'BoldItalic'][i]}.woff2`])),
     license: 'inter-ui-4.1.1/package/LICENSE.txt',
   },
+  // Weight 400 of the variable TrueType release, from LETTERING_CJK=1 tools/lettering-outline-fonts.sh. No Bold cut yet.
   'noto-sans-sc': { cuts: { '': 'noto-sans-sc.ttf' }, license: 'Noto-CJK-OFL.txt' },
   'eb-garamond': fontsource('eb-garamond', 'latin', { '': '400-normal', bold: '700-normal', italic: '400-italic', 'bold-italic': '700-italic' }),
   // The jetbrains-mono npm package's own LICENSE is the MIT licence of its CSS; the font's OFL is vendored.
   'jetbrains-mono': {
-    cuts: { '': 'Regular', bold: 'Bold', italic: 'Italic', 'bold-italic': 'BoldItalic' },
+    cuts: Object.fromEntries((['', 'bold', 'italic', 'bold-italic'] as const).map((cut, i) =>
+      [cut, `jetbrains-mono-1.0.6/package/fonts/webfonts/JetBrainsMono-${['Regular', 'Bold', 'Italic', 'BoldItalic'][i]}.woff2`])),
     license: 'repo:vendor/licenses/JetBrainsMono-OFL.txt',
   },
 };
-for (const [name, cuts] of [['inter', 'inter-ui-4.1.1/package/web/Inter-'], ['jetbrains-mono', 'jetbrains-mono-1.0.6/package/fonts/webfonts/JetBrainsMono-']] as const)
-  for (const cut of Object.keys(registry[name]!.cuts) as LetteringCut[]) registry[name]!.cuts[cut] = cuts + registry[name]!.cuts[cut] + '.woff2';
 const scriptFaces = scriptFaceNames;
+/**
+ * The layout features a subset keeps: those glyph's shaper applies when a page
+ * replays a counter (DEFAULT_GSUB and DEFAULT_GPOS in vendor/glyph.js), less the
+ * ligatures for JetBrains Mono, which capture shapes as literal code.
+ */
+const GLYPH_FEATURES = ['rvrn', 'ccmp', 'locl', 'rlig', 'calt', 'clig', 'liga', 'rclt', 'kern', 'mark', 'mkmk', 'curs', 'dist', 'abvm', 'blwm'];
+const subsetFeatures = (name: string) =>
+  name.startsWith('jetbrains-mono') ? GLYPH_FEATURES.filter((f) => !['calt', 'clig', 'liga'].includes(f)) : GLYPH_FEATURES;
 const STYLES = ['bold', 'italic'];
 export function validateLettering(request: LetteringRequest): void {
   if (!request || typeof request !== 'object' || Array.isArray(request)) throw new Error('lettering must be an object');
@@ -127,6 +136,8 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
   for (const name of [...Object.values(request.faces ?? {}), ...(request.scripts ?? []).flatMap((s) => scriptFaces[s] ?? [])]) addFace(name);
   // The face each family's cut comes from, best first after the requested cut (scriptCuts).
   const hasCut = (name: string, cut: LetteringCut) => !!registry[name]?.cuts[cut];
+  /** Script faces with no stand-in for a cut, which that cut's chain leaves out. */
+  const lacking = new Map<LetteringCut, string[]>();
   const chainOf = (font: 'sans' | 'mono', cut: LetteringCut): string[] => {
     const scripts = (request.scripts ?? []).flatMap((s) => scriptFaces[s] ?? []);
     if (!cut) return [...new Set([request.faces?.[font] ?? font, ...scripts, font, 'sans', ...FALLBACK.map(([name]) => name)])];
@@ -136,11 +147,19 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
       const found = scriptCuts(cut).find((c) => hasCut(name, c));
       return found === undefined ? [] : [cutFace(name, found)];
     });
-    const chain = [...new Set([cutFace(primary, cut), ...cuts, font, 'sans', ...FALLBACK.map(([name]) => name)])];
-    for (const name of chain.slice(0, cuts.length + 1)) addFace(name);
-    return chain;
+    lacking.set(cut, [...new Set(scripts.filter((name) => !scriptCuts(cut).some((c) => hasCut(name, c))))]);
+    for (const name of [cutFace(primary, cut), ...cuts]) addFace(name);
+    return [...new Set([cutFace(primary, cut), ...cuts, font, 'sans', ...FALLBACK.map(([name]) => name)])];
   };
-  // Code points each cut face was asked to draw, so a Bold cut carries only bold text.
+  // Say which face lacked the cut when a styled run has a character no face in its chain draws.
+  const withLacking = <T>(cut: LetteringCut, work: () => T): T => {
+    try { return work(); } catch (error) {
+      const names = lacking.get(cut) ?? [];
+      if (!names.length || !/No requested face draws/.test(String(error))) throw error;
+      throw new Error(`${(error as Error).message}. ${names.join(', ')} has no ${cut} cut, so ${cut} text cannot draw its script; keep that text regular or drop '${cut.split('-')[0]}' from meta.lettering.styles`);
+    }
+  };
+  // Code points each cut face drew, so a Bold cut carries only the bold text it drew.
   const cutUsed = new Map<string, Set<number>>();
   // The old, already subset faces are the final fallback, unchanged. Write
   // them into an ignored cache only for the build-time HarfBuzz process.
@@ -175,7 +194,7 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
       if (replay) return replay.shape(font, text, size, fallback, cut);
       if (cut && !requestCuts(request).includes(cut)) throw new Error(`Lettering cut ${cut} was not requested in meta.lettering.styles`);
       if (!cut && !request.faces?.[font] && !request.scripts?.length) return fallback(text, size);
-      const key = runKey(cutFamily(font, cut), text);
+      const key = runKey(cutFace(font, cut), text);
       let r = snapshot.runs[key];
       if (!r) {
         for (const ch of text) {
@@ -187,16 +206,20 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
         }
         if (!usesLettering(request, font, text, cut)) return fallback(text, size);
         const chain = chainOf(font, cut);
-        for (const name of chain.filter((n) => n.includes('/'))) {
-          const points = cutUsed.get(name) ?? new Set<number>();
-          for (const ch of text) points.add(ch.codePointAt(0)!);
-          cutUsed.set(name, points);
-        }
         // The chain's first face wins wherever it draws a cluster when the scene named it, or for a cut.
-        r = python({ command: 'shape', fonts: chain.map((n) => fonts.get(n)!.file), text, mono: font === 'mono', literal: chain.flatMap((n, i) => n.startsWith('jetbrains-mono') ? [i] : []), explicitPrimary: !!cut || !!request.faces?.[font], preferred: Object.fromEntries((request.scripts ?? []).filter((s) => ['Arab', 'Deva', 'Hebr', 'Hani'].includes(s)).flatMap((s) => {
+        const shaped = withLacking(cut, () => python({ command: 'shape', fonts: chain.map((n) => fonts.get(n)!.file), text, mono: font === 'mono', literal: chain.flatMap((n, i) => n.startsWith('jetbrains-mono') ? [i] : []), explicitPrimary: !!cut || !!request.faces?.[font], preferred: Object.fromEntries((request.scripts ?? []).filter((s) => ['Arab', 'Deva', 'Hebr', 'Hani'].includes(s)).flatMap((s) => {
           const at = chain.findIndex((n) => n.split('/')[0] === scriptFaces[s]);
           return at < 0 ? [] : [[s, at]];
-        })) }) as Run;
+        })) })) as Run & { uses: Record<string, number[]> };
+        const { uses, ...run } = shaped;
+        for (const [index, points] of Object.entries(uses)) {
+          const name = chain[Number(index)]!;
+          if (!name.includes('/')) continue;
+          const set = cutUsed.get(name) ?? new Set<number>();
+          for (const point of points) set.add(point);
+          cutUsed.set(name, set);
+        }
+        r = run;
         Object.defineProperty(snapshot.runs, key, { value: r, enumerable: true });
       }
       return scaledRun(r, size);
@@ -228,7 +251,7 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
   return { Scene: bindLettering(Source, provider), snapshot,
     async finish() {
       for (const [name, face] of fonts) if (face.license) {
-        // A cut drew only what styled text asked of it: leave out a cut no run reached.
+        // A cut carries only what it drew: leave out a cut that drew nothing.
         const cut = name.includes('/');
         if (cut && !cutUsed.has(name)) continue;
         // Numeric animations visit values between their endpoints and may be
@@ -240,7 +263,7 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
         if (Object.values(request.faces ?? {}).includes(name) || (cut && (['sans', 'mono'] as const).some((font) =>
           requestCuts(request).some((c) => c && cutFace(request.faces?.[font] ?? defaultCutFace[font], c) === name))))
           for (const ch of numericAlphabet) points.add(ch.codePointAt(0)!);
-        const data = python({ command: 'subset', font: face.file, codepoints: [...points].sort((a, b) => a - b), gids: name === 'latin-modern-math' ? [...usedMath] : [] }) as string;
+        const data = python({ command: 'subset', font: face.file, codepoints: [...points].sort((a, b) => a - b), gids: name === 'latin-modern-math' ? [...usedMath] : [], features: subsetFeatures(name) }) as string;
         snapshot.faces[name] = { hash: face.hash, data, license: face.license };
       }
       // Stable run order, regardless of which case first visits a string.

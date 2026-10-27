@@ -73,8 +73,10 @@ size per face, and the distinct run count. A page carries the request and the
 runs, which hold every outline it draws, and only the subsets its counters shape
 with at runtime; hashes and licences stay in the snapshot, and each distinct
 licence notice joins the page's licence block once. Subsets keep the layout
-features the embedded faces keep (`kern`, `liga`, `ccmp`, `locl`, `mark`, `mkmk`)
-and no hinting. Receipts include
+features glyph's shaper applies when a counter replays (without ligatures for
+JetBrains Mono, which capture shapes as literal code) and no hinting. A cut's
+subset holds only the characters that cut drew, and a cut that drew nothing is
+left out. Receipts include
 `letteringHash`; the snapshot includes source/font/builder hashes. The legacy
 engine fingerprint deliberately excludes optional modules and type-only
 metadata, so opting out preserves receipts as well as page bytes. A regression
@@ -148,7 +150,7 @@ this.add(new ItalicText('Both', { weight: 'bold' }));       // the Bold Italic c
 - Scripts follow the nearest cut their face has. Noto Naskh Arabic, Noto Sans
   Devanagari and Noto Sans Hebrew have Bold cuts and no italic, so italic text in
   them draws upright and bold italic draws bold. Noto Sans SC has no Bold cut in
-  the registry, so bold Chinese fails capture. Symbols and numerals that only the
+  the registry, so bold Chinese fails capture, naming that face. Symbols and numerals that only the
   embedded Noto fallbacks draw stay at their one weight.
 - Each cut is shaped by HarfBuzz at capture like any other run, keyed
   `["sans/bold", text, false]`, and stored with its outlines. A cut's subset holds
