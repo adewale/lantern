@@ -72,9 +72,12 @@ export function stepWords(s: { step: string; meta: Record<string, unknown> }): {
   const text = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
   return { title: text(s.meta.title) || s.step, line: text(s.meta.line), caption: text(s.meta.caption) };
 }
-/** A step's line and caption as transcript paragraphs; the caller marks up the title. */
-export function wordsHtml(words: { line: string; caption: string }): string {
-  return `${words.line ? `<p><strong>${htmlEscape(words.line)}</strong></p>` : ''}<p>${htmlEscape(words.caption)}</p>`;
+/**
+ * A step's line and caption as transcript paragraphs; the caller marks up the title. `dir`
+ * gives each paragraph's attributes from its text (a right-to-left marker, say).
+ */
+export function wordsHtml(words: { line: string; caption: string }, dir: (text: string) => string = () => ''): string {
+  return `${words.line ? `<p${dir(words.line)}><strong>${htmlEscape(words.line)}</strong></p>` : ''}<p${dir(words.caption)}>${htmlEscape(words.caption)}</p>`;
 }
 const pictureOf = (state: unknown): Picture | undefined => (state as { picture?: Picture } | undefined)?.picture;
 /**
@@ -185,6 +188,6 @@ export function pictureHtml(state: unknown, previous?: unknown): string {
 }
 /**
  * What a step's picture leaves unsaid: kept drawings and diagram parts with no words.
- * Empty when everything on the stage is described; `explain check` fails a step otherwise.
+ * Empty when everything on the stage is described; `rayner check` fails a step otherwise.
  */
 export const undescribed = (state: unknown): string[] => pictureOf(state)?.undescribed ?? [];

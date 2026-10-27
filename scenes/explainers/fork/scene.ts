@@ -6,7 +6,7 @@ const LANTERN =
   'graph LR\nDoc[JSON doc]\nParser[Flowchart parser]\nScene[Scene class]\nClock[Fixed dt clock]\nPlayer[Dev player]\nWorker[Worker]\nFrames[SVG frames]\nDoc --> Scene\nParser --> Scene\nScene --> Clock\nClock --> Player\nClock --> Worker\nClock --> Frames';
 // The fork: docs/UPSTREAM.md and the design record's table of what is inherited and what changes.
 const FORK =
-  'graph LR\nSettings[Settings]\nCapture[Agentic Mermaid]\nSnaps[Snapshots]\nScene[Scene class]\nClock[Fixed dt clock]\nPage[Embed page]\nFrames[SVG frames]\nVideo[Captioned video]\nCheck[explain check]\nSettings --> Scene\nCapture --> Snaps\nSnaps --> Scene\nScene --> Clock\nClock --> Page\nClock --> Frames\nFrames --> Video\nClock --> Check';
+  'graph LR\nSettings[Settings]\nCapture[Agentic Mermaid]\nSnaps[Snapshots]\nScene[Scene class]\nClock[Fixed dt clock]\nPage[Embed page]\nFrames[SVG frames]\nVideo[Captioned video]\nCheck[rayner check]\nSettings --> Scene\nCapture --> Snaps\nSnaps --> Scene\nScene --> Clock\nClock --> Page\nClock --> Frames\nFrames --> Video\nClock --> Check';
 // scenes/explainers/token-bucket/scene.ts.
 const SETTINGS = [
   'static settings = [{',
@@ -100,7 +100,7 @@ export default class ForkExplainer extends Scene {
       title: 'The fork puts a build between the scene and the reader',
       line: 'Diagrams are captured once; the page runs no renderer.',
       caption:
-        'Agentic Mermaid draws each diagram in Chromium at build time, and the snapshot is stored beside the scene, so the page runs no diagram renderer. The same scene and clock then feed an embed page, a captioned video and explain check.',
+        'Agentic Mermaid draws each diagram in Chromium at build time, and the snapshot is stored beside the scene, so the page runs no diagram renderer. The same scene and clock then feed an embed page, a captioned video and rayner check.',
     });
     await flow.morph({ source: FORK });
     await flow.walk(
@@ -136,7 +136,7 @@ export default class ForkExplainer extends Scene {
     await this.step('video', {
       title: 'The same steps become a silent, captioned video',
       line: `Moving ${motion.toFixed(1)} s under its title, then still ${held.toFixed(1)} s under its caption.`,
-      caption: `explain render draws every frame with resvg and encodes them with FFmpeg. In the video, each step shows its title while it moves, then holds still under its caption long enough to read it at ${Scene.captionWpm} words a minute. Lantern’s render stops at numbered SVG frames.`,
+      caption: `rayner render draws every frame with resvg and encodes them with FFmpeg. In the video, each step shows its title while it moves, then holds still under its caption long enough to read it at ${Scene.captionWpm} words a minute. Lantern’s render stops at numbered SVG frames.`,
     });
     await s.clearOverlays();
     await flow.dim(['Clock', 'Frames', 'Video']);
@@ -164,10 +164,10 @@ export default class ForkExplainer extends Scene {
     this.state.video = { motion: Number(motion.toFixed(2)), held: Number(held.toFixed(2)), words };
 
     await this.step('checks', {
-      title: 'Every case passes explain check before it ships',
+      title: 'Every case passes rayner check before it ships',
       line: 'Two checks come from Lantern; the fork adds four.',
       caption:
-        'Lantern’s own tests compared a seeked frame with a played one and looked for jumps in motion. explain check runs both on every case and adds the fork’s checks: text at least 14 px, no letters the fonts lack, words for every drawing, and a still picture while the caption is read.',
+        'Lantern’s own tests compared a seeked frame with a played one and looked for jumps in motion. rayner check runs both on every case and adds the fork’s checks: text at least 14 px, no letters the fonts lack, words for every drawing, and a still picture while the caption is read.',
     });
     await s.clearOverlays();
     await flow.focus('all');

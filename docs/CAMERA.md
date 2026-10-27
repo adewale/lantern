@@ -61,7 +61,7 @@ this.frame.scale(0.5).addUpdater((f) => f.moveTo(token));
 - **Clips**: `clipBox` is in world coordinates and so are clip rects; the viewBox only
   changes what part of the world is visible, so clipped groups zoom with everything else.
 - **Text** (`renderText`): the grid shows the frame box, so zoomed content reads larger.
-- **Pages and videos**: they render through the sinks above. The video exporter, `explain shots`,
+- **Pages and videos**: they render through the sinks above. The video exporter, `rayner shots`,
   `preview`'s contact sheet and the gallery tiles turn on culling (below). A page's reader zoom narrows the `viewBox` inside the camera's box, so an
   author's camera move keeps playing under it ([reference](REFERENCE.md#controls-and-accessibility)).
 
@@ -89,7 +89,7 @@ screen space is exactly world space.
 
 ## How `check` measures labels
 
-`explain check` measures a native label on screen: its world size times the camera's zoom,
+`rayner check` measures a native label on screen: its world size times the camera's zoom,
 which for a view `w` × `h` units is min(16 ÷ w, 9 ÷ h), since a view out of 16:9 is
 letterboxed and its tighter side sets the scale. A label passes when, in some frame where it
 is drawn (opacity and draw fraction at least 0.95) and inside the camera's view, it reaches

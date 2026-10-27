@@ -58,7 +58,7 @@ fades out (`fadeOut: false` retracts it along its path instead), and the scene
 removes it when the play ends. With `keep: true`, the outline stays at full
 strength after drawing in and remains in `scene.mobjects`, so the step's last
 frame shows it. That also means the step's last frame differs from the previous
-step's, which `explain check` requires. Take it away later with
+step's, which `rayner check` requires. Take it away later with
 `new FadeOut(c.outline)`.
 
 Options: `color` (yellow), `shape` (`'rect'`, or `'circle'` through the box's

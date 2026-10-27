@@ -1,4 +1,4 @@
-// PNG output (explain shots and preview's contact sheet, the gallery tiles, the film)
+// PNG output (rayner shots and preview's contact sheet, the gallery tiles, the film)
 // rasterises with resvg 2.6.2, which aborts the whole process (a Rust panic, exit 134)
 // on a translucent element the camera has left outside its view. Every path culls what
 // the camera cannot show first. The shots path runs in a child process: an abort would
@@ -22,11 +22,11 @@ const resvg = await import('@resvg/resvg-js').then(
 );
 const skip = resvg ? false : '@resvg/resvg-js is not installed (PNG and video only)';
 
-const folder = await mkdtemp(join(tmpdir(), 'lantern-raster-'));
+const folder = await mkdtemp(join(tmpdir(), 'rayner-raster-'));
 after(() => rm(folder, { recursive: true, force: true }));
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
-// A scene that passes `explain check`: the camera zooms onto one label while another, off to
+// A scene that passes `rayner check`: the camera zooms onto one label while another, off to
 // the side, fades to 0.3. The faded label is then outside the view, and translucent.
 const DIM = `import{Scene,Text}from'rayner';import{stage}from'rayner/explain';
 export default class Dim extends Scene{async construct(){const s=stage(this);
@@ -38,13 +38,13 @@ await this.step('two',{caption:'Zoom on one; the other dims.'});
 await this.play(this.frame.animate.fit([-2,-1.125,2,1.125],{margin:0}),far.animate.setOpacity(0.3));
 }}`;
 
-test('explain shots draws a zoomed frame with a translucent label outside the view', { skip }, async () => {
+test('rayner shots draws a zoomed frame with a translucent label outside the view', { skip }, async () => {
   const dir = join(folder, 'dim');
   await mkdir(dir);
   await writeFile(join(dir, 'scene.ts'), DIM);
   const out = join(dir, 'sheet.png');
   const run = spawnSync(process.execPath, [join(ROOT, 'tools/explain.ts'), 'shots', dir, '--out', out], { encoding: 'utf8' });
-  assert.equal(run.status, 0, `explain shots exited ${run.status} (signal ${run.signal}):\n${run.stderr.slice(-2000)}`);
+  assert.equal(run.status, 0, `rayner shots exited ${run.status} (signal ${run.signal}):\n${run.stderr.slice(-2000)}`);
   assert.deepEqual((await readFile(out)).subarray(0, 8), PNG);
   assert.match(await readFile(join(dir, 'sheet.svg'), 'utf8'), /^<svg /);
 });

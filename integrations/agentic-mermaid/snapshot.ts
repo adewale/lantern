@@ -45,7 +45,7 @@ export const SVG_PX_PER_UNIT = 100;
 /** The renderer every snapshot was captured with; receipts and indexes name it from here. */
 export const RENDERER = 'agentic-mermaid@0.4.1';
 /** The one remedy for a missing, stale or damaged snapshot. */
-const RECAPTURE = 'Run `explain snapshots <scene> --refresh`.';
+const RECAPTURE = 'Run `rayner snapshots <scene> --refresh`.';
 export interface DiagramSnapshot {
   version: 1;
   renderer: typeof RENDERER;
@@ -90,7 +90,7 @@ export function useDiagrams(scene: Scene, resolver: DiagramResolver): void {
 export function diagramsOf(scene: Scene): DiagramResolver {
   const resolver = resolvers.get(scene);
   if (!resolver)
-    throw new Error('No diagram snapshots are bound to this scene: run it through the explain CLI, or bind them with bindSnapshots().');
+    throw new Error('No diagram snapshots are bound to this scene: run it through the rayner CLI, or bind them with bindSnapshots().');
   return resolver;
 }
 /** Snapshots already validated: a store is checked once, not on every resolve. */

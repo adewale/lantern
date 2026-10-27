@@ -4,6 +4,7 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -15,7 +16,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-24.04  # the pinned image the embed tests were validated on
-    timeout-minutes: 35  # full suite, browser gates and every demo case take about 20 minutes
+    timeout-minutes: 60  # full suite, browser gates, all-case demos, installed capture and gallery review
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,12 +35,32 @@ jobs:
           out/lettering-venv/bin/pip install -r tools/lettering-requirements.txt
           bash tools/lettering-outline-fonts.sh
           echo "RAYNER_LETTERING_PYTHON=$PWD/out/lettering-venv/bin/python" >> "$GITHUB_ENV"
-      - run: EXPLAIN_LETTERING=1 EXPLAIN_BROWSER=1 node --test test/lettering-outlines.test.ts test/lettering-*-audit.test.ts
+      - run: EXPLAIN_LETTERING=1 EXPLAIN_BROWSER=1 node --test test/lettering-outlines.test.ts test/lettering-styles.test.ts test/lettering-rtl.test.ts test/lettering-*-audit.test.ts
       - run: npm run check          # tsc -b over every project (emits dist/); compile a TS consumer against it
       - run: npm run test:full      # every frame, fast-check properties at ten times the default cases, cache validation, golden trace, leaks
       # Product gates reuse this job and its Chromium installation; no scheduled lane.
       - run: npm run test:embeds    # real origin/source isolation, offline/no-JS reading and style fidelity
       - run: npm run demos:check    # every explainer case: seek, motion, hold, bare runtime, readable labels
-      - run: EXPLAIN_BROWSER=1 npm run pack:smoke  # packed archive in a fresh project: CLI, check, build, diagram capture
+      - run: EXPLAIN_BROWSER=1 EXPLAIN_LETTERING=1 npm run release:check  # retain the exact tested archive
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rayner-package-${{ github.sha }}
+          path: out/release/
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: true  # a re-run of a failed job uploads again under the same name
       - run: npm run demos:review   # every served case at phone and desktop width, headers, two embeds on one page
       # Videos are made and tested apart from CI, with `npm run videos` (needs FFmpeg).
+
+  compatibility:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30  # npm ci, two typechecks and the full package smoke
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26.0.0
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run pack:smoke  # installed API and committed snapshots at the supported Node floor

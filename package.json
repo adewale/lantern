@@ -1,6 +1,6 @@
 {
   "name": "rayner",
-  "version": "0.2.0-explainers.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "build:lib": "rm -rf dist && tsc -p tsconfig.lib.json && node tools/copy-vendor.ts && node tools/build-cli.ts",
@@ -11,7 +11,7 @@
     "fonts:lettering-outlines": "bash tools/lettering-outline-fonts.sh",
     "check": "tsc -b && node tools/copy-vendor.ts && tsc -p test/consumer/tsconfig.json",
     "prepack": "npm run build:lib",
-    "explain": "node tools/explain.ts",
+    "rayner": "node tools/explain.ts",
     "demos:build": "node tools/explain-demos.ts",
     "demos:check": "node tools/explain-demos.ts --check",
     "demos:render": "node tools/explain-demos.ts --render",
@@ -20,8 +20,9 @@
     "demos:review": "node tools/explain-review.ts",
     "pack:smoke": "node tools/explain-package-smoke.ts",
     "site:export": "node tools/explain-site.ts",
-    "test:embeds": "EXPLAIN_BROWSER=1 node --test test/explain-capture.test.ts test/explain-embed.test.ts test/lettering-browser.test.ts",
-    "test:video": "EXPLAIN_VIDEO=1 node --test test/explain-video.test.ts"
+    "test:embeds": "EXPLAIN_BROWSER=1 node --test test/explain-capture.test.ts test/explain-embed.test.ts test/lettering-browser.test.ts test/lettering-math.test.ts",
+    "test:video": "EXPLAIN_VIDEO=1 node --test test/explain-video.test.ts",
+    "release:check": "node tools/prepare-release.ts"
   },
   "devDependencies": {
     "@resvg/resvg-js": "2.6.2",
@@ -48,7 +49,7 @@
     }
   },
   "bin": {
-    "explain": "dist/tools/explain.js"
+    "rayner": "dist/tools/explain.js"
   },
   "author": "Ade Oshineye (https://github.com/adewale)",
   "license": "MIT",
@@ -73,14 +74,15 @@
     "vendor/glyph.d.ts",
     "vendor/lettering",
     "vendor/licenses",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=26"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/adewale/rayner"
+    "url": "git+https://github.com/adewale/rayner.git"
   },
   "keywords": [
     "animation",
@@ -115,5 +117,13 @@
     "svgpath": {
       "optional": true
     }
+  },
+  "homepage": "https://oshineye.dev/projects/rayner",
+  "bugs": {
+    "url": "https://github.com/adewale/rayner/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
   }
 }

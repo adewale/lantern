@@ -292,7 +292,7 @@ export default class LanternExplainer extends Scene {
       title: 'The build captures diagrams once and ships one HTML file',
       line: 'Readers change only the pace; the page never lays anything out.',
       caption:
-        'explain build captures each diagram once and writes lantern.html with the steps, cases, poster and transcript. Because the layouts are already captured, reader controls change only the pace and the page never calls a layout service.',
+        'rayner build captures each diagram once and writes lantern.html with the steps, cases, poster and transcript. Because the layouts are already captured, reader controls change only the pace and the page never calls a layout service.',
     });
     await s.clearOverlays();
     await flow.morph({ source: PUBLISH });
@@ -306,20 +306,20 @@ export default class LanternExplainer extends Scene {
     );
     await s.code(
       [
-        '$ explain build scenes/explainers/lantern',
+        '$ rayner build scenes/explainers/lantern',
         '  lantern.html               steps, cases, poster, transcript',
         '  lantern.html.receipt.json  source, engine and snapshot hashes',
-        '$ explain render scenes/explainers/lantern --footer',
+        '$ rayner render scenes/explainers/lantern --footer',
         '  captioned video, chapters from the same steps',
       ],
       { at: regionBox('bottom', { top: -0.85 }), fontSize: 0.24 },
     );
 
     await this.step('inspect', {
-      title: 'The trace records every walk, and explain check tests every case',
+      title: 'The trace records every walk, and rayner check tests every case',
       line: 'Recorded walks, and four checks run on every case.',
       caption:
-        'Each walk records the edges it travelled, and trace.json lists this scene’s own clock and seek walks. explain check runs the card’s four tests on every case, so a frame that jumps or text under 14 px fails the check.',
+        'Each walk records the edges it travelled, and trace.json lists this scene’s own clock and seek walks. rayner check runs the card’s four tests on every case, so a frame that jumps or text under 14 px fails the check.',
     });
     await s.clearOverlays();
     await flow.note('Page', 'trace + checks ship with it', { side: 'above' });
