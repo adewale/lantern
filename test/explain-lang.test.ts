@@ -227,6 +227,9 @@ test('French counts, plurals and agreement: 0 and 1 singular, regular and irregu
   assert.equal(markHeading(fr, `${fr.focused}, ${fr.removed}`, 2), 'en surbrillance, supprimées');
   assert.equal(markHeading(fr, fr.marked, 5), 'en évidence');
   assert.equal(markHeading(fr, 'ce foyer', 3), 'ce foyer');
+  for (const lang of ['en', 'fr']) for (const word of ['constructor', '__proto__', 'toString', 'valueOf', 'hasOwnProperty'])
+    for (const n of [1, 2, 3]) assert.equal(markHeading(wordsFor(lang), word, n), word);
+  assert.equal(markHeading(fr, `${fr.added}, constructor`, 2), 'ajoutées, constructor');
   // …and so does a summary, which lists the parts under their word.
   const lines = (mark: string, n: number) => ({ what: 'Code', parts: Array.from({ length: n }, (_, i) => ({ name: `${i + 1}${NB}: x`, mark })) });
   assert.equal(pictureSummary({ picture: picture([lines(fr.added, 2)], new Set(), 'fr') }), `Code. Ajoutées${NB}: 1${NB}: x${NB}; 2${NB}: x.`);

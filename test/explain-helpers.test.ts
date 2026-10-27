@@ -9,7 +9,7 @@ import { stage, bindSnapshots, findingsOf, edgePartOf, regionBox, REGIONS } from
 import { diagramKey, snapshotResolver, useDiagrams, diagramsOf } from '../integrations/agentic-mermaid/snapshot.ts';
 import type { DiagramSnapshot } from '../explain/index.ts';
 import { raised, rule, emphasis, soft, good, bad, dimOpacity } from '../explain/look.ts';
-import { PALETTES } from '../explain/palettes.ts';
+import { PALETTES, palette } from '../explain/palettes.ts';
 import { Diagram } from '../explain/diagrams.ts';
 import { htmlEscape } from '../explain/trace.ts';
 import { parseColor, lerpColor } from '../src/color.ts';
@@ -205,7 +205,7 @@ test('a snapshot with any one field replaced is accepted or refused with the doc
   );
 });
 
-test('whatever the validator accepts, a Diagram can draw without a NaN', async () => {
+test('whatever the validator accepts, a Diagram can draw and describe without invalid values', async () => {
   await fc.assert(
     fc.asyncProperty(mutated, async ([s, path, value]) => {
       const broken = mutate(s, path, value);
@@ -220,13 +220,14 @@ test('whatever the validator accepts, a Diagram can draw without a NaN', async (
       const d = new Diagram(scene, ok.spec, ok, { box: 'side' });
       await d.build();
       await d.focus('all');
+      for (const p of d.describe().parts) assert.equal(typeof p.name, 'string');
       for (const p of d.parts.values())
         for (const m of p.mob.family()) {
           for (const a of m.pointArrays()) assert.ok(a.every(Number.isFinite), `${path.join('.')} = ${JSON.stringify(value)}: point`);
           assert.ok(!/NaN/.test(JSON.stringify(m.style) + String(m.style.dashArray)), `${path.join('.')} = ${JSON.stringify(value)}: ${JSON.stringify(m.style)}`);
         }
     }),
-    params(300),
+    params(300, { examples: ['valueOf', 'constructor', '__proto__', 'toString', 'hasOwnProperty'].map((family): [[DiagramSnapshot, (string | number)[], string]] => [[fixture(), ['family'], family]]) }),
   );
 });
 
@@ -470,6 +471,11 @@ test('a panel, its rule and secondary text step from the paper toward the ink, i
   );
 });
 
+test('an unknown style is refused even when its name belongs to Object.prototype', () => {
+  for (const name of ['valueOf', 'constructor', '__proto__', 'toString', 'hasOwnProperty', '', 'not-a-style'])
+    assert.throws(() => palette(name), /Unknown style/, name);
+});
+
 /** Whether each built-in style's accent is a hue (else emphasis falls back to an orange), as its palette shows. */
 const HUED: Record<string, boolean> = {
   'hand-drawn': false, 'pen-and-ink': false, blueprint: false, nord: true, 'github-light': true, 'tokyo-night': true, excalidraw: true,
@@ -477,7 +483,8 @@ const HUED: Record<string, boolean> = {
 };
 test('on every built-in style, secondary text reaches 4.5:1 and emphasis and outcome colours 3:1; monochrome styles get an orange', () => {
   assert.deepEqual(Object.keys(HUED).sort(), Object.keys(PALETTES).sort());
-  for (const [name, p] of Object.entries(PALETTES)) {
+  for (const name of Object.keys(PALETTES)) {
+    const p = palette(name);
     const at = (c: string) => `${name}: ${c} on ${p.paper} is ${contrast(c, p.paper).toFixed(2)}:1`;
     assert.ok(contrast(soft(p), p.paper) >= 4.5, at(soft(p)));
     for (const c of [emphasis(p), good(p), bad(p)]) assert.ok(contrast(c, p.paper) >= 3, at(c));
@@ -533,7 +540,8 @@ test('the fallback emphasis is the warm orange that contrasts more with the pape
 });
 
 test('dimmed ink reaches 3:1 on the paper of every built-in style, at the least opacity that does', () => {
-  for (const [name, p] of Object.entries(PALETTES)) {
+  for (const name of Object.keys(PALETTES)) {
+    const p = palette(name);
     const at = (a: number) => contrast(lerpColor(p.paper, p.ink, a), p.paper);
     const a = dimOpacity(p);
     assert.ok(at(a) >= 3, `${name}: ${at(a).toFixed(2)}:1 at ${a}`);

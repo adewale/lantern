@@ -79,7 +79,7 @@ size per face, and the distinct run count. A page carries the request and the
 runs its scene draws, which hold every outline it shows, and only the subsets its
 counters shape with at runtime; hashes and licences stay in the snapshot, and each
 distinct licence notice joins the page's licence block once. Runs that only the
-build draws, contact sheet's numbered titles, are listed in the snapshot's `offPage` and left
+build draws, such as contact sheets’ numbered titles, are listed in the snapshot's `offPage` and left
 out of the page. The snapshot file and the page store each distinct glyph outline
 once (`outlines`, with each glyph's `o` indexing it): a wrapped caption is
 measured line by line, so its glyphs recur in many runs. Subsets keep the layout
@@ -191,7 +191,7 @@ HarfBuzz shapes at capture through `uharfbuzz` (pinned in
 `tools/lettering-requirements.txt`). The build already needs Python and
 fontTools to subset faces, so the Python binding adds one wheel; harfbuzzjs
 would add a WASM dependency to the Node build for the same shaping. The page
-never shapes: they draw the stored runs.
+draws the stored runs without shaping them.
 
 Bidi resolves logical runs before shaping, including paired brackets in mixed-direction text; clusters always address the original string, even when the visual glyph order is right to left. The Unicode Bidi Algorithm comes from python-bidi 0.6.12, whose Rust backend is the `unicode-bidi` crate; it supplies resolved UTF-8 levels, and the builder validates that metadata, maps it to source code-point indices and reorders each line (rules L1 and L2). It handles explicit embeddings/overrides, preserves shaping joiners, and rejects unsupported isolate controls. Complex scripts beyond the registered faces remain unsupported.
 
@@ -203,6 +203,12 @@ numbers inside it keep their own order. `test/lettering/hebrew` is the fixture.
   box (`start` is the left edge) whatever the direction, so panels and counters
   lay out as before. Panels lay out left to right: a right-to-left label sits
   where a left-to-right one would.
+
+- **On the page**, captions, titles, the steps list and the transcript are
+  HTML text. A page whose request includes `Arab` or `Hebr` gives them
+  `unicode-bidi: plaintext` and `text-align: start`, so each takes its direction
+  from its own text and a Hebrew caption aligns right. The player's controls are
+  unchanged. Pages that ask for no right-to-left script carry no such rule.
 
 ## Changes between strings
 

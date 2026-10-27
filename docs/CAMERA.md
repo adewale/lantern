@@ -62,7 +62,7 @@ this.frame.scale(0.5).addUpdater((f) => f.moveTo(token));
   changes what part of the world is visible, so clipped groups zoom with everything else.
 - **Text** (`renderText`): the grid shows the frame box, so zoomed content reads larger.
 - **Pages and PNGs**: they render through the sinks above. `rayner shots`
-  `preview`'s contact sheet and the gallery tiles turn on culling (below). A page's reader zoom narrows the `viewBox` inside the camera's box, so an
+  and the gallery tiles turn on culling (below). A page's reader zoom narrows the `viewBox` inside the camera's box, so an
   author's camera move keeps playing under it ([reference](REFERENCE.md#controls-and-accessibility)).
 
 ## Rendering off-screen content
@@ -72,8 +72,8 @@ and `toSvgString(scene, { cull: true })` (type `RenderOptions`) leave out a leaf
 by its stroke, leaves under 2 output pixels of the view (2 × view width ÷ `width`, the output's
 width in pixels, default 1280; `toSvgString` passes its own `width`), and skip a group whole only
 when it clears the view by 0.5 units. Culling is a pure function of the state, so seeks are unaffected, and the
-records it keeps are the same objects as without it. Every PNG the explain
-tools draw turn it on because resvg 2.6.2 (the latest release) aborts on an element with `opacity` whose visible box is empty:
+records it keeps are the same objects as without it. Every PNG the authoring
+tools draw turns it on because resvg 2.6.2 (the latest release) aborts on an element with `opacity` whose visible box is empty:
 seasons' noon zoom left one fading glyph at opacity 0.054 beyond the frame, and its PNG export
 died in resvg. DOM sinks leave it off and keep one element per mobject. Tests:
 `test/camera.test.ts`, "cull: true leaves out what the camera cannot show; off by default" and

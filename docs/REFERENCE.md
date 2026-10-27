@@ -295,7 +295,7 @@ These checks establish deterministic behaviour and readable pictures. They do no
 | Command | What it does |
 | --- | --- |
 | `init <directory>` | Write `scene.ts`, a working scene with one setting |
-| `preview <scene>` | Build, write a contact sheet of every step, serve the page |
+| `preview <scene>` | Build and serve the page; use `shots` for a contact sheet |
 | `snapshots <scene>` | Capture and verify diagrams; replay morph edits |
 | `check <scene>` | The checks above |
 | `build <scene>` | The page, its receipt, its header recipe and `loader.js` |
@@ -309,7 +309,7 @@ These checks establish deterministic behaviour and readable pictures. They do no
 | `--refresh` | all but `init` | Recapture every diagram |
 | `--case id=value` | `shots`, `see` | One case; repeat for several settings |
 | `--port <n>` | `preview` | Default 5174 |
-| `--watch` | `preview` | Rebuild the page and contact sheet when a source file changes; reload the browser to see it |
+| `--watch` | `preview` | Rebuild the page when a source file changes; reload the browser to see it |
 
 `CHROMIUM_EXECUTABLE_PATH` selects a Chromium for capture; otherwise it is looked up in `PLAYWRIGHT_BROWSERS_PATH` and Playwright's cache. If an authoring package is missing, the command prints the line that installs it.
 

@@ -90,8 +90,13 @@ export function picture(all: readonly Seen[], before: ReadonlySet<string>, lang?
   const undescribed = all.flatMap((s) => s.blank ?? []);
   const seen = all.filter((s) => s.what);
   const entries = seen.map(({ what, parts }) => {
-    const marked: Record<string, string[]> = {};
-    for (const p of parts) if (p.mark) (marked[p.mark] ??= []).push(p.name);
+    const grouped = new Map<string, string[]>();
+    for (const p of parts) if (p.mark) {
+      const names = grouped.get(p.mark) ?? [];
+      names.push(p.name);
+      grouped.set(p.mark, names);
+    }
+    const marked = Object.fromEntries(grouped);
     const rest = parts.filter((p) => !p.mark).sort((a, b) => +!!a.dimmed - +!!b.dimmed);
     const items = rest.map((p) => (p.dimmed ? words.dimmed(p.name) : p.name));
     return { what, ...(Object.keys(marked).length ? { marked } : {}), items };
@@ -136,14 +141,19 @@ export function pictureSummary(state: unknown): string {
   const p = pictureOf(state);
   if (!p?.entries.length) return '';
   const w = wordsFor(p.lang);
-  const words: Record<string, string[]> = {};
-  for (const e of p.entries) for (const [word, names] of Object.entries(e.marked ?? {})) (words[word] ??= []).push(...names);
+  const words = new Map<string, string[]>();
+  for (const e of p.entries) for (const [word, names] of Object.entries(e.marked ?? {})) {
+    const group = words.get(word) ?? [];
+    group.push(...names);
+    words.set(word, group);
+  }
   // At most four emphasised parts in all and three under one word, those new in this step
   // first, so the description stays short and says what this step did; one count at the end
   // says how many it leaves to the full list.
   const fresh = new Set(p.changed);
   const first = (names: string[]) => names.filter((n) => fresh.has(n)).length;
-  const groups = Object.entries(words)
+  // Preserve the serialized record’s numeric-key order as well as ordinary word order.
+  const groups = Object.entries(Object.fromEntries(words))
     .map(([word, names]) => [word, [...names].sort((a, b) => +fresh.has(b) - +fresh.has(a))] as const)
     .sort((a, b) => first(b[1]) - first(a[1]));
   const named = groups.flatMap(([, names]) => names);

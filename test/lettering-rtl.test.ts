@@ -142,7 +142,7 @@ const capture = process.env.EXPLAIN_LETTERING === '1';
 test('hebrew: stored glyph IDs, clusters, advances and offsets agree with independent HarfBuzz', { skip: !capture && 'set EXPLAIN_LETTERING=1 for the build-time oracle' }, async () => {
   const s = await stored('hebrew');
   const fonts = process.env.RAYNER_LETTERING_FONTS ?? join(ROOT, 'out/lettering-fonts');
-  for (const text of ['שָׁלוֹם עוֹלָם', 'אותיות']) {
+  for (const text of ['שָׁלוֹם עוֹלָם', 'ניקוד']) {
     const expected = JSON.parse(execFileSync(process.env.RAYNER_LETTERING_PYTHON ?? 'python3', [join(ROOT, 'test/lettering/oracle.py'),
       join(fonts, 'fontsource-noto-sans-hebrew-5.3.0/package/files/noto-sans-hebrew-hebrew-400-normal.woff2'), text], { encoding: 'utf8' }));
     const actual = s.runs[runKey('sans', text)]!.glyphs;

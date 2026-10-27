@@ -73,7 +73,7 @@ const OWNED: Readonly<Record<string, readonly [RegExp, string]>> = {
  * its owner, and draws under it (an ER label's background under the label, not over it).
  */
 function partsOf(snapshot: DiagramSnapshot): readonly SnapshotPart[] {
-  const rule = OWNED[snapshot.family];
+  const rule = Object.hasOwn(OWNED, snapshot.family) ? OWNED[snapshot.family] : undefined;
   if (!rule) return snapshot.parts;
   const ids = new Set(snapshot.parts.map((p) => p.id));
   return snapshot.parts.map((p) => {
@@ -155,10 +155,10 @@ const erName: Namer = ({ w, snapshot, info, words, end }) => {
   }
   if (!info.id.startsWith('rel:') || !info.from || !info.to) return undefined;
   // What a crow's-foot marker says, by the category capture gives it (Mermaid's `||`, `|o`, `}o`, `}|`).
-  const marker = (at: 1 | 2) =>
-    w.cardinality[
-      String((snapshot.parts.find((p) => p.id === `card:${info.id.slice(4)}:${at}`)?.channels as { category?: unknown } | undefined)?.category)
-    ];
+  const marker = (at: 1 | 2) => {
+    const category = (snapshot.parts.find((p) => p.id === `card:${info.id.slice(4)}:${at}`)?.channels as { category?: unknown } | undefined)?.category;
+    return typeof category === 'string' && Object.hasOwn(w.cardinality, category) ? w.cardinality[category] : undefined;
+  };
   const [from, to] = [end(info.from), end(info.to)];
   const [atFrom, atTo] = [marker(1), marker(2)];
   const says = [atTo && w.eachHas(from, atTo, to), atFrom && w.eachHas(to, atFrom, from)].filter(Boolean);
@@ -545,7 +545,8 @@ export class Diagram {
     if (!p) return id;
     const w = wordsOf(this.scene),
       words = this.words(p.info.id);
-    const own = NAMERS[this.snapshot.family]?.({ w, snapshot: this.snapshot, info: p.info, words, end: (e) => this.endName(e) });
+    const namer = Object.hasOwn(NAMERS, this.snapshot.family) ? NAMERS[this.snapshot.family] : undefined;
+    const own = namer?.({ w, snapshot: this.snapshot, info: p.info, words, end: (e) => this.endName(e) });
     if (own) return own;
     if (p.info.from && p.info.to) {
       const link = w.arrow(this.endName(p.info.from), this.endName(p.info.to));
