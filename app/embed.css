@@ -35,6 +35,11 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
    on a map embedded with cooperative gestures; a sideways drag, a tap or a pinch moves the view. */
 .stage.narrow.zoomed{touch-action:pan-y}
 .frame{position:relative}
+.view-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}
+.view-controls .button{min-height:44px}
+.view-controls[hidden]{display:none}
+.view-controls>span{font-size:.875rem;color:var(--muted);margin-right:auto}
+.view-help{flex-basis:100%;margin:0;font-size:.875rem;line-height:1.5;color:var(--muted)}
 .overview{position:absolute;right:2px;bottom:2px;z-index:1;display:block;width:76px;height:48px;padding:6px;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .overview[hidden]{display:none}
 .overview:disabled{cursor:default}
