@@ -66,7 +66,7 @@ export function wrapCaption(text: string, width: number, size = CAPTION.size): s
 /**
  * Each step's title and caption wrapped for the caption-footer preset. Throws, naming the step
  * and case, when one does not fit four lines or has a character the embedded fonts cannot draw.
- * `rayner render --footer` runs it before FFmpeg starts; `demos:check` runs it on every case.
+ * `rayner render --footer` runs it before FFmpeg starts; `npm run videos` runs it on every case it renders.
  */
 export async function footerLines(trace: Trace, values: Settings): Promise<string[][][]> {
   await loadFonts();

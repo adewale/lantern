@@ -7,7 +7,7 @@ const finite = (value: unknown): value is number => typeof value === 'number' &&
 const digest = (value: unknown): value is string => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 
 export function validateLetteringSnapshot(value: unknown): asserts value is LetteringSnapshot {
-  const fail = (part: string): never => { throw new Error(`Invalid lettering snapshot ${part}; run rayner snapshots to rebuild it`); };
+  const fail = (part: string): never => { throw new Error(`Invalid lettering snapshot ${part}; run explain snapshots to rebuild it`); };
   if (!object(value) || value.version !== 1 || !digest(value.sourceHash) || !digest(value.builderHash) ||
       !digest(value.payloadHash) || !object(value.request) || !object(value.runs) || !object(value.faces) || typeof value.shaper !== 'string') fail('header');
   const snapshot = value as Record<string, unknown> & { runs: Record<string, unknown>; faces: Record<string, unknown> };

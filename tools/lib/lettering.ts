@@ -71,10 +71,10 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
       throw e;
     });
     if (!snapshot || snapshot.version !== 1 || snapshot.sourceHash !== sourceHash || snapshot.builderHash !== builderHash || json(snapshot.request) !== json(request))
-      throw new Error('Missing or stale lettering snapshot; run rayner snapshots ' + file);
+      throw new Error('Missing or stale lettering snapshot; run explain snapshots ' + file);
     validateLetteringSnapshot(snapshot);
     if (!snapshot.payloadHash || snapshot.payloadHash !== hash(JSON.stringify({ ...snapshot, payloadHash: undefined })))
-      throw new Error('Invalid lettering snapshot payload checksum; run rayner snapshots ' + file);
+      throw new Error('Invalid lettering snapshot payload checksum; run explain snapshots ' + file);
     return { Scene: bindLettering(Source, snapshot), snapshot, async finish() {} };
   }
   const folder = resolve(process.env.RAYNER_LETTERING_FONTS ?? join(root, 'out/lettering-fonts'));

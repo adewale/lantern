@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, readFile, rm, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { build } from 'esbuild';
 import { traceScene } from '../src/index.ts';
 import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
@@ -62,6 +62,19 @@ test('external source and compiled ESM scenes share the CLI engine; source hashe
     assert.match(String(refused?.stderr), /^rayner: Unknown command: not-a-command/);
   } finally {
     await rm(folder, { recursive: true, force: true });
+  }
+});
+
+test('`rayner --version` and `rayner version` print the version; the word as an option value does not', async () => {
+  const cli = join(ROOT, 'tools/explain.ts'),
+    { version } = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8'));
+  for (const args of [['--version'], ['version']])
+    assert.equal(execFileSync(process.execPath, [cli, ...args], { encoding: 'utf8' }).trim(), version, args.join(' '));
+  const scene = join(ROOT, 'scenes/explainers/fork/scene.ts');
+  for (const args of [['shots', scene, '--case', 'x=--version'], ['shots', scene, '--out', '--version']]) {
+    const r = spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8' });
+    assert.notEqual(r.stdout.trim(), version, args.join(' '));
+    assert.equal(r.status, 1, args.join(' '));
   }
 });
 

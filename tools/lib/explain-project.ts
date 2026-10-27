@@ -111,9 +111,11 @@ async function loadScene(
     plugins: [engineAlias(true)],
     logLevel: 'silent',
   });
+  // 'lantern:/' is an internal placeholder for the checkout path, kept from Lantern:
+  // it never reaches output, and renaming it would make every committed snapshot stale.
   const code = result.outputFiles[0]!.text,
     sourceHash = hash(
-      code.replaceAll(pathToFileURL(ROOT).href, 'rayner:/').replaceAll(dirname(file), '<author>'),
+      code.replaceAll(pathToFileURL(ROOT).href, 'lantern:/').replaceAll(dirname(file), '<author>'),
     );
   const folder = join(tmpdir(), 'rayner-explain');
   await mkdir(folder, { recursive: true });

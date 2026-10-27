@@ -215,7 +215,7 @@ test('native legibility on screen: an 8 px label with the camera zoomed in 2x pa
   await checked(await write(scene(`this.frame.scale(0.5);await this.step('one',{caption:'Close.'});${label('close up', '[0,0]', 0.1)}`)));
 });
 
-test('explain check exits 1 and names the failing gate on stderr', async () => {
+test('rayner check exits 1 and names the failing gate on stderr', async () => {
   const dir = await write(gates.find((g) => g.gate === 'seek = play')!.source);
   let refused: { status: number; stderr: Buffer } | undefined;
   try {
