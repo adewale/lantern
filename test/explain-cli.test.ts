@@ -6,9 +6,11 @@ import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { build } from 'esbuild';
 import { traceScene } from '../src/index.ts';
-import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
+import { collectProject, defaultVariant, ROOT } from '../tools/lib/explain-project.ts';
+import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
 import { seeStep, seeText } from '../tools/lib/explain-see.ts';
 import { describeExplainer } from '../explain/index.ts';
+import { describeCase } from '../explain/describe.ts';
 import type { CaseDescription } from '../explain/index.ts';
 
 /** The error a child process failed with, or undefined when it succeeded. */
@@ -118,7 +120,7 @@ test('`explain see` prints describeExplainer\'s words for the step, so the two c
   // The case without the attacker, so the case name is printed from the description too.
   const v = project.variants.find((v) => v.values.attacker === 'no')!,
     c = d.cases.find((c) => c.values.attacker === 'no')!;
-  for (const s of c.steps) assert.equal((await seeStep(project, v, s.step)).text, seeText('oauth-pkce', c, s.step));
+  for (const s of c.steps) assert.equal(await seeStep(project, v, s.step), seeText('oauth-pkce', c, s.step));
   // The text is the description's fields and nothing else: a made-up description prints as it says.
   const step = { step: 'a', title: 'One', caption: '', start: 0, end: 1, state: {}, changed: {}, picture: '' };
   const made: CaseDescription = {
@@ -134,3 +136,21 @@ test('`explain see` prints describeExplainer\'s words for the step, so the two c
   assert.equal(seeText('x', made, 'a'), '\n\nx · step 1 of 2: a · Size: 3\nTitle: One\nChanged: nothing in scene.state');
   assert.throws(() => seeText('x', made, 'c'), /No step "c"\. Steps: a, b/);
 });
+
+// `see` draws only the step it shows; its text must still be what the whole description gives.
+test(
+  '`explain see` prints what the whole description gives: each case\'s last step, and a named step in other cases, for every explainer',
+  { skip: !process.env.FULL && 'set FULL=1 (npm run test:full): it describes every case of every explainer' },
+  async () => {
+    for (const { id } of EXPLAINERS) {
+      const project = await collectProject(join(ROOT, 'scenes/explainers', id), { write: false });
+      for (const v of project.variants) {
+        const c = await describeCase(project.Scene, v.values, { snapshots: project.store });
+        assert.equal(await seeStep(project, v), seeText(id, c), `${id} ${JSON.stringify(v.values)}: the last step`);
+        // In a case other than the default, a step that is not the last, by name.
+        const named = c.steps[0]!.step;
+        if (v !== defaultVariant(project)) assert.equal(await seeStep(project, v, named), seeText(id, c, named), `${id} ${JSON.stringify(v.values)}: ${named}`);
+      }
+    }
+  },
+);

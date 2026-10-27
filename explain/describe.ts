@@ -25,7 +25,7 @@ export interface StepDescription {
   changed: Record<string, { before?: unknown; after?: unknown }>;
   /** The resting picture in words, as the page's description gives it; empty if the scene gives none. */
   picture: string;
-  /** The resting picture drawn as text (heading left out), when `drawings` is on. */
+  /** The resting picture drawn as text (heading left out), when `drawings` asks for this step. */
   drawing?: string;
 }
 /** One case: a combination of setting values, as a reader picks it under the title. */
@@ -49,8 +49,11 @@ export interface ExplainerDescription {
 export interface DescribeOptions {
   /** Where the scene's diagrams come from: its pinned snapshots, or a resolver that captures them. */
   snapshots?: SnapshotStore | DiagramResolver;
-  /** Draw each resting picture as text (default true); off is faster, a trace only. */
-  drawings?: boolean;
+  /**
+   * Draw each resting picture as text (default true); false is faster, a trace only. A step's name
+   * draws only that step, for a caller that shows one step (`explain see`).
+   */
+  drawings?: boolean | string;
 }
 
 const PICTURE = 'picture';
@@ -79,6 +82,7 @@ export async function describeCase(Scene: ExplainerClass, values: Settings, opti
   const Source = options.snapshots ? bindSnapshots(Scene, options.snapshots) : Scene,
     Bound = withSettings(Source, values),
     trace = await traceScene(Bound),
+    draw = options.drawings ?? true,
     steps: StepDescription[] = [];
   for (const s of trace.steps) {
     const before = withoutPicture(s.before),
@@ -98,7 +102,7 @@ export async function describeCase(Scene: ExplainerClass, values: Settings, opti
       changed,
       picture: pictureSummary(s.after),
     };
-    if (options.drawings ?? true) d.drawing = await drawing(Bound, restingTime(s, trace.fps));
+    if (draw === true || draw === s.step) d.drawing = await drawing(Bound, restingTime(s, trace.fps));
     steps.push(d);
   }
   return { values, name: caseName(Scene, values), duration: trace.duration, steps };
