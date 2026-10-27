@@ -1,0 +1,68 @@
+[
+  {
+    "defect": "omitted-final-step",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-omitted-final-step.log"
+  },
+  {
+    "defect": "omitted-desktop",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-omitted-desktop.log"
+  },
+  {
+    "defect": "coverage-hole",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-coverage-hole.log"
+  },
+  {
+    "defect": "partial-glyph",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-partial-glyph.log"
+  },
+  {
+    "defect": "fresh-emphasis",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-fresh-emphasis.log"
+  },
+  {
+    "defect": "route-replacement",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-route-replacement.log"
+  },
+  {
+    "defect": "transparent-paint",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-transparent-paint.log"
+  },
+  {
+    "defect": "css-clip-override",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-css-clip-override.log"
+  },
+  {
+    "defect": "undeclared-subject",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-undeclared-subject.log"
+  },
+  {
+    "defect": "live-clip-obligation",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-live-clip-obligation.log"
+  },
+  {
+    "defect": "hidden-later-view",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-hidden-later-view.log"
+  }
+]
