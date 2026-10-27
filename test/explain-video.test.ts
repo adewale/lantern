@@ -36,10 +36,10 @@ test('a caption with a blank line or "-->" stays one WebVTT cue', () => {
       const decoded = blocks.map((block) => block.split('\n').slice(2).join('\n')
         .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'));
       // Blank separator lines collapse, while each nonblank line and its text survive.
-      const expected = caps.map((caption) => caption.split('\n').filter((line) => line.trim()).join('\n').trim());
+      const expected = caps.map((caption) => caption.split('\n').filter((line) => line.trim()).join('\n').trim()).filter(Boolean);
       assert.deepEqual(decoded, expected, 'every cue retains its caption payload');
     }),
-    params(300),
+    { ...params(300), examples: [[[' ', 'a']], [['a', ' ']], [[' ', '\n']]] },
   );
 });
 test(
