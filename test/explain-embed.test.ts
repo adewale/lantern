@@ -19,7 +19,7 @@ import { NARROW_PX, READ_PX, closeUps, labelsToRead, stageScale, stepLayouts, to
 import type { StepLayout } from '../app/embed-closeup.ts';
 import { labelOf } from '../explain/diagrams.ts';
 import { zoomOfView } from '../app/embed-zoom.ts';
-import { cardRow, restingBox, wordsOutsideCards } from './lib/scenes.ts';
+import { labelsSaying, restingBox, wordsOutsideCards } from './lib/scenes.ts';
 import type { Box } from '../src/index.ts';
 
 const enabled = !!process.env.EXPLAIN_BROWSER,
@@ -1263,7 +1263,7 @@ test(
 );
 
 // Issue #21: at 390 × 844, PKCE's `authorize` caption says the verifier stays with the client
-// "as the card's last row shows", and the first step's caption describes deriving the
+// and is not sent, as the note under the request says, and the first step's caption describes deriving the
 // challenge; both were close-ups the reader had to hunt for (7th of 7, 4th of 6). Next view
 // now goes first to what the step emphasised, so one press, by touch or by keyboard, shows each.
 test('phone: one press of Next view shows what PKCE\'s captions point at, emphasised close-ups first', options, async () => {
@@ -1272,7 +1272,7 @@ test('phone: one press of Next view shows what PKCE\'s captions point at, emphas
     layouts = await stepLayouts(v.Scene);
   const evidence: Record<string, Box> = {
     secret: await restingBox(v.Scene, 'secret', (scene) => wordsOutsideCards(scene, 'code_verifier', 'SHA-256')),
-    authorize: await restingBox(v.Scene, 'authorize', (scene) => cardRow(scene, 'code_verifier', 'not sent')),
+    authorize: await restingBox(v.Scene, 'authorize', (scene) => labelsSaying(scene, 'verifier not sent')),
   };
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, reducedMotion: 'no-preference' });
   try {
@@ -1298,7 +1298,9 @@ test('phone: one press of Next view shows what PKCE\'s captions point at, emphas
       const tour = closeUps(layouts.get(step), w, h);
       assert.ok(near(await settledZoom(page), tour[0]!), `${step} opens on its first close-up`);
       assert.equal(await count.innerText(), `View 1 of ${tour.length}`);
-      // One press, a tap on the first step and the keyboard on the second, shows what the caption points at.
+      // What the caption points at is in the opening close-up, or one press away.
+      const atOnce = await shows(evidence[step]!);
+      // One press, a tap on the first step and the keyboard on the second, moves to the next close-up.
       if (i === 0) await nextView.tap();
       else {
         await nextView.focus();
@@ -1307,7 +1309,7 @@ test('phone: one press of Next view shows what PKCE\'s captions point at, emphas
       await until(async () => near(zoomOf(await paintedView(page)), tour[1]!), `${step}: view 2`);
       assert.equal(await count.innerText(), `View 2 of ${tour.length}`);
       assert.equal(new URL(page.url()).searchParams.get('step'), step, 'Next view keeps the step');
-      assert.ok(await shows(evidence[step]!), `${step}: view 2 shows ${JSON.stringify(evidence[step])}`);
+      assert.ok(atOnce || (await shows(evidence[step]!)), `${step}: view 1 or 2 shows ${JSON.stringify(evidence[step])}`);
     }
     assert.deepEqual(errors, []);
   } finally {
@@ -1786,7 +1788,7 @@ test('PKCE mobile views expose the derivation and the unsent verifier without ad
         const found: number[][] = [];
         const walk = (m: import('../src/index.ts').Mobject) => {
           const label = labelOf(m);
-          // The unsent verifier is said in the authorize message's note ("code_verifier not sent").
+          // The unsent verifier is said in the authorize message's note ("verifier not sent").
           if (label && (step.name === 'secret' ? ['code_verifier', 'code_challenge'].includes(label.text) : label.text.includes('not sent'))) {
             const box = m.box();
             if (box) found.push(toView(box, scene.frame.box()!));

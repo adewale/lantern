@@ -92,7 +92,8 @@ export default class OAuthExplainer extends Scene {
     const say = (id: string, text: string, color: string = s.palette.ink) => seq.note(id, text, { side: 'below', color });
     await seq.reveal(['message:C->S#0']);
     await seq.mark(['message:C->S#0'], { color: CHALLENGE, as: 'carries the challenge' });
-    await say('message:C->S#0', `code_challenge ${short(challenge)}, S256; code_verifier not sent`, CHALLENGE);
+    // Short enough to read whole in one phone close-up.
+    await say('message:C->S#0', `challenge ${short(challenge, 8)}, S256; verifier not sent`, CHALLENGE);
 
     await this.step('code', {
       title: 'The redirect carries a short-lived code bound to the challenge',
