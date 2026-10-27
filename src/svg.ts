@@ -137,7 +137,7 @@ function clipFor(box: Box, parent?: Box): Clip {
     box = [x, y, Math.max(x, Math.min(box[2], parent[2])), Math.max(y, Math.min(box[3], parent[3]))];
   }
   const coords = userRect(box);
-  return {box, id: 'lantern-clip-' + coords.join('_'), attrs: {x:coords[0]!,y:coords[1]!,width:coords[2]!,height:coords[3]!}};
+  return {box, id: 'rayner-clip-' + coords.join('_'), attrs: {x:coords[0]!,y:coords[1]!,width:coords[2]!,height:coords[3]!}};
 }
 const clippedRecords = new WeakMap<ElementRecord, {id:string; rec:ElementRecord}>();
 function clippedRecord(rec: ElementRecord, clip: Clip): ElementRecord {

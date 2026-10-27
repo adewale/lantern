@@ -37,7 +37,7 @@ test('describeExplainer gives every case and step: the words, the state the trac
       for (const words of [s.title, s.line].filter(Boolean)) assert.ok(!s.drawing!.includes(words), `${s.step}: "${words}" is in the drawing`);
     });
   }
-  // The ring after the last pushes, as `explain see` reports it.
+  // The ring after the last pushes, as `rayner see` reports it.
   const result = d.cases[0]!.steps.find((s) => s.step === 'result')!;
   assert.deepEqual(result.changed.tail, { before: 0, after: 2 });
   // JSON-safe: what an agent reads from a file is what the function returned.
@@ -59,4 +59,20 @@ test('a scene with diagrams describes from its pinned snapshots, case by case, a
   const trace = await traceScene(withSettings(bindSnapshots(OauthPkce as ExplainerClass, snapshots), d.cases[0]!.values));
   assert.deepEqual(d.cases[0]!.steps.map((s) => s.step), trace.steps.map((s) => s.step));
   await assert.rejects(describeExplainer(OauthPkce as ExplainerClass, { drawings: false }));
+});
+
+test("drawings: a step's name draws that step only, as drawing every step draws it", async () => {
+  const all = await describeExplainer(RingBuffer as ExplainerClass);
+  const one = await describeExplainer(RingBuffer as ExplainerClass, { drawings: 'next' });
+  assert.ok(all.cases.length > 1);
+  for (const [i, c] of one.cases.entries()) {
+    const full = all.cases[i]!;
+    assert.ok(c.steps.some((s) => s.step === 'next'));
+    c.steps.forEach((s, j) => {
+      const { drawing, ...rest } = full.steps[j]!;
+      // `rayner see` draws the step it shows this way, so its picture is the description's.
+      assert.equal(s.drawing, s.step === 'next' ? drawing : undefined, `${s.step}: drawn only when named`);
+      assert.deepEqual({ ...s, drawing: undefined }, { ...rest, drawing: undefined });
+    });
+  }
 });

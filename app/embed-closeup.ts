@@ -4,11 +4,14 @@
  * scene to lay itself out for a phone, the player frames each step: it zooms onto
  * the part of the resting picture that changed in that step, far enough that the
  * labels there read at 12 px, as a map fits its view to the feature a search found.
- * The reader can still pan, zoom, or go back to the whole picture.
+ * When the change needs several close-ups, the reader steps through them with the
+ * overview, and the ones that show what the step emphasised (a lit card row, a marked
+ * link, a note) come first, since its caption most often speaks of that. The reader
+ * can still pan, zoom, or go back to the whole picture.
  *
  * `stepLayouts` runs a scene once and records, for each step, where its picture
  * changed and every visible label's size; `closeUps` turns one step's layout into the
- * zooms for a stage of a given size. `explain check` uses both, so its phone number
+ * zooms for a stage of a given size. `rayner check` uses both, so its phone number
  * is the size the player draws.
  *
  * A close-up is the reader's zoom, and it sits on top of the author's camera
@@ -19,6 +22,7 @@
  */
 import type { Box, Mobject, Scene, SceneClass, Sink } from '../src/index.ts';
 import { labelOf } from '../explain/diagrams.ts';
+import { emphasisOf } from '../explain/look.ts';
 import { isHeading } from '../explain/stage.ts';
 import { IDENTITY, ZOOM_MAX, clampZoom } from './embed-zoom.ts';
 import type { Zoom } from './embed-zoom.ts';
@@ -48,9 +52,17 @@ export interface StepLayout {
   lead: number;
   labels: LayoutLabel[];
   /**
+   * What the step newly emphasised with the stage's helpers (`emphasises` in
+   * explain/look.ts): each lit card row's bar, code focus bar or diff line, marked,
+   * travelled or focused diagram part, or note that was not there, or showed something
+   * else, when the step began; one box each, in the camera's view units. Absent when the
+   * step emphasised nothing new.
+   */
+  stress?: Box[];
+  /**
    * The top of the content area, in the camera's view units: the lowest edge of the heading
-   * the stage draws (its title, number and line), which stays put on screen. A close-up keeps
-   * below it, since cutting through the heading shows half a line of text. Absent without a heading.
+   * the stage draws, which stays put on screen. A close-up keeps below it, since cutting
+   * through the heading shows half a line of text. Absent without a heading.
    */
   top?: number;
 }
@@ -74,6 +86,8 @@ interface Leaf {
   top: Mobject;
   /** Part of a label's lettering. */
   text: boolean;
+  /** The nearest object, itself or above it, that shows what the step newly emphasised. */
+  stress: Mobject | null;
   /** The object drawn, the same from step to step while it stays on stage. */
   m: Mobject;
   /** Its colours and its shape wherever it is and however large: equal when it was only moved or scaled. */
@@ -106,15 +120,12 @@ const painted = (m: Mobject) =>
   (m.style.fill !== 'none' && (m.style.fillOpacity ?? 1) > 0) ||
   (m.style.stroke !== 'none' && (m.style.strokeOpacity ?? 1) > 0 && (m.style.strokeWidth ?? 0) > 0);
 
-/**
- * The paper and the heading (with its number and line) frame every step; the heading changes
- * each step but says nothing about where to look.
- */
+/** The paper and the heading frame every step; the heading changes each step but says nothing about where to look. */
 const fixed = (m: Mobject) => m.key === '__paper' || isHeading(m);
 
 /**
  * A world box in the units of the camera's view `view`: 16 wide, centred on the origin.
- * The identity at home. `explain check` maps its labels the same way (inView there).
+ * The identity at home. `rayner check` maps its labels the same way (inView there).
  */
 export function toView(box: Box, view: Box): Box {
   const z = viewZoom(view),
@@ -131,14 +142,16 @@ export const viewZoom = (view: Box): number => Math.min(16 / (view[2] - view[0])
 /** The camera's box: what the author's frame shows, the most a leaf can be seen in. */
 const viewOf = (scene: Scene): Box => [...(scene.frame?.box() ?? FRAME)] as Box;
 
-function leavesOf(scene: Scene): Leaf[] {
+/** The drawn leaves of the resting picture; those under an object in `fresh` show the step's new emphasis. */
+function leavesOf(scene: Scene, fresh: ReadonlySet<Mobject> = new Set()): Leaf[] {
   const out: Leaf[] = [];
-  const walk = (m: Mobject, top: Mobject, opacity: number, clip: Box, inLabel: boolean) => {
+  const walk = (m: Mobject, top: Mobject, opacity: number, clip: Box, inLabel: boolean, stressed: Mobject | null) => {
     const o = opacity * (m.style.opacity ?? 1);
     if (o < 0.05) return;
     const c = m.clipBox ? intersect(clip, m.clipBox) : clip;
     if (!c) return;
     const text = inLabel || !!labelOf(m);
+    const stress = fresh.has(m) ? m : stressed;
     if (!m.children.length) {
       const b = m.box();
       const seen = b && painted(m) && (m.style.drawFraction ?? 1) > 0.05 ? intersect(b, c) : null;
@@ -146,14 +159,22 @@ function leavesOf(scene: Scene): Leaf[] {
         const s = m.style;
         const key = [s.fill, s.fillOpacity, s.stroke, s.strokeOpacity, s.strokeWidth, s.drawFraction ?? 1, hashPoints(m)].join('|');
         const form = [s.fill, s.fillOpacity, s.stroke, s.strokeOpacity, s.drawFraction ?? 1, hashShape(m, b!)].join('|');
-        out.push({ key, opacity: o, box: seen, top, text, m, form });
+        out.push({ key, opacity: o, box: seen, top, text, stress, m, form });
       }
     }
-    for (const child of m.children) walk(child, top, o, c, text);
+    for (const child of m.children) walk(child, top, o, c, text, stress);
   };
   const view = viewOf(scene);
-  for (const top of scene.mobjects) if (!fixed(top)) walk(top, top, 1, view, false);
+  for (const top of scene.mobjects) if (!fixed(top)) walk(top, top, 1, view, false, null);
   return out;
+}
+/** Rows a unit tall, top first, then left to right: the order parts are read in. */
+const readingOrder = (a: Box, b: Box) => Math.floor(-a[3]) - Math.floor(-b[3]) || a[0] - b[0];
+/** What the step emphasised: one box for each object that shows it, around its drawn leaves. */
+function emphasised(leaves: readonly Leaf[]): Box[] {
+  const boxes = new Map<Mobject, Box>();
+  for (const l of leaves) if (l.stress) boxes.set(l.stress, union(boxes.get(l.stress) ?? null, l.box));
+  return [...boxes.values()];
 }
 
 /**
@@ -257,7 +278,7 @@ export function partsOf(changes: readonly Change[]): { parts: Box[]; lead: numbe
     }
     parts = next;
   }
-  parts.sort((a, b) => Math.floor(-a.box[3]) - Math.floor(-b.box[3]) || a.box[0] - b.box[0]);
+  parts.sort((a, b) => readingOrder(a.box, b.box));
   const lead = parts.reduce((best, p, i) => {
     const b = parts[best]!;
     return p.text > b.text || (p.text === b.text && p.moved > b.moved) ? i : best;
@@ -275,16 +296,22 @@ export const focusOf = (layout: StepLayout): Box | null => layout.parts.reduce<B
  */
 export async function stepLayouts(Scene: SceneClass): Promise<Map<string, StepLayout>> {
   const layouts = new Map<string, StepLayout>();
-  let before: Leaf[] = [];
+  let before: Leaf[] = [],
+    was = new Map<Mobject, string>();
   const sink: Sink = {
     async frame() {},
     async stepEnd(scene, step) {
-      const leaves = leavesOf(scene),
+      // New emphasis: an object that shows emphasis now and did not when the step began, or showed another row, line or colour.
+      const now = emphasisOf(scene),
+        fresh = new Set([...now].filter(([m, what]) => was.get(m) !== what).map(([m]) => m));
+      was = now;
+      const leaves = leavesOf(scene, fresh),
         view = viewOf(scene);
       // Changes are found in the world (a camera move alone changes no leaf), then framed as the camera shows them.
       const changes = changed(leaves, before).map((c) => ({ ...c, box: toView(c.box, view) }));
-      const top = headingBottom(scene);
-      layouts.set(step.name, { ...partsOf(changes), labels: labelsOf(scene), ...(top == null ? {} : { top }) });
+      const stress = emphasised(leaves).map((b) => toView(b, view)),
+        top = headingBottom(scene);
+      layouts.set(step.name, { ...partsOf(changes), labels: labelsOf(scene), ...(stress.length ? { stress } : {}), ...(top == null ? {} : { top }) });
       before = leaves;
     },
   };
@@ -359,15 +386,33 @@ export function tourRegions(parts: readonly Box[], vw: number, vh: number, bound
 }
 
 /**
- * The close-ups of a step on a `w`×`h` stage: the first is where the step opens (on its
- * lead part), and the rest continue the tour of its changes in reading order, wrapping
- * round, for the reader to step through with the overview. On a stage at least
- * NARROW_PX wide, or with nothing to read, there is one: the whole picture. Otherwise
+ * Where reading what the step emphasised starts, part by part: for each emphasised box and
+ * each part it lies in, the top-left corner of the box within the part. A box that only
+ * touches a part's edge does not lie in it (a line, with no height or width, lies in a part
+ * it crosses). Every point of a part is in some close-up, so each start is too.
+ */
+export function stressStarts(layout: StepLayout): [number, number][] {
+  const within = (s: Box, p: Box) => {
+    const w = Math.min(s[2], p[2]) - Math.max(s[0], p[0]),
+      h = Math.min(s[3], p[3]) - Math.max(s[1], p[1]);
+    return w >= 0 && h >= 0 && (w > 1e-6 || s[2] - s[0] < 1e-6) && (h > 1e-6 || s[3] - s[1] < 1e-6);
+  };
+  return (layout.stress ?? []).flatMap((s) =>
+    layout.parts.filter((p) => within(s, p)).map((p): [number, number] => [Math.max(s[0], p[0]), Math.min(s[3], p[3])]),
+  );
+}
+/**
+ * The close-ups of a step on a `w`×`h` stage, in the order the overview visits them. The
+ * first is where the step opens, on its lead part. Next come the close-ups that show the
+ * start of something the step emphasised (`stress`: a lit card row, a marked link, a note),
+ * since a caption most often speaks of what its step marked, and last the rest of its
+ * changes; each group in reading order from the opening one, wrapping round. On a stage at
+ * least NARROW_PX wide, or with nothing to read, there is one: the whole picture. Otherwise
  * every close-up has one scale, the least that draws every label near the step's
  * changes at READ_PX (up to `max`), so a label read in one close-up, or found by
  * panning, reads the same in any other. When every such label already reads at
  * READ_PX, there is one: the whole picture. Any label under it is enlarged, however
- * little it needs: a label at 11 px is still under the floor `explain check` measures.
+ * little it needs: a label at 11 px is still under the floor `rayner check` measures.
  * Close-ups keep below the heading the stage draws (`layout.top`), zooming a little further
  * when that is what it takes for a view to fit under it.
  */
@@ -390,31 +435,40 @@ export function closeUps(layout: StepLayout | undefined, w: number, h: number, m
   const k = Math.min(max, Math.max(reading, fit));
   const vw = w / (k * s),
     vh = h / (k * s);
-  const regions = tourRegions(layout.parts, vw, vh, bounds);
-  // Open on the lead part: the first region that holds all of it when it fits a view, else,
-  // of the regions that hold its top-left corner (where reading it starts), the one that
-  // shows most of it: a region framing another part can reach the corner too.
+  // The stage point that shows a region's top-left corner at 1× goes to the stage's top-left corner.
+  const zoomOn = ([left, , , top]: Box) =>
+    clampZoom({ k, x: -k * (ox + (left + 8) * s), y: -k * (oy + (4.5 - top) * s) }, w, h, max);
+  // Clamping at the frame's edge can move a region; what a close-up shows is the view it lands on.
+  const views = tourRegions(layout.parts, vw, vh, bounds).map((r) => {
+    const zoom = zoomOn(r);
+    return { zoom, box: viewBox(zoom, w, h) };
+  });
+  const inside = (x: number, y: number, r: Box) => x >= r[0] - 1e-6 && x <= r[2] + 1e-6 && y >= r[1] - 1e-6 && y <= r[3] + 1e-6;
+  // Open on the lead part: the first close-up that holds all of it when it fits a view, else,
+  // of the close-ups that hold its top-left corner (where reading it starts), the one that
+  // shows most of it: a close-up framing another part can reach the corner too.
   const lead = layout.parts[layout.lead] ?? layout.parts[0]!,
-    inside = (x: number, y: number, r: Box) => x >= r[0] - 1e-9 && x <= r[2] + 1e-9 && y >= r[1] - 1e-9 && y <= r[3] + 1e-9,
     holds = (r: Box) => inside(lead[0], lead[3], r),
     holdsAll = (r: Box) => holds(r) && inside(lead[2], lead[1], r);
   const fits = lead[2] - lead[0] <= vw && lead[3] - lead[1] <= vh;
-  let open = fits ? regions.findIndex(holdsAll) : -1;
+  let open = fits ? views.findIndex((v) => holdsAll(v.box)) : -1;
   if (open < 0) {
     const shown = (r: Box) => {
       const i = intersect(r, lead);
       return i ? (i[2] - i[0]) * (i[3] - i[1]) : 0;
     };
-    for (const [i, r] of regions.entries()) if (holds(r) && (open < 0 || shown(r) > shown(regions[open]!) + 1e-9)) open = i;
+    for (const [i, v] of views.entries()) if (holds(v.box) && (open < 0 || shown(v.box) > shown(views[open]!.box) + 1e-9)) open = i;
     open = Math.max(0, open);
   }
+  const starts = stressStarts(layout),
+    first: Zoom[] = [],
+    rest: Zoom[] = [];
+  for (const v of [...views.slice(open + 1), ...views.slice(0, open)])
+    (starts.some(([x, y]) => inside(x, y, v.box)) ? first : rest).push(v.zoom);
   const zooms: Zoom[] = [];
-  for (const [left, , , top] of [...regions.slice(open), ...regions.slice(0, open)]) {
-    // The stage point that shows (left, top) at 1× goes to the stage's top-left corner.
-    const z = clampZoom({ k, x: -k * (ox + (left + 8) * s), y: -k * (oy + (4.5 - top) * s) }, w, h, max);
-    // Clamping at the frame's edge can land two views in one place; the tour visits it once.
+  for (const z of [views[open]!.zoom, ...first, ...rest])
+    // Clamping can land two views in one place; the tour visits it once.
     if (!zooms.some((o) => Math.abs(o.x - z.x) < 1e-6 && Math.abs(o.y - z.y) < 1e-6)) zooms.push(z);
-  }
   return zooms;
 }
 /** Where a step opens on a `w`×`h` stage: the first of its close-ups. */
