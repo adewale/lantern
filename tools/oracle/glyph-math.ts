@@ -31,11 +31,11 @@ export interface Expected {
     glyphs: [gid: number, x: number, y: number, k: number, path: string][]; rules: [x: number, y: number, w: number, h: number][] }[];
   errors: { tex: string; error: unknown }[];
 }
-type Typeset = (font: unknown, key: string, tex: string, o: { size: number; display: boolean }) =>
+type Typeset<F> = (font: F, key: string, tex: string, o: { size: number; display: boolean }) =>
   { tag: 'Ok'; value: { width: number; ascent: number; descent: number; s: number; glyphs: { gid: number; x: number; y: number; k: number; path: unknown }[]; rules: { x: number; y: number; w: number; h: number }[] } } | { tag: 'Err'; error: unknown };
 
 /** One typeset result in the expected file's shape. */
-export function expectedOf(typeset: Typeset, font: unknown, tex: string, display: boolean) {
+export function expectedOf<F>(typeset: Typeset<F>, font: F, tex: string, display: boolean) {
   const r = typeset(font, 'latin-modern-math', tex, { size: 1, display });
   if (r.tag !== 'Ok') return { error: r.error };
   const { width, ascent, descent, s } = r.value;
@@ -57,7 +57,7 @@ async function main(): Promise<void> {
   if (createHash('sha256').update(bytes).digest('hex') !== LMM_SHA256) throw new Error('Latin Modern Math checksum mismatch');
   const at = (p: string) => import(pathToFileURL(join(repo, p)).href);
   const { loadFont } = await at('sfnt/src/font.js');
-  const { typeset } = await at('math/src/typeset.js') as { typeset: Typeset };
+  const { typeset } = await at('math/src/typeset.js') as { typeset: Typeset<unknown> };
   const { CORPUS } = await at('verify/math-corpus.js') as { CORPUS: { id: string; display: boolean; tex: string }[] };
   const font = (await loadFont(new Uint8Array(bytes))).value;
   const fixture = JSON.parse(await readFile(join(ROOT, 'test/lettering/math/scene.lettering.json'), 'utf8')) as { runs: Record<string, unknown> };
