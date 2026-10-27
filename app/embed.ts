@@ -138,12 +138,14 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   // stage, whose role of img makes everything inside it a picture.
   const frame = el('div', undefined, 'frame');
   // An unseen copy of the caption, at its width and in its type, measures every step's
-  // caption so the caption can keep the room its case's longest needs: Next, the steps
-  // list and the transcript then stay put as the reader steps. It is not a .caption, so
+  // caption so the caption can keep the room its case's longest needs: the steps list
+  // and the transcript then stay put as the reader steps. It is not a .caption, so
   // the page still has one.
   const ruler = el('p', undefined, 'ruler');
   ruler.setAttribute('aria-hidden', 'true');
-  player.append(frame, summary, caption, described, controls, notice, ruler);
+  // The controls sit straight under the picture, above the words, so however long a
+  // caption runs, Next stays beside what it moves.
+  player.append(frame, controls, notice, summary, caption, described, ruler);
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', t.stepList);
@@ -300,7 +302,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     let tallest = 0;
     for (const s of trace.steps) {
       ruler.textContent = String(s.meta.caption ?? '');
-      // The exact height: offsetHeight rounds, and a 115.2 px caption would still move Next by a fraction.
+      // The exact height: offsetHeight rounds, and a 115.2 px caption would still move the steps list by a fraction.
       tallest = Math.max(tallest, ruler.getBoundingClientRect().height);
     }
     ruler.textContent = '';
@@ -339,6 +341,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     if (!trace) return; // Controls exist before the first case has loaded.
     const gen = ++generation;
     playing = false;
+    active = undefined;
     selected = Math.max(0, Math.min(trace.steps.length - 1, index));
     chrome();
     link(push);
@@ -368,63 +371,97 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     link(true);
     await animate(true);
   }
-  /** A run of one step's animation, held at the step's first frame until it is let go (or cancelled with null). */
-  type Run = { at: Entry; index: number; release: (go: { gen: number; target: Zoom | null } | null) => void; done: Promise<boolean> };
-  let primed: Run | undefined;
+  type Go = { gen: number; target: Zoom | null };
+  /**
+   * A run of the scene that plays one step's animation, held at the step's first frame until
+   * it is let go (or cancelled with null). While it plays, `follow` aims it at the next step
+   * instead: it runs on undrawn to that step's first frame and waits there to be let go again,
+   * so Next pressed mid-motion does not replay the scene from its start. It refuses (false)
+   * once the run is over or before it was first let go.
+   */
+  type Run = { at: Entry; index: () => number; release: (go: Go | null) => void; follow: () => boolean; done: Promise<boolean> };
+  let primed: Run | undefined,
+    // The run playing the step on show, while it plays.
+    active: Run | undefined;
   /**
    * Run the scene to a step's first frame and wait there. Released, it plays the step until
    * the hold, then runs on undrawn to the step's resting frame (the one a link to it shows)
    * and draws that; `done` says whether it got there.
    */
-  function prepare(at: Entry, index: number): Run {
-    const step = at.trace.steps[index]!,
-      start = step.t0,
-      // Stop when the picture stops: the caption-reading hold is for video; here the reader sets the pace.
-      end = step.hold ?? step.t1 ?? at.trace.duration,
-      rest = restingTime(step, at.trace.fps);
-    const container = el('div'),
-      seek = new SeekSink(new ReaderSink(container, {}, readerView), start);
-    let release!: Run['release'];
-    const gate = new Promise<Parameters<Run['release']>[0]>((r) => (release = r));
-    let go: Parameters<Run['release']>[0] | undefined,
+  function prepare(at: Entry, first: number): Run {
+    /** Where the run is headed: a step, its times, and a fresh drawing of it. */
+    const aimAt = (index: number) => {
+      const step = at.trace.steps[index]!,
+        container = el('div');
+      return {
+        index,
+        start: step.t0,
+        // Stop when the picture stops: the caption-reading hold is for video; here the reader sets the pace.
+        end: step.hold ?? step.t1 ?? at.trace.duration,
+        rest: restingTime(step, at.trace.fps),
+        container,
+        seek: new SeekSink(new ReaderSink(container, {}, readerView), step.t0),
+      };
+    };
+    let aim = aimAt(first),
+      release!: Run['release'],
+      gate!: Promise<Go | null>;
+    const arm = () => (gate = new Promise<Go | null>((r) => (release = r)));
+    arm();
+    let go: Go | null | undefined,
       attached = false,
-      rested = false;
-    const attach = (g: NonNullable<typeof go>) => {
-      stage.replaceChildren(...container.childNodes);
+      rested = false,
+      over = false;
+    const stop = () => {
+      over = true;
+      return new StopScene();
+    };
+    const attach = (g: Go) => {
+      stage.replaceChildren(...aim.container.childNodes);
       zoom.apply();
       // The view glides to the step's close-up as the step begins, so the change is watched.
       if (!attached && g.target) requestAnimationFrame(() => g.gen === generation && zoom.to(g.target!, true));
       attached = true;
     };
-    const done = new at.Scene(
+    const runner = new at.Scene(
       {
         // Until released, yield at each step boundary, so a tap never waits behind the whole run.
         async stepBegin() {
           if (go === undefined) await new Promise((r) => setTimeout(r));
         },
         async frame(scene, dt) {
-          if (scene.time + 1e-9 < start) return; // before the step: dropped, as SeekSink drops it
+          if (scene.time + 1e-9 < aim.start) return; // before the step: dropped, as SeekSink drops it
           if (dt === 0 && scene.mobjects.length === 0) return; // Keep the poster until a meaningful first frame.
           if (go === undefined) go = await gate;
-          if (!go || go.gen !== generation) throw new StopScene();
-          if (scene.time > end + 1e-8) {
-            if (scene.time + 1e-9 < rest) return;
+          if (!go || go.gen !== generation) throw stop();
+          if (scene.time > aim.end + 1e-8) {
+            if (scene.time + 1e-9 < aim.rest) return;
             // Drawn afresh, as a link to the step draws it, so the two are the same picture.
-            await new ReaderSink(container, { realtime: false }, readerView).frame(scene, 0);
+            await new ReaderSink(aim.container, { realtime: false }, readerView).frame(scene, 0);
             attach(go);
             rested = true;
-            throw new StopScene();
+            throw stop();
           }
-          await seek.frame(scene, dt);
-          if (go.gen !== generation) throw new StopScene(); // superseded while that frame was drawn
-          if (!attached) attach(go);
+          await aim.seek.frame(scene, dt);
+          // Superseded while that frame was drawn; a run sent on to the next step waits for it instead.
+          if (go && go.gen !== generation) throw stop();
+          if (go && !attached) attach(go);
         },
       },
-      { skipUntil: start },
-    )
-      .run()
-      .then(() => rested);
-    return { at, index, release, done };
+      { skipUntil: aim.start },
+    );
+    const done = runner.run().then(() => rested);
+    const follow = () => {
+      if (over || rested || !go || aim.index + 1 >= at.trace.steps.length) return false;
+      aim = aimAt(aim.index + 1);
+      // The way a link seeks: plays begun from here on to the next step are not interpolated.
+      runner.skipUntil = aim.start;
+      go = undefined;
+      attached = false;
+      arm();
+      return true;
+    };
+    return { at, index: () => aim.index, release: (g) => release(g), follow, done };
   }
   /** Once the reader is on a step, run the scene to the next one, so Next starts at once. */
   function primeNext() {
@@ -452,13 +489,18 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     chrome();
     const at = current!,
       step = trace.steps[selected]!;
-    const run = primed?.at === at && primed.index === selected ? primed : prepare(at, selected);
+    // Next mid-motion: the run playing the step before carries on to this one. This must happen
+    // before the first await, while that run has not yet seen the new generation.
+    const followed = active?.at === at && active.index() === selected - 1 && active.follow();
+    const run = followed ? active! : primed?.at === at && primed.index() === selected ? primed : prepare(at, selected);
     if (run !== primed) primed?.release(null);
     primed = undefined;
+    active = run;
     const target = await framing(step);
     run.release(gen === generation ? { gen, target } : null);
     const rested = await run.done;
     if (gen !== generation) return;
+    active = undefined;
     if (!rested) return show(selected, false);
     at.resting.set(step.step, [...stage.childNodes].filter((n) => n.nodeName === 'svg').map((n) => n.cloneNode(true)));
     playing = false;

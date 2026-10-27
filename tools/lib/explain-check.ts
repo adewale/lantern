@@ -1,4 +1,5 @@
 import { letteringWeight } from './lettering.ts';
+import { isHeading } from '../../explain/stage.ts';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -151,7 +152,7 @@ export function restingTextProblems(scene: Viewed): string[] {
     const shown = box[0] < view[2] && box[2] > view[0] && box[1] < view[3] && box[3] > view[1];
     if (zoomed && !shown) continue; // off screen while the camera looks elsewhere
     const native = m instanceof Text;
-    const heading = m.key === '__heading';
+    const heading = isHeading(m);
     if (zoomed && (native || heading) && (box[0] < view[0] || box[1] < view[1] || box[2] > view[2] || box[3] > view[3]))
       problems.push(`"${text}" is cut off by the frame`);
     if (!heading) texts.push({ m, box, native, text });
@@ -287,7 +288,7 @@ export async function checkProject(project: Project, out: string): Promise<Recor
         if (completedFrames.has(scene.frameCount)) {
           // The resting picture of a step, without the heading that names it.
           const all = scene.mobjects;
-          scene.mobjects = all.filter((m) => m.key !== '__heading');
+          scene.mobjects = all.filter((m) => !isHeading(m));
           resting.set(scene.frameCount, toSvgString(scene));
           scene.mobjects = all;
           restingText.set(scene.frameCount, renderText(scene));

@@ -62,3 +62,28 @@ test('after a stop, play(), wait() and step() reject at once without reaching th
   assert.equal(scene.time, before, 'and the clock did not move');
   assert.ok(!scene.mobjects.includes(box), 'nothing began');
 });
+
+// The player sends a playing run on to a later step by raising its skipUntil mid-play; from
+// there it must skip exactly as a seek does, so the next frame drawn is the seek's frame.
+test('skipUntil raised mid-run: the first frame drawn at or after it is the frame a seek there draws', async () => {
+  const ix = await indexScene(Fixture);
+  const times = [0.1, 0.35, 0.8, 1.3, 2, 2.9].map((f) => f * (ix.duration / 3));
+  for (const raise of times)
+    for (const target of times.filter((t) => t > raise + 0.2)) {
+      let drawn: string | undefined;
+      const snap = new SnapshotSink();
+      const sink = {
+        async frame(scene: Scene) {
+          if (scene.time + 1e-9 >= raise && scene.skipUntil < target) scene.skipUntil = target;
+          if (scene.time + 1e-9 < target) return;
+          await snap.frame(scene);
+          drawn = snap.svg;
+          throw new StopScene();
+        },
+      };
+      await new Fixture(sink).run();
+      const seek = new SnapshotSink();
+      await renderAt(Fixture, target, seek);
+      assert.equal(drawn, seek.svg, `raised at ${raise.toFixed(2)} s to ${target.toFixed(2)} s`);
+    }
+});

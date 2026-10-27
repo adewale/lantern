@@ -19,6 +19,7 @@
  */
 import type { Box, Mobject, Scene, SceneClass, Sink } from '../src/index.ts';
 import { labelOf } from '../explain/diagrams.ts';
+import { isHeading } from '../explain/stage.ts';
 import { IDENTITY, ZOOM_MAX, clampZoom } from './embed-zoom.ts';
 import type { Zoom } from './embed-zoom.ts';
 
@@ -46,6 +47,12 @@ export interface StepLayout {
   /** The part the step opens on: the one whose lettering changed most (new words, new values), else the first. */
   lead: number;
   labels: LayoutLabel[];
+  /**
+   * The top of the content area, in the camera's view units: the lowest edge of the heading
+   * the stage draws, which stays put on screen. A close-up keeps
+   * below it, since cutting through the heading shows half a line of text. Absent without a heading.
+   */
+  top?: number;
 }
 /** Changed boxes closer than this, in stage units, read as one part. */
 const GAP = 0.5;
@@ -67,6 +74,10 @@ interface Leaf {
   top: Mobject;
   /** Part of a label's lettering. */
   text: boolean;
+  /** The object drawn, the same from step to step while it stays on stage. */
+  m: Mobject;
+  /** Its colours and its shape wherever it is and however large: equal when it was only moved or scaled. */
+  form: string;
 }
 /** FNV-1a over the points rounded to a thousandth of a unit: equal shapes in the same place hash equal. */
 function hashPoints(m: Mobject): string {
@@ -78,12 +89,28 @@ function hashPoints(m: Mobject): string {
     }
   return (h >>> 0).toString(36);
 }
+/** FNV-1a over the points relative to their box, scaled to its longer side: equal for a shape moved or scaled. */
+function hashShape(m: Mobject, box: Box): string {
+  const side = Math.max(box[2] - box[0], box[3] - box[1]) || 1;
+  let h = 0x811c9dc5;
+  for (const a of m.pointArrays())
+    for (let i = 0; i < a.length; i++) {
+      // Points are flat (x, y) pairs.
+      const origin = i % 2 === 0 ? box[0] : box[1];
+      h ^= Math.round(((a[i]! - origin) / side) * 1000) | 0;
+      h = Math.imul(h, 0x01000193);
+    }
+  return (h >>> 0).toString(36);
+}
 const painted = (m: Mobject) =>
   (m.style.fill !== 'none' && (m.style.fillOpacity ?? 1) > 0) ||
   (m.style.stroke !== 'none' && (m.style.strokeOpacity ?? 1) > 0 && (m.style.strokeWidth ?? 0) > 0);
 
-/** The paper and the heading frame every step; the heading changes each step but says nothing about where to look. */
-const fixed = (m: Mobject) => m.key === '__paper' || m.key === '__heading';
+/**
+ * The paper and the heading frame every step; the heading changes
+ * each step but says nothing about where to look.
+ */
+const fixed = (m: Mobject) => m.key === '__paper' || isHeading(m);
 
 /**
  * A world box in the units of the camera's view `view`: 16 wide, centred on the origin.
@@ -118,7 +145,8 @@ function leavesOf(scene: Scene): Leaf[] {
       if (seen) {
         const s = m.style;
         const key = [s.fill, s.fillOpacity, s.stroke, s.strokeOpacity, s.strokeWidth, s.drawFraction ?? 1, hashPoints(m)].join('|');
-        out.push({ key, opacity: o, box: seen, top, text });
+        const form = [s.fill, s.fillOpacity, s.stroke, s.strokeOpacity, s.drawFraction ?? 1, hashShape(m, b!)].join('|');
+        out.push({ key, opacity: o, box: seen, top, text, m, form });
       }
     }
     for (const child of m.children) walk(child, top, o, c, text);
@@ -126,6 +154,28 @@ function leavesOf(scene: Scene): Leaf[] {
   const view = viewOf(scene);
   for (const top of scene.mobjects) if (!fixed(top)) walk(top, top, 1, view, false);
   return out;
+}
+
+/**
+ * The lowest edge of the heading the stage draws, in the camera's view units, or undefined
+ * when nothing of it is drawn. The heading is pinned to the screen, so it lands in the same
+ * place whatever the camera does.
+ */
+function headingBottom(scene: Scene): number | undefined {
+  const view = viewOf(scene);
+  let bottom: number | undefined;
+  const walk = (m: Mobject, opacity: number) => {
+    const o = opacity * (m.style.opacity ?? 1);
+    if (o < 0.05) return;
+    // A label's own box, which can reach below its glyphs, or a painted leaf's.
+    if (labelOf(m) || (!m.children.length && painted(m))) {
+      const b = m.box();
+      if (b) bottom = Math.min(bottom ?? Infinity, toView(b, view)[1]);
+    }
+    for (const child of m.children) walk(child, o);
+  };
+  for (const top of scene.mobjects) if (isHeading(top)) walk(top, 1);
+  return bottom;
 }
 
 /** Every readable label in the camera's view, in its units: a label's size grows with the camera's zoom. */
@@ -153,18 +203,24 @@ function labelsOf(scene: Scene): LayoutLabel[] {
 
 /**
  * What changed since `before` (the previous step's resting picture): every leaf that
- * is new, moved, reshaped, recoloured or brighter. A leaf that only grew fainter was
+ * is new, moved, reshaped, recoloured or brighter. A leaf that is the same object with
+ * the same colours and shape, only somewhere else or another size, is marked `moved`:
+ * it changed, but it is not what the step brought. A leaf that only grew fainter was
  * dimmed, which points away from it; when a step only dims, what it left bright in
  * the drawings it dimmed is what changed. With no change at all, everything drawn.
  */
 export function changed(leaves: readonly Leaf[], before: readonly Leaf[]): Change[] {
-  const was = new Map<string, number>();
-  for (const l of before) was.set(l.key, Math.max(was.get(l.key) ?? 0, l.opacity));
+  const was = new Map<string, number>(),
+    forms = new Map<Mobject, string>();
+  for (const l of before) {
+    was.set(l.key, Math.max(was.get(l.key) ?? 0, l.opacity));
+    forms.set(l.m, l.form);
+  }
   const out: Change[] = [],
     dimmed = new Set<Mobject>();
   for (const l of leaves) {
     const prior = was.get(l.key);
-    if (prior == null || l.opacity > prior + 0.1) out.push({ box: l.box, text: l.text });
+    if (prior == null || l.opacity > prior + 0.1) out.push({ box: l.box, text: l.text, ...(prior == null && forms.get(l.m) === l.form ? { moved: true } : {}) });
     else if (l.opacity < prior - 0.1) dimmed.add(l.top);
   }
   if (out.length) return out;
@@ -172,19 +228,21 @@ export function changed(leaves: readonly Leaf[], before: readonly Leaf[]): Chang
   // Kept or not, nothing here is new lettering: the step opens on the first part.
   return (kept.length ? kept : leaves).map((l) => ({ box: l.box, text: false }));
 }
-/** A changed leaf: where, and whether it is lettering. */
+/** A changed leaf: where, whether it is lettering, and whether it was only moved or scaled. */
 export interface Change {
   box: Box;
   text: boolean;
+  moved?: boolean;
 }
 /**
  * Changes merged into parts (any two within GAP join), in reading order: by rows of a
- * unit, top first, then left to right. The lead is the part with the most changed
- * lettering: a caption usually reads out the new words or numbers, so the step opens
- * there; with no changed lettering, it opens on the first part.
+ * unit, top first, then left to right. The lead is the part with the most new lettering:
+ * a caption usually reads out the new words or numbers, so the step opens there. Lettering
+ * that was only moved counts after it (a block carried aside is not what the step is
+ * about); with no changed lettering, it opens on the first part.
  */
 export function partsOf(changes: readonly Change[]): { parts: Box[]; lead: number } {
-  let parts = changes.map((c) => ({ box: [...c.box] as Box, text: +c.text }));
+  let parts = changes.map((c) => ({ box: [...c.box] as Box, text: +(c.text && !c.moved), moved: +(c.text && !!c.moved) }));
   for (let merged = true; merged; ) {
     merged = false;
     const next: typeof parts = [];
@@ -193,14 +251,17 @@ export function partsOf(changes: readonly Change[]): { parts: Box[]; lead: numbe
       const near = next.findIndex(({ box: n }) => overlaps([n[0] - GAP, n[1] - GAP, n[2] + GAP, n[3] + GAP], b));
       if (near < 0) next.push(p);
       else {
-        next[near] = { box: union(next[near]!.box, b), text: next[near]!.text + p.text };
+        next[near] = { box: union(next[near]!.box, b), text: next[near]!.text + p.text, moved: next[near]!.moved + p.moved };
         merged = true;
       }
     }
     parts = next;
   }
   parts.sort((a, b) => Math.floor(-a.box[3]) - Math.floor(-b.box[3]) || a.box[0] - b.box[0]);
-  const lead = parts.reduce((best, p, i) => (p.text > parts[best]!.text ? i : best), 0);
+  const lead = parts.reduce((best, p, i) => {
+    const b = parts[best]!;
+    return p.text > b.text || (p.text === b.text && p.moved > b.moved) ? i : best;
+  }, 0);
   return { parts: parts.map((p) => p.box), lead: parts.length ? lead : 0 };
 }
 /** All the parts as one box, or null when there are none. */
@@ -222,7 +283,8 @@ export async function stepLayouts(Scene: SceneClass): Promise<Map<string, StepLa
         view = viewOf(scene);
       // Changes are found in the world (a camera move alone changes no leaf), then framed as the camera shows them.
       const changes = changed(leaves, before).map((c) => ({ ...c, box: toView(c.box, view) }));
-      layouts.set(step.name, { ...partsOf(changes), labels: labelsOf(scene) });
+      const top = headingBottom(scene);
+      layouts.set(step.name, { ...partsOf(changes), labels: labelsOf(scene), ...(top == null ? {} : { top }) });
       before = leaves;
     },
   };
@@ -254,15 +316,16 @@ export function labelsToRead(layout: StepLayout): LayoutLabel[] {
  * order: changed parts taken together while they fit in one view, each group centred;
  * a group too big for one view is covered by views in rows, top to bottom, each row left
  * to right, overlapping evenly, the way a comic reader's guided view crosses a big panel.
+ * Views stay inside `bounds` where they fit it, so a close-up never cuts the heading.
  */
-export function tourRegions(parts: readonly Box[], vw: number, vh: number): Box[] {
+export function tourRegions(parts: readonly Box[], vw: number, vh: number, bounds: Box = FRAME): Box[] {
   const groups: Box[] = [];
   let group: Box | null = null;
   // Room around each part, but never so much that a part which fits a view no longer does.
   const room = (b: Box): Box => {
     const x = b[2] - b[0] <= vw ? Math.min(PAD, (vw - (b[2] - b[0])) / 2) : PAD,
       y = b[3] - b[1] <= vh ? Math.min(PAD, (vh - (b[3] - b[1])) / 2) : PAD;
-    return intersect([b[0] - x, b[1] - y, b[2] + x, b[3] + y], FRAME) ?? FRAME;
+    return intersect([b[0] - x, b[1] - y, b[2] + x, b[3] + y], bounds) ?? bounds;
   };
   for (const p of parts.map(room)) {
     const next = union(group, p);
@@ -280,9 +343,18 @@ export function tourRegions(parts: readonly Box[], vw: number, vh: number): Box[
     if (n < 2) return [(lo + hi) / 2 - size / 2];
     return Array.from({ length: n }, (_, i) => lo + (i * (hi - lo - size)) / (n - 1));
   };
+  // A view centred on a part near an edge would reach past the bounds: slide it back in.
+  // A view that fits only to a rounding (zoomed exactly to fit under the heading) still slides.
+  const inside = (lo: number, size: number, min: number, max: number) => (size <= max - min + 1e-9 ? Math.min(Math.max(lo, min), max - size) : lo);
   for (const g of groups)
     for (const bottom of starts(g[1], g[3], vh).reverse())
-      for (const left of starts(g[0], g[2], vw)) views.push([left, bottom, left + vw, bottom + vh]);
+      for (const left of starts(g[0], g[2], vw)) {
+        // A view as tall as the frame (a tall stage) can still be panned into the letterbox
+        // under the drawing: lift it until it shows the frame's top, heading and all.
+        const x = inside(left, vw, bounds[0], bounds[2]),
+          y = vh >= FRAME[3] - FRAME[1] - 1e-9 ? Math.max(bottom, FRAME[3] - vh) : inside(bottom, vh, bounds[1], bounds[3]);
+        views.push([x, y, x + vw, y + vh]);
+      }
   return views;
 }
 
@@ -296,6 +368,8 @@ export function tourRegions(parts: readonly Box[], vw: number, vh: number): Box[
  * panning, reads the same in any other. When every such label already reads at
  * READ_PX, there is one: the whole picture. Any label under it is enlarged, however
  * little it needs: a label at 11 px is still under the floor `explain check` measures.
+ * Close-ups keep below the heading the stage draws (`layout.top`), zooming a little further
+ * when that is what it takes for a view to fit under it.
  */
 export function closeUps(layout: StepLayout | undefined, w: number, h: number, max = ZOOM_MAX): Zoom[] {
   const whole = [clampZoom(IDENTITY, w, h, max)];
@@ -304,20 +378,36 @@ export function closeUps(layout: StepLayout | undefined, w: number, h: number, m
   if (!read.length) return whole;
   const { s, ox, oy } = stageScale(w, h);
   const smallest = Math.min(...read.map((l) => l.size));
-  const k = Math.min(max, Math.max(1, READ_PX / (smallest * s)));
-  if (k < 1 + 1e-9) return whole;
+  const reading = Math.min(max, Math.max(1, READ_PX / (smallest * s)));
+  if (reading < 1 + 1e-9) return whole;
+  // Below the heading, unless a change reaches into it. A view shorter than the frame would
+  // cut the heading somewhere, so it zooms a little further, until it fits under it (as far
+  // as the zoom cap allows); a view as tall as the frame shows the heading whole.
+  const ceiling = Math.min(FRAME[3], Math.max(layout.top ?? FRAME[3], ...layout.parts.map((p) => p[3])));
+  const bounds: Box = [FRAME[0], FRAME[1], FRAME[2], ceiling];
+  const short = h / (reading * s) < FRAME[3] - FRAME[1] - 1e-9;
+  const fit = short && ceiling < FRAME[3] ? h / ((ceiling - FRAME[1]) * s) : 1;
+  const k = Math.min(max, Math.max(reading, fit));
   const vw = w / (k * s),
     vh = h / (k * s);
-  const regions = tourRegions(layout.parts, vw, vh);
-  // Open on the lead part: the first region that holds all of it when it fits a view, else the
-  // first that holds its top-left corner, where reading it starts.
+  const regions = tourRegions(layout.parts, vw, vh, bounds);
+  // Open on the lead part: the first region that holds all of it when it fits a view, else,
+  // of the regions that hold its top-left corner (where reading it starts), the one that
+  // shows most of it: a region framing another part can reach the corner too.
   const lead = layout.parts[layout.lead] ?? layout.parts[0]!,
     inside = (x: number, y: number, r: Box) => x >= r[0] - 1e-9 && x <= r[2] + 1e-9 && y >= r[1] - 1e-9 && y <= r[3] + 1e-9,
     holds = (r: Box) => inside(lead[0], lead[3], r),
     holdsAll = (r: Box) => holds(r) && inside(lead[2], lead[1], r);
   const fits = lead[2] - lead[0] <= vw && lead[3] - lead[1] <= vh;
   let open = fits ? regions.findIndex(holdsAll) : -1;
-  if (open < 0) open = Math.max(0, regions.findIndex(holds));
+  if (open < 0) {
+    const shown = (r: Box) => {
+      const i = intersect(r, lead);
+      return i ? (i[2] - i[0]) * (i[3] - i[1]) : 0;
+    };
+    for (const [i, r] of regions.entries()) if (holds(r) && (open < 0 || shown(r) > shown(regions[open]!) + 1e-9)) open = i;
+    open = Math.max(0, open);
+  }
   const zooms: Zoom[] = [];
   for (const [left, , , top] of [...regions.slice(open), ...regions.slice(0, open)]) {
     // The stage point that shows (left, top) at 1× goes to the stage's top-left corner.

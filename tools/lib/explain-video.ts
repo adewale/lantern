@@ -100,7 +100,12 @@ export function band(scene: Scene, width: number, height: number, background?: s
   const full = Math.round((width * FRAME.h) / FRAME.w),
     px = Math.round((width * height) / FRAME.w);
   // cull: resvg 2.6.2 aborts on a fading element the camera has left outside the view.
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${px}" viewBox="0 ${(full - px) / 2} ${width} ${px}">${toSvgString(scene, { width, background, cull: true })}</svg>`;
+  // overflow="visible": resvg 2.6.2 also panics (geom.rs, unwrap on None) on a translucent element
+  // inside a nested svg that clips its viewport when something there reaches past it, as the paper
+  // does under a zoomed camera. The outer svg crops the band, which lies inside the inner viewport,
+  // so letting the inner one overflow shows nothing more.
+  const stage = toSvgString(scene, { width, background, cull: true }).replace(/^<svg /, '<svg overflow="visible" ');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${px}" viewBox="0 ${(full - px) / 2} ${width} ${px}">${stage}</svg>`;
 }
 
 export function vttTime(seconds: number): string {

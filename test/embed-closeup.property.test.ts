@@ -155,10 +155,10 @@ test('a step opens on its lead part: whole when it fits the view, else from its 
   );
 });
 
-test('changes merge into parts in reading order, and the part with the most changed lettering leads', () => {
+test('changes merge into parts in reading order, and the part with the most new lettering leads, then the most moved', () => {
   fc.assert(
     fc.property(
-      fc.array(fc.record({ box: boxIn(), text: fc.boolean() }), { minLength: 1, maxLength: 10 }),
+      fc.array(fc.record({ box: boxIn(), text: fc.boolean(), moved: fc.boolean() }), { minLength: 1, maxLength: 10 }),
       (changes) => {
         const { parts, lead } = partsOf(changes);
         // Every change lies in exactly one part, and the parts keep apart.
@@ -166,13 +166,14 @@ test('changes merge into parts in reading order, and the part with the most chan
           const holding = parts.filter((p) => p[0] <= c.box[0] && p[1] <= c.box[1] && p[2] >= c.box[2] && p[3] >= c.box[3]);
           assert.ok(holding.length >= 1);
         }
-        const lettering = parts.map(
-          (p) => changes.filter((c) => c.text && p[0] <= c.box[0] && p[1] <= c.box[1] && p[2] >= c.box[2] && p[3] >= c.box[3]).length,
-        );
+        const count = (p: Box, moved: boolean) =>
+          changes.filter((c) => c.text && c.moved === moved && p[0] <= c.box[0] && p[1] <= c.box[1] && p[2] >= c.box[2] && p[3] >= c.box[3]).length;
+        // New lettering first, moved lettering to break ties: one number that orders both.
+        const rank = parts.map((p) => count(p, false) * 1000 + count(p, true));
         // Parts are disjoint, so a change inside one is counted there alone.
-        assert.equal(lettering.reduce((a, b) => a + b, 0), changes.filter((c) => c.text).length);
-        assert.equal(lettering[lead], Math.max(...lettering));
-        assert.equal(lead, lettering.indexOf(Math.max(...lettering)), 'ties go to the earlier part in reading order');
+        assert.equal(parts.reduce((n, p) => n + count(p, false) + count(p, true), 0), changes.filter((c) => c.text).length);
+        assert.equal(rank[lead], Math.max(...rank));
+        assert.equal(lead, rank.indexOf(Math.max(...rank)), 'ties go to the earlier part in reading order');
       },
     ),
     params(500),
@@ -247,4 +248,92 @@ test('a step changes where it recolours; a step that only dims points at what it
     ),
     params(60),
   );
+});
+
+/** A layout under a heading: the heading's bottom edge somewhere in the top half. */
+const headedArb: fc.Arbitrary<StepLayout> = fc
+  .tuple(layoutArb, fc.double({ min: 0.5, max: 4.4, noNaN: true }))
+  .map(([layout, top]) => ({ ...layout, top }));
+
+test('with a heading, no close-up cuts through it: each stays below its bottom edge unless a change reaches above it', () => {
+  fc.assert(
+    fc.property(headedArb, stageArb, (layout, { w, h }) => {
+      fc.pre(w < NARROW_PX);
+      const tour = closeUps(layout, w, h);
+      if (tour[0]!.k === 1) return; // the whole picture shows the heading whole
+      const ceiling = Math.min(4.5, Math.max(layout.top!, ...layout.parts.map((p) => p[3])));
+      // A view's top edge is under the heading or above all of it, never in it (unless the zoom cap leaves no room).
+      for (const z of tour) {
+        if (z.k === ZOOM_MAX) continue;
+        const v = viewBox(z, w, h);
+        // 1e-4 units: the zoom is clamped in pixels, which rounds a view's edge by far less than a pixel.
+        assert.ok(v[3] <= ceiling + 1e-4 || v[3] >= 4.5 - 1e-4, `view ${v} cuts the heading at ${ceiling}`);
+      }
+    }),
+    params(500),
+  );
+});
+
+test('with a heading, a close-up zooms no further than reading, or fitting under the heading, needs', () => {
+  fc.assert(
+    fc.property(headedArb, stageArb, (layout, { w, h }) => {
+      fc.pre(w < NARROW_PX);
+      const { k } = closeUp(layout, w, h),
+        { s } = stageScale(w, h),
+        read = labelsToRead(layout);
+      if (!read.length || k === 1 || k === ZOOM_MAX) return;
+      const ceiling = Math.min(4.5, Math.max(layout.top!, ...layout.parts.map((p) => p[3])));
+      const reading = READ_PX / (Math.min(...read.map((l) => l.size)) * s),
+        fit = ceiling < 4.5 && h / (reading * s) < 9 - 1e-9 ? h / ((ceiling + 4.5) * s) : 1;
+      assert.ok(Math.abs(k - Math.max(reading, fit)) < 1e-9, `k=${k}, reading ${reading}, fit ${fit}`);
+      // Every label near the changes still reads at READ_PX.
+      for (const l of read) assert.ok(l.size * s * k >= READ_PX - 1e-9);
+    }),
+    params(500),
+  );
+});
+
+test('stepLayouts records where the stage heading ends, and a phone close-up of a change just under it stays below it', async () => {
+  const { stage } = await import('../explain/index.ts');
+  class Headed extends Scene {
+    override async construct() {
+      const s = stage(this);
+      await this.step('one', { title: 'A title over the picture' });
+      const small = new Text('a small label near the top', { fontSize: 0.2 }).moveTo([-4, 2.9]);
+      await s.enter(small, { describe: 'a label' });
+    }
+  }
+  const layout = (await stepLayouts(Headed)).get('one')!;
+  assert.ok(layout.top! > 3 && layout.top! < 3.8, `top ${layout.top}`);
+  const [w, h] = [358, 201];
+  for (const z of closeUps(layout, w, h)) {
+    assert.ok(z.k > 1);
+    const v = viewBox(z, w, h);
+    assert.ok(v[3] <= layout.top! + 1e-6, `view ${v} cuts the heading at ${layout.top}`);
+  }
+});
+
+test('a block of text carried aside is a moved part, and the step opens on what it brought new', async () => {
+  for (const scale of [1, 0.5]) {
+    class Carry extends Scene {
+      override async construct() {
+        const block = new Group(
+          ...['five lines of code that', 'the previous step showed', 'and this step only moves', 'into the corner, out of', 'the way of the new part'].map((t, i) =>
+            new Text(t, { fontSize: 0.3 }).moveTo([0, 1 - i * 0.45]),
+          ),
+        );
+        await this.step('show');
+        this.add(block);
+        await this.wait(0.1);
+        await this.step('carry');
+        await this.play(block.animate.scale(scale).moveTo([-5, 3]));
+        this.add(new Text('2.96 units', { fontSize: 0.25 }).moveTo([3, -3]));
+        await this.wait(0.1);
+      }
+    }
+    const layout = (await stepLayouts(Carry)).get('carry')!;
+    assert.equal(layout.parts.length, 2, JSON.stringify(layout.parts));
+    const lead = layout.parts[layout.lead]!;
+    assert.ok(lead[0] > 2 && lead[3] < -2, `scale ${scale}: opens on the new label, not the carried block: ${JSON.stringify(lead)}`);
+  }
 });
