@@ -62,3 +62,22 @@ test('DOM output merges same-styled glyph lines into one element, and splits dur
   assert.ok(merged > 500, `merged lines: ${merged}`);
   assert.ok(split > 0, 'letter-by-letter Write falls back to per-glyph elements');
 });
+
+test('failed and stopped sinks close their trace span before the next caller', async (t) => {
+  const { StopScene } = await import('../src/index.ts');
+  let clock = 100;
+  t.mock.method(performance, 'now', () => clock);
+  try {
+    for (const failure of [new Error('sink failed'), new StopScene()]) {
+      perf.enable({ timelineDepth: 1 });
+      const scene = new Scene({ async frame() { clock += 7; throw failure; } });
+      await assert.rejects(scene.emitFrame(0), (error) => error === failure);
+      perf.span('after', () => { clock += 3; });
+      assert.deepEqual(perf.rows().find((r) => r.name === 'sink'), { name: 'sink', calls: 1, total: 7, self: 7, max: 7 });
+      assert.deepEqual(perf.rows().find((r) => r.name === 'after'), { name: 'after', calls: 1, total: 3, self: 3, max: 3 });
+      const events = JSON.parse(perf.chromeTrace()).traceEvents as { name: string; dur: number }[];
+      assert.equal(events.find((e) => e.name === 'sink')!.dur, 7000, 'trace durations are microseconds');
+      assert.ok(events.some((e) => e.name === 'after'), 'no failed span hides the next top-level event');
+    }
+  } finally { perf.disable().reset(); }
+});
