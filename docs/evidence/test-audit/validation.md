@@ -1,3 +1,5 @@
+> Historical validation for the original PR head. See [latest-main validation](latest-main/validation.md) for the tree merged after the newer release and lettering work.
+
 # Validation
 
 Final tested source/test head: `35384175b8f527be62996e35f2ced90ad2f687a8`, including main `fad29b00a0c1984984ab4e0f4bbe363199520371`. Node 26.12.1, Chromium 154, pinned lettering fonts and Python environment. Property-run defaults and dependencies are unchanged. The final documentation commit adds no source/test edits.

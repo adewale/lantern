@@ -1,3 +1,5 @@
+> Subsequent integration with the newer release, player and packed lettering changes is recorded in [latest-main validation](latest-main/validation.md). The inventories and counts below describe the original audit.
+
 # Rayner test audit, October 2026
 
 This audit covers the 68 original TypeScript test files: 679 declarations, 17,188 test lines and 1,520 support lines at main `a4a80d03963a86d804e2b3465ee8a7e9eb68ba6d`. The lettering lane also reviewed its 14 Python oracle cases. Parameterized rows and runtime subtests make runner totals different from declaration counts.
