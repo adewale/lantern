@@ -182,6 +182,7 @@ const mutated = randomSnapshot('graph LR\nA-->B').chain((s) => {
     fc.oneof(fc.jsonValue(), fc.constantFrom(null, undefined, NaN, Infinity, -1, '', 'red', '#12', '4,2', '-1', {}, [], [[1]], 'ab', 5)),
   );
 });
+type Mutation = typeof mutated extends fc.Arbitrary<infer Value> ? Value : never;
 const mutate = (s: DiagramSnapshot, path: (string | number)[], value: unknown) => {
   const copy = JSON.parse(JSON.stringify(s));
   let at = copy;
@@ -227,7 +228,7 @@ test('whatever the validator accepts, a Diagram can draw and describe without in
           assert.ok(!/NaN/.test(JSON.stringify(m.style) + String(m.style.dashArray)), `${path.join('.')} = ${JSON.stringify(value)}: ${JSON.stringify(m.style)}`);
         }
     }),
-    params<[fc.ArbitraryValue<typeof mutated>]>(300, { examples: ['valueOf', 'constructor', '__proto__', 'toString', 'hasOwnProperty'].map((family): [fc.ArbitraryValue<typeof mutated>] => [[fixture(), ['family'], family]]) }),
+    params<[Mutation]>(300, { examples: ['valueOf', 'constructor', '__proto__', 'toString', 'hasOwnProperty'].map((family): [Mutation] => [[fixture(), ['family'], family]]) }),
   );
 });
 
