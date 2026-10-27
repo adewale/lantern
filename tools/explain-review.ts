@@ -12,14 +12,15 @@ import { serve } from './lib/explain-serve.ts';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
 import { reviewStoryVariant, STORY_CLAIMS } from './lib/explain-story-review.ts';
 
-const server = await serve(join(ROOT, 'out'), 0, 'explainers/'),
-  base = server.url;
+let server: Awaited<ReturnType<typeof serve>> | undefined;
 let browser: Browser | undefined, page: Page | undefined;
 const receipt = join(ROOT, 'out/validation/browser-review.json');
 const review = join(ROOT, 'out/review');
 try {
-  await rm(receipt, {force:true});
-  await rm(review, {recursive:true,force:true});
+  await rm(receipt, { force: true });
+  await rm(review, { recursive: true, force: true });
+  server = await serve(join(ROOT, 'out'), 0, 'explainers/');
+  const base = server.url;
   browser = await launch();
   page = await browser.newPage({ viewport: { width: 1180, height: 980 } });
   const errors: string[] = [],
@@ -42,29 +43,45 @@ try {
     await Promise.all(images.map((image) => image.decode()));
   });
   await page.screenshot({ path: join(review, 'gallery.png'), fullPage: true, animations: 'disabled' });
-  const built = JSON.parse(await readFile(join(ROOT, 'out/explainers/evidence.json'), 'utf8')) as {scenes: {id:string;cases:Record<string,string>[]}[]};
-  const planned = built.scenes.flatMap(s => s.cases.map(settings => ({scene:s.id,settings})));
+  const built = JSON.parse(await readFile(join(ROOT, 'out/explainers/evidence.json'), 'utf8')) as {
+    scenes: { id: string; cases: Record<string, string>[] }[];
+  };
+  const planned = built.scenes.flatMap((s) => s.cases.map((settings) => ({ scene: s.id, settings })));
   const cases = [];
   for (const entry of EXPLAINERS) {
     const project = await collectProject(join(ROOT, 'scenes/explainers', entry.id), { write: false });
-    assert.deepEqual(JSON.parse(await readFile(join(ROOT,'out/explainers',entry.id,'inputs.json'),'utf8')),await sceneInputs(project),`${entry.id}: rebuild stale collection output before reviewing`);
+    assert.deepEqual(
+      JSON.parse(await readFile(join(ROOT, 'out/explainers', entry.id, 'inputs.json'), 'utf8')),
+      await sceneInputs(project),
+      `${entry.id}: rebuild stale collection output before reviewing`,
+    );
     for (const [index, variant] of project.variants.entries()) {
       const directory = join(review, 'story', entry.id, String(index));
-      await mkdir(directory, {recursive: true});
-      const steps = await reviewStoryVariant(page, `${base}/explainers/${entry.id}.html`, variant, STORY_CLAIMS[entry.id], directory);
-      cases.push({scene: entry.id, settings: variant.values, steps});
+      await mkdir(directory, { recursive: true });
+      const steps = await reviewStoryVariant(
+        page,
+        `${base}/explainers/${entry.id}.html`,
+        variant,
+        STORY_CLAIMS[entry.id],
+        directory,
+      );
+      cases.push({ scene: entry.id, settings: variant.values, steps });
     }
     console.log(`${entry.id}: every resting step passed both widths`);
   }
 
-  assert.deepEqual(cases.map(({scene,settings}) => ({scene,settings})), planned, 'every built settings case must be reviewed exactly once');
+  assert.deepEqual(
+    cases.map(({ scene, settings }) => ({ scene, settings })),
+    planned,
+    'every built settings case must be reviewed exactly once',
+  );
   const headers = await fetch(base + '/explainers/exgit.html', { method: 'HEAD' });
   assert.match(headers.headers.get('content-security-policy') ?? '', /connect-src 'none'/);
   assert.equal(headers.headers.get('x-frame-options'), null);
 
   await page.goto(base + '/explainers/embed-lab.html');
   await page.waitForFunction(() => document.querySelectorAll('iframe').length === 2);
-  const mainFrame=page.mainFrame();
+  const mainFrame = page.mainFrame();
   for (const frame of page.frames().filter((frame) => frame !== mainFrame))
     await frame.waitForSelector('[data-ready=true]');
   await page.waitForFunction(() =>
@@ -78,7 +95,11 @@ try {
   // Graph and Twitter card tags, with absolute https URLs and pictures at the declared size.
   const site = await mkdtemp(join(tmpdir(), 'rayner-site-'));
   try {
-    const exported = spawnSync(process.execPath, [join(ROOT, 'tools/explain-site.ts'), site, '--origin', 'https://example.org'], { encoding: 'utf8' });
+    const exported = spawnSync(
+      process.execPath,
+      [join(ROOT, 'tools/explain-site.ts'), site, '--origin', 'https://example.org'],
+      { encoding: 'utf8' },
+    );
     assert.equal(exported.status, 0, `site:export --origin failed:\n${exported.stderr.slice(-4000)}`);
     console.log(exported.stdout.split('\n').find((line) => line.includes('Twitter card')));
   } finally {
@@ -104,14 +125,20 @@ try {
   console.log(
     `${cases.length} served cases, every resting step at both widths, passed caption, actual paint, story-target, no-error and no-external-connection checks. Response headers, link preview tags and the two-embed host page passed. Screenshots: ${review}`,
   );
-} catch(error) {
-  await mkdir(join(ROOT,'out/review'),{recursive:true});
-  let screenshotError:string|undefined;
-  try {await page?.screenshot({path:join(ROOT,'out/review/failure.png'),fullPage:true});}
-  catch(e){screenshotError=String(e);}
-  await writeFile(join(ROOT,'out/review/failure.json'),JSON.stringify({url:page?.url(),error:String(error),screenshotError},null,2)+'\n');
+} catch (error) {
+  await mkdir(join(ROOT, 'out/review'), { recursive: true });
+  let screenshotError: string | undefined;
+  try {
+    await page?.screenshot({ path: join(ROOT, 'out/review/failure.png'), fullPage: true });
+  } catch (e) {
+    screenshotError = String(e);
+  }
+  await writeFile(
+    join(ROOT, 'out/review/failure.json'),
+    JSON.stringify({ url: page?.url(), error: String(error), screenshotError }, null, 2) + '\n',
+  );
   throw error;
 } finally {
   await browser?.close();
-  server.close();
+  server?.close();
 }

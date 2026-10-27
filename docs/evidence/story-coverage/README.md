@@ -14,12 +14,14 @@ The WCAG AA/AAA 2.4 Focus Visible step exposed a real omission: the caption disc
 | Tour coverage without holes | Rectangle-union PBT against integer unit-cell centres, including adjacent views and a gap |
 | Complete named labels | Logical glyph checks before accepting surviving rendered records; opacity, clipping and partial-draw controls |
 | Stage membership and replacement ink | Missing fresh emphasis rejects; marked route must bind the painted sibling rather than its invisible carrier |
-| Actual paint at the reachable view | Real Chromium checks computed fill/stroke, ancestor opacity/visibility and effective clips; missing-path, transparent-paint, CSS-clip and later-view controls |
+| Actual paint at the reachable view | Real Chromium checks computed fill/stroke, ancestor opacity/visibility and effective clips; missing-path, transparent-paint, CSS-clip, transformed-clip and later-view controls |
 | Expected context independent of damaged DOM | Authored clip determines the obligation; live clipped ink determines coverage at each stop |
 | Caption over unchanged artwork | Missing declaration rejects; explicit existing subject accepts |
 | Focus Visible opening | Independent named criterion claim rejects the old production page and accepts the marked version |
 
-The browser controls themselves needed repair. A style-attribute poison was blocked by CSP and retained an earlier hidden state. Each poison now starts from verified visible ink and uses individual CSSOM properties. Mutation rejection is evidence only when the intended assertion fails; import or syntax failures do not count.
+The browser controls themselves needed repair. A style-attribute poison was blocked by CSP and retained an earlier hidden state. Each poison now starts from verified visible ink and uses individual CSSOM properties. The final structural clip controls reject displaced rect/clipPath transforms and object-bounding-box units, while normal clips remain accepted. Twelve deliberate mutations reject at assertions. A separate injected server-listen failure reproduces the old stale-receipt bug; the repaired command removes the old success receipt and writes the injected error to its failure report.
+
+Mutation rejection is evidence only when the intended assertion fails; import or syntax failures do not count.
 
 ## Scope decisions
 

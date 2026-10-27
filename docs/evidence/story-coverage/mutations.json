@@ -64,5 +64,11 @@
     "assertionRejected": true,
     "exitCode": 1,
     "log": "story-mutant-hidden-later-view.log"
+  },
+  {
+    "defect": "transformed-clip",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-transformed-clip.log"
   }
 ]
