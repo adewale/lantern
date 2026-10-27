@@ -285,7 +285,7 @@ export interface BraceOpts extends Style {
  * then the mirror image back out. Stroked rather than filled so it takes the
  * same stroke weight and color as the outlines it sits beside, and so Create
  * traces it once, as a pen would (a filled brace's outline is traced around
- * both sides before the fill comes in); at Lantern's stroke widths the taper
+ * both sides before the fill comes in); at the engine's stroke widths the taper
  * of a filled brace is too small to see anyway.
  *
  * Every direction is the same drawing: built pointing DOWN, as wide as the

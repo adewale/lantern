@@ -39,7 +39,7 @@ for (const item of EXPLAINERS) {
   await rm(join(directory, item.id, 'inputs.json'), { force: true });
   const project = await collectProject(join(ROOT, 'scenes/explainers', item.id));
   // For agents: what site:export publishes as <id>.json, described right after the run, as
-  // `explain describe` does.
+  // `rayner describe` does.
   const described = await describeProject(project);
   await buildExplainer(project, join(directory, item.id + '.html'));
   // The tile links to the default case, so it shows that case's picture.

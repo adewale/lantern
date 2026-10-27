@@ -1,6 +1,6 @@
 // An explainer as data, for agents: every case and every step, with the words a reader gets,
 // the state the scene recorded, what each step changed and its resting picture drawn as text.
-// One definition behind `explain describe` and anything an agent imports; it runs the scene in
+// One definition behind `rayner describe` and anything an agent imports; it runs the scene in
 // Node or a browser, with no Chromium, given the diagrams' pinned snapshots.
 import { renderAt, renderText, traceScene } from '../src/index.ts';
 import type { Scene, SceneState, Sink } from '../src/index.ts';
@@ -51,7 +51,7 @@ export interface DescribeOptions {
   snapshots?: SnapshotStore | DiagramResolver;
   /**
    * Draw each resting picture as text (default true); false is faster, a trace only. A step's name
-   * draws only that step, for a caller that shows one step (`explain see`).
+   * draws only that step, for a caller that shows one step (`rayner see`).
    */
   drawings?: boolean | string;
 }
@@ -77,7 +77,7 @@ export async function describeExplainer(Scene: ExplainerClass, options: Describe
   };
 }
 
-/** One case of `describeExplainer`, for a caller that needs only that case (`explain see`). */
+/** One case of `describeExplainer`, for a caller that needs only that case (`rayner see`). */
 export async function describeCase(Scene: ExplainerClass, values: Settings, options: DescribeOptions = {}): Promise<CaseDescription> {
   const Source = options.snapshots ? bindSnapshots(Scene, options.snapshots) : Scene,
     Bound = withSettings(Source, values),
@@ -108,7 +108,7 @@ export async function describeCase(Scene: ExplainerClass, values: Settings, opti
   return { values, name: caseName(Scene, values), duration: trace.duration, steps };
 }
 
-/** The picture at `t` as text, without the heading that names the step, as `explain check` draws it. */
+/** The picture at `t` as text, without the heading that names the step, as `rayner check` draws it. */
 async function drawing(Bound: ExplainerClass, t: number): Promise<string> {
   const sink: Sink = { async frame() {} };
   const scene: Scene = await renderAt(Bound, t, sink);

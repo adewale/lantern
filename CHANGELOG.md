@@ -1,16 +1,36 @@
-## Unreleased
+# Changelog
+
+## 0.1.0 (unreleased)
+
+The first release of the `rayner` npm package. Lantern released 0.1.0 under the name `manim-js`; `rayner` is a new package, so its numbering starts again at 0.1.0. Earlier drafts of this changelog called this version `0.2.0-explainers.0`.
+
+What the package provides:
+
+- `rayner`: Lantern's engine at `2c7bad5`, with the fixes [Upstream](docs/UPSTREAM.md) lists, plus a camera, matching and diff transforms, emphasis, graphing, views and addressable code.
+- `rayner/explain`: helpers for diagrams, cards and code panels; reader settings that rerun the scene as checked cases; and `describeExplainer`.
+- `rayner/lettering`: Latin Extended, Greek and Cyrillic for the explainers that ask for them.
+- The `rayner` command: `init`, `preview`, `snapshots`, `check`, `build`, `render`, `shots`, `describe` and `see`, and `--version`. Install with `npm i -D rayner` and run with `npx rayner`.
+- Portable HTML pages with a loader and header recipes, and silent captioned video.
+- An agent skill, `skills/rayner-explainers/SKILL.md`.
+
+Changes in this release, for anyone using a checkout from before it:
+
+- **`rayner see` and `site:export` do less work**: `rayner see` describes its case with only the step it prints drawn (`describeExplainer`'s `drawings` option now takes a step name), and draws the SVG only with `--out`. Its printed text is unchanged. `demos:build` writes each explainer's `describeExplainer` JSON to `out/explainers/<id>/describe.json`, and `site:export` copies it instead of running every scene again; the published `<id>.json` files are byte-identical. `demos:build` also records what it built each explainer from in `out/explainers/<id>/inputs.json`. `site:export` checks those records before it writes anything and fails, telling you to run `demos:build`, when one is missing or a scene's code, its folder or the engine changed since the build. Measured on a 4-CPU machine: `see` on gtfs takes 3.1 s instead of 4.0 s, `site:export` 1 s instead of 65 s, and `demos:build` 97 s instead of 61 s.
 
 - **Next view goes first to what the step emphasised** (issue #21, after #24): at 390 × 844, PKCE's `authorize` caption says the verifier stays with the client "as the card's last row shows", but that row was view 7 of 7, and the first step's derivation of the challenge was view 4 of 6; #24 made the route visible, but views were still ordered by position alone. Now the stage's helpers report what they emphasise from their own state (a lit card row, a code focus or diff line, a marked, travelled or focused diagram part, a note; `emphasises` in `explain/look.ts`), and Next view and the corner map visit the views showing what the step newly emphasised straight after the first, so both are one press away. The `authorize` step now lights the row its caption names (`code_verifier: not sent`) instead of `code_challenge`, which the coloured request arrow already shows. Over the 1,025 case steps of the 26 explainers, 236 of the 822 multi-view tours change order; the view a step opens on, the set of views and their scale do not, so `check` reports the same phone numbers.
 
 - Add opt-in `meta.lettering`: licensed, per-scene font subsets; build-time HarfBuzz and bidi outline snapshots; and `Math`/`MathTex` using glyph's optional TeX/MATH typesetter. Fresh snapshots build offline without those tools. Checks report lettering weight and fail on stale snapshots or unrequested scripts. All 26 existing explainer pages and receipts remain byte-identical.
 
-# Changelog
+- **Requested lettering:** per-scene licensed fonts, build-time HarfBuzz and bidi outline snapshots, and `Math`/`MathTex` using glyph's optional TeX/MATH typesetter. Fresh snapshots build without Python or source fonts; checks report lettering weight and reject stale snapshots or unrequested scripts.
+- **Phone navigation and authoring:** visible Next view and Whole picture controls distinguish close-ups from steps; the gallery states its purpose and links the authoring guides.
+- **Release validation:** install and test the exact packed archive, compile a consumer against its exports, and retain its integrity manifest. The manual publishing workflow reuses CI and supports npm trusted publishing after account setup.
 
-## Unreleased: 0.2.0-explainers.0
+- **The command is `rayner`**, not `explain`. In a checkout, `npm run explain -- …` is now `npm run rayner -- …`, and errors start `rayner:`. `--version` prints the version.
+- **Lantern's name is left only where it means Lantern.** Built SVG clip ids are `rayner-clip-…` (were `lantern-clip-…`); `demos:serve` prints "Rayner demos"; temporary folders and the docs call the engine Rayner's. Because the engine's source and every page's licence notices changed, every explainer's engine hash and page bytes change once, so run `npm run videos` before publishing videos again. The receipt's `engine` field still says `lantern@2c7bad5+explainer`, which records where the engine came from. Internal capture markers remain `data-lantern-part` and `backend:lantern-capture`; the internal path placeholder remains `lantern:/` so committed snapshots stay usable.
+- **Licences**: `LICENSE` adds the fork's copyright line beside Lantern's, and `vendor/licenses/glyph-MIT.txt` carries the notice for the bundled glyph. The package now includes this changelog.
+- **CI** can be started by hand (`workflow_dispatch`).
 
-Newest first; all on 24–27 October 2026.
-
-- **`explain see` and `site:export` do less work**: `explain see` describes its case with only the step it prints drawn (`describeExplainer`'s `drawings` option now takes a step name), and draws the SVG only with `--out`. Its printed text is unchanged. `demos:build` writes each explainer's `describeExplainer` JSON to `out/explainers/<id>/describe.json`, and `site:export` copies it instead of running every scene again; the published `<id>.json` files are byte-identical. `demos:build` also records what it built each explainer from in `out/explainers/<id>/inputs.json`. `site:export` checks those records before it writes anything and fails, telling you to run `demos:build`, when one is missing or a scene's code, its folder or the engine changed since the build. Measured on a 4-CPU machine: `see` on gtfs takes 3.1 s instead of 4.0 s, `site:export` 1 s instead of 65 s, and `demos:build` 97 s instead of 61 s.
+The entries below record how the release was built, newest first, all on 24–26 October 2026.
 
 - **Real bold and italic, on request** (issue #8): `static meta.lettering = { styles: ['bold', 'italic'] }` draws `weight: 'bold'` Text, including stage headings and panel titles, in the face's Bold cut instead of the Regular outline stroked, and allows `ItalicText`, a `Text` in the Italic cut (Bold Italic with `weight: 'bold'`). The cuts come from the requested face, else Inter and JetBrains Mono, and are shaped by HarfBuzz at capture into `scene.lettering.json` like other outline lettering. Arabic, Devanagari and Hebrew have no italic cut, so they draw upright in italic text; a requested face without the cut fails capture. Without `'italic'`, `ItalicText` fails the build: there is no faux italic. Only OFL and Apache-2.0 faces may be embedded, and every build from a snapshot checks the stored notices again. A lettered page now carries only the font subsets its counters decode, without hashes or licences, and each licence notice once; subsets keep only the layout features glyph's shaper applies and drop hinting. The four existing outline fixtures' pages shrink by 3.8 to 10.1 KB and their runs are unchanged. `test/lettering-browser.test.ts` now builds every outline fixture and checks, at every step, that Chromium draws the paths Node draws; `npm run test:embeds` runs it. All 26 unlettered explainers build the same pages, headers and receipts.
 

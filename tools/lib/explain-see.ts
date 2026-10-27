@@ -14,7 +14,7 @@ type Variant = Project['variants'][number];
 
 const value = (v: unknown) => (v === undefined ? '—' : JSON.stringify(v));
 
-/** The text `explain see` prints for `step` of a described case (by name; the last step when omitted). */
+/** The text `rayner see` prints for `step` of a described case (by name; the last step when omitted). */
 export function seeText(id: string, c: CaseDescription, step?: string): string {
   const names = c.steps.map((s) => s.step);
   const s = step == null ? c.steps.at(-1) : c.steps.find((x) => x.step === step);

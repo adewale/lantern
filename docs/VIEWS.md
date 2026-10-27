@@ -21,13 +21,13 @@ class Ring extends Scene {
 }
 ```
 
-This is manim's `always_redraw` idea in Lantern's form. The picture changes only
+This is manim's `always_redraw` idea in the engine's form. The picture changes only
 when you play `sync()`, and each change is a matching transform from the old
 picture to the new one.
 
 ## Why not updaters
 
-`always_redraw` rebuilds the picture every frame with an updater. A Lantern scene
+`always_redraw` rebuilds the picture every frame with an updater. A Rayner scene
 can't afford that. A play with an active updater can never be skipped during a
 seek (`Scene.hasUpdaters()`), because updaters integrate over frames. One
 per-frame readout would make every seek into that scene replay frame by frame.

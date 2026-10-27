@@ -18,7 +18,7 @@ export interface SiteItem {
 const TITLE = '# Rayner explainers';
 const GROUPS = { topic: 'Explainers', toolchain: 'How these are made' } as const;
 
-/** What demos:build writes as <id>/describe.json: the explainer as `explain describe` gives it, drawings included. */
+/** What demos:build writes as <id>/describe.json: the explainer as `rayner describe` gives it, drawings included. */
 export async function describeProject(project: Project): Promise<string> {
   return JSON.stringify(await describeExplainer(project.Scene, { snapshots: project.store }));
 }

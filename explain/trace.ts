@@ -172,6 +172,6 @@ export function pictureHtml(state: unknown, previous?: unknown): string {
 }
 /**
  * What a step's picture leaves unsaid: kept drawings and diagram parts with no words.
- * Empty when everything on the stage is described; `explain check` fails a step otherwise.
+ * Empty when everything on the stage is described; `rayner check` fails a step otherwise.
  */
 export const undescribed = (state: unknown): string[] => pictureOf(state)?.undescribed ?? [];

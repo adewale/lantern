@@ -26,7 +26,7 @@ test('site:export copies each explainer\'s describe.json from demos:build as <id
       { id: 'glyph', group: 'toolchain' },
       { id: 'ring-buffer', group: 'topic' },
     ], built);
-    // The JSON is describeExplainer's object, drawings included, as `explain describe` prints it,
+    // The JSON is describeExplainer's object, drawings included, as `rayner describe` prints it,
     // in the bytes demos:build wrote.
     const json = await readFile(join(root, 'projects/rayner/ring-buffer.json'), 'utf8');
     assert.equal(json, await readFile(join(built, 'ring-buffer/describe.json'), 'utf8'));
