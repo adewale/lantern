@@ -70,5 +70,11 @@
     "assertionRejected": true,
     "exitCode": 1,
     "log": "story-mutant-transformed-clip.log"
+  },
+  {
+    "defect": "server-startup-error-code",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-startup-error.log"
   }
 ]

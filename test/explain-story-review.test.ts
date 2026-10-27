@@ -12,6 +12,16 @@ import { launch } from '../tools/lib/browser.ts';
 import { Scene, Text, Line, Group } from '../src/index.ts';
 import { emphasises } from '../explain/look.ts';
 
+test('local review server rejects an occupied port so startup failure can be reported', async () => {
+  const first = await serve(tmpdir(), 0, 'index.html');
+  try {
+    await assert.rejects(serve(tmpdir(), Number(new URL(first.url).port), 'index.html'), { code: 'EADDRINUSE' });
+    assert.equal((await fetch(first.url + '/missing-story-file')).status, 404, 'the existing host remains usable');
+  } finally {
+    first.close();
+  }
+});
+
 test('tour coverage requires every target cell, including holes between views', () => {
   const rect = fc
     .tuple(

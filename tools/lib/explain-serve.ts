@@ -77,7 +77,13 @@ export async function serve(root: string, port: number, index: string): Promise<
       res.end('Not found');
     }
   });
-  await new Promise<void>((done) => server.listen(port, '127.0.0.1', done));
+  await new Promise<void>((done, reject) => {
+    server.once('error', reject);
+    server.listen(port, '127.0.0.1', () => {
+      server.off('error', reject);
+      done();
+    });
+  });
   return {
     url: `http://127.0.0.1:${(server.address() as { port: number }).port}`,
     close: () => server.close(),
