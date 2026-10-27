@@ -19,7 +19,8 @@ Commands are `rayner <command>` (`npx rayner <command>` in a project that instal
 6. Design each step's resting picture, what the step leaves on screen, because the reader looks at it while reading the caption. Leave the idea there with `walk(..., { trail: true })`, `mark`, `dim`, `note`, `card.set`, `card.mark` and `code.focus`; give marks an `as` word ("rejected") when they mean something. A token that walks and vanishes leaves nothing.
 7. `rayner preview scene.ts --watch` and `rayner shots scene.ts --case id=value`: look at every step of every case. A passing build is not a visual review.
 8. `rayner check scene.ts`. Fix failures at their cause; `out/checks/<id>/report.json` draws each resting picture roughly in text. Its `legibility.labelsUnder12PxAt390` counts labels a phone reader sees under 12 px in the step's close-up; get it to 0 in every case (a heading at `stage(this, { headingSize: 0.54 })` reads at 12 px).
-9. `rayner build scene.ts --out public/<id>.html`; optionally `rayner render scene.ts --out public/<id>.mp4 --footer`, which also writes `<id>.transcript.html`.
+9. `rayner describe scene.ts --out out/<id>.json` and read each step of each case: does the caption claim only what that step's `changed` and `picture` show? Rewrite a caption that names a value, mark or path the step does not show, or change the step so it shows it. `rayner see scene.ts <step> --case id=value` prints one step.
+10. `rayner build scene.ts --out public/<id>.html`; optionally `rayner render scene.ts --out public/<id>.mp4 --footer`, which also writes `<id>.transcript.html`.
 
 ## Start from an example
 

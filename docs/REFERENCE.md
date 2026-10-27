@@ -175,6 +175,28 @@ Other exports: `withSettings(Scene, values)` binds a case without mutating the c
 
 It runs the scene once per case, in Node or a browser, with no Chromium. A scene with diagrams needs its pinned snapshots (`snapshots`, as `rayner` reads them from `scene.snapshots/`) or it throws. `rayner describe <scene>` prints the same object; `--out file.json` writes it. Diagram labels are outlines, so the text drawing shows them as strokes; their words are in `picture`.
 
+In a script, load the snapshots from `scene.snapshots/` (`index.json` names each diagram's file) and walk the cases and steps. This prints each step's caption and the state keys it changed:
+
+```ts
+import { readFile } from 'node:fs/promises';
+import { describeExplainer } from 'rayner/explain';
+import type { SnapshotStore } from 'rayner/explain';
+import Scene from './my-explainer/scene.ts';
+
+const folder = new URL('./my-explainer/scene.snapshots/', import.meta.url);
+const index = JSON.parse(await readFile(new URL('index.json', folder), 'utf8'));
+const snapshots: SnapshotStore = {};
+for (const [key, file] of Object.entries<string>(index.diagrams))
+  snapshots[key] = JSON.parse(await readFile(new URL(file, folder), 'utf8'));
+
+const d = await describeExplainer(Scene, { snapshots });
+for (const c of d.cases)
+  for (const s of c.steps)
+    console.log(`${c.name || d.title} · ${s.step}: ${s.caption}\n  changed: ${Object.keys(s.changed).join(', ') || 'nothing'}`);
+```
+
+`npm run pack:smoke` runs this block against the packed package. `rayner see <scene> [step]` prints one step of the same description for a person at a terminal. `npm run site:export` publishes the description beside each page as `<id>.json`, and lists every explainer in `llms.txt` at the site root.
+
 ## Snapshots
 
 Every command except `init` runs every case, captures any diagram missing from `scene.snapshots/` beside the scene, and deletes unused ones; `rayner snapshots` stops there. Commit the folder; `index.json` maps each diagram's key to its own file. A change to the capture code invalidates the whole cache; `--refresh` recaptures everything. Capture needs Chromium and the optional packages in [the README](../README.md#requirements).
@@ -228,12 +250,13 @@ These checks establish deterministic behaviour and readable pictures. They do no
 | `render <scene>` | A video with subtitles, chapters, transcript and receipt |
 | `shots <scene>` | A contact sheet of every step, as SVG and PNG |
 | `describe <scene>` | [`describeExplainer`](#describe) as JSON: every case and step, with words, state, what changed and the picture in words and as text |
+| `see <scene> [step]` | One step of [`describeExplainer`](#describe)'s description: its resting picture drawn as text, then its title, caption, the picture in words and what it changed in `scene.state` (`key: before → after`). The last step by default; needs no browser, so an agent can read a scene from a terminal |
 
 | Option | Applies to | Effect |
 | --- | --- | --- |
-| `--out <path>` | all but `init` and `snapshots` | The output file; for `check`, the report's directory. Defaults under `out/` in the current directory |
+| `--out <path>` | all but `init` and `snapshots` | The output file; for `check`, the report's directory; for `see`, the resting picture as SVG (nothing is written without it). Defaults under `out/` in the current directory |
 | `--refresh` | all but `init` | Recapture every diagram |
-| `--case id=value` | `render`, `shots` | One case; repeat for several settings |
+| `--case id=value` | `render`, `shots`, `see` | One case; repeat for several settings |
 | `--all` | `render` | Every case, each file suffixed `-id=value` |
 | `--footer` | `render` | The 1280 × 960 caption-footer preset |
 | `--width <even>` | `render` | Stage-only width, default 1280 |
@@ -260,7 +283,7 @@ The transcript lists, for every case, each step as a link to it, its caption, an
 | `theme=light\|dark\|auto` | Player chrome only; default `auto` |
 | `parentOrigin=<origin>` | Set by the loader; the exact HTTP(S) origin that receives resize messages |
 
-An unknown setting or value resets every setting to its default, and a notice names what was wrong. A step the case lacks opens the first step, with a notice. Switching cases keeps the step by name. Back and forward restore case and step. Copy link keeps case and step and drops `parentOrigin`.
+An unknown setting or value resets every setting to its default, and a notice names what was wrong. A step the case lacks opens the first step, with a notice. Switching cases keeps the step by name. Back and forward restore case and step. Copy link keeps case and step and drops `parentOrigin`. On a page `site:export --origin` published, which carries `<meta name="rayner:share">`, Copy link on a step of the default case gives that step's share page, `<origin><path>/<id>/<step>`, whose link preview is the step; another case, or a step whose name is not letters, digits, `-` and `_`, keeps `?step=`. A share link drops `theme`.
 
 ### Controls and accessibility
 
@@ -323,7 +346,7 @@ With `--footer`, `render` fails before FFmpeg starts on a title or caption that 
 | `npm run videos` | Everything video, kept out of CI: `demos:render`, `test:video` and the package smoke test's installed render. Needs FFmpeg |
 | `npm run demos:serve` | Serve `out/` on port 5175 with each page's headers and byte ranges; `-- --port n` |
 | `npm run demos:review` | Open every served case at 390 px and 1180 px in Chromium and check captions, artwork, errors, outside requests and headers, and video byte ranges when `out/videos/` has videos; screenshots in `out/review/` |
-| `npm run site:export -- <site-root>` | Copy the built pages, posters, videos and loader under `<site-root>/projects/rayner` (`--path` changes it), with every step's preview picture of the default case as `<id>/<step>.png` (the 960 × 540 still centred on a 1080 × 540 canvas of the stage's paper, since X shows these cards at 2:1), and write their `_headers` block to `out/site-headers.txt`. `--origin https://example.org` also writes a share page per step, `<id>/<step>.html`, which sends a reader to the player at `<id>?step=<step>`, and adds the same link-preview tags to each explainer page, for its gallery tile's step: `description`, Open Graph (`og:type`, `og:title`, `og:description`, `og:url`, `og:image`, `og:image:width`, `og:image:height`, `og:image:alt`) and Twitter card (`twitter:card` = `summary_large_image`, `twitter:title`, cut at a word to the 70 characters X shows, `twitter:description`, `twitter:image`, `twitter:image:alt`), with absolute URLs; then it checks every page has each tag once and each picture exists at the declared size. Link previews come from the HTML a crawler fetches, and a static host sends the same HTML for every `?step=`, so a step needs its own URL to preview |
+| `npm run site:export -- <site-root>` | Copy the built pages, posters, videos and loader under `<site-root>/projects/rayner` (`--path` changes it), with every step's preview picture of the default case as `<id>/<step>.png` (the 960 × 540 still centred on a 1080 × 540 canvas of the stage's paper, since X shows these cards at 2:1; a palette PNG of at most 256 colours taken from the picture, each channel within a few levels of the render), and write their `_headers` block to `out/site-headers.txt`. `--origin https://example.org` also writes a share page per step, `<id>/<step>.html`, which sends a reader to the player at `<id>?step=<step>`, and adds the same link-preview tags to each explainer page, for its gallery tile's step: `description`, Open Graph (`og:type`, `og:title`, `og:description`, `og:url`, `og:image`, `og:image:width`, `og:image:height`, `og:image:alt`) and Twitter card (`twitter:card` = `summary_large_image`, `twitter:title`, cut at a word to the 70 characters X shows, `twitter:description`, `twitter:image`, `twitter:image:alt`), with absolute URLs, and `<meta name="rayner:share" content="<origin><path>/<id>/">`, which the player's Copy link reads; then it checks every page has each tag once and each picture exists at the declared size. Link previews come from the HTML a crawler fetches, and a static host sends the same HTML for every `?step=`, so a step needs its own URL to preview |
 | `npm run pack:smoke` | Pack, install into a fresh project without the optional packages, build an outside scene; `EXPLAIN_BROWSER=1` adds capture, `EXPLAIN_VIDEO=1` a render |
 | `npm run build:lib` | Compile `dist/` (runs on `npm pack`) |
 | `npm run fonts` | Regenerate `src/font-data.ts` from Inter, JetBrains Mono and the Noto numeral subsets, reproducibly (needs `fonttools` and `brotli`) |

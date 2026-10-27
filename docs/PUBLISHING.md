@@ -20,7 +20,7 @@ How to put a built page on a website, and how to export the same scene as a vide
    - The page that embeds it needs the artifact's origin in its own `frame-src`, and the loader's in `script-src` if it uses the loader.
    - The recipe's `Cache-Control` revalidates on every load. Long-lived caching is safe only for a URL that changes when the content does, such as one with the receipt's `artifactHash` in it.
 
-   For the demo collection, `npm run demos:build && npm run site:export -- <site-root>` copies every page, poster, video and the loader into a site and writes the matching `_headers` block to `out/site-headers.txt`.
+   For the demo collection, `npm run demos:build && npm run site:export -- <site-root>` copies every page, poster, video and the loader into a site and writes the matching `_headers` block to `out/site-headers.txt`. For agents it also writes each explainer's [`describeExplainer`](REFERENCE.md#describe) object as `<id>.json` beside its page, and `llms.txt` at the site root listing every page and its JSON.
 
 4. Embed it with a plain iframe:
 

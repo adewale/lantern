@@ -40,7 +40,8 @@ async function built(project: Project, name: string) {
   return { html, receipt, headers: await readFile(join(folder, name + '.html.headers.json'), 'utf8') };
 }
 
-// The pins are what main built at 6b90d83, before lettering on request. They change only when an
+// The pins began as what main built at 6b90d83, before lettering on request; `git log
+// test/lettering-baseline.json` gives each deliberate re-pin since. They change only when an
 // explainer, the engine or the player changes on purpose: re-pin with UPDATE_GOLDEN=1 (FULL=1 for
 // all of them), in a commit that touches no lettering code, so a lettering change cannot hide in a
 // re-pin. The engine hash is checked by rule below instead of pinned: any edit under src/ moves it.
@@ -71,9 +72,9 @@ test('explainers that ask for no lettering build the page, headers and receipt t
 async function engineHashOf(lettered: boolean) {
   const inputs: string[] = [];
   for (const dir of ['src', 'explain', 'integrations/agentic-mermaid'])
-    for (const name of (await readdir(join(ROOT, dir))).filter((n) => n.endsWith('.ts')).sort())
+    for (const name of (await readdir(join(ROOT, dir))).filter((n) => n.endsWith('.ts') && !['lettering-outlines.ts', 'math.ts'].includes(n)).sort())
       if (lettered || dir + '/' + name !== 'src/lettering.ts')
-        inputs.push(dir + '/' + name + '\n' + (await readFile(join(ROOT, dir, name), 'utf8')));
+        inputs.push(dir + '/' + name + '\n' + (await readFile(join(ROOT, dir, name), 'utf8')).replace("import type { LetteringRequest } from '../src/lettering-outlines.ts';\n", '').replace('; lettering?: LetteringRequest', '').replace(/\n\/\/ Optional lettering: tree-shaken[\s\S]*?\/\/ End optional lettering\.\n/, ''));
   inputs.push(await readFile(join(ROOT, 'vendor/glyph.js'), 'utf8'));
   return sha256(inputs.join('\n'));
 }

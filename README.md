@@ -16,6 +16,8 @@ Node 26 or later. CI is set up on Ubuntu 24.04 and the suite has also passed on 
 
 `check` and `build` from committed snapshots need none of them.
 
+Optional per-scene fonts, Arabic/Devanagari shaping, and typeset maths are documented in [Lettering on request](docs/LETTERING.md). Existing scenes retain their original output.
+
 ## See the demos
 
 ```sh

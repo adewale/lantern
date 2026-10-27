@@ -13,6 +13,7 @@ import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
 import { ROOT } from './lib/explain-project.ts';
+import { writeDescriptions } from './lib/explain-site-describe.ts';
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -53,6 +54,9 @@ for (const { id, video } of EXPLAINERS) {
   blocks.push(`${path}/${id}\n${lines}\n\n${path}/${id}.html\n${lines}`);
 }
 await copyFile(join(built, 'loader.js'), join(target, 'loader.js'));
+// For agents: each explainer's describeExplainer object as <id>.json beside its page, and llms.txt at the site root.
+const described = await writeDescriptions(resolve(root), path, EXPLAINERS, origin);
+console.log(`Wrote ${EXPLAINERS.length} <id>.json files (${described.json} bytes) and ${join(resolve(root), 'llms.txt')} (${described.llms} bytes).`);
 if (origin) {
   const { pages, problems } = await checkCards(resolve(root), origin, path, EXPLAINERS.map((e) => e.id));
   if (problems.length) throw new Error(`Link preview tags are wrong:\n${problems.join('\n')}`);

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Explicit distribution gate: pack, install in a fresh author project, run the installed CLI.
-import { mkdtemp, mkdir, writeFile, readFile, copyFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, copyFile, cp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
@@ -42,11 +42,12 @@ try {
     assert.equal(Object.keys(cache.diagrams).length, 1);
   }
   // Use native objects only, so this distribution smoke needs no browser or optional renderer.
-  await writeFile(
-    join(folder, 'first/scene.ts'),
-    `import{Scene,Text,FadeIn}from'rayner';import{stage,settingsOf}from'rayner/explain';export default class Outside extends Scene{static meta={id:'outside',title:'An outside author'};static settings=[{id:'case',label:'Case',default:'a',options:[{value:'a',label:'A'},{value:'b',label:'B'}]}];async construct(){const s=stage(this);await this.step('one',{title:'First step',caption:'A native scene outside the checkout.'});await this.play(new FadeIn(new Text(settingsOf(this).case,{color:s.palette.ink})));}}`,
-  );
+  const native = `import{Scene,Text,FadeIn}from'rayner';import{stage,settingsOf}from'rayner/explain';export default class Outside extends Scene{static meta={id:'outside',title:'An outside author'};static settings=[{id:'case',label:'Case',default:'a',options:[{value:'a',label:'A'},{value:'b',label:'B'}]}];async construct(){const s=stage(this);await this.step('one',{title:'First step',caption:'A native scene outside the checkout.'});await this.play(new FadeIn(new Text(settingsOf(this).case,{color:s.palette.ink})));}}`;
+  await writeFile(join(folder, 'first/scene.ts'), native);
   await run(process.execPath, [cli, 'check', 'first'], { cwd: folder });
+  // `see` reads a step from the terminal with no browser or optional renderer installed.
+  const seen = await run(process.execPath, [cli, 'see', 'first', 'one', '--case', 'case=b'], { cwd: folder });
+  assert.match(seen.stdout, /^outside · step 1 of 1: one · Case: B$/m);
   await run(process.execPath, [cli, 'build', 'first', '--out', 'public/outside.html'], { cwd: folder });
   const html = await readFile(join(folder, 'public/outside.html'), 'utf8');
   assert.match(html, /An outside author/);
@@ -71,6 +72,27 @@ try {
   const lettered = JSON.parse(await readFile(join(folder, 'public/greek.html.receipt.json'), 'utf8'));
   assert.deepEqual(lettered.lettering.scripts, ['Grek']);
   assert.ok(!JSON.parse(await readFile(join(folder, 'public/outside.html.receipt.json'), 'utf8')).lettering);
+  // Outline snapshots captured against source .ts must remain fresh against
+  // the archive's compiled .js engine, without Python or source font caches.
+  for (const name of ['arabic', 'devanagari', 'math', 'style']) {
+    const source = join(ROOT, 'test/lettering', name);
+    const target = join(folder, 'outline-' + name);
+    await mkdir(target);
+    await copyFile(join(source, 'scene.ts'), join(target, 'scene.ts'));
+    await copyFile(join(source, 'scene.lettering.json'), join(target, 'scene.lettering.json'));
+    if (name === 'style') {
+      await cp(join(source, 'scene.snapshots'), join(target, 'scene.snapshots'), { recursive: true });
+    }
+    const env = {
+      ...process.env,
+      RAYNER_LETTERING_PYTHON: join(folder, 'no-python-here'),
+      RAYNER_LETTERING_FONTS: join(folder, 'no-source-fonts-here'),
+    };
+    await run(process.execPath, [cli, 'check', target, '--out', join(folder, 'checks', name)], { cwd: folder, env });
+    await run(process.execPath, [cli, 'build', target, '--out', `public/outline-${name}.html`], { cwd: folder, env });
+    const receipt = JSON.parse(await readFile(join(folder, `public/outline-${name}.html.receipt.json`), 'utf8'));
+    assert.ok(receipt.letteringHash, name);
+  }
   const result = await run(
     process.execPath,
     [
@@ -92,6 +114,20 @@ try {
     { cwd: folder },
   );
   assert.equal(described.stdout.trim(), 'a:one b:one');
+  // The example in REFERENCE "Describe", verbatim: on the `rayner init` template and its captured
+  // diagram when capture is installed, else on the native scene with an empty snapshot index.
+  const describeSection = (await readFile(join(ROOT, 'docs/REFERENCE.md'), 'utf8')).split(/^## /m).find((s) => s.startsWith('Describe\n')),
+    example = /^```ts\n([\s\S]*?)^```/m.exec(describeSection ?? '')?.[1];
+  assert.ok(example, 'docs/REFERENCE.md "Describe" has a ts example');
+  await run(process.execPath, [cli, 'init', 'my-explainer'], { cwd: folder });
+  if (!process.env.EXPLAIN_BROWSER) await writeFile(join(folder, 'my-explainer/scene.ts'), native);
+  await run(process.execPath, [cli, 'snapshots', 'my-explainer'], { cwd: folder });
+  await writeFile(join(folder, 'describe.ts'), example);
+  const walked = (await run(process.execPath, ['describe.ts'], { cwd: folder })).stdout;
+  assert.match(
+    walked,
+    process.env.EXPLAIN_BROWSER ? /^Follow a request: Cache miss · request: .+\n  changed: .*\breads\b/m : /^Case: B · one: .+\n  changed: nothing$/m,
+  );
   if (process.env.EXPLAIN_VIDEO) {
     await run('npm', ['i', `@resvg/resvg-js@${peers['@resvg/resvg-js']}`, '--no-audit', '--no-fund'], { cwd: folder });
     await run(bin, ['render', 'first', '--out', 'public/outside.mp4', '--footer', '--fps', '4'], {
@@ -99,7 +135,7 @@ try {
     });
   }
   console.log(
-    'Package gate passed: archive install without optional peers, executable JS bin, install hint, external native author, settings, checks, build, describeExplainer, notices, lettering on request, one compiled engine' +
+    'Package gate passed: archive install without optional peers, executable JS bin, install hint, external native author, settings, checks, see, build, describeExplainer and its REFERENCE example, notices, lettering on request, one compiled engine' +
       (process.env.EXPLAIN_VIDEO ? ', installed video export' : '') +
       (process.env.EXPLAIN_BROWSER ? ', installed diagram capture' : '') +
       '.',

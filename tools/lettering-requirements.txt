@@ -1,0 +1,5 @@
+# Optional build-time inputs for `rayner snapshots` with meta.lettering.
+fonttools==4.67.0
+brotli==1.2.1
+uharfbuzz==0.57.0
+python-bidi==0.6.12

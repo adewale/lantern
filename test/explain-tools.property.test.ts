@@ -494,6 +494,22 @@ test('scriptEscape changes nothing in code without those tokens', () => {
   );
 });
 
+/**
+ * A raw template of `t`, or null when its body holds what no escape can keep (`<!--`, U+2028/9).
+ * The body is checked after the backticks and `$` come out: `<!\`--` holds no `<!--` until then.
+ */
+const rawTemplate = (t: string): string | null => {
+  const body = t.replace(/[`$]/g, '').replace(/\\+$/, '');
+  return /<!--|\u2028|\u2029/.test(body) ? null : 'String.raw`' + body + '`';
+};
+
+test('raw-template fragments never hold <!--, even once a backtick between its characters is removed', () => {
+  // test:full drew String.raw`<!--` from "<!`--": the old filter ran before the backtick came out.
+  assert.equal(rawTemplate('<!`--'), null);
+  assert.equal(rawTemplate('<!$--'), null);
+  assert.equal(rawTemplate('a<!-x'), 'String.raw`a<!-x`');
+});
+
 /** Expression fragments as bundled code contains them: strings, templates, regexes (with u/v), raw templates. */
 const regexToken = fc.constantFrom('<', '!', '-', 'a', '<!--', '<\\/script', '\\/', 's', '>', 'x*');
 const fragment = fc.oneof(
@@ -508,7 +524,7 @@ const fragment = fc.oneof(
   ),
   // Raw templates keep their backslashes, so no textual escape of `<!--` or U+2028/9 can preserve them
   // (ledger: scriptEscape, String.raw). esbuild itself rewrites raw templates holding </script.
-  hostile.filter((t) => !/<!--|\u2028|\u2029/.test(t)).map((t) => 'String.raw`' + t.replace(/[`$]/g, '').replace(/\\+$/, '') + '`'),
+  hostile.map(rawTemplate).filter((t): t is string => t !== null),
 );
 const runOut = (code: string) => {
   const context = vm.createContext({});
