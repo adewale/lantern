@@ -16,7 +16,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-24.04  # the pinned image the embed tests were validated on
-    timeout-minutes: 35  # full suite, browser gates and every demo case take about 20 minutes
+    timeout-minutes: 60  # full suite, browser gates, all-case demos, installed capture and gallery review
     steps:
       - uses: actions/checkout@v4
         with:
