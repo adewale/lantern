@@ -161,11 +161,11 @@
     "fullReceipt": "d83e4297dada248d92c229d53878a256d39cdd20fd96423b3ffc4e625fb9c17a"
   },
   "fork": {
-    "html": "a05b1bb1cfaa8f89bb95649819c72b62bf8788a0c037232e5d44600d79b8dedc",
-    "bytes": 792258,
-    "headers": "22046dd2e882d54679b0c28f517b97cce03b588c99b522e886106ed561b9a8e2",
-    "receipt": "c558a108c5b515a8171869c9ee09441c402e73c5fe501e326b50c2e87343fc30",
-    "fullReceipt": "a727182949eaefc6a975aa5ecb1a63f72c2d778be1fb9b6f6bebc1235ff887b8"
+    "html": "bf8c895f4e92e7c639fae5bad6e6fbd13d42ac58e919f1e6d167e9c139e0a676",
+    "bytes": 792270,
+    "headers": "c7f277e2fe8fc2b347cca5fc73c5e3424089160f5eb8213d43a5c4a4edd01fe2",
+    "receipt": "1ad865487156ac744e6e9029b86103bcab4d23be0d3166764acbdf8147be3072",
+    "fullReceipt": "d3907b18b32c93810401a4509d6f8c9b8769f08437e8cfe202ed5c6b6d79b9ac"
   },
   "agentic-mermaid": {
     "html": "5c5474e4a804c13fae2af2287d0f463fde717a8e0b29469c1243c3db46e1a38c",
