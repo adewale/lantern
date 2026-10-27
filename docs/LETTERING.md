@@ -224,8 +224,11 @@ out and in instead of morphing: `क` to the conjunct `क्ष` fades, while `
 `नमस्ते` keeps न and म and fades in the conjunct `स्ते`, and `سلم` to `سلام` keeps its
 three letters, which change joining form as they morph (`test/lettering/matching`).
 Text in pages without lettering keeps the old pairing by the character at a
-glyph's cluster start. Use `Transform` for whole-formula changes. Maths has no
-character-to-glyph correspondence and uses a single source cluster.
+glyph's cluster start. Use `Transform` for whole-formula changes. A formula's
+glyphs are not characters of its source, so they carry no cluster, and both
+matching transforms pair them by shape ([Maths](REFERENCE.md#maths)).
+Replacement prose must be built into a case; numeric animations use the bounded
+exception described above.
 
 Picture descriptions are generated in English or French only. Describing the
 pictures in Arabic, Hebrew, Hindi or Chinese is outside lettering on request.
