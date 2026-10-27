@@ -20,6 +20,17 @@ async function readoutAtSteps(S: SceneClass): Promise<Array<{ step: string; stat
     override async stepEnd(scene: Scene, s: Step): Promise<void> {
       await super.stepEnd(scene, s);
       const v = (scene as unknown as { readout?: View | null }).readout;
+      if (scene instanceof TokenBucketExplainer) {
+        assert.ok(!scene.familyMembers().some((m) => 'text' in m && m.text === 'scene.state'), 'author debug title must not reach the reader');
+        if (v) {
+          const own = new Set(v.family()), b = v.box()!;
+          for (const m of scene.familyMembers()) {
+            if (own.has(m) || !('text' in m)) continue;
+            const other = m.box();
+            if (other) assert.ok(Math.min(b[2], other[2]) - Math.max(b[0], other[0]) < 0.001 || Math.min(b[3], other[3]) - Math.max(b[1], other[1]) < 0.001, `readout overlaps ${m.text}`);
+          }
+        }
+      }
       out.push({ step: s.path, state: this.events.at(-1)!.state, shown: v ? v.shown : null });
     }
   }
@@ -45,7 +56,7 @@ test('ring-buffer: the readout pairs head, tail and length with their traced val
 /** A number as the token-bucket readout writes it: whole numbers plain, anything else to one decimal. */
 const tenths = (x: number): string => (Number.isInteger(x) ? String(x) : x.toFixed(1));
 
-test('token-bucket: the readout pairs tokens, lastRefill, allowed and rejected with their traced values at every step', async () => {
+test('token-bucket: reader labels pair balances, refill times and request outcomes with the full traced values', async () => {
   for (const rate of ['1', '2', '4']) {
     const rows = (await readoutAtSteps(withSettings(TokenBucketExplainer, { rate }))).filter((r) => r.shown);
     assert.equal(rows.length, 5, `rate ${rate}: the readout is on screen at all five steps`);
@@ -53,7 +64,7 @@ test('token-bucket: the readout pairs tokens, lastRefill, allowed and rejected w
       const { tokens, lastRefill, allowed, rejected } = state as { tokens: number; lastRefill: number; allowed: number; rejected: string[] };
       assert.deepEqual(
         shown,
-        ['tokens', tenths(tokens), 'lastRefill', tenths(lastRefill), 'allowed', String(allowed), 'rejected', rejected.length ? rejected.join(', ') : 'none'],
+        ['Tokens left', tenths(tokens), 'Last refill (s)', tenths(lastRefill), 'Accepted', String(allowed), 'Rejected', rejected.length ? rejected.join(', ') : 'none'],
         `rate ${rate}, step "${step}"`,
       );
     }

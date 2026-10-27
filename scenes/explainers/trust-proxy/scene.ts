@@ -181,7 +181,7 @@ export default class TrustProxyExplainer extends Scene {
     );
     const chosen = await s.card(
       [
-        ["app.set('trust proxy', …)", TRUST_CODE[trustKey]],
+        ['trust proxy setting', TRUST_CODE[trustKey]],
         ['Request followed', REQUEST_LABEL[reqKey]],
       ],
       { at: regionBox(BELOW, { left: 0.15 }), align: 'top', fontSize: SIZE, title: 'This case', enter: false },

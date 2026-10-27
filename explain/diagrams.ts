@@ -360,6 +360,26 @@ export class Diagram {
         }
         mob.add(drawn);
       }
+      // Connector lettering needs a paper gap, not just an outline around each
+      // glyph: a marked route otherwise remains visible through the counters.
+      const owner = info.owner && snapshot.parts.find((p) => p.id === info.owner);
+      if (owner && owner.from != null && owner.to != null) {
+        const labels = mob.children.filter((m) => labelOf(m));
+        for (const label of labels) {
+          const b = label.box();
+          if (!b) continue;
+          const gap = Math.max(0.12, (labelOf(label)?.fontSize ?? 0) * 0.6);
+          const paper = new Rectangle({
+            width: b[2] - b[0] + gap * 2, height: b[3] - b[1] + gap * 2,
+            fill: snapshot.palette.paper, stroke: 'none',
+          }).moveTo([(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]);
+          // Keep the plate with the label through reveals, dimming and focus.
+          const i = mob.children.indexOf(label);
+          mob.add(paper);
+          mob.children.splice(mob.children.indexOf(paper), 1);
+          mob.children.splice(i, 0, paper);
+        }
+      }
       let route: VMobject | undefined;
       if (info.route?.length) {
         route = new VMobject({ fill: 'none', stroke: 'none', opacity: 0 });
