@@ -14,3 +14,9 @@ Merged main d8a300b (release, packed lettering, maths, player and stage tools) w
 All seven lettering fixtures were recaptured by the actual pipeline. Six changed fingerprints only. Styles preserves every existing run/face and adds exactly the two standalone bold digits used by numbered headings. Incoming main's 27 immutable page records were migrated before a separate intentional combined-runtime pin refresh. The proxy diagram manifest source hash was restamped by the actual catalog build; its diagram data stayed unchanged.
 
 The original audit's inventories and validation remain historical evidence. Read the latest lettering/reader merge notes and structured results here for this integration. Local verification is separate from repository Actions, which remain tracked under issue #9.
+
+## Final concurrent story integration
+
+Main advanced again to bf78d14 while validation ran, merging PR #29's 18 rewritten stories. This changes scenes, their references and related tests, with no framework/runtime source changes from the validated d8a300b integration. The helper conflict retains the new labelsSaying evidence selector and the audit's test-owned zoom readback; obsolete production inverse imports remain removed.
+
+The combined story tree passes TypeScript, 67 node checks (1 optional skip) over source fidelity, real scenes, language and close-up geometry, and 3 real browser checks covering target-aware caption layout, both-setting phone tours and touch/Enter evidence navigation. All 27 immutable page/header/receipt contracts were rebuilt after first migrating the exact incoming records. The framework's fresh 789-pass standard run and focused FULL repaired properties above remain applicable to unchanged framework source.
