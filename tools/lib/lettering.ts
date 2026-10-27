@@ -279,10 +279,24 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
       replay = snapshotProvider(snapshot);
       if (persist) {
         await mkdir(dirname(path), { recursive: true });
-        await writeFile(path, json(packLettering(snapshot)));
+        await writeFile(path, snapshotFile(packLettering(snapshot)));
       }
     },
   };
+}
+/**
+ * A packed snapshot as committed: indented JSON, but each run and each outline
+ * on one line, so the file stays small and a recapture's diff names the runs
+ * that changed.
+ */
+function snapshotFile(snapshot: LetteringSnapshot): string {
+  const lines = (entries: [string, unknown][]) => entries.map(([key, value]) => `    ${JSON.stringify(key)}: ${JSON.stringify(value)}`).join(',\n');
+  const body = Object.entries(snapshot).map(([key, value]) => {
+    if (key === 'runs') return `  "runs": {\n${lines(Object.entries(value as object))}\n  }`;
+    if (key === 'outlines') return `  "outlines": [\n${(value as unknown[]).map((o) => '    ' + JSON.stringify(o)).join(',\n')}\n  ]`;
+    return `  ${JSON.stringify(key)}: ${JSON.stringify(value, null, 2).replace(/\n/g, '\n  ')}`;
+  });
+  return `{\n${body.join(',\n')}\n}\n`;
 }
 export async function letteringWeight(snapshot: LetteringSnapshot) {
   return {
