@@ -30,6 +30,10 @@ export interface Chrome {
   closeUp: string;
   /** The corner map's name: the step's next close-up, i of n. */
   nextCloseUp: (i: number, n: number) => string;
+  viewCount: (i: number, n: number) => string;
+  nextView: string;
+  wholePicture: string;
+  viewHelp: string;
   replay: string;
   stop: string;
   copy: string;
@@ -68,6 +72,10 @@ const EN: Chrome = {
   fit: 'Fit stage',
   closeUp: 'Close-up of each step',
   nextCloseUp: (i, n) => `Next close-up of this step (${i} of ${n})`,
+  viewCount: (i, n) => `View ${i} of ${n}`,
+  nextView: 'Next view',
+  wholePicture: 'Whole picture',
+  viewHelp: 'Use Next view to explore this picture. Next below advances the step.',
   replay: 'Replay step',
   stop: 'Stop animation',
   copy: 'Copy link',
@@ -100,6 +108,10 @@ const FR: Chrome = {
   fit: 'Adapter à la page',
   closeUp: 'Gros plan sur chaque étape',
   nextCloseUp: (i, n) => `Gros plan suivant de cette étape (${i} sur ${n})`,
+  viewCount: (i, n) => `Vue ${i} sur ${n}`,
+  nextView: 'Vue suivante',
+  wholePicture: 'Image entière',
+  viewHelp: 'Vue suivante explore cette image. Suivant, plus bas, passe à l’étape suivante.',
   replay: 'Rejouer l’étape',
   stop: 'Arrêter l’animation',
   copy: 'Copier le lien',
