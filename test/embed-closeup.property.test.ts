@@ -388,6 +388,46 @@ const headedArb: fc.Arbitrary<StepLayout> = fc
   .tuple(layoutArb, fc.double({ min: 0.5, max: 4.4, noNaN: true }))
   .map(([layout, top]) => ({ ...layout, top }));
 
+test('a readable label that fits a permitted view is whole in some close-up', () => {
+  fc.assert(
+    fc.property(fc.oneof(layoutArb, headedArb), stageArb,
+      fc.double({ min: 1, max: ZOOM_MAX, noNaN: true }), (layout, { w, h }, max) => {
+        const tour = closeUps(layout, w, h, max),
+          k = tour[0]!.k,
+          scale = Math.min(w / 16, h / 9),
+          offsetX = (w - 16 * scale) / 2,
+          offsetY = (h - 9 * scale) / 2,
+          viewWidth = w / (k * scale),
+          viewHeight = h / (k * scale),
+          ceiling = Math.min(4.5, Math.max(layout.top ?? 4.5, ...layout.parts.map((p) => p[3])));
+        // Relevance is the documented 0.2-unit padding, not the production selector.
+        const near = layout.labels.filter((label) => layout.parts.some((part) =>
+          label.box[0] <= part[2] + 0.2 && label.box[2] >= part[0] - 0.2 &&
+          label.box[1] <= part[3] + 0.2 && label.box[3] >= part[1] - 0.2));
+        const read = near.length ? near : layout.labels;
+        for (const { box } of read) {
+          if (box[2] - box[0] > viewWidth || box[3] - box[1] > viewHeight ||
+              box[0] < -8 || box[2] > 8 || box[1] < -4.5 || box[3] > ceiling) continue;
+          // Forward project authored corners into CSS pixels. Do not use the
+          // production inverse (viewBox) to decide whether the whole label is shown.
+          const complete = tour.some((z) => {
+            const left = ((box[0] + 8) * scale + offsetX) * z.k + z.x,
+              right = ((box[2] + 8) * scale + offsetX) * z.k + z.x,
+              top = ((4.5 - box[3]) * scale + offsetY) * z.k + z.y,
+              bottom = ((4.5 - box[1]) * scale + offsetY) * z.k + z.y,
+              slack = 1e-6 * scale * z.k; // existing scene-unit serialization allowance
+            return left >= -slack && right <= w + slack && top >= -slack && bottom <= h + slack;
+          });
+          assert.ok(complete, `label ${JSON.stringify(box)} is split across every view at ${w} × ${h}, max ${max}`);
+        }
+      }),
+    params<[StepLayout, { w: number; h: number }, number]>(500, { examples: [[{
+      parts: [[-4, -3, 4, 3]], lead: 0,
+      labels: [{ box: [-2.6, -0.2, 2.6, 0.2], size: 0.2 }],
+    }, { w: 320, h: 180 }, ZOOM_MAX]] }),
+  );
+});
+
 test('with a heading, no close-up cuts through it: each stays below its bottom edge unless a change reaches above it', () => {
   fc.assert(
     fc.property(headedArb, stageArb, (layout, { w, h }) => {

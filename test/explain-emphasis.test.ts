@@ -282,6 +282,13 @@ test('a link names its ends by their labels: a service by its label, a class or 
     await act?.(d);
     return d.describe().parts.map((p) => (p.mark ? `${p.name} (${p.mark})` : p.name));
   };
+  // Unregistered families use their authored labels and links, including prototype names.
+  for (const family of ['unregistered', 'valueOf', 'constructor', '__proto__', 'toString', 'hasOwnProperty'])
+    assert.deepEqual(await describe('graph LR\nA-->B', family, [
+      { id: 'A', role: 'node', kind: 'shape', shapes: box(0, 'Alpha') },
+      link('edge:A->B#0', 'edge', 'A', 'B', 1.5),
+      { id: 'B', role: 'node', kind: 'shape', shapes: box(3, 'Beta') },
+    ]), ['Alpha', 'Alpha → Beta', 'Beta'], family);
   // Architecture links name services by bare id; an unlabelled group and a junction have no label.
   const architecture = await describe(
     'architecture-beta',
@@ -316,17 +323,23 @@ test('a link names its ends by their labels: a service by its label, a class or 
   ]);
   assert.deepEqual(classes, ['Scene play()', 'Scene → Mobject: owns', 'Mobject points']);
   // An ER entity declared with an alias is called by its label, as its box shows it.
-  const er = await describe('erDiagram\n  p["Person"] {\n    string name\n  }\n  p ||--o{ CAR : drives', 'er', [
+  const erSource = 'erDiagram\n  p["Person"] {\n    string name\n  }\n  p ||--o{ CAR : drives';
+  const erParts: SnapshotPart[] = [
     link('rel:p-CAR#0', 'relationship', 'p', 'CAR', 1.5),
     { id: 'rel-label:p-CAR#0', role: 'label', kind: 'text', owner: 'rel:p-CAR#0', shapes: box(1.5, 'drives') },
     { id: 'entity:p', role: 'entity', kind: 'shape', shapes: box(0, 'Person', 'string', 'name') },
     { id: 'entity:CAR', role: 'entity', kind: 'shape', shapes: box(3, 'CAR') },
     { id: 'card:p-CAR#0:1', role: 'cardinality', kind: 'shape', shapes: box(0.5), channels: { category: 'one' } },
     { id: 'card:p-CAR#0:2', role: 'cardinality', kind: 'shape', shapes: box(2.5), channels: { category: 'zero-many' } },
-  ]);
+  ];
+  const er = await describe(erSource, 'er', erParts);
   assert.deepEqual(er, [
     'Person → CAR: drives (each Person has zero or more CAR, each CAR has exactly one Person)',
     'Person: name (string)',
     'CAR',
   ]);
+  for (const category of ['constructor', '__proto__', 'toString', 'valueOf', 'hasOwnProperty', 'unknown', null, { toString: false, valueOf: false }]) {
+    const parts = erParts.map((p) => p.role === 'cardinality' ? { ...p, channels: { category } } : p);
+    assert.deepEqual(await describe(erSource, 'er', parts), ['Person → CAR: drives', 'Person: name (string)', 'CAR']);
+  }
 });

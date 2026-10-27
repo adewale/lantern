@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Build-time only: HarfBuzz outlines, Unicode bidi, and fontTools subsetting.
-JSON in/out. Never used by the self-contained reader or video renderer.
+JSON in/out. Never used by the self-contained reader.
 """
 import base64
 import io

@@ -1,5 +1,5 @@
 // Cached lettering is executable drawing data. Reject damaged snapshots before
-// they reach Text, the browser, or a video renderer, even if their metadata is fresh.
+// they reach Text, the browser, or an image renderer, even if their metadata is fresh.
 import type { LetteringSnapshot } from '../../src/lettering-outlines.ts';
 
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);

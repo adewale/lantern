@@ -82,7 +82,7 @@ export const PALETTES: Record<string, Palette> = {
   },
 };
 export function palette(name: string): Palette {
-  const p = PALETTES[name];
+  const p = Object.hasOwn(PALETTES, name) ? PALETTES[name] : undefined;
   if (!p) throw new Error(`Unknown style ${name}. Styles: ${Object.keys(PALETTES).join(', ')}`);
   return { ...p };
 }

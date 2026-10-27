@@ -8,7 +8,7 @@ import { dirname, resolve, join, basename, relative, sep } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { createHash, randomUUID } from 'node:crypto';
-import { Scene, NullSink, traceScene, shaperFor } from '../../src/index.ts';
+import { Scene, NullSink, traceScene } from '../../src/index.ts';
 import { takeMissingGlyphs } from '../../src/lettering.ts';
 import type { Trace } from '../../src/index.ts';
 import { variantsOf, withSettings, bindSnapshots, caseName, resolveSettings } from '../../explain/index.ts';
@@ -84,7 +84,7 @@ export function engineAlias(node = false, outlines = false): Plugin {
 /**
  * The engine's fingerprint. src/lettering.ts counts only for an explainer that asks
  * for lettering: no other page carries it, and leaving it out keeps every other
- * explainer's receipts, and its video's freshness, as they were.
+ * explainer's receipts as they were.
  */
 async function engineHash(lettered: boolean): Promise<string> {
   const inputs: string[] = [];
@@ -106,7 +106,7 @@ export async function loadScene(
     bundle: true,
     platform: 'node',
     format: 'esm',
-    target: 'node26',
+    target: 'node24',
     write: false,
     plugins: [engineAlias(true)],
     logLevel: 'silent',
@@ -316,9 +316,6 @@ export async function collectProject(
             const scene = await new (withSettings(bindSnapshots(Source, resolver), values))(new NullSink(), {
               skipUntil: Infinity,
             }).run();
-            // The video footer draws each step's title and caption as outlines too
-            for (const s of scene.steps)
-              for (const t of [s.meta.title ?? s.name, s.meta.caption ?? '']) shaperFor('sans')(String(t), 1);
           }
           edits = counted;
           takeMissingGlyphs();
@@ -357,22 +354,11 @@ export async function collectProject(
       // The page never draws these (offPage): they stay out of what it carries
       if (outline) await withSceneLettering(Bound, () => offPage(async () => {
         const { Text } = await import('../../src/index.ts');
-        const { footerParagraph } = await import('./explain-video.ts');
         for (const [i, s] of trace.steps.entries()) {
           step = s.step;
           // Contact sheets draw this numbered title outside the authored scene.
           new Text(`${i + 1}. ${String(s.meta.title ?? s.step)}`);
-          for (const text of [s.meta.title ?? s.step, s.meta.caption ?? '']) {
-            new Text(String(text));
-            // The footer's lines, as it shapes them (a right-to-left paragraph's lines lead with a mark)
-            try { for (const line of footerParagraph(String(text))) new Text(line); }
-            catch (error) {
-              // Long captions may still be valid on a page. Video reports its own
-              // footer limits; script/face/snapshot errors must always fail closed.
-              if (!/^Caption (word exceeds|exceeds four)/.test((error as Error).message)) throw error;
-            }
-            blanks();
-          }
+
         }
       }));
       variants.push({ values, Scene: Bound, trace });
@@ -392,7 +378,7 @@ export function defaultVariant(project: Project, values: Settings = {}) {
   return project.variants.find((v) => Object.keys(want).every((key) => v.values[key] === want[key]))!;
 }
 export const sceneSlug = (p: Project) => p.Scene.meta?.id ?? basename(p.file).replace(/\.[^.]+$/, '');
-/** The fields every receipt (page or video) carries: what was built, from which sources. */
+/** The fields every page receipt carries: what was built, from which sources. */
 export const baseReceipt = (p: Project) => ({
   version: 1,
   scene: sceneSlug(p),

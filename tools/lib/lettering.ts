@@ -1,5 +1,5 @@
 // Node-only preparation. Optional dependencies are needed only to refresh a
-// lettering snapshot; check/build/video from a fresh snapshot need none of them.
+// lettering snapshot; check/build from a fresh snapshot need none of them.
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -59,7 +59,7 @@ const subsetFeatures = (name: string) =>
   name.startsWith('jetbrains-mono') ? GLYPH_FEATURES.filter((f) => !['calt', 'clig', 'liga'].includes(f)) : GLYPH_FEATURES;
 const STYLES = ['bold', 'italic'];
 /**
- * Text the build shapes but no page draws (video footer lines, the wrapping that
+ * Text the build shapes but no page draws (contact-sheet titles and the wrapping that
  * measures them, contact-sheet titles) is shaped inside offPage(), so capture
  * lists its runs in the snapshot's offPage. Scoped to the async work it wraps.
  */
@@ -274,7 +274,7 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
         const cut = name.includes('/');
         if (cut && !cutUsed.has(name)) continue;
         // Numeric animations visit values between their endpoints and may be
-        // replayed at different video frame rates. Keep their bounded alphabet
+        // replayed at different playback frame rates. Keep their bounded alphabet
         // in replacement faces, and in each cut a family's text starts from, so
         // the runtime can shape these values without accepting arbitrary new
         // captions or scripts.

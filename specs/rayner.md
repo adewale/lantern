@@ -8,7 +8,7 @@ Why the project has the shape it has, and the decisions still open. Contracts ar
 
 Create a separately maintained, openly attributed fork of Lantern for one complete workflow:
 
-> Write an explanation once as a native Lantern scene, publish it as a step-through website embed, and export the same scene as a silent, captioned video.
+> Write an explanation once as a native Lantern scene, publish it as a step-through website embed.
 
 Five commitments define the project:
 
@@ -25,13 +25,11 @@ A good explanation has requirements that cross tool boundaries, and no single pr
 - Authors need control over a sequence of ideas: what appears, in what order, and what the reader looks at.
 - Readers need to move through that sequence at their own pace, go back, and share a link to a step.
 - Publishers need a portable file they can host with their own site.
-- The same explanation often needs a video for a talk or a channel with no embeds.
-- Maintainers need one source for the web version and the video.
 - Diagram-led explanations need diagrams that look right. Without capture, that means redrawing by hand what Agentic Mermaid already draws well.
 
-Lantern supplies the execution and rendering model. Agentic Mermaid supplies layout, styles and a typed model of every diagram. The fork owns the workflow between them: the helpers, the player, the build, the video export, and the documentation and releases.
+Lantern supplies the execution and rendering model. Agentic Mermaid supplies layout, styles and a typed model of every diagram. The fork owns the workflow between them: the helpers, the player, the build, and the documentation and releases.
 
-**Why a fork, not only upstream changes.** General engine fixes can go upstream, and [upstream](../docs/UPSTREAM.md) lists them with their regression tests; scene registration and video tooling stay in the fork. A fork is justified only by the wider commitment: owning releases of the combined engine, helpers, player and tools, and supporting their users. That cost is real. Divergence should stay in the product and tooling layers, and the engine should change only for demonstrated needs. The project should not have started without a named maintainer; it did, and Ade Oshineye was named on 25 October 2026.
+**Why a fork, not only upstream changes.** General engine fixes can go upstream, and [upstream](../docs/UPSTREAM.md) lists them with their regression tests; scene registration and publishing tooling stay in the fork. A fork is justified only by the wider commitment: owning releases of the combined engine, helpers, player and tools, and supporting their users. That cost is real. Divergence should stay in the product and tooling layers, and the engine should change only for demonstrated needs. The project should not have started without a named maintainer; it did, and Ade Oshineye was named on 25 October 2026.
 
 ## What is inherited, and what changes
 
@@ -43,14 +41,13 @@ Lantern supplies the execution and rendering model. Agentic Mermaid supplies lay
 | Diagrams | `flowchart()` and Lantern's own Mermaid layout | Replaced by Agentic Mermaid capture, which honours its styles across families |
 | Player | `app/player.ts` | Replaced by the embed player (`app/embed.ts`): stepper first, cases, zoom, accessibility |
 | Builds | Bundled HTML | External scenes, snapshot build, portable pages, receipts |
-| Video | Frame execution and SVG sinks | `rayner render` (`tools/lib/explain-video.ts`): MP4 and WebM, caption footer, receipts |
 | Inspection | Traces, text views, motion verifier | Kept; the helpers record every walk in the trace so tests can check it |
 
 The owner chose to delete the inherited player, Lantern's Mermaid layout and the nine original scenes once the explainers rebuilt them, so the repository has one of each.
 
 ## Architecture
 
-One scene file drives everything. At build time it runs once per case so Agentic Mermaid can draw the diagrams it asks for; the page and the video exporter run the same scene again on Lantern alone.
+One scene file drives everything. At build time it runs once per case so Agentic Mermaid can draw the diagrams it asks for; the page runs the same scene again on Lantern alone.
 
 ```mermaid
 flowchart LR
@@ -60,12 +57,9 @@ flowchart LR
   end
   subgraph run["Lantern only"]
     page["Page: one HTML file"]
-    video["Video: MP4, WebVTT, chapters, transcript"]
   end
   scene --> page
-  scene --> video
   snaps --> page
-  snaps --> video
 ```
 
 The snapshot is the only thing that crosses from build time to the page. It holds each mark's resolved geometry and text runs as the style drew it, with the mark's id, role, endpoints, route and data channels, plus the verifier's findings. The browser never loads Agentic Mermaid, contacts a server, or recomputes a layout.
@@ -130,12 +124,11 @@ Rebuilding Lantern's examples in a prototype (the `agentic-mermaid` branch of a 
 | Ten of the prototype's fourteen explainers needed native drawing; the ring buffer has no diagram at all | The helpers are two layers: the stage (paper, cards, code, settings), useful in any scene, and diagrams on top of it |
 | Every Lantern example works by asking the program | A named pattern with a test helper: a scene's state at each step must equal the program's |
 | In the prototype, rebuilt scenes were 87 to 176 lines, against 57 to 267 for the originals | Do not sell the helpers as shorter code. They buy real styles, settings and checks |
-| In the prototype, caption reading holds were most of each explainer's length, and video export took 2 to 11 minutes per explainer | The player stops when the picture stops and waits for the reader; the video holds each caption over its resting picture. Demo exports skip videos whose inputs did not change |
 | In the prototype, one page held all fourteen explainers in 1.27 MB, 830 KB of it snapshots | A page holds one explainer and its own snapshots |
 
 ## Authoring and embedding
 
-The command line is the contract: `init`, `preview`, `snapshots`, `check`, `build`, `render` and `shots`, the same on a laptop and in CI ([tutorial](../docs/TUTORIAL.md), [reference](../docs/REFERENCE.md#command-line)).
+The command line is the contract: `init`, `preview`, `snapshots`, `check`, `build` and `shots`, the same on a laptop and in CI ([tutorial](../docs/TUTORIAL.md), [reference](../docs/REFERENCE.md#command-line)).
 
 The lessons from [embed.oshineye.dev](https://embed.oshineye.dev/) and its [implementation notes](https://github.com/adewale/embed.oshineye.dev/blob/main/docs/LESSONS_LEARNED.md) are release requirements. An embed is a portable artifact with a stable interface:
 
@@ -154,19 +147,12 @@ It is an npm package with a command-line tool, plus an agent skill. An explainer
 | Who | What they use | Why this form |
 | --- | --- | --- |
 | Author, by hand | `npm i -D rayner`: the engine, helpers and Agentic Mermaid integration as one package with a pinned engine | Scenes are TypeScript; editor, types, tests and git all apply |
-| Author or CI | The CLI | Snapshots, checks, pages and videos are build steps |
+| Author or CI | The CLI | Snapshots, checks, pages are build steps |
 | Coding agent | The agent skill in `skills/rayner-explainers/` | Agents already have a shell and an editor; a skill costs nothing to run |
 | Agent with no shell | An optional MCP server wrapping the same CLI, later | Useful only where an agent cannot run the CLI |
 | Reader | A static HTML page, or an iframe of it | No account, server or network |
-| Viewer of a video | An MP4 with captions | For talks and channels without embeds |
 
 MCP suits live access to a system, like a vault or a ticket queue. An explainer is source that is checked and built once, then served as files, so the CLI comes first.
-
-## Video
-
-The stepper is the primary artefact and the video is its derivative, for places that cannot embed a page. A silent video with captions makes the viewer alternate between reading and watching, which is the split-attention problem the stepper avoids by letting the reader choose when to look. The video is a build target of the same scene, so it needs no second implementation: the exporter runs the scene at a fixed frame rate through Lantern's deterministic loop and rasterises each frame with resvg.
-
-To reduce the split, each step in the video plays its motion under the step's title, then holds the resting picture under the full caption for its reading time, so the caption always describes the picture beside it. Reading time sets the length, and most of a video is a still picture; this order made the still share larger, which is the cost of pairing each caption with its own picture. Shorter captions or narration would shorten it; narration is out of scope for the first release. The files, presets and the measured share are in [the reference](../docs/REFERENCE.md#video-files).
 
 ## Decisions
 
@@ -174,7 +160,6 @@ To reduce the split, each step in the video plays its motion under the step's ti
 | --- | --- | --- |
 | Publishing the npm package | The `rayner` CLI for authors outside this repository | The package is named `rayner` (chosen 25 October 2026); 0.1.0 is prepared, with the CLI named `rayner` |
 | Upstream relationship: write to Ivar Vong, then offer the engine fixes or declare a hard fork | Merging future upstream work without guesswork | [Upstream](../docs/UPSTREAM.md) lists the fixes with their tests |
-| Subject-matter review of the published explainers, and video delivery on oshineye.dev | Trusting the explainers; videos in Safari | All 26 are live at oshineye.dev since 25 October 2026. No explainer has been reviewed by an expert in its subject. The site answers a byte-range request with the whole video (200, not 206), which Safari needs for video |
 | First outside author, and their topic | Evidence that the docs and skill work for someone other than the owner | A clean-machine trial can run once the topic is chosen |
 | The next Agentic Mermaid release with the four changes | Deleting the undocumented `drawNode` coupling and the label workaround | The four changes are listed in [upstream](../docs/UPSTREAM.md#agentic-mermaid) |
 

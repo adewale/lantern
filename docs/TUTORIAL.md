@@ -2,7 +2,7 @@
 
 This builds a two-case explainer of a cache, breaks one of the checks, fixes it, and builds the page. Run the commands from a checkout of this repository; in a project that installs the package, run the same commands as `npx rayner ...`.
 
-You need Node 26 or later and `npm ci` run once, which installs the capture and video packages. The scene has a diagram, so the first run captures it with Chromium: install one with `npx playwright-core install chromium`, or point `CHROMIUM_EXECUTABLE_PATH` at an existing one.
+You need Node 24 or later. In a checkout run `npm ci`; in an author project run `npm install --save-dev rayner`. Diagram capture is included. The scene has a diagram, so the first run captures it with Chromium: install one with `npx playwright-core install chromium`, or point `CHROMIUM_EXECUTABLE_PATH` at an existing one.
 
 ## 1. Create the scene
 
@@ -23,9 +23,9 @@ This writes `my-explainer/scene.ts`. Open it. It is an ordinary `Scene` from `ra
 npm run rayner -- preview my-explainer/scene.ts --watch
 ```
 
-The first run captures the diagram into `my-explainer/scene.snapshots/`; commit that folder with the scene. The command writes a contact sheet of every step (`out/explainers/my-explainer.steps.png`) and serves the page at http://127.0.0.1:5174/. Press **Next** to play a step; it stops on what the step leaves on screen, its **resting picture**, which is what a reader looks at while reading the caption.
+The first run captures the diagram into `my-explainer/scene.snapshots/`; commit that folder with the scene. The command serves the page at http://127.0.0.1:5174/. Press **Next** to play a step; it stops on what the step leaves on screen, its **resting picture**, which is what a reader looks at while reading the caption.
 
-Choose "Cache miss" above the stage, or open `http://127.0.0.1:5174/my-explainer.html?request=miss&step=request`. The URL names the case and the step, so a link opens exactly that picture. To see one case's steps without a browser:
+Choose "Cache miss" above the stage, or open `http://127.0.0.1:5174/my-explainer.html?request=miss&step=request`. The URL names the case and the step, so a link opens exactly that picture. To make a contact sheet of one case, run:
 
 ```sh
 npm run rayner -- shots my-explainer/scene.ts --case request=miss
@@ -52,7 +52,7 @@ npm run rayner -- check my-explainer/scene.ts
 ```
 
 ```text
-explain: Each step must change the picture; these end exactly as the step before in Follow a request: Cache hit
+rayner: Each step must change the picture; these end exactly as the step before in Follow a request: Cache hit
 + actual - expected
 
 + [
@@ -86,7 +86,7 @@ This writes:
 - `public/my-explainer.html.receipt.json`: hashes of the source, engine and snapshots.
 - `public/loader.js`: an optional script that sizes the iframe to its content.
 
-[Publishing](PUBLISHING.md) covers hosting these files, embedding the page with an iframe or the loader, and a video of the same scene.
+[Publishing](PUBLISHING.md) covers hosting these files, embedding the page with an iframe or the loader, and embedding it in another page.
 
 ## 6. Draw with the engine
 

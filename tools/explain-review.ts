@@ -1,5 +1,5 @@
 // Review the built collection as served, not just its source. Run demos:build (or demos:check) first;
-// if demos:render has made videos, their byte ranges are checked too.
+// Checks every served case on desktop and phone.
 import { stepWords } from '../explain/trace.ts';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
@@ -85,14 +85,7 @@ try {
   const headers = await fetch(base + '/explainers/exgit.html', { method: 'HEAD' });
   assert.match(headers.headers.get('content-security-policy') ?? '', /connect-src 'none'/);
   assert.equal(headers.headers.get('x-frame-options'), null);
-  // Videos are made apart from the pages (npm run videos); check their delivery when there are any.
-  const video = await fetch(base + '/videos/exgit.mp4', { method: 'HEAD' });
-  const videos = video.status === 200;
-  if (videos) {
-    const range = await fetch(base + '/videos/exgit.mp4', { headers: { range: 'bytes=0-31' } });
-    assert.equal(range.status, 206);
-    assert.equal((await range.arrayBuffer()).byteLength, 32);
-  }
+
   await page.goto(base + '/explainers/embed-lab.html');
   await page.waitForFunction(() => document.querySelectorAll('iframe').length === 2);
   for (const frame of page.frames().filter((frame) => frame !== page.mainFrame()))
@@ -131,7 +124,7 @@ try {
   assert.deepEqual(errors, []);
   assert.deepEqual(connections, []);
   console.log(
-    `${cases.length} served cases passed desktop/mobile, caption, artwork, no-error and no-external-connection checks. Response headers${videos ? ', video byte ranges' : ''}, link preview tags and the two-embed host page passed${videos ? '' : '; no videos were built, so their delivery was not checked'}. Screenshots: ${review}`,
+    `${cases.length} served cases passed desktop/mobile, caption, artwork, no-error and no-external-connection checks. Response headers, link preview tags and the two-embed host page passed. Screenshots: ${review}`,
   );
 } finally {
   await browser?.close();
