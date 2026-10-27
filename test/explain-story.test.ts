@@ -32,6 +32,12 @@ test('Lantern and cache routes leave a paper gap behind every named edge label',
           finally { labels.forEach((m, i) => { m.children = children[i]!; }); }
           const image = new Resvg(svg, { font: { loadSystemFonts: false } }).render();
           const pixels = image.pixels;
+          if (id === 'lantern') {
+            let trail = 0;
+            for (let i = 0; i < pixels.length; i += 4)
+              if (pixels[i]! > 180 && pixels[i + 1]! < 120 && pixels[i + 2]! < 80) trail++;
+            assert.ok(trail > 500, 'the orange trail must remain visible outside the words');
+          }
           for (const [i, b] of boxes.entries()) {
             let samples = 0;
             for (let y = Math.ceil((4.5 - b[3]) * 80 + 1); y < (4.5 - b[1]) * 80 - 1; y++)
