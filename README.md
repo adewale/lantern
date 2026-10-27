@@ -4,7 +4,7 @@ Rayner turns a TypeScript program into an explainer that a reader steps through 
 
 Rayner is for engineers and technical educators who write TypeScript and want readers to explore a protocol, algorithm or code change. It works best when changing a setting changes the explanation: a cache hit takes a different path from a miss, or exchanging an intercepted authorization code fails without the verifier. Authors need to test the model and review the pictures; the build checks cannot establish whether the explanation is true.
 
-Start with [Your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md), then use the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) while writing and [publishing guide](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) when the page is ready. The [authoring skill](https://github.com/adewale/rayner/blob/main/skills/rayner-explainers/SKILL.md) gives agents the same workflow, including how to test the model and review every case. The published examples are at [oshineye.dev/projects/rayner](https://oshineye.dev/projects/rayner). Work from a checkout for now; the npm package `rayner` has not been published.
+Start with [Your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md), then use the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) while writing and [publishing guide](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) when the page is ready. The [authoring skill](https://github.com/adewale/rayner/blob/main/skills/rayner-explainers/SKILL.md) gives agents the same workflow, including how to test the model and review every case. The published examples are at [oshineye.dev/projects/rayner](https://oshineye.dev/projects/rayner). Install it with `npm i -D rayner`, or work from a checkout.
 
 ## Requirements
 
@@ -20,9 +20,9 @@ Node 26 or later. CI is configured for Ubuntu 24.04; other platforms have not be
 
 Optional per-scene fonts, Arabic/Devanagari shaping, and typeset maths are documented in [Lettering on request](https://github.com/adewale/rayner/blob/main/docs/LETTERING.md). Existing scenes retain their original output.
 
-## Install after the first release
+## Install
 
-The package is not published yet. Once 0.1.0 is available:
+npm shows this README from the package itself, so it is written to read the same before and after a release. If `npm view rayner version` prints a version, install it in an author project:
 
 ```sh
 npm install --save-dev rayner
@@ -30,7 +30,7 @@ npx rayner init my-explainer
 npx rayner preview my-explainer/scene.ts --watch
 ```
 
-Until then, use a checkout and the commands below.
+If it prints nothing, no version is published yet: use a checkout and the commands below.
 
 ## See the demos
 
