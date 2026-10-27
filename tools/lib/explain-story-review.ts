@@ -55,6 +55,13 @@ export const STORY_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = {
     },
   ],
   lantern: [{ step: 'objects', targets: [{ text: 'owns' }, { text: 'plays' }, { text: 'emits' }] }],
+  'traffic-policy': [
+    {
+      step: 'local-path',
+      settings: { policy: 'local' },
+      targets: [{ key: 'service:k1' }, { key: 'service:a' }, { key: 'edge:k1->a#0', paint: 'stroke' }, { text: 'from 198.51.100.79' }],
+    },
+  ],
   'mr-cache': ['after', 'request'].map((step) => ({ step, targets: [{ text: 'hit' }, { text: 'miss' }] })),
   'token-bucket': [
     { step: 'balance', targets: [{ text: 'bucket' }, { text: 'Tokens left' }] },
@@ -72,6 +79,8 @@ interface Target {
   indices: number[];
   opening: boolean;
   camera?: boolean;
+  partial?: number[];
+  required?: boolean;
 }
 export interface StoryFrame {
   records: ElementRecord[];
@@ -124,7 +133,14 @@ export async function storyFrames(
         };
         const now = emphasisOf(scene),
           targets: Target[] = [];
-        const add = (name: string, objects: Mobject[], opening: boolean, context = false, stroke = false) => {
+        const add = (
+          name: string,
+          objects: Mobject[],
+          opening: boolean,
+          context = false,
+          stroke = false,
+          clipShapes = false,
+        ) => {
           assert.ok(objects.length, `${step.name}: story target ${name} is missing`);
           // A surviving half-word cannot stand in for the complete named label.
           // renderElements legitimately drops invisible/clipped leaves, so inspect
@@ -168,17 +184,32 @@ export async function storyFrames(
               }),
               `${step.name}: ${name} needs painted stroke ink, not only its label`,
             );
-          targets.push({ name, indices, opening, ...(context ? { camera: true } : {}) });
+          const partial = clipShapes
+            ? indices.filter((i) => {
+                for (let a = byId.get(records[i]!.id); a; a = a.parent ?? undefined) if (labelOf(a)) return false;
+                return true;
+              })
+            : undefined;
+          targets.push({
+            name,
+            indices,
+            opening,
+            ...(context ? { camera: true } : {}),
+            ...(clipShapes ? { partial, required: true } : {}),
+          });
         };
         for (const [m, what] of now)
           if (previous.get(m) !== what) {
             assert.ok(members.includes(m), `${step.name}: newly emphasised ${m.key ?? what} is absent from the stage`);
-            add(`emphasis: ${m.key ?? what}`, [m], false);
+            add(`emphasis: ${m.key ?? what}`, [m], false, false, false, true);
           }
         previous = now;
         const paint = new Map(records.map((r) => [r.id, JSON.stringify([r.attrs, r.transform])]));
         const added = new Set<Mobject>();
-        for (const r of records) {
+        // Declared intent takes priority over unrelated context that a rebuild
+        // happens to replace or move. With no primary subject, inspect new art.
+        const hasPrimary = targets.length > 0 || claims.some((c) => c.step === step.name);
+        for (const r of hasPrimary ? [] : records) {
           if (previousPaint.get(r.id) === paint.get(r.id) || Number(r.attrs.opacity ?? 1) < 0.95) continue;
           const m = byId.get(r.id);
           if (!m) continue;
@@ -444,8 +475,10 @@ export async function reviewStoryVariant(
           assert.ok(n < frame.records.length, `${step.step}: close-up tour did not terminate`);
         }
       const verified = new Set<string>();
-      for (const target of frame.targets)
+      for (const target of frame.targets) {
+        let seen = 0;
         for (const index of target.indices) {
+          const bounded = target.camera || target.partial?.includes(index);
           const original = opening.ink.find((p) => p.index === index)!;
           // The obligation comes from the authored frame, never from a possibly
           // damaged live clip. Each stop contributes only its actual shown ink.
@@ -453,7 +486,7 @@ export async function reviewStoryVariant(
           const expectedClip: Rect = authoredClip
             ? [authoredClip[0] * 1000, -authoredClip[3] * 1000, authoredClip[2] * 1000, -authoredClip[1] * 1000]
             : (original.author as Rect);
-          const box: Rect = target.camera
+          const box: Rect = bounded
             ? [
                 Math.max(original.box[0], expectedClip[0], original.author[0]),
                 Math.max(original.box[1], expectedClip[1], original.author[1]),
@@ -461,16 +494,16 @@ export async function reviewStoryVariant(
                 Math.min(original.box[3], expectedClip[3], original.author[3]),
               ]
             : original.box;
-          if (target.camera && (box[2] <= box[0] || box[3] <= box[1])) continue; // context outside an authored viewport is not newly shown ink
+          if (bounded && (box[2] <= box[0] || box[3] <= box[1])) continue; // context outside an authored viewport is not newly shown ink
           const eligible = (target.opening ? [opening] : views).filter((v) => {
             const ink = v.ink.find((p) => p.index === index);
-            return ink?.visible && (target.camera || ink.complete);
+            return ink?.visible && (bounded || ink.complete);
           });
           assert.ok(eligible.length, `${step.step}: ${target.name} has hidden or clipped ink`);
           const ink = eligible[0]!.ink.find((p) => p.index === index)!;
           assert.ok(ink.box[2] > ink.box[0] && ink.box[3] > ink.box[1], `${step.step}: ${target.name} has empty ink`);
           const coverage = eligible.map((v) => {
-            if (!target.camera) return v.viewport;
+            if (!bounded) return v.viewport;
             const shown = v.ink.find((p) => p.index === index)!.shown;
             return [
               Math.max(v.viewport[0], shown[0]),
@@ -484,7 +517,10 @@ export async function reviewStoryVariant(
             `${step.step} at ${viewport.width}px: ${target.name} is missing from ${target.opening ? 'the opening' : 'the close-up tour'}: ${JSON.stringify({ box, views: coverage })}`,
           );
           verified.add(target.name);
+          seen++;
         }
+        if (target.required) assert.ok(seen, `${step.step}: ${target.name} is outside the authored picture`);
+      }
       assert.ok(verified.size, `${step.step}: no story subject is painted in a reader view`);
       results.push({ step: step.step, width: viewport.width, views: views.length, targets: [...verified] });
     }

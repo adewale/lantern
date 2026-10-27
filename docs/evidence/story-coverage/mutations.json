@@ -112,5 +112,29 @@
     "assertionRejected": true,
     "exitCode": 1,
     "log": "story-mutant-frame-as-story.log"
+  },
+  {
+    "defect": "incidental-context-as-subject",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-incidental-context-as-subject.log"
+  },
+  {
+    "defect": "cropped-highlighted-word",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-cropped-highlighted-word.log"
+  },
+  {
+    "defect": "missing-one-highlighted-subject",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-missing-one-highlighted-subject.log"
+  },
+  {
+    "defect": "cropped-explicit-arrow",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-cropped-explicit-arrow.log"
   }
 ]

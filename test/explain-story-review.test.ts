@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fc, params } from './lib/pbt.ts';
 import { covered, storyFrames, inspectStoryFrame, reviewStoryVariant } from '../tools/lib/explain-story-review.ts';
-import { collectProject } from '../tools/lib/explain-project.ts';
+import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
 import { serve } from '../tools/lib/explain-serve.ts';
 import { launch } from '../tools/lib/browser.ts';
@@ -92,11 +92,35 @@ test('logical story labels reject partially missing glyphs before accepting surv
     }
   }
   assert.equal((await storyFrames(Windowed)).size, 1, 'new context may pass through an authored viewport');
+  class HighlightedWindow extends Scene {
+    override async construct() {
+      await this.step('window');
+      const word = new Text('word');
+      word.clipBox = [0, -1, 2, 1];
+      this.add(word);
+      emphasises(this, () => [[word, 'highlighted word']]);
+    }
+  }
+  await assert.rejects(
+    storyFrames(HighlightedWindow),
+    /clipped glyph ink/,
+    'highlighted text stays complete even when route shapes may enter a viewport',
+  );
+
   await assert.rejects(
     storyFrames(Windowed, [{ step: 'window', targets: [{ key: 'word' }] }]),
     /clipped glyph ink/,
     'the complete named subject may not be excused as cropped context',
   );
+});
+
+test('declared story subjects do not turn incidental context into extra obligations',async()=>{
+  for(const helper of [false,true]){
+    class Selection extends Scene {override async construct(){await this.step('picture');const subject=new Text('Subject');subject.key='subject';const context=new Text('Context').moveTo([6,3]);context.key='context';this.add(subject,context);if(helper)emphasises(this,()=>[[subject,'the subject']]);}}
+    const frame=(await storyFrames(Selection,helper?[]:[{step:'picture',targets:[{key:'subject'}]}])).get('picture')!;
+    assert.deepEqual(frame.targets.map(t=>t.name),[helper?'emphasis: subject':'subject']);
+    assert.ok(frame.records.length>frame.targets[0]!.indices.length,'incidental context is still rendered');
+  }
 });
 
 test('a caption explaining unchanged artwork must declare its subject', async () => {
@@ -184,11 +208,11 @@ test(
     try {
       await writeFile(
         join(dir, 'scene.ts'),
-        `import{Scene,Text}from'rayner';import{stage}from'rayner/explain';
-      export default class Story extends Scene{static meta={id:'story',title:'Story subjects'};async construct(){const s=stage(this);
+        `import{Scene,Text,Line}from'rayner';import{stage,settingsOf}from'rayner/explain';import{emphasises}from${JSON.stringify(join(ROOT, 'explain/look.ts'))};
+      export default class Story extends Scene{static meta={id:'story',title:'Story subjects'};static settings=[{id:'route',label:'Route position',default:'visible',options:[{value:'visible',label:'Entering the viewport'},{value:'outside',label:'Outside the authored picture'}]}];async construct(){const s=stage(this);
       await this.step('opening',{caption:'The first subject is shown.'});const a=new Text('First subject',{fontSize:.7});a.key='first';await s.enter(a,{describe:'First subject'});
       await this.step('ending',{caption:'The final subject replaces the first.'});await s.clear();const b=new Text('Final subject',{fontSize:.7});b.key='last';b.clipBox=[-7,-2,7,2];await s.enter(b,{describe:'Final subject'});
-      await this.step('split',{caption:'Read the left and right subjects.'});await s.clear();const l=new Text('Left',{fontSize:.2}).moveTo([-5,0]),r=new Text('Right',{fontSize:.2}).moveTo([5,0]);l.key='left';r.key='right';r.clipBox=[4,-1,6,1];await s.enter(l,r,{describe:'The left and right subjects'});await this.step('return',{caption:'Return to the right subject.'});await s.clear();const again=new Text('Again',{fontSize:.7}).moveTo([4,0]);again.key='again';await s.enter(again,{describe:'Again on the right'});}}`,
+      await this.step('split',{caption:'Read the left and right subjects.'});await s.clear();const l=new Text('Left',{fontSize:.2}).moveTo([-5,0]),r=new Text('Right',{fontSize:.2}).moveTo([5,0]);l.key='left';r.key='right';r.clipBox=[4,-1,6,1];await s.enter(l,r,{describe:'The left and right subjects'});await this.step('return',{caption:'Return to the right subject.'});await s.clear();const again=new Text('Again',{fontSize:.7}).moveTo([4,0]);again.key='again';await s.enter(again,{describe:'Again on the right'});await this.step('route',{caption:'The highlighted route enters the window.'});await s.clear();const outside=settingsOf(this).route==='outside';const route=new Line(outside?[20,0]:[-10,0],outside?[21,0]:[0,0],{stroke:'#ff0000',strokeWidth:.05});route.key='window-route';route.clipBox=outside?[19,-1,22,1]:[-1,-1,1,1];this.add(route,new Text('Unrelated context',{fontSize:.2}).moveTo([6,3]));const other=outside?new Text('Other subject',{fontSize:.7}):null;if(other)this.add(other);emphasises(this,()=>other?[[route,'visible route'],[other,'other subject']]:[[route,'visible route']]);}}`,
       );
       const project = await collectProject(dir, { write: false }),
         variant = project.variants[0]!;
@@ -209,11 +233,27 @@ test(
           ['ending', 390],
           ['split', 390],
           ['return', 390],
+          ['route', 390],
           ['opening', 1180],
           ['ending', 1180],
           ['split', 1180],
           ['return', 1180],
+          ['route', 1180],
         ],
+      );
+      await assert.rejects(
+        reviewStoryVariant(page, server.url + '/story.html', variant, [
+          ...claims,
+          { step: 'route', targets: [{ key: 'window-route', paint: 'stroke' }] },
+        ]),
+        /route: window-route has hidden or clipped ink/,
+        'an explicit arrow claim requires the whole route',
+      );
+      const outside = project.variants.find((v) => v.values.route === 'outside')!;
+      await assert.rejects(
+        reviewStoryVariant(page, server.url + '/story.html', outside, claims),
+        /route: emphasis: window-route is outside the authored picture/,
+        'helper membership cannot excuse an entirely absent subject',
       );
       await page.goto(server.url + '/story.html?step=ending');
       await page.waitForFunction(

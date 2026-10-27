@@ -134,3 +134,31 @@ frame-as-story
 AssertionError [ERR_ASSERTION]: Missing expected rejection: reserved diagram paper is not narrative evidence
       at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
 log SHA-256: 88bca6851fed0c748dc0d86ebb2247a6738759af704af74ad9d4f5f92287501b
+
+incidental-context-as-subject
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'changed: Subject',
+  +   'changed: Context',
+      'subject'
+    ]
+  
+      at TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-story-review.test.ts:121:12)
+log SHA-256: 44b47461ba3b01dad56542f3a0de40fe1b03ef3d4468952bb77004ae59733693
+
+cropped-highlighted-word
+AssertionError [ERR_ASSERTION]: Missing expected rejection: highlighted text stays complete even when route shapes may enter a viewport
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+log SHA-256: 848cdab54dc39b89b344f1dcdf1bc51a97e9335a522e7ed3c743cfebf1f848ee
+
+missing-one-highlighted-subject
+AssertionError [ERR_ASSERTION]: Missing expected rejection: helper membership cannot excuse an entirely absent subject
+      at async TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-story-review.test.ts:253:7)
+log SHA-256: 8f03478e390654d4f86a1895aa2ef1a752a29da2e3753390e719855f9d496de8
+
+cropped-explicit-arrow
+AssertionError [ERR_ASSERTION]: Missing expected rejection: an explicit arrow claim requires the whole route
+      at async TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-story-review.test.ts:244:7)
+log SHA-256: ca5bbb303e93c199a7014bd67bc1d27bb4780d371b39499bfa2a07216804f880
