@@ -16,7 +16,7 @@ test('site:export writes each explainer as <id>.json beside its page, and llms.t
       { id: 'glyph', group: 'toolchain' },
       { id: 'ring-buffer', group: 'topic' },
     ]);
-    // The JSON is describeExplainer's object, drawings included, as `explain describe` prints it.
+    // The JSON is describeExplainer's object, drawings included, as `rayner describe` prints it.
     const json = await readFile(join(root, 'projects/rayner/ring-buffer.json'), 'utf8');
     assert.deepEqual(JSON.parse(json), await describeExplainer(RingBuffer as ExplainerClass));
     const llms = await readFile(join(root, 'llms.txt'), 'utf8');

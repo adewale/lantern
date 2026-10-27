@@ -2,7 +2,7 @@ Noto Sans Arabic: Copyright 2022 The Noto Project Authors (https://github.com/no
 Noto Sans Devanagari: Copyright 2022 The Noto Project Authors (https://github.com/notofonts/devanagari)
 Noto Sans SC: Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'. (https://github.com/notofonts/noto-cjk)
 
-Lantern Explainers embeds subsets of these fonts made by tools/fonts.sh. The only changes are
+Rayner embeds subsets of these fonts made by tools/fonts.sh. The only changes are
 the subsetting and, for Noto Sans SC, fixing the weight at 400.
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.

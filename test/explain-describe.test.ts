@@ -34,7 +34,7 @@ test('describeExplainer gives every case and step: the words, the state the trac
       assert.match(s.drawing!, /[┌─│]/, `${s.step}: the resting picture drawn as text`);
     });
   }
-  // The ring after the last pushes, as `explain see` reports it.
+  // The ring after the last pushes, as `rayner see` reports it.
   const result = d.cases[0]!.steps.find((s) => s.step === 'result')!;
   assert.deepEqual(result.changed.tail, { before: 0, after: 2 });
   // JSON-safe: what an agent reads from a file is what the function returned.
