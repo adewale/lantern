@@ -84,7 +84,7 @@ export default class OAuthExplainer extends Scene {
       title: 'The authorization request carries the challenge and S256',
       line: 'The request carries the challenge and S256, never the verifier.',
       caption:
-        'The client sends the challenge and the S256 method in the authorization request, through the user’s browser, as the note beside it says, while the verifier stays with the client. The user then signs in and consents at the auth server.',
+        'The client sends the challenge and the S256 method in the authorization request, through the user’s browser, as the note under it says, while the verifier stays with the client and is not sent. The user then signs in and consents at the auth server.',
     });
     await s.clear();
     const seq = await s.show({ source: sequence(attacker) }, { box: 'full', build: 'frame' });
@@ -92,7 +92,7 @@ export default class OAuthExplainer extends Scene {
     const say = (id: string, text: string, color: string = s.palette.ink) => seq.note(id, text, { side: 'below', color });
     await seq.reveal(['message:C->S#0']);
     await seq.mark(['message:C->S#0'], { color: CHALLENGE, as: 'carries the challenge' });
-    await say('message:C->S#0', `code_challenge ${short(challenge)}, S256`, CHALLENGE);
+    await say('message:C->S#0', `code_challenge ${short(challenge)}, S256; code_verifier not sent`, CHALLENGE);
 
     await this.step('code', {
       title: 'The redirect carries a short-lived code bound to the challenge',

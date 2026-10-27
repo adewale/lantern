@@ -1730,7 +1730,8 @@ test('PKCE mobile views expose the derivation and the unsent verifier without ad
         const found: number[][] = [];
         const walk = (m: import('../src/index.ts').Mobject) => {
           const label = labelOf(m);
-          if (label && (step.name === 'secret' ? ['code_verifier', 'code_challenge'].includes(label.text) : label.text === 'not sent')) {
+          // The unsent verifier is said in the authorize message's note ("code_verifier not sent").
+          if (label && (step.name === 'secret' ? ['code_verifier', 'code_challenge'].includes(label.text) : label.text.includes('not sent'))) {
             const box = m.box();
             if (box) found.push(toView(box, scene.frame.box()!));
           }

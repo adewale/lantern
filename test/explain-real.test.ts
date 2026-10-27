@@ -132,5 +132,5 @@ test('shipped explainers describe their steps: chart values, marks, focus, walks
   // Only the first message is revealed, and what it carries is a note on it.
   const authorize = pictureSummary(pkce.get('authorize')!.after);
   assert.match(authorize, /^Sequence diagram: 3 participants, 1 message\. /);
-  assert.match(authorize, /Note: “code_challenge [^”]+, S256” beside Client → Auth server/);
+  assert.match(authorize, /Note: “code_challenge [^”]+, S256; code_verifier not sent” beside Client → Auth server/);
 });
