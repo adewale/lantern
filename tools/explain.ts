@@ -33,6 +33,7 @@ Commands:
   see <scene> [step]  One step's resting picture as text, with its caption, its
                       picture in words and what it changed in scene.state
                       (the last step by default; --out file.svg also writes it)
+  version             Print the version (also --version)
 
 Every command fails on text the embedded fonts cannot draw, unless the scene
 asks for that script with meta.lettering.
@@ -60,7 +61,7 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     console.log(HELP);
     return;
   }
-  if (args.includes('--version') || args[0] === 'version') {
+  if (args[0] === '--version' || args[0] === 'version') {
     console.log(pkg.version);
     return;
   }
