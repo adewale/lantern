@@ -35,14 +35,48 @@ import type { LetteringRequest } from 'rayner/lettering';
 static meta = { id: 'alphabet', title: 'Αλφάβητο', lettering: { scripts: ['Grek'] } satisfies LetteringRequest };
 ```
 
-- `scripts` takes ISO 15924 codes: `Latn` (Latin Extended-A, -B and Additional, U+0100–024F and U+1E00–1EFF), `Grek` (U+0370–03FF and U+1F00–1FFF) and `Cyrl` (U+0400–052F). These scripts need no shaping beyond what the shaper already does for Latin. Any other code, or any key other than `scripts`, fails the build with what is supported.
+- `scripts` takes ISO 15924 codes: `Latn` (Latin Extended-A, -B and Additional, U+0100–024F and U+1E00–1EFF), `Grek` (U+0370–03FF and U+1F00–1FFF) and `Cyrl` (U+0400–052F). These scripts need no shaping beyond what the shaper already does for Latin. `math` is [below](#maths); `faces`, and scripts that need shaping, are in [LETTERING.md](LETTERING.md). An unknown code or key fails the build.
 - The build runs every case once with Inter's and JetBrains Mono's own letters in those scripts (`vendor/lettering/`, the same releases as the embedded faces, made by `npm run fonts:lettering`). It records which letters each face drew, on stage and in the step titles and captions the video footer draws. It keeps only the letters of the requested scripts, and cuts each face to them with fonttools' subsetter. The page embeds the cuts as WOFF2 in its script, and puts them in place (`useLettering`) before the player draws.
 - A requested face joins its family's chain after the embedded face and before the Noto fallbacks, so everything the embedded faces draw looks as it did. Code tries JetBrains Mono's cut, then Inter's: JetBrains Mono has no ῶ, so code draws it in Inter.
 - The cuts are pinned beside the scene in `scene.lettering.json`, keyed by the source face's hash and the letters. A build reuses them. When the letters change it cuts again, which needs `pip install fonttools brotli` (or `PYFTSUBSET` set to the path of `pyftsubset`). Commit the file with the scene.
 - A letter outside the request still fails every command, as before. So does a combining mark after a letter the embedded faces draw: write the precomposed letter.
 - A lettered page's receipt and its `check` report have a `lettering` entry: the scripts and, for each cut, its source, letter count, WOFF2 bytes and SHA-256, plus `pageBytes`, the base64 the page carries. The Greek test fixture's two cuts hold 24 letters in 6,740 bytes of base64.
 - An explainer that asks for nothing builds the same page, header recipe and receipt as before lettering on request existed, engine hash included: `src/lettering.ts` counts toward the engine hash only of an explainer that asks. `test/lettering.test.ts` holds the explainers to pins taken before the feature.
-- Not supported yet: another face (a diagram style's own font), real bold and italic, scripts that need shaping (Arabic, Indic), right-to-left text and typeset maths.
+- Not supported yet: another face (a diagram style's own font), real bold and italic, scripts that need shaping (Arabic, Indic) and right-to-left text. Typeset maths is [below](#maths).
+
+### Maths
+
+An explainer that sets formulas asks for `math: true`, and draws each one with `MathTex`:
+
+```ts
+import { Scene, MathTex } from 'rayner';
+import { stage } from 'rayner/explain';
+
+export default class Roots extends Scene {
+  static meta = { id: 'roots', title: 'The quadratic formula', lettering: { math: true } };
+  override async construct() {
+    const s = stage(this);
+    await this.step('formula', { title: 'Two roots', caption: 'Both roots of a quadratic, from its three coefficients.' });
+    const roots = new MathTex('x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}', { display: true, fontSize: 0.6, color: s.palette.ink });
+    await s.enter(roots, { describe: 'x equals minus b, plus or minus the square root of b squared minus 4 a c, all over 2 a.' });
+  }
+}
+```
+
+```sh
+export RAYNER_MATH_FONT=/path/to/latinmodern-math.otf   # Latin Modern Math 1.959, from CTAN
+npm run explain -- snapshots roots.ts                   # typesets each formula once
+npm run explain -- check roots.ts
+```
+
+- `MathTex` is also exported as `Math`. Importing it as `Math` hides JavaScript's `Math` in that file, so prefer `MathTex` or `Math as Formula`. It is a `Text`: it takes `fontSize` (0.4 by default), `color` and the other text options. `display: true` sets display style: limits above and below large operators, full-size fractions.
+- `snapshots` typesets each distinct formula once, with `glyph`'s TeX typesetter (`vendor/glyph-math.js`, glyph at `6398654`) on Latin Modern Math. It stores the outlines in `scene.lettering.json`, with a cut of the font to the glyphs drawn, and adds the font's GUST licence to the page's licence block. Capture needs `RAYNER_MATH_FONT` (the file's SHA-256 is checked) and Python with fonttools and brotli ([LETTERING.md](LETTERING.md#capture-check-build)). Commit the file with the scene.
+- `check`, `build`, `shots` and `render` draw the stored outlines and run no typesetter, and neither does the page. A formula changed without running `snapshots` fails every command with "stale lettering snapshot". `MathTex` without `math: true` fails too.
+- The TeX is `glyph`'s subset: scripts and primes; `\frac \dfrac \tfrac \cfrac \binom`; `\sqrt` and `\sqrt[n]`; `\left \middle \right` and `\big` to `\Bigg`; large operators with `\limits` and `\nolimits`; `\sin`, `\lim` and `\operatorname`; accents, `\widehat \widetilde \overline \underline \overbrace \underbrace`; `\overset \underset \stackrel`; `\text`; Greek; about 125 relations, arrows and binary operators, and `\not`; `\mathbb \mathcal \mathfrak \mathbf \mathit \mathrm \mathsf \mathtt \boldsymbol`; spacing and style commands; `matrix pmatrix bmatrix Bmatrix vmatrix Vmatrix cases`.
+- Anything else fails `snapshots` with `glyph`'s error and its offset in the source, for example `Math: {"tag":"Tex","error":{"tag":"UnknownCommand","name":"\\color","at":0}}`. Not supported: `\color`, `\phantom`, `\substack`, `\pmod`, `align` and the other multi-line environments, line breaking, and right-to-left maths. Latin Modern Math has no lowercase script letters, so `\mathcal{a}` fails as a missing glyph.
+- Morphs: a formula's glyphs are not characters of its source, so `TransformMatchingText` and `TransformMatchingShapes` both pair them by shape. Use `TransformMatchingText` when terms are added or removed: new glyphs grow inside the formula, so it stays one piece for the motion check. `TransformMatchingShapes` passes when every glyph is matched, as when terms swap places. When glyphs are added, it grows them from outside the formula's box, and `check` reports the formula jumping, as it does for plain `Text`. `Transform` morphs a whole formula into another.
+- A kept formula with no `describe` is described as "1 label.", so say it in words.
+- An explainer without maths builds the same page and receipt as before. Each formula costs its outlines. The four-step fixture in `test/lettering/math` stores 7 formulas in 103 KB of JSON, with an 8 KB font cut. Its page is 87 KB larger than the same scene drawn as plain `Text` (20 KB gzipped). `test/lettering-math.test.ts` compares the stored outlines with upstream `glyph`'s own results (`test/lettering/glyph-math.json`, made by `tools/oracle/glyph-math.ts`), and in Chromium compares the page's paths with Node's at every step.
 
 ## Stage
 

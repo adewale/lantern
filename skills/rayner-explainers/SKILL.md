@@ -57,6 +57,7 @@ The scene asks the model; it never states an answer it did not get from one. The
 - A setting may change diagrams, captions, numbers and which steps exist; keep the palette fixed. Keep cases few; the limit is 64.
 - Do not weaken a check, bless a corrupt snapshot or skip a case to get a pass. Add a regression test that fails before the fix.
 - Lettering is embedded Inter or JetBrains Mono, plus Arabic-Indic, Devanagari and Chinese numerals. For Latin Extended, Greek or Cyrillic letters, ask with `static meta.lettering = { scripts: [...] }` and commit the `scene.lettering.json` the build writes; any other script fails every command. Picture descriptions are generated in English or French.
+- For formulas, set `lettering: { math: true }` and draw `new MathTex('\\frac{a}{b}', { display: true })`. `snapshots` typesets each one once (it needs `RAYNER_MATH_FONT`); commit `scene.lettering.json`. TeX outside `glyph`'s subset (`\color`, `align`, `\substack` …) fails capture. Give each kept formula a `describe` in words, and morph a formula that gains or loses terms with `TransformMatchingText`. See REFERENCE, Maths.
 - Leave out panel titles and asides that repeat the heading, caption or values. Write titles and captions with [anti-slop-writing](https://github.com/adewale/anti-slop-writing): name the value or mechanism on screen, and state contrasts with because, although or so.
 
 ## Reporting

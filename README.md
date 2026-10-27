@@ -96,6 +96,7 @@ A scene is an ordinary Rayner scene, so beside the helpers it can use the engine
 
 - Lettering is the embedded Inter or JetBrains Mono, so styles lose their own fonts.
 - Beyond Latin-1, only numerals draw (Arabic-Indic, Devanagari and Chinese, from small Noto subsets) unless an explainer asks for Latin Extended, Greek or Cyrillic ([lettering on request](docs/REFERENCE.md#lettering-on-request)). Other scripts, such as Arabic, Hebrew, Devanagari and Chinese letters, fail the build.
+- Maths is `glyph`'s TeX subset, typeset when the snapshot is captured ([maths](docs/REFERENCE.md#maths)). `\color`, `\phantom`, `\substack`, `\pmod`, `align` and line breaking fail the capture.
 - Descriptions of the pictures are generated in English or French only.
 - On a phone each step opens on a close-up of what it changed, so a reader pans for the rest.
 - The models are small and cited, and no subject expert has reviewed the explainers.
