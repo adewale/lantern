@@ -336,7 +336,9 @@ const series = fc
   .record({ count: fc.integer({ min: 1, max: 30 }), interval: fc.integer({ min: 1, max: 4 }), seed: fc.array(fc.integer({ min: 0, max: 2 }), { minLength: 30, maxLength: 30 }), shift: fc.array(fc.integer({ min: -72, max: 72 }), { minLength: 30, maxLength: 30 }) })
   .map(({ count, interval, seed, shift }) => {
     const rrule = `FREQ=WEEKLY;INTERVAL=${interval};COUNT=${count}`;
-    const all = occurrences(DTSTART, parseRule(rrule));
+    // Independent UTC arithmetic anchors generated slots; occurrences is the subject.
+    const all = Array.from({ length: count }, (_, i) => new Date(Date.UTC(2026, 10, 2, 9) + i * interval * 7 * 86400e3)
+      .toISOString().replace(/[-:]/g, '').replace('.000', ''));
     // 0 keeps a start, 1 excludes it, 2 moves it by shift hours.
     const exdates = all.filter((_, i) => seed[i] === 1);
     const overrides = all
@@ -369,8 +371,10 @@ test('property: meetings are the rule’s starts less the EXDATEs; overrides mov
 test('property: UNTIL at the k-th start gives the same starts as COUNT=k', () => {
   fc.assert(
     fc.property(fc.integer({ min: 1, max: 40 }), fc.integer({ min: 1, max: 4 }), (k, interval) => {
-      const counted = occurrences(DTSTART, parseRule(`FREQ=WEEKLY;INTERVAL=${interval};COUNT=${k}`));
-      assert.deepEqual(occurrences(DTSTART, parseRule(`FREQ=WEEKLY;INTERVAL=${interval};UNTIL=${counted.at(-1)}`)), counted);
+      const expected = Array.from({ length: k }, (_, i) => new Date(Date.UTC(2026, 10, 2, 9) + i * interval * 7 * 86400e3)
+        .toISOString().replace(/[-:]/g, '').replace('.000', ''));
+      assert.deepEqual(occurrences(DTSTART, parseRule(`FREQ=WEEKLY;INTERVAL=${interval};COUNT=${k}`)), expected);
+      assert.deepEqual(occurrences(DTSTART, parseRule(`FREQ=WEEKLY;INTERVAL=${interval};UNTIL=${expected.at(-1)}`)), expected);
     }),
     params(200),
   );

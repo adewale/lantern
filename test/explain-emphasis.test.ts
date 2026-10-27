@@ -71,6 +71,15 @@ test('the heading follows step titles; a fixed or absent heading is still possib
     }
   }
   await new Fixed(new NullSink()).run();
+  class Absent extends Scene {
+    override async construct() {
+      const s = stage(this, { heading: false });
+      await this.step('one', { title: 'Never shown on stage' });
+      assert.equal(s.heading.text, '');
+      assert.ok(!this.familyMembers().some((m) => m instanceof Text && m.text === 'Never shown on stage'));
+    }
+  }
+  await new Absent(new NullSink()).run();
 });
 
 test('a note follows its part through focus; clear() leaves paper and heading, and a cleared diagram can be drawn again', async () => {

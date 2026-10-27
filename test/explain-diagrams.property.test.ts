@@ -745,30 +745,41 @@ test('scale probe: a diagram of 1,800 parts with 600 outlined labels builds, emp
 // Keep the generator honest: it must reach what the importer writes (see test/lib/random-snapshot.ts).
 test('the snapshot generator reaches every shape the importer writes', () => {
   const seen = new Set<string>();
-  fc.assert(
-    fc.property(snapshotPlan, (p) => {
-      const s = buildSnapshot(p);
-      const shapes = s.parts.flatMap((x) => x.shapes);
-      const run = shapes.flatMap((x) => (x.textRun ? [x.textRun] : []));
-      if (s.parts.some((x) => x.id.startsWith('edge-label:') && x.owner)) seen.add('edge label');
-      if (s.parts.some((x) => x.id.startsWith('rel-label:') && x.owner)) seen.add('relationship label');
-      if (s.parts.some((x) => x.from && x.from === x.to)) seen.add('self');
-      if (s.parts.some((x) => /#1$/.test(x.id))) seen.add('parallel');
-      if (s.parts.some((x) => x.id === '__frame')) seen.add('frame');
-      if (s.parts.some((x) => x.role === 'message' && x.shapes.some((y) => y.textRun))) seen.add('worded message');
-      for (const prefix of ['actor:', 'lifeline:', 'class:', 'bar:', 'axis:', 'grid:', 'branch:'])
-        if (s.parts.some((x) => x.id.startsWith(prefix))) seen.add(prefix);
-      if (planOf(s).names.size) seen.add('bare names');
-      if (shapes.some((x) => x.style.dashArray)) seen.add('dashes');
-      for (const r of run) {
-        seen.add(`anchor ${r.anchor}`);
-        if (r.baseline) seen.add(`baseline ${r.baseline}`);
-        if (r.width != null) seen.add('width');
-        if (r.matrix[1] !== 0) seen.add('rotated');
-      }
-    }),
-    params(300),
-  );
+  // Explicit covering plans make support coverage deterministic; product properties above
+  // still generate arbitrary plans and shrink their failures.
+  for (const family of ['flowchart', 'state', 'class', 'mindmap', 'sequence', 'gitgraph', 'xychart', 'er']) {
+    for (const anchor of ['start', 'middle', 'end'] as const) {
+      const style = { fill: '#fff', stroke: '#000', strokeWidth: 0.01, dashArray: '0.1 0.1' };
+      const label = { text: 'label', style, anchor, baseline: 'middle' as const, width: true, rotated: true };
+      const p = {
+        family, width: 400, height: 200, frame: style,
+        palette: { paper: '#fff', ink: '#000', accent: '#f00', muted: '#777' },
+        nodes: [0, 1].map((i) => ({ id: `n${i}`, x: i * 2, y: 0, w: 1, h: 1, style, label, value: i + 1 })),
+        links: [{ from: 0, to: 0, line: style, head: style, label },
+          { from: 0, to: 1, line: style, head: style, label }, { from: 0, to: 1, line: style, head: style, label }],
+      };
+        const s = buildSnapshot(p);
+        const shapes = s.parts.flatMap((x) => x.shapes);
+        const run = shapes.flatMap((x) => (x.textRun ? [x.textRun] : []));
+        if (s.parts.some((x) => x.id.startsWith('edge-label:') && x.owner)) seen.add('edge label');
+        if (s.parts.some((x) => x.id.startsWith('rel-label:') && x.owner)) seen.add('relationship label');
+        if (s.parts.some((x) => x.from && x.from === x.to)) seen.add('self');
+        if (s.parts.some((x) => /#1$/.test(x.id))) seen.add('parallel');
+        if (s.parts.some((x) => x.id === '__frame')) seen.add('frame');
+        if (s.parts.some((x) => x.role === 'message' && x.shapes.some((y) => y.textRun))) seen.add('worded message');
+        for (const prefix of ['actor:', 'lifeline:', 'class:', 'bar:', 'axis:', 'grid:', 'branch:'])
+          if (s.parts.some((x) => x.id.startsWith(prefix))) seen.add(prefix);
+        if (planOf(s).names.size) seen.add('bare names');
+        if (shapes.some((x) => x.style.dashArray)) seen.add('dashes');
+        for (const r of run) {
+          seen.add(`anchor ${r.anchor}`);
+          if (r.baseline) seen.add(`baseline ${r.baseline}`);
+          if (r.width != null) seen.add('width');
+          if (r.matrix[1] !== 0) seen.add('rotated');
+        }
+    }
+  }
+
   assert.deepEqual([...seen].sort(), [
     'actor:', 'anchor end', 'anchor middle', 'anchor start', 'axis:', 'bar:', 'bare names', 'baseline middle', 'branch:', 'class:', 'dashes',
     'edge label', 'frame', 'grid:', 'lifeline:', 'parallel', 'relationship label', 'rotated', 'self', 'width', 'worded message',

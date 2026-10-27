@@ -52,7 +52,7 @@ const morph: fc.Arbitrary<Morph> = fc.record({
   font: fc.constantFrom('sans' as const, 'mono' as const),
 });
 
-test('property: a text morph (removals, insertions, resize, move, lag) has no motion discontinuities', async () => {
+test('property: text morphs with gentle lag up to 0.2 have no motion discontinuities', async () => {
   await fc.assert(fc.asyncProperty(morph, async (m) => { assert.deepEqual(await jumps(m), [], JSON.stringify(m)); }), params(300));
 });
 
@@ -81,4 +81,17 @@ test('a Code block morphs without jumps too', async () => {
     await new S(sink).run();
     assert.deepEqual(analyzeMotion(sink).map((e) => `${e.kind} @${e.frame}: ${e.what} ${e.detail}`), [], JSON.stringify(a));
   }
+});
+
+
+test('property: text morph replay agrees across lag ratios up to one', async () => {
+  const broadLag = fc.tuple(morph, fc.double({ min: 0, max: 1, noNaN: true }), fc.integer({ min: 0, max: 36 }));
+  await fc.assert(fc.asyncProperty(broadLag, async ([m, lag, k]) => {
+    const S = sceneOf({ ...m, lag });
+    const full = new StringSink();
+    await new S(full).run();
+    const snap = new SnapshotSink();
+    await renderAt(S, k / 30, snap);
+    assert.equal(snap.svg, full.frames[k], `lag ${lag}, frame ${k}`);
+  }), params(100));
 });

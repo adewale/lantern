@@ -41,13 +41,59 @@ test('render caches are never stale: every explainer, both output modes, each sa
   }
 });
 
-test('tracer: spans nest and self time excludes children', () => {
-  perf.enable();
-  perf.span('outer', () => { const t = performance.now(); while (performance.now() - t < 5); perf.span('inner', () => { const u = performance.now(); while (performance.now() - u < 5); }); });
-  perf.disable();
-  const rows = Object.fromEntries(perf.rows().map((r) => [r.name, r]));
-  assert.ok(rows.outer!.total >= 10 && rows.outer!.self < rows.outer!.total - 4);
-  assert.ok(rows.inner!.self >= 5);
+test('tracer: spans preserve values and exceptions, with exact nested self time', (t) => {
+  let clock = 100;
+  t.mock.method(performance, 'now', () => clock);
+  try {
+    perf.enable();
+    const value = {};
+    assert.equal(perf.span('outer', () => {
+      clock += 3;
+      assert.equal(perf.span('inner', () => { clock += 5; return value; }), value);
+      clock += 2;
+      return value;
+    }), value);
+    assert.deepEqual(perf.rows(), [
+      { name: 'inner', calls: 1, total: 5, self: 5, max: 5 },
+      { name: 'outer', calls: 1, total: 10, self: 5, max: 10 },
+    ]);
+    const failure = new Error('expected callback failure');
+    assert.throws(() => perf.span('throws', () => { clock += 4; throw failure; }), (e) => e === failure);
+    perf.span('after', () => { clock += 7; });
+    assert.equal(perf.rows().find((r) => r.name === 'after')!.self, 7);
+    assert.equal(perf.rows().find((r) => r.name === 'throws')!.total, 4);
+  } finally { perf.disable().reset(); }
+});
+
+test('tracer: depth caps events while all spans aggregate; counters and reset remain observable', (t) => {
+  let clock = 0;
+  t.mock.method(performance, 'now', () => clock);
+  try {
+    for (const timelineDepth of [0, 1, 2]) {
+      perf.enable({ timelineDepth });
+      perf.span('outer', () => { clock++; perf.span('middle', () => { clock++; perf.span('inner', () => { clock++; }); }); });
+      assert.equal(perf.rows().length, 3);
+      const trace = JSON.parse(perf.chromeTrace());
+      assert.deepEqual(trace.traceEvents.map((e: { name: string }) => e.name), ['inner', 'middle', 'outer'].slice(3 - timelineDepth));
+      perf.count('glyphs', 2); perf.count('glyphs');
+      assert.match(perf.report(), /glyphs\s+3/);
+      perf.reset();
+      assert.deepEqual(perf.rows(), []);
+      assert.deepEqual(JSON.parse(perf.chromeTrace()).traceEvents, []);
+      assert.doesNotMatch(perf.report(), /glyphs/);
+    }
+    perf.disable();
+    const value = {};
+    assert.equal(perf.span('disabled', () => value), value);
+    const failure = new Error('disabled callback failure');
+    assert.throws(() => perf.span('disabled', () => { throw failure; }), (e) => e === failure);
+    perf.count('disabled'); perf.begin('disabled')();
+    assert.deepEqual(perf.rows(), []);
+    assert.doesNotMatch(perf.report(), /disabled/);
+    perf.enable();
+    const end = perf.begin('async'); clock += 6; end();
+    assert.deepEqual(perf.rows(), [{ name: 'async', calls: 1, total: 6, self: 6, max: 6 }]);
+  } finally { perf.disable().reset(); }
 });
 
 test('DOM output merges same-styled glyph lines into one element, and splits during Write', async () => {

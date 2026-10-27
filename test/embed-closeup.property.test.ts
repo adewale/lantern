@@ -77,7 +77,13 @@ test('on a narrow stage every label near the changes reads at READ_PX whenever t
       fc.pre(w < NARROW_PX);
       const { k } = closeUp(layout, w, h),
         { s } = stageScale(w, h),
-        read = labelsToRead(layout);
+        read = layout.labels.filter((label) => layout.parts.some((part) =>
+          label.box[0] <= part[2] + 0.2 && label.box[2] >= part[0] - 0.2 &&
+          label.box[1] <= part[3] + 0.2 && label.box[3] >= part[1] - 0.2));
+      // With no nearby label the reader uses all labels. This oracle derives
+      // relevance from the documented padding, without calling its selector.
+      if (!read.length) read.push(...layout.labels);
+      assert.deepEqual(labelsToRead(layout), read);
       if (!read.length) return void assert.equal(k, 1);
       const drawn = read.map((l) => l.size * s * k);
       // No nearby label under READ_PX after the close-up when the cap leaves room to reach it.
@@ -111,16 +117,19 @@ test('the tour of close-ups covers every changed part: each point of a change is
       const views = closeUps(layout, w, h).map((z) => viewBox(z, w, h));
       // A view's edge may round by a hair of a unit; compare with that slack.
       const slack = 1e-6;
-      for (const p of layout.parts)
-        for (const fx of [0, 0.25, 0.5, 0.75, 1])
-          for (const fy of [0, 0.25, 0.5, 0.75, 1]) {
-            const x = p[0] + fx * (p[2] - p[0]),
-              y = p[1] + fy * (p[3] - p[1]);
-            assert.ok(
-              views.some((v) => x >= v[0] - slack && x <= v[2] + slack && y >= v[1] - slack && y <= v[3] + slack),
-              `(${x}, ${y}) of part ${JSON.stringify(p)} is in no close-up: ${JSON.stringify(views)}`,
-            );
-          }
+      for (const p of layout.parts) {
+        // Rectangle membership is constant between adjacent view boundaries.
+        // Check those cells AND boundaries, including zero-area changed boxes.
+        const cuts = (lo: number, hi: number, axis: 0 | 1) => {
+          const edges = [lo, hi, ...views.flatMap((v) => [v[axis]! - slack, v[axis + 2]! + slack])]
+            .filter((x) => x >= lo && x <= hi).sort((a, b) => a - b);
+          return [...edges, ...edges.slice(1).map((x, i) => edges[i]! + (x - edges[i]!) / 2)];
+        };
+        for (const x of cuts(p[0], p[2], 0))
+          for (const y of cuts(p[1], p[3], 1))
+            assert.ok(views.some((v) => x >= v[0] - slack && x <= v[2] + slack && y >= v[1] - slack && y <= v[3] + slack),
+              `(${x}, ${y}) of part ${JSON.stringify(p)} is in no close-up: ${JSON.stringify(views)}`);
+      }
     }),
     params(500),
   );
@@ -164,7 +173,12 @@ test('changes merge into parts in reading order, and the part with the most chan
         // Every change lies in exactly one part, and the parts keep apart.
         for (const c of changes) {
           const holding = parts.filter((p) => p[0] <= c.box[0] && p[1] <= c.box[1] && p[2] >= c.box[2] && p[3] >= c.box[3]);
-          assert.ok(holding.length >= 1);
+          assert.equal(holding.length, 1, 'each change belongs to exactly one part');
+        }
+        for (let i = 1; i < parts.length; i++) {
+          const a = parts[i - 1]!, b = parts[i]!;
+          const rowA = Math.floor(-a[3]), rowB = Math.floor(-b[3]);
+          assert.ok(rowA < rowB || (rowA === rowB && a[0] <= b[0]), 'parts follow rows top to bottom, then left to right');
         }
         const lettering = parts.map(
           (p) => changes.filter((c) => c.text && p[0] <= c.box[0] && p[1] <= c.box[1] && p[2] >= c.box[2] && p[3] >= c.box[3]).length,

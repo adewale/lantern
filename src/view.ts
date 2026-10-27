@@ -56,7 +56,7 @@ export class View<M extends Mobject = Mobject> extends Group {
   /** The same picture as a function of a state snapshot, when the View was made from a scene's state: what the fidelity check calls. */
   render: ((state: SceneState) => M) | null;
   place: ViewPlace | false;
-  /** Layout size [w, h] of the last picture build() returned, before placing: how much the View has been scaled since is current / this. */
+  /** Unplaced build size [w, h] used as the scale basis; a returning sync restores the retained picture’s basis. */
   builtSize: [number, number];
   /** The scale the last sync applied: kept while the measured one only differs from it in the last bits. */
   scaleK: number;

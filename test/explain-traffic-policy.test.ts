@@ -141,7 +141,12 @@ test('for any placement, the shares sum to 1 and follow each policy’s rule', (
         }
         counts.forEach((_, j) => {
           const eps = endpointsOn(counts, policy, j);
-          assert.ok(policy === 'cluster' ? eps.length === total : eps.every((e) => e.node === j));
+          // Enumerate IDs from the placement input, not podsOf/endpointsOn.
+          let next = 0;
+          const expected = counts.flatMap((count, node) =>
+            Array.from({ length: count }, () => ({ id: String.fromCharCode(97 + next++), node })),
+          ).filter((pod) => policy === 'cluster' || pod.node === j);
+          assert.deepEqual(eps, expected, `${policy} endpoints on node ${j}: ${counts}`);
         });
       }
       // Under Cluster a request leaves its node unless the pick runs there: 1 − 1/nodes overall.

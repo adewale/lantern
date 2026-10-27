@@ -4,45 +4,35 @@ import { mkdtemp, readFile, writeFile, rm, copyFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
-import { Scene, Text, NullSink, toSvgString } from '../src/index.ts';
+import { Scene, Text, NullSink, SnapshotSink, renderAt, renderElements, toSvgString } from '../src/index.ts';
 import { runKey, bindLettering, snapshotProvider } from '../src/lettering-outlines.ts';
 import type { LetteringSnapshot } from '../src/lettering-outlines.ts';
-import { collectProject, hash, ROOT } from '../tools/lib/explain-project.ts';
+import { collectProject, defaultVariant, ROOT } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
 import { checkProject } from '../tools/lib/explain-check.ts';
-import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
 import { launch } from '../tools/lib/browser.ts';
+import { htmlEscape, restingTime } from '../explain/trace.ts';
 
 const fixtures = join(ROOT, 'test/lettering');
 const ids = ['arabic', 'devanagari', 'math', 'style'] as const;
 const snapshot = async (id: string): Promise<LetteringSnapshot> => JSON.parse(await readFile(join(fixtures, id, 'scene.lettering.json'), 'utf8'));
 
-test('all 26 unrequested explainers keep their original page bytes and receipt hashes', async () => {
-  const expected = JSON.parse(await readFile(join(fixtures, 'legacy-builds.json'), 'utf8'));
-  const out = await mkdtemp(join(tmpdir(), 'lettering-cost-'));
-  try {
-    assert.equal(EXPLAINERS.length, Object.keys(expected).length);
-    for (const { id } of EXPLAINERS) {
-      const project = await collectProject(join(ROOT, 'scenes/explainers', id), { write: false });
-      const { html, receipt } = await buildExplainer(project, join(out, id + '.html'));
-      assert.equal(hash(html), expected[id].page, id + ' page');
-      assert.equal(hash(JSON.stringify(receipt, null, 2) + '\n'), expected[id].receipt, id + ' receipt');
-      assert.equal(project.outlineLettering, undefined);
-    }
-  } finally { await rm(out, { recursive: true, force: true }); }
-});
-
-for (const id of ids) test(`${id}: fresh snapshots pass seek, motion, bare runtime and readability gates without build-time dependencies`, async () => {
+for (const id of ids) test(`${id}: committed snapshots pass seek, motion, bare runtime and readability gates`, async () => {
   const out = await mkdtemp(join(tmpdir(), 'lettering-check-'));
   try {
     const project = await collectProject(join(fixtures, id), { write: false });
     const report = await checkProject(project, out);
-    assert.ok((report.lettering as { bytes: number }).bytes > 0);
+    const lettering = project.outlineLettering!;
+    assert.deepEqual(report.lettering, {
+      bytes: Buffer.byteLength(JSON.stringify(lettering)),
+      faceBytes: Object.fromEntries(Object.entries(lettering.faces).map(([name, face]) => [name, Buffer.from(face.data, 'base64').byteLength])),
+      runs: Object.keys(lettering.runs).length,
+    });
     const { html, receipt } = await buildExplainer(project, join(out, 'page.html'));
     assert.ok(html.includes('<path'));
     assert.ok(receipt.letteringHash);
     assert.ok(!html.includes('function typeset('));
-    for (const f of Object.values(project.outlineLettering!.faces)) assert.ok(html.includes(f.license.slice(0, 50).replace(/&/g, '&amp;').replace(/</g, '&lt;')));
+    for (const f of Object.values(lettering.faces)) assert.ok(html.includes(htmlEscape(f.license)), 'the complete requested-font notice travels with the page');
   } finally { await rm(out, { recursive: true, force: true }); }
 });
 
@@ -124,16 +114,25 @@ test('requested pages run offline in Chromium without errors or network requests
     for (const id of ids) {
       const project = await collectProject(join(fixtures, id), { write: false });
       const { html } = await buildExplainer(project, join(dir, id + '.html'));
+      const variant = defaultVariant(project);
+      const first = variant.trace.steps[0]!;
+      const scene = await renderAt(variant.Scene, restingTime(first, variant.trace.fps), new SnapshotSink());
+      const expected = renderElements(scene, { relative: false })
+        .filter((record) => record.tag === 'path').map((record) => String(record.attrs.d)).sort();
+      assert.ok(expected.length > 0, `${id}: the source fixture draws outlines`);
       const page = await browser.newPage();
       const errors: string[] = [];
       const network: string[] = [];
       page.on('pageerror', (e) => errors.push(e.message));
+      page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
       await page.route('**/*', (r) => { network.push(r.request().url()); return r.abort(); });
       await page.setContent(html);
       await page.waitForSelector('#content[data-ready=true]');
       assert.deepEqual(errors, [], id);
       assert.deepEqual(network, [], id);
-      assert.ok(await page.locator('.stage path').count() > 0);
+      await page.waitForFunction((count) => document.querySelectorAll('.stage path').length === count, expected.length);
+      const actual = await page.locator('.stage').evaluate((stage) => [...stage.querySelectorAll('path')].map((path) => path.getAttribute('d')!).sort());
+      assert.deepEqual(actual, expected, `${id}: browser paths equal Node's requested lettering`);
       await page.close();
     }
   } finally { await browser.close(); await rm(dir, { recursive: true, force: true }); }

@@ -97,13 +97,24 @@ test('a sync rebuilds from the state, morphs by glyph, and keeps the View, its p
 });
 
 test('sync() inside a Succession builds from the state at its turn, not at construction', async () => {
-  const s = new Ring(new StringSink());
-  const seen: string[] = [];
-  const orig = ViewSync.prototype.begin;
-  ViewSync.prototype.begin = function (this: ViewSync) { orig.call(this); seen.push((this.next as Text | null)?.text ?? '(same)'); };
-  try { await s.run(); } finally { ViewSync.prototype.begin = orig; }
-  // The two syncs of the 'turns' step: len 11 set after construction, then the Mutate's state
-  assert.deepEqual(seen.slice(-2), ['len 11  head 1', 'len 9  head 2']);
+  const seen: number[] = [];
+  class Lazy extends Scene {
+    override async construct() {
+      this.state = { n: 0 };
+      const v = view(this, (state) => {
+        seen.push(state.n as number);
+        return new Text(String(state.n));
+      });
+      this.add(v);
+      const seq = new Succession([v.sync(), new Mutate(() => { this.state.n = 2; }), v.sync()]);
+      assert.deepEqual(seen, [0], 'creating syncs does not build their targets');
+      this.state.n = 1;
+      await this.play(seq);
+      assert.equal(v.current.text, '2');
+    }
+  }
+  await new Lazy(new StringSink()).run();
+  assert.deepEqual(seen, [0, 1, 2]);
 });
 
 test('no updaters: seeking skips the frames of plays with syncs, and renders the frame a full run renders', async () => {

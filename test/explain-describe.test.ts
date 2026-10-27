@@ -23,6 +23,10 @@ test('describeExplainer gives every case and step: the words, the state the trac
       const { picture, ...state } = t.after ?? {};
       assert.deepEqual(s.state, state, `${s.step}: state is the trace's, without the picture`);
       assert.ok(picture === undefined || s.picture.length > 0, `${s.step}: the picture in words`);
+      const before = Object.fromEntries(Object.entries(t.before).filter(([key]) => key !== 'picture'));
+      const changedKeys = [...new Set([...Object.keys(before), ...Object.keys(state)])]
+        .filter((key) => JSON.stringify(before[key]) !== JSON.stringify(state[key]));
+      assert.deepEqual(Object.keys(s.changed).sort(), changedKeys.sort(), `${s.step}: complete changed-key set`);
       for (const [k, change] of Object.entries(s.changed)) {
         // A side is there exactly when the value was set, so the JSON says the same as the object.
         assert.equal('before' in change, k in t.before);
@@ -55,5 +59,5 @@ test('a scene with diagrams describes from its pinned snapshots, case by case, a
   // Same answer as binding the snapshots by hand.
   const trace = await traceScene(withSettings(bindSnapshots(OauthPkce as ExplainerClass, snapshots), d.cases[0]!.values));
   assert.deepEqual(d.cases[0]!.steps.map((s) => s.step), trace.steps.map((s) => s.step));
-  await assert.rejects(describeExplainer(OauthPkce as ExplainerClass, { drawings: false }));
+  await assert.rejects(describeExplainer(OauthPkce as ExplainerClass, { drawings: false }), /^Error: No diagram snapshots are bound to this scene:/);
 });

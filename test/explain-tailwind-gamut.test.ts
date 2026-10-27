@@ -175,11 +175,11 @@ test('sRGB lies inside Display P3, and each edge is the boundary of its gamut', 
 });
 test('CSS gamut mapping returns a colour inside the gamut, never adds chroma, and leaves a colour inside unchanged', () => {
   fc.assert(
-    fc.property(colour, fc.double({ min: 0, max: 0.4, noNaN: true }), ({ L, h }, C) => {
-      const m = cssMap(L, C, h, 'srgb');
-      assert.ok(linearRgb(m.L, m.C, m.h, 'srgb').every((v) => v >= -1e-9 && v <= 1 + 1e-9), JSON.stringify({ L, C, h, m }));
+    fc.property(colour, fc.double({ min: 0, max: 0.4, noNaN: true }), fc.constantFrom('srgb' as const, 'p3' as const), ({ L, h }, C, space) => {
+      const m = cssMap(L, C, h, space);
+      assert.ok(linearRgb(m.L, m.C, m.h, space).every((v) => v >= -1e-9 && v <= 1 + 1e-9), JSON.stringify({ L, C, h, m }));
       assert.ok(m.C <= C + 1e-9);
-      if (inside(L, C, h, 'srgb')) assert.deepEqual(m, { L, C, h });
+      if (inside(L, C, h, space)) assert.deepEqual(m, { L, C, h });
     }),
     params(300),
   );

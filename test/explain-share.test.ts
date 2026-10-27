@@ -102,7 +102,11 @@ test('an exported explainer page keeps its page and adds the cover step\'s previ
 });
 
 test('checkCards finds a missing tag on either page, a page with no share marker, a non-https or off-site URL, and a missing or mis-sized picture', async () => {
-  for (const key of CARD_TAGS) {
+  // This protocol inventory is independent of the implementation's CARD_TAGS.
+  const required = ['og:type', 'og:title', 'og:description', 'og:url', 'og:image', 'og:image:width', 'og:image:height', 'og:image:alt',
+    'twitter:card', 'twitter:title', 'twitter:description', 'twitter:image', 'twitter:image:alt'];
+  assert.deepEqual([...CARD_TAGS], required);
+  for (const key of required) {
     const drop = (html: string) => html.replace(new RegExp(`<meta (?:property|name)="${key}" content="[^"]*">`), '');
     for (const [where, edit] of [['token-bucket/burst.html', { share: drop }], ['token-bucket.html', { page: drop }]] as const) {
       const problems = await exported(edit);
@@ -120,7 +124,10 @@ test('checkCards finds a missing tag on either page, a page with no share marker
     'token-bucket.html: https://example.org/projects/rayner/token-bucket/burst.png is missing',
     'token-bucket/burst.html: https://example.org/projects/rayner/token-bucket/burst.png is missing',
   ]);
-  assert.ok((await exported({ picture: png(960, 540) })).every((p) => p.includes('is 960 × 540, not the declared 1080 × 540')));
+  assert.deepEqual(await exported({ picture: png(960, 540) }), [
+    'token-bucket.html: https://example.org/projects/rayner/token-bucket/burst.png is 960 × 540, not the declared 1080 × 540',
+    'token-bucket/burst.html: https://example.org/projects/rayner/token-bucket/burst.png is 960 × 540, not the declared 1080 × 540',
+  ]);
 });
 
 test('a preview picture is the 16:9 still on a 2:1 canvas of the stage\'s paper colour', async () => {
