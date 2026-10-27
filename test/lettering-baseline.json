@@ -1,158 +1,164 @@
 {
   "seasons": {
-    "html": "9f969ea70d321af8ffa15bf6a6a1208d886385db85ffccb9f5dab8a62e3b0bf3",
-    "bytes": 578978,
-    "headers": "6410ee7946f8556f85e406f68fc1d95d57a866ffa2833f00fd777eb1a8988b18",
-    "receipt": "f59f6184cf0127deed46d7586e3338f973acf480301f9748f03b0dfea43ac245"
+    "html": "494e9198200d85c948f2e4d092758ed40baf5df621c326b2e2fce5d50113fa8c",
+    "bytes": 628311,
+    "headers": "dfaeed68d7849849ccf9ef6155c99c05f083c5ee43ac7a6bb1dc0a495a105ec9",
+    "receipt": "c5887990097a1df728a3a1c6b2edd6433f21cb8f91470f6aeb21b298e2b562c9"
   },
   "oauth-pkce": {
-    "html": "f2dcaf9371cd6e5ea2a01cfbdfb0abc150ba42e5fdafa933145c62a0d71f7c2b",
-    "bytes": 762269,
-    "headers": "80878b330da1437911088d7a7630880b469372c7aaa27c0fe5c96df003398fba",
-    "receipt": "68582818dc535fd37cef7235d2769d205c2d0969bd940e50f676afc5f0f6b114"
+    "html": "4361474951e3a8f100a1ea8efef4ac8e64c4cec1bfec7a91362866630bf7cfff",
+    "bytes": 806726,
+    "headers": "08de9761fb0f74ebf1c80879a56998eac6d37ec3a93ecf702a9780b803ae6207",
+    "receipt": "e01cea49bd388c05c1c3756ae577df8f4c45f09d687c2a85a3600f82392be9c2"
   },
   "exgit": {
-    "html": "5dc5aa5d16f93d4af53c0946a7d4fdd1920e3b1710ef18f6ee4a2bcfafe2918d",
-    "bytes": 735681,
-    "headers": "8694b6dfc914538d64537e8dead2b1e2078b0024172ef8ecf090c8ad7e12f628",
-    "receipt": "c554205e4270c97a236dd32d44d0e5b08be7f13fc80a3adc17b53cdf23e9b59f"
+    "html": "43317839c17d2ef920398f8da33094b58eeba715ea77604c507064c43e5391fa",
+    "bytes": 783931,
+    "headers": "5acf8bf1d8086955386da9125be50ff0bd314dc6895e2dba4b98a9f909b86464",
+    "receipt": "b23fde82c936b99b58bc1e5a34f11933b0c575ee496c7a4183a69c8b2aab7d95"
   },
   "token-bucket": {
-    "html": "8fe0bf46f9d349da70ddc8e7cf6d7ca6a189f6934e6c308420010ff5b1edb753",
-    "bytes": 724832,
-    "headers": "5fa9bfbd21d84b58d8885fa1013cc7fc3f3c6763d137ad9cb59eb65531e573e6",
-    "receipt": "b59e2c9022439c926d5e0f00edcf816513bf8c8a4226fa34beb6bd508a868efa"
+    "html": "33bc777f8814d57c90278513705460429fadf81fae9e75775b734aff99f10e0d",
+    "bytes": 765750,
+    "headers": "4767acc1c749fe91d03b60ec11efaa7df046b8fc2f33e479c2485b3723af3eed",
+    "receipt": "398625ae1a409f5e96fa1ff81f9c7e2ca5ff463ca655b516d9ed4809b351652f"
   },
   "mr-cache": {
-    "html": "9c8e2f1cf5d797a05c59fa27f5e042e2bc30a1a0d1a3187c207c477e702aa196",
-    "bytes": 649304,
-    "headers": "0e908b89d08a85ee4f20c7b04a0c31f52f702639a16014377aaea5dd78a4f65f",
-    "receipt": "a61eeed8a40b8d599e3a58eedfcc983dd8c9fca27d9957f9a3a26b2fad4e4bcf"
+    "html": "27b7b3dc1d1cd4c8dda8249981311c981267ba9ce366a1e00921f51276adcdf3",
+    "bytes": 685797,
+    "headers": "a9399bcc090355c59318da2a37da86cfba2c01e8947964dee5c95b1b68b2d7d2",
+    "receipt": "38e0e5b7121ebaee9a3b5574a93c8a18a13aa359b34897cb3193356c117bad1b"
   },
   "state-machine": {
-    "html": "9d66fcc8d8f8cb21435e33919c32a4e1bad047445b7db052ad091a90a861e218",
-    "bytes": 759432,
-    "headers": "dbb9c06d1d30c00a46d5c21817696a8d10b74ec8d5a29d994eb78e8b86f4c0ee",
-    "receipt": "7eae1a66eede6892722190316220da0d7c83c3122503c0a78e584fdb1b1bb6f7"
+    "html": "f3996ceb945c22dc7e3910c83c0baf8e76689e24a1263051357ea8cdff7ae10b",
+    "bytes": 801135,
+    "headers": "ab2cfc16c2be0ce1530d86cb77243695dde65032f763c5fe71e925ea1c2f02b2",
+    "receipt": "11ae38102705b29bce507c5630d8a00259be860fa5d4d1b538a8eeed17498bcb"
   },
   "ring-buffer": {
-    "html": "13377690e4e0067ef91cc55b12a4ed5208065aa5c25d2e4b0a0af2f4a434bbe3",
-    "bytes": 684912,
-    "headers": "7695e6c772e229a9c320d09afcb153534b8817dc8b967c0effa57bdb505105cc",
-    "receipt": "c31d825c1a8bd4d6a432292c708fa952e2d2385de45ce75654d9344438ee6cee"
+    "html": "3e81548c15969dde83aa86dbaded951d99c93839958fd2f1b3b79a2d7c399330",
+    "bytes": 733131,
+    "headers": "42763eabd93ee39bf0d790796d8b29b5bb7ff49ab11da64a0398e63b7f004631",
+    "receipt": "d4a8aa5e9e5c495df4851f11a52d615cac17164592b693ae50367ab41f55a25c"
   },
   "2password": {
-    "html": "ebbf6a82b89ef934e962ec9d53b31f74d589ddbd9f6069ee8dd4ffe72c14fd13",
-    "bytes": 708036,
-    "headers": "c346c8dbd21ff8832c4917b962ff161eaa7459bf28dcde90b762189eafe1ea4e",
-    "receipt": "ed5bde1696c14011d044cf878fc21cac06341fbdbcc04d002a97a43241997a20"
+    "html": "c4a3669fffdda6bd6dbf96438c43c510ce4897d0b8f343d9c2bd152529c872ed",
+    "bytes": 751935,
+    "headers": "22de76af95fe9a67f685fae6b52f787b68c56fcaaf437445da817ca4d0e1ffbb",
+    "receipt": "bc3a612ce8d50847928c495d0b6b8abb92f28a9996d81e861ade634185d8fa72"
   },
   "just-bash": {
-    "html": "8a46266e045851bf27721177809a3f934f7b7933b9d79af2272f1b1bd751faf6",
-    "bytes": 699210,
-    "headers": "b95a331e9ddf1775072c1423809e90d68594acb4c1c5793aa648f4a2a0dae3b8",
-    "receipt": "8c779db9aa5d8de9f237f82b54e0c39854d8caf6d1b6f9eaafde6bc445c000c0"
+    "html": "90685ad817eed6f74c16ecd2b4ee981007164435d773093885c24a77c276039f",
+    "bytes": 751706,
+    "headers": "0d3c4a2ea8d2a5a985d4fda731fed46fb8fe3cba81749a7a8567a640ccf9347e",
+    "receipt": "d225b21553bf9fcae7292fe57605840e83c183242edd99f1ff690cb87debbec0"
   },
   "cert-renewal": {
-    "html": "1d194b71f6b295c235ad774b35527db4a57870d9492fb3422795c62b3df18c3e",
-    "bytes": 1322952,
-    "headers": "37c1fb1f8d853aa0ae926c727454b027e3d6a53365cb7ea23fc9f02df45009b7",
-    "receipt": "6bc2e7c531a2105e3dcf8257c6060cd291abf4c64f9e0b3b96e4d66ba65e002f"
+    "html": "8f5ec785edc993a8cb02c5251566930d366ac63b9c0b672abb7ca84b68ab59da",
+    "bytes": 1376273,
+    "headers": "a1ec6d152417600f31fe02a8a0f19f4437678589e5b508be2a23e16c6cd7ffad",
+    "receipt": "59e7cdf6f26c114b36dc2edbd779fe7d878f538a0a69f6745065becd63cf78df"
   },
   "quotient-familial": {
-    "html": "7560d20dac6db3c015d5d5bf54cc8d2a09bff48333e8cb1906dc31b53dd5b7cc",
-    "bytes": 1301355,
-    "headers": "6b6580cd8d67df10d77e444e330cec35e6b00595a3ddc16bed5a011e543c4c59",
-    "receipt": "01f6f5a6713e28f30c41c2eda44f7c264b504a9573830eb571b86765a33f411a"
+    "html": "8cce43ec375788fe880953ba72a4e432d1d2cad35b1445fd3c4a771747ff981e",
+    "bytes": 1360062,
+    "headers": "c2d5acc9a25b01bd0fdc2dd43bd2cb26da7301921ce1e0394ca5b7f4c7b8c851",
+    "receipt": "1641a81897d036f8c1e8eee48a83eca3dfde672e052be70515c65e49043abf33"
   },
   "send-sync": {
-    "html": "d1120143869d6ac6b8ceb680e02d1c10ac924eede64b1d46c8e84b9b4efdb45b",
-    "bytes": 1006813,
-    "headers": "dd8a572c455be68bf76600341fea2d4d4edbd39c4a5e598ca3ece78732bd56f2",
-    "receipt": "c239ab3ca71619344fc187b53ef609b135540f12bb7f116030f6cefa53f0cb3d"
+    "html": "969c9fb62993ab91e2801c161542331344ab0d93cdd80dfa76be3ac901be6b96",
+    "bytes": 1064626,
+    "headers": "fe2492f1037c035ea3b2fa87be1fefd19871988fe19b07423f43b8d2c19a9a9d",
+    "receipt": "e1d2e4840845d3ffb1f95c1bd57012d9f22abc333b81ec61f96d4a9e96d31344"
   },
   "gtfs": {
-    "html": "a59c9a36d889048d3506ff75636fbde855279e47a042ee4b19729a8a9ea79398",
-    "bytes": 868457,
-    "headers": "b96390c3bbf564368fedcd7cd21e093f9ddb30c918c67a5b84150fe8b5f3e642",
-    "receipt": "7c01b1033f95d0c9b8e46727b9054e5954f5fd82cc44269b6568ffd14589f4c2"
+    "html": "372cb489847bc2fb5b84bbaa33b00602d5fad5a28c4f45bfb5b0584e60daf7ba",
+    "bytes": 912604,
+    "headers": "c659f17352b0afa8dfb58b4b80d5977dbf542e359ced9d46427fc36d0b50a5e5",
+    "receipt": "4b5a2fb8c17890d73803d721eb0211c2c85dd5cd9cbe572855d1c1e6090ba6d7"
   },
   "pg-page": {
-    "html": "836a8675737eb8c8f83209042f559542e866c2cf0523291af237a91c2effd957",
-    "bytes": 830579,
-    "headers": "4e090a93c053e032ccaa54502d5991b8d69746d642f36089fab36e0422e229cb",
-    "receipt": "17c1454a145d9332dd75882d0120a0c8900d7dbf17a0524bf3babc8b41ae3105"
+    "html": "27ce79a50ab4972a970b0d6affe014714f07ee4274a1850946e105c1f2e4e388",
+    "bytes": 888688,
+    "headers": "4a7818c8523c957580ccbec16dbf5912311f33a68c4c431b939dd950c6e910e2",
+    "receipt": "322a46e47c0016913389ce29f97196390b41dbcc4fd202ea16cae9c182e60456"
   },
   "traffic-policy": {
-    "html": "6e7d40534747a609dd717748fa918bf3860b0ac2fba9da44c153ec5b86988a38",
-    "bytes": 1026455,
-    "headers": "159df0f534a92aace2213553b85779d7f6b693361316eb1675178f6b366cbe55",
-    "receipt": "f8215b18b9294e01df75c43ad4c59edf57c467cd40181dcb4af0f7921616bec5"
+    "html": "343b85cbb93f9547d9f7f234efb32094eecdf754fb23558d697304176cd270d8",
+    "bytes": 1079903,
+    "headers": "b0585fa4d02705d1abbcfe665fcba28c53dd34454c66157f05a9beaae35136bf",
+    "receipt": "ff81c45ef6e4e593551e77e9701d648e385feeff66b6a9c4c1d9ea6ffdb1a24e"
   },
   "isdigit": {
-    "html": "721ddc065a1e1d91cb8b3c11c2cc49a0e4a5ea49f5f1dd753a9aa350e7f00521",
-    "bytes": 652013,
-    "headers": "a62058cbfc841083a85f1b3b14b5c3621f93548664e127ed011d379c91244ad3",
-    "receipt": "7de050515e7236358e8ab7e4e09347b35f283159ff91536548efd470c693ceee"
+    "html": "a48749e20c8fee0d93dded559c07e837f0f982284a89155cb727c0906c4f3e85",
+    "bytes": 707962,
+    "headers": "b78dbdadb643b9fc42bed01ea53244a1969d104fa7f0d3e3dcc87c4ed397a239",
+    "receipt": "c9d33f06d7b89a5aaf751c3060fb0e1df0e16552acf9f00269cc0d8e9dc5e834"
   },
   "ical-recurrence": {
-    "html": "b887ec043dc62f89d48a9f4fdfe1136fbd082390295b7b529305b92d43498817",
-    "bytes": 816769,
-    "headers": "2e3bd53b11ed497fb2fde2999bbf692a2fec52439c534abfd35020ca98b0eabf",
-    "receipt": "231a8474bc5662ce92044389115f9a186b550550100ea705b1c038d9014d1c2b"
+    "html": "7fc25617311df8564fab466476db599f9d6c2febac2fb9d0250347238bf56bb5",
+    "bytes": 864886,
+    "headers": "7985b7a2670ddf9fbbc9a14835dd81b5331077049c21801b4b13b8c1be864499",
+    "receipt": "e7e030f1d624413317caa0e4e6e3910422a294fbbab58fb5683bdad3f873f8fd"
   },
   "ext4-space": {
-    "html": "304f310067e9c2a07e42290373b72f4104288a332e54c89c8ea72ea0771f365d",
-    "bytes": 900173,
-    "headers": "9470ce0a9565e2f6c5f9b4fdc607237c384516b82d2bbda0171d947fff5d5597",
-    "receipt": "37791c11326ab8b5a7e39c3d8d442123ff87ca79452ebbc9d4c26e5e1c9cca2c"
+    "html": "4bca9ed9069aaf9e3a00438cb25e3a4da4add71b57b5ad0baa2b0ef7fa0de2dd",
+    "bytes": 953645,
+    "headers": "caa304c7efa7783eecbe4d6f9c1bc8a5da4de5918f84af456b90a861c2d75c05",
+    "receipt": "0f2c7c505cfbd0c62fb2482902bb301cd3b3f912fd70531ea313136527aca2fd"
   },
   "trust-proxy": {
-    "html": "e56a8cd68566d458b4d48b6a02ca0b316e187ce896e2e79fca85ba34b1b5f40c",
-    "bytes": 915225,
-    "headers": "90ee9b376606ec91c34bb4857c1ae38a63c22b1beefdea6a7a93bf413075ae7d",
-    "receipt": "72b97216f6bd3881ea69a074484ca5cddaa9f8609330a0b8a285556314869d90"
+    "html": "60a10ac9eb380d73424e680b68e2dcbcc45450b21424c6e49602aae82358eb3a",
+    "bytes": 973484,
+    "headers": "5b81231a23849ac0209243bb6145dc06d3285eb25683f3722c3fc2f1ffbab126",
+    "receipt": "164667e801e5af6fc756997e81750c17eaed673165874b006ceb92c43e40b348"
   },
   "tailwind-gamut": {
-    "html": "684a09b6c047da8075323d8aa15dfa38709712df892258fa8a6e866d292079ae",
-    "bytes": 2603386,
-    "headers": "3d5f1559e1f3cf474e0f8ad759e6713249d56f817f318d9b8ccbddba0a99c6e2",
-    "receipt": "6171f85cee9870299f5ac488665837eca4fe041922b22e01847a4d4bfcdaf958"
+    "html": "9b22ef23ca37aad6c478812119e716076ba32b9070392994e627d7b39503f26a",
+    "bytes": 2653278,
+    "headers": "eb3156963eb0b440229be60bbc7979586efca7fd710888abb40918e7df884987",
+    "receipt": "52e324e6befa89abaa7a4e86d8c9b7e130428de67abaceef98fa8911520d8f17"
   },
   "gnome-files": {
-    "html": "6380209ea84f2b31ec268e65730894329ac6e5b98f2f74f43064a159fd3dc64c",
-    "bytes": 1330606,
-    "headers": "588693ee4f50334ded86be1022e038b489096221bd86b27546d574c553be4344",
-    "receipt": "576dc3c0c831ad76c26df1ecb4fa5f1621de89e11aa85364254d6a27655c76fb"
+    "html": "347ae8374e075d04361b71c7d1102a336d119b0f474d0c56cd6044aacb4c0fae",
+    "bytes": 1379558,
+    "headers": "6f1bc0179656315e407ce7a56c53bda53628af03f0dc1eae2a227aba6d2f25d6",
+    "receipt": "6f4a0d6a3bae9e007df37216e4f33c61b1bc43111d8b5090ee8e65a67f5cf3e1"
   },
   "wcag-map": {
-    "html": "64071c22427bfa71bbd750f0b485c9721bab85ebe833df96a65c02f1c143c360",
-    "bytes": 1479181,
-    "headers": "143305604409d6cc7c74bd13907809a3d0e7bbcbb582af06eabbbf2744159f16",
-    "receipt": "9e6e3488d02f2d298222ea6849f2ec6928e2baa8233d9e28a3c66b5d5850d673"
+    "html": "ba5cb2e1bc6aa326fb8a46b3584d7966b833bc6fc91c93e01859120b48f700af",
+    "bytes": 1524976,
+    "headers": "6c3e240bd003a0e7c2545a4391e19e22833b13e7647d279a97736b7472f217bb",
+    "receipt": "ccf4a359d7b5ec259e34cf971f01b49ffd18029d4a8d12cf526ec07ad7adf3f2"
   },
   "lantern": {
-    "html": "a7eb45e93d4aad745c390c4423e4e3b4efe4eaf506a4781f6829a6bdb6f8ba80",
-    "bytes": 796490,
-    "headers": "c1d9e8bd31a93e7e8beda8ba241ccd3578c82c7a69894e7774bd6e8c869878ca",
-    "receipt": "6577a3b39ef0ba71549af6eb6322c58383c6ad4fc6cce20b43a0eaf6e62fbe10"
+    "html": "926f9a3e69fde7f5d999fc27b8e943decc786e3b9d0a4b7ab473ba7725f11416",
+    "bytes": 841599,
+    "headers": "3eaded23ff79e8c878bbc89adcf623149399fe12702b3ede32f45ef0769b6f0f",
+    "receipt": "1db1682971db7bb331698a56b929803e28e73de512f4b2e1ade2955df2cd16e2"
   },
   "fork": {
-    "html": "c7008b4973f056abdba1ead3c54376879419718a384992687317b696b2d7d65d",
-    "bytes": 743434,
-    "headers": "8346b94e8e5d3feacd30fff95bc0214b551c4b80a546876b5821f0e45b27a51f",
-    "receipt": "60242bb87025e2861f5609b4cd829701c016d696a99bc3fc05738d56afd27e1c"
+    "html": "9c790e76f266e623d63975af182da8b931caff4e7fc292d45515432912f1723a",
+    "bytes": 787722,
+    "headers": "be3a72c3a3653fe668af4af475784031b77b1ec7c5e1e893a33b165cec41f096",
+    "receipt": "3fc08c0160b11e6252690dffc7da7cdb0464b5411326c04210fa9da16b83e94d"
   },
   "agentic-mermaid": {
-    "html": "2d2704d77f5232ecbac7397c83eeda0467354389be1424fbaad69e0894ce565c",
-    "bytes": 762406,
-    "headers": "59e72ddf282058a8a00f0a0ab207d669d7ec7cb204d55134e9bf35ce59406d42",
-    "receipt": "e3ff6367274e480d93a8ea1fcdabcf1cc3fef138df3274108861eaf1e2a750bd"
+    "html": "f6913f8c72da30968e4e51c7f45bd67097c00acca2f529d61ea96626b2ca3c91",
+    "bytes": 801218,
+    "headers": "bd8040147d271d87295c719923371062d624a1f46868d57ea607633b02159990",
+    "receipt": "4b1a140e42d121b1dbcdd4d36bf763be66e173212c7029eaa5a4a37980e13cc0"
   },
   "glyph": {
-    "html": "da4c8cb65c56b226b97296120aa56326e79f8177d8a15d0d9c2c5af84b285d18",
-    "bytes": 675518,
-    "headers": "37c628974b0d2414e30146667e707696441b749bf392e8af2d9a520820f56563",
-    "receipt": "01096d7ece3a3040f06ebaaefc46e1d8ed91d02102a625a7e73bc4b3d1d6edbe"
+    "html": "832cc1a19ee44267aa444e800ce634c310f9097414584d3ad3eb2843bab934b7",
+    "bytes": 727306,
+    "headers": "baa7f6ecf41882f963c0452a38bc2096d23797d91bf5b81c8c65cfc72e33c028",
+    "receipt": "52361ea31d0416d7153c84caadee870bd1cecd7cc851200647937881b9da1fa1"
+  },
+  "pen-and-pencil": {
+    "html": "a86aab4a93d4d177fc8a9e79dc27d3409a927a25991a084b6b650c49e02b1a51",
+    "bytes": 739585,
+    "headers": "4b88da6a6e8769565dc198beca2d1c8612398fa41aea9dbc1c4010b1f44c2c27",
+    "receipt": "7ab649fdf25f9130ee29093894add13d2bcbad9e12b214d92799ef6a98060bcd"
   }
 }
