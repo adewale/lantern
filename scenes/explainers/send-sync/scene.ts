@@ -138,6 +138,12 @@ export default class SendSyncExplainer extends Scene {
       return card;
     };
 
+    /** A point's two answers, said on the point, with the column's words beside the chart. */
+    const tell = async (chartOf: Diagram, point: string, send: boolean, sync: boolean, words: readonly string[]) => {
+      await chartOf.note(`point:${point}:label`, `Send: ${yesNo(send)}, Sync: ${yesNo(sync)}`, { side: 'below', size: SIZE });
+      await s.enter(...lines(words, RIGHT[3]));
+    };
+
     // ------------------------------------------------------------------ the two questions
     await this.step('questions', {
       title: 'Send and Sync are two separate questions',
@@ -210,13 +216,7 @@ export default class SendSyncExplainer extends Scene {
       await s.clearOverlays();
       await d.reveal([`point:${p.name}`, `point:${p.name}:label`]);
       await d.focus([`plate:${p.q}`], { zoom: ZOOM });
-      await column(
-        [
-          ['Send', yesNo(p.send)],
-          ['Sync', yesNo(p.sync)],
-        ],
-        [meta.source, ...(p.name === 'i32' ? ['Only the quadrant counts: a point’s place inside it means nothing.'] : [])],
-      );
+      await tell(d, p.name, p.send, p.sync, [meta.source, ...(p.name === 'i32' ? ['Only the quadrant counts: a point’s place inside it means nothing.'] : [])]);
       this.state.shown = p.name;
     }
 
@@ -290,13 +290,7 @@ export default class SendSyncExplainer extends Scene {
         await q.morph({ source: chart(points) }, { ops: [{ kind: 'move_point', label: to, x, y }] });
       }
       await q.focus([`plate:${now.quadrant}`], { zoom: ZOOM });
-      await column(
-        [
-          ['Send', yesNo(now.send)],
-          ['Sync', yesNo(now.sync)],
-        ],
-        [`${ctor} needs T: ${ctor === 'Arc' ? 'Send + Sync' : 'Send'}`, `T here: ${was.name}`],
-      );
+      await tell(q, to, now.send, now.sync, [`${ctor} needs T: ${ctor === 'Arc' ? 'Send + Sync' : 'Send'}`, `T here: ${was.name}`]);
       this.state.built = now;
     }
 

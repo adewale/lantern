@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { fc, params } from './lib/pbt.ts';
 import { Group, Rectangle, Scene, Text } from '../src/index.ts';
 import { stage } from '../explain/index.ts';
-import { cardRow, explainer, restingBox, wordsOutsideCards } from './lib/scenes.ts';
+import { explainer, labelsSaying, restingBox, wordsOutsideCards } from './lib/scenes.ts';
 import type { Box } from '../src/index.ts';
 import { clampZoom, ZOOM_MAX } from '../app/embed-zoom.ts';
 import {
@@ -362,7 +362,7 @@ test('a step records what it emphasised with the helpers, and only that step', a
 });
 
 // Issue #21: on a phone, PKCE's `authorize` caption says the verifier stays with the client
-// "as the card's last row shows", and the first step's caption describes deriving the
+// and is not sent, as the note under the request says, and the first step's caption describes deriving the
 // challenge from the verifier. Both are in a close-up the overview reaches in one press: the
 // card was the 7th of 7 close-ups, and the derivation the 4th of 6.
 test('PKCE on a phone: what each caption points at is in the first close-up or the next (issue #21)', async () => {
@@ -372,7 +372,7 @@ test('PKCE on a phone: what each caption points at is in the first close-up or t
   const [w, h] = [358, 201];
   const within = (b: Box, v: Box) => b[0] >= v[0] - 1e-6 && b[2] <= v[2] + 1e-6 && b[1] >= v[1] - 1e-6 && b[3] <= v[3] + 1e-6;
   const evidence: [string, Box][] = [
-    ['authorize', await restingBox(Scene, 'authorize', (scene) => cardRow(scene, 'code_verifier', 'not sent'))],
+    ['authorize', await restingBox(Scene, 'authorize', (scene) => labelsSaying(scene, 'verifier not sent'))],
     ['secret', await restingBox(Scene, 'secret', (scene) => wordsOutsideCards(scene, 'code_verifier', 'SHA-256'))],
   ];
   for (const [step, box] of evidence) {

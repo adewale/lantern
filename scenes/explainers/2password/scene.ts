@@ -1,4 +1,4 @@
-import { Scene, Text, Arrow, Group, Line, FadeIn, Create } from '../../../src/index.ts';
+import { Scene, Text, Arrow, Group, Line, FadeIn, FadeOut, Create } from '../../../src/index.ts';
 import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
 import {
   ITEMS,
@@ -140,18 +140,16 @@ export default class PasswordExplainer extends Scene {
           ' T-->>A: op:// references',
         ].join('\n'),
       },
-      { box: 'main' },
+      { box: 'full' },
     );
     await sequence.mark(['message:T->O#1']);
-    const ledger = await s.card(
-      [
-        ['op calls', found.opCalls.length],
-        ['Items fetched', found.fetched.length],
-        ['Approvals', PROMPTS_PER_COMMAND[auth]],
-      ],
-      { at: 'side', fontSize: 0.27 },
+    // What the two calls cost, said on op itself.
+    const approvals = PROMPTS_PER_COMMAND[auth];
+    await sequence.note(
+      'O',
+      `${found.opCalls.length} calls, ${approvals ? `${approvals} approval${approvals === 1 ? '' : 's'}` : 'no approval'}`,
+      { side: 'right' },
     );
-    await ledger.mark('Approvals');
     this.state.auth = auth;
 
     await this.step('reference', {
@@ -162,7 +160,7 @@ export default class PasswordExplainer extends Scene {
     });
     await s.clear();
     const ref = match.ref;
-    const refText = new Text(ref, { fontSize: 0.56, font: 'mono', color: s.palette.ink }).moveTo([0, 2.1]);
+    const refText = new Text(ref, { fontSize: 0.56, font: 'mono', color: s.palette.ink }).moveTo([0, 1.9]);
     const parts = ['vault', 'item', 'field'],
       segs = ref.slice(5).split('/'),
       per = refText.advance() / ref.length,
@@ -180,19 +178,19 @@ export default class PasswordExplainer extends Scene {
       );
       at += seg.length + 1;
     });
-    await s.enter(refText, { runTime: 0.5 });
+    // Each reference find printed, with the query it answers above it.
+    const answers = (text: string, under: Text) =>
+      new Text(text, { fontSize: 0.24, color: s.soft, anchor: 'start' }).moveTo([under.box()![0], under.box()![3] + 0.3], [-1, 0]);
+    const matchFor = answers(`match for “${hitQuery}”`, refText);
+    await s.enter(refText, matchFor, { runTime: 0.5 });
     await this.play(new Create(s.keep(anatomy), { lagRatio: 0 }));
+    const suggestionText = new Text(suggestion.ref, { fontSize: 0.44, font: 'mono', color: s.palette.ink }).moveTo([0, -0.9]),
+      suggestionFor = answers(`suggestion for “${missQuery}”`, suggestionText);
+    await s.enter(suggestionText, suggestionFor, { runTime: 0.5 });
     const values = ITEMS.flatMap((i) => i.fields.map((f) => f.value));
-    const printed = JSON.stringify(found);
-    const output = await s.card(
-      [
-        [`Match for ${hitQuery}`, match.ref],
-        [`Suggestion for ${missQuery}`, suggestion.ref],
-        ['Secret values printed', values.filter((v) => printed.includes(v)).length || 'none'],
-      ],
-      { at: [-6, -3.6, 6, 0.2], fontSize: 0.27 },
-    );
-    await output.mark('Secret values printed');
+    const printed = JSON.stringify(found),
+      leaked = values.filter((v) => printed.includes(v)).length;
+    const none = await s.note(`Secret values in find’s output: ${leaked || 'none'}`, { at: [0, -2.6], size: 0.28 });
 
     const launched = run(auth, { API_KEY: ref }, ['app']);
     await this.step('run', {
@@ -206,11 +204,14 @@ export default class PasswordExplainer extends Scene {
         ? 'run hands op the reference, and op puts the secret into the app’s environment. With a service-account token, 2password has op start env -u OP_SERVICE_ACCOUNT_TOKEN app, so the app gets the secret and not the token.'
         : 'run hands op the reference, and op puts the secret into the app’s environment. With desktop approval op holds no token, so it starts the app directly. The app inherits the environment 2password started with, shown here as PATH, plus the secret.',
     });
-    await s.clear();
+    // The match's reference is carried into the run command that hands it to op; the rest goes.
+    await this.play(...[anatomy, matchFor, suggestionText, suggestionFor, none].map((m) => new FadeOut(m, { runTime: 0.4 })));
     const command = await s.code(
       [`2password run --env "API_KEY=${ref}" -- app`, `→ ${launched.argv.join(' ')}`],
-      { at: regionBox('top', { bottom: 1.2 }), fontSize: 0.3 },
+      { at: regionBox('top', { bottom: 1.2 }), fontSize: 0.3, enter: false },
     );
+    await s.carry(refText, command.code.token(0, ref).box()!);
+    await this.play(new FadeIn(command, { runTime: 0.4 }), new FadeOut(refText, { runTime: 0.4 }));
     const before = await s.code(
       Object.entries(launched.opEnv).map(([k, v]) => (k === TOKEN ? '- ' : '  ') + `${k}=${v}`),
       { at: regionBox('full', { right: -0.75, top: 0.7 }), title: "op's environment", fontSize: 0.26, diff: true, enter: false },

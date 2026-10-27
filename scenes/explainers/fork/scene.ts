@@ -90,16 +90,11 @@ export default class ForkExplainer extends Scene {
     await s.clearOverlays();
     await flow.dim(null);
     await flow.mark(GONE, { color: s.bad, as: 'deleted' });
-    await s.card(
-      [
-        ['JSON doc', 'no replacement'],
-        ['Flowchart parser', 'Agentic Mermaid capture'],
-        ['Dev player', 'embed page'],
-        ['Worker', 'no replacement'],
-        ['Nine scenes', 'rebuilt as explainers'],
-      ],
-      { at: BELOW },
-    );
+    // What replaces each deleted part, said on the part.
+    await flow.note('Doc', 'no replacement', { side: 'left' });
+    await flow.note('Parser', 'replaced by Agentic Mermaid capture', { side: 'below' });
+    await flow.note('Player', 'replaced by the embed page', { side: 'above' });
+    await flow.note('Worker', 'no replacement', { side: 'right' });
 
     await this.step('fork', {
       title: 'The fork puts a build between the scene and the reader',
@@ -107,7 +102,6 @@ export default class ForkExplainer extends Scene {
       caption:
         'Agentic Mermaid draws each diagram in Chromium at build time, and the snapshot is stored beside the scene, so the page runs no diagram renderer. The same scene and clock then feed an embed page, a captioned video and rayner check.',
     });
-    await s.clearOverlays();
     await flow.morph({ source: FORK });
     await flow.walk(
       [
@@ -118,14 +112,8 @@ export default class ForkExplainer extends Scene {
       ],
       { trail: true },
     );
-    await s.card(
-      [
-        ['Diagram families', '15 in Agentic Mermaid 0.4.1'],
-        ['Diagram renderer in the page', 'none'],
-        ['Runtime dependencies', 'still none'],
-      ],
-      { at: BELOW },
-    );
+    await flow.note('Capture', '15 diagram families in 0.4.1', { side: 'below' });
+    await flow.note('Page', 'no diagram renderer, still no dependencies', { side: 'above' });
 
     await this.step('settings', {
       title: 'A reader setting is a case built ahead of time',
@@ -137,14 +125,8 @@ export default class ForkExplainer extends Scene {
     await flow.unmark();
     await flow.dim(['Settings', 'Scene', 'Clock', 'Page']);
     await flow.walk([['Settings', 'Scene']], { trail: true });
-    await s.code(SETTINGS, { at: regionBox(BELOW, { right: 2.2 }), fontSize: 0.24 });
-    await s.card(
-      [
-        ['Cases', '3, one per option'],
-        ['Each case', 'built, captured, checked'],
-      ],
-      { at: regionBox(BELOW, { left: 2.6 }) },
-    );
+    await s.code(SETTINGS, { at: BELOW, fontSize: 0.24 });
+    await flow.note('Settings', '3 cases, each built, captured and checked', { side: 'above' });
 
     // The video step reads the timing of the 'fork' step this scene has just played.
     const shown = this.steps.find((st) => st.name === 'fork')!;
@@ -212,14 +194,7 @@ export default class ForkExplainer extends Scene {
     await s.clearOverlays();
     await flow.dim(null);
     await flow.mark(['Capture'], { as: 'needs Chromium' });
-    await s.card(
-      [
-        ['Agent endpoints', 'gone'],
-        ['Diagram lettering', 'Inter in every style'],
-        ['New diagrams need', 'Chromium at build time'],
-        ['Engine changes upstream', 'none yet'],
-      ],
-      { at: BELOW },
-    );
+    await flow.note('Capture', 'Chromium at build time; Inter in every style', { side: 'below' });
+    await flow.note('Page', 'no agent endpoints', { side: 'above' });
   }
 }

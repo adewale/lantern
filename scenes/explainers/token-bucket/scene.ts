@@ -159,7 +159,8 @@ export default class TokenBucketExplainer extends Scene {
             `Dots mark what R1–${name(calls.length - 1)} found; ` +
             (refused.length ? `${list(refused)} ${refused.length > 1 ? 'are' : 'is'} under the one-token line and got 429` : 'none is under the one-token line') +
             (othersShown
-              ? `. Grey lines are the same requests at ${list(RATES.filter((r) => r !== rate).map(String))} tokens a second`
+              ? `. Grey lines are the same requests at ${list(RATES.filter((r) => r !== rate).map(String))} tokens a second; ` +
+                `each line's end names its 429s: ${RATES.map((r) => `${r} / s ${list(refusedAt(r)) || 'none'}`).join(', ')}`
               : '');
     };
     const chipsSay = () => {
@@ -413,25 +414,25 @@ export default class TokenBucketExplainer extends Scene {
       ]);
       return line(points, soft, 0.03)!.setStyle({ strokeOpacity: 0.7 }) as VMobject;
     });
+    // Each line's end names its rate and, under it, the requests it refused: the table the
+    // three runs make, said where each run ends.
     const ends = new Group(
       ...RATES.map((r) => {
         const last = runs.get(r)!.at(-1)!,
-          p = axes.c2p(last.at, last.after);
-        return new Text(`${r} / s`, {
-          fontSize: 0.2,
-          color: r === rate ? s.palette.accent : soft,
-          weight: r === rate ? 'bold' : 'normal',
-        }).moveTo([p[0] + 0.16, Math.max(p[1], Y0 + 0.16)], [-1, 0]);
+          p = axes.c2p(last.at, last.after),
+          color = r === rate ? s.palette.accent : soft,
+          weight = r === rate ? ('bold' as const) : ('normal' as const);
+        const rateLabel = new Text(`${r} / s`, { fontSize: 0.2, color, weight }),
+          refusedLabel = new Text(refusedAt(r).length ? `429: ${list(refusedAt(r))}` : 'no 429', { fontSize: 0.2, color, weight });
+        const at: [number, number] = [p[0] + 0.16, Math.max(p[1], Y0 + 0.42)];
+        rateLabel.moveTo([at[0], at[1] + 0.12], [-1, 0]);
+        refusedLabel.moveTo([at[0], at[1] - 0.12], [-1, 0]);
+        return new Group(rateLabel, refusedLabel);
       }),
     );
     await this.play(new FadeOut(code, { runTime: 0.4 }), new FadeOut(needLabel, { runTime: 0.4 }));
     othersShown = true;
     s.keep(others[0]!, ...others.slice(1), ends, { describe: chartSays });
     await this.play(...others.map((o) => new Create(o, { runTime: 1.2 })), new FadeIn(ends));
-    const table = await s.card(
-      RATES.map((r) => [perSecond(r).replace(' a second', ' / s'), list(refusedAt(r)) || 'none'] as const),
-      { at: [1.3, -2.25, 7.55, 1.55], title: '429s at each refill rate', fontSize: 0.24 },
-    );
-    await table.mark(perSecond(rate).replace(' a second', ' / s'));
   }
 }
