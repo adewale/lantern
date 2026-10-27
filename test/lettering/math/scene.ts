@@ -11,10 +11,10 @@ export default class Example extends Scene {
     const more = new Math("x^2+\\frac{1}{2}", {color: s.palette.ink});
     await this.play(new TransformMatchingShapes(half, more));
     s.keep(more, {describe: 'x squared plus one half.'});
-    await this.step('grow', {title: "A new term", caption: "Glyphs pair by shape; y squared grows in inside the formula."});
-    const grown = new Math("x^2+y^2+\\frac{1}{2}", {color: s.palette.ink});
+    await this.step('grow', {title: "A new term", caption: "Each glyph keeps its place, and plus y squared grows in at the end."});
+    const grown = new Math("x^2+\\frac{1}{2}+y^2", {color: s.palette.ink});
     await this.play(new TransformMatchingText(more, grown));
-    s.keep(grown, {describe: 'x squared plus y squared plus one half.'});
+    s.keep(grown, {describe: 'x squared plus one half plus y squared.'});
     await this.step('forms', {title: "Display maths", caption: "Radicals, large operators with limits, an integral and a matrix."});
     await s.clear();
     const ink = {color: s.palette.ink, display: true, fontSize: 0.5};

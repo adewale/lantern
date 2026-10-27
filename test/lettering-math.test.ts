@@ -4,7 +4,8 @@
 // at the pinned commit: node tools/oracle/glyph-math.ts <glyph checkout> <latinmodern-math.otf>.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { mkdtemp, readFile, writeFile, rm, copyFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -30,7 +31,9 @@ const expected: Expected = JSON.parse(await readFile(EXPECTED, 'utf8'));
 const snapshot: LetteringSnapshot = JSON.parse(await readFile(join(fixture, 'scene.lettering.json'), 'utf8'));
 const mathRuns = Object.entries(snapshot.runs).filter(([key]) => JSON.parse(key)[0] === 'math');
 const mathFont = process.env.RAYNER_MATH_FONT ?? '/usr/share/texmf/fonts/opentype/public/lm-math/latinmodern-math.otf';
-const noFont = !existsSync(mathFont) && 'set RAYNER_MATH_FONT to Latin Modern Math 1.959';
+// Capture accepts only the pinned file, so the font-gated tests skip any other
+const noFont = (!existsSync(mathFont) || createHash('sha256').update(readFileSync(mathFont)).digest('hex') !== expected.font)
+  && 'set RAYNER_MATH_FONT to Latin Modern Math 1.959';
 const rect = (x: number, y: number, w: number, h: number) =>
   [{ tag: 'MoveTo', x, y }, { tag: 'LineTo', x: x + w, y }, { tag: 'LineTo', x: x + w, y: y + h }, { tag: 'LineTo', x, y: y + h }, { tag: 'Close' }];
 // As written to the expected file: JSON keeps no -0
@@ -51,6 +54,9 @@ async function variant(from: string, to: string, withSnapshot: boolean): Promise
 }
 
 test('every stored formula is glyph\'s own layout: fractions, scripts, radicals, large operators, matrices', () => {
+  // Same font and same glyph commit as capture used, so a bumped pin cannot pass against old results
+  assert.equal(snapshot.faces['latin-modern-math']!.hash, expected.font);
+  assert.ok(snapshot.shaper.includes('glyph-math@' + expected.glyph.slice(0, 7)), snapshot.shaper);
   const sources = mathRuns.map(([key]) => JSON.parse(key)[1] as string).join(' ');
   for (const construct of ['\\frac', '^', '_', '\\sqrt', '\\sum', '\\int', 'pmatrix']) assert.ok(sources.includes(construct), construct);
   assert.ok(mathRuns.length >= 7);
@@ -119,33 +125,43 @@ test('a display formula is typeset once, in display style', async () => {
   const display = mathRuns.map(([key]) => JSON.parse(key) as [string, string, boolean]).filter(([, , d]) => d);
   assert.ok(display.length >= 4);
   for (const [, tex] of display) assert.ok(!snapshot.runs[JSON.stringify(['math', tex, false])], `no inline run for ${tex}`);
-  const built: number[] = [];
+  const built: { width: number; middle: number; ascent: number }[] = [];
   class Display extends Scene {
-    override async construct() { for (const [, tex] of display) built.push(new MathTex(tex, { display: true }).run.width); }
+    override async construct() {
+      for (const [, tex] of display) {
+        const m = new MathTex(tex, { display: true }), f = m.frameBox;
+        built.push({ width: m.run.width, middle: (f[1]! + f[3]!) / 2, ascent: m.run.ascent });
+      }
+    }
   }
   await new (bindLettering(Display, snapshot))(new NullSink()).run();
-  assert.deepEqual(built, display.map(([, tex]) => snapshot.runs[JSON.stringify(['math', tex, true])]!.width * 0.4));
+  assert.deepEqual(built.map((b) => b.width), display.map(([, tex]) => snapshot.runs[JSON.stringify(['math', tex, true])]!.width * 0.4));
+  // Placed as Text's constructor places any run, by the display metrics: the box's middle at y = ascent
+  for (const b of built) assert.ok(Math.abs(b.middle - b.ascent) < 1e-6, JSON.stringify(b));
 });
 
 test('morphs: TransformMatchingShapes and TransformMatchingText both pair a formula\'s glyphs by shape', async () => {
   const results: Record<string, unknown> = {};
   class Morphs extends Scene {
     override async construct() {
-      const half = new MathTex('\\frac{1}{2}+x^2'), swapped = new MathTex('x^2+\\frac{1}{2}'), grown = new MathTex('x^2+y^2+\\frac{1}{2}');
+      const half = new MathTex('\\frac{1}{2}+x^2'), swapped = new MathTex('x^2+\\frac{1}{2}'), grown = new MathTex('x^2+\\frac{1}{2}+y^2');
       for (const [name, Kind, from, to] of [['shapes', TransformMatchingShapes, half, swapped], ['text', TransformMatchingText, swapped.copy(), grown]] as const) {
+        const index = new Map<Mobject, number>([...from.children.map((g, i) => [g, i] as const), ...to.children.map((g, i) => [g, i] as const)]);
         const key = new Map<Mobject, string>([...from.children, ...to.children].map((g) => [g, (g as VMobject).shapeKey()]));
         this.add(from);
         const t = new Kind(from, to);
         t.begin();
-        results[name] = { ...t.summary(), sameShapes: t.pairs.every(([a, b]) => key.get(a) === key.get(b)) };
+        results[name] = { ...t.summary(), sameShapes: t.pairs.every(([a, b]) => key.get(a) === key.get(b)), pairs: t.pairs.map(([a, b]) => [index.get(a), index.get(b)]) };
         this.remove(from);
       }
     }
   }
   await new (bindLettering(Morphs, snapshot))(new NullSink()).run();
-  // A swap moves every glyph; a new term's three glyphs grow in, and the six others keep their own glyph
-  assert.deepEqual(results.shapes, { matched: 6, morphed: 0, removed: 0, added: 0, sameShapes: true });
-  assert.deepEqual(results.text, { matched: 6, morphed: 0, removed: 0, added: 3, sameShapes: true });
+  // Glyphs are listed in reading order with the rules last: 1 2 + x 2 bar becomes x 2 + 1 2 bar. A shape key
+  // ignores size, so the two 2s pair by distance: the denominator becomes x's exponent, and the exponent the denominator
+  assert.deepEqual(results.shapes, { matched: 6, morphed: 0, removed: 0, added: 0, sameShapes: true, pairs: [[0, 3], [1, 1], [2, 2], [3, 0], [4, 4], [5, 5]] });
+  // x 2 + 1 2 bar keeps every glyph and grows + y 2 at the end: the bar moves from 5th to 8th in the list
+  assert.deepEqual(results.text, { matched: 6, morphed: 0, removed: 0, added: 3, sameShapes: true, pairs: [[0, 0], [1, 1], [2, 2], [3, 3], [4, 4], [5, 8]] });
 });
 
 const noPython = (() => {
@@ -181,17 +197,18 @@ test('the page draws the same maths paths as Node at every step', { skip: !proce
       const scene = await renderAt(v.Scene, restingTime(step, v.trace.fps), new SnapshotSink());
       const want = renderElements(scene, { relative: false }).filter((r) => r.tag === 'path').map((r) => String(r.attrs.d)).sort();
       const page = await browser.newPage();
-      const errors: string[] = [];
-      page.on('console', (m) => void (m.type() === 'error' && errors.push(m.text())));
-      page.on('pageerror', (e) => errors.push(String(e)));
-      await page.goto(`${server.url}/math.html?step=${step.step}`);
-      await page.waitForSelector('[data-ready=true]');
-      const live = () => page.locator('.stage').evaluate((s) => [...s.querySelectorAll('path')].map((p) => p.getAttribute('d')!).sort());
-      await page.waitForFunction((n) => document.querySelectorAll('.stage path').length === n, want.length).catch(() => {});
-      assert.ok(want.length >= 2, `${step.step}: paper and maths`);
-      assert.deepEqual(await live(), want, `${step.step}: the live stage draws what Node drew`);
-      assert.deepEqual(errors, [], step.step);
-      await page.close();
+      try {
+        const errors: string[] = [];
+        page.on('console', (m) => void (m.type() === 'error' && errors.push(m.text())));
+        page.on('pageerror', (e) => errors.push(String(e)));
+        await page.goto(`${server.url}/math.html?step=${step.step}`);
+        await page.waitForSelector('[data-ready=true]');
+        const live = () => page.locator('.stage').evaluate((s) => [...s.querySelectorAll('path')].map((p) => p.getAttribute('d')!).sort());
+        await page.waitForFunction((n) => document.querySelectorAll('.stage path').length === n, want.length, { timeout: 10_000 });
+        assert.ok(want.length >= 2, `${step.step}: paper and maths`);
+        assert.deepEqual(await live(), want, `${step.step}: the live stage draws what Node drew`);
+        assert.deepEqual(errors, [], step.step);
+      } finally { await page.close(); }
     }
   } finally {
     await browser.close();

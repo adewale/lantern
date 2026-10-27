@@ -59,7 +59,9 @@ async function main(): Promise<void> {
   const { loadFont } = await at('sfnt/src/font.js');
   const { typeset } = await at('math/src/typeset.js') as { typeset: Typeset<unknown> };
   const { CORPUS } = await at('verify/math-corpus.js') as { CORPUS: { id: string; display: boolean; tex: string }[] };
-  const font = (await loadFont(new Uint8Array(bytes))).value;
+  const loaded = await loadFont(new Uint8Array(bytes));
+  if (loaded.tag !== 'Ok') throw new Error('glyph cannot load the font: ' + JSON.stringify(loaded.error));
+  const font = loaded.value;
   const fixture = JSON.parse(await readFile(join(ROOT, 'test/lettering/math/scene.lettering.json'), 'utf8')) as { runs: Record<string, unknown> };
   const wanted = new Map<string, { tex: string; display: boolean; from: string }>();
   for (const c of CORPUS) wanted.set(JSON.stringify([c.tex, c.display]), { tex: c.tex, display: c.display, from: `glyph verify/math-corpus.js ${c.id}` });
