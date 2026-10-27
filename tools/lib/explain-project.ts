@@ -1,5 +1,5 @@
 import { prepareLettering as prepareOutlineLettering } from './lettering.ts';
-import { usesOutlineLettering, withSceneLettering } from '../../src/lettering-outlines.ts';
+import { offPage, usesOutlineLettering, withSceneLettering } from '../../src/lettering-outlines.ts';
 import type { LetteringSnapshot } from '../../src/lettering-outlines.ts';
 import { build } from 'esbuild';
 import type { Plugin } from 'esbuild';
@@ -334,7 +334,8 @@ export async function collectProject(
         throw new Error(`Each case needs non-empty named steps: ${JSON.stringify(values)}`);
       if (new Set(names).size !== names.length)
         throw new Error(`Duplicate step names prevent stable links: ${JSON.stringify(values)}`);
-      if (outline) await withSceneLettering(Bound, async () => {
+      // The page never draws these (offPage): they stay out of what it carries
+      if (outline) await withSceneLettering(Bound, () => offPage(async () => {
         const { Text } = await import('../../src/index.ts');
         const { footerParagraph } = await import('./explain-video.ts');
         for (const [i, s] of trace.steps.entries()) {
@@ -353,7 +354,7 @@ export async function collectProject(
             blanks();
           }
         }
-      });
+      }));
       variants.push({ values, Scene: Bound, trace });
     }
     if (undrawable.length)

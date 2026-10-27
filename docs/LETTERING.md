@@ -70,9 +70,14 @@ in an unrequested script still fail, including during capture.
 `explain check` reports `lettering.bytes` (serialized snapshot payload),
 `lettering.pageBytes` (what the page's script carries of it), the binary subset
 size per face, and the distinct run count. A page carries the request and the
-runs, which hold every outline it draws, and only the subsets its counters shape
-with at runtime; hashes and licences stay in the snapshot, and each distinct
-licence notice joins the page's licence block once. Subsets keep the layout
+runs its scene draws, which hold every outline it shows, and only the subsets its
+counters shape with at runtime; hashes and licences stay in the snapshot, and each
+distinct licence notice joins the page's licence block once. Runs that only the
+build draws, the video footer's lines, the wrapping that measured them and the
+contact sheet's numbered titles, are listed in the snapshot's `offPage` and left
+out of the page. The snapshot file and the page store each distinct glyph outline
+once (`outlines`, with each glyph's `o` indexing it): a wrapped caption is
+measured line by line, so its glyphs recur in many runs. Subsets keep the layout
 features glyph's shaper applies when a counter replays (without ligatures for
 JetBrains Mono, which capture shapes as literal code) and no hinting. A cut's
 subset holds only the characters that cut drew, and a cut that drew nothing is

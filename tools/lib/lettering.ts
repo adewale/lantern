@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { loadFont } from '../../vendor/glyph.js';
 import { SANS, MONO, FALLBACK } from '../../src/font-data.ts';
-import { bindLettering, cutFace, defaultCutFace, letteringOf, numericAlphabet, requestCuts, runKey, scaledRun, scriptCuts, scriptFaceNames, snapshotProvider, usesLettering } from '../../src/lettering-outlines.ts';
+import { bindLettering, cutFace, defaultCutFace, isOffPage, letteringOf, packLettering, unpackLettering, numericAlphabet, requestCuts, runKey, scaledRun, scriptCuts, scriptFaceNames, snapshotProvider, usesLettering } from '../../src/lettering-outlines.ts';
 import type { LetteringCut, LetteringSnapshot, LetteringProvider, LetteringRequest } from '../../src/lettering-outlines.ts';
 import type { ExplainerClass } from '../../explain/settings.ts';
 import type { Run } from '../../vendor/glyph.js';
@@ -103,7 +103,7 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
   const builderHash = hash((await Promise.all(['src/lettering-outlines.ts', 'src/math.ts', 'src/italic.ts', 'src/font-data.ts', 'src/fonts.ts', 'src/text.ts', 'tools/lib/lettering.ts', 'tools/lib/lettering-validation.ts', 'tools/lettering.py', 'tools/lettering-requirements.txt', 'vendor/glyph.js', 'vendor/glyph-math.js'].map((name) => readFile(join(root, name), 'utf8')))).join('\n'));
   const path = file.replace(/\.[^.]+$/, '') + '.lettering.json';
   if (!capture) {
-    const snapshot: LetteringSnapshot | undefined = await readFile(path, 'utf8').then(JSON.parse).catch((e: NodeJS.ErrnoException) => {
+    const snapshot: LetteringSnapshot | undefined = await readFile(path, 'utf8').then((text) => unpackLettering(JSON.parse(text))).catch((e: NodeJS.ErrnoException) => {
       if (e.code === 'ENOENT') return undefined;
       throw e;
     });
@@ -187,6 +187,9 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
   }
   const { typeset } = request.math ? await import('../../vendor/glyph-math.js') : { typeset: undefined };
   let replay: LetteringProvider | undefined;
+  // Which runs the scene draws, and which only the build's footers and contact sheets do
+  const onPage = new Set<string>(), offPageOnly = new Set<string>();
+  const seen = (key: string) => (isOffPage() ? offPageOnly : onPage).add(key);
   const provider: LetteringProvider = {
     async prepare() { await replay?.prepare?.(); },
     request,
@@ -196,6 +199,7 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
       if (!cut && !request.faces?.[font] && !request.scripts?.length) return fallback(text, size);
       const key = runKey(cutFace(font, cut), text);
       let r = snapshot.runs[key];
+      if (r || usesLettering(request, font, text, cut)) seen(key);
       if (!r) {
         for (const ch of text) {
           // Existing coverage remains free, including the existing numeral faces.
@@ -228,6 +232,7 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
       if (replay) return replay.math(text, size, display);
       if (!request.math || !typeset || mathFont?.tag !== 'Ok') throw new Error('Math requires meta.lettering.math: true');
       const key = runKey('math', text, display);
+      seen(key);
       let run = snapshot.runs[key];
       if (!run) {
         const result = typeset(mathFont.value, 'latin-modern-math', text, { size: 1, display });
@@ -268,11 +273,13 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
       }
       // Stable run order, regardless of which case first visits a string.
       snapshot.runs = Object.fromEntries(Object.entries(snapshot.runs).sort(([a], [b]) => a.localeCompare(b)));
+      const off = Object.keys(snapshot.runs).filter((key) => offPageOnly.has(key) && !onPage.has(key));
+      if (off.length) snapshot.offPage = off;
       snapshot.payloadHash = hash(JSON.stringify({ ...snapshot, payloadHash: undefined }));
       replay = snapshotProvider(snapshot);
       if (persist) {
         await mkdir(dirname(path), { recursive: true });
-        await writeFile(path, json(snapshot));
+        await writeFile(path, json(packLettering(snapshot)));
       }
     },
   };
@@ -287,9 +294,10 @@ export async function letteringWeight(snapshot: LetteringSnapshot) {
   };
 }
 /**
- * What a page carries of a snapshot: the request and the runs, which hold every
- * outline it draws, and only the subsets its counters shape with (the faces
- * snapshotProvider decodes). Hashes and licences stay in the snapshot; the
+ * What a page carries of a snapshot, packed: the request and the runs its scene
+ * draws, which hold every outline it shows, each distinct outline once, and only
+ * the subsets its counters shape with (the faces snapshotProvider decodes). Runs
+ * only the build draws (offPage), hashes and licences stay in the snapshot; the
  * licences go to the page's licence block, once each.
  */
 export async function pageSnapshot(snapshot: LetteringSnapshot): Promise<LetteringSnapshot> {
@@ -300,11 +308,13 @@ export async function pageSnapshot(snapshot: LetteringSnapshot): Promise<Letteri
       return Reflect.get(target, key);
     },
   });
-  await snapshotProvider({ ...snapshot, faces }).prepare!();
-  return {
-    version: 1, sourceHash: '', builderHash: '', request: snapshot.request, runs: snapshot.runs, shaper: '',
+  const off = new Set(snapshot.offPage);
+  const runs = Object.fromEntries(Object.entries(snapshot.runs).filter(([key]) => !off.has(key)));
+  await snapshotProvider({ ...snapshot, runs, faces }).prepare!();
+  return packLettering({
+    version: 1, sourceHash: '', builderHash: '', request: snapshot.request, runs, shaper: '',
     faces: Object.fromEntries([...used].sort().map((name) => [name, { hash: '', data: snapshot.faces[name]!.data, license: '' }])),
-  };
+  });
 }
 /** The face licences a lettered page adds to its licence block: each distinct notice once. */
 export const letteringLicences = (snapshot: LetteringSnapshot): string[] =>

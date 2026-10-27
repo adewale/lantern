@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { Scene, Text, ItalicText, MathTex, NullSink, loadFonts, shaperFor } from '../src/index.ts';
-import { bindLettering, runKey, snapshotProvider } from '../src/lettering-outlines.ts';
+import { bindLettering, runKey, snapshotProvider, unpackLettering } from '../src/lettering-outlines.ts';
 import type { LetteringSnapshot } from '../src/lettering-outlines.ts';
 import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
@@ -23,7 +23,7 @@ import { htmlEscape } from '../explain/trace.ts';
 const fixture = join(ROOT, 'test/lettering/styles');
 const folder = await mkdtemp(join(tmpdir(), 'rayner-lettering-styles-'));
 after(() => rm(folder, { recursive: true, force: true }));
-const stored = async (): Promise<LetteringSnapshot> => JSON.parse(await readFile(join(fixture, 'scene.lettering.json'), 'utf8'));
+const stored = async (): Promise<LetteringSnapshot> => unpackLettering(JSON.parse(await readFile(join(fixture, 'scene.lettering.json'), 'utf8')));
 const sha = (value: string) => createHash('sha256').update(value).digest('hex');
 
 /** The scene's only Text, built under `snapshot`. */
@@ -55,7 +55,7 @@ test('bold Text draws the stored Bold cut, with no faux-bold stroke, and recolou
 });
 
 test('bold maths keeps its faux stroke: a formula is drawn from its own run, with no cut', async () => {
-  const math: LetteringSnapshot = JSON.parse(await readFile(join(ROOT, 'test/lettering/math/scene.lettering.json'), 'utf8'));
+  const math: LetteringSnapshot = unpackLettering(JSON.parse(await readFile(join(ROOT, 'test/lettering/math/scene.lettering.json'), 'utf8')));
   const both = { ...math, request: { ...math.request, styles: ['bold'] as const } };
   const formula = await built(both, () => new MathTex('\\frac{1}{2}+x^2', { weight: 'bold', color: '#112233' }));
   assert.ok(formula.children.length > 0);

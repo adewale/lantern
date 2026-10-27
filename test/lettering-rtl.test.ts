@@ -9,16 +9,17 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { Scene, NullSink, Text, MathTex, TransformMatchingText, loadFonts } from '../src/index.ts';
-import { bindLettering, runKey, withSceneLettering } from '../src/lettering-outlines.ts';
+import { bindLettering, runKey, unpackLettering, withSceneLettering } from '../src/lettering-outlines.ts';
 import type { LetteringSnapshot } from '../src/lettering-outlines.ts';
 import { collectProject, defaultVariant, ROOT } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
+import { pageSnapshot } from '../tools/lib/lettering.ts';
 import { footerLines, footerParagraph, footerText, rightToLeft, FOOTER_TEXT_WIDTH } from '../tools/lib/explain-video.ts';
 
 const folder = await mkdtemp(join(tmpdir(), 'rayner-lettering-rtl-'));
 after(() => rm(folder, { recursive: true, force: true }));
 const stored = async (id: string): Promise<LetteringSnapshot> =>
-  JSON.parse(await readFile(join(ROOT, 'test/lettering', id, 'scene.lettering.json'), 'utf8'));
+  unpackLettering(JSON.parse(await readFile(join(ROOT, 'test/lettering', id, 'scene.lettering.json'), 'utf8')));
 /** A stored run's source clusters, left to right on the page. */
 const visual = (s: LetteringSnapshot, text: string) =>
   [...s.runs[runKey('sans', text)]!.glyphs].sort((a, b) => a.x - b.x || a.cluster - b.cluster).map((g) => g.cluster);
@@ -131,6 +132,22 @@ test('cluster keys pair a match only when every Text in it has them; a Text buil
   }
   await new (bindLettering(Mixed, s))(new NullSink()).run();
   assert.deepEqual(summary, { matched: 2, morphed: 0, removed: 0, added: 1 });
+});
+
+test('a page leaves out the runs only the build draws, and every snapshot stores each outline once', async () => {
+  const raw = JSON.parse(await readFile(join(ROOT, 'test/lettering/hebrew/scene.lettering.json'), 'utf8'));
+  assert.ok(Array.isArray(raw.outlines), 'the committed snapshot is packed');
+  const s = await stored('hebrew');
+  // The footer's RLM-led lines and the wrapping that measured them are drawn only in the video
+  assert.ok(s.offPage!.some((key) => JSON.parse(key)[1].startsWith('\u200f')));
+  for (const key of Object.keys(s.runs)) if (JSON.parse(key)[1].startsWith('\u200f')) assert.ok(s.offPage!.includes(key), key);
+  // What the stage draws stays: the heading and the words on stage
+  for (const text of ['שָׁלוֹם עוֹלָם', 'Rayner גרסה 2.0']) assert.ok(!s.offPage!.includes(runKey('sans', text)), text);
+  const page = await pageSnapshot(s);
+  for (const key of s.offPage!) assert.equal(page.runs[key], undefined, key);
+  assert.ok(Array.isArray(page.outlines));
+  const unpacked = JSON.stringify(s.runs).length, shipped = JSON.stringify(page).length;
+  assert.ok(shipped * 10 < unpacked, `the page carries ${shipped} bytes of the ${unpacked} the runs take unpacked`);
 });
 
 const capture = process.env.EXPLAIN_LETTERING === '1';

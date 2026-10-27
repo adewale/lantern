@@ -39,7 +39,55 @@ export interface LetteringSnapshot {
   faces: Record<string, { hash: string; data: string; license: string }>;
   shaper: string;
   payloadHash?: string;
+  /**
+   * Run keys only the build draws (video footer lines, contact-sheet titles and the
+   * wrapping that measures them), which a page leaves out. Absent when there are none.
+   */
+  offPage?: string[];
+  /**
+   * Packed form only (packLettering): each distinct glyph outline once. A packed
+   * glyph has `o`, its outline's index here, in place of `path`.
+   */
+  outlines?: unknown[][];
 }
+
+/**
+ * A snapshot as written to disk and shipped in a page: each distinct glyph
+ * outline stored once. A caption wrapped for the video footer is measured line
+ * by line, so its glyphs recur in many runs; packing stores each outline once.
+ */
+export function packLettering(snapshot: LetteringSnapshot): LetteringSnapshot {
+  const outlines: unknown[][] = [], index = new Map<string, number>();
+  const runs = Object.fromEntries(Object.entries(snapshot.runs).map(([key, run]) => [key, {
+    ...run, glyphs: run.glyphs.map(({ path, ...glyph }) => {
+      const id = JSON.stringify(path);
+      let o = index.get(id);
+      if (o === undefined) { index.set(id, o = outlines.length); outlines.push(path as unknown[]); }
+      return { ...glyph, o };
+    }),
+  }])) as unknown as LetteringSnapshot['runs'];
+  return { ...snapshot, runs, outlines };
+}
+/** A packed snapshot made whole again, in place; an unpacked one is returned as it is. */
+export function unpackLettering(snapshot: LetteringSnapshot): LetteringSnapshot {
+  const outlines = snapshot.outlines;
+  if (!outlines) return snapshot;
+  for (const run of Object.values(snapshot.runs)) for (const glyph of run.glyphs as (Run['glyphs'][number] & { o?: number })[]) {
+    const path = Number.isInteger(glyph.o) ? outlines[glyph.o!] : undefined;
+    if (!Array.isArray(path)) throw new Error('Invalid lettering snapshot outline index; run rayner snapshots to rebuild it');
+    glyph.path = path as Run['glyphs'][number]['path'];
+    delete glyph.o;
+  }
+  delete snapshot.outlines;
+  return snapshot;
+}
+/** Set while the build shapes text only it draws: see LetteringSnapshot.offPage. */
+let offPageDepth = 0;
+export async function offPage<T>(work: () => Promise<T>): Promise<T> {
+  offPageDepth++;
+  try { return await work(); } finally { offPageDepth--; }
+}
+export const isOffPage = (): boolean => offPageDepth > 0;
 export interface LetteringProvider {
   /** What the scene asked for; styles decide which cuts Text may use. */
   request?: LetteringRequest;
@@ -134,6 +182,7 @@ export function requestCuts(request: LetteringRequest): LetteringCut[] {
   return ['', ...(bold ? ['bold' as const] : []), ...(italic ? ['italic' as const] : []), ...(bold && italic ? ['bold-italic' as const] : [])];
 }
 export function snapshotProvider(snapshot: LetteringSnapshot): LetteringProvider {
+  unpackLettering(snapshot);
   let replay = replays.get(snapshot);
   if (!replay) replays.set(snapshot, replay = { chains: {}, templates: {}, memo: new Map() });
   const state = replay;
