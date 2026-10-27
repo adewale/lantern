@@ -2,3 +2,6 @@ node_modules/
 out/
 dist/
 .claude/scheduled_tasks.lock
+
+# Python lettering capture caches
+__pycache__/

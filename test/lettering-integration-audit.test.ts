@@ -7,11 +7,13 @@ import { createHash } from 'node:crypto';
 import { takeMissingGlyphs } from '../src/lettering.ts';
 import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
 import { contactSheet } from '../tools/lib/explain-shots.ts';
+import { unpackLettering } from '../src/lettering-outlines.ts';
 
 const fixture = join(ROOT, 'test/lettering/arabic');
 const sourceAt = async (folder: string) => {
   await writeFile(join(folder, 'scene.ts'), await readFile(join(fixture, 'scene.ts'), 'utf8'));
-  const snapshot = JSON.parse(await readFile(join(fixture, 'scene.lettering.json'), 'utf8'));
+  // Unpacked, so a damaged outline is the glyph's own and not an index into the shared table
+  const snapshot = unpackLettering(JSON.parse(await readFile(join(fixture, 'scene.lettering.json'), 'utf8')));
   return snapshot;
 };
 
@@ -35,7 +37,7 @@ test('editing a contour without changing metadata is caught by the payload check
     const run = Object.values(snapshot.runs).find((r: unknown) => (r as { glyphs: unknown[] }).glyphs.length) as { glyphs: { dx: number }[] };
     run.glyphs[0]!.dx += .1;
     await writeFile(join(folder, 'scene.lettering.json'), JSON.stringify(snapshot));
-    await assert.rejects(collectProject(folder, { write: false }), /checksum|payload/i);
+    await assert.rejects(collectProject(folder, { write: false }), /Invalid lettering snapshot payload checksum/);
   } finally { await rm(folder, { recursive: true, force: true }); }
 });
 

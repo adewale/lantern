@@ -1,13 +1,13 @@
-import { prepareLettering as prepareOutlineLettering } from './lettering.ts';
+import { offPage, prepareLettering as prepareOutlineLettering } from './lettering.ts';
 import { usesOutlineLettering, withSceneLettering } from '../../src/lettering-outlines.ts';
 import type { LetteringSnapshot } from '../../src/lettering-outlines.ts';
 import { build } from 'esbuild';
 import type { Plugin } from 'esbuild';
-import { readFile, writeFile, mkdir, stat, readdir, rm } from 'node:fs/promises';
-import { dirname, resolve, join, basename, relative } from 'node:path';
+import { readFile, writeFile, mkdir, stat, readdir, rm, rename } from 'node:fs/promises';
+import { dirname, resolve, join, basename, relative, sep } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { Scene, NullSink, traceScene, shaperFor } from '../../src/index.ts';
 import { takeMissingGlyphs } from '../../src/lettering.ts';
 import type { Trace } from '../../src/index.ts';
@@ -47,7 +47,7 @@ const legacySource = (source: string) => source
   .replace(/\n\/\/ Optional lettering: tree-shaken[\s\S]*?\/\/ End optional lettering\.\n/, '');
 export function engineAlias(node = false, outlines = false): Plugin {
   return {
-    name: 'one-lantern-engine',
+    name: 'one-rayner-engine',
     setup(b) {
       if (!outlines) b.onLoad({ filter: /[/\\]src[/\\]index\.ts$/ }, async (args) => ({
         contents: legacySource(await readFile(args.path, 'utf8')), loader: 'ts',
@@ -90,13 +90,13 @@ async function engineHash(lettered: boolean): Promise<string> {
   const inputs: string[] = [];
   for (const folder of ['src', 'explain', 'integrations/agentic-mermaid'])
     for (const name of (await readdir(join(ROOT, folder)))
-      .filter((n) => n.endsWith('.ts') && !['lettering-outlines.ts', 'math.ts'].includes(n) && (lettered || folder + '/' + n !== 'src/lettering.ts'))
+      .filter((n) => n.endsWith('.ts') && !['lettering-outlines.ts', 'math.ts', 'italic.ts'].includes(n) && (lettered || folder + '/' + n !== 'src/lettering.ts'))
       .sort())
       inputs.push(folder + '/' + name + '\n' + legacySource(await readFile(join(ROOT, folder, name), 'utf8')));
   inputs.push(await readFile(join(ROOT, 'vendor/glyph.js'), 'utf8'));
   return hash(inputs.join('\n'));
 }
-async function loadScene(
+export async function loadScene(
   file: string,
 ): Promise<{ Scene: ExplainerClass; exportName: string; file: string; sourceHash: string; engineHash: string }> {
   file = await scenePath(file);
@@ -111,14 +111,21 @@ async function loadScene(
     plugins: [engineAlias(true)],
     logLevel: 'silent',
   });
+  // 'lantern:/' is an internal placeholder for the checkout path, kept from Lantern:
+  // it never reaches output, and renaming it would make every committed snapshot stale.
   const code = result.outputFiles[0]!.text,
     sourceHash = hash(
       code.replaceAll(pathToFileURL(ROOT).href, 'lantern:/').replaceAll(dirname(file), '<author>'),
     );
-  const folder = join(tmpdir(), 'lantern-explain');
+  const folder = join(tmpdir(), 'rayner-explain');
   await mkdir(folder, { recursive: true });
   const output = join(folder, hash(code) + '.mjs');
-  await writeFile(output, code);
+  // Other processes (parallel test files, two builds) import this same content-addressed file.
+  // writeFile truncates before it writes, so one of them could import it half written and find
+  // no Scene export. Write a private copy and rename it into place: a rename is atomic.
+  const temporary = `${output}.${process.pid}.${randomUUID()}`;
+  await writeFile(temporary, code);
+  await rename(temporary, output);
   const module = await import(pathToFileURL(output).href);
   const choices = Object.values(module).filter(
     (value): value is ExplainerClass => typeof value === 'function' && value.prototype instanceof Scene,
@@ -168,6 +175,24 @@ export const IMPORTER = await (async () => {
   const files = (await readdir(dir)).filter((n) => n.endsWith('.ts')).sort();
   return hash((await Promise.all(files.map(async (n) => n + '\n' + (await readFile(join(dir, n), 'utf8'))))).join('\n')).slice(0, 16);
 })();
+/**
+ * What an explainer's built files come from: the scene's code, the engine, the snapshot importer,
+ * and a hash of every file in the scene's folder (its pinned snapshots, lettering and data), leaving
+ * out dotfiles and names ending in `~`, which editors and file browsers leave there. demos:build
+ * records it in out/explainers/<id>/inputs.json, and site:export compares it with the checkout's.
+ * The player (app/) and the build tools are not in it, as they are not in a page's receipt.
+ * Needs only `loadScene`, not a run.
+ */
+export async function sceneInputs(p: { file: string; sourceHash: string; engineHash: string }): Promise<Record<string, string>> {
+  const folder = dirname(p.file),
+    files: string[] = [];
+  for (const entry of await readdir(folder, { recursive: true, withFileTypes: true })) {
+    const path = relative(folder, join(entry.parentPath, entry.name));
+    if (entry.isFile() && !path.split(sep).some((part) => part.startsWith('.')) && !entry.name.endsWith('~'))
+      files.push(path + '\n' + hash(await readFile(join(folder, path))));
+  }
+  return { sourceHash: p.sourceHash, engineHash: p.engineHash, importer: IMPORTER, files: hash(files.sort().join('\n')) };
+}
 /** File name for one diagram's snapshot: a short hash of its cache key. */
 export const snapshotFileName = (key: string) => hash(key).slice(0, 16) + '.json';
 const json = (value: unknown) => JSON.stringify(value, null, 2) + '\n';
@@ -249,7 +274,7 @@ export async function collectProject(
     const key = diagramKey(snapshot.spec);
     if (!warned.has(key)) {
       warned.add(key);
-      for (const warning of lostLabelWarnings(snapshot)) console.warn('explain: ' + warning);
+      for (const warning of lostLabelWarnings(snapshot)) console.warn('rayner: ' + warning);
     }
     return snapshot;
   };
@@ -329,16 +354,18 @@ export async function collectProject(
         throw new Error(`Each case needs non-empty named steps: ${JSON.stringify(values)}`);
       if (new Set(names).size !== names.length)
         throw new Error(`Duplicate step names prevent stable links: ${JSON.stringify(values)}`);
-      if (outline) await withSceneLettering(Bound, async () => {
+      // The page never draws these (offPage): they stay out of what it carries
+      if (outline) await withSceneLettering(Bound, () => offPage(async () => {
         const { Text } = await import('../../src/index.ts');
-        const { wrapCaption, FOOTER_TEXT_WIDTH } = await import('./explain-video.ts');
+        const { footerParagraph } = await import('./explain-video.ts');
         for (const [i, s] of trace.steps.entries()) {
           step = s.step;
           // Contact sheets draw this numbered title outside the authored scene.
           new Text(`${i + 1}. ${String(s.meta.title ?? s.step)}`);
           for (const text of [s.meta.title ?? s.step, s.meta.caption ?? '']) {
             new Text(String(text));
-            try { wrapCaption(String(text), FOOTER_TEXT_WIDTH); }
+            // The footer's lines, as it shapes them (a right-to-left paragraph's lines lead with a mark)
+            try { for (const line of footerParagraph(String(text))) new Text(line); }
             catch (error) {
               // Long captions may still be valid on a page. Video reports its own
               // footer limits; script/face/snapshot errors must always fail closed.
@@ -347,7 +374,7 @@ export async function collectProject(
             blanks();
           }
         }
-      });
+      }));
       variants.push({ values, Scene: Bound, trace });
     }
     if (undrawable.length)

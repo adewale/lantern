@@ -96,7 +96,8 @@ export default class OAuthExplainer extends Scene {
     );
     await seq.reveal(['message:C->S#0']);
     await seq.mark(['message:C->S#0'], { color: CHALLENGE, as: 'carries the challenge' });
-    await request.mark('code_challenge');
+    // The caption points at this row, so the step lights it: the request carries the challenge, not the verifier.
+    await request.mark('code_verifier');
 
     await this.step('code', {
       title: 'The redirect carries a short-lived code bound to the challenge',

@@ -8,6 +8,18 @@ import { restingTime, pictureHtml, htmlEscape } from '../../explain/trace.ts';
 import { ROOT, engineAlias, defaultVariant, hash, scriptEscape, sceneSlug, baseReceipt } from './explain-project.ts';
 import type { Project } from './explain-project.ts';
 import { pageFaces, letteringReport, useProjectLettering } from './explain-lettering.ts';
+import { letteringLicences, pageSnapshot } from './lettering.ts';
+import { RTL_SCRIPTS } from '../../src/lettering-outlines.ts';
+
+/**
+ * A page whose lettering asks for a right-to-left script sets the direction of
+ * each title, caption and transcript line from its own first letter (UAX #9
+ * P2-P3), so an Arabic or Hebrew caption reads and aligns right to left while
+ * the player's controls stay as they are. Every other page's style is as it was.
+ */
+const RTL_CSS = '\nh1,.caption,.ruler,.transcript h2,.transcript a,.transcript p,.steps button span{unicode-bidi:plaintext;text-align:start}\n';
+const rightToLeftPage = (project: Project) =>
+  !!project.outlineLettering?.request.scripts?.some((script) => RTL_SCRIPTS.includes(script));
 
 export async function buildExplainer(
   project: Project,
@@ -30,7 +42,7 @@ export async function buildExplainer(
       ? `import{useLettering}from ${JSON.stringify(join(ROOT, 'src/lettering.ts'))};`
       : '';
   const author = project.outlineLettering
-    ? `import Original from 'virtual:author';import{bindLettering}from ${JSON.stringify(join(ROOT, 'src/lettering-outlines.ts'))};const Source=bindLettering(Original,${JSON.stringify(project.outlineLettering)});`
+    ? `import Original from 'virtual:author';import{bindLettering}from ${JSON.stringify(join(ROOT, 'src/lettering-outlines.ts'))};const Source=bindLettering(Original,${JSON.stringify(await pageSnapshot(project.outlineLettering))});`
     : `import Source from 'virtual:author';`;
   const entry = `${author}import{mountEmbed}from ${JSON.stringify(join(ROOT, 'app/embed.ts'))};${lettered}const root=document.getElementById('content');${lettered ? `useLettering(${JSON.stringify(pageFaces(project.lettering))}).then(()=>${mount})` : mount}.then(()=>{root.dataset.ready='true'}).catch(error=>{console.error(error);const p=document.createElement('p');p.setAttribute('role','alert');p.textContent=${JSON.stringify(t.failed)};root.append(p)});`;
   const bundled = await build({
@@ -65,7 +77,7 @@ export async function buildExplainer(
   )
     throw new Error('Build-time diagram renderer leaked into browser artifact');
   const js = scriptEscape(bundled.outputFiles[0]!.text),
-    css = await readFile(join(ROOT, 'app/embed.css'), 'utf8');
+    css = (await readFile(join(ROOT, 'app/embed.css'), 'utf8')) + (rightToLeftPage(project) ? RTL_CSS : '');
   // Every case, every step: a link to it, its caption and what its resting picture shows.
   // The player shows the current case's section; without JavaScript every case shows.
   const transcript = project.variants
@@ -83,13 +95,15 @@ export async function buildExplainer(
   const sources = (project.Scene.meta?.sources ?? [])
     .map((url) => `<li><a href="${htmlEscape(url)}" target="_blank" rel="noopener">${htmlEscape(url)}</a></li>`)
     .join('');
-  const licenses = (
-    await Promise.all(
-      ['LICENSE', 'vendor/licenses/Inter-OFL.txt', 'vendor/licenses/JetBrainsMono-OFL.txt', 'vendor/licenses/Noto-OFL.txt'].map((file) =>
-        readFile(join(ROOT, file), 'utf8'),
-      ),
-    )
-  ).join('\n\n') + (project.outlineLettering ? '\n\n' + Object.values(project.outlineLettering.faces).map((f) => f.license).join('\n\n') : '');
+  const notices = await Promise.all(
+    ['LICENSE', 'vendor/licenses/Inter-OFL.txt', 'vendor/licenses/JetBrainsMono-OFL.txt', 'vendor/licenses/Noto-OFL.txt', 'vendor/licenses/glyph-MIT.txt'].map((file) =>
+      readFile(join(ROOT, file), 'utf8'),
+    ),
+  );
+  // A requested face's notice joins the block unless the block already holds that text.
+  const licenses = notices.join('\n\n') + (project.outlineLettering
+    ? letteringLicences(project.outlineLettering).filter((notice) => !notices.includes(notice)).map((notice) => '\n\n' + notice).join('')
+    : '');
   const html = `<!doctype html>\n<html lang="${htmlEscape(lang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${htmlEscape(title)}</title><meta name="generator" content="Rayner"><style>${css}</style></head><body><main id="content"><h1>${htmlEscape(title)}</h1><div class="stage poster">${sink.svg}</div><p class="caption">${htmlEscape(first.meta.caption ?? '')}</p><details class="transcript" open><summary>${htmlEscape(t.transcript)}</summary>${transcript}${sources ? `<h2>${htmlEscape(t.sources)}</h2><ul>${sources}</ul>` : ''}</details></main><template id="licenses"><pre>${htmlEscape(licenses)}</pre></template><script>${js}</script></body></html>\n`;
   const sri = (value: string) => "'sha256-" + createHash('sha256').update(value).digest('base64') + "'";
   const policy = `default-src 'none'; script-src ${sri(js)}; style-src ${sri(css)}; img-src data:; connect-src 'none'; font-src 'none'; base-uri 'none'; object-src 'none'; frame-ancestors *`;

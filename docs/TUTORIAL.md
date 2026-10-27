@@ -1,16 +1,16 @@
 # Your first explainer
 
-This builds a two-case explainer of a cache, breaks one of the checks, fixes it, and builds the page. Run the commands from a checkout of this repository; an installed package runs the same commands as `explain`.
+This builds a two-case explainer of a cache, breaks one of the checks, fixes it, and builds the page. Run the commands from a checkout of this repository; in a project that installs the package, run the same commands as `npx rayner ...`.
 
 You need Node 26 or later and `npm ci` run once, which installs the capture and video packages. The scene has a diagram, so the first run captures it with Chromium: install one with `npx playwright-core install chromium`, or point `CHROMIUM_EXECUTABLE_PATH` at an existing one.
 
 ## 1. Create the scene
 
 ```sh
-npm run explain -- init my-explainer
+npm run rayner -- init my-explainer
 ```
 
-This writes `my-explainer/scene.ts`. Open it. It is an ordinary Lantern `Scene`:
+This writes `my-explainer/scene.ts`. Open it. It is an ordinary `Scene` from `rayner`:
 
 - `static meta` gives the explainer an id (`my-explainer`, which names the output files) and a title.
 - `static settings` declares one setting, `request`, with two options. With one setting, each option is a **case**; every case is built and checked before anyone reads it.
@@ -20,7 +20,7 @@ This writes `my-explainer/scene.ts`. Open it. It is an ordinary Lantern `Scene`:
 ## 2. Preview it
 
 ```sh
-npm run explain -- preview my-explainer/scene.ts --watch
+npm run rayner -- preview my-explainer/scene.ts --watch
 ```
 
 The first run captures the diagram into `my-explainer/scene.snapshots/`; commit that folder with the scene. The command writes a contact sheet of every step (`out/explainers/my-explainer.steps.png`) and serves the page at http://127.0.0.1:5174/. Press **Next** to play a step; it stops on what the step leaves on screen, its **resting picture**, which is what a reader looks at while reading the caption.
@@ -28,7 +28,7 @@ The first run captures the diagram into `my-explainer/scene.snapshots/`; commit 
 Choose "Cache miss" above the stage, or open `http://127.0.0.1:5174/my-explainer.html?request=miss&step=request`. The URL names the case and the step, so a link opens exactly that picture. To see one case's steps without a browser:
 
 ```sh
-npm run explain -- shots my-explainer/scene.ts --case request=miss
+npm run rayner -- shots my-explainer/scene.ts --case request=miss
 ```
 
 Leave the preview running: with `--watch` it rebuilds on save, and a reload shows the change.
@@ -48,7 +48,7 @@ Add a third step at the end of `construct()`:
 Then run the checks:
 
 ```sh
-npm run explain -- check my-explainer/scene.ts
+npm run rayner -- check my-explainer/scene.ts
 ```
 
 ```text
@@ -76,7 +76,7 @@ Run `check` again. It passes and prints a report, also saved to `out/checks/my-e
 ## 5. Build the page
 
 ```sh
-npm run explain -- build my-explainer/scene.ts --out public/my-explainer.html
+npm run rayner -- build my-explainer/scene.ts --out public/my-explainer.html
 ```
 
 This writes:
@@ -90,7 +90,7 @@ This writes:
 
 ## 6. Draw with the engine
 
-The helpers cover diagrams, cards and code panels. For anything else a scene uses Lantern itself, imported from `rayner`, and the engine has general features the explainers use. Each excerpt below is shortened from one of the demo scenes in `scenes/explainers/`; [the reference](REFERENCE.md#engine-features) lists them all with their guides.
+The helpers cover diagrams, cards and code panels. For anything else a scene uses the engine itself, imported from `rayner`, and the engine has general features the explainers use. Each excerpt below is shortened from one of the demo scenes in `scenes/explainers/`; [the reference](REFERENCE.md#engine-features) lists them all with their guides.
 
 Zoom onto what the step is about, then come back. The camera moves no point, so `check` measures labels as the reader sees them (`seasons`):
 
