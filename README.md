@@ -6,7 +6,7 @@ Rayner is a fork of Ivar Vong's [Lantern](https://github.com/ivarvong/lantern) a
 
 ## Requirements
 
-Node 26 or later. CI is set up on Ubuntu 24.04 and the suite has also passed on macOS; other platforms have not been checked. Install the package with `npm i -D rayner`. In a checkout, `npm ci` installs everything except Chromium and FFmpeg. A package install leaves out the capture and picture packages; `explain --help` prints these lines:
+Node 26 or later. CI is set up on Ubuntu 24.04 and the suite has also passed on macOS; other platforms have not been checked. Install the package with `npm i -D rayner`. In a checkout, `npm ci` installs everything except Chromium and FFmpeg. A package install leaves out the capture and picture packages; `rayner --help` prints these lines:
 
 | Needed for | Install |
 | --- | --- |

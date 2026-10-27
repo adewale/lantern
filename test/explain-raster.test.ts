@@ -1,4 +1,4 @@
-// PNG output (explain shots and preview's contact sheet, the gallery tiles, the film)
+// PNG output (rayner shots and preview's contact sheet, the gallery tiles, the film)
 // rasterises with resvg 2.6.2, which aborts the whole process (a Rust panic, exit 134)
 // on a translucent element the camera has left outside its view. Every path culls what
 // the camera cannot show first. The shots path runs in a child process: an abort would
@@ -38,7 +38,7 @@ await this.step('two',{caption:'Zoom on one; the other dims.'});
 await this.play(this.frame.animate.fit([-2,-1.125,2,1.125],{margin:0}),far.animate.setOpacity(0.3));
 }}`;
 
-test('explain shots draws a zoomed frame with a translucent label outside the view', { skip }, async () => {
+test('rayner shots draws a zoomed frame with a translucent label outside the view', { skip }, async () => {
   const dir = join(folder, 'dim');
   await mkdir(dir);
   await writeFile(join(dir, 'scene.ts'), DIM);
