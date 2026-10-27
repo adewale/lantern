@@ -9,6 +9,8 @@ import type { Font, Run } from '../vendor/glyph.js';
 import { SANS, MONO, FALLBACK } from './font-data.ts';
 import { Text, CodeSpan } from './text.ts';
 import type { Style, Box } from './mobject.ts';
+import { TransformMatchingText } from './animation.ts';
+import type { MatchKey } from './animation.ts';
 
 /** Real cuts an explainer can ask for, instead of the stroked faux bold and no italic. */
 export type LetteringStyle = 'bold' | 'italic';
@@ -47,8 +49,10 @@ export interface LetteringProvider {
 }
 export const letteringOf = (Source: object): LetteringRequest | undefined =>
   (Source as { meta?: { lettering?: LetteringRequest } }).meta?.lettering;
+/** Bidi marks (LRM, RLM, ALM): only the build-time bidi resolver gives them meaning, so their strings are stored runs. */
+const BIDI_MARK = /[\u200e\u200f\u061c]/;
 export const usesLettering = (request: LetteringRequest, font: FontName, text: string, cut: LetteringCut = ''): boolean =>
-  !!cut || !!request.faces?.[font] || (request.scripts ?? []).some((s) => new RegExp(`\\p{Script_Extensions=${s}}`, 'u').test(text));
+  !!cut || !!request.faces?.[font] || (!!request.scripts?.length && BIDI_MARK.test(text)) || (request.scripts ?? []).some((s) => new RegExp(`\\p{Script_Extensions=${s}}`, 'u').test(text));
 export const runKey = (font: string, text: string, display = false): string => JSON.stringify([font, text, display]);
 export function scaledRun(run: Run, size: number): Run {
   return { ...run, width: run.width * size, ascent: run.ascent * size, descent: run.descent * size,
@@ -270,7 +274,46 @@ function spanForm(text: Text): { shaped: string; source: number[] } {
 // Preserve the core module's source and all legacy geometry. Only a Text built
 // with an optional provider needs the adapter; remember that provider for spans
 // queried after the run has released its fonts, or on a copied Code line.
+/**
+ * Matching keys for the glyphs of a Text built from lettering runs: the whole
+ * cluster each glyph draws (a conjunct, a ligature, a letter with its marks),
+ * and how many glyphs draw it. TransformMatchingText then pairs a glyph only
+ * with a glyph of the same cluster drawn the same way, so a cluster whose
+ * glyphs change (क to the conjunct क्ष) fades out and in instead of morphing
+ * one glyph into another. Keys by source index into the Text's text; recomputed
+ * when the text changes.
+ */
+const clusterKeys = new WeakMap<Text, { text: string; keys: Map<number, string> }>();
+function clusterKey(text: Text, cluster: number): string | undefined {
+  const provider = textProviders.get(text);
+  if (!provider) return undefined;
+  let memo = clusterKeys.get(text);
+  if (!memo || memo.text !== text.text) {
+    const form = spanForm(text), cut = textCuts.get(text) ?? '';
+    const run = provider.shape(text.font, form.shaped, text.run.fontSize, normalShapers?.[text.font] ?? shaperFor(text.font), cut);
+    const starts = run.glyphs.map((g) => form.source[g.cluster] ?? text.text.length);
+    const sorted = [...new Set(starts)].sort((a, b) => a - b);
+    // Only glyphs with outlines become the Text's children, so only they count
+    const counts = new Map<number, number>();
+    run.glyphs.forEach((g, i) => { if (g.path?.length) counts.set(starts[i]!, (counts.get(starts[i]!) ?? 0) + 1); });
+    const keys = new Map<number, string>();
+    sorted.forEach((start, i) => keys.set(start,
+      `${text.font} ${text.weight}${cut ? ' ' + cut : ''} ${text.text.slice(start, sorted[i + 1] ?? text.text.length)} ×${counts.get(start) ?? 0}`));
+    clusterKeys.set(text, memo = { text: text.text, keys });
+  }
+  return memo.keys.get(cluster);
+}
+
 function installSpanAdapter(): void {
+  const begin = TransformMatchingText.prototype.begin;
+  TransformMatchingText.prototype.begin = function (this: TransformMatchingText) {
+    const plain: MatchKey = this.key;
+    this.key = (part) => {
+      const text = part.parent, cluster = (part as { cluster?: number }).cluster;
+      return text instanceof Text && cluster != null ? clusterKey(text, cluster) ?? plain(part) : plain(part);
+    };
+    try { begin.call(this); } finally { this.key = plain; }
+  };
   const build = Text.prototype.build, copy = Text.prototype.copy, box = CodeSpan.prototype.box, setFill = Text.prototype.setFill;
   Text.prototype.build = function (text: string, size: number, style: Style) {
     if (active) textProviders.set(this, active); else textProviders.delete(this);

@@ -21,7 +21,7 @@ const enabled = !!process.env.EXPLAIN_BROWSER,
   options = { skip: enabled ? false : 'set EXPLAIN_BROWSER=1 for the lettered page in Chromium' };
 let browser: Browser, folder: string, server: { url: string; close(): void }, project: Project;
 /** The outline-snapshot fixtures (test/lettering/): scripts, faces, cuts and maths drawn from stored runs. */
-const OUTLINES = ['arabic', 'devanagari', 'math', 'style', 'styles'] as const;
+const OUTLINES = ['arabic', 'devanagari', 'hebrew', 'math', 'matching', 'style', 'styles'] as const;
 const outlines: Partial<Record<(typeof OUTLINES)[number], Project>> = {};
 before(async () => {
   if (!enabled) return;
@@ -101,4 +101,27 @@ test('each outline-snapshot page draws, at every step, the paths Node draws from
     assert.deepEqual(errors, [], id);
     await page.close();
   }
+});
+
+test('a right-to-left caption reads and aligns right to left on the page; a left-to-right one stays left', options, async () => {
+  const page = await browser.newPage({ viewport: { width: 1000, height: 900 } });
+  /** The caption's text against its box: how far its ink sits from each side, and its direction. */
+  const caption = () => page.locator('.player .caption').evaluate((p) => {
+    const range = document.createRange();
+    range.selectNodeContents(p);
+    const text = range.getBoundingClientRect(), box = p.getBoundingClientRect();
+    return { left: text.left - box.left, right: box.right - text.right, direction: getComputedStyle(p).unicodeBidi };
+  });
+  // The Hebrew fixture's first caption is one Hebrew line ending in a full stop
+  await page.goto(`${server.url}/hebrew.html`);
+  await page.waitForSelector('[data-ready=true]');
+  const rtl = await caption();
+  assert.equal(rtl.direction, 'plaintext');
+  assert.ok(rtl.right < 1 && rtl.left > 40, `the Hebrew caption hugs the right edge: ${JSON.stringify(rtl)}`);
+  await page.goto(`${server.url}/style.html`);
+  await page.waitForSelector('[data-ready=true]');
+  const ltr = await caption();
+  assert.notEqual(ltr.direction, 'plaintext');
+  assert.ok(ltr.left < 1 && ltr.right > 40, `the English caption hugs the left edge: ${JSON.stringify(ltr)}`);
+  await page.close();
 });

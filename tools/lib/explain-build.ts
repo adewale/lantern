@@ -10,6 +10,16 @@ import type { Project } from './explain-project.ts';
 import { pageFaces, letteringReport, useProjectLettering } from './explain-lettering.ts';
 import { letteringLicences, pageSnapshot } from './lettering.ts';
 
+/**
+ * A page whose lettering asks for a right-to-left script sets the direction of
+ * each title, caption and transcript line from its own first letter (UAX #9
+ * P2-P3), so an Arabic or Hebrew caption reads and aligns right to left while
+ * the player's controls stay as they are. Every other page's style is as it was.
+ */
+const RTL_CSS = '\nh1,.caption,.ruler,.transcript h2,.transcript a,.transcript p,.steps button span{unicode-bidi:plaintext;text-align:start}\n';
+const rightToLeftPage = (project: Project) =>
+  !!project.outlineLettering?.request.scripts?.some((script) => script === 'Arab' || script === 'Hebr');
+
 export async function buildExplainer(
   project: Project,
   out: string,
@@ -66,7 +76,7 @@ export async function buildExplainer(
   )
     throw new Error('Build-time diagram renderer leaked into browser artifact');
   const js = scriptEscape(bundled.outputFiles[0]!.text),
-    css = await readFile(join(ROOT, 'app/embed.css'), 'utf8');
+    css = (await readFile(join(ROOT, 'app/embed.css'), 'utf8')) + (rightToLeftPage(project) ? RTL_CSS : '');
   // Every case, every step: a link to it, its caption and what its resting picture shows.
   // The player shows the current case's section; without JavaScript every case shows.
   const transcript = project.variants
