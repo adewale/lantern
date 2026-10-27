@@ -3,11 +3,11 @@ import { usesOutlineLettering, withSceneLettering } from '../../src/lettering-ou
 import type { LetteringSnapshot } from '../../src/lettering-outlines.ts';
 import { build } from 'esbuild';
 import type { Plugin } from 'esbuild';
-import { readFile, writeFile, mkdir, stat, readdir, rm } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, stat, readdir, rm, rename } from 'node:fs/promises';
 import { dirname, resolve, join, basename, relative, sep } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { Scene, NullSink, traceScene, shaperFor } from '../../src/index.ts';
 import { takeMissingGlyphs } from '../../src/lettering.ts';
 import type { Trace } from '../../src/index.ts';
@@ -118,7 +118,11 @@ export async function loadScene(
   const folder = join(tmpdir(), 'lantern-explain');
   await mkdir(folder, { recursive: true });
   const output = join(folder, hash(code) + '.mjs');
-  await writeFile(output, code);
+  // Write then rename: processes loading the same scene at once (parallel test files) share this
+  // name, and a plain write let one import the file while another had just truncated it.
+  const partial = `${output}.${process.pid}.${randomUUID()}`;
+  await writeFile(partial, code);
+  await rename(partial, output);
   const module = await import(pathToFileURL(output).href);
   const choices = Object.values(module).filter(
     (value): value is ExplainerClass => typeof value === 'function' && value.prototype instanceof Scene,
