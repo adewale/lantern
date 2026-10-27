@@ -17,7 +17,6 @@ import {
   Text,
 } from '../../src/index.ts';
 import { Card } from '../../explain/panels.ts';
-import { isHeading } from '../../explain/stage.ts';
 import { ROOT, engineAlias, sceneSlug } from './explain-project.ts';
 import { caseName } from '../../explain/index.ts';
 import { restingFrame, undescribed } from '../../explain/trace.ts';
