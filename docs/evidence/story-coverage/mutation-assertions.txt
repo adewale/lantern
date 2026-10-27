@@ -1,8 +1,8 @@
 omitted-final-step
 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   2 !== 8
-  
+
       at reviewStoryVariant (file:///tmp/rayner-story-controls/tools/lib/explain-story-review.ts:259:10)
 log SHA-256: c520cc4f408ffe4e94aa9d79bbe7f19135687fab28dcf38e05e5bd0592394a77
 
@@ -10,7 +10,7 @@ omitted-desktop
 AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
   + actual - expected
   ... Skipped lines
-  
+
     [
       [
         'opening',
@@ -23,9 +23,9 @@ log SHA-256: c4c5d5b7f5ebf3df60e3c61fb13bf5c6ee45df9eb3d35b8e4f2b56a2e33ca1a4
 
 coverage-hole
 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-    
+
     true !== false
-    
+
         at file:///tmp/rayner-story-controls/test/explain-story-review.test.ts:24:12
 log SHA-256: 1534af39d7b8eddfd16b0d92d2e3b00335b8261138899ddfde156484738dfe52
 
@@ -46,17 +46,17 @@ log SHA-256: 78e39366e0c1a0b4d88ebd7efb570f37fc7b58324a4ee3c70b31c993e524eb27
 
 transparent-paint
 AssertionError [ERR_ASSERTION]: fill
-  
+
   true !== false
-  
+
       at TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-story-review.test.ts:100:14)
 log SHA-256: 55485c6e69cb68eb4e79ae907deb568e61de857347e9d9049b05ac33949e9b68
 
 css-clip-override
 AssertionError [ERR_ASSERTION]: clip
-  
+
   true !== false
-  
+
       at TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-story-review.test.ts:100:14)
 log SHA-256: a764ee010566815311a2c0eddb408ebcd2d2e6babf484cd463a91693f2809ee4
 
@@ -77,21 +77,21 @@ log SHA-256: d64b694091792dbc75fb6074e27ec8230dc9d7f690247b5623c1331a5a4bf4b5
 
 transformed-clip
 AssertionError [ERR_ASSERTION]: rect-transform
-  
+
   true !== false
-  
+
       at TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-story-review.test.ts:263:16)
 log SHA-256: 8ec51553bbc3cb3488e8620772f547e632e54bbf17db21dc8f334ab0c54fdd2c
 
 server-startup-error-code
 AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
   + actual - expected
-  
+
   + Comparison {}
   - Comparison {
   -   code: 'EADDRINUSE'
   - }
-  
+
       at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
 log SHA-256: 90704d5245972e6a0e3110100a2642f72505b6e9661033fc90f68e16b4e9e6b0
 
@@ -118,7 +118,7 @@ log SHA-256: df3a860181bf7a9e57625468a8676b1d8b99a63c335357800e87bdd6ed3eb33b
 repeated-first-shard
 AssertionError [ERR_ASSERTION]: exact case inventory
     + actual - expected
-    
+
       [
         {
     +     scene: 'scene-1',
@@ -138,13 +138,13 @@ log SHA-256: 88bca6851fed0c748dc0d86ebb2247a6738759af704af74ad9d4f5f92287501b
 incidental-context-as-subject
 AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
   + actual - expected
-  
+
     [
   +   'changed: Subject',
   +   'changed: Context',
       'subject'
     ]
-  
+
       at TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-story-review.test.ts:121:12)
 log SHA-256: 44b47461ba3b01dad56542f3a0de40fe1b03ef3d4468952bb77004ae59733693
 
