@@ -9,6 +9,8 @@ import assert from 'node:assert/strict';
 import { ROOT } from './lib/explain-project.ts';
 
 const run = promisify(execFile);
+const sourceCommit = (await run('git', ['rev-parse', 'HEAD'], { cwd: ROOT })).stdout.trim();
+const dirtyBefore = !!(await run('git', ['status', '--porcelain'], { cwd: ROOT })).stdout.trim();
 const directory = join(ROOT, 'out/release');
 await rm(directory, { recursive: true, force: true });
 await mkdir(directory, { recursive: true });
@@ -23,8 +25,8 @@ assert.equal(await integrity(), packed.integrity);
 const result = await run(process.execPath, [join(ROOT, 'tools/explain-package-smoke.ts'), '--archive', archive], { cwd: ROOT, maxBuffer: 4 * 1024 * 1024 });
 process.stdout.write(result.stdout);
 assert.equal(await integrity(), packed.integrity, 'the tested archive was modified');
-const sourceCommit = (await run('git', ['rev-parse', 'HEAD'], { cwd: ROOT })).stdout.trim();
-const dirty = !!(await run('git', ['status', '--porcelain'], { cwd: ROOT })).stdout.trim();
+assert.equal((await run('git', ['rev-parse', 'HEAD'], { cwd: ROOT })).stdout.trim(), sourceCommit, 'source commit changed during validation');
+const dirty = dirtyBefore || !!(await run('git', ['status', '--porcelain'], { cwd: ROOT })).stdout.trim();
 await writeFile(join(directory, 'manifest.json'), JSON.stringify({
   name: packed.name, version: packed.version, filename: packed.filename, sourceCommit, dirty,
   integrity: packed.integrity, shasum: packed.shasum, size: packed.size, unpackedSize: packed.unpackedSize,
