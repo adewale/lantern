@@ -82,24 +82,18 @@ export default class OAuthExplainer extends Scene {
 
     await this.step('authorize', {
       title: 'The authorization request carries the challenge and S256',
-      line: 'The card’s last row: the code_verifier is not sent.',
+      line: 'The request carries the challenge and S256, never the verifier.',
       caption:
-        'The client sends the challenge and the S256 method in the authorization request, through the user’s browser, while the verifier stays with the client, as the card’s last row shows. The user then signs in and consents at the auth server.',
+        'The client sends the challenge and the S256 method in the authorization request, through the user’s browser, as the note under it says, while the verifier stays with the client and is not sent. The user then signs in and consents at the auth server.',
     });
     await s.clear();
-    const seq = await s.show({ source: sequence(attacker) }, { box: 'main', build: 'frame' });
-    const request = await s.card(
-      [
-        ['code_challenge', short(challenge)],
-        ['method', 'S256'],
-        ['code_verifier', 'not sent'],
-      ],
-      { at: 'side', fontSize: 0.26 },
-    );
+    const seq = await s.show({ source: sequence(attacker) }, { box: 'full', build: 'frame' });
+    /** What a message carries, or what the server makes of it, said on the diagram under its arrow. */
+    const say = (id: string, text: string, color: string = s.palette.ink) => seq.note(id, text, { side: 'below', color });
     await seq.reveal(['message:C->S#0']);
     await seq.mark(['message:C->S#0'], { color: CHALLENGE, as: 'carries the challenge' });
-    // The caption points at this row, so the step lights it: the request carries the challenge, not the verifier.
-    await request.mark('code_verifier');
+    // Short enough to read whole in one phone close-up.
+    await say('message:C->S#0', `challenge ${short(challenge, 8)}, S256; verifier not sent`, CHALLENGE);
 
     await this.step('code', {
       title: 'The redirect carries a short-lived code bound to the challenge',
@@ -110,14 +104,7 @@ export default class OAuthExplainer extends Scene {
     await s.clearOverlays();
     await seq.reveal(['message:S->C#0']);
     await seq.mark(['message:S->C#0'], { color: CODE, as: 'carries the code' });
-    const redirect = await s.card(
-      [
-        ['bound challenge', short(challenge)],
-        ['code_verifier', 'not in it'],
-      ],
-      { at: 'side', fontSize: 0.26 },
-    );
-    await redirect.mark('bound challenge');
+    await say('message:S->C#0', `code bound to ${short(challenge)}`, CODE);
 
     if (attacker) {
       await this.step('attack', {
@@ -132,21 +119,13 @@ export default class OAuthExplainer extends Scene {
       await s.clearOverlays();
       await seq.reveal(['message:S->X#0', 'message:X->S#0', 'message:S->X#1']);
       await seq.mark(['message:S->X#0', 'message:X->S#0', 'message:S->X#1'], { color: s.bad, as: 'attack' });
-      const check = await s.card(
-        [
-          ['guessed verifier', short(GUESS)],
-          ['S256(guess)', short(bad)],
-          ['bound challenge', short(challenge)],
-          ['match', String(bad === challenge)],
-        ],
-        { at: 'side', fontSize: 0.26 },
-      );
-      await check.mark('match');
+      // The server's check, said where it happens: the guess as sent, then the answer.
+      await say('message:S->X#1', `S256(guess) ${short(bad, 10)} ≠ bound ${short(challenge, 10)}`, s.bad);
     }
 
     await this.step('exchange', {
       title: 'The token endpoint returns a token only when S256(verifier) matches',
-      line: 'The real verifier hashes to the bound challenge: match is true.',
+      line: 'The real verifier hashes to the bound challenge, so they match.',
       caption:
         'The real client sends the code with the original verifier. The server computes S256 of the verifier, finds that it matches the challenge stored with the code, and returns an access token once its usual code and client checks also pass.',
     });
@@ -155,16 +134,7 @@ export default class OAuthExplainer extends Scene {
     await seq.mark(['message:C->S#1', 'message:S->C#1'], { color: s.good, as: 'accepted' });
     const recomputed = pkceChallenge(VERIFIER);
     const accepted = recomputed === challenge;
-    const verify = await s.card(
-      [
-        ['code_verifier', short(VERIFIER)],
-        ['S256(verifier)', short(recomputed)],
-        ['bound challenge', short(challenge)],
-        ['match', String(accepted)],
-      ],
-      { at: 'side', fontSize: 0.26 },
-    );
-    await verify.mark('match');
+    await say('message:S->C#1', `S256(verifier) ${short(recomputed, 10)} ${accepted ? '=' : '≠'} bound ${short(challenge, 10)}`, accepted ? s.good : s.bad);
     this.state.accepted = accepted;
 
     await this.step('channels', {
@@ -180,14 +150,6 @@ export default class OAuthExplainer extends Scene {
       as: 'readable on the device',
     });
     await seq.mark(['message:C->S#1'], { color: s.good, as: 'direct TLS' });
-    const paths = await s.card(
-      [
-        ['Via browser', 'challenge, code'],
-        ['Direct, TLS', 'verifier'],
-        ['Verifier', '32 random bytes'],
-      ],
-      { at: 'side', fontSize: 0.26 },
-    );
-    await paths.mark('Direct, TLS');
+    await say('message:S->C#1', 'The verifier, 32 random bytes, went only by TLS', s.good);
   }
 }

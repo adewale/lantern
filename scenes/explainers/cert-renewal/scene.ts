@@ -404,21 +404,36 @@ export default class CertRenewalExplainer extends Scene {
       ],
       '%d %b',
     );
-    const margin = await s.show({ source: windows }, { box: regionBox('full', { bottom: -1.6 }) });
+    const margin = await s.show({ source: windows }, { box: 'full' });
     await margin.mark([`task:${rule}`], { as: 'the chosen rule' });
-    await s.card(
-      limited
-        ? [
-            ['Limit', `${LIMIT.burst} per 7 days, one back every ${EMISSION} h`],
-            ['First refusal', `hour ${mine.firstRefused}`],
-            ['In 365 days', `${mine.renewalsPerYear} renewed, ${mine.refusedPerYear} refused`],
-          ]
-        : [
-            [RULES[rule].name, `${length(mine.slack, short)}, ${mine.retries} runs`],
-            [RULES[other].name, `${length(theirs.slack, short)}, ${theirs.retries} runs`],
-          ],
-      { at: regionBox('full', { top: -1.8 }), width: 9.5 },
-    );
+    // Each retry window says what it leaves, just left of its bar, in the row it belongs to.
+    // A task's first child is its bar; its row label travels with it.
+    const bar = (r: Rule) => margin.get(`task:${r}`).children[0]!.box()!;
+    const chartLeft = margin.get('task:life').children[0]!.box()![0];
+    // Left of the bar when the row has room for the words, otherwise under the chart.
+    const say = (r: Rule, text: string) => {
+      const b = bar(r),
+        room = b[0] - chartLeft > new Text(text, { fontSize: 0.22 }).width() + 0.4;
+      return s.callout(b, text, room ? { side: 'left', gap: 0.2, color: s.emphasis, size: 0.22 } : { side: 'below', gap: 0.8, color: s.emphasis, size: 0.22 });
+    };
+    // Renewing at every run, the 30-day rule's window is the whole life, so its words go under the chart.
+    if (limited) {
+      // The callout points at the hour of the first refusal on the 30-day rule's bar.
+      const b = bar(rule),
+        from = Math.round(byRule[rule].due),
+        x = b[0] + ((mine.firstRefused! - from) / (life.hours - from)) * (b[2] - b[0]);
+      await s.callout([x, b[1]], `refused at hour ${mine.firstRefused}; ${mine.refusedPerYear} refused, ${mine.renewalsPerYear} renewed in 365 days`, {
+        side: 'below',
+        gap: 0.8,
+        color: s.emphasis,
+        size: 0.22,
+      });
+    } else
+      for (const [r, m] of [
+        [rule, mine],
+        [other, theirs],
+      ] as const)
+        await say(r, `${length(m.slack, short)} to retry, ${m.retries} runs`);
     this.state.slack = {
       fraction: frac.slack,
       fixed30: f30.slack,

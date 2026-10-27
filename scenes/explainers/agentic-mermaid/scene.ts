@@ -51,16 +51,19 @@ export default class MermaidExplainer extends Scene {
 
     await this.step('source', {
       title: 'The agent’s edit, parsed into a snapshot with ids',
-      line: 'The card lists the id of every node and edge.',
+      line: 'Every node and edge carries the id the snapshot gives it.',
       caption:
-        'The agent’s edit is Mermaid source, and the card lists the id the snapshot gives each node and edge. Agentic Mermaid parses, lays out, styles and verifies it at build time, and none of Agentic Mermaid ships to the reader.',
+        'The agent’s edit is Mermaid source, and each node and edge is labelled with the id the snapshot gives it. Agentic Mermaid parses, lays out, styles and verifies it at build time, and none of Agentic Mermaid ships to the reader.',
     });
     const d = await s.show({ source: first }, { box: 'main' });
     const source = await code(first.split('\n'));
-    const ids = await card(
-      d.snapshot.parts.filter((p) => p.role === 'node' || p.role === 'edge').map((p) => [p.role, p.id] as const),
-    );
-    await column(source, ids);
+    await column(source);
+    // Each part's id, said on the part: Reply and the edge to it above, the rest below.
+    const parts = d.snapshot.parts.filter((p) => p.role === 'node' || p.role === 'edge');
+    for (const p of parts)
+      await d.note(p.id, p.role === 'edge' ? p.id : `node ${p.id}`, {
+        side: (p.role === 'edge' ? p.to : p.id) === 'B' ? 'above' : 'below',
+      });
 
     await this.step('verify', {
       title: missing ? 'The verifier flags both edges out of Cached' : 'The verifier finds no warnings in the first edit',
@@ -71,7 +74,7 @@ export default class MermaidExplainer extends Scene {
         ? 'verify(flow) returns ok: true with two DECISION_BRANCH_UNLABELED warnings, one per marked edge. The diagram renders, but nothing on it says which edge out of Cached means yes.'
         : 'Both edges out of Cached carry labels, yes and no, so verify(flow) returns no warnings and this case skips the repair step.',
     });
-    await this.play(new FadeOut(ids, { runTime: 0.3 }));
+    await d.clearNotes();
     const warnings = d.findings();
     this.state.warnings = warnings;
     await d.mark(
@@ -122,7 +125,7 @@ export default class MermaidExplainer extends Scene {
       title: 'The token travels the yes edge’s own route',
       line: 'Each hop is checked first; Reply to Database would throw.',
       caption:
-        'The card lists the route the token follows from Cached to Reply. walk() looks up every hop before animating, so a hop with no edge, such as Reply to Database, throws before anything moves.',
+        'The note on the yes edge gives the route the token follows from Cached to Reply, its first and last points in snapshot units. walk() looks up every hop before animating, so a hop with no edge, such as Reply to Database, throws before anything moves.',
     });
     await s.clearOverlays();
     await d.unmark();
@@ -131,13 +134,9 @@ export default class MermaidExplainer extends Scene {
     const route = d.snapshot.parts.find((p) => p.role === 'edge' && p.from === 'A' && p.to === 'B')!.route ?? [];
     const pt = (p: readonly number[] | undefined) => (p ? `(${p[0]!.toFixed(2)}, ${p[1]!.toFixed(2)})` : '–');
     const linked = d.snapshot.parts.some((p) => p.role === 'edge' && p.from === 'B' && p.to === 'C');
+    const yes = d.snapshot.parts.find((p) => p.role === 'edge' && p.from === 'A' && p.to === 'B')!.id;
+    await d.note(yes, `${route.length} points: ${pt(route[0])} → ${pt(route.at(-1))}`, { side: 'above' });
     await column(
-      await card([
-        ['edge', 'A -> B'],
-        ['route points', route.length],
-        ['starts', pt(route[0])],
-        ['ends', pt(route.at(-1))],
-      ]),
       await code(
         [
           "d.walk([['A', 'B']])  // real edge",

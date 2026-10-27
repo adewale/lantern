@@ -1,6 +1,6 @@
 import { Scene } from '../../../src/index.ts';
 import { stage, settingsOf, regionBox } from '../../../explain/index.ts';
-import { impot, bareme, BAREME, PARAMS, euros, nombre, pourcent, partsTexte, NNBSP } from '../lib/quotient-familial.ts';
+import { impot, bareme, BAREME, PARAMS, euros, pourcent, partsTexte, NNBSP } from '../lib/quotient-familial.ts';
 import type { Impot } from '../lib/quotient-familial.ts';
 
 // Every rule is read from openfisca-france at tag 176.1.3 (commit 5cc6563); the model in
@@ -133,6 +133,12 @@ export default class QuotientFamilialExplainer extends Scene {
       caption: `Un couple marié ou pacsé, ${ENFANTS[enfants]}, déclare ${rniTexte} de revenu net imposable pour 2024. Le calcul reprend celui d’OpenFisca France 176.1.3, réduit aux étapes du schéma${deux} il s’arrête avant les réductions et crédits d’impôt, et ignore le seuil de 61 € sous lequel l’impôt n’est pas recouvré.`,
     });
     const flow = await s.show({ source: FLOW }, { box: TOP });
+    /** A step's arithmetic, said under the node of the pipeline that does it. */
+    const sous = (id: string, texte: string) => {
+      const b = flow.get(id).box()!,
+        bas = flow.get('REF').box()![1] - 0.4;
+      return s.callout(b, texte, { side: 'below', gap: b[1] - bas, size: 0.32, color: s.emphasis });
+    };
     await flow.mark(['RNI'], { as: 'étape en cours' });
     await card(
       [
@@ -170,17 +176,7 @@ export default class QuotientFamilialExplainer extends Scene {
     await s.clearOverlays();
     await flow.unmark();
     await flow.mark(['QUOT'], { as: 'étape en cours' });
-    await card(
-      [
-        ['Couple', '2'],
-        ...RANG.slice(0, enfants).map((rang, i) => [rang, i < 2 ? '0,5' : '1'] as const),
-        ['Nombre de parts', partsTexte(r.parts)],
-      ],
-      {
-        at: regionBox(BELOW, { left: -3.5, right: 3.5 }),
-        title: 'Parts du foyer',
-      },
-    ).then((c) => c.mark('Nombre de parts'));
+    await sous('QUOT', [`2 pour le couple`, ...RANG.slice(0, enfants).map((_, i) => (i < 2 ? '0,5' : '1'))].join(' + ') + ` = ${partsTexte(r.parts)} parts`);
     this.state.parts = r.parts;
 
     // ----------------------------------------------------------- quotient
@@ -192,14 +188,7 @@ export default class QuotientFamilialExplainer extends Scene {
     await s.clearOverlays();
     await flow.unmark();
     await flow.walk([['RNI', 'QUOT']], { trail: true });
-    await card(
-      [
-        ['Revenu net imposable', rniTexte],
-        ['÷ nombre de parts', partsTexte(r.parts)],
-        ['= quotient', eur2(r.quotient)],
-      ],
-      { at: regionBox(BELOW, { left: -3.5, right: 3.5 }) },
-    ).then((c) => c.mark('= quotient'));
+    await sous('QUOT', `${rniTexte} ÷ ${partsTexte(r.parts)} = ${eur2(r.quotient)}`);
     this.state.quotient = r.quotient;
 
     // ------------------------------------------------------------ barème
@@ -207,8 +196,6 @@ export default class QuotientFamilialExplainer extends Scene {
       TRANCHES = BAREME[2024].map((x) => pourcent(x.rate)),
       reached = b.slices.filter((x) => x.base > 0),
       top = reached.at(-1)!;
-    const sliceLabel = (x: (typeof b.slices)[number]) =>
-      `${pourcent(x.rate)} de ${nombre(x.from)} à ${x.to == null ? '…' : nombre(x.to)}`;
     await this.step('bareme', {
       title: 'Le barème taxe chaque tranche à son propre taux',
       line: `Impôt de chaque tranche${pv} total pour une part${deux} ${eur2(b.total)}.`,
@@ -229,13 +216,10 @@ export default class QuotientFamilialExplainer extends Scene {
           bars: b.slices.map((x) => x.tax),
         }),
       },
-      { box: LEFT },
+      { box: BELOW },
     );
-    const parTranche = await card(
-      [...reached.map((x) => [sliceLabel(x), eur2(x.tax)] as const), ['Impôt pour une part', eur2(b.total)]],
-      { at: RIGHT, title: `Quotient de ${eur2(r.quotient)}` },
-    );
-    await parTranche.mark('Impôt pour une part');
+    // Each tranche the quotient reaches says its tax over its own bar.
+    for (const x of reached) await s.callout(bars.get(`bar:0:${pourcent(x.rate)}`), eur2(x.tax), { side: 'above', gap: 0.2, size: 0.26 });
     this.state.parPart = r.parPart;
 
     // -------------------------------------------------------------- taux
@@ -256,7 +240,6 @@ export default class QuotientFamilialExplainer extends Scene {
     });
     const topBar = `bar:0:${pourcent(top.rate)}`;
     await bars.mark([topBar], { as: 'tranche marginale' });
-    await parTranche.mark(sliceLabel(top), { as: 'tranche marginale' });
     this.state.tranche = top.rate;
     this.state.tauxMoyenPart = moyen;
 
@@ -272,15 +255,7 @@ export default class QuotientFamilialExplainer extends Scene {
     await flow.unmark();
     await flow.dim(['RNI', 'QUOT', 'BAR', 'FOIS']);
     await flow.walk([['BAR', 'FOIS']], { trail: true });
-    await card(
-      [
-        ['Impôt pour une part', eur2(r.parPart)],
-        ['× nombre de parts', partsTexte(r.parts)],
-        ['= impôt avec quotient', eur2(r.brut)],
-        ['Barème sur le revenu entier', eur2(enGros)],
-      ],
-      { at: regionBox(BELOW, { left: -3.8, right: 3.8 }) },
-    ).then((c) => c.mark('= impôt avec quotient'));
+    await sous('FOIS', `${eur2(r.parPart)} × ${partsTexte(r.parts)} = ${eur2(r.brut)}`);
     this.state.brut = r.brut;
 
     // --------------------------------------------------------- reference

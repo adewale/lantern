@@ -3,7 +3,8 @@ import type { Box } from '../../../src/index.ts';
 import { stage, settingsOf, REGIONS } from '../../../explain/index.ts';
 import type { Diagram } from '../../../explain/index.ts';
 import { SHADES, THEME_LINES, rows, summarize } from '../lib/tailwind-gamut.ts';
-import type { Fact, Row, Shade } from '../lib/tailwind-gamut.ts';
+import type { Row, Shade } from '../lib/tailwind-gamut.ts';
+type Side = 'above' | 'below' | 'left' | 'right';
 
 // Sources. Every number on screen comes from lib/tailwind-gamut.ts, which cites the lines it uses.
 const THEME =
@@ -53,7 +54,6 @@ const SIZE = 0.24;
 const COLOUR_NAME: Record<Curve['id'], string> = { srgb: 'dark grey', tw: 'blue', p3: 'lavender' };
 
 const pct = (v: number) => `${v.toFixed(1)}%`;
-const named = (f: Fact) => `${f.family} ${pct(f.value)}`;
 const list = (xs: readonly string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}`);
 
 export default class TailwindGamutExplainer extends Scene {
@@ -156,6 +156,48 @@ export default class TailwindGamutExplainer extends Scene {
       }
     };
 
+    /**
+     * A colour's value, said on its Tailwind dot in a note, whose spoke name is beside it: on the
+     * first side, across the spoke first, where the note meets none of the chart's words (spoke
+     * names and ring values) or the notes so far; failing that, where it covers least.
+     */
+    const said: Box[] = [];
+    const onDot = async (d: Diagram, family: string, text: string) => {
+      const i = all.findIndex((r) => r.family === family);
+      const dot = d.get(`dot:tw:${i}`).box()!,
+        ring = d.get('ring:0').box()!;
+      const dx = (dot[0] + dot[2]) / 2 - (ring[0] + ring[2]) / 2,
+        dy = (dot[1] + dot[3]) / 2 - (ring[1] + ring[3]) / 2;
+      const across: Side[] = Math.abs(dx) > Math.abs(dy) ? (dy >= 0 ? ['above', 'below'] : ['below', 'above']) : dx >= 0 ? ['right', 'left'] : ['left', 'right'];
+      const along: Side[] = Math.abs(dx) > Math.abs(dy) ? (dx >= 0 ? ['left', 'right'] : ['right', 'left']) : dy >= 0 ? ['below', 'above'] : ['above', 'below'];
+      const words = [...d.parts.keys()]
+        .filter((id) => id.startsWith('axis-label:') || id.startsWith('tick'))
+        .map((id) => d.get(id).box())
+        .filter((b): b is Box => !!b);
+      const taken = [...words, ...said];
+      const size = 0.22,
+        w = new Text(text, { fontSize: size }).width() + size * 1.4,
+        h = size * 1.85;
+      const cx = (dot[0] + dot[2]) / 2,
+        cy = (dot[1] + dot[3]) / 2;
+      // Where note() puts a note on each side, 0.14 off the dot.
+      const boxAt = (side: Side): Box =>
+        side === 'right'
+          ? [dot[2] + 0.14, cy - h / 2, dot[2] + 0.14 + w, cy + h / 2]
+          : side === 'left'
+            ? [dot[0] - 0.14 - w, cy - h / 2, dot[0] - 0.14, cy + h / 2]
+            : side === 'above'
+              ? [cx - w / 2, dot[3] + 0.14, cx + w / 2, dot[3] + 0.14 + h]
+              : [cx - w / 2, dot[1] - 0.14 - h, cx + w / 2, dot[1] - 0.14];
+      const overlap = (a: Box, b: Box) =>
+        Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
+      const cost = (sd: Side) => taken.reduce((sum, b) => sum + overlap(boxAt(sd), b), 0);
+      const sides = [...across, ...along];
+      const best = sides.find((sd) => cost(sd) === 0) ?? sides.reduce((a, b) => (cost(b) < cost(a) ? b : a));
+      said.push(boxAt(best));
+      await d.note(`dot:tw:${i}`, text, { side: best, size });
+    };
+
     // ------------------------------------------------------------------ oklch
     // theme.css l.10–320: 26 families of 11 shades, 286 lines, each oklch(L% C h); only black and white
     // (l.322–323) are hex. The 17 coloured families come first (l.10–212), then nine greys. Blog l.358–360: "We've upgraded the entire default
@@ -212,16 +254,10 @@ export default class TailwindGamutExplainer extends Scene {
       caption: `Tailwind’s own chroma for each colour, drawn over the edge. ${out} of ${n} lie outside sRGB; only ${list(sum.insideSrgb)} fit. At this scale the overshoot is a sliver: the furthest out in chroma, ${sum.furthest.family}-${shade}, is ${sum.furthest.value.toFixed(3)} past the edge.`,
     });
     await s.clearOverlays();
+    said.length = 0;
     await d.reveal(['curve:tw']);
-    await column(
-      d,
-      [
-        ['Outside sRGB', `${out} of ${n}`],
-        ['Furthest out', `${sum.furthest.family}, +${sum.furthest.value.toFixed(3)}`],
-      ],
-      [`Inside sRGB: ${list(sum.insideSrgb)}.`],
-      [srgbCurve, twCurve],
-    );
+    await onDot(d, sum.furthest.family, `+${sum.furthest.value.toFixed(3)}`);
+    await column(d, [], [`Inside sRGB: ${list(sum.insideSrgb)}.`], [srgbCurve, twCurve]);
     this.state.outsideSrgb = sum.outsideSrgb;
     this.state.furthest = sum.furthest;
 
@@ -237,6 +273,7 @@ export default class TailwindGamutExplainer extends Scene {
       caption: `The same colours, each as a percentage of the sRGB edge on its own spoke. The edge becomes the 100 ring, and every colour past it shows. ${sum.mostOfSrgb.family} goes furthest, to ${pct(sum.mostOfSrgb.value)}; ${sum.leastOfSrgb.family} has the most room, at ${pct(sum.leastOfSrgb.value)}. The centre is now 50%, and the rings are 25 points apart.`,
     });
     await s.clearOverlays();
+    said.length = 0;
     await d.morph(
       { source: radar(all, shareCurves, SHARE) },
       {
@@ -247,16 +284,9 @@ export default class TailwindGamutExplainer extends Scene {
         ],
       },
     );
-    await column(
-      d,
-      [
-        ['Ring 100', 'the sRGB edge'],
-        ['Highest', named(sum.mostOfSrgb)],
-        ['Lowest', named(sum.leastOfSrgb)],
-      ],
-      ['Rings: 75, 100, 125 and 150% of the edge.'],
-      shareCurves,
-    );
+    await onDot(d, sum.mostOfSrgb.family, pct(sum.mostOfSrgb.value));
+    await onDot(d, sum.leastOfSrgb.family, pct(sum.leastOfSrgb.value));
+    await column(d, [], ['Ring 100 is the sRGB edge.', 'Rings: 75, 100, 125 and 150% of the edge.'], shareCurves);
     this.state.ofSrgb = all.map((r) => r.ofSrgb);
 
     // ------------------------------------------------------------------ p3-edge
@@ -269,18 +299,19 @@ export default class TailwindGamutExplainer extends Scene {
       caption: `The Display P3 edge on the same scale lies beyond sRGB’s on every spoke, from ${pct(sum.p3OfSrgb.lo.value)} at ${sum.p3OfSrgb.lo.family} to ${pct(sum.p3OfSrgb.hi.value)} at ${sum.p3OfSrgb.hi.family}. All ${n} colours fit inside it. The closest is ${near.family}-${shade}, at ${pct(near.value)} of the P3 edge, ${near.spare.toFixed(3)} chroma short of it.`,
     });
     await s.clearOverlays();
+    said.length = 0;
     await d.morph(
       { source: radar(all, withP3, SHARE) },
       { ops: [{ kind: 'add_curve', id: 'p3', label: p3Curve.label, values: [...p3Curve.values] }] },
     );
+    await onDot(d, near.family, pct(near.value));
     await column(
       d,
-      [
-        ['Outside P3', sum.outsideP3.length ? `${sum.outsideP3.length} of ${n}` : 'none'],
-        ['Closest to it', `${near.family}, ${pct(near.value)}`],
-        ['Short by', `${near.spare.toFixed(3)} chroma`],
-      ],
       [],
+      [
+        `Outside P3: ${sum.outsideP3.length ? `${sum.outsideP3.length} of ${n}` : 'none'}.`,
+        `${near.family}-${shade} reaches ${pct(near.value)} of the P3 edge, ${near.spare.toFixed(3)} chroma short of it.`,
+      ],
       withP3,
     );
     this.state.outsideP3 = sum.outsideP3;
@@ -303,6 +334,7 @@ export default class TailwindGamutExplainer extends Scene {
         caption: `CSS Color 4 says a colour outside the screen’s gamut must be mapped into it. Its binary search lowers chroma at fixed lightness and hue until clipping changes the colour by under 0.02, then clips; hue moves by up to ${sum.hueShift.value}°. All ${out} land on the edge. ${lost.family}-${shade} loses most chroma: ${lost.from.toFixed(3)} to ${lost.to.toFixed(3)}.`,
       });
       await s.clearOverlays();
+      said.length = 0;
       await d.morph(
         { source: radar(all, [shareCurves[0]!, mapped, p3Curve], SHARE) },
         {
@@ -312,14 +344,12 @@ export default class TailwindGamutExplainer extends Scene {
           ],
         },
       );
+      await onDot(d, lost.family, `−${lost.value.toFixed(3)}`);
       await column(
         d,
+        [],
         [
-          ['Lowered', `${out} of ${n}`],
-          ['Most lost', `${lost.family}, ${lost.value.toFixed(3)}`],
-          ['Hue moves', `up to ${sum.hueShift.value}°`],
-        ],
-        [
+          `${out} of ${n} lowered; hue moves up to ${sum.hueShift.value}°.`,
           `${lost.family}-${shade}: chroma ${lost.from.toFixed(3)} to ${lost.to.toFixed(3)}.`,
           'Each lowered colour is measured against the edge at its new lightness and hue.',
           'CSS Color 4 also allows two other methods, EdgeSeeker and ray trace; these numbers are binary search’s.',
@@ -341,18 +371,17 @@ export default class TailwindGamutExplainer extends Scene {
         caption: `Now each spoke is measured against the Display P3 edge, the new 100 ring. CSS Color 4’s gamut mapping leaves a colour inside the screen’s gamut unchanged, so a P3 screen shows all ${n} as written. The sRGB edge falls to ${pct(sum.srgbOfP3.lo.value)}–${pct(sum.srgbOfP3.hi.value)} of P3’s; ${near.family} comes closest, at ${pct(near.value)}.`,
       });
       await s.clearOverlays();
+      said.length = 0;
       await d.morph(
         { source: radar(all, p3Share, SHARE) },
         { ops: p3Share.map((c) => ({ kind: 'set_curve_values', id: c.id, values: [...c.values] })) },
       );
+      await onDot(d, near.family, pct(near.value));
+      if (sum.leastOfP3.family !== near.family) await onDot(d, sum.leastOfP3.family, pct(sum.leastOfP3.value));
       await column(
         d,
-        [
-          ['Ring 100', 'the Display P3 edge'],
-          ['Closest', named(near)],
-          ['Most room', named(sum.leastOfP3)],
-        ],
-        ['Each spoke is now a percentage of the P3 edge at that colour’s lightness and hue.'],
+        [],
+        ['Ring 100 is now the Display P3 edge.', 'Each spoke is now a percentage of the P3 edge at that colour’s lightness and hue.'],
         p3Share,
       );
       this.state.ofP3 = all.map((r) => r.ofP3);

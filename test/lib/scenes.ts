@@ -87,6 +87,9 @@ export const cardRow = (scene: Scene, label: string, value: string): Mobject[] =
   );
   return card ? [card.labels.get(label)!, card.values.get(label)!] : [];
 };
+/** Shown labels whose text contains `words`: a note that says a value among others, say. */
+export const labelsSaying = (scene: Scene, words: string): Mobject[] =>
+  scene.familyMembers().filter((m) => (m.style.opacity ?? 1) > 0.5 && (labelOf(m)?.text ?? '').includes(words));
 /** Shown labels with these words, outside cards (a diagram's, say). */
 export const wordsOutsideCards = (scene: Scene, ...words: string[]): Mobject[] =>
   scene.familyMembers().filter((m) => {
