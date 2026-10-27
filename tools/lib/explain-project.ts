@@ -118,11 +118,12 @@ export async function loadScene(
   const folder = join(tmpdir(), 'lantern-explain');
   await mkdir(folder, { recursive: true });
   const output = join(folder, hash(code) + '.mjs');
-  // Write then rename: processes loading the same scene at once (parallel test files) share this
-  // name, and a plain write let one import the file while another had just truncated it.
-  const partial = `${output}.${process.pid}.${randomUUID()}`;
-  await writeFile(partial, code);
-  await rename(partial, output);
+  // Other processes (parallel test files, two builds) import this same content-addressed file.
+  // writeFile truncates before it writes, so one of them could import it half written and find
+  // no Scene export. Write a private copy and rename it into place: a rename is atomic.
+  const temporary = `${output}.${process.pid}.${randomUUID()}`;
+  await writeFile(temporary, code);
+  await rename(temporary, output);
   const module = await import(pathToFileURL(output).href);
   const choices = Object.values(module).filter(
     (value): value is ExplainerClass => typeof value === 'function' && value.prototype instanceof Scene,
