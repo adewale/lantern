@@ -6,6 +6,9 @@
 // page's CSP pins its own inline script and style). With --origin (https), also a share page per
 // step, <id>/<step>.html, whose link preview is that step, and the same Open Graph and Twitter card
 // tags in each explainer page, for its cover step (tools/lib/explain-share.ts); then checks them.
+// Each explainer's describeExplainer JSON, as demos:build wrote it, is copied to <id>.json, with an
+// llms.txt at the site root (tools/lib/explain-site-describe.ts). Fails, before writing anything, if
+// demos:build has not run since a scene, its folder or the engine changed.
 import { copyFile, mkdir, readFile, writeFile, access } from 'node:fs/promises';
 import { sharePage, publishedPage, checkCards } from './lib/explain-share.ts';
 import type { ShareManifest } from './lib/explain-share.ts';
@@ -13,7 +16,7 @@ import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
 import { ROOT } from './lib/explain-project.ts';
-import { writeDescriptions } from './lib/explain-site-describe.ts';
+import { writeDescriptions, checkBuilt } from './lib/explain-site-describe.ts';
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -29,6 +32,10 @@ const target = join(resolve(root), path);
 const built = join(ROOT, 'out/explainers'),
   videos = join(ROOT, 'out/videos');
 const exists = (file: string) => access(file).then(() => true, () => false);
+
+// Refuse an explainer whose scene, scene folder or engine changed since demos:build built it;
+// check them all before copying any.
+for (const { id } of EXPLAINERS) await checkBuilt(join(built, id), join(ROOT, 'scenes/explainers', id));
 
 await mkdir(target, { recursive: true });
 const blocks: string[] = [];
@@ -55,7 +62,7 @@ for (const { id, video } of EXPLAINERS) {
 }
 await copyFile(join(built, 'loader.js'), join(target, 'loader.js'));
 // For agents: each explainer's describeExplainer object as <id>.json beside its page, and llms.txt at the site root.
-const described = await writeDescriptions(resolve(root), path, EXPLAINERS, origin);
+const described = await writeDescriptions(resolve(root), path, EXPLAINERS, built, origin);
 console.log(`Wrote ${EXPLAINERS.length} <id>.json files (${described.json} bytes) and ${join(resolve(root), 'llms.txt')} (${described.llms} bytes).`);
 if (origin) {
   const { pages, problems } = await checkCards(resolve(root), origin, path, EXPLAINERS.map((e) => e.id));
