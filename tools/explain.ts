@@ -255,7 +255,7 @@ if (
     console.error(
       missing
         ? `rayner: this command needs ${missing}${group ? `. Install: ${install(group)}` : ''}`
-        : `rayner: ${error.message}`,
+        : `rayner: ${String(error.message).replaceAll('run explain snapshots', 'run rayner snapshots')}`,
     );
     process.exitCode = 1;
   });

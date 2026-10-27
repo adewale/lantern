@@ -147,3 +147,16 @@ test('`rayner see` prints describeExplainer\'s words for the step, so the two ca
   assert.equal(seeText('x', made, 'a'), '\n\nx · step 1 of 2: a · Size: 3\nTitle: One\nChanged: nothing in scene.state');
   assert.throws(() => seeText('x', made, 'c'), /No step "c"\. Steps: a, b/);
 });
+
+
+test('lettering errors name the rayner capture command without invalidating existing snapshot fingerprints', async () => {
+  const folder = await mkdtemp(join(tmpdir(), 'rayner-missing-lettering-'));
+  try {
+    const file = join(folder, 'scene.ts');
+    await writeFile(file, `import{Scene}from'rayner';export default class L extends Scene{static meta={id:'missing',lettering:{scripts:['Arab']}};async construct(){await this.step('one');}}`);
+    const result = spawnSync(process.execPath, [join(ROOT, 'tools/explain.ts'), 'check', file], { encoding: 'utf8' });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /stale lettering snapshot; run rayner snapshots /);
+    assert.doesNotMatch(result.stderr, /run explain snapshots/);
+  } finally { await rm(folder, { recursive: true, force: true }); }
+});
