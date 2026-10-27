@@ -250,3 +250,26 @@ test('stateView: a StateReadout of the scene\'s state whose keys stay put as val
   await new Counter(sink).run();
   assert.deepEqual(analyzeMotion(sink).map((e) => `${e.t}s ${e.kind} [${e.step}] ${e.what}`), []);
 });
+
+test('a returning sync preserves inherited scale for the next rebuild or sync', () => {
+  for (const next of ['rebuild', 'sync'] as const) {
+    let side = 1;
+    const v = view(() => new Rectangle({ width: side, height: side }));
+    v.scale(2);
+    const original = v.current;
+    side = 3;
+    const back = v.sync({ rateFunc: () => 0 });
+    back.begin(); back.interpolate(0); back.finish();
+    assert.equal(v.current, original, 'a returning rate keeps the original picture');
+    assert.equal(v.current.width(), 2);
+    assert.equal(v.current.height(), 2);
+    side = 4;
+    if (next === 'rebuild') v.rebuild();
+    else {
+      const sync = v.sync();
+      sync.begin(); sync.interpolate(1); sync.finish();
+    }
+    assert.equal(v.current.width(), 8, `${next} inherits the original scale`);
+    assert.equal(v.current.height(), 8, `${next} inherits the original scale`);
+  }
+});
