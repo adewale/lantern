@@ -174,7 +174,11 @@ def shape(req):
             groups.append((key, []))
         groups[-1][1].append(c)
     glyphs, pen = [], 0
+    # The code points each face drew, by its index in req['fonts'], so a subset
+    # holds only what its face drew.
+    uses = {}
     for (level, owner, sc, _paragraph, _control), chars in groups:
+        uses.setdefault(owner, set()).update(ord(c['ch']) for c in chars)
         chars = sorted(chars, key=lambda c: c['index'])
         f, hf = fonts[owner]
         buf = hb.Buffer()
@@ -182,8 +186,12 @@ def shape(req):
         buf.direction = 'rtl' if level % 2 else 'ltr'
         buf.script = sc
         buf.guess_segment_properties()
-        # Literal code has no ligatures, like the existing mono face.
-        hb.shape(hf, buf, {'liga': False, 'clig': False} if req.get('mono') else {})
+        # Literal code has no ligatures, like the existing mono face. JetBrains
+        # Mono draws its code ligatures with calt, which the embedded cut drops.
+        features = {'liga': False, 'clig': False} if req.get('mono') else {}
+        if req.get('mono') and owner in req.get('literal', []):
+            features['calt'] = False
+        hb.shape(hf, buf, features)
         scale = 1 / f['head'].unitsPerEm
         for info, pos in zip(buf.glyph_infos, buf.glyph_positions):
             control_glyph = info.codepoint == 0 and unicodedata.category(chars[info.cluster]['ch']) in ('Cc', 'Cf')
@@ -195,14 +203,21 @@ def shape(req):
             pen += pos.x_advance * scale
     first = fonts[0][0]
     em = first['head'].unitsPerEm
+    # The caller stores the run without `uses`.
     return dict(glyphs=glyphs, width=pen, ascent=first['hhea'].ascent/em,
-                descent=-first['hhea'].descent/em, s=1/em)
+                descent=-first['hhea'].descent/em, s=1/em,
+                uses={str(k): sorted(v) for k, v in uses.items()})
 
 
 def sub(req):
     f = TTFont(req['font'], recalcTimestamp=False)
     options = subset.Options()
-    options.layout_features = ['*']
+    # A page decodes a subset only to shape counter values with glyph's Latin
+    # shaper, so keep the features that shaper applies (the caller passes them:
+    # glyph's defaults, without ligatures for a literal code face), and drop
+    # hinting: outlines are drawn unhinted.
+    options.layout_features = req['features']
+    options.hinting = False
     options.recalc_timestamp = False
     options.flavor = 'woff2'
     s = subset.Subsetter(options=options)

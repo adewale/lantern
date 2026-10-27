@@ -21,6 +21,7 @@ them below say so.
 | `perf.ts`, `svg.ts` | Lantern's [PERF.md](https://github.com/ivarvong/lantern/blob/2c7bad533be25fbd56d26a9a2b6c5651743f011e/docs/PERF.md) (at `2c7bad5`); run merging in [CODE.md](CODE.md#cost-elements-per-line) | Where does a frame's time go, and what made it faster? |
 | `fonts.ts`, `font-data.ts` | [The reference, "Scene"](REFERENCE.md#scene) (the fallback chain) and [upstream](UPSTREAM.md#engine-changes) | Which face draws a character, and what fails? |
 | `lettering.ts` | [The reference, "Lettering on request"](REFERENCE.md#lettering-on-request) | How does an explainer draw Greek or Cyrillic, and what does that cost the explainers that do not? |
+| `lettering-outlines.ts`, `italic.ts`, `math.ts` | [LETTERING.md](LETTERING.md) | How does an explainer draw another face, real bold and italic, Arabic, Devanagari, Hebrew or maths from runs shaped at build time, and why does no other page carry that code? |
 
 Lantern's Mermaid flowchart layout and its JSON document format were deleted in this fork
 ([upstream](UPSTREAM.md) lists what went); diagrams come from Agentic Mermaid capture instead.
