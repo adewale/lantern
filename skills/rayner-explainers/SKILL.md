@@ -56,7 +56,7 @@ The scene asks the model; it never states an answer it did not get from one. The
 - Finish every change before a step's last `play()` ends: the picture must not move during the caption hold.
 - A setting may change diagrams, captions, numbers and which steps exist; keep the palette fixed. Keep cases few; the limit is 64.
 - Do not weaken a check, bless a corrupt snapshot or skip a case to get a pass. Add a regression test that fails before the fix.
-- Lettering is embedded Inter or JetBrains Mono, plus Arabic-Indic, Devanagari and Chinese numerals. For Latin Extended, Greek or Cyrillic letters, ask with `static meta.lettering = { scripts: [...] }` and commit the `scene.lettering.json` the build writes; any other script fails every command. Picture descriptions are generated in English or French.
+- Lettering is embedded Inter or JetBrains Mono, plus Arabic-Indic, Devanagari and Chinese numerals, with faux bold and no italic. Ask for more in `static meta.lettering` ([docs/LETTERING.md](../../docs/LETTERING.md)): `scripts` (`Latn`, `Grek`, `Cyrl`, `Arab`, `Deva`, `Hebr`, `Hani`), `faces` (a style's own face, such as `eb-garamond` for pen-and-ink), `styles: ['bold', 'italic']` (real cuts; `ItalicText` needs `'italic'`) or `math`. Run `rayner snapshots` and commit the `scene.lettering.json` it writes. Ask only for what the explainer draws: a script you did not ask for fails every command. Picture descriptions are generated in English or French.
 - Leave out panel titles and asides that repeat the heading, caption or values. Write titles and captions with [anti-slop-writing](https://github.com/adewale/anti-slop-writing): name the value or mechanism on screen, and state contrasts with because, although or so.
 
 ## Reporting

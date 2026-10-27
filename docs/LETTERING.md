@@ -1,8 +1,8 @@
 # Lettering on request
 
 Plain `Latn`, `Grek`, and `Cyrl` requests retain the subset workflow introduced
-in PR #10. Requests containing `faces`, `math`, or another script use the outline
-snapshot workflow described here; the existing snapshot schema remains supported.
+in PR #10. Requests containing `faces`, `styles`, `math`, or another script use the
+outline snapshot workflow described here; the existing snapshot schema remains supported.
 
 Existing scenes keep their embedded Inter/JetBrains Mono lettering and their
 page bytes and receipts. Nothing is downloaded for them. Do not regenerate
@@ -67,8 +67,14 @@ lettering builder, embedded fallback fonts or core shaping code invalidates the 
 `preview` refreshes during authoring. Unrecorded prose fails closed; seek and playback cannot start an unrecorded language case. Formatted numeric values and known simple-script prefix/suffix templates can replay through the existing glyph shaper with the requested subset, so counters work at arbitrary video frame rates. Missing characters
 in an unrequested script still fail, including during capture.
 
-`explain check` reports `lettering.bytes` (serialized snapshot payload), the
-binary subset size per face, and the distinct run count. Receipts include
+`explain check` reports `lettering.bytes` (serialized snapshot payload),
+`lettering.pageBytes` (what the page's script carries of it), the binary subset
+size per face, and the distinct run count. A page carries the request and the
+runs, which hold every outline it draws, and only the subsets its counters shape
+with at runtime; hashes and licences stay in the snapshot, and each distinct
+licence notice joins the page's licence block once. Subsets keep the layout
+features the embedded faces keep (`kern`, `liga`, `ccmp`, `locl`, `mark`, `mkmk`)
+and no hinting. Receipts include
 `letteringHash`; the snapshot includes source/font/builder hashes. The legacy
 engine fingerprint deliberately excludes optional modules and type-only
 metadata, so opting out preserves receipts as well as page bytes. A regression
@@ -104,12 +110,54 @@ static meta = {
 // In construct(): stage(this, { style: 'pen-and-ink' })
 ```
 
-The registry accepts `inter`, `eb-garamond`, `noto-naskh-arabic`,
+The registry accepts `inter`, `eb-garamond`, `jetbrains-mono`, `noto-naskh-arabic`,
 `noto-sans-devanagari`, `noto-sans-hebrew`, and `noto-sans-sc` for `sans` or
 `mono`. Requests do not implicitly add scripts: Greek text in a replacement
 face must still request `Grek`. Faces outside this licensed registry are rejected.
+Only faces under the SIL Open Font License 1.1 or the Apache License 2.0 may be
+in it: capture checks each face's notice, and every check and build from a
+snapshot checks the stored notices again, so a face under another licence fails
+the build. Latin Modern Math, for `Math`, is the one exception (GUST Font License).
 The proposed `stage(..., { lettering: 'style' })` shorthand is not implemented;
 explicit face selection keeps the request visible in `meta`.
+
+## Bold and italic
+
+Without a request, `weight: 'bold'` strokes the Regular outline (faux bold) and
+there is no italic. Ask for the real cuts:
+
+```ts
+import { Scene, Text, ItalicText } from 'rayner';
+
+static meta = { id: 'cuts', title: 'Cuts', lettering: { styles: ['bold', 'italic'] } };
+// In construct():
+this.add(new Text('Bold', { weight: 'bold' }));            // the Bold cut, no stroke
+this.add(new ItalicText('Italic'));                         // the Italic cut
+this.add(new ItalicText('Both', { weight: 'bold' }));       // the Bold Italic cut
+```
+
+- With `'bold'`, every bold Text in the explainer draws its face's Bold cut,
+  including the stage heading and panel titles. Without it, bold stays faux.
+- `ItalicText` is a `Text` in the Italic cut. It fails the build unless
+  `styles` includes `'italic'`; there is no faux italic. With both styles,
+  `weight: 'bold'` gives Bold Italic.
+- The cuts come from the family's face: the requested `faces.sans` or
+  `faces.mono`, else Inter for `sans` and JetBrains Mono for `mono` (the full
+  releases of the embedded faces). A requested face without the cut fails
+  capture, naming it: `noto-sans-hebrew` has no italic.
+- Scripts follow the nearest cut their face has. Noto Naskh Arabic, Noto Sans
+  Devanagari and Noto Sans Hebrew have Bold cuts and no italic, so italic text in
+  them draws upright and bold italic draws bold. Noto Sans SC has no Bold cut in
+  the registry, so bold Chinese fails capture. Symbols and numerals that only the
+  embedded Noto fallbacks draw stay at their one weight.
+- Each cut is shaped by HarfBuzz at capture like any other run, keyed
+  `["sans/bold", text, false]`, and stored with its outlines. A cut's subset holds
+  only the characters styled runs asked of it, plus the numeric alphabet for the
+  family's own cut so a bold counter replays at any frame rate.
+- `test/lettering/styles` is the fixture: heading, bold, italic, bold italic,
+  bold code, bold and italic Arabic, and a bold counter.
+
+## Bidi and matching
 
 Bidi resolves logical runs before shaping, including paired brackets in mixed-direction text; clusters always address the original string, even when the visual glyph order is right to left. The pinned Rust backend exposed by python-bidi supplies resolved UTF-8 levels; the builder validates that metadata and maps it to source code-point indices. It handles explicit embeddings/overrides, preserves shaping joiners, and rejects unsupported isolate controls. Complex scripts beyond the registered faces remain unsupported.
 Picture descriptions still use the existing English/French vocabulary.
@@ -126,16 +174,18 @@ a single source cluster. Replacement prose must be built into a case; numeric an
 ## Verification
 
 ```sh
-node --test test/lettering-outlines.test.ts
-EXPLAIN_LETTERING=1 node --test test/lettering-outlines.test.ts test/lettering-*-audit.test.ts
-EXPLAIN_BROWSER=1 node --test test/lettering-outlines.test.ts
+node --test test/lettering-outlines.test.ts test/lettering-styles.test.ts
+EXPLAIN_LETTERING=1 node --test test/lettering-outlines.test.ts test/lettering-styles.test.ts test/lettering-*-audit.test.ts
+EXPLAIN_BROWSER=1 node --test test/lettering-browser.test.ts
 ```
 
 The first command uses committed Arabic, Devanagari, maths and serif fixtures
 and runs the legacy cost and bare-runtime/seek gates. The second also compares
-stored IDs, clusters and placement with a separate direct HarfBuzz oracle,
+stored IDs, clusters and placement with a separate direct HarfBuzz oracle
+(for each bold and italic cut too),
 checks maths symbol glyphs and fraction/script layout, deterministic refresh,
-and script rejection. It needs the capture dependencies above. The last runs
-the pages offline in Chromium (`CHROMIUM_EXECUTABLE_PATH` may select a system
-browser). No screenshot or browser assertion substitutes for the outline and
+and script rejection. It needs the capture dependencies above. The last builds
+each fixture's page, opens every step in Chromium and asserts the live stage
+draws the same path data Node draws from the same runs (`npm run test:embeds`
+runs it; `CHROMIUM_EXECUTABLE_PATH` may select a system browser). No screenshot or browser assertion substitutes for the outline and
 receipt comparisons.

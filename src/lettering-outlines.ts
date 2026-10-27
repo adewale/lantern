@@ -10,12 +10,20 @@ import { SANS, MONO, FALLBACK } from './font-data.ts';
 import { Text, CodeSpan } from './text.ts';
 import type { Style, Box } from './mobject.ts';
 
+/** Real cuts an explainer can ask for, instead of the stroked faux bold and no italic. */
+export type LetteringStyle = 'bold' | 'italic';
 export interface LetteringRequest {
   faces?: Partial<Record<FontName, string>>;
   /** ISO 15924 script codes, e.g. Arab, Deva, Hebr, Hani. */
   scripts?: readonly string[];
   math?: boolean;
+  /** Draw `weight: 'bold'` Text in the face's Bold cut, and allow ItalicText. */
+  styles?: readonly LetteringStyle[];
 }
+/** The cut a run is shaped in: '' for the regular cut. */
+export type LetteringCut = '' | 'bold' | 'italic' | 'bold-italic';
+/** A run's family as snapshots key it: 'sans', or 'sans/bold' for a cut. */
+export const cutFamily = (font: FontName, cut: LetteringCut): string => cut ? font + '/' + cut : font;
 export interface LetteringSnapshot {
   version: 1;
   sourceHash: string;
@@ -28,14 +36,16 @@ export interface LetteringSnapshot {
   payloadHash?: string;
 }
 export interface LetteringProvider {
+  /** What the scene asked for; styles decide which cuts Text may use. */
+  request?: LetteringRequest;
   prepare?(): Promise<void>;
-  shape(font: FontName, text: string, size: number, fallback: Shaper): Run;
+  shape(font: FontName, text: string, size: number, fallback: Shaper, cut?: LetteringCut): Run;
   math(latex: string, size: number, display: boolean): Run;
 }
 export const letteringOf = (Source: object): LetteringRequest | undefined =>
   (Source as { meta?: { lettering?: LetteringRequest } }).meta?.lettering;
-export const usesLettering = (request: LetteringRequest, font: FontName, text: string): boolean =>
-  !!request.faces?.[font] || (request.scripts ?? []).some((s) => new RegExp(`\\p{Script_Extensions=${s}}`, 'u').test(text));
+export const usesLettering = (request: LetteringRequest, font: FontName, text: string, cut: LetteringCut = ''): boolean =>
+  !!cut || !!request.faces?.[font] || (request.scripts ?? []).some((s) => new RegExp(`\\p{Script_Extensions=${s}}`, 'u').test(text));
 export const runKey = (font: string, text: string, display = false): string => JSON.stringify([font, text, display]);
 export function scaledRun(run: Run, size: number): Run {
   return { ...run, width: run.width * size, ascent: run.ascent * size, descent: run.descent * size,
@@ -49,7 +59,7 @@ export const numericAlphabet = '0123456789+-.eE,%‰‱$€£¥()−\u0020\u00a0
 export const isNumericText = (text: string): boolean =>
   /^[ (+\-−$€£¥\u00a0\u202f]*\d[\d .,\u00a0\u202f]*(?:[eE][+\-−]?\d+)?[ )%‰‱$€£¥\u00a0\u202f]*$/u.test(text);
 const simpleWrapper = (text: string) => /^[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{Script=Common}\p{Script=Inherited}]*$/u.test(text);
-function numericTemplates(snapshot: LetteringSnapshot, font: FontName): [string, string][] {
+function numericTemplates(snapshot: LetteringSnapshot, font: string): [string, string][] {
   const out: [string, string][] = [];
   for (const key of Object.keys(snapshot.runs)) {
     const [family, text] = JSON.parse(key) as [string, string];
@@ -80,15 +90,32 @@ function numericFallbackFaces(): Promise<Record<FontName, Font[]>> {
 }
 interface ReplayState {
   ready?: Promise<void>;
-  chains: Partial<Record<FontName, Font[]>>;
-  templates: Partial<Record<FontName, [string, string][]>>;
+  /** By run family: 'sans', 'mono', or a cut such as 'sans/bold'. */
+  chains: Record<string, Font[]>;
+  templates: Record<string, [string, string][]>;
   memo: Map<string, Run>;
 }
 const replays = new WeakMap<LetteringSnapshot, ReplayState>();
-const scriptFaceNames: Record<string, string> = {
+export const scriptFaceNames: Readonly<Record<string, string>> = {
   Arab: 'noto-naskh-arabic', Deva: 'noto-sans-devanagari', Hebr: 'noto-sans-hebrew',
   Hani: 'noto-sans-sc', Latn: 'inter', Grek: 'inter', Cyrl: 'inter',
 };
+/** The registry face a family's cuts come from when the request names none. */
+export const defaultCutFace: Readonly<Record<FontName, string>> = { sans: 'inter', mono: 'jetbrains-mono' };
+/** A face's name for one of its cuts, as snapshots and the registry key it: 'inter/bold'. */
+export const cutFace = (name: string, cut: LetteringCut): string => cut ? name + '/' + cut : name;
+/**
+ * The cuts a script face may stand in with for `cut`, best first. Scripts in
+ * the registry have no italic, so italic text in them draws upright; bold has
+ * no stand-in, so a script face without a Bold cut cannot draw bold text.
+ */
+export const scriptCuts = (cut: LetteringCut): LetteringCut[] =>
+  cut === 'italic' ? ['italic', ''] : cut === 'bold-italic' ? ['bold-italic', 'bold'] : [cut];
+/** The cuts a request allows: the regular cut, and each combination of its styles. */
+export function requestCuts(request: LetteringRequest): LetteringCut[] {
+  const bold = request.styles?.includes('bold'), italic = request.styles?.includes('italic');
+  return ['', ...(bold ? ['bold' as const] : []), ...(italic ? ['italic' as const] : []), ...(bold && italic ? ['bold-italic' as const] : [])];
+}
 export function snapshotProvider(snapshot: LetteringSnapshot): LetteringProvider {
   let replay = replays.get(snapshot);
   if (!replay) replays.set(snapshot, replay = { chains: {}, templates: {}, memo: new Map() });
@@ -96,45 +123,58 @@ export function snapshotProvider(snapshot: LetteringSnapshot): LetteringProvider
   const lookup = (font: string, text: string, size: number, display = false) => {
     const run = snapshot.runs[runKey(font, text, display)];
     if (run) return scaledRun(run, size);
-    if ((font === 'sans' || font === 'mono') && state.chains[font]
+    if (font !== 'math' && state.chains[font]
       && isNumericReplay(text, state.templates[font] ?? [])) {
       const key = runKey(font, text);
       let numeric = state.memo.get(key);
       if (!numeric) {
-        numeric = shapeChain(state.chains[font]!, font, text, 1);
+        numeric = shapeChain(state.chains[font], font, text, 1);
         if (numeric.glyphs.some((g) => g.gid === 0)) throw new Error(`Numeric lettering cannot draw ${JSON.stringify(text)}`);
         state.memo.set(key, numeric);
         if (state.memo.size > 4096) state.memo.delete(state.memo.keys().next().value!);
       }
       return scaledRun(numeric, size);
     }
-    throw new Error(`Lettering snapshot has no run for ${JSON.stringify(text)} (${font}); run explain snapshots`);
+    throw new Error(`Lettering snapshot has no run for ${JSON.stringify(text)} (${font}); run rayner snapshots`);
   };
   return {
     prepare() {
       return state.ready ??= (async () => {
-        const families = (['sans', 'mono'] as const).filter((font) => {
-          state.templates[font] = numericTemplates(snapshot, font);
-          return snapshot.request.faces?.[font] || state.templates[font]!.length;
-        });
+        const families = requestCuts(snapshot.request).flatMap((cut) => (['sans', 'mono'] as const).flatMap((font) => {
+          const family = cutFamily(font, cut);
+          state.templates[family] = numericTemplates(snapshot, family);
+          return (cut ? state.templates[family].length : snapshot.request.faces?.[font] || state.templates[family].length)
+            ? [{ font, cut, family }] : [];
+        }));
         if (!families.length) return;
         const fallback = await numericFallbackFaces();
         const scriptNames = [...new Set((snapshot.request.scripts ?? []).flatMap((script) => scriptFaceNames[script] ?? []))];
-        const scriptFaces = await Promise.all(scriptNames.flatMap((name) => snapshot.faces[name] ? [decode(snapshot.faces[name]!.data)] : []));
-        for (const font of families) {
-          const name = snapshot.request.faces?.[font];
+        const decoded = new Map<string, Promise<Font>>();
+        const face = (name: string) => {
+          let f = decoded.get(name);
+          if (!f) decoded.set(name, f = decode(snapshot.faces[name]!.data));
+          return f;
+        };
+        for (const { font, cut, family } of families) {
+          // The order capture shaped in (tools/lib/lettering.ts): the requested cut,
+          // the scripts' nearest cuts, then the embedded faces.
+          const scripts = await Promise.all(scriptNames.flatMap((name) => {
+            const found = scriptCuts(cut).map((c) => cutFace(name, c)).find((n) => snapshot.faces[n]);
+            return found ? [face(found)] : [];
+          }));
+          const name = cut ? cutFace(snapshot.request.faces?.[font] ?? defaultCutFace[font], cut) : snapshot.request.faces?.[font];
           if (name) {
-            const subset = snapshot.faces[name];
-            if (!subset) throw new Error(`Lettering snapshot has no subset for requested face ${name}`);
-            state.chains[font] = [await decode(subset.data), ...scriptFaces, ...fallback[font]];
+            if (!snapshot.faces[name]) throw new Error(`Lettering snapshot has no subset for requested face ${name}`);
+            state.chains[family] = [await face(name), ...scripts, ...fallback[font]];
           } else {
-            state.chains[font] = [fallback[font][0]!, ...scriptFaces, ...fallback[font].slice(1)];
+            state.chains[family] = [fallback[font][0]!, ...scripts, ...fallback[font].slice(1)];
           }
         }
       })();
     },
-    shape: (font, text, size, fallback) => usesLettering(snapshot.request, font, text)
-      ? lookup(font, text, size) : fallback(text, size),
+    request: snapshot.request,
+    shape: (font, text, size, fallback, cut = '') => usesLettering(snapshot.request, font, text, cut)
+      ? lookup(cutFamily(font, cut), text, size) : fallback(text, size),
     math: (text, size, display) => lookup('math', text, size, display),
   };
 }
@@ -154,6 +194,29 @@ let normalShapers: Awaited<ReturnType<typeof loadFonts>> | undefined;
 let leasing = false;
 const activeTasks = new Set<Promise<unknown>>();
 const textProviders = new WeakMap<Text, LetteringProvider>();
+/** The cut each Text built under a provider was shaped in, for spans queried later. */
+const textCuts = new WeakMap<Text, LetteringCut>();
+/** The cut of the Text being built now: the leased shapers pass it to the provider. */
+let building: LetteringCut = '';
+/** Set by ItalicText around its build. */
+let slanting = false;
+
+/**
+ * Build an ItalicText. Italic has no faux form, so a scene that did not ask for
+ * it fails here, at build time, rather than drawing upright letters.
+ */
+export function withItalic<T>(draw: () => T): T {
+  if (!active?.request?.styles?.includes('italic'))
+    throw new Error("ItalicText needs static meta.lettering.styles to include 'italic' and a fresh lettering snapshot");
+  const saved = slanting;
+  slanting = true;
+  try { return draw(); } finally { slanting = saved; }
+}
+/** The cut a Text is shaped in under `provider`: real bold only when the scene asked for it. */
+function cutOf(text: Text, provider: LetteringProvider | undefined): LetteringCut {
+  const bold = text.weight === 'bold' && !!provider?.request?.styles?.includes('bold');
+  return slanting ? (bold ? 'bold-italic' : 'italic') : bold ? 'bold' : '';
+}
 function withinLease<T>(work: () => Promise<T>): Promise<T> {
   const result = Promise.resolve().then(work);
   activeTasks.add(result);
@@ -202,21 +265,34 @@ function spanForm(text: Text): { shaped: string; source: number[] } {
 // with an optional provider needs the adapter; remember that provider for spans
 // queried after the run has released its fonts, or on a copied Code line.
 function installSpanAdapter(): void {
-  const build = Text.prototype.build, copy = Text.prototype.copy, box = CodeSpan.prototype.box;
+  const build = Text.prototype.build, copy = Text.prototype.copy, box = CodeSpan.prototype.box, setFill = Text.prototype.setFill;
   Text.prototype.build = function (text: string, size: number, style: Style) {
     if (active) textProviders.set(this, active); else textProviders.delete(this);
-    return build.call(this, text, size, style);
+    const cut = cutOf(this, active);
+    if (cut) textCuts.set(this, cut); else textCuts.delete(this);
+    // A real Bold cut replaces the stroke that fakes bold in text.ts.
+    if (cut.startsWith('bold')) style = { ...style, stroke: 'none', strokeWidth: 0 };
+    const saved = building;
+    building = cut;
+    try { return build.call(this, text, size, style); } finally { building = saved; }
   };
+  Text.prototype.setFill = function (this: Text, fill: string, fillOpacity?: number) {
+    setFill.call(this, fill, fillOpacity);
+    // text.ts strokes bold text in its fill colour; real bold has no stroke to recolour.
+    if (textCuts.get(this)?.startsWith('bold')) this.setStyle({ stroke: 'none' });
+    return this;
+  } as typeof Text.prototype.setFill;
   Text.prototype.copy = function (this: Text) {
-    const result = copy.call(this), provider = textProviders.get(this);
+    const result = copy.call(this), provider = textProviders.get(this), cut = textCuts.get(this);
     if (provider) textProviders.set(result, provider);
+    if (cut) textCuts.set(result, cut);
     return result;
   } as typeof Text.prototype.copy;
   CodeSpan.prototype.box = function (): Box {
     const provider = textProviders.get(this.owner);
     if (!provider || this.stale) return box.call(this);
     const text = this.owner, form = spanForm(text);
-    const run = provider.shape(text.font, form.shaped, text.run.fontSize, normalShapers?.[text.font] ?? shaperFor(text.font));
+    const run = provider.shape(text.font, form.shaped, text.run.fontSize, normalShapers?.[text.font] ?? shaperFor(text.font), textCuts.get(text) ?? '');
     const clusters = run.glyphs.map((g) => form.source[g.cluster] ?? text.text.length);
     const rtl = clusters.some((cluster, i) => i > 0 && cluster < clusters[i - 1]!);
     if (!rtl) {
@@ -276,7 +352,7 @@ async function lease<T>(p: LetteringProvider | undefined, work: () => Promise<T>
   loadedFonts = fonts;
   currentFonts = fonts;
   if (p) for (const font of ['sans', 'mono'] as const)
-    fonts[font] = (text, size) => p.shape(font, text, size, saved[font]);
+    fonts[font] = (text, size) => p.shape(font, text, size, saved[font], building);
   try { return await work(); }
   finally {
     // Same-provider work can nest (or start while a run is awaiting). Keep its
@@ -317,6 +393,6 @@ export function bindLettering(Source: SceneClass, provider: LetteringProvider | 
 /** Keep the existing Latin/Greek/Cyrillic subset workflow unless more is requested. */
 export function usesOutlineLettering(Source: object): boolean {
   const r = letteringOf(Source);
-  return !!r && (Object.hasOwn(r, 'faces') || Object.hasOwn(r, 'math') ||
+  return !!r && (Object.hasOwn(r, 'faces') || Object.hasOwn(r, 'math') || Object.hasOwn(r, 'styles') ||
     (Array.isArray(r.scripts) && r.scripts.some((s) => !['Latn', 'Grek', 'Cyrl'].includes(s))));
 }

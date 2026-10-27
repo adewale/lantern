@@ -1,33 +1,61 @@
 // Node-only preparation. Optional dependencies are needed only to refresh a
 // lettering snapshot; check/build/video from a fresh snapshot need none of them.
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { loadFont } from '../../vendor/glyph.js';
 import { SANS, MONO, FALLBACK } from '../../src/font-data.ts';
-import { bindLettering, letteringOf, numericAlphabet, runKey, scaledRun, snapshotProvider, usesLettering } from '../../src/lettering-outlines.ts';
-import type { LetteringSnapshot, LetteringProvider, LetteringRequest } from '../../src/lettering-outlines.ts';
+import { bindLettering, cutFace, cutFamily, defaultCutFace, letteringOf, numericAlphabet, requestCuts, runKey, scaledRun, scriptCuts, scriptFaceNames, snapshotProvider, usesLettering } from '../../src/lettering-outlines.ts';
+import type { LetteringCut, LetteringSnapshot, LetteringProvider, LetteringRequest } from '../../src/lettering-outlines.ts';
 import type { ExplainerClass } from '../../explain/settings.ts';
 import type { Run } from '../../vendor/glyph.js';
-import { validateLetteringSnapshot } from './lettering-validation.ts';
+import { licenceOf, validateLetteringSnapshot } from './lettering-validation.ts';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const hash = (s: string | Uint8Array) => createHash('sha256').update(s).digest('hex');
 const json = (x: unknown) => JSON.stringify(x, null, 2) + '\n';
-const registry: Record<string, { folder: string; file: string }> = {
-  'noto-naskh-arabic': { folder: 'fontsource-noto-naskh-arabic-5.3.0', file: 'noto-naskh-arabic-arabic-400-normal.woff2' },
-  'noto-sans-devanagari': { folder: 'fontsource-noto-sans-devanagari-5.3.0', file: 'noto-sans-devanagari-devanagari-400-normal.woff2' },
-  'noto-sans-hebrew': { folder: 'fontsource-noto-sans-hebrew-5.3.0', file: 'noto-sans-hebrew-hebrew-400-normal.woff2' },
-  'inter': { folder: 'inter-ui-4.1.1', file: 'Inter-Regular.woff2' },
-  'noto-sans-sc': { folder: '', file: '' },
-  'eb-garamond': { folder: 'fontsource-eb-garamond-5.3.0', file: 'eb-garamond-latin-400-normal.woff2' },
+/**
+ * The faces a scene may ask for, each cut as a file in the font cache that
+ * tools/lettering-outline-fonts.sh fills, with the file holding its licence
+ * (`repo:` for one in this repository). Only OFL and Apache-2.0 faces may be
+ * listed: capture and every build check each notice (licenceOf).
+ */
+interface RegistryFace { cuts: Partial<Record<LetteringCut, string>>; license: string }
+const fontsource = (name: string, subset: string, cuts: Partial<Record<LetteringCut, string>>): RegistryFace => ({
+  cuts: Object.fromEntries(Object.entries(cuts).map(([cut, file]) => [cut, `fontsource-${name}-5.3.0/package/files/${name}-${subset}-${file}.woff2`])),
+  license: `fontsource-${name}-5.3.0/package/LICENSE`,
+});
+const registry: Record<string, RegistryFace> = {
+  'noto-naskh-arabic': fontsource('noto-naskh-arabic', 'arabic', { '': '400-normal', bold: '700-normal' }),
+  'noto-sans-devanagari': fontsource('noto-sans-devanagari', 'devanagari', { '': '400-normal', bold: '700-normal' }),
+  'noto-sans-hebrew': fontsource('noto-sans-hebrew', 'hebrew', { '': '400-normal', bold: '700-normal' }),
+  'inter': {
+    cuts: { '': 'Regular', bold: 'Bold', italic: 'Italic', 'bold-italic': 'BoldItalic' },
+    license: 'inter-ui-4.1.1/package/LICENSE.txt',
+  },
+  'noto-sans-sc': { cuts: { '': 'noto-sans-sc.ttf' }, license: 'Noto-CJK-OFL.txt' },
+  'eb-garamond': fontsource('eb-garamond', 'latin', { '': '400-normal', bold: '700-normal', italic: '400-italic', 'bold-italic': '700-italic' }),
+  // The jetbrains-mono npm package's own LICENSE is the MIT licence of its CSS; the font's OFL is vendored.
+  'jetbrains-mono': {
+    cuts: { '': 'Regular', bold: 'Bold', italic: 'Italic', 'bold-italic': 'BoldItalic' },
+    license: 'repo:vendor/licenses/JetBrainsMono-OFL.txt',
+  },
 };
-const scriptFaces: Record<string, string> = { Arab: 'noto-naskh-arabic', Deva: 'noto-sans-devanagari', Hebr: 'noto-sans-hebrew', Hani: 'noto-sans-sc', Grek: 'inter', Cyrl: 'inter', Latn: 'inter' };
+for (const [name, cuts] of [['inter', 'inter-ui-4.1.1/package/web/Inter-'], ['jetbrains-mono', 'jetbrains-mono-1.0.6/package/fonts/webfonts/JetBrainsMono-']] as const)
+  for (const cut of Object.keys(registry[name]!.cuts) as LetteringCut[]) registry[name]!.cuts[cut] = cuts + registry[name]!.cuts[cut] + '.woff2';
+const scriptFaces = scriptFaceNames;
+const STYLES = ['bold', 'italic'];
 export function validateLettering(request: LetteringRequest): void {
   if (!request || typeof request !== 'object' || Array.isArray(request)) throw new Error('lettering must be an object');
-  for (const k of Object.keys(request)) if (!['faces', 'scripts', 'math'].includes(k)) throw new Error(`Unknown lettering option: ${k}`);
+  for (const k of Object.keys(request)) if (!['faces', 'scripts', 'math', 'styles'].includes(k)) throw new Error(`Unknown lettering option: ${k}`);
+  if (request.styles !== undefined) {
+    if (!Array.isArray(request.styles) || !request.styles.length) throw new Error("lettering.styles must be a non-empty array of 'bold' and 'italic'");
+    for (const style of request.styles) if (!STYLES.includes(style)) throw new Error(`Unknown lettering style: ${style}; use 'bold' or 'italic'`);
+    if (new Set(request.styles).size !== request.styles.length) throw new Error('lettering.styles names a style twice');
+  }
   if (request.math !== undefined && typeof request.math !== 'boolean') throw new Error('lettering.math must be boolean');
   if (request.faces && (typeof request.faces !== 'object' || Array.isArray(request.faces))) throw new Error('lettering.faces must be an object');
   for (const [key, name] of Object.entries(request.faces ?? {})) {
@@ -59,11 +87,11 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
   const request = letteringOf(Source);
   if (!request) return undefined;
   validateLettering(request);
-  if (!Object.keys(request.faces ?? {}).length && !request.scripts?.length && !request.math) return undefined;
+  if (!Object.keys(request.faces ?? {}).length && !request.scripts?.length && !request.math && !request.styles?.length) return undefined;
   // Default faces and the core shaper are inputs too: requested runs may contain
   // glyphs from the existing fallback chain, and Text determines the strings
   // handed to the shaper (for example after tab expansion).
-  const builderHash = hash((await Promise.all(['src/lettering-outlines.ts', 'src/math.ts', 'src/font-data.ts', 'src/fonts.ts', 'src/text.ts', 'tools/lib/lettering.ts', 'tools/lib/lettering-validation.ts', 'tools/lettering.py', 'tools/lettering-requirements.txt', 'vendor/glyph.js', 'vendor/glyph-math.js'].map((name) => readFile(join(root, name), 'utf8')))).join('\n'));
+  const builderHash = hash((await Promise.all(['src/lettering-outlines.ts', 'src/math.ts', 'src/italic.ts', 'src/font-data.ts', 'src/fonts.ts', 'src/text.ts', 'tools/lib/lettering.ts', 'tools/lib/lettering-validation.ts', 'tools/lettering.py', 'tools/lettering-requirements.txt', 'vendor/glyph.js', 'vendor/glyph-math.js'].map((name) => readFile(join(root, name), 'utf8')))).join('\n'));
   const path = file.replace(/\.[^.]+$/, '') + '.lettering.json';
   if (!capture) {
     const snapshot: LetteringSnapshot | undefined = await readFile(path, 'utf8').then(JSON.parse).catch((e: NodeJS.ErrnoException) => {
@@ -71,29 +99,49 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
       throw e;
     });
     if (!snapshot || snapshot.version !== 1 || snapshot.sourceHash !== sourceHash || snapshot.builderHash !== builderHash || json(snapshot.request) !== json(request))
-      throw new Error('Missing or stale lettering snapshot; run explain snapshots ' + file);
+      throw new Error('Missing or stale lettering snapshot; run rayner snapshots ' + file);
     validateLetteringSnapshot(snapshot);
     if (!snapshot.payloadHash || snapshot.payloadHash !== hash(JSON.stringify({ ...snapshot, payloadHash: undefined })))
-      throw new Error('Invalid lettering snapshot payload checksum; run explain snapshots ' + file);
+      throw new Error('Invalid lettering snapshot payload checksum; run rayner snapshots ' + file);
     return { Scene: bindLettering(Source, snapshot), snapshot, async finish() {} };
   }
   const folder = resolve(process.env.RAYNER_LETTERING_FONTS ?? join(root, 'out/lettering-fonts'));
   await mkdir(folder, { recursive: true });
   const fonts = new Map<string, { file: string; license: string; hash: string }>();
-  const addFace = async (name: string) => {
+  // name is a registry face, or one of its cuts as cutFace() names it ('inter/bold').
+  const addFace = (name: string) => {
     if (fonts.has(name)) return;
-    const info = registry[name];
+    const [base, cut = ''] = name.split('/') as [string, LetteringCut?];
+    const info = registry[base];
     if (!info) throw new Error(`Unknown lettering face: ${name}`);
-    const base = join(folder, info.folder, 'package');
-    const file = name === 'noto-sans-sc' ? join(folder, 'noto-sans-sc.ttf')
-      : name === 'inter' ? join(base, 'web/Inter-Regular.woff2') : join(base, 'files', info.file);
+    const file = info.cuts[cut];
+    if (!file) throw new Error(`Lettering face ${base} has no ${cut} cut`);
+    let bytes: Buffer, license: string;
     try {
-      const bytes = await readFile(file), license = await readFile(name === 'noto-sans-sc' ? join(folder, 'Noto-CJK-OFL.txt') : join(base, name === 'inter' ? 'LICENSE.txt' : 'LICENSE'), 'utf8');
-      if (!license.includes('SIL OPEN FONT LICENSE')) throw new Error('Only OFL registry faces may be embedded');
-      fonts.set(name, { file, license, hash: hash(bytes) });
+      bytes = readFileSync(join(folder, file));
+      license = readFileSync(info.license.startsWith('repo:') ? join(root, info.license.slice(5)) : join(folder, info.license), 'utf8');
     } catch (e) { throw new Error(`Install requested lettering fonts with tools/lettering-outline-fonts.sh: ${String(e)}`); }
+    if (!licenceOf(license)) throw new Error(`Lettering face ${base} is not under the OFL or Apache-2.0; only those may be embedded`);
+    fonts.set(name, { file: join(folder, file), license, hash: hash(bytes) });
   };
-  for (const name of [...Object.values(request.faces ?? {}), ...(request.scripts ?? []).flatMap((s) => scriptFaces[s] ?? [])]) await addFace(name);
+  for (const name of [...Object.values(request.faces ?? {}), ...(request.scripts ?? []).flatMap((s) => scriptFaces[s] ?? [])]) addFace(name);
+  // The face each family's cut comes from, best first after the requested cut (scriptCuts).
+  const hasCut = (name: string, cut: LetteringCut) => !!registry[name]?.cuts[cut];
+  const chainOf = (font: 'sans' | 'mono', cut: LetteringCut): string[] => {
+    const scripts = (request.scripts ?? []).flatMap((s) => scriptFaces[s] ?? []);
+    if (!cut) return [...new Set([request.faces?.[font] ?? font, ...scripts, font, 'sans', ...FALLBACK.map(([name]) => name)])];
+    const primary = request.faces?.[font] ?? defaultCutFace[font];
+    if (!hasCut(primary, cut)) throw new Error(`Lettering face ${primary} has no ${cut} cut; ask for another face or drop the style`);
+    const cuts = scripts.flatMap((name) => {
+      const found = scriptCuts(cut).find((c) => hasCut(name, c));
+      return found === undefined ? [] : [cutFace(name, found)];
+    });
+    const chain = [...new Set([cutFace(primary, cut), ...cuts, font, 'sans', ...FALLBACK.map(([name]) => name)])];
+    for (const name of chain.slice(0, cuts.length + 1)) addFace(name);
+    return chain;
+  };
+  // Code points each cut face was asked to draw, so a Bold cut carries only bold text.
+  const cutUsed = new Map<string, Set<number>>();
   // The old, already subset faces are the final fallback, unchanged. Write
   // them into an ignored cache only for the build-time HarfBuzz process.
   for (const [name, data] of [['sans', SANS], ['mono', MONO], ...FALLBACK]) {
@@ -122,10 +170,12 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
   let replay: LetteringProvider | undefined;
   const provider: LetteringProvider = {
     async prepare() { await replay?.prepare?.(); },
-    shape(font, text, size, fallback) {
-      if (replay) return replay.shape(font, text, size, fallback);
-      if (!request.faces?.[font] && !request.scripts?.length) return fallback(text, size);
-      const key = runKey(font, text);
+    request,
+    shape(font, text, size, fallback, cut = '') {
+      if (replay) return replay.shape(font, text, size, fallback, cut);
+      if (cut && !requestCuts(request).includes(cut)) throw new Error(`Lettering cut ${cut} was not requested in meta.lettering.styles`);
+      if (!cut && !request.faces?.[font] && !request.scripts?.length) return fallback(text, size);
+      const key = runKey(cutFamily(font, cut), text);
       let r = snapshot.runs[key];
       if (!r) {
         for (const ch of text) {
@@ -135,9 +185,18 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
             throw new Error(`Script not requested in meta.lettering.scripts: ${ch} (U+${ch.codePointAt(0)!.toString(16).toUpperCase()})`);
           used.add(ch.codePointAt(0)!);
         }
-        if (!usesLettering(request, font, text)) return fallback(text, size);
-        const chain = [...new Set([request.faces?.[font] ?? font, ...(request.scripts ?? []).flatMap((s) => scriptFaces[s] ?? []), font, 'sans', ...FALLBACK.map(([name]) => name)])];
-        r = python({ command: 'shape', fonts: chain.map((n) => fonts.get(n)!.file), text, mono: font === 'mono', explicitPrimary: !!request.faces?.[font], preferred: Object.fromEntries((request.scripts ?? []).filter((s) => ['Arab', 'Deva', 'Hebr', 'Hani'].includes(s)).map((s) => [s, chain.indexOf(scriptFaces[s]!)])) }) as Run;
+        if (!usesLettering(request, font, text, cut)) return fallback(text, size);
+        const chain = chainOf(font, cut);
+        for (const name of chain.filter((n) => n.includes('/'))) {
+          const points = cutUsed.get(name) ?? new Set<number>();
+          for (const ch of text) points.add(ch.codePointAt(0)!);
+          cutUsed.set(name, points);
+        }
+        // The chain's first face wins wherever it draws a cluster when the scene named it, or for a cut.
+        r = python({ command: 'shape', fonts: chain.map((n) => fonts.get(n)!.file), text, mono: font === 'mono', literal: chain.flatMap((n, i) => n.startsWith('jetbrains-mono') ? [i] : []), explicitPrimary: !!cut || !!request.faces?.[font], preferred: Object.fromEntries((request.scripts ?? []).filter((s) => ['Arab', 'Deva', 'Hebr', 'Hani'].includes(s)).flatMap((s) => {
+          const at = chain.findIndex((n) => n.split('/')[0] === scriptFaces[s]);
+          return at < 0 ? [] : [[s, at]];
+        })) }) as Run;
         Object.defineProperty(snapshot.runs, key, { value: r, enumerable: true });
       }
       return scaledRun(r, size);
@@ -169,12 +228,18 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
   return { Scene: bindLettering(Source, provider), snapshot,
     async finish() {
       for (const [name, face] of fonts) if (face.license) {
+        // A cut drew only what styled text asked of it: leave out a cut no run reached.
+        const cut = name.includes('/');
+        if (cut && !cutUsed.has(name)) continue;
         // Numeric animations visit values between their endpoints and may be
         // replayed at different video frame rates. Keep their bounded alphabet
-        // in replacement faces so the runtime can shape these values without
-        // accepting arbitrary new captions or scripts.
-        const points = new Set(used);
-        if (Object.values(request.faces ?? {}).includes(name)) for (const ch of numericAlphabet) points.add(ch.codePointAt(0)!);
+        // in replacement faces, and in each cut a family's text starts from, so
+        // the runtime can shape these values without accepting arbitrary new
+        // captions or scripts.
+        const points = new Set(cut ? cutUsed.get(name) : used);
+        if (Object.values(request.faces ?? {}).includes(name) || (cut && (['sans', 'mono'] as const).some((font) =>
+          requestCuts(request).some((c) => c && cutFace(request.faces?.[font] ?? defaultCutFace[font], c) === name))))
+          for (const ch of numericAlphabet) points.add(ch.codePointAt(0)!);
         const data = python({ command: 'subset', font: face.file, codepoints: [...points].sort((a, b) => a - b), gids: name === 'latin-modern-math' ? [...usedMath] : [] }) as string;
         snapshot.faces[name] = { hash: face.hash, data, license: face.license };
       }
@@ -189,10 +254,35 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
     },
   };
 }
-export function letteringWeight(snapshot: LetteringSnapshot) {
+export async function letteringWeight(snapshot: LetteringSnapshot) {
   return {
     bytes: Buffer.byteLength(JSON.stringify(snapshot)),
+    /** What the page's script carries of it (pageSnapshot). */
+    pageBytes: Buffer.byteLength(JSON.stringify(await pageSnapshot(snapshot))),
     faceBytes: Object.fromEntries(Object.entries(snapshot.faces).map(([name, face]) => [name, Buffer.from(face.data, 'base64').length])),
     runs: Object.keys(snapshot.runs).length,
   };
 }
+/**
+ * What a page carries of a snapshot: the request and the runs, which hold every
+ * outline it draws, and only the subsets its counters shape with (the faces
+ * snapshotProvider decodes). Hashes and licences stay in the snapshot; the
+ * licences go to the page's licence block, once each.
+ */
+export async function pageSnapshot(snapshot: LetteringSnapshot): Promise<LetteringSnapshot> {
+  const used = new Set<string>();
+  const faces = new Proxy(snapshot.faces, {
+    get(target, key) {
+      if (typeof key === 'string' && Object.hasOwn(target, key)) used.add(key);
+      return Reflect.get(target, key);
+    },
+  });
+  await snapshotProvider({ ...snapshot, faces }).prepare!();
+  return {
+    version: 1, sourceHash: '', builderHash: '', request: snapshot.request, runs: snapshot.runs, shaper: '',
+    faces: Object.fromEntries([...used].sort().map((name) => [name, { hash: '', data: snapshot.faces[name]!.data, license: '' }])),
+  };
+}
+/** The face licences a lettered page adds to its licence block: each distinct notice once. */
+export const letteringLicences = (snapshot: LetteringSnapshot): string[] =>
+  [...new Set(Object.values(snapshot.faces).map((face) => face.license))];

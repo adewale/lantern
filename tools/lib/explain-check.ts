@@ -407,7 +407,7 @@ export async function checkProject(project: Project, out: string): Promise<Recor
     variants,
     diagrams: Object.keys(project.store).length,
     replayedEdits: project.edits,
-    ...(project.outlineLettering ? { lettering: letteringWeight(project.outlineLettering) } : {}),
+    ...(project.outlineLettering ? { lettering: await letteringWeight(project.outlineLettering) } : {}),
     // What the requested lettering adds to the page; only an explainer that asked has it.
     ...(project.lettering ? { lettering: letteringReport(project.lettering) } : {}),
   };

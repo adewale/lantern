@@ -94,8 +94,8 @@ A scene is an ordinary Rayner scene, so beside the helpers it can use the engine
 
 ## Limits
 
-- Lettering is the embedded Inter or JetBrains Mono, so styles lose their own fonts.
-- Beyond Latin-1, only numerals draw (Arabic-Indic, Devanagari and Chinese, from small Noto subsets) unless an explainer asks for Latin Extended, Greek or Cyrillic ([lettering on request](docs/REFERENCE.md#lettering-on-request)). Other scripts, such as Arabic, Hebrew, Devanagari and Chinese letters, fail the build.
+- Lettering is the embedded Inter or JetBrains Mono, with faux bold and no italic, unless an explainer asks for more with `meta.lettering` ([lettering on request](docs/LETTERING.md)): a style's own face, real bold and italic, Latin Extended, Greek, Cyrillic, Arabic, Devanagari, Hebrew and Chinese, or maths. Capturing a request needs Python with HarfBuzz and the fonts; building from the committed snapshot does not.
+- Beyond Latin-1, only numerals draw (Arabic-Indic, Devanagari and Chinese, from small Noto subsets) in an explainer that asks for nothing. Any script it did not ask for fails the build.
 - Descriptions of the pictures are generated in English or French only.
 - On a phone each step opens on a close-up of what it changed, so a reader pans for the rest.
 - The models are small and cited, and no subject expert has reviewed the explainers.

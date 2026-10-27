@@ -182,8 +182,12 @@ def shape(req):
         buf.direction = 'rtl' if level % 2 else 'ltr'
         buf.script = sc
         buf.guess_segment_properties()
-        # Literal code has no ligatures, like the existing mono face.
-        hb.shape(hf, buf, {'liga': False, 'clig': False} if req.get('mono') else {})
+        # Literal code has no ligatures, like the existing mono face. JetBrains
+        # Mono draws its code ligatures with calt, which the embedded cut drops.
+        features = {'liga': False, 'clig': False} if req.get('mono') else {}
+        if req.get('mono') and owner in req.get('literal', []):
+            features['calt'] = False
+        hb.shape(hf, buf, features)
         scale = 1 / f['head'].unitsPerEm
         for info, pos in zip(buf.glyph_infos, buf.glyph_positions):
             control_glyph = info.codepoint == 0 and unicodedata.category(chars[info.cluster]['ch']) in ('Cc', 'Cf')
@@ -202,7 +206,11 @@ def shape(req):
 def sub(req):
     f = TTFont(req['font'], recalcTimestamp=False)
     options = subset.Options()
-    options.layout_features = ['*']
+    # A page decodes a subset only to shape counter values with glyph's Latin
+    # shaper, so keep the features that shaper and the embedded faces use, and
+    # drop hinting: outlines are drawn unhinted.
+    options.layout_features = ['kern', 'liga', 'ccmp', 'locl', 'mark', 'mkmk']
+    options.hinting = False
     options.recalc_timestamp = False
     options.flavor = 'woff2'
     s = subset.Subsetter(options=options)

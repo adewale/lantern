@@ -1,6 +1,8 @@
 // A lettered page in Chromium, served with its header recipe: the player puts the requested
 // faces in place before it draws, so the live stage draws the same Greek outlines as the
 // poster the build drew in Node. Without them its Greek would be the faces' empty glyph.
+// The outline-snapshot fixtures are held to the same rule: the page draws the stored runs,
+// and never shapes them, so each step's resting picture is Node's, path for path.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -18,9 +20,17 @@ import { serve } from '../tools/lib/explain-serve.ts';
 const enabled = !!process.env.EXPLAIN_BROWSER,
   options = { skip: enabled ? false : 'set EXPLAIN_BROWSER=1 for the lettered page in Chromium' };
 let browser: Browser, folder: string, server: { url: string; close(): void }, project: Project;
+/** The outline-snapshot fixtures (test/lettering/): scripts, faces, cuts and maths drawn from stored runs. */
+const OUTLINES = ['arabic', 'devanagari', 'math', 'style', 'styles'] as const;
+const outlines: Partial<Record<(typeof OUTLINES)[number], Project>> = {};
 before(async () => {
   if (!enabled) return;
   folder = await mkdtemp(join(tmpdir(), 'rayner-lettering-browser-'));
+  for (const id of OUTLINES) {
+    outlines[id] = await collectProject(join(ROOT, 'test/lettering', id), { write: false });
+    await buildExplainer(outlines[id]!, join(folder, id + '.html'));
+  }
+  // Last, so its faces are the ones in place when the Greek test draws in Node
   project = await collectProject(join(ROOT, 'test/fixtures/lettering'), { write: false });
   await buildExplainer(project, join(folder, 'lettered.html'));
   server = await serve(folder, 0, 'lettered.html');
@@ -57,6 +67,38 @@ test('the live stage of a lettered page draws the Greek outlines the build draws
     assert.ok(expected.length > 4, `${word}: the picture has the card and its words`);
     assert.deepEqual(await live(), expected, `${word}: the live stage draws what Node drew`);
     assert.deepEqual(errors, []);
+    await page.close();
+  }
+});
+
+/** Every resting picture of `project`'s default case, as Node draws it: absolute path data, sorted. */
+async function nodePaths(p: Project): Promise<string[][]> {
+  const v = defaultVariant(p);
+  const out: string[][] = [];
+  for (const step of v.trace.steps) {
+    const scene = await renderAt(v.Scene, restingTime(step, v.trace.fps), new SnapshotSink());
+    out.push(renderElements(scene, { relative: false }).filter((r) => r.tag === 'path').map((r) => String(r.attrs.d)).sort());
+  }
+  return out;
+}
+
+test('each outline-snapshot page draws, at every step, the paths Node draws from the same runs', options, async () => {
+  for (const id of OUTLINES) {
+    const p = outlines[id]!, expected = await nodePaths(p), steps = defaultVariant(p).trace.steps;
+    const page = await browser.newPage();
+    const errors: string[] = [];
+    page.on('console', (m) => void (m.type() === 'error' && errors.push(m.text())));
+    page.on('pageerror', (e) => errors.push(String(e)));
+    for (const [i, step] of steps.entries()) {
+      await page.goto(`${server.url}/${id}.html?step=${encodeURIComponent(step.step)}`);
+      await page.waitForSelector('[data-ready=true]');
+      await page.waitForFunction((n) => document.querySelectorAll('.stage path').length === n, expected[i]!.length);
+      const live = await page.locator('.stage').evaluate((s) => [...s.querySelectorAll('path')].map((q) => q.getAttribute('d')!).sort());
+      // The paper and at least one line of lettering (the player draws a line as one path)
+      assert.ok(expected[i]!.length >= 2, `${id} ${step.step}: the picture has its lettering`);
+      assert.deepEqual(live, expected[i], `${id} ${step.step}: the live stage draws what Node drew`);
+    }
+    assert.deepEqual(errors, [], id);
     await page.close();
   }
 });
