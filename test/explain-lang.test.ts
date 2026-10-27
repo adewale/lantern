@@ -44,7 +44,7 @@ let folder: string;
 const built: Record<'fr' | 'en' | 'de', { project: Project; html: string; file: string }> = {} as never;
 let riche: Project;
 before(async () => {
-  folder = await mkdtemp(join(tmpdir(), 'lantern-lang-'));
+  folder = await mkdtemp(join(tmpdir(), 'rayner-lang-'));
   for (const [lang, label, caption] of [
     ['fr', 'Enfants à charge', 'Un couple déclare son revenu.'],
     ['en', 'Children', 'A couple files a return.'],

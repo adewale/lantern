@@ -7,10 +7,10 @@ How to put a built page on a website, and how to export the same scene as a vide
 1. Build it:
 
    ```sh
-   explain build scene.ts --out public/cache.html
+   rayner build scene.ts --out public/cache.html
    ```
 
-   In a checkout, use `npm run explain -- build ...`. The HTML file is the whole explainer: every case, poster, transcript, sources and licence notices. It makes no network requests at runtime.
+   In a checkout, use `npm run rayner -- build ...`. The HTML file is the whole explainer: every case, poster, transcript, sources and licence notices. It makes no network requests at runtime.
 
 2. Upload `cache.html` to any static host, with `loader.js` if you will use the loader.
 
@@ -66,10 +66,10 @@ Video is optional; the page is the main output. A video of a scene has the same 
 You need FFmpeg on `PATH` and `@resvg/resvg-js` (`npm i @resvg/resvg-js@^2.6.2`; a checkout's `npm ci` already has it). `check` and `build` need neither.
 
 ```sh
-explain render scene.ts --out cache.mp4 --footer                      # 1280 × 960, title and caption under the stage
-explain render scene.ts --out cache-miss.mp4 --footer --case request=miss
-explain render scene.ts --out cache.mp4 --footer --all                # one file per case
-explain render scene.ts --out cache.webm --width 1920                 # stage only, VP9
+rayner render scene.ts --out cache.mp4 --footer                      # 1280 × 960, title and caption under the stage
+rayner render scene.ts --out cache-miss.mp4 --footer --case request=miss
+rayner render scene.ts --out cache.mp4 --footer --all                # one file per case
+rayner render scene.ts --out cache.webm --width 1920                 # stage only, VP9
 ```
 
 Each step plays its motion under its title, then holds its resting picture under the caption for the caption's reading time, so shorter captions make a shorter video.

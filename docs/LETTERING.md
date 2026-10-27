@@ -49,9 +49,9 @@ export RAYNER_LETTERING_PYTHON="$PWD/out/lettering-venv/bin/python"
 bash tools/lettering-outline-fonts.sh
 # Latin Modern Math 1.959 is supplied by Ubuntu's fonts-lmodern package.
 # Else set RAYNER_MATH_FONT to the original latinmodern-math.otf.
-npm run explain -- snapshots path/to/scene.ts
-npm run explain -- check path/to/scene.ts
-npm run explain -- build path/to/scene.ts --out out/example.html
+npm run rayner -- snapshots path/to/scene.ts
+npm run rayner -- check path/to/scene.ts
+npm run rayner -- build path/to/scene.ts --out out/example.html
 ```
 
 Commit `scene.lettering.json` beside the scene, just like diagram snapshots.
@@ -67,7 +67,7 @@ lettering builder, embedded fallback fonts or core shaping code invalidates the 
 `preview` refreshes during authoring. Unrecorded prose fails closed; seek and playback cannot start an unrecorded language case. Formatted numeric values and known simple-script prefix/suffix templates can replay through the existing glyph shaper with the requested subset, so counters work at arbitrary video frame rates. Missing characters
 in an unrequested script still fail, including during capture.
 
-`explain check` reports `lettering.bytes` (serialized snapshot payload),
+`rayner check` reports `lettering.bytes` (serialized snapshot payload),
 `lettering.pageBytes` (what the page's script carries of it), the binary subset
 size per face, and the distinct run count. A page carries the request and the
 runs its scene draws, which hold every outline it shows, and only the subsets its
@@ -86,6 +86,22 @@ left out. Receipts include
 engine fingerprint deliberately excludes optional modules and type-only
 metadata, so opting out preserves receipts as well as page bytes. A regression
 test pins all 26 pre-feature pages and receipts, across their 140 cases.
+
+## Capture from an installed package
+
+The preceding commands run in a Rayner checkout. In an author project with the package installed, keep the optional Python environment and source fonts in your own `out/` directory:
+
+```sh
+python3 -m venv out/lettering-venv
+out/lettering-venv/bin/pip install -r node_modules/rayner/tools/lettering-requirements.txt
+export RAYNER_LETTERING_PYTHON="$PWD/out/lettering-venv/bin/python"
+export RAYNER_LETTERING_FONTS="$PWD/out/lettering-fonts"
+bash node_modules/rayner/tools/lettering-outline-fonts.sh
+npx rayner snapshots path/to/scene.ts
+npx rayner check path/to/scene.ts
+```
+
+Maths capture also needs the checksum-pinned Latin Modern Math face described above. Cached snapshots build without these capture dependencies. Commit the refreshed `scene.lettering.json` with the scene.
 
 ## Supported requests
 

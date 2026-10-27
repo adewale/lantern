@@ -83,7 +83,7 @@ export function wrapCaption(text: string, width: number, size = CAPTION.size): s
 /**
  * Each step's title and caption wrapped for the caption-footer preset. Throws, naming the step
  * and case, when one does not fit four lines or has a character the embedded fonts cannot draw.
- * `explain render --footer` runs it before FFmpeg starts; `demos:check` runs it on every case.
+ * `rayner render --footer` runs it before FFmpeg starts; `npm run videos` runs it on every case it renders.
  */
 export async function footerLines(trace: Trace, values: Settings): Promise<string[][][]> {
   await loadFonts();
@@ -250,7 +250,7 @@ export async function renderVideo(
   const footerLinesByStep = withFooter ? await withSceneLettering(variant.Scene, () => footerLines(trace, variant.values)) : steps.map((): string[][] => [[], []]);
   out = resolve(out);
   await mkdir(dirname(out), { recursive: true });
-  const temp = await mkdtemp(join(dirname(out), '.lantern-video-'));
+  const temp = await mkdtemp(join(dirname(out), '.rayner-video-'));
   const temporaryVideo = join(temp, basename(out));
   const vtt = temporaryVideo.replace(/\.[^.]+$/, '.vtt'),
     metadata = temporaryVideo + '.chapters.ffmeta';

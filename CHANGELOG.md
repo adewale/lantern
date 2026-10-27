@@ -1,14 +1,34 @@
-## Unreleased
+# Changelog
+
+## 0.1.0 (unreleased)
+
+The first release of the `rayner` npm package. Lantern released 0.1.0 under the name `manim-js`; `rayner` is a new package, so its numbering starts again at 0.1.0. Earlier drafts of this changelog called this version `0.2.0-explainers.0`.
+
+What the package provides:
+
+- `rayner`: Lantern's engine at `2c7bad5`, with the fixes [Upstream](docs/UPSTREAM.md) lists, plus a camera, matching and diff transforms, emphasis, graphing, views and addressable code.
+- `rayner/explain`: helpers for diagrams, cards and code panels; reader settings that rerun the scene as checked cases; and `describeExplainer`.
+- `rayner/lettering`: Latin Extended, Greek and Cyrillic for the explainers that ask for them.
+- The `rayner` command: `init`, `preview`, `snapshots`, `check`, `build`, `render`, `shots`, `describe` and `see`, and `--version`. Install with `npm i -D rayner` and run with `npx rayner`.
+- Portable HTML pages with a loader and header recipes, and silent captioned video.
+- An agent skill, `skills/rayner-explainers/SKILL.md`.
+
+Changes in this release, for anyone using a checkout from before it:
 
 - **Next view goes first to what the step emphasised** (issue #21, after #24): at 390 × 844, PKCE's `authorize` caption says the verifier stays with the client "as the card's last row shows", but that row was view 7 of 7, and the first step's derivation of the challenge was view 4 of 6; #24 made the route visible, but views were still ordered by position alone. Now the stage's helpers report what they emphasise from their own state (a lit card row, a code focus or diff line, a marked, travelled or focused diagram part, a note; `emphasises` in `explain/look.ts`), and Next view and the corner map visit the views showing what the step newly emphasised straight after the first, so both are one press away. The `authorize` step now lights the row its caption names (`code_verifier: not sent`) instead of `code_challenge`, which the coloured request arrow already shows. Over the 1,025 case steps of the 26 explainers, 236 of the 822 multi-view tours change order; the view a step opens on, the set of views and their scale do not, so `check` reports the same phone numbers.
 
 - Add opt-in `meta.lettering`: licensed, per-scene font subsets; build-time HarfBuzz and bidi outline snapshots; and `Math`/`MathTex` using glyph's optional TeX/MATH typesetter. Fresh snapshots build offline without those tools. Checks report lettering weight and fail on stale snapshots or unrequested scripts. All 26 existing explainer pages and receipts remain byte-identical.
 
-# Changelog
+- **Requested lettering:** per-scene licensed fonts, build-time HarfBuzz and bidi outline snapshots, and `Math`/`MathTex` using glyph's optional TeX/MATH typesetter. Fresh snapshots build without Python or source fonts; checks report lettering weight and reject stale snapshots or unrequested scripts.
+- **Phone navigation and authoring:** visible Next view and Whole picture controls distinguish close-ups from steps; the gallery states its purpose and links the authoring guides.
+- **Release validation:** install and test the exact packed archive, compile a consumer against its exports, and retain its integrity manifest. The manual publishing workflow reuses CI and supports npm trusted publishing after account setup.
 
-## Unreleased: 0.2.0-explainers.0
+- **The command is `rayner`**, not `explain`. In a checkout, `npm run explain -- …` is now `npm run rayner -- …`, and errors start `rayner:`. `--version` prints the version.
+- **Lantern's name is left only where it means Lantern.** Built SVG clip ids are `rayner-clip-…` (were `lantern-clip-…`); `demos:serve` prints "Rayner demos"; temporary folders and the docs call the engine Rayner's. Because the engine's source and every page's licence notices changed, every explainer's engine hash and page bytes change once, so run `npm run videos` before publishing videos again. The receipt's `engine` field still says `lantern@2c7bad5+explainer`, which records where the engine came from. Internal capture markers remain `data-lantern-part` and `backend:lantern-capture`; the internal path placeholder remains `lantern:/` so committed snapshots stay usable.
+- **Licences**: `LICENSE` adds the fork's copyright line beside Lantern's, and `vendor/licenses/glyph-MIT.txt` carries the notice for the bundled glyph. The package now includes this changelog.
+- **CI** can be started by hand (`workflow_dispatch`).
 
-Newest first; all on 24–26 October 2026.
+The entries below record how the release was built, newest first, all on 24–26 October 2026.
 
 - **Right-to-left captions and footers, morphs by cluster** (closes issue #8): a right-to-left title or caption now reads and aligns right to left. In the video footer each wrapped line is led by a right-to-left mark (U+200F), so a line that starts with a Latin word keeps the paragraph's direction, and it ends at the right edge of the text column; the video transcript marks it `dir="rtl"`. A page whose lettering asks for `Arab` or `Hebr` gives its titles, captions, steps list and transcript `unicode-bidi: plaintext`, so each takes its direction from its own first strong character; no other page changes. `TransformMatchingText` pairs the glyphs of lettered text by whole cluster and glyph count, so a cluster whose glyphs change (क to the conjunct क्ष) fades instead of morphing one glyph into another, while नम to नमस्ते keeps न and म; pages without lettering keep pairing by character. New fixtures: `test/lettering/hebrew` (niqqud, a right-to-left paragraph with a Latin word and numbers, a caption that wraps onto a line starting with a Latin word) and `test/lettering/matching`, with HarfBuzz and UAX #9 visual-order tests and the Chromium path comparison. Picture descriptions in these languages are out of scope; they stay English or French.
 

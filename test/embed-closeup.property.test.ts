@@ -1,5 +1,5 @@
 // Property tests for the close-ups a narrow stage opens each step on (app/embed-closeup.ts),
-// in Node. The player and `explain check` both take their phone view from these functions,
+// in Node. The player and `rayner check` both take their phone view from these functions,
 // so these contracts are what a phone reader gets: every label near a step's changes at
 // 12 px or more, and every change reachable by the overview's tour, with no panning.
 // Counts: test/lib/pbt.ts (FULL=1 is 10x).
@@ -345,7 +345,7 @@ test('a step records what it emphasised with the helpers, and only that step', a
 test('PKCE on a phone: what each caption points at is in the first close-up or the next (issue #21)', async () => {
   const Scene = await explainer('oauth-pkce'),
     layouts = await stepLayouts(Scene);
-  // The 358 × 201 stage of a 390 px page, the one `explain check` measures.
+  // The 358 × 201 stage of a 390 px page, the one `rayner check` measures.
   const [w, h] = [358, 201];
   const within = (b: Box, v: Box) => b[0] >= v[0] - 1e-6 && b[2] <= v[2] + 1e-6 && b[1] >= v[1] - 1e-6 && b[3] <= v[3] + 1e-6;
   const evidence: [string, Box][] = [

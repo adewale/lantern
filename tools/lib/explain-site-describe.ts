@@ -15,7 +15,7 @@ export interface SiteItem {
 const TITLE = '# Rayner explainers';
 const GROUPS = { topic: 'Explainers', toolchain: 'How these are made' } as const;
 
-/** The explainer as `explain describe` prints it, drawings included, from its pinned snapshots. */
+/** The explainer as `rayner describe` prints it, drawings included, from its pinned snapshots. */
 export async function describeById(id: string): Promise<ExplainerDescription> {
   const project = await collectProject(join(ROOT, 'scenes/explainers', id), { write: false });
   return describeExplainer(project.Scene, { snapshots: project.store });
