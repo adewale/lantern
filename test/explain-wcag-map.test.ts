@@ -4,9 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fc, params } from './lib/pbt.ts';
 import { collectProject } from '../tools/lib/explain-project.ts';
-import { check as fidelity } from './lib/fidelity/wcag-map.ts';
 import {
   CRITERIA,
   GUIDELINES,
@@ -275,63 +273,50 @@ test('2.4.7 Focus Visible is level AA in every version', () => {
   assert.ok(INCLUDES.some(([, f, l]) => f === 'sc/20/focus-visible.html' && l === 'AA'));
 });
 
-const version = fc.constantFrom(...VERSIONS),
-  level = fc.constantFrom(...LEVELS);
-
-test('property: a tally adds up, by principle and by guideline', () => {
-  fc.assert(
-    fc.property(version, level, (v, l) => {
-      const t = tally(v, l);
-      const sum = (r: Record<string, number>) => Object.values(r).reduce((a, b) => a + b, 0);
-      assert.equal(sum(t.principles), t.total);
-      assert.equal(sum(t.guidelines), t.total);
-      assert.deepEqual(Object.keys(t.guidelines), guidelinesIn(v).map((g) => g.num));
-    }),
-    params(50),
-  );
+test('every version and level tally adds up, by principle and by guideline', () => {
+  for (const v of VERSIONS) for (const l of LEVELS) {
+    const t = tally(v, l);
+    const sum = (r: Record<string, number>) => Object.values(r).reduce((a, b) => a + b, 0);
+    assert.equal(sum(t.principles), t.total, `${v} ${l} principles`);
+    assert.equal(sum(t.guidelines), t.total, `${v} ${l} guidelines`);
+    assert.deepEqual(Object.keys(t.guidelines), guidelinesIn(v).map((g) => g.num));
+  }
 });
 
-test('property: each level asks for everything the level below it does', () => {
-  fc.assert(
-    fc.property(version, fc.constantFrom<[Level, Level]>(['A', 'AA'], ['AA', 'AAA'], ['A', 'AAA']), (v, [lo, hi]) => {
-      const higher = new Set(criteria(v, hi).map((c) => c.num));
-      for (const c of criteria(v, lo)) assert.ok(higher.has(c.num), `${c.num} at ${lo} but not ${hi}`);
-    }),
-    params(50),
-  );
+test('every version and level includes everything the level below it asks for', () => {
+  const pairs: readonly (readonly [Level, Level])[] = [['A', 'AA'], ['AA', 'AAA'], ['A', 'AAA']];
+  for (const v of VERSIONS) for (const [lo, hi] of pairs) {
+    const higher = new Set(criteria(v, hi).map((c) => c.num));
+    for (const c of criteria(v, lo)) assert.ok(higher.has(c.num), `${v}: ${c.num} at ${lo} but not ${hi}`);
+  }
 });
 
-test('property: a version is the one before it, plus what it adds, minus what it removes', () => {
-  fc.assert(
-    fc.property(fc.constantFrom<[Version, Version]>(['2.0', '2.1'], ['2.1', '2.2']), level, ([a, b], l) => {
-      const c = change(a, b, l);
-      const before = criteria(a, l).map((x) => x.num);
-      const expected = [...before.filter((n) => !c.removed.includes(n)), ...c.added];
-      assert.deepEqual(new Set(criteria(b, l).map((x) => x.num)), new Set(expected));
-      assert.equal(criteria(b, l).length, before.length + c.added.length - c.removed.length);
-    }),
-    params(50),
-  );
+test('every adjacent version and level is its predecessor plus additions minus removals', () => {
+  const pairs: readonly (readonly [Version, Version])[] = [['2.0', '2.1'], ['2.1', '2.2']];
+  for (const [a, b] of pairs) for (const l of LEVELS) {
+    const c = change(a, b, l);
+    const before = criteria(a, l).map((x) => x.num);
+    const expected = [...before.filter((n) => !c.removed.includes(n)), ...c.added];
+    assert.deepEqual(new Set(criteria(b, l).map((x) => x.num)), new Set(expected));
+    assert.equal(criteria(b, l).length, before.length + c.added.length - c.removed.length);
+  }
 });
 
-test('property: an opened guideline counts what its 2.2 criteria are, and holds every criterion it ever had', () => {
-  fc.assert(
-    fc.property(fc.constantFrom(...GUIDELINES.map((g) => g.num)), level, (g, l) => {
-      const shown = opened(g, l);
-      assert.deepEqual(
-        shown.filter((c) => inVersion(c, '2.2')).map((c) => c.num),
-        criteria('2.2', l, g).map((c) => c.num),
-      );
-      for (const v of VERSIONS) for (const c of criteria(v, l, g)) assert.ok(shown.includes(c), `${c.num} in ${v}`);
-    }),
-    params(50),
-  );
+test('every opened guideline and level counts its current criteria and holds every criterion it ever had', () => {
+  for (const { num: g } of GUIDELINES) for (const l of LEVELS) {
+    const shown = opened(g, l);
+    assert.deepEqual(
+      shown.filter((c) => inVersion(c, '2.2')).map((c) => c.num),
+      criteria('2.2', l, g).map((c) => c.num),
+    );
+    for (const v of VERSIONS) for (const c of criteria(v, l, g)) assert.ok(shown.includes(c), `${c.num} in ${v}`);
+  }
 });
 
-test('every case’s step state is the model’s, and the mind map reads as its outline', async () => {
+test('every authored case is collected, and the mind map reads as its outline', async () => {
   const project = await collectProject('scenes/explainers/wcag-map', { write: false });
   assert.equal(project.variants.length, 12);
-  for (const { values, trace } of project.variants) fidelity(trace, values);
+  // Step-state fidelity for every variant lives in explain-fidelity.test.ts.
   // The description lists a mind map's topics depth first, each principle followed by its own
   // guidelines, rather than alternating between the root's two sides (1.1, 2.1, 1.2, …).
   const v20 = project.variants[0]!.trace.steps.find((s) => s.step === 'v20')!;

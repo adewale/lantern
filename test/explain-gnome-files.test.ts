@@ -11,7 +11,6 @@ import { Diagram } from '../explain/diagrams.ts';
 import type { DiagramSnapshot } from '../explain/index.ts';
 import { collectProject, readSnapshots } from '../tools/lib/explain-project.ts';
 import { footerLines } from '../tools/lib/explain-video.ts';
-import { check } from './lib/fidelity/gnome-files.ts';
 import {
   COLOURS,
   GROUPS,
@@ -169,11 +168,11 @@ test('edits replay between any two journeys of the same actor', () => {
 });
 
 // ---------------------------------------------------------------- the scene, every case
-test('every case’s step state is the model’s, and every title and caption fits the video footer', async () => {
+test('every authored case’s title and caption fits the video footer', async () => {
   const project = await collectProject('scenes/explainers/gnome-files', { write: false });
   assert.equal(project.variants.length, PARTICIPANTS.length);
   for (const v of project.variants) {
-    check(v.trace, v.values as Record<string, string>);
+    // Step-state fidelity for every participant lives in explain-fidelity.test.ts.
     await footerLines(v.trace, v.values);
   }
 });

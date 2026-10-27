@@ -212,7 +212,8 @@ test('whatever the validator accepts, a Diagram can draw without a NaN', async (
       let ok: DiagramSnapshot;
       try {
         ok = await snapshotResolver({ [diagramKey(s.spec)]: broken }).diagram(s.spec);
-      } catch {
+      } catch (error) {
+        assert.match((error as Error).message, /^(Invalid diagram snapshot|Snapshot source does not match)/);
         return;
       }
       const scene = new Scene(new NullSink(), { skipUntil: Infinity });

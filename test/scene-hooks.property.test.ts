@@ -20,7 +20,7 @@ type Plan = typeof plan extends fc.Arbitrary<infer T> ? T : never;
 const words = (c: string) => (c.trim() ? c.trim().split(/\s+/).length : 0);
 
 /** Run a plan; return its steps, and the motion time each step played before any hold. */
-async function run(p: Plan, skipUntil = 0) {
+async function run(p: Plan, skipUntil = Infinity) {
   const motion: number[] = [];
   class Planned extends Scene {
     override async construct() {
@@ -110,7 +110,7 @@ test('a caption with no words needs no hold', async () => {
 test('holds are the same whether the run is played or skipped', async () => {
   await fc.assert(
     fc.asyncProperty(plan, async (p) => {
-      const [a, b] = [await run(p), await run(p, Infinity)];
+      const [a, b] = [await run(p, 0), await run(p, Infinity)];
       assert.deepEqual(b.steps.map((s) => [s.t0, s.t1, s.hold, s.frame0, s.frame1]), a.steps.map((s) => [s.t0, s.t1, s.hold, s.frame0, s.frame1]));
     }),
     params(300),

@@ -97,29 +97,50 @@ test('Transform ends drawing exactly what its target, as authored, draws', async
 });
 
 test('subdividing any cubic path preserves its geometry (random paths, random n)', async () => {
-  // 200 cases: each samples the path 4000 times per curve as its reference.
-  await forDraws(200, (seed) => {
-    const r = drawsFrom(seed);
-    const n = r.int(1, 6), p = new VMobject();
+  // Read source controls directly; the independent Bernstein evaluator does not call
+  // pointOnCurve. Manim fixtures separately own which source curves receive splits.
+  const cubic = (a: Float32Array, c: number, t: number): [number, number] => {
+    const u = 1 - t, weights = [u ** 3, 3 * u * u * t, 3 * u * t * t, t ** 3];
+    return [0, 1].map((axis) => weights.reduce((sum, w, j) => sum + w * a[6 * c + 2 * j + axis]!, 0)) as [number, number];
+  };
+  const check = (seed: Draws) => {
+    const r = drawsFrom(seed), n = r.int(1, 6), p = new VMobject();
     p.startNewPath([r(-2, 2), r(-2, 2)]);
     for (let i = 0; i < n; i++) p.addCubic([r(-2, 2), r(-2, 2)], [r(-2, 2), r(-2, 2)], [r(-2, 2), r(-2, 2)]);
-    // Every point of the subdivided path must lie on the original. The reference is
-    // the original sampled 4000 times per curve (about 2e-3 apart on the longest
-    // paths here), so 3e-3 is the resolution of the check, not slack in the code.
-    const ref: Array<[number, number]> = [];
-    for (let c = 0; c < n; c++) for (let i = 0; i <= 4000; i++) ref.push(p.pointOnCurve(0, c, i / 4000));
-    const start = p.pointFromProportion(0), end = p.pointFromProportion(1);
-    const extra = r.int(1, 12);
+    const original = p.subpaths[0]!.slice(), extra = r.int(1, 12);
     p.insertNCurves(0, extra);
-    assert.equal(p.numCurves(), n + extra, 'exactly n more curves');
-    assert.deepEqual(p.pointFromProportion(0), start); assert.deepEqual(p.pointFromProportion(1), end);
-    for (let c = 0; c < p.numCurves(); c++) for (const t of [0, 0.25, 0.5, 0.75]) {
-      const q = p.pointOnCurve(0, c, t);
-      let d = Infinity;
-      for (const a of ref) { const e = Math.hypot(a[0] - q[0], a[1] - q[1]); if (e < d) d = e; }
-      assert.ok(d < 3e-3, `curve ${c} t=${t} is ${d.toFixed(4)} off the original path`);
-    }
-  });
+    assert.equal(p.numCurves(), n + extra);
+    const out = p.subpaths[0]!;
+    assert.deepEqual(Array.from(out.slice(0, 2)), Array.from(original.slice(0, 2)));
+    assert.deepEqual(Array.from(out.slice(-2)), Array.from(original.slice(-2)));
+    // Coincident anchors make the allocation boundary ambiguous. Accept any
+    // complete ordered partition whose independently evaluated geometry matches;
+    // the separate Manim fixtures pin which of these equivalent allocations wins.
+    const failed = new Set<string>();
+    const matches = (c: number, first: number): boolean => {
+      if (c === n) return first === p.numCurves();
+      const key = `${c}:${first}`;
+      if (failed.has(key)) return false;
+      for (let parts = 1; parts <= p.numCurves() - first - (n - c - 1); parts++) {
+        const end = 6 * (first + parts);
+        if (out[end] !== original[6 * c + 6] || out[end + 1] !== original[6 * c + 7]) continue;
+        let same = true;
+        for (let j = 0; j < parts && same; j++) for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+          const want = cubic(original, c, (j + t) / parts), got = p.pointOnCurve(0, first + j, t);
+          // Controls are bounded by 2; Float32 storage rounds split controls.
+          if (Math.hypot(got[0] - want[0], got[1] - want[1]) >= 1e-5) { same = false; break; }
+        }
+        if (same && matches(c + 1, first + parts)) return true;
+      }
+      failed.add(key);
+      return false;
+    };
+    assert.ok(matches(0, 0), 'every output piece preserves an equal parameter span of a source curve');
+  };
+  // Coincident source anchors remain valid, including all-degenerate curves.
+  check(Array.from({ length: 640 }, () => 0));
+  check(Array.from({ length: 640 }, () => 0.5));
+  await forDraws(200, check);
 });
 
 test('copy() is deep: mutating a copy never touches the original', async () => {
@@ -161,4 +182,49 @@ test('a one-curve path morphing into a Text heads for the text’s centre, not o
     ),
     params(),
   );
+});
+
+test('splitCurve preserves equal parameter spans, exact anchors and untouched neighbor curves', () => {
+  fc.assert(fc.property(fc.array(fc.tuple(fc.double({ min: -2, max: 2, noNaN: true }), fc.double({ min: -2, max: 2, noNaN: true })), { minLength: 10, maxLength: 10 }), fc.integer({ min: 0, max: 2 }), fc.integer({ min: 1, max: 12 }), (points, curve, parts) => {
+    const original = new Float32Array(points.flat());
+    const split = VMobject.splitCurve(original, curve, parts);
+    assert.equal(split.length, original.length + 6 * (parts - 1));
+    assert.deepEqual(split.slice(0, 6 * curve + 2), original.slice(0, 6 * curve + 2));
+    assert.deepEqual(split.slice(6 * (curve + parts) ), original.slice(6 * (curve + 1)));
+    const subject = new VMobject(); subject.subpaths = [split];
+    for (let j = 0; j < parts; j++) for (const u of [0, 0.25, 0.5, 0.75, 1]) {
+      const t = (j + u) / parts, v = 1 - t;
+      for (const axis of [0, 1]) {
+        const o = 6 * curve + axis;
+        const want = v ** 3 * original[o]! + 3 * v * v * t * original[o + 2]! + 3 * v * t * t * original[o + 4]! + t ** 3 * original[o + 6]!;
+        assert.ok(Math.abs(subject.pointOnCurve(0, curve + j, u)[axis]! - want) < 1e-5);
+      }
+    }
+  }), params(200));
+});
+
+test('arcLength uses eight Bernstein segments per curve and excludes disconnected jumps', () => {
+  const point = fc.tuple(fc.double({ min: -2, max: 2, noNaN: true }), fc.double({ min: -2, max: 2, noNaN: true }));
+  const subpath = fc.record({ start: point, curves: fc.array(fc.tuple(point, point, point), { maxLength: 4 }) });
+  fc.assert(fc.property(fc.array(subpath, { maxLength: 5 }), (paths) => {
+    const p = new VMobject();
+    for (const { start, curves } of paths) {
+      p.startNewPath(start);
+      for (const [b, c, d] of curves) p.addCubic(b, c, d);
+    }
+    let total = 0;
+    p.subpaths.forEach((a, i) => {
+      for (let c = 0; c < paths[i]!.curves.length; c++) {
+        const at = (t: number) => [0, 1].map((axis) => {
+          const o = 6 * c + axis;
+          return (1 - t) ** 3 * a[o]! + 3 * (1 - t) ** 2 * t * a[o + 2]! + 3 * (1 - t) * t ** 2 * a[o + 4]! + t ** 3 * a[o + 6]!;
+        });
+        let length = 0, prev = at(0);
+        for (let k = 1; k <= 8; k++) { const next = at(k / 8); length += Math.hypot(next[0]! - prev[0]!, next[1]! - prev[1]!); prev = next; }
+        assert.ok(Math.abs(p.curveLength(i, c) - length) < 1e-12);
+        total += length;
+      }
+    });
+    assert.ok(Math.abs(p.arcLength() - total) < 1e-12);
+  }), params(200));
 });

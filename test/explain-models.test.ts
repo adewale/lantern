@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { fc, params } from './lib/pbt.ts';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import {
@@ -23,13 +24,18 @@ import { loadFonts } from '../src/index.ts';
 import TokenBucketExplainer from '../scenes/explainers/token-bucket/scene.ts';
 
 test('SHA-256 and PKCE agree with independent crypto and the RFC 7636 vector', () => {
-  for (let n = 0; n < 180; n++) {
-    const input = Array.from({ length: n }, (_, i) => String.fromCharCode(32 + ((i * 17 + n) % 90))).join('');
-    assert.equal(
-      Buffer.from(sha256(input)).toString('hex'),
-      createHash('sha256').update(input).digest('hex'),
-    );
-  }
+  const checkHash = (input: string) => {
+    const expected = createHash('sha256').update(input).digest();
+    assert.deepEqual(Buffer.from(sha256(input)), expected);
+    assert.equal(pkceChallenge(input), expected.toString('base64url'));
+  };
+  // Independent UTF-8 hashing at SHA's one/two-block padding boundaries, with
+  // NUL, non-BMP characters and lone surrogates handled by TextEncoder/Node.
+  for (const size of [0, 1, 55, 56, 63, 64, 65, 119, 120, 127, 128]) checkHash('x'.repeat(size));
+  for (const text of ['\0', 'é中文😀', '\ud800', '\udfff']) checkHash(text);
+  const utf16 = fc.array(fc.integer({ min: 0, max: 0xffff }), { maxLength: 192 })
+    .map((units) => String.fromCharCode(...units));
+  fc.assert(fc.property(utf16, checkHash), params(300));
   assert.equal(
     pkceChallenge('dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk'),
     'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',
@@ -41,8 +47,13 @@ test('both session histories come from the reducer; closed rejects all modeled e
     ['CONNECT', 'ERROR'],
   ])
     assert.equal(events.reduce(reduceSession, 'idle'), 'closed');
-  for (const event of ['CONNECT', 'OPENED', 'CLOSE', 'ERROR'])
-    assert.throws(() => reduceSession('closed', event), /InvalidTransition/);
+  const transitions: Record<string, Record<string, string>> = {
+    idle: { CONNECT: 'connecting' }, connecting: { OPENED: 'open', ERROR: 'closed' }, open: { CLOSE: 'closed' }, closed: {},
+  };
+  for (const [state, allowed] of Object.entries(transitions)) for (const event of ['CONNECT', 'OPENED', 'CLOSE', 'ERROR']) {
+    if (Object.hasOwn(allowed, event)) assert.equal(reduceSession(state, event), allowed[event]);
+    else assert.throws(() => reduceSession(state, event), /InvalidTransition/);
+  }
 });
 test('rate changes alter real decisions while balances stay inside capacity', () => {
   const successes = [];
@@ -57,6 +68,29 @@ test('rate changes alter real decisions while balances stay inside capacity', ()
     successes.push(results.filter(Boolean).length);
   }
   assert.deepEqual(successes, [7, 8, 9]);
+});
+test('token buckets match an independent quarter-token ledger at varied rates and capacities', () => {
+  fc.assert(fc.property(
+    fc.integer({ min: 1, max: 16 }), fc.integer({ min: 1, max: 24 }),
+    fc.array(fc.integer({ min: 0, max: 40 }), { maxLength: 80 }),
+    (rate, capacity, elapsedTicks) => {
+      const bucket = new TokenBucket(rate, capacity);
+      // One tick is a quarter second; reference credits are quarter-tokens.
+      // Integer accounting makes repeated timestamps and exact refill edges exact.
+      let credits = capacity * 4;
+      let ticks = 0;
+      for (const elapsed of elapsedTicks) {
+        ticks += elapsed;
+        credits += elapsed * rate;
+        if (credits > capacity * 4) credits = capacity * 4;
+        const accepted = credits >= 4;
+        if (accepted) credits -= 4;
+        assert.equal(bucket.allow(ticks / 4), accepted);
+        assert.equal(bucket.tokens, credits / 4);
+        assert.equal(bucket.lastRefill, ticks / 4);
+      }
+    },
+  ), params(300));
 });
 test('token-bucket: the state readout shows scene.state at the end of every step, at every rate', async () => {
   await loadFonts();
@@ -74,24 +108,36 @@ test('ring wraps into freed slots and Full changes no state', () => {
   assert.deepEqual(full[5]!.result, full[4]!.result);
   assert.deepEqual(full[6]!.result, full[4]!.result);
   assert.equal(full[5]!.error, 'Full');
-  for (let capacity = 1; capacity <= 16; capacity++) {
-    const ring = new RingBuffer<number>(capacity);
-    const reference: number[] = [];
-    for (let i = 0; i < 100; i++) {
-      if (i % 3 === 0 && reference.length) {
-        assert.equal(ring.pop(), reference.shift());
-      } else if (reference.length === capacity) {
+  fc.assert(fc.property(
+    fc.integer({ min: 1, max: 24 }),
+    fc.array(fc.oneof(fc.constant({ kind: 'pop' as const }), fc.integer().map((value) => ({ kind: 'push' as const, value }))), { maxLength: 80 }),
+    (capacity, commands) => {
+      const ring = new RingBuffer<number>(capacity);
+      const reference: number[] = [];
+      for (const command of commands) {
         const before = ring.snapshot();
-        assert.throws(() => ring.push(i), Full);
-        assert.deepEqual(ring.snapshot(), before);
-      } else {
-        ring.push(i);
-        reference.push(i);
+        if (command.kind === 'pop') {
+          if (reference.length) assert.equal(ring.pop(), reference.shift());
+          else {
+            assert.throws(() => ring.pop(), /^Error: Empty$/);
+            assert.deepEqual(ring.snapshot(), before);
+          }
+        } else if (reference.length === capacity) {
+          assert.throws(() => ring.push(command.value), Full);
+          assert.deepEqual(ring.snapshot(), before);
+        } else {
+          ring.push(command.value);
+          reference.push(command.value);
+        }
+        assert.equal(ring.length, reference.length);
+        assert.ok(ring.head >= 0 && ring.head < capacity && ring.tail >= 0 && ring.tail < capacity);
+        assert.deepEqual(Array.from({ length: ring.length }, (_, i) => ring.data[(ring.head + i) % capacity]), reference);
       }
-      assert.equal(ring.length, reference.length);
-      assert.ok(ring.head >= 0 && ring.head < capacity && ring.tail >= 0 && ring.tail < capacity);
-    }
-  }
+      // Drain even traces ending in pushes, so the tail's complete FIFO order is observed.
+      while (reference.length) assert.equal(ring.pop(), reference.shift());
+      assert.throws(() => ring.pop(), /^Error: Empty$/);
+    },
+  ), params(300));
 });
 test('shell execution returns a new filesystem and never mutates its input', () => {
   const original = { fs: {}, steps: 0 };
@@ -110,12 +156,18 @@ test('shell execution returns a new filesystem and never mutates its input', () 
   assert.equal(exec(next.shell, [['cat', 'shout.txt']]).stdout, 'HELLO\n');
 });
 test('sunlight follows the sunrise equation: bounded, hemisphere-symmetric, polar extremes and mid-latitude hours', () => {
-  for (let latitude = -89; latitude <= 89; latitude++)
-    for (let declination = -23; declination <= 23; declination++) {
+  fc.assert(fc.property(
+    fc.double({ min: -90, max: 90, noNaN: true }),
+    fc.double({ min: -23.44, max: 23.44, noNaN: true }),
+    (latitude, declination) => {
       const value = sunlight(latitude, declination);
-      assert.ok(value.daylight >= 0 && value.daylight <= 24);
+      assert.ok(Number.isFinite(value.daylight) && value.daylight >= 0 && value.daylight <= 24);
       assert.ok(Math.abs(value.daylight - sunlight(-latitude, -declination).daylight) < 1e-10);
-    }
+      // Opposite seasons partition one rotation, including polar day/night.
+      assert.ok(Math.abs(value.daylight + sunlight(latitude, -declination).daylight - 24) < 1e-10);
+      assert.equal(value.altitude, 90 - Math.abs(latitude - declination));
+    },
+  ), params(300));
   assert.equal(sunlight(69.65, 23.44).daylight, 24);
   assert.equal(sunlight(69.65, -23.44).daylight, 0);
   assert.deepEqual(daylightYear(0), Array(12).fill(12));

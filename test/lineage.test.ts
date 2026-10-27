@@ -69,6 +69,15 @@ test('rate: style blended at any alpha, overshoot included, keeps opacities in [
     for (const k of ['opacity', 'fillOpacity', 'strokeOpacity'] as const) assert.ok(m.style[k] >= 0 && m.style[k] <= 1, `${k} = ${m.style[k]}`);
     assert.match(m.style.fill, /^#[0-9a-f]{6}$/);
     assert.match(m.style.stroke, /^#[0-9a-f]{6}$/);
+    const t = Math.max(0, Math.min(1, alpha));
+    const expectedColor = (start: string, end: string) => '#' + [1, 3, 5].map((offset) => {
+      const a = Number.parseInt(start.slice(offset, offset + 2), 16), b = Number.parseInt(end.slice(offset, offset + 2), 16);
+      return Math.round(a * (1 - t) + b * t).toString(16).padStart(2, '0');
+    }).join('');
+    assert.equal(m.style.fill, expectedColor(c0, c1));
+    assert.equal(m.style.stroke, expectedColor(c1, c0));
+    assert.ok(near(m.style.fillOpacity, o0 * (1 - t) + o1 * t, 1e-15));
+    assert.ok(near(m.style.opacity, o1 * (1 - t) + o0 * t, 1e-15));
   }), params(500));
 });
 
@@ -80,7 +89,13 @@ test('rate: every exported rate function is exact at its ends and finite in betw
   }
   fc.assert(fc.property(rate, fc.double({ min: 0, max: 1, noNaN: true }), ([name, f], t) => {
     assert.ok(Number.isFinite(f(t)), `${name}(${t})`);
-    if (name === 'wiggle') assert.ok(near(wiggle(1 - t), -wiggle(t), 1e-12), 'wiggle is odd about t = 0.5, as manim\'s is');
+
+  }), params(500));
+});
+
+test('rate: wiggle is odd about t = 0.5', () => {
+  fc.assert(fc.property(fc.double({ min: 0, max: 1, noNaN: true }), (t) => {
+    assert.ok(near(wiggle(1 - t), -wiggle(t), 1e-12));
   }), params(500));
 });
 
@@ -172,7 +187,10 @@ test('play: a runTime of 0 shows the end state, never a collapsed or NaN frame (
     s.add(r);
     await s.play(r.animate.shift([2, 0]), { runTime: 0 });
   });
-  for (const f of frames.slice(1)) assert.equal(f, toSvgString(scene), 'the zero-length play draws its end state');
+  const expected = drawn(new Rectangle({ width: 2, height: 1 }).shift([2, 0]));
+  assert.ok(frames.length > 1, 'the zero-length play emits a finished frame after the initial frame');
+  assert.equal(toSvgString(scene), expected, 'geometry reaches the authored target');
+  for (const f of frames.slice(1)) assert.equal(f, expected, 'the zero-length play draws its end state');
 });
 
 test('play: the last frame of a play shows the finished animation, whatever runTime × fps is (ManimCommunity #183, #698)', async () => {
@@ -324,7 +342,10 @@ test('transform: replace=true on a mobject inside an on-screen group leaves no g
   // replace() used to look only at top-level mobjects, leaving a grouped source behind.
   const a = new Rectangle(), g = new Group(a, new Square().shift([3, 0])), t = new Circle().shift([-3, 0]);
   const { scene } = await film(async (s) => { s.add(g); await s.play(new Transform(a, t, { replace: true })); });
-  assert.equal(renderElements(scene).length, 2, 'the square and the circle, not the old rectangle too');
+  const ids = renderElements(scene).map((e) => e.id);
+  assert.equal(ids.length, 2, 'the square and the circle, not the old rectangle too');
+  assert.ok(ids.includes(t.id), 'replacement target is drawn');
+  assert.ok(!ids.includes(a.id), 'grouped source is removed');
 });
 
 test('play: animating a new Group of mobjects already on screen draws each once, in its place (manim #2500, #2352)', async () => {
@@ -447,10 +468,13 @@ test('create: Create\'s stagger does not depend on how the drawn shapes are grou
     const flat = await film(async (s) => { await s.play(new Create(new Group(...shapes()), { lagRatio: lag })); });
     const nested = await film(async (s) => { const m = shapes(); await s.play(new Create(new Group(new Group(...m.slice(0, k)), new Group(new Group(...m.slice(k)))), { lagRatio: lag })); });
     assert.deepEqual(nested.frames, flat.frames);
-    const word = await film(async (s) => { await s.play(new Write(new Text('lag'))); });
-    const wrapped = await film(async (s) => { await s.play(new Write(new Group(new Text('lag')))); });
-    assert.deepEqual(wrapped.frames, word.frames);
   }), params(20));
+});
+
+test('create: wrapping Text in a Group preserves Write stagger', async () => {
+  const word = await film(async (s) => { await s.play(new Write(new Text('lag'))); });
+  const wrapped = await film(async (s) => { await s.play(new Write(new Group(new Text('lag')))); });
+  assert.deepEqual(wrapped.frames, word.frames);
 });
 
 test('create: the temporary outline Write draws on text scales with the text (ManimCommunity #4220, #4222)', () => {
@@ -600,7 +624,7 @@ test('path: pointFromProportion stays finite and exact at its ends on degenerate
 
 test('box: no transform leaves a bounding box inside out, negative stretches included (manim #2496)', () => {
   // https://github.com/3b1b/manim/pull/2496: stretch(-1) left min above max.
-  fc.assert(fc.property(fc.double({ min: -3, max: 3, noNaN: true }).filter((k) => Math.abs(k) > 1e-3), fc.constantFrom(0 as const, 1 as const), fc.double({ min: -4, max: 4, noNaN: true }), (k, axis, angle) => {
+  fc.assert(fc.property(fc.oneof(fc.constantFrom(0, -0, Number.MIN_VALUE, -Number.MIN_VALUE), fc.double({ min: -3, max: 3, noNaN: true })), fc.constantFrom(0 as const, 1 as const), fc.double({ min: -4, max: 4, noNaN: true }), (k, axis, angle) => {
     const g = new Group(new Rectangle({ width: 2, height: 1 }), new Text('ab').shift([1, 1]));
     g.box(); // cache it first: a stale cache is what upstream got wrong
     g.stretch(k, axis).rotate(angle);
@@ -673,7 +697,7 @@ test('code: a Code line re-set to its own text keeps its tab stops; bad tab widt
   // An accented letter is one column, so the tab after it reaches the same stop as after 'x'
   const stop = (text: string) => { const l = new Code([text]).lines[0]!; return l.children.at(-1)!.box()![0] - l.frameBox[0]!; };
   assert.ok(near(stop('\u00e9\tZ'), stop('x\tZ'), 1e-4), 'é + tab reaches the same stop as x + tab');
-  for (const w of [0, -1, 2.5, NaN]) assert.throws(() => new Code(['\tx'], { tabWidth: w }), RangeError);
+  for (const w of [0, -1, 2.5, NaN, Infinity, -Infinity]) assert.throws(() => new Code(['\tx'], { tabWidth: w }), RangeError);
 });
 
 const anyText = fc.string({ unit: fc.constantFrom('', ' ', '\t', '\n', 'a', 'Q', '😀', '漢', 'a\u0301', '\u200d', '→', '0'), maxLength: 5 });
@@ -696,7 +720,7 @@ test('text: empty, blank and unsupported-script strings shape, Write and morph w
 
 test('text: each glyph\'s cluster indexes the visible character it draws, so string ranges map to glyphs (ManimCommunity #4864)', () => {
   // https://github.com/ManimCommunity/manim/issues/4864: Text indices silently referred to a whitespace-stripped copy.
-  fc.assert(fc.property(fc.string({ unit: fc.constantFrom('a', ' ', 'b', '\t', 'é', 'fi', '→', 'W'), maxLength: 12 }), (s) => {
+  fc.assert(fc.property(fc.string({ unit: fc.constantFrom('a', ' ', 'b', '\t', 'é', 'fi', '→', 'W', '😀'), maxLength: 12 }), (s) => {
     const t = new Text(s);
     let prev = -1;
     for (const g of t.children as Array<Mobject & { cluster?: number }>) {
@@ -706,6 +730,9 @@ test('text: each glyph\'s cluster indexes the visible character it draws, so str
       prev = c;
     }
   }), params(300));
+  // An unsupported astral symbol still occupies two UTF-16 code units.
+  const afterAstral = new Text('😀a');
+  assert.deepEqual(afterAstral.children.map((g) => (g as Mobject & { cluster: number }).cluster), [2]);
 });
 
 test('text: layout is scale-free, so letter spacing does not drift with font size (ManimCommunity #2844; manim #1813)', () => {

@@ -4,6 +4,7 @@ import {
   NumberLine, Axes, VMobject, Rectangle, Text, Scene, Create, Transform, FadeIn,
   StringSink, SnapshotSink, MotionSink, analyzeMotion, renderAt, loadFonts, GOLD, RED,
 } from '../src/index.ts';
+import { fc, params } from './lib/pbt.ts';
 import type { Vec } from '../src/index.ts';
 
 // Labels shape on glyph outlines; scenes load fonts in run(), bare tests do it here
@@ -109,13 +110,18 @@ test('plot never overshoots a clamped function between samples (monotone cubic, 
   }
 });
 
-test('plot splits at non-finite values; lineGraph is a polyline through its points', () => {
+test('plot splits at non-finite values', () => {
   const ax = new Axes({ xRange: [-2, 2, 1], yRange: [-4, 4, 1] });
   const p = ax.plot((x) => 1 / x, { samples: 41 });  // x = 0 is sample 20
   assert.equal(p.subpaths.length, 2);
-  const lg = ax.lineGraph([[-2, 1], [0, 3], [2, -1]]);
-  assert.deepEqual(anchors(lg).length, 3);
-  nearVec(anchors(lg)[1]!, ax.c2p(0, 3), 1e-6);
+});
+
+test('lineGraph preserves every point in input order, including repeats', () => {
+  const ax = new Axes({ xRange: [-2, 2, 1], yRange: [-4, 4, 1] });
+  const points: Vec[] = [[-2, 1], [0, 3], [0, 3], [2, -1], [-1, 2]];
+  const lg = ax.lineGraph(points);
+  assert.equal(anchors(lg).length, points.length);
+  anchors(lg).forEach((p, i) => nearVec(p, ax.c2p(...points[i]!), 1e-6));
 });
 
 test('bar heights are value × scale, standing on y = 0; negatives hang below the axis', () => {
@@ -194,4 +200,60 @@ test('seeking renders the identical frame a full run produces, mid-animation too
     await renderAt(ChartScene, frame / 30, snap, { fps: 30 });
     assert.equal(snap.svg, full.frames[frame], `frame ${frame}`);
   }
+});
+
+test('coordinate inverses follow independent nonsingular affine transforms', () => {
+  fc.assert(fc.property(fc.double({ min: -4, max: 4, noNaN: true }), fc.double({ min: -4, max: 4, noNaN: true }), fc.double({ min: -2, max: 2, noNaN: true }), (x, y, shear) => {
+    const ax = new Axes({ xRange: [1, 5, 1], yRange: [-3, 2, 1], width: 7, height: 3 });
+    const before = ax.c2p(x, y);
+    ax.applyAffine(1, 0, shear, 1, 2, -1, { aboutPoint: [0, 0] });
+    nearVec(ax.c2p(x, y), [before[0] + shear * before[1] + 2, before[1] - 1], 1e-5);
+    nearVec(ax.p2c(ax.c2p(x, y)), [x, y], 1e-5);
+    const nl = new NumberLine({ range: [1, 5, 1], length: 7 });
+    nl.shift([2, -1]).rotate(shear).scale(0.75);
+    nearVec(nl.n2p(1), nl.line.start(), 0);
+    nearVec(nl.n2p(5), nl.line.end(), 1e-6);
+    near(nl.p2n(nl.n2p(x)), x, 1e-5);
+  }), params(200));
+});
+
+test('areaUnder closes on the data baseline and rejects nonfinite function samples', () => {
+  fc.assert(fc.property(fc.double({ min: -3, max: 3, noNaN: true }), fc.integer({ min: 2, max: 12 }), (slope, samples) => {
+    const ax = new Axes({ xRange: [-2, 3, 1], yRange: [-4, 4, 1] }).rotate(0.3).shift([1, -1]);
+    const area = ax.areaUnder((x) => slope * x + 1, [-1, 2], { samples });
+    assert.equal(area.closed[0], true);
+    const ps = anchors(area);
+    nearVec(ps[0]!, ax.c2p(-1, 1 - slope), 1e-6);
+    nearVec(ps[samples - 1]!, ax.c2p(2, 1 + 2 * slope), 1e-6);
+    nearVec(ps[samples]!, ax.c2p(2, 0), 1e-6);
+    nearVec(ps[samples + 1]!, ax.c2p(-1, 0), 1e-6);
+    nearVec(ps.at(-1)!, ps[0]!, 0);
+  }), params(200));
+  for (const value of [NaN, Infinity, -Infinity]) assert.throws(() => new Axes().areaUnder(() => value, [0, 1]), RangeError);
+});
+
+test('bar interpolation fixes baseline while the top moves linearly through zero', () => {
+  fc.assert(fc.property(fc.double({ min: -3, max: 3, noNaN: true }), fc.double({ min: -3, max: 3, noNaN: true }), fc.double({ min: 0, max: 1, noNaN: true }), (a, b, alpha) => {
+    const ax = new Axes({ xRange: [-2, 2, 1], yRange: [-4, 4, 1] }).rotate(0.3).shift([1, -1]);
+    const bars = ax.bar([a], { x: [0.5], width: 0.8 }), target = ax.bar([b], { x: [0.5], width: 0.8 });
+    const transform = new Transform(bars, target); transform.begin(); transform.interpolate(alpha);
+    const pts = anchors(bars.children[0] as VMobject), top = a + (b - a) * alpha;
+    [[0.1, top], [0.9, top], [0.9, 0], [0.1, 0]].forEach(([x, y], i) => nearVec(pts[i]!, ax.c2p(x!, y!), 1e-6));
+  }), params(200));
+});
+
+test('plot samples once per x and every segment stays between neighboring sampled values', () => {
+  fc.assert(fc.property(fc.array(fc.integer({ min: -10, max: 10 }), { minLength: 2, maxLength: 24 }), (values) => {
+    const ax = new Axes({ xRange: [0, values.length - 1, 1], yRange: [-10, 10, 1], width: values.length - 1, height: 20 });
+    let calls = 0;
+    const plot = ax.plot((x) => { calls++; return values[Math.round(x)]!; }, { samples: values.length });
+    assert.equal(calls, values.length);
+    assert.equal(plot.numCurves(), values.length - 1);
+    anchors(plot).forEach((p, i) => assert.deepEqual(p, ax.c2p(i, values[i]!)));
+    for (let c = 0; c < values.length - 1; c++) for (const t of [0, 0.125, 0.25, 0.5, 0.75, 0.875, 1]) {
+      const y = ax.p2c(plot.pointOnCurve(0, c, t))[1];
+      // Unit y scale and integer anchors make these bounds exact; no epsilon.
+      assert.ok(y >= Math.min(values[c]!, values[c + 1]!) && y <= Math.max(values[c]!, values[c + 1]!), `${c} at ${t}: ${y}`);
+    }
+  }), params(200));
 });

@@ -351,8 +351,8 @@ export class Scene {
     // Camera updaters run last, so a following frame sees this frame's positions
     perf.span('updaters', () => { for (const m of this.mobjects) m.update(dt); this.frame.update(dt); });
     const end = perf.begin('sink');
-    await this.toSink(() => this.sink.frame(this, dt));
-    end();
+    try { await this.toSink(() => this.sink.frame(this, dt)); }
+    finally { end(); }
   }
 
   /** Play animations together; a trailing plain object is options: { runTime, rateFunc, lagRatio }. */

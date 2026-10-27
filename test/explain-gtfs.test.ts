@@ -179,7 +179,9 @@ test('a service runs on a date exactly when an exception adds it, or no exceptio
   fc.assert(
     fc.property(service, ymd, (s, date) => {
       const day = serviceOn(feedOf(s, date), 'S', date);
-      const pattern = s.inCalendar && s.days[WEEKDAYS.indexOf(weekday(date))]! && s.start <= date && date <= s.end;
+      const utcDay = new Date(`${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}T00:00:00Z`).getUTCDay();
+      const mondayIndex = (utcDay + 6) % 7;
+      const pattern = s.inCalendar && s.days[mondayIndex]! && s.start <= date && date <= s.end;
       assert.equal(day.byCalendar, pattern);
       assert.equal(day.runs, s.exception === 1 || (s.exception !== 2 && pattern));
     }),

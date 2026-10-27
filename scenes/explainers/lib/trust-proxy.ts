@@ -124,9 +124,15 @@ const ipv4 = (s: string): number | null => {
   if (parts.some((p) => p > 255)) return null;
   return ((parts[0]! << 24) >>> 0) + (parts[1]! << 16) + (parts[2]! << 8) + parts[3]!;
 };
-/** proxy-addr's range test for IPv4: an address, or address/prefix. */
+/**
+ * proxy-addr's IPv4 membership test: an address, or address/prefix (decimal 1–32).
+ * proxy-addr 2.0.8 index.js:153–195 rejects /0 as well as malformed prefixes.
+ * This predicate returns false for invalid ranges; proxy-addr's config parser throws.
+ */
 export function inRange(addr: string, range: string): boolean {
-  const [base, bits = '32'] = range.split('/');
+  const match = /^(\d{1,3}(?:\.\d{1,3}){3})(?:\/([0-9]+))?$/.exec(range);
+  if (!match) return false;
+  const [, base, bits = '32'] = match;
   const a = ipv4(addr),
     b = ipv4(base!),
     n = Number(bits);

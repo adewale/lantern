@@ -195,6 +195,20 @@ test('Circumscribe variants: circle, retract instead of fade, a Box target, insi
   assert.deepEqual(events, []);
 });
 
+test('Circumscribe retracts the path at full opacity instead of fading a complete path', () => {
+  const retract = new Circumscribe([0, 0, 2, 1], { fadeOut: false });
+  const fade = new Circumscribe([0, 0, 2, 1]);
+  for (const c of [retract, fade]) {
+    c.outline.style.opacity = 0.8;
+    c.begin();
+    c.interpolate(5 / 6);
+  }
+  assert.ok(retract.outline.style.drawFraction! > 0 && retract.outline.style.drawFraction! < 1);
+  assert.equal(retract.outline.style.opacity, 0.8);
+  assert.equal(fade.outline.style.drawFraction, 1);
+  assert.ok(fade.outline.style.opacity > 0 && fade.outline.style.opacity < 0.8);
+});
+
 test('Circumscribe fits the target where it is when the play starts', async () => {
   let c!: Circumscribe;
   await watch(async (s) => {

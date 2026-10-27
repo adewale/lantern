@@ -130,6 +130,7 @@ A scene is an ordinary Rayner scene, so beside the helpers it can use the engine
 - [npm releases](https://github.com/adewale/rayner/blob/main/docs/RELEASING.md): maintainer validation, tested archives and trusted publishing
 - [Lettering](https://github.com/adewale/rayner/blob/main/docs/LETTERING.md): requested scripts, fonts, maths and snapshot capture
 - [Authoring skill](https://github.com/adewale/rayner/blob/main/skills/rayner-explainers/SKILL.md): the authoring and review workflow for agents
+- [Testing](https://github.com/adewale/rayner/blob/main/docs/TESTING.md): suite commands, property tests and retained integration boundaries
 
 ## Fork and engine
 

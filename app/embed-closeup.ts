@@ -395,7 +395,7 @@ export function stressStarts(layout: StepLayout): [number, number][] {
   const within = (s: Box, p: Box) => {
     const w = Math.min(s[2], p[2]) - Math.max(s[0], p[0]),
       h = Math.min(s[3], p[3]) - Math.max(s[1], p[1]);
-    return w >= 0 && h >= 0 && (w > 1e-6 || s[2] - s[0] < 1e-6) && (h > 1e-6 || s[3] - s[1] < 1e-6);
+    return w >= 0 && h >= 0 && (w > 0 || s[2] === s[0]) && (h > 0 || s[3] === s[1]);
   };
   return (layout.stress ?? []).flatMap((s) =>
     layout.parts.filter((p) => within(s, p)).map((p): [number, number] => [Math.max(s[0], p[0]), Math.min(s[3], p[3])]),

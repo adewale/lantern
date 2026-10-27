@@ -49,6 +49,20 @@ const layoutArb: fc.Arbitrary<StepLayout> = fc.array(boxIn(), { minLength: 1, ma
   ),
 );
 const holds = (v: Box, [x, y]: readonly [number, number]) => x >= v[0] - 1e-6 && x <= v[2] + 1e-6 && y >= v[1] - 1e-6 && y <= v[3] + 1e-6;
+// Contract oracle: a nonzero span must share an interval, rather than merely
+// touch an edge. A genuinely zero-length emphasised span is a line/point and
+// belongs wherever its coordinate lies in the part. No fuzzy size cutoff turns
+// a positive-width box into a line or removes a positive-area intersection.
+function expectedStressStarts(layout: StepLayout): [number, number][] {
+  const crosses = (lo: number, hi: number, pLo: number, pHi: number) =>
+    lo === hi ? pLo <= lo && lo <= pHi : Math.max(lo, pLo) < Math.min(hi, pHi);
+  const points: [number, number][] = [];
+  for (const stress of layout.stress ?? [])
+    for (const part of layout.parts)
+      if (crosses(stress[0], stress[2], part[0], part[2]) && crosses(stress[1], stress[3], part[1], part[3]))
+        points.push([Math.max(stress[0], part[0]), Math.min(stress[3], part[3])]);
+  return points;
+}
 /** A stage: a phone's or a laptop's, mostly 16:9 as the player's is, sometimes not. */
 const stageArb = fc.oneof(
   fc.integer({ min: 120, max: 1600 }).map((w) => ({ w, h: Math.round((w * 9) / 16) })),
@@ -86,7 +100,13 @@ test('on a narrow stage every label near the changes reads at READ_PX whenever t
       fc.pre(w < NARROW_PX);
       const { k } = closeUp(layout, w, h),
         { s } = stageScale(w, h),
-        read = labelsToRead(layout);
+        read = layout.labels.filter((label) => layout.parts.some((part) =>
+          label.box[0] <= part[2] + 0.2 && label.box[2] >= part[0] - 0.2 &&
+          label.box[1] <= part[3] + 0.2 && label.box[3] >= part[1] - 0.2));
+      // With no nearby label the reader uses all labels. This oracle derives
+      // relevance from the documented padding, without calling its selector.
+      if (!read.length) read.push(...layout.labels);
+      assert.deepEqual(labelsToRead(layout), read);
       if (!read.length) return void assert.equal(k, 1);
       const drawn = read.map((l) => l.size * s * k);
       // No nearby label under READ_PX after the close-up when the cap leaves room to reach it.
@@ -120,16 +140,19 @@ test('the tour of close-ups covers every changed part: each point of a change is
       const views = closeUps(layout, w, h).map((z) => viewBox(z, w, h));
       // A view's edge may round by a hair of a unit; compare with that slack.
       const slack = 1e-6;
-      for (const p of layout.parts)
-        for (const fx of [0, 0.25, 0.5, 0.75, 1])
-          for (const fy of [0, 0.25, 0.5, 0.75, 1]) {
-            const x = p[0] + fx * (p[2] - p[0]),
-              y = p[1] + fy * (p[3] - p[1]);
-            assert.ok(
-              views.some((v) => x >= v[0] - slack && x <= v[2] + slack && y >= v[1] - slack && y <= v[3] + slack),
-              `(${x}, ${y}) of part ${JSON.stringify(p)} is in no close-up: ${JSON.stringify(views)}`,
-            );
-          }
+      for (const p of layout.parts) {
+        // Rectangle membership is constant between adjacent view boundaries.
+        // Check those cells AND boundaries, including zero-area changed boxes.
+        const cuts = (lo: number, hi: number, axis: 0 | 1) => {
+          const edges = [lo, hi, ...views.flatMap((v) => [v[axis]! - slack, v[axis + 2]! + slack])]
+            .filter((x) => x >= lo && x <= hi).sort((a, b) => a - b);
+          return [...edges, ...edges.slice(1).map((x, i) => edges[i]! + (x - edges[i]!) / 2)];
+        };
+        for (const x of cuts(p[0], p[2], 0))
+          for (const y of cuts(p[1], p[3], 1))
+            assert.ok(views.some((v) => x >= v[0] - slack && x <= v[2] + slack && y >= v[1] - slack && y <= v[3] + slack),
+              `(${x}, ${y}) of part ${JSON.stringify(p)} is in no close-up: ${JSON.stringify(views)}`);
+      }
     }),
     params(500),
   );
@@ -173,7 +196,12 @@ test('changes merge into parts in reading order, and the part with the most new 
         // Every change lies in exactly one part, and the parts keep apart.
         for (const c of changes) {
           const holding = parts.filter((p) => p[0] <= c.box[0] && p[1] <= c.box[1] && p[2] >= c.box[2] && p[3] >= c.box[3]);
-          assert.ok(holding.length >= 1);
+          assert.equal(holding.length, 1, 'each change belongs to exactly one part');
+        }
+        for (let i = 1; i < parts.length; i++) {
+          const a = parts[i - 1]!, b = parts[i]!;
+          const rowA = Math.floor(-a[3]), rowB = Math.floor(-b[3]);
+          assert.ok(rowA < rowB || (rowA === rowB && a[0] <= b[0]), 'parts follow rows top to bottom, then left to right');
         }
         const count = (p: Box, moved: boolean) =>
           changes.filter((c) => c.text && c.moved === moved && p[0] <= c.box[0] && p[1] <= c.box[1] && p[2] >= c.box[2] && p[3] >= c.box[3]).length;
@@ -272,35 +300,29 @@ test('emphasis orders the tour and changes nothing else: the same close-ups, the
   );
 });
 
-test('where emphasis starts is a point of an emphasised box inside a part, and every emphasised box with area in a part has one there', () => {
+test('where emphasis starts is exactly the top-left of each box-part intersection, including thin spans and lines', () => {
   fc.assert(
     fc.property(layoutArb, (layout) => {
-      const starts = stressStarts(layout);
-      for (const pt of starts) {
-        assert.ok((layout.stress ?? []).some((s) => holds(s, pt)), `${pt} is in no emphasised box`);
-        assert.ok(layout.parts.some((p) => holds(p, pt)), `${pt} is in no part`);
-      }
-      // A box sharing area with a part starts there: at the top-left of what they share.
-      for (const s of layout.stress ?? [])
-        for (const p of layout.parts) {
-          const shared: Box = [Math.max(s[0], p[0]), Math.max(s[1], p[1]), Math.min(s[2], p[2]), Math.min(s[3], p[3])];
-          if (shared[2] - shared[0] > 1e-3 && shared[3] - shared[1] > 1e-3)
-            assert.ok(starts.some(([x, y]) => Math.abs(x - shared[0]) < 1e-9 && Math.abs(y - shared[3]) < 1e-9), JSON.stringify({ s, p }));
-        }
+      assert.deepEqual(stressStarts(layout), expectedStressStarts(layout));
     }),
-    params(500),
+    { ...params(500), examples: [[{
+      parts: [[0.9999995, 0, 2, 1]], lead: 0, labels: [], stress: [[0, 0, 1, 1]],
+    }], [{ parts: [[1, 0, 2, 1]], lead: 0, labels: [], stress: [[0, 0, 1, 1]] }],
+      [{ parts: [[1, 0, 2, 1]], lead: 0, labels: [], stress: [[0.9999995, 0, 1, 1]] }],
+      [{ parts: [[0, 0, 2, 1]], lead: 0, labels: [], stress: [[1, 0, 1, 1]] }]] },
   );
 });
 
 test('after the first close-up, every close-up that shows where an emphasised thing starts comes before any that does not', () => {
   fc.assert(
     fc.property(layoutArb, stageArb, (layout, { w, h }) => {
-      const marks = stressStarts(layout);
-      const shows = closeUps(layout, w, h)
-        .slice(1)
-        .map((z) => marks.some((m) => holds(viewBox(z, w, h), m)));
-      // Once a close-up shows no emphasis, none after it does.
-      assert.ok(shows.indexOf(false) < 0 || !shows.slice(shows.indexOf(false)).includes(true), JSON.stringify(shows));
+      const marks = expectedStressStarts(layout);
+      const plain = closeUps({ ...layout, stress: undefined }, w, h);
+      const prioritised = (z: { k: number; x: number; y: number }) => marks.some((m) => holds(viewBox(z, w, h), m));
+      const following = plain.slice(1);
+      const expected = [plain[0]!, ...following.filter(prioritised), ...following.filter((z) => !prioritised(z))];
+      assert.deepEqual(closeUps(layout, w, h), expected,
+        'emphasis stably partitions the same exact views after the opening view');
     }),
     params(500),
   );

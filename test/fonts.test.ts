@@ -53,7 +53,7 @@ test('Inter draws the number forms it has; mono falls back to it', () => {
   assert.deepEqual([...takeMissingGlyphs()], []);
 });
 
-test('a run its own face draws whole is shaped once, untouched', () => {
+test('a run supported by its own face has no fallback scale', () => {
   fc.assert(
     fc.property(fc.string({ unit: fc.constantFrom(...'abcdefxyz ABC0123456789.,;:()[]{}<>-=+_/\\\'"½²µé€→'), maxLength: 30 }), (t) => {
       for (const font of ['sans', 'mono'] as const) {

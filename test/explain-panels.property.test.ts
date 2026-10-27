@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { Scene, NullSink, Text, loadFonts } from '../src/index.ts';
 import type { Box, Vec } from '../src/index.ts';
 import { Card, CodeBlock } from '../explain/panels.ts';
-import { REGIONS, emphasis } from '../explain/look.ts';
+import { REGIONS, emphasis, good, bad } from '../explain/look.ts';
 import type { Region } from '../explain/look.ts';
 import { fc, params } from './lib/pbt.ts';
 import { hexColor } from './lib/random-snapshot.ts';
@@ -19,7 +19,7 @@ const scene = () => new Scene(new NullSink(), { skipUntil: Infinity });
 const palette = fc.record({ paper: hexColor, ink: hexColor, accent: hexColor, muted: hexColor });
 /** Lines: a tiny alphabet (so many lines repeat), empty lines, near-duplicates and any text. */
 const line = fc.oneof(
-  fc.constantFrom('a', 'b', 'c', '', 'a ', 'x = 1;', 'é', 'é'),
+  fc.constantFrom('a', 'b', 'c', '', 'a ', 'x = 1;', 'é', 'é', '\tb', 'a\tb'),
   fc.string({ unit: 'grapheme', maxLength: 24 }),
   fc.string({ unit: 'binary', maxLength: 8 }),
 );
@@ -172,9 +172,8 @@ test('morph turns the code into the next lines, keeping as many line objects as 
   await fc.assert(
     fc.asyncProperty(morphCase, async (c) => {
       const { block, old } = await morphed(c);
-      // Code shows tabs expanded; the morphed block shows `after` exactly as a fresh block would.
-      const shown = (code: string[]) => new CodeBlock(scene(), c.colors, code).code.lines.map((l) => l.text);
-      const [a, b] = [shown(c.before), shown(c.after)];
+      // Text.text keeps the source line (including tabs); only glyph layout expands tab stops.
+      const [a, b] = [c.before, c.after];
       assert.deepEqual(block.code.lines.map((l) => l.text), b);
       // A kept line keeps its text and its order among the kept: the pairs form a common subsequence...
       const kept = block.code.lines.map((l, j) => [j, old.indexOf(l)] as const).filter(([, i]) => i >= 0);
@@ -231,7 +230,7 @@ test('a morphed block stays inside the region it was placed in', async () => {
   );
 });
 
-test('a morphed block stays within its region\'s width and on stage, whatever the region', async () => {
+test('a morphed block stays within its region\'s width with finite bounds, whatever the region', async () => {
   await fc.assert(
     fc.asyncProperty(morphCase, async (c) => {
       const { block } = await morphed(c);
@@ -297,7 +296,13 @@ test('diff marks one bar per +/- line, green for added and red for removed', () 
       const marked = code.filter((l) => /^[+-] /.test(l));
       assert.deepEqual(block.marks.map((m) => m.kind), marked.map((l) => (l[0] === '+' ? 'added' : 'removed')));
       // A solid gutter edge marks the line by shape, not only by its tint.
-      for (const m of block.marks) assert.equal(m.mob.children.length, 2);
+      for (const m of block.marks) {
+        const color = m.kind === 'added' ? good(colors) : bad(colors);
+        const filled = m.mob.family().filter((part) => part.style.fill === color && part.box());
+        assert.equal(filled.length, 2, 'both tint and solid gutter use the outcome color');
+        assert.ok(filled.some((part) => (part.style.fillOpacity ?? 1) === 1 && part.width() > 0 && part.height() > 0),
+          'a visible solid gutter identifies the diff line by shape');
+      }
     }),
     params(),
   );
@@ -348,6 +353,29 @@ function tryCard(c: Of<typeof cardCase>) {
     return null;
   }
 }
+// Positive layouts need padding plus 2.5 font-size units for a row. Derive the
+// minimum from each sample's size, preserving narrow valid cards at small sizes.
+const fittingCardCase = cardCase.map((c) => {
+  const minimum = 0.56 + 2.5 * (c.fontSize ?? 0.24) + EPS;
+  // Keep undefined/default placement, named regions and points as authored.
+  // Only explicit boxes can be too narrow; copy one before widening it.
+  const at = typeof c.at !== 'string' && c.at?.length === 4 ? [...c.at] as Box : c.at;
+  if (typeof at !== 'string' && at?.length === 4 && at[2] - at[0] < minimum) at[2] = at[0] + minimum;
+  return { ...c, at, width: c.width === undefined ? undefined : Math.max(minimum, c.width) };
+});
+
+test('arbitrary card layouts are accepted or refused only for insufficient row width', () => {
+  fc.assert(fc.property(cardCase, (c) => {
+    const at = typeof c.at === 'string' ? regionOf(c.at) : c.at;
+    const cap = at?.length === 4 ? at[2]! - at[0]! : Infinity;
+    const available = Math.min(c.width ?? Infinity, cap);
+    const required = 0.56 + 2.5 * (c.fontSize ?? 0.24);
+    const made = tryCard(c);
+    if (available >= required) assert.ok(made, 'a layout with enough row width must be accepted');
+    if (made) rowsInside(made.k);
+  }), params());
+});
+
 /** Every label and value lies inside the panel horizontally, and no value extends right of its edge. */
 function rowsInside(k: Card) {
   const p = k.panel.box()!;
@@ -364,9 +392,8 @@ function rowsInside(k: Card) {
 
 test('a card in a box is no wider than the box and never rises above its top', () => {
   fc.assert(
-    fc.property(cardCase.filter((c) => !!c.at && (c.at as unknown[]).length !== 2), (c) => {
-      const made = tryCard(c);
-      if (!made) return;
+    fc.property(fittingCardCase.filter((c) => !!c.at && (c.at as unknown[]).length !== 2), (c) => {
+      const made = card(c);
       const b = made.k.panel.box()!,
         r = regionOf(c.at as Box | Region);
       assert.ok(b[2] - b[0] <= r[2] - r[0] + EPS);
@@ -379,9 +406,8 @@ test('a card in a box is no wider than the box and never rises above its top', (
 
 test('a card at a point is centred on it', () => {
   fc.assert(
-    fc.property(cardCase, point, (c, at) => {
-      const made = tryCard({ ...c, at });
-      if (!made) return;
+    fc.property(fittingCardCase, point, (c, at) => {
+      const made = card({ ...c, at });
       const { k } = made;
       const [x, y] = k.panel.center();
       assert.ok(Math.abs(x - at[0]) < EPS && Math.abs(y - at[1]) < EPS);
@@ -392,9 +418,8 @@ test('a card at a point is centred on it', () => {
 
 test('every label and value fits inside its card, never mirrored', () => {
   fc.assert(
-    fc.property(cardCase, (c) => {
-      const made = tryCard(c);
-      if (!made) return;
+    fc.property(fittingCardCase, (c) => {
+      const made = card(c);
       rowsInside(made.k);
     }),
     params(),
@@ -405,7 +430,7 @@ test('a card too narrow for any row is refused', () => {
   // Too narrow: less than the padding, the label gap and one glyph's width (2 x 0.28 + 2.5 x size).
   // The boundary is the card's contract with authors, so it is pinned exactly.
   fc.assert(
-    fc.property(cardCase, fc.double({ min: 0, max: 1, noNaN: true }), (c, f) => {
+    fc.property(fittingCardCase, fc.double({ min: 0, max: 1, noNaN: true }), (c, f) => {
       const size = c.fontSize ?? 0.24;
       const width = f * (0.56 + 2.5 * size) * (1 - 1e-9);
       assert.throws(() => card({ ...c, width, at: undefined }), /no room for its rows/);
@@ -433,9 +458,8 @@ const changesFor = (r: readonly (readonly [string, unknown])[]) =>
 
 test('set shows each new value and leaves unchanged rows alone', async () => {
   await fc.assert(
-    fc.asyncProperty(cardCase.chain((c) => fc.tuple(fc.constant(c), changesFor(c.rows))), async ([c, changes]) => {
-      const made = tryCard(c);
-      if (!made) return;
+    fc.asyncProperty(fittingCardCase.chain((c) => fc.tuple(fc.constant(c), changesFor(c.rows))), async ([c, changes]) => {
+      const made = card(c);
       const { s, k } = made;
       const before = new Map([...k.values].map(([l, t]) => [l, t]));
       await k.set(changes);
@@ -452,9 +476,8 @@ test('set shows each new value and leaves unchanged rows alone', async () => {
 
 test('after set, each row shows exactly one value, inside the card', async () => {
   await fc.assert(
-    fc.asyncProperty(cardCase.chain((c) => fc.tuple(fc.constant(c), changesFor(c.rows))), async ([c, changes]) => {
-      const made = tryCard(c);
-      if (!made) return;
+    fc.asyncProperty(fittingCardCase.chain((c) => fc.tuple(fc.constant(c), changesFor(c.rows))), async ([c, changes]) => {
+      const made = card(c);
       const { s, k } = made;
       const before = [...k.values.values()];
       await k.set(changes);
@@ -470,10 +493,9 @@ test('after set, each row shows exactly one value, inside the card', async () =>
 
 test('set with an unknown row changes nothing and plays nothing', async () => {
   await fc.assert(
-    fc.asyncProperty(cardCase.chain((c) => fc.tuple(fc.constant(c), changesFor(c.rows))), label, value, async ([c, changes], extra, v) => {
+    fc.asyncProperty(fittingCardCase.chain((c) => fc.tuple(fc.constant(c), changesFor(c.rows))), label, value, async ([c, changes], extra, v) => {
       fc.pre(!c.rows.some(([l]) => l === extra));
-      const made = tryCard(c);
-      if (!made) return;
+      const made = card(c);
       const { s, k } = made;
       const children = [...k.children],
         values = [...k.values],
@@ -493,9 +515,8 @@ test('set with an unknown row changes nothing and plays nothing', async () => {
 
 test('a faded card stays faded when a value changes', async () => {
   await fc.assert(
-    fc.asyncProperty(cardCase.chain((c) => fc.tuple(fc.constant(c), changesFor(c.rows))), fc.double({ min: 0, max: 1, noNaN: true }), async ([c, changes], o) => {
-      const made = tryCard(c);
-      if (!made) return;
+    fc.asyncProperty(fittingCardCase.chain((c) => fc.tuple(fc.constant(c), changesFor(c.rows))), fc.double({ min: 0, max: 1, noNaN: true }), async ([c, changes], o) => {
+      const made = card(c);
       for (const m of made.k.family()) m.style.opacity = o;
       await made.k.set(changes);
       for (const v of made.k.values.values()) assert.equal(v.style.opacity, o);
@@ -506,9 +527,8 @@ test('a faded card stays faded when a value changes', async () => {
 
 test('mark lights the row and stays; mark(null) hides the bar', async () => {
   await fc.assert(
-    fc.asyncProperty(cardCase.chain((c) => fc.tuple(fc.constant(c), fc.array(fc.option(fc.constantFrom(...c.rows.map(([l]) => l))), { minLength: 1, maxLength: 5 }))), async ([c, marks]) => {
-      const made = tryCard(c);
-      if (!made) return;
+    fc.asyncProperty(fittingCardCase.chain((c) => fc.tuple(fc.constant(c), fc.array(fc.option(fc.constantFrom(...c.rows.map(([l]) => l))), { minLength: 1, maxLength: 5 }))), async ([c, marks]) => {
+      const made = card(c);
       const { k } = made;
       for (const l of marks) {
         await k.mark(l);
