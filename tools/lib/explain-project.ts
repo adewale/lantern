@@ -90,7 +90,7 @@ async function engineHash(lettered: boolean): Promise<string> {
   const inputs: string[] = [];
   for (const folder of ['src', 'explain', 'integrations/agentic-mermaid'])
     for (const name of (await readdir(join(ROOT, folder)))
-      .filter((n) => n.endsWith('.ts') && !['lettering-outlines.ts', 'math.ts'].includes(n) && (lettered || folder + '/' + n !== 'src/lettering.ts'))
+      .filter((n) => n.endsWith('.ts') && !['lettering-outlines.ts', 'math.ts', 'italic.ts'].includes(n) && (lettered || folder + '/' + n !== 'src/lettering.ts'))
       .sort())
       inputs.push(folder + '/' + name + '\n' + legacySource(await readFile(join(ROOT, folder, name), 'utf8')));
   inputs.push(await readFile(join(ROOT, 'vendor/glyph.js'), 'utf8'));

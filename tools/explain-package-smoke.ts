@@ -73,7 +73,7 @@ try {
   assert.ok(!JSON.parse(await readFile(join(folder, 'public/outside.html.receipt.json'), 'utf8')).lettering);
   // Outline snapshots captured against source .ts must remain fresh against
   // the archive's compiled .js engine, without Python or source font caches.
-  for (const name of ['arabic', 'devanagari', 'math', 'style']) {
+  for (const name of ['arabic', 'devanagari', 'math', 'style', 'styles']) {
     const source = join(ROOT, 'test/lettering', name);
     const target = join(folder, 'outline-' + name);
     await mkdir(target);
