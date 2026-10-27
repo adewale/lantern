@@ -4,12 +4,12 @@ import type { Scene } from '../../src/index.ts';
 import { FRAME } from '../../src/svg.ts';
 
 /** Package ranges, so a missing package's error gives the install line the help gives. */
-const PEERS: Record<string, string> = createRequire(import.meta.url)('../../package.json').dependencies;
+const PACKAGES: Record<string, string> = createRequire(import.meta.url)('../../package.json').dependencies;
 let resvg: typeof import('@resvg/resvg-js') | undefined;
-/** Rasterise an SVG with the embedded fonts only. resvg loads on first use: only PNG output need it. */
+/** Rasterise an SVG with the embedded fonts only. resvg loads on first use: only PNG output needs it. */
 export async function rasterize(svg: string) {
   resvg ??= await import('@resvg/resvg-js').catch(() => {
-    throw new Error('PNG output need @resvg/resvg-js: npm i @resvg/resvg-js@' + PEERS['@resvg/resvg-js']);
+    throw new Error('PNG output needs @resvg/resvg-js: npm i @resvg/resvg-js@' + PACKAGES['@resvg/resvg-js']);
   });
   return new resvg.Resvg(svg, { font: { loadSystemFonts: false } }).render();
 }
