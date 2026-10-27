@@ -48,12 +48,13 @@ jobs:
           path: out/release/
           if-no-files-found: error
           retention-days: 7
+          overwrite: true  # a re-run of a failed job uploads again under the same name
       - run: npm run demos:review   # every served case at phone and desktop width, headers, two embeds on one page
       # Videos are made and tested apart from CI, with `npm run videos` (needs FFmpeg).
 
   compatibility:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 30  # npm ci, two typechecks and the full package smoke
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
