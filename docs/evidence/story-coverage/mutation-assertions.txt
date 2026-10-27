@@ -1,0 +1,101 @@
+omitted-final-step
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 8
+  
+      at reviewStoryVariant (file:///tmp/rayner-story-controls/tools/lib/explain-story-review.ts:259:10)
+log SHA-256: c520cc4f408ffe4e94aa9d79bbe7f19135687fab28dcf38e05e5bd0592394a77
+
+omitted-desktop
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    [
+      [
+        'opening',
+        390
+      ],
+  ...
+        'opening',
+  +     390
+log SHA-256: c4c5d5b7f5ebf3df60e3c61fb13bf5c6ee45df9eb3d35b8e4f2b56a2e33ca1a4
+
+coverage-hole
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    
+    true !== false
+    
+        at file:///tmp/rayner-story-controls/test/explain-story-review.test.ts:24:12
+log SHA-256: 1534af39d7b8eddfd16b0d92d2e3b00335b8261138899ddfde156484738dfe52
+
+partial-glyph
+AssertionError [ERR_ASSERTION]: Missing expected rejection: opacity
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+log SHA-256: 4b89af5645f72ac625c53337dd51f262129f84464a1dae6fdceea56c71238d1e
+
+fresh-emphasis
+AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+log SHA-256: a97311b0afd23a24377d9fc76cc893bcf7c45f42f169c864167d9b5334f04b58
+
+route-replacement
+AssertionError [ERR_ASSERTION]: the actual replacement stroke belongs to the subject
+      at TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-story-review.test.ts:56:10)
+log SHA-256: 78e39366e0c1a0b4d88ebd7efb570f37fc7b58324a4ee3c70b31c993e524eb27
+
+transparent-paint
+AssertionError [ERR_ASSERTION]: fill
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-story-review.test.ts:100:14)
+log SHA-256: 55485c6e69cb68eb4e79ae907deb568e61de857347e9d9049b05ac33949e9b68
+
+css-clip-override
+AssertionError [ERR_ASSERTION]: clip
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-story-review.test.ts:100:14)
+log SHA-256: a764ee010566815311a2c0eddb408ebcd2d2e6babf484cd463a91693f2809ee4
+
+undeclared-subject
+AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+log SHA-256: 518837b532d7a832c6ca919c0b9998c7836682f8385dce2331e46bce277f73ff
+
+live-clip-obligation
+AssertionError [ERR_ASSERTION]: Missing expected rejection: clip
+      at async TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-story-review.test.ts:129:9)
+log SHA-256: 40fd1ff4627b7ca67b6554b563c343fe7336a2d3c6cac37fb02ed97bf6cf3856
+
+hidden-later-view
+AssertionError [ERR_ASSERTION]: Missing expected rejection: visibility
+      at async TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-story-review.test.ts:129:9)
+log SHA-256: d64b694091792dbc75fb6074e27ec8230dc9d7f690247b5623c1331a5a4bf4b5
+
+transformed-clip
+AssertionError [ERR_ASSERTION]: rect-transform
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-story-review.test.ts:263:16)
+log SHA-256: 8ec51553bbc3cb3488e8620772f547e632e54bbf17db21dc8f334ab0c54fdd2c
+
+server-startup-error-code
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + Comparison {}
+  - Comparison {
+  -   code: 'EADDRINUSE'
+  - }
+  
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+log SHA-256: 90704d5245972e6a0e3110100a2642f72505b6e9661033fc90f68e16b4e9e6b0
+
+label-only-arrow
+AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+log SHA-256: 63035e7fb2f90d25c142106a8148a75414ce5044cc7ca3bda592fa092d11a4b5

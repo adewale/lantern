@@ -135,7 +135,21 @@ test('fresh helper emphasis must be on stage and painted replacement routes coun
       this.add(part, overlay);
     }
   }
-  const frame = (await storyFrames(Marked, [{ step: 'claim', targets: [{ key: 'route' }] }])).get('claim')!;
+  class LabelOnly extends Scene {
+    override async construct() {
+      await this.step('claim');
+      const route = new Group(new Line([-1, 0], [1, 0], { strokeOpacity: 0 }), new Text('route label'));
+      route.key = 'route';
+      this.add(route);
+    }
+  }
+  await assert.rejects(
+    storyFrames(LabelOnly, [{ step: 'claim', targets: [{ key: 'route', paint: 'stroke' }] }]),
+    /needs painted stroke ink/,
+  );
+  const frame = (await storyFrames(Marked, [{ step: 'claim', targets: [{ key: 'route', paint: 'stroke' }] }])).get(
+    'claim',
+  )!;
   const records = frame.targets.find((t) => t.name === 'route')!.indices.map((i) => frame.records[i]!);
   assert.ok(
     records.some((r) => r.attrs['stroke-width'] === '100' && r.attrs['stroke-opacity'] === '1'),

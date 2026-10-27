@@ -4,6 +4,8 @@ The previous collection review opened one selected step per settings case. It ch
 
 `tools/lib/explain-story-review.ts` now owns every resting step at both review widths. It observes the matching ready event, checks the served record signatures, reads native SVG geometry and computed paint, and visits the real close-up tour. Every frame needs a subject. Newly emphasised objects and changed artwork supply automatic subjects; independent caption claims cover the OAuth arrows, Lantern edge labels, cache labels, token-bucket labels and WCAG Focus Visible opening. A caption over unchanged artwork must declare its subject.
 
+Arrow claims additionally require painted stroke ink: a surviving label alone cannot stand in for its route. Both OAuth settings cases pass the stronger source contract, and a label-only route rejects.
+
 The WCAG AA/AAA 2.4 Focus Visible step exposed a real omission: the caption discussed criterion 2.4.7 while the phone opening showed other criteria. Marking the criterion supplies the missing narrative cue. The matched screenshots use `level=AA&guideline=2.4&step=focus-visible` at 390×844. Inspect the card in the stage: before it shows Page Titled, Link Purpose and Headings; after it shows Focus Visible. The screenshot pair does not prove all captions or all mobile layouts.
 
 ## Owners and controls
@@ -19,7 +21,7 @@ The WCAG AA/AAA 2.4 Focus Visible step exposed a real omission: the caption disc
 | Caption over unchanged artwork | Missing declaration rejects; explicit existing subject accepts |
 | Focus Visible opening | Independent named criterion claim rejects the old production page and accepts the marked version |
 
-The browser controls themselves needed repair. A style-attribute poison was blocked by CSP and retained an earlier hidden state. Each poison now starts from verified visible ink and uses individual CSSOM properties. The final structural clip controls reject displaced rect/clipPath transforms and object-bounding-box units, while normal clips remain accepted. Thirteen deliberate mutations reject at assertions. A separate injected server-listen failure reproduces the old stale-receipt bug; the repaired command removes the old success receipt and writes the injected error to its failure report. The same control passes for an asynchronous listen error. A real occupied-port test additionally requires the exact `EADDRINUSE` rejection and verifies that the existing host remains usable.
+The browser controls themselves needed repair. A style-attribute poison was blocked by CSP and retained an earlier hidden state. Each poison now starts from verified visible ink and uses individual CSSOM properties. The final structural clip controls reject displaced rect/clipPath transforms and object-bounding-box units, while normal clips remain accepted. Fourteen deliberate mutations reject at assertions. A separate injected server-listen failure reproduces the old stale-receipt bug; the repaired command removes the old success receipt and writes the injected error to its failure report. The same control passes for an asynchronous listen error. A real occupied-port test additionally requires the exact `EADDRINUSE` rejection and verifies that the existing host remains usable.
 
 Mutation rejection is evidence only when the intended assertion fails; import or syntax failures do not count.
 

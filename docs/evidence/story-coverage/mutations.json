@@ -76,5 +76,11 @@
     "assertionRejected": true,
     "exitCode": 1,
     "log": "story-mutant-startup-error.log"
+  },
+  {
+    "defect": "label-only-arrow",
+    "assertionRejected": true,
+    "exitCode": 1,
+    "log": "story-mutant-label-only-arrow.log"
   }
 ]

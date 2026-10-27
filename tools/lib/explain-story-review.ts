@@ -15,7 +15,7 @@ export interface StoryClaim {
   step: string;
   settings?: Record<string, string>;
   opening?: boolean;
-  targets: readonly ({ key: string } | { text: string })[];
+  targets: readonly (({ key: string } | { text: string }) & { paint?: 'stroke' })[];
 }
 // These expectations are written from the captions, independently of the
 // close-up planner. Automatic helper-emphasis checks below cover every step.
@@ -25,14 +25,27 @@ export const STORY_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = {
       step: 'attack',
       settings: { attacker: 'yes' },
       opening: true,
-      targets: [{ key: 'message:S->X#0' }, { key: 'message:X->S#0' }, { key: 'message:S->X#1' }],
+      targets: [
+        { key: 'message:S->X#0', paint: 'stroke' },
+        { key: 'message:X->S#0', paint: 'stroke' },
+        { key: 'message:S->X#1', paint: 'stroke' },
+      ],
     },
     {
       step: 'secret',
       targets: [{ key: 'V' }, { key: 'H' }, { key: 'C' }, { text: 'code_verifier' }, { text: 'code_challenge' }],
     },
-    { step: 'authorize', targets: [{ key: 'message:C->S#0' }, { text: 'challenge + S256; verifier not sent' }] },
-    { step: 'exchange', targets: [{ key: 'message:C->S#1' }, { key: 'message:S->C#1' }] },
+    {
+      step: 'authorize',
+      targets: [{ key: 'message:C->S#0', paint: 'stroke' }, { text: 'challenge + S256; verifier not sent' }],
+    },
+    {
+      step: 'exchange',
+      targets: [
+        { key: 'message:C->S#1', paint: 'stroke' },
+        { key: 'message:S->C#1', paint: 'stroke' },
+      ],
+    },
   ],
   lantern: [{ step: 'objects', targets: [{ text: 'owns' }, { text: 'plays' }, { text: 'emits' }] }],
   'mr-cache': ['after', 'request'].map((step) => ({ step, targets: [{ text: 'hit' }, { text: 'miss' }] })),
@@ -104,7 +117,7 @@ export async function storyFrames(
         };
         const now = emphasisOf(scene),
           targets: Target[] = [];
-        const add = (name: string, objects: Mobject[], opening: boolean, context = false) => {
+        const add = (name: string, objects: Mobject[], opening: boolean, context = false, stroke = false) => {
           assert.ok(objects.length, `${step.name}: story target ${name} is missing`);
           // A surviving half-word cannot stand in for the complete named label.
           // renderElements legitimately drops invisible/clipped leaves, so inspect
@@ -138,6 +151,16 @@ export async function storyFrames(
             (ids.has(r.id) || geometry.has(r.attrs.d)) && realInk(r) ? [i] : [],
           );
           assert.ok(indices.length, `${step.name}: story target ${name} has no painted paths`);
+          if (stroke)
+            assert.ok(
+              indices.some((i) => {
+                const a = records[i]!.attrs;
+                return (
+                  a.stroke !== 'none' && Number(a['stroke-width'] ?? 0) > 0 && Number(a['stroke-opacity'] ?? 1) > 0
+                );
+              }),
+              `${step.name}: ${name} needs painted stroke ink, not only its label`,
+            );
           targets.push({ name, indices, opening, ...(context ? { camera: true } : {}) });
         };
         for (const [m, what] of now)
@@ -172,6 +195,8 @@ export async function storyFrames(
               name,
               members.filter((m) => ('key' in target ? m.key === target.key : labelOf(m)?.text === target.text)),
               !!claim.opening,
+              false,
+              target.paint === 'stroke',
             );
           }
         assert.ok(targets.length, `${step.name}: unchanged artwork needs a declared story subject`);
@@ -392,12 +417,10 @@ export async function reviewStoryVariant(
       const opening = await inspectStoryFrame(page, frame),
         views = [opening];
       if (directory)
-        await page
-          .locator('.stage')
-          .screenshot({
-            path: join(directory, `${encodeURIComponent(step.step)}.${viewport.width}.png`),
-            animations: 'disabled',
-          });
+        await page.locator('.stage').screenshot({
+          path: join(directory, `${encodeURIComponent(step.step)}.${viewport.width}.png`),
+          animations: 'disabled',
+        });
       const next = page.locator('.view-controls > button').first();
       const visited = new Set([opening.viewBox]);
       if ((await next.isVisible()) && (await next.isEnabled()))
