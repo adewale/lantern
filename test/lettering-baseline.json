@@ -147,11 +147,11 @@
     "fullReceipt": "4e5c5073227787aea92979f8219a7bd643bdfb4a9fe96af27a6f37bbddfc0612"
   },
   "wcag-map": {
-    "html": "ecb0e85356224abf27291a8c14f00263c10d90c6a28d77a2b6bf102f4dd5d1d7",
-    "bytes": 1497149,
-    "headers": "b0b7bdd742c6b46532a6ac4828655d3fa58c455598c58d1b7fd87edd04faf687",
-    "receipt": "93201cfa876c084b7146affd11b81f5b801ffc360e89c32522d3b5aa5b7dca4b",
-    "fullReceipt": "93e69e75d3a507c9476878dba6aae77cdcb75632ce3773e7d2cb8df3f2b346de"
+    "html": "9a5fbdcc19f48f41ce388dedcce4d21718b4fbde997081e3a5d7a5727d0418db",
+    "bytes": 1497233,
+    "headers": "1b169979465e3918742b7deb0994714176cacd8376a6e839aeeae68d449c3bf3",
+    "receipt": "2029c314ef2668cbda45473601d0a6c389796a693b2012b9c84a9aa43e4b2404",
+    "fullReceipt": "563b3b4ef535e5a9af9afb0e1eee52bb2dc7e12137c10a0170badfbe59842a4c"
   },
   "lantern": {
     "html": "d71fe0cfc5326d0fd33951fb4fda3824776b2cadfcfe688e34b0fee4bd8dc935",
