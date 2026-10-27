@@ -99,3 +99,38 @@ label-only-arrow
 AssertionError [ERR_ASSERTION]: Missing expected rejection.
       at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
 log SHA-256: 63035e7fb2f90d25c142106a8148a75414ce5044cc7ca3bda592fa092d11a4b5
+
+stale-catalog
+AssertionError [ERR_ASSERTION]: Missing expected exception: stale catalog
+      at TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-review-plan.test.ts:123:12)
+log SHA-256: 55d3e9a70d0f3af33c817898db3602c25983a1196e89cc60162df86176fcec58
+
+stale-review-code
+AssertionError [ERR_ASSERTION]: Missing expected exception: stale reviewer
+      at TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-review-plan.test.ts:123:12)
+log SHA-256: 02ab7c26285ccf42bf6b50812f14a75986dd9eccaff1a1eaa54452db360fe74d
+
+lost-width-inventory
+AssertionError [ERR_ASSERTION]: Missing expected exception: missing desktop
+      at TestContext.<anonymous> (file:///tmp/rayner-story-controls/test/explain-review-plan.test.ts:123:12)
+log SHA-256: df3a860181bf7a9e57625468a8676b1d8b99a63c335357800e87bdd6ed3eb33b
+
+repeated-first-shard
+AssertionError [ERR_ASSERTION]: exact case inventory
+    + actual - expected
+    
+      [
+        {
+    +     scene: 'scene-1',
+    -     scene: 'scene-0',
+          settings: {
+    +       case: '1'
+    -       case: '0'
+          }
+        },
+log SHA-256: 3e06de2b54f21ac7829c0d3a65686e7663b50c1d617e48ea99f5a5289e56a142
+
+frame-as-story
+AssertionError [ERR_ASSERTION]: Missing expected rejection: reserved diagram paper is not narrative evidence
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+log SHA-256: 88bca6851fed0c748dc0d86ebb2247a6738759af704af74ad9d4f5f92287501b

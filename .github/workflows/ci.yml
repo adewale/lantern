@@ -72,10 +72,14 @@ jobs:
           retention-days: 7
           overwrite: true
 
-  story:
+  story-part:
     needs: catalog
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [1, 2, 3]
     runs-on: ubuntu-24.04
-    timeout-minutes: 60  # all 1,037 resting frames at both widths, including tours and screenshots
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -91,14 +95,49 @@ jobs:
         with:
           name: rayner-catalog-${{ github.sha }}
           path: out/explainers/
-      - run: npm run demos:review  # every case/step/width, actual paint, named subjects and close-up tours
+      - run: npm run demos:review -- --shard ${{ matrix.part }}/3
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: rayner-story-${{ github.sha }}
+          name: rayner-story-${{ github.sha }}-${{ matrix.part }}
           path: |
-            out/review/
-            out/validation/browser-review.json
+            out/review/shard-${{ matrix.part }}-of-3/
+            out/validation/browser-review-shard-${{ matrix.part }}-of-3.json
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: true
+
+  story:
+    if: always()  # a failed/missing shard must fail this required check, not skip it
+    needs: [catalog, story-part]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require the catalog and every story shard to pass
+        env:
+          CATALOG_RESULT: ${{ needs.catalog.result }}
+          STORY_RESULT: ${{ needs['story-part'].result }}
+        run: test "$CATALOG_RESULT" = success && test "$STORY_RESULT" = success
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: rayner-catalog-${{ github.sha }}
+          path: out/explainers/
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: rayner-story-${{ github.sha }}-*
+          merge-multiple: true
+          path: out/
+      - run: node tools/explain-review-merge.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rayner-story-${{ github.sha }}
+          path: out/validation/browser-review.json
           if-no-files-found: error
           retention-days: 7
           overwrite: true

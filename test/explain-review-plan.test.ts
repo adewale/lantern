@@ -1,0 +1,125 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { fc, params } from './lib/pbt.ts';
+import { reviewScope, mergeStoryReviews } from '../tools/lib/explain-review-plan.ts';
+import type { PlannedCase, ReviewReceipt } from '../tools/lib/explain-review-plan.ts';
+
+test('story shard arguments accept complete integer scopes and reject malformed selections', () => {
+  assert.deepEqual(reviewScope([]), { part: 1, total: 1 });
+  fc.assert(
+    fc.property(fc.integer({ min: 1, max: 100 }), fc.nat(100), (total, n) => {
+      const part = (n % total) + 1;
+      assert.deepEqual(reviewScope(['--shard', `${part}/${total}`]), { part, total });
+    }),
+    params(100),
+  );
+  for (const arg of ['0/3', '4/3', '1/0', '-1/3', '1.5/3', '1/3x', '1/9007199254740992', '1/3/4', ' 1/3'])
+    assert.throws(() => reviewScope(['--shard', arg]), /usage|invalid/);
+  assert.throws(() => reviewScope(['--unknown', '1/3']), /usage/);
+  assert.throws(() => reviewScope(['--shard', '1/3', 'extra']), /usage/);
+});
+function receipts(expected: PlannedCase[], total: number): ReviewReceipt[] {
+  const parts: ReviewReceipt[] = Array.from({ length: total }, (_, i) => ({
+    scope: { part: i + 1, total },
+    catalogHash: 'catalog',
+    reviewCodeHash: 'code',
+    cases: 0,
+    stepWidths: 0,
+    results: [],
+    consoleErrors: [],
+    runtimeConnections: [],
+  }));
+  // Round-robin assignment is independent of the production modulo selector.
+  let cursor = 0;
+  for (const c of expected) {
+    const p = parts[cursor]!;
+    cursor++;
+    if (cursor === total) cursor = 0;
+    p.results.push({
+      scene: c.scene,
+      settings: c.settings,
+      steps: [390, 1180].flatMap((width) =>
+        c.steps.map((step) => ({ step, width, views: 1, targets: ['visible subject'] })),
+      ),
+    });
+  }
+  for (const p of parts) {
+    p.cases = p.results.length;
+    p.stepWidths = p.results.reduce((n, c) => n + c.steps.length, 0);
+  }
+  return parts;
+}
+test('merging story shards preserves every case, final step and width across generated inventories', () => {
+  fc.assert(
+    fc.property(
+      fc.array(fc.integer({ min: 1, max: 8 }), { minLength: 5, maxLength: 20 }),
+      fc.integer({ min: 1, max: 5 }),
+      (counts, total) => {
+        const expected = counts.map((n, i) => ({
+          scene: `scene-${i}`,
+          settings: { case: String(i) },
+          steps: Array.from({ length: n }, (_, j) => `step-${j}`),
+        }));
+        const merged = mergeStoryReviews(receipts(expected, total).reverse(), expected, 'catalog', 'code');
+        assert.deepEqual(
+          merged.results.map((c) => [c.scene, c.settings]),
+          expected.map((c) => [c.scene, c.settings]),
+        );
+        assert.equal(merged.cases, counts.length);
+        assert.equal(merged.stepWidths, 2 * counts.reduce((a, b) => a + b, 0));
+      },
+    ),
+    params(300),
+  );
+});
+test('a passing story result requires all matching shards with complete nonempty subject inventories', () => {
+  const expected = Array.from({ length: 6 }, (_, i) => ({
+    scene: `scene-${i}`,
+    settings: { case: String(i) },
+    steps: ['first', 'final'],
+  }));
+  const empty = [{ scene: 'empty', settings: {}, steps: [] }];
+  assert.throws(() => mergeStoryReviews(receipts(empty, 1), empty, 'catalog', 'code'), /at least one step/);
+  const good = receipts(expected, 3);
+  assert.equal(mergeStoryReviews(good, expected, 'catalog', 'code').stepWidths, 24);
+  const defects: Record<string, (p: ReviewReceipt[]) => void> = {
+    'missing shard': (p) => {
+      p.pop();
+    },
+    'duplicate shard': (p) => {
+      p[1] = p[0]!;
+    },
+    'missing case': (p) => {
+      p[0]!.results.pop();
+    },
+    'duplicate case': (p) => {
+      p[0]!.results[1] = p[0]!.results[0]!;
+    },
+    'missing final step': (p) => {
+      p[0]!.results[0]!.steps.pop();
+    },
+    'missing desktop': (p) => {
+      p[0]!.results[0]!.steps[2]!.width = 390;
+    },
+    'no subject': (p) => {
+      p[0]!.results[0]!.steps[0]!.targets = [];
+    },
+    'stale catalog': (p) => {
+      p[0]!.catalogHash = 'old';
+    },
+    'stale reviewer': (p) => {
+      p[0]!.reviewCodeHash = 'old';
+    },
+    'console error': (p) => {
+      p[0]!.consoleErrors.push('broken');
+    },
+    'external connection': (p) => {
+      p[0]!.runtimeConnections.push('remote');
+    },
+  };
+  for (const [name, defect] of Object.entries(defects)) {
+    const parts = structuredClone(good);
+    defect(parts);
+    assert.throws(() => mergeStoryReviews(parts, expected, 'catalog', 'code'), {code:'ERR_ASSERTION'}, name);
+  }
+});

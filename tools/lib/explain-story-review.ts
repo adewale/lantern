@@ -47,6 +47,13 @@ export const STORY_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = {
       ],
     },
   ],
+  gtfs: [
+    {
+      step: 'day',
+      settings: { date: '2007-06-09' },
+      targets: [1, 2, 3, 4].map((n) => ({ text: `AAMV${n}, route 50` })),
+    },
+  ],
   lantern: [{ step: 'objects', targets: [{ text: 'owns' }, { text: 'plays' }, { text: 'emits' }] }],
   'mr-cache': ['after', 'request'].map((step) => ({ step, targets: [{ text: 'hit' }, { text: 'miss' }] })),
   'token-bucket': [
@@ -178,7 +185,7 @@ export async function storyFrames(
           let fixed = false,
             subject = m;
           for (let a: Mobject | null = m; a; a = a.parent) {
-            if (a.key === '__paper' || isHeading(a)) fixed = true;
+            if (a.key === '__paper' || a.key === '__frame' || isHeading(a)) fixed = true;
             if (labelOf(a)) subject = a;
           }
           if (fixed || added.has(subject)) continue;

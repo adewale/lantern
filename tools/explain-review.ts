@@ -10,15 +10,26 @@ import { launch } from './lib/browser.ts';
 import { collectProject, sceneInputs, ROOT } from './lib/explain-project.ts';
 import { serve } from './lib/explain-serve.ts';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
+import {
+  reviewScope,
+  inReviewScope,
+  readStoryPlan,
+  reviewCodeHash,
+  validateReviewedCases,
+} from './lib/explain-review-plan.ts';
 import { reviewStoryVariant, STORY_CLAIMS } from './lib/explain-story-review.ts';
 
 let server: Awaited<ReturnType<typeof serve>> | undefined;
 let browser: Browser | undefined, page: Page | undefined;
-const receipt = join(ROOT, 'out/validation/browser-review.json');
-const review = join(ROOT, 'out/review');
+let codeHash: string | undefined;
+const scope = reviewScope(process.argv.slice(2));
+const suffix = scope.total === 1 ? '' : `shard-${scope.part}-of-${scope.total}`;
+const receipt = join(ROOT, 'out/validation', `browser-review${suffix ? '-' + suffix : ''}.json`);
+const review = join(ROOT, 'out/review', suffix);
 try {
   await rm(receipt, { force: true });
   await rm(review, { recursive: true, force: true });
+  codeHash = await reviewCodeHash(ROOT);
   server = await serve(join(ROOT, 'out'), 0, 'explainers/');
   const base = server.url;
   browser = await launch();
@@ -43,10 +54,10 @@ try {
     await Promise.all(images.map((image) => image.decode()));
   });
   await page.screenshot({ path: join(review, 'gallery.png'), fullPage: true, animations: 'disabled' });
-  const built = JSON.parse(await readFile(join(ROOT, 'out/explainers/evidence.json'), 'utf8')) as {
-    scenes: { id: string; cases: Record<string, string>[] }[];
-  };
-  const planned = built.scenes.flatMap((s) => s.cases.map((settings) => ({ scene: s.id, settings })));
+  const plan = await readStoryPlan(join(ROOT, 'out/explainers'));
+  const planned = plan.cases.filter((_, i) => inReviewScope(i, scope));
+  assert.ok(planned.length, 'story shard selects no cases');
+  let ordinal = 0;
   const cases = [];
   for (const entry of EXPLAINERS) {
     const project = await collectProject(join(ROOT, 'scenes/explainers', entry.id), { write: false });
@@ -55,7 +66,10 @@ try {
       await sceneInputs(project),
       `${entry.id}: rebuild stale collection output before reviewing`,
     );
+    let selected = 0;
     for (const [index, variant] of project.variants.entries()) {
+      if (!inReviewScope(ordinal++, scope)) continue;
+      selected++;
       const directory = join(review, 'story', entry.id, String(index));
       await mkdir(directory, { recursive: true });
       const steps = await reviewStoryVariant(
@@ -67,14 +81,10 @@ try {
       );
       cases.push({ scene: entry.id, settings: variant.values, steps });
     }
-    console.log(`${entry.id}: every resting step passed both widths`);
+    if (selected) console.log(`${entry.id}: ${selected} selected cases, every resting step passed both widths`);
   }
 
-  assert.deepEqual(
-    cases.map(({ scene, settings }) => ({ scene, settings })),
-    planned,
-    'every built settings case must be reviewed exactly once',
-  );
+  validateReviewedCases(cases, planned);
   const headers = await fetch(base + '/explainers/exgit.html', { method: 'HEAD' });
   assert.match(headers.headers.get('content-security-policy') ?? '', /connect-src 'none'/);
   assert.equal(headers.headers.get('x-frame-options'), null);
@@ -112,6 +122,9 @@ try {
     receipt,
     JSON.stringify(
       {
+        scope,
+        catalogHash: plan.catalogHash,
+        reviewCodeHash: codeHash,
         cases: cases.length,
         stepWidths: cases.reduce((n, c) => n + c.steps.length, 0),
         results: cases,
@@ -126,16 +139,20 @@ try {
     `${cases.length} served cases, every resting step at both widths, passed caption, actual paint, story-target, no-error and no-external-connection checks. Response headers, link preview tags and the two-embed host page passed. Screenshots: ${review}`,
   );
 } catch (error) {
-  await mkdir(join(ROOT, 'out/review'), { recursive: true });
+  await mkdir(review, { recursive: true });
   let screenshotError: string | undefined;
   try {
-    await page?.screenshot({ path: join(ROOT, 'out/review/failure.png'), fullPage: true });
+    await page?.screenshot({ path: join(review, 'failure.png'), fullPage: true });
   } catch (e) {
     screenshotError = String(e);
   }
   await writeFile(
-    join(ROOT, 'out/review/failure.json'),
-    JSON.stringify({ url: page?.url(), error: String(error), screenshotError }, null, 2) + '\n',
+    join(review, 'failure.json'),
+    JSON.stringify(
+      { scope, reviewCodeHash: codeHash, url: page?.url(), error: String(error), screenshotError },
+      null,
+      2,
+    ) + '\n',
   );
   throw error;
 } finally {

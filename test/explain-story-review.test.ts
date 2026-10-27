@@ -9,7 +9,7 @@ import { collectProject } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
 import { serve } from '../tools/lib/explain-serve.ts';
 import { launch } from '../tools/lib/browser.ts';
-import { Scene, Text, Line, Group } from '../src/index.ts';
+import { Scene, Text, Line, Group, Rectangle } from '../src/index.ts';
 import { emphasises } from '../explain/look.ts';
 
 test('local review server rejects an occupied port so startup failure can be reported', async () => {
@@ -100,6 +100,19 @@ test('logical story labels reject partially missing glyphs before accepting surv
 });
 
 test('a caption explaining unchanged artwork must declare its subject', async () => {
+  class BackdropOnly extends Scene {
+    override async construct() {
+      await this.step('background');
+      const frame = new Group(new Rectangle({ width: 16, height: 9, fill: '#ffffff' }));
+      frame.key = '__frame';
+      this.add(frame);
+    }
+  }
+  await assert.rejects(
+    storyFrames(BackdropOnly),
+    /unchanged artwork needs a declared story subject/,
+    'reserved diagram paper is not narrative evidence',
+  );
   class Unchanged extends Scene {
     override async construct() {
       await this.step('draw');
