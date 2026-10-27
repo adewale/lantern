@@ -1,0 +1,38 @@
+# Story coverage audit
+
+The previous collection review opened one selected step per settings case. It checked caption text and label size without proving that the named artwork was painted or reachable. Source-box projection could also credit missing SVG paths. These were missing contracts; increasing generated-case counts could not catch them.
+
+`tools/lib/explain-story-review.ts` now owns every resting step at both review widths. It observes the matching ready event, checks the served record signatures, reads native SVG geometry and computed paint, and visits the real close-up tour. Every frame needs a subject. Newly emphasised objects and changed artwork supply automatic subjects; independent caption claims cover the OAuth arrows, Lantern edge labels, cache labels, token-bucket labels and WCAG Focus Visible opening. A caption over unchanged artwork must declare its subject.
+
+The WCAG AA/AAA 2.4 Focus Visible step exposed a real omission: the caption discussed criterion 2.4.7 while the phone opening showed other criteria. Marking the criterion supplies the missing narrative cue. The matched screenshots use `level=AA&guideline=2.4&step=focus-visible` at 390×844. Inspect the card in the stage: before it shows Page Titled, Link Purpose and Headings; after it shows Focus Visible. The screenshot pair does not prove all captions or all mobile layouts.
+
+## Owners and controls
+
+| Contract | Owner and independent check |
+| --- | --- |
+| Complete step/width inventory, including final step | Real served four-step fixture; exact eight-row expectation and omitted-step/desktop mutations |
+| Tour coverage without holes | Rectangle-union PBT against integer unit-cell centres, including adjacent views and a gap |
+| Complete named labels | Logical glyph checks before accepting surviving rendered records; opacity, clipping and partial-draw controls |
+| Stage membership and replacement ink | Missing fresh emphasis rejects; marked route must bind the painted sibling rather than its invisible carrier |
+| Actual paint at the reachable view | Real Chromium checks computed fill/stroke, ancestor opacity/visibility and effective clips; missing-path, transparent-paint, CSS-clip and later-view controls |
+| Expected context independent of damaged DOM | Authored clip determines the obligation; live clipped ink determines coverage at each stop |
+| Caption over unchanged artwork | Missing declaration rejects; explicit existing subject accepts |
+| Focus Visible opening | Independent named criterion claim rejects the old production page and accepts the marked version |
+
+The browser controls themselves needed repair. A style-attribute poison was blocked by CSP and retained an earlier hidden state. Each poison now starts from verified visible ink and uses individual CSSOM properties. Mutation rejection is evidence only when the intended assertion fails; import or syntax failures do not count.
+
+## Scope decisions
+
+Named caption subjects and fresh emphasis require complete labels. Incidental context may be cropped by an authored viewport, as in traffic-policy detail views; its expected visible portion must still be painted and reachable. A mutable browser clip cannot reduce that expectation. Existing route checks continue to own native/imported label crossings, stroke footprints, clips, paint order and label plates.
+
+The stage allowance is one CSS pixel for antialiasing and stroke-edge rounding, matching the existing narrow-phone PKCE contract. A preliminary French tax-code card border differed by about 0.1 CSS pixel; this was a rounding fringe, not missing story content. Rectangle union remains exact. SVG path-formatting allowance is separately bounded to one SVG unit.
+
+A preliminary token-bucket claim demanded an unchanged balance readout during the rate-trace step. Reading the caption showed that the step explains the three rate labels. The independent claim now names those labels; the product was not changed to satisfy the mistaken expectation.
+
+The source survey covers all 27 explainers, 142 settings cases and 1,037 resting frames. Existing transport, motion/races, offline/no-JS, keyboard, touch, 320-pixel PKCE, wording/value and raster owners remain in place. PBT supplies cheap geometric proof; it does not replace those boundaries or infer arbitrary caption meaning. Arbitrary SVG occlusion still needs the retained collision/raster checks and visual review.
+
+## Reproduction and CI
+
+Use Node 24 and Chromium. Run `npm run check`, `npm test`, `EXPLAIN_BROWSER=1 node --test test/explain-story-review.test.ts`, `npm run demos:check`, then `npm run demos:review`. Review screenshots are written under `out/review/story`; the success receipt is `out/validation/browser-review.json`. A failed run removes stale success evidence and saves a failure screenshot and error. CI passes the exact catalog artifact to a separate story job and uploads its review artifacts even on failure.
+
+GitHub currently rejects workflow dispatches with HTTP 422: “Actions has been disabled for this repository.” Updating Actions permissions returns HTTP 403 with the session credential. An owner must enable Actions and require the check, catalog, story and compatibility jobs. Workflow files and local passes do not establish hosted enforcement. This external blocker remains tracked in issue #9.
