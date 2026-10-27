@@ -35,7 +35,7 @@ test('editing a contour without changing metadata is caught by the payload check
     const run = Object.values(snapshot.runs).find((r: unknown) => (r as { glyphs: unknown[] }).glyphs.length) as { glyphs: { dx: number }[] };
     run.glyphs[0]!.dx += .1;
     await writeFile(join(folder, 'scene.lettering.json'), JSON.stringify(snapshot));
-    await assert.rejects(collectProject(folder, { write: false }), /checksum|payload/i);
+    await assert.rejects(collectProject(folder, { write: false }), /Invalid lettering snapshot payload checksum/);
   } finally { await rm(folder, { recursive: true, force: true }); }
 });
 

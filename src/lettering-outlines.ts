@@ -108,7 +108,7 @@ export function snapshotProvider(snapshot: LetteringSnapshot): LetteringProvider
       }
       return scaledRun(numeric, size);
     }
-    throw new Error(`Lettering snapshot has no run for ${JSON.stringify(text)} (${font}); run rayner snapshots`);
+    throw new Error(`Lettering snapshot has no run for ${JSON.stringify(text)} (${font}); run explain snapshots`);
   };
   return {
     prepare() {
