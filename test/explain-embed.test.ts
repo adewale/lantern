@@ -1872,3 +1872,33 @@ test('PKCE mobile views expose the derivation and the unsent verifier without ad
     } finally { await context.close(); }
   }
 });
+
+
+test('the PKCE attack opens with the stolen-code, guessed-verifier and rejection arrows visible on a phone', options, async () => {
+  const variant = projects.get('oauth-pkce')!.variants.find((v) => v.values.attacker === 'yes')!;
+  const ids = ['message:S->X#0', 'message:X->S#0', 'message:S->X#1'];
+  const boxes = await restingBox(variant.Scene, 'attack', (scene) => {
+    const arrows = scene.familyMembers().filter((m) => ids.includes(m.key ?? ''));
+    assert.equal(arrows.length, 3, 'all three narrative arrows must exist');
+    return arrows;
+  });
+  for (const width of [320, 390]) {
+    const page = await browser.newPage({ viewport: { width, height: 844 }, reducedMotion: 'reduce' });
+    try {
+      await page.goto(`${embed}/oauth-pkce.html?attacker=yes&step=attack`);
+      await page.waitForSelector('[data-ready=true]');
+      await quiet(page);
+      const seen = await page.locator('.stage svg:not(.leaving)').evaluate((svg, b) => {
+        const matrix = (svg as SVGSVGElement).getScreenCTM()!;
+        const stage = svg.parentElement!.getBoundingClientRect();
+        const a = new DOMPoint(b[0] * 1000, -b[3] * 1000).matrixTransform(matrix);
+        const z = new DOMPoint(b[2] * 1000, -b[1] * 1000).matrixTransform(matrix);
+        return { actual: [a.x, a.y, z.x, z.y], viewport: [stage.left, stage.top, stage.right, stage.bottom] };
+      }, boxes);
+      const [l, t, r, b] = seen.actual, [vl, vt, vr, vb] = seen.viewport;
+      assert.ok(l! >= vl! - 1 && t! >= vt! - 1 && r! <= vr! + 1 && b! <= vb! + 1,
+        `width ${width}: opening must contain the complete attack, not an unrelated card: ${JSON.stringify(seen)}`);
+      assert.equal(await page.locator('[aria-current=step]').getAttribute('data-step'), 'attack');
+    } finally { await page.close(); }
+  }
+});

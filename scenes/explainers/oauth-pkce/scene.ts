@@ -9,7 +9,6 @@ const GUESS = 'attacker-does-not-know-the-original-verifier';
 const CHALLENGE = '#0969da',
   CODE = '#bc4c00';
 const hex = (bytes: Uint8Array) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
-const short = (s: string, n = 12) => (s.length > n ? s.slice(0, n) + '…' : s);
 function sequence(attacker: boolean): string {
   return [
     'sequenceDiagram',
@@ -93,7 +92,7 @@ export default class OAuthExplainer extends Scene {
     await seq.reveal(['message:C->S#0']);
     await seq.mark(['message:C->S#0'], { color: CHALLENGE, as: 'carries the challenge' });
     // Short enough to read whole in one phone close-up.
-    await say('message:C->S#0', `challenge ${short(challenge, 8)}, S256; verifier not sent`, CHALLENGE);
+    await say('message:C->S#0', 'challenge + S256; verifier not sent', CHALLENGE);
 
     await this.step('code', {
       title: 'The redirect carries a short-lived code bound to the challenge',
@@ -104,7 +103,7 @@ export default class OAuthExplainer extends Scene {
     await s.clearOverlays();
     await seq.reveal(['message:S->C#0']);
     await seq.mark(['message:S->C#0'], { color: CODE, as: 'carries the code' });
-    await say('message:S->C#0', `code bound to ${short(challenge)}`, CODE);
+    await say('message:S->C#0', 'code bound to the challenge', CODE);
 
     if (attacker) {
       await this.step('attack', {
@@ -120,7 +119,7 @@ export default class OAuthExplainer extends Scene {
       await seq.reveal(['message:S->X#0', 'message:X->S#0', 'message:S->X#1']);
       await seq.mark(['message:S->X#0', 'message:X->S#0', 'message:S->X#1'], { color: s.bad, as: 'attack' });
       // The server's check, said where it happens: the guess as sent, then the answer.
-      await say('message:S->X#1', `S256(guess) ${short(bad, 10)} ≠ bound ${short(challenge, 10)}`, s.bad);
+      await say('message:S->X#1', 'S256(guess) ≠ bound challenge', s.bad);
     }
 
     await this.step('exchange', {
@@ -134,7 +133,7 @@ export default class OAuthExplainer extends Scene {
     await seq.mark(['message:C->S#1', 'message:S->C#1'], { color: s.good, as: 'accepted' });
     const recomputed = pkceChallenge(VERIFIER);
     const accepted = recomputed === challenge;
-    await say('message:S->C#1', `S256(verifier) ${short(recomputed, 10)} ${accepted ? '=' : '≠'} bound ${short(challenge, 10)}`, accepted ? s.good : s.bad);
+    await say('message:S->C#1', `S256(verifier) ${accepted ? '=' : '≠'} bound challenge`, accepted ? s.good : s.bad);
     this.state.accepted = accepted;
 
     await this.step('channels', {

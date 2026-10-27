@@ -12,7 +12,8 @@ import {
   AnimationGroup,
   Succession,
   ViewSync,
-  stateView,
+  view,
+  StateReadout,
 } from '../../../src/index.ts';
 import type { Animation, SceneState, SyncOpts, View, VMobject } from '../../../src/index.ts';
 import { stage, settingsOf } from '../../../explain/index.ts';
@@ -273,18 +274,21 @@ export default class TokenBucketExplainer extends Scene {
       rejected: calls.flatMap((c, i) => (c.ok ? [] : [name(i)])),
     });
     this.state = record([]);
-    const readout = stateView(this, ['tokens', 'lastRefill', 'allowed', 'rejected'], {
+    const readout = view(this, (state) => new StateReadout([
+      ['Tokens left', formatState(state.tokens)],
+      ['Last refill (s)', formatState(state.lastRefill)],
+      ['Accepted', formatState(state.allowed)],
+      ['Rejected', formatState(state.rejected)],
+    ], {
       fontSize: 0.26,
       gap: 0.42,
       at: [3.85, -2.78],
-      format: formatState,
-    });
+    }));
     this.readout = readout;
-    const readoutTitle = new Text('scene.state', { fontSize: 0.2, color: soft }).moveTo([2.25, -2.4], [-1, 0]);
+    const readoutTitle = new Text('Bucket balance', { fontSize: 0.2, color: soft }).moveTo([2.25, -2.4], [-1, 0]);
     s.keep(readout, readoutTitle, {
       describe: () =>
-        'scene.state: ' +
-        ['tokens', 'lastRefill', 'allowed', 'rejected'].map((k) => `${k} ${formatState(this.state[k])}`).join(', '),
+        `Bucket balance: ${formatState(this.state.tokens)} tokens left, last refill at ${formatState(this.state.lastRefill)} seconds, ${formatState(this.state.allowed)} accepted; rejected requests: ${formatState(this.state.rejected)}`,
     });
     await s.enter(shell, level, bucketLabel, { describe: gaugeSays });
     s.keep(axes, { describe: chartSays });
