@@ -49,6 +49,20 @@ const layoutArb: fc.Arbitrary<StepLayout> = fc.array(boxIn(), { minLength: 1, ma
   ),
 );
 const holds = (v: Box, [x, y]: readonly [number, number]) => x >= v[0] - 1e-6 && x <= v[2] + 1e-6 && y >= v[1] - 1e-6 && y <= v[3] + 1e-6;
+// Contract oracle: a nonzero span must share an interval, rather than merely
+// touch an edge. A genuinely zero-length emphasised span is a line/point and
+// belongs wherever its coordinate lies in the part. No fuzzy size cutoff turns
+// a positive-width box into a line or removes a positive-area intersection.
+function expectedStressStarts(layout: StepLayout): [number, number][] {
+  const crosses = (lo: number, hi: number, pLo: number, pHi: number) =>
+    lo === hi ? pLo <= lo && lo <= pHi : Math.max(lo, pLo) < Math.min(hi, pHi);
+  const points: [number, number][] = [];
+  for (const stress of layout.stress ?? [])
+    for (const part of layout.parts)
+      if (crosses(stress[0], stress[2], part[0], part[2]) && crosses(stress[1], stress[3], part[1], part[3]))
+        points.push([Math.max(stress[0], part[0]), Math.min(stress[3], part[3])]);
+  return points;
+}
 /** A stage: a phone's or a laptop's, mostly 16:9 as the player's is, sometimes not. */
 const stageArb = fc.oneof(
   fc.integer({ min: 120, max: 1600 }).map((w) => ({ w, h: Math.round((w * 9) / 16) })),
@@ -285,35 +299,29 @@ test('emphasis orders the tour and changes nothing else: the same close-ups, the
   );
 });
 
-test('where emphasis starts is a point of an emphasised box inside a part, and every emphasised box with area in a part has one there', () => {
+test('where emphasis starts is exactly the top-left of each box-part intersection, including thin spans and lines', () => {
   fc.assert(
     fc.property(layoutArb, (layout) => {
-      const starts = stressStarts(layout);
-      for (const pt of starts) {
-        assert.ok((layout.stress ?? []).some((s) => holds(s, pt)), `${pt} is in no emphasised box`);
-        assert.ok(layout.parts.some((p) => holds(p, pt)), `${pt} is in no part`);
-      }
-      // A box sharing area with a part starts there: at the top-left of what they share.
-      for (const s of layout.stress ?? [])
-        for (const p of layout.parts) {
-          const shared: Box = [Math.max(s[0], p[0]), Math.max(s[1], p[1]), Math.min(s[2], p[2]), Math.min(s[3], p[3])];
-          if (shared[2] - shared[0] > 1e-3 && shared[3] - shared[1] > 1e-3)
-            assert.ok(starts.some(([x, y]) => Math.abs(x - shared[0]) < 1e-9 && Math.abs(y - shared[3]) < 1e-9), JSON.stringify({ s, p }));
-        }
+      assert.deepEqual(stressStarts(layout), expectedStressStarts(layout));
     }),
-    params(500),
+    { ...params(500), examples: [[{
+      parts: [[0.9999995, 0, 2, 1]], lead: 0, labels: [], stress: [[0, 0, 1, 1]],
+    }], [{ parts: [[1, 0, 2, 1]], lead: 0, labels: [], stress: [[0, 0, 1, 1]] }],
+      [{ parts: [[1, 0, 2, 1]], lead: 0, labels: [], stress: [[0.9999995, 0, 1, 1]] }],
+      [{ parts: [[0, 0, 2, 1]], lead: 0, labels: [], stress: [[1, 0, 1, 1]] }]] },
   );
 });
 
 test('after the first close-up, every close-up that shows where an emphasised thing starts comes before any that does not', () => {
   fc.assert(
     fc.property(layoutArb, stageArb, (layout, { w, h }) => {
-      const marks = stressStarts(layout);
-      const shows = closeUps(layout, w, h)
-        .slice(1)
-        .map((z) => marks.some((m) => holds(viewBox(z, w, h), m)));
-      // Once a close-up shows no emphasis, none after it does.
-      assert.ok(shows.indexOf(false) < 0 || !shows.slice(shows.indexOf(false)).includes(true), JSON.stringify(shows));
+      const marks = expectedStressStarts(layout);
+      const plain = closeUps({ ...layout, stress: undefined }, w, h);
+      const prioritised = (z: { k: number; x: number; y: number }) => marks.some((m) => holds(viewBox(z, w, h), m));
+      const following = plain.slice(1);
+      const expected = [plain[0]!, ...following.filter(prioritised), ...following.filter((z) => !prioritised(z))];
+      assert.deepEqual(closeUps(layout, w, h), expected,
+        'emphasis stably partitions the same exact views after the opening view');
     }),
     params(500),
   );
