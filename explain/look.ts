@@ -1,5 +1,5 @@
 import { lerpColor, parseColor } from '../src/color.ts';
-import type { Box } from '../src/index.ts';
+import type { Box, Mobject, Scene } from '../src/index.ts';
 import type { Palette } from '../integrations/agentic-mermaid/snapshot.ts';
 
 /**
@@ -36,6 +36,31 @@ export function emphasis(p: Palette): string {
   // A hue needs both relative and absolute chroma: near-black inks (pen-and-ink) are not one.
   if (max > 0 && (max - min) / max > 0.3 && max - min > 48) return p.accent;
   return onPaper(p, '#ffb454', '#d9480f');
+}
+/**
+ * What a helper emphasises now: each object that shows it, with what it shows there (a card
+ * row, code lines, a mark's colour, a note's words), so moving a focus bar is new emphasis.
+ */
+export type Emphasis = readonly (readonly [Mobject, string])[];
+const emphasisers = new WeakMap<Scene, Set<() => Emphasis>>();
+/**
+ * Register what a helper emphasises, read from its own state whenever asked: a lit card row's
+ * bar, a code focus bar or diff line, a marked, travelled or focused diagram part, a note
+ * beside one. A phone's close-ups visit what a step newly emphasised first
+ * (app/embed-closeup.ts), since a caption most often speaks of what its step marked. Nothing
+ * drawn, traced or described changes.
+ */
+export function emphasises(scene: Scene, now: () => Emphasis): void {
+  let set = emphasisers.get(scene);
+  if (!set) emphasisers.set(scene, (set = new Set()));
+  set.add(now);
+}
+/** Everything the scene's helpers emphasise now, each object with what it shows. */
+export function emphasisOf(scene: Scene): Map<Mobject, string> {
+  const out = new Map<Mobject, string>();
+  for (const now of emphasisers.get(scene) ?? [])
+    for (const [m, what] of now()) out.set(m, out.has(m) ? `${out.get(m)}; ${what}` : what);
+  return out;
 }
 /** Success and failure colours that read on the paper, for outcomes such as accepted and rejected. */
 export const good = (p: Palette) => onPaper(p, '#3fb950', '#1a7f37');
