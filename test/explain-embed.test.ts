@@ -18,6 +18,8 @@ import { pictureHtml, pictureSummary } from '../explain/trace.ts';
 import { NARROW_PX, READ_PX, closeUps, labelsToRead, stageScale, stepLayouts, toView, viewBox } from '../app/embed-closeup.ts';
 import type { StepLayout } from '../app/embed-closeup.ts';
 import { labelOf } from '../explain/diagrams.ts';
+import { cardRow, restingBox, wordsOutsideCards } from './lib/scenes.ts';
+import type { Box } from '../src/index.ts';
 
 const enabled = !!process.env.EXPLAIN_BROWSER,
   options = { skip: enabled ? false : 'set EXPLAIN_BROWSER=1 for real cross-origin browser checks' };
@@ -1224,10 +1226,11 @@ test(
   'phone close-ups: at 390 × 844 every step opens on its close-up, by link or by Next with motion; at 1280 × 900 none is zoomed',
   options,
   async () => {
-    for (const name of ['mr-cache', 'exgit']) {
+    for (const name of ['mr-cache', 'exgit', 'oauth-pkce']) {
       const p = projects.get(name)!;
-      // mr-cache's two cases, and exgit's first: diagram, code and card changes, kept to a minute.
-      for (const v of name === 'exgit' ? p.variants.slice(0, 1) : p.variants) {
+      // mr-cache's two cases, exgit's first and PKCE's with the attacker (issue #21): diagram, code and card changes.
+      const cases = name === 'mr-cache' ? p.variants : name === 'exgit' ? p.variants.slice(0, 1) : p.variants.filter((v) => v.values.attacker === 'yes');
+      for (const v of cases) {
         const list = v.trace.steps,
           layouts = await stepLayouts(v.Scene);
         const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'no-preference' });
@@ -1277,6 +1280,59 @@ test(
     }
   },
 );
+
+// Issue #21: at 390 × 844, PKCE's `authorize` caption says the verifier stays with the client
+// "as the card's last row shows", and the first step's caption describes deriving the
+// challenge; both were close-ups the reader had to hunt for (7th of 7, 4th of 6). Next view
+// now goes first to what the step emphasised, so one press, by touch or by keyboard, shows each.
+test('phone: one press of Next view shows what PKCE\'s captions point at, emphasised close-ups first', options, async () => {
+  const p = projects.get('oauth-pkce')!,
+    v = p.variants.find((c) => c.values.attacker === 'yes')!,
+    layouts = await stepLayouts(v.Scene);
+  const evidence: Record<string, Box> = {
+    secret: await restingBox(v.Scene, 'secret', (scene) => wordsOutsideCards(scene, 'code_verifier', 'SHA-256')),
+    authorize: await restingBox(v.Scene, 'authorize', (scene) => cardRow(scene, 'code_verifier', 'not sent')),
+  };
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, reducedMotion: 'no-preference' });
+  try {
+    const { page, errors } = await counted(context, `${embed}/oauth-pkce.html`);
+    await quiet(page);
+    const { w, h } = await page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
+    const count = page.locator('.view-controls>span'),
+      nextView = page.getByRole('button', { name: 'Next view', exact: true });
+    const near = (a: ReturnType<typeof zoomOf>, b: { k: number; x: number; y: number }) =>
+      !!a && Math.abs(a.k - b.k) < 1e-4 * b.k && Math.abs(a.x - b.x) < 0.01 && Math.abs(a.y - b.y) < 0.01;
+    const shows = async (box: Box) => {
+      const z = await settledZoom(page),
+        view = z && viewBox(z, w, h);
+      return !!view && box[0] >= view[0] - 1e-3 && box[2] <= view[2] + 1e-3 && box[1] >= view[1] - 1e-3 && box[3] <= view[3] + 1e-3;
+    };
+    for (const [i, step] of ['secret', 'authorize'].entries()) {
+      if (i > 0) {
+        // Next, with motion: it moves to the next step, as before.
+        await page.getByRole('button', { name: 'Next step', exact: true }).click();
+        await page.waitForURL(/step=authorize/);
+        await quiet(page);
+      }
+      const tour = closeUps(layouts.get(step), w, h);
+      assert.ok(near(await settledZoom(page), tour[0]!), `${step} opens on its first close-up`);
+      assert.equal(await count.innerText(), `View 1 of ${tour.length}`);
+      // One press, a tap on the first step and the keyboard on the second, shows what the caption points at.
+      if (i === 0) await nextView.tap();
+      else {
+        await nextView.focus();
+        await page.keyboard.press('Enter');
+      }
+      await until(async () => near(zoomOf(await paintedView(page)), tour[1]!), `${step}: view 2`);
+      assert.equal(await count.innerText(), `View 2 of ${tour.length}`);
+      assert.equal(new URL(page.url()).searchParams.get('step'), step, 'Next view keeps the step');
+      assert.ok(await shows(evidence[step]!), `${step}: view 2 shows ${JSON.stringify(evidence[step])}`);
+    }
+    assert.deepEqual(errors, []);
+  } finally {
+    await context.close();
+  }
+});
 
 // Regression (ledger P5): Next used to stop the animation where the caption hold
 // begins, before anything a step adds after its last play(), so the picture the
