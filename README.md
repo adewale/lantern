@@ -111,6 +111,7 @@ A scene is an ordinary Rayner scene, so beside the helpers it can use the engine
 - [Publishing](docs/PUBLISHING.md): hosting a page and exporting a video
 - [Engine map](docs/ENGINE.md): the engine's guides (camera, matching and diff transforms, emphasis, graphing, views, code spans, animations) and what it leaves out
 - [Upstream](docs/UPSTREAM.md): the fork base, engine changes and Agentic Mermaid
+- [Testing](docs/TESTING.md): suite commands, property tests and retained integration boundaries
 - [Design record](specs/rayner.md): why the project is shaped this way, and the open decisions
 - [Changelog](CHANGELOG.md)
 - [Lettering](docs/LETTERING.md): requested scripts, fonts, maths and snapshot capture
