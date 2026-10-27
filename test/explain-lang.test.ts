@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { serve } from '../tools/lib/explain-serve.ts';
 import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
 import type { Project } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
@@ -384,11 +384,13 @@ test(
   'in Chromium, the French player speaks French, its descriptions take the page’s language, and its notices are French',
   { skip: process.env.EXPLAIN_BROWSER ? false : 'set EXPLAIN_BROWSER=1 for the browser check' },
   async () => {
-    const browser = await launch();
+    const server = await serve(folder, 0, 'fr.html');
+    let browser: Awaited<ReturnType<typeof launch>> | undefined;
     try {
+      browser = await launch();
       const page = await browser.newPage();
       const read = async (lang: 'fr' | 'en' | 'de', query = '') => {
-        await page.goto(pathToFileURL(built[lang].file).href + query);
+        await page.goto(`${server.url}/${lang}.html${query}`);
         await page.waitForSelector('[data-ready=true]');
         return page.evaluate(() => ({
           next: document.querySelector('.controls .primary span')?.textContent,
@@ -442,7 +444,8 @@ test(
       );
       assert.equal((await read('en', '?n=9')).notice, 'Unknown n option: 9. Showing the default case.');
     } finally {
-      await browser.close();
+      try { await browser?.close(); }
+      finally { server.close(); }
     }
   },
 );
