@@ -94,4 +94,3 @@ export async function measure(browser: Browser, url: string, { cpu, readMs }: { 
     await context.close();
   }
 }
-
