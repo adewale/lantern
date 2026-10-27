@@ -241,21 +241,25 @@ function vmobjectAttrs(m: VMobject, s: StyleRecord, pd: { d: string }): Attrs {
       fill: s.fill,
       'fill-opacity': fmt(s.fillOpacity),
       stroke: s.stroke,
-      'stroke-width': len(s.strokeWidth),
-      'stroke-opacity': fmt(s.strokeOpacity),
-      'stroke-linejoin': s.lineJoin ?? 'round',
-      'stroke-linecap': s.lineCap ?? 'round',
     };
+    // WebKit can paint a hairline on fill-only glyphs if stroke attributes
+    // accompany stroke="none". Emit stroke paint only when a stroke exists.
+    if (s.stroke !== 'none') {
+      attrs['stroke-width'] = len(s.strokeWidth);
+      attrs['stroke-opacity'] = fmt(s.strokeOpacity);
+      attrs['stroke-linejoin'] = s.lineJoin ?? 'round';
+      attrs['stroke-linecap'] = s.lineCap ?? 'round';
+    }
     if (s.fillRule) attrs['fill-rule'] = s.fillRule;
-    const dashes = dashPattern(s.dashArray);
+    const dashes = s.stroke === 'none' ? null : dashPattern(s.dashArray);
     if (dashes) {
       attrs['stroke-dasharray'] = dashes.map(len).join(' ');
       if (s.dashOffset) attrs['stroke-dashoffset'] = len(s.dashOffset);
     }
-    if (s.miterLimit != null) attrs['stroke-miterlimit'] = fmt(s.miterLimit);
+    if (s.stroke !== 'none' && s.miterLimit != null) attrs['stroke-miterlimit'] = fmt(s.miterLimit);
     if (s.paintOrder) attrs['paint-order'] = s.paintOrder;
     if (s.opacity < 1) attrs.opacity = fmt(s.opacity);
-    if (s.drawFraction != null && s.drawFraction < 1) {
+    if (s.stroke !== 'none' && s.drawFraction != null && s.drawFraction < 1) {
       const L = perf.span('arcLength', () => m.arcLength()) + 0.001;
       const revealed = dashes ? dashedReveal(dashes, s.dashOffset ?? 0, L, s.drawFraction) : null;
       if (revealed) {
@@ -322,38 +326,75 @@ function dashedReveal(list: readonly number[], offset: number, total: number, fr
   return out.join(' ');
 }
 
-const ESC = /[&<>"]/;
-const esc = (v: unknown): string => {
-  const str = String(v);
-  // Most values (numbers, colors, path data) contain nothing to escape: one test, no allocation
-  return ESC.test(str) ? str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') : str;
-};
+const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
+
+/** XML 1.0 Char, excluding the surrogate range (those are checked as pairs). */
+function xmlCharOk(code: number): boolean {
+  return code === 0x9 || code === 0xa || code === 0xd || (code >= 0x20 && code <= 0xd7ff) || (code >= 0xe000 && code <= 0xfffd);
+}
+
+/**
+ * Attribute and text data: drop code points XML 1.0 cannot represent, then
+ * escape the four markup characters. A value with nothing to change is returned
+ * as-is (path data and colours take this path).
+ */
+function esc(v: string): string {
+  let dirty = false;
+  for (let i = 0; i < v.length; i++) {
+    const c = v.charCodeAt(i);
+    if (c >= 0xd800 && c <= 0xdbff) {
+      const d = v.charCodeAt(i + 1);
+      if (d >= 0xdc00 && d <= 0xdfff) { i++; continue; }
+    }
+    if (c === 38 || c === 60 || c === 62 || c === 34 || !xmlCharOk(c)) { dirty = true; break; }
+  }
+  if (!dirty) return v;
+  let out = '';
+  for (let i = 0; i < v.length; i++) {
+    const c = v.charCodeAt(i);
+    if (c >= 0xd800 && c <= 0xdbff) {
+      const d = v.charCodeAt(i + 1);
+      if (d >= 0xdc00 && d <= 0xdfff) { out += v[i]! + v[i + 1]!; i++; continue; }
+    }
+    if (!xmlCharOk(c)) continue;
+    const ch = v[i]!;
+    out += Object.hasOwn(ESCAPES, ch) ? ESCAPES[ch]! : ch;
+  }
+  return out;
+}
 
 const attrStrings = new WeakMap<Attrs, string>(); // attrs object -> ' k="v" ...'
 function serializeAttrs(attrs: Attrs): string {
   let s = attrStrings.get(attrs);
   if (s === undefined) {
     s = '';
-    for (const k in attrs) s += ` ${k}="${esc(attrs[k])}"`;
+    for (const k of Object.keys(attrs)) s += ` ${k}="${esc(attrs[k] ?? '')}"`;
     attrStrings.set(attrs, s);
   }
   return s;
 }
 function serializeElement(el: ElementRecord): string {
-  const t = el.transform ? ` transform="${el.transform}"` : '';
+  const t = el.transform ? ` transform="${esc(el.transform)}"` : '';
   return `<${el.tag}${t}${serializeAttrs(el.attrs)}` + (el.text == null ? '/>' : `>${esc(el.text)}</${el.tag}>`);
 }
 
 export interface SvgOptions {
-  /** Pixel width; height follows the 16:9 frame. */
+  /** Positive safe-integer pixel width; height follows the 16:9 frame. */
   width?: number;
+  /** #rgb or #rrggbb, normalized to lowercase #rrggbb. */
   background?: string;
   /** Leave out what the camera cannot show; see RenderOptions. */
   cull?: boolean;
 }
 
 export function toSvgString(scene: Scene, { width = 1280, background = '#1a1a1a', cull = false }: SvgOptions = {}): string {
-  const height = Math.round(width * FRAME.h / FRAME.w);
+  if (typeof width !== 'number' || !Number.isSafeInteger(width) || width < 1)
+    throw new TypeError('svg width must be a positive safe integer');
+  if (typeof background !== 'string' || !/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(background))
+    throw new TypeError('svg background must be a #rgb or #rrggbb colour');
+  const hex = background.slice(1).toLowerCase();
+  background = '#' + (hex.length === 3 ? [...hex].map((ch) => ch + ch).join('') : hex);
+  const height = Number((BigInt(width) * BigInt(FRAME.h) + BigInt(FRAME.w / 2)) / BigInt(FRAME.w));
   // Camera: the viewBox follows the frame; the background rect fills whatever it shows
   const [vx, vy, vw, vh] = userRect(scene.frame.box()!);
   let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${vx} ${vy} ${vw} ${vh}">`;
@@ -496,7 +537,7 @@ export class DomSink implements Sink {
       if (!node || node.el.tagName !== rec.tag) {
         if (node) node.el.remove();
         const el = this.doc.createElementNS(this.NS, rec.tag);
-        node = { el, attrs: {}, text: null, rec: null };
+        node = { el, attrs: Object.create(null) as Record<string, string>, text: null, rec: null };
         this.nodes.set(rec.id, node);
       }
       // Records are memoized: the same object means nothing about this element changed
@@ -510,21 +551,23 @@ export class DomSink implements Sink {
         if (rec.transform) node.el.setAttribute('transform', rec.transform); else node.el.removeAttribute('transform');
         node.transform = rec.transform;
       }
-      // Same attrs object: only the transform can have changed
+      // Text is independent of the immutable attrs object. A new record may
+      // reuse those attrs while replacing its text.
+      if (rec.text !== node.text) { node.el.textContent = rec.text ?? ''; node.text = rec.text; }
+      // Same attrs object: neither attribute values nor their membership changed.
       if (node.attrsRef === rec.attrs) {
         if (node.el !== cursor) this.svg.insertBefore(node.el, cursor);
         else cursor = cursor.nextSibling;
         continue;
       }
       node.attrsRef = rec.attrs;
-      for (const k in rec.attrs) {
-        const v = rec.attrs[k]!;
+      for (const k of Object.keys(rec.attrs)) {
+        const v = rec.attrs[k] ?? '';
         if (node.attrs[k] !== v) { node.el.setAttribute(k, v); node.attrs[k] = v; }
       }
-      for (const k in node.attrs) {
-        if (!(k in rec.attrs)) { node.el.removeAttribute(k); delete node.attrs[k]; }
+      for (const k of Object.keys(node.attrs)) {
+        if (!Object.hasOwn(rec.attrs, k)) { node.el.removeAttribute(k); delete node.attrs[k]; }
       }
-      if (rec.text !== node.text) { node.el.textContent = rec.text ?? ''; node.text = rec.text; }
       // Keep document order equal to draw order with minimal moves
       if (node.el !== cursor) this.svg.insertBefore(node.el, cursor);
       else cursor = cursor.nextSibling;

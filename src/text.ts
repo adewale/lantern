@@ -126,8 +126,9 @@ export class Text extends Group {
     this.build(text, fontSize, {
       fill: color, fillOpacity, stroke: bold ? color : 'none', strokeWidth: bold ? BOLD_STROKE * fontSize : 0,
     });
-    // Centered on the origin, like every other mobject
-    this.shift([-this.run.width / 2, this.run.ascent - (this.run.ascent - this.run.descent) / 2]);
+    // Centre the advance box, whose baseline is y=0 and bounds are
+    // [0, -descent, width, ascent], rather than shifting it up by an ascent.
+    this.shift([-this.run.width / 2, -(this.run.ascent - this.run.descent) / 2]);
   }
 
   /** Lay out glyphs with the pen at the origin and the baseline at y = 0. */

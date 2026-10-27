@@ -7,24 +7,32 @@ import { labelOf } from '../explain/diagrams.ts';
 import { toView } from '../app/embed-closeup.ts';
 import { collectProject } from '../tools/lib/explain-project.ts';
 
-test('Lantern and cache routes leave a paper gap behind every named edge label', async () => {
-  for (const [id, stepName, words] of [
-    ['lantern', 'objects', ['owns', 'plays', 'emits']],
-    ['mr-cache', 'after', ['hit', 'miss']],
-    ['mr-cache', 'request', ['hit', 'miss']],
-  ] as const) {
+test('route and chart annotations leave the expected paper visible behind their lettering', async () => {
+  const cases: [string, string, string[], Record<string, string>, number[]][] = [
+    ['lantern', 'objects', ['owns', 'plays', 'emits'], {}, [247, 245, 239]],
+    ['mr-cache', 'after', ['hit', 'miss'], {}, [247, 245, 239]],
+    ['mr-cache', 'request', ['hit', 'miss'], {}, [247, 245, 239]],
+    ['seasons', 'year', ['60 days', '61 days at 0 h'], {place: 'tromso'}, [26, 27, 38]],
+    ['seasons', 'distance', ['0.0 h'], {place: 'tromso'}, [26, 27, 38]],
+  ];
+  for (const [id, stepName, words, settings, paper] of cases) {
     const project = await collectProject(`scenes/explainers/${id}`, { write: false });
-    for (const variant of project.variants) {
+    const variants = project.variants.filter((v) => Object.entries(settings).every(([k, value]) => v.values[k] === value));
+    assert.ok(variants.length > 0, `${id}: the named case must exist`);
+    for (const variant of variants) {
       let checked = 0;
       await new variant.Scene({
         async frame() {},
         async stepEnd(scene, step) {
           if (step.name !== stepName) return;
-          const labels = scene.familyMembers().filter((m) => words.includes(labelOf(m)?.text as never));
+          const labels = scene.familyMembers().filter((m) => words.includes(labelOf(m)?.text ?? ''));
           assert.equal(labels.length, words.length, `${id}: all expected edge labels exist`);
           // Remove only glyphs: if the route draws through the label's interior,
           // its ink is now visible. This checks rendered pixels, not plate metadata.
           const boxes = labels.map((m) => toView(m.box()!, scene.frame.box()!));
+          const opaque = labels.map((m) => m.family().every((f) => f.style.opacity >= 0.95));
+          for (const [i, full] of opaque.entries()) if (!full)
+            assert.ok(id === 'mr-cache' && stepName === 'request', 'only the deliberately dimmed cache diagram uses the light-context bound');
           const children = labels.map((m) => m.children);
           labels.forEach((m) => { m.children = []; });
           let svg: string;
@@ -44,7 +52,8 @@ test('Lantern and cache routes leave a paper gap behind every named edge label',
               for (let x = Math.ceil((b[0] + 8) * 80 + 1); x < (b[2] + 8) * 80 - 1; x++) {
                 const at = (y * image.width + x) * 4;
                 const rgb = [...pixels.subarray(at, at + 3)];
-                assert.ok(Math.min(...rgb) > 200, `${id}/${stepName}/${words[i]}: route ink under label at ${x},${y}: ${rgb}`);
+                if (opaque[i]) assert.deepEqual(rgb, paper, `${id}/${stepName}/${words[i]}: route ink or wrong paper under label at ${x},${y}`);
+                else assert.ok(Math.min(...rgb) > 200, 'dimmed context retains its light background rather than dark route ink');
                 samples++;
               }
             assert.ok(samples > 10, 'a nonempty label interior was sampled');

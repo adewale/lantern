@@ -110,13 +110,27 @@ test('the heading collides with no text, but a text runs into it exactly when th
   );
 });
 
-test('two diagram labels never collide with each other', () => {
-  fc.assert(
-    fc.property(fc.array(placedText.map((p) => ({ ...p, native: false, hide: 'none' as const })), { maxLength: 6 }), (items) => {
-      assert.deepEqual(restingTextProblems(sceneOf(build(items))).filter((p) => p.includes('overlaps')), []);
-    }),
-    params(),
-  );
+test('native and imported text collisions obey the same independent intersection contract', () => {
+  fc.assert(fc.property(
+    fc.array(placedText.map((p) => ({ ...p, hide: 'none' as const })), { maxLength: 6 }),
+    (items) => {
+      const mobs = build(items);
+      const expected: string[] = [];
+      for (let i = 0; i < mobs.length; i++) for (let j = i + 1; j < mobs.length; j++) {
+        if (!items[i]!.text.trim() || !items[j]!.text.trim()) continue;
+        const a = mobs[i]!.box()!, b = mobs[j]!.box()!;
+        const w = Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0]));
+        const h = Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
+        const smaller = Math.min((a[2] - a[0]) * (a[3] - a[1]), (b[2] - b[0]) * (b[3] - b[1]));
+        if (w * h > smaller * 0.12) expected.push(`"${items[i]!.text}" overlaps "${items[j]!.text}"`);
+      }
+      const actual = restingTextProblems(sceneOf(mobs)).filter((p) => p.includes('overlaps'));
+      assert.equal(actual.length, expected.length, 'every colliding pair is reported');
+      assert.deepEqual(asSet(actual), asSet(expected));
+    }), params(1000, { examples: [[[
+      { text: 'one', x: 0, y: 0, size: 0.4, native: false, hide: 'none' },
+      { text: 'two', x: 0, y: 0, size: 0.4, native: false, hide: 'none' },
+    ]]] }));
 });
 
 test('a native text is cut off exactly when its box leaves the frame', () => {

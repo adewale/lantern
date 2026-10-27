@@ -4,6 +4,18 @@ This repository is a fork of [ivarvong/lantern](https://github.com/ivarvong/lant
 
 From Lantern, with the changes below: `src/` (the engine), `tools/fonts.sh`, `tools/vendor-glyph.ts`, `tools/oracle/` (now only `manim_math.py`) and `tools/lib/browser.ts` (now only Chromium discovery and launch). The rest is the fork's: `explain/`, `integrations/agentic-mermaid/`, `app/`, the other tools and `scenes/explainers/`. The MIT notice in `LICENSE` is Lantern's.
 
+## October 2026 backport
+
+The fork base remains `2c7bad533be25fbd56d26a9a2b6c5651743f011e`. The engine backport reviews Lantern through [`d65fd1d`](https://github.com/ivarvong/lantern/commit/d65fd1da5f11f8e902b43eaf2e1598decee9abcb), specifically [#3](https://github.com/ivarvong/lantern/pull/3) and [#4](https://github.com/ivarvong/lantern/pull/4). It does not merge the repositories or change that ancestry.
+
+It carries the Text advance-box correction, single-admission hierarchy rule, literal font-name validation, XML/own-property hardening and fill-only stroke omission. Rayner's scene admission also preserves repeated-root ordering within a batch and extends the rule to front/back and replacement entry points. Its live DOM patcher handles text changes independently of cached attributes and tracks prototype-sensitive own attribute names.
+
+The layout checks are adapted rather than copied wholesale: Rayner's diagram labels are outline Groups, its connectors are VMobject paths, and its camera is a `Frame` object. The checker follows actual painted ink, clips, stroke width, draw order and opaque label plates. Imported labels have the same collision obligations as native text. Existing content-sized cards and diagram routing remain with Rayner and Agentic Mermaid; this backport does not add a second layout engine.
+
+The Worker/JSON service, Cloudflare tooling and Lantern's fixed portrait-camera API are not included. Its blanket crossfade and phone composition policies would reject deliberate Rayner effects and teaching diagrams, so they are not adopted. Local SVG export retains widths above 4096px; that service-oriented ceiling is not needed here. SVG option formats are documented in the [reference](REFERENCE.md#engine-output-and-admission).
+
+[The testing follow-up](evidence/upstream-backport/README.md) records why the earlier tests missed these bugs, the corrected contracts and the validation limits. WebKit's stroke fix is present; actual Safari execution remains separate platform evidence.
+
 ## Merging
 
 ```sh
