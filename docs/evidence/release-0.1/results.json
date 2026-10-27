@@ -1,0 +1,143 @@
+{
+  "commit": "6e3e4113e9fc04c90ba4013dec29adf131673863",
+  "node": "v24.22.1",
+  "platform": "Linux x64",
+  "seed": 20261027,
+  "expandedCore": {
+    "commit": "e8f2209811b77c15970a418b6c133c3f6494f584",
+    "tests": 830,
+    "pass": 776,
+    "skip": 54,
+    "fail": 0,
+    "seconds": 855.27
+  },
+  "steps": [
+    {
+      "gate": "types",
+      "command": [
+        "npm",
+        "run",
+        "check"
+      ],
+      "exit": 0,
+      "seconds": 21.01
+    },
+    {
+      "gate": "whole",
+      "command": [
+        "npm",
+        "test"
+      ],
+      "exit": 0,
+      "seconds": 267.47
+    },
+    {
+      "gate": "closeups",
+      "command": [
+        "node",
+        "--test",
+        "test/embed-closeup.property.test.ts"
+      ],
+      "exit": 0,
+      "seconds": 12.02,
+      "env": {
+        "FULL": "1",
+        "FC_SEED": "20261027"
+      }
+    },
+    {
+      "gate": "lettering",
+      "command": [
+        "node",
+        "--test",
+        "test/lettering-outlines.test.ts",
+        "test/lettering-styles.test.ts",
+        "test/lettering-rtl.test.ts",
+        "test/lettering-integration-audit.test.ts",
+        "test/lettering-pipeline-audit.test.ts",
+        "test/lettering-runtime-audit.test.ts",
+        "test/lettering-unicode-audit.test.ts"
+      ],
+      "exit": 0,
+      "seconds": 49.22
+    },
+    {
+      "gate": "embeds",
+      "command": [
+        "npm",
+        "run",
+        "test:embeds"
+      ],
+      "exit": 0,
+      "seconds": 437.11
+    },
+    {
+      "gate": "demos",
+      "command": [
+        "npm",
+        "run",
+        "demos:check"
+      ],
+      "exit": 0,
+      "seconds": 1136.47
+    },
+    {
+      "gate": "archive",
+      "command": [
+        "npm",
+        "run",
+        "release:check"
+      ],
+      "exit": 0,
+      "seconds": 59.25
+    },
+    {
+      "gate": "review",
+      "command": [
+        "npm",
+        "run",
+        "demos:review"
+      ],
+      "exit": 0,
+      "seconds": 204.24
+    }
+  ],
+  "minimumNode": {
+    "version": "v24.0.0",
+    "types": true,
+    "descriptionAndDiagramTests": 10,
+    "installedRetainedArchive": true,
+    "browser": true,
+    "watch": true,
+    "arabicAndMathCapture": true
+  },
+  "archiveIntegrity": "sha512-J0/1a5ShRt7LXqmPjXWLna0hRqkrPx2xDOptR0GQ3RhZiU/cJKYE+ZxjHp5ZKOB/+39sMOAcJNQ70XzaxJDtvQ==",
+  "limits": [
+    "Hosted Actions disabled: no Mac execution result.",
+    "Optional external upstream-checkout oracles skipped as reported.",
+    "No paired reader performance campaign or 0.3 release validation."
+  ],
+  "images": {
+    "before-phone-first-title.png": "3d863c72f04d3475892e66ad471edac21cab925c9606de992feaaf393d3d39f2",
+    "after-phone-first-title.png": "0987cc2d2cb40e7015614dbde6ec621d18e4e7852a8b61a9e621a7764d3ecf57",
+    "before-pkce-note.png": "1cc5ed7c68cefb34de7e203f9ad848830d44330e5a2d27daf38ada36caad5566",
+    "after-pkce-note.png": "3fb793eb17deb024e83a29c2cfb50d0624ba5886c895ce5afd292346335c826f"
+  },
+  "editorialFollowup": {
+    "commit": "8c85f4b7fa150e5966314ba41c9d7320251e678d",
+    "pins": "c8881f51cb66ec6893f6f001156c7daeb00b89d1",
+    "forkFidelity": {
+      "pass": 2,
+      "fail": 0
+    },
+    "forkProductionCheck": true,
+    "all27PinsReplay": true,
+    "timingAndStateBytes": 23879,
+    "timingAndStateSha256": "dc540646ad8b532cd523dddd9c4817226a26562aef57e2e3b6dacca234b28536",
+    "timingSvgBytes": 109767,
+    "timingSvgSha256": "728339300f24ee31fe3bb09dcb5cfdf02eebb0167d9183ea35ae6a83193893ef",
+    "servedCasesAfterRefresh": 142,
+    "previewPages": 208,
+    "runtimeAndPackageFilesChanged": false
+  }
+}

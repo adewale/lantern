@@ -73,9 +73,9 @@ by its stroke, leaves under 2 output pixels of the view (2 × view width ÷ `wid
 width in pixels, default 1280; `toSvgString` passes its own `width`), and skip a group whole only
 when it clears the view by 0.5 units. Culling is a pure function of the state, so seeks are unaffected, and the
 records it keeps are the same objects as without it. Every PNG the authoring
-tools draw turns it on because resvg 2.6.2 (the latest release) aborts on an element with `opacity` whose visible box is empty:
-seasons' noon zoom left one fading glyph at opacity 0.054 beyond the frame, and its PNG export
-died in resvg. DOM sinks leave it off and keep one element per mobject. Tests:
+tools draw turns it on because resvg 2.6.2 aborts on an element with `opacity` whose visible box is empty:
+seasons' noon zoom leaves a fading glyph at opacity 0.054 beyond the frame;
+rasterising that frame without culling aborts resvg. DOM sinks leave it off and keep one element per mobject. Tests:
 `test/camera.test.ts`, "cull: true leaves out what the camera cannot show; off by default" and
 "cull: 2 pixels of the output width, so a wider output keeps a thinner strip".
 
