@@ -321,19 +321,24 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       span = el('span');
     ledeRuler.replaceChildren(strong, span);
     let tallest = 0,
-      tallestLede = 0;
+      tallestTitle = 0,
+      tallestLine = 0;
     for (const [i, s] of trace.steps.entries()) {
       const words = stepWords(s);
       ruler.textContent = words.caption;
       fillLede(strong, span, i, words);
       // The exact height: offsetHeight rounds, and a 115.2 px caption would still move the steps list by a fraction.
       tallest = Math.max(tallest, ruler.getBoundingClientRect().height);
-      tallestLede = Math.max(tallestLede, ledeRuler.getBoundingClientRect().height);
+      tallestTitle = Math.max(tallestTitle, strong.getBoundingClientRect().height);
+      tallestLine = Math.max(tallestLine, span.getBoundingClientRect().height);
     }
     ruler.textContent = '';
     ledeRuler.replaceChildren();
     caption.style.minHeight = `${tallest}px`;
-    lede.style.minHeight = `${tallestLede}px`;
+    // Reserve each row separately: a two-line title must not move the line below it.
+    ledeTitle.style.minHeight = `${tallestTitle}px`;
+    ledeLine.style.minHeight = `${tallestLine}px`;
+    lede.style.minHeight = `${tallestTitle + tallestLine}px`;
   }
   new ResizeObserver(reserve).observe(player);
   /**
