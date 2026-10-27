@@ -9,6 +9,7 @@ import { ROOT, engineAlias, defaultVariant, hash, scriptEscape, sceneSlug, baseR
 import type { Project } from './explain-project.ts';
 import { pageFaces, letteringReport, useProjectLettering } from './explain-lettering.ts';
 import { letteringLicences, pageSnapshot } from './lettering.ts';
+import { RTL_SCRIPTS } from '../../src/lettering-outlines.ts';
 
 /**
  * A page whose lettering asks for a right-to-left script sets the direction of
@@ -18,7 +19,7 @@ import { letteringLicences, pageSnapshot } from './lettering.ts';
  */
 const RTL_CSS = '\nh1,.caption,.ruler,.transcript h2,.transcript a,.transcript p,.steps button span{unicode-bidi:plaintext;text-align:start}\n';
 const rightToLeftPage = (project: Project) =>
-  !!project.outlineLettering?.request.scripts?.some((script) => script === 'Arab' || script === 'Hebr');
+  !!project.outlineLettering?.request.scripts?.some((script) => RTL_SCRIPTS.includes(script));
 
 export async function buildExplainer(
   project: Project,

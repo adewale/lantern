@@ -49,6 +49,18 @@ export interface LetteringProvider {
 }
 export const letteringOf = (Source: object): LetteringRequest | undefined =>
   (Source as { meta?: { lettering?: LetteringRequest } }).meta?.lettering;
+/** The registered scripts that run right to left, and a letter of one of them. */
+export const RTL_SCRIPTS: readonly string[] = ['Arab', 'Hebr'];
+export const RTL_LETTER = /[\p{Script=Arabic}\p{Script=Hebrew}]/u;
+/**
+ * Whether a paragraph reads right to left, as UAX #9 rules P2 and P3 decide:
+ * by its first strong character, a letter or a bidi mark (RLM and ALM are
+ * right to left, LRM left to right). tools/lettering.py resolves the same way.
+ */
+export function rightToLeft(text: string): boolean {
+  const first = text.match(/[\p{L}\u200e\u200f\u061c]/u)?.[0];
+  return !!first && (first === '\u200f' || first === '\u061c' || RTL_LETTER.test(first));
+}
 /** Bidi marks (LRM, RLM, ALM): only the build-time bidi resolver gives them meaning, so their strings are stored runs. */
 const BIDI_MARK = /[\u200e\u200f\u061c]/;
 export const usesLettering = (request: LetteringRequest, font: FontName, text: string, cut: LetteringCut = ''): boolean =>
@@ -207,6 +219,8 @@ let building: LetteringCut = '';
 let slanting = false;
 /** Set by withFontRun: the Text draws a given run, so it has no cut. */
 let fixedRun = false;
+/** Texts drawn from a given run (maths): their clusters are not indices into their text. */
+const fixedTexts = new WeakSet<Text>();
 
 /**
  * Build an ItalicText. Italic has no faux form, so a scene that did not ask for
@@ -284,14 +298,24 @@ function spanForm(text: Text): { shaped: string; source: number[] } {
  * when the text changes.
  */
 const clusterKeys = new WeakMap<Text, { text: string; keys: Map<number, string> }>();
-function clusterKey(text: Text, cluster: number): string | undefined {
+/**
+ * A Text's run as its build shaped it, with each glyph's cluster as a source
+ * index into its text; undefined for a Text built with no provider, or drawn
+ * from a given run (maths), whose clusters are not source indices.
+ */
+function sourceRun(text: Text): { run: Run; clusters: number[] } | undefined {
   const provider = textProviders.get(text);
-  if (!provider) return undefined;
+  if (!provider || fixedTexts.has(text)) return undefined;
+  const form = spanForm(text);
+  const run = provider.shape(text.font, form.shaped, text.run.fontSize, normalShapers?.[text.font] ?? shaperFor(text.font), textCuts.get(text) ?? '');
+  return { run, clusters: run.glyphs.map((g) => form.source[g.cluster] ?? text.text.length) };
+}
+function clusterKey(text: Text, cluster: number): string | undefined {
   let memo = clusterKeys.get(text);
   if (!memo || memo.text !== text.text) {
-    const form = spanForm(text), cut = textCuts.get(text) ?? '';
-    const run = provider.shape(text.font, form.shaped, text.run.fontSize, normalShapers?.[text.font] ?? shaperFor(text.font), cut);
-    const starts = run.glyphs.map((g) => form.source[g.cluster] ?? text.text.length);
+    const shaped = sourceRun(text);
+    if (!shaped) return undefined;
+    const { run, clusters: starts } = shaped, cut = textCuts.get(text) ?? '';
     const sorted = [...new Set(starts)].sort((a, b) => a - b);
     // Only glyphs with outlines become the Text's children, so only they count
     const counts = new Map<number, number>();
@@ -308,15 +332,19 @@ function installSpanAdapter(): void {
   const begin = TransformMatchingText.prototype.begin;
   TransformMatchingText.prototype.begin = function (this: TransformMatchingText) {
     const plain: MatchKey = this.key;
-    this.key = (part) => {
-      const text = part.parent, cluster = (part as { cluster?: number }).cluster;
-      return text instanceof Text && cluster != null ? clusterKey(text, cluster) ?? plain(part) : plain(part);
-    };
+    // Cluster keys never equal plain ones, so use them only when every Text on both sides has them
+    const texts = [...this.mobject.family(), ...this.target.family()].filter((m): m is Text => m instanceof Text && m.children.length > 0);
+    if (texts.length && texts.every((t) => textProviders.has(t) && !fixedTexts.has(t)))
+      this.key = (part) => {
+        const text = part.parent, cluster = (part as { cluster?: number }).cluster;
+        return text instanceof Text && cluster != null ? clusterKey(text, cluster) ?? plain(part) : plain(part);
+      };
     try { begin.call(this); } finally { this.key = plain; }
   };
   const build = Text.prototype.build, copy = Text.prototype.copy, box = CodeSpan.prototype.box, setFill = Text.prototype.setFill;
   Text.prototype.build = function (text: string, size: number, style: Style) {
     if (active) textProviders.set(this, active); else textProviders.delete(this);
+    if (fixedRun) fixedTexts.add(this); else fixedTexts.delete(this);
     const cut = cutOf(this, active);
     if (cut) textCuts.set(this, cut); else textCuts.delete(this);
     // A real Bold cut replaces the stroke that fakes bold in text.ts.
@@ -335,14 +363,15 @@ function installSpanAdapter(): void {
     const result = copy.call(this), provider = textProviders.get(this), cut = textCuts.get(this);
     if (provider) textProviders.set(result, provider);
     if (cut) textCuts.set(result, cut);
+    if (fixedTexts.has(this)) fixedTexts.add(result);
     return result;
   } as typeof Text.prototype.copy;
   CodeSpan.prototype.box = function (): Box {
     const provider = textProviders.get(this.owner);
     if (!provider || this.stale) return box.call(this);
-    const text = this.owner, form = spanForm(text);
-    const run = provider.shape(text.font, form.shaped, text.run.fontSize, normalShapers?.[text.font] ?? shaperFor(text.font), textCuts.get(text) ?? '');
-    const clusters = run.glyphs.map((g) => form.source[g.cluster] ?? text.text.length);
+    const text = this.owner, form = spanForm(text), shaped = sourceRun(text);
+    if (!shaped) return box.call(this);
+    const { run, clusters } = shaped;
     const rtl = clusters.some((cluster, i) => i > 0 && cluster < clusters[i - 1]!);
     if (!rtl) {
       if (!loadedFonts) return box.call(this);
@@ -373,7 +402,7 @@ function installSpanAdapter(): void {
       const nextDelta = next === undefined ? undefined : position(next)! - here;
       const delta = previousDelta === undefined ? nextDelta : nextDelta === undefined ? previousDelta
         : Math.abs(previousDelta) < Math.abs(nextDelta) ? previousDelta : nextDelta;
-      const backwards = (/[\p{Script=Arabic}\p{Script=Hebrew}]/u.test(clusterText) && /\p{L}/u.test(clusterText)) || (delta ?? 0) < 0;
+      const backwards = (RTL_LETTER.test(clusterText) && /\p{L}/u.test(clusterText)) || (delta ?? 0) < 0;
       const x0 = cell.length ? Math.min(...cell.map((g) => g.x)) : 0;
       const x1 = cell.length ? Math.max(...cell.map((g) => g.x + g.ax)) : run.width;
       const atEnd = this.from >= (logical === undefined ? 0 : endOf(logical));

@@ -1,4 +1,4 @@
-import { withSceneLettering } from '../../src/lettering-outlines.ts';
+import { rightToLeft, withSceneLettering } from '../../src/lettering-outlines.ts';
 import { spawn, execFileSync } from 'node:child_process';
 import { once } from 'node:events';
 import { mkdir, writeFile, readFile, mkdtemp, rename, rm } from 'node:fs/promises';
@@ -18,6 +18,8 @@ const CAPTION = { size: 0.34, leading: 0.5, lines: 4 };
 export const FOOTER_TEXT_WIDTH = 13.6;
 /** Footer height in scene units: a 1280 × 720 stage over a 240 px footer is 1280 × 960. */
 const FOOTER_HEIGHT = 3;
+/** The footer's top edge, in the footer band's scene units. */
+const FOOTER_TEXT_TOP = FOOTER_HEIGHT / 2;
 /** MP4 tags a stream with an ISO 639-2 code (the terminology code, as MP4 uses); WebM and WebVTT take the scene's BCP 47 tag as is. */
 const ISO_639_2: Record<string, string> = { ar: 'ara', hi: 'hin', he: 'heb', zh: 'zho', ja: 'jpn', ko: 'kor', el: 'ell', ru: 'rus', en: 'eng', fr: 'fra' };
 /** The subtitle stream's language tag: the BCP 47 tag for WebM, an ISO 639-2 code for MP4. */
@@ -42,17 +44,7 @@ export function videoTranscript(title: string, lang: string, steps: Trace['steps
     .join('')}</ol></html>\n`;
 }
 
-/** Letters of the right-to-left scripts: Hebrew, Arabic, Syriac, Thaana, N'Ko, Samaritan, Mandaic, Adlam and Hanifi Rohingya. */
-const RTL_LETTER = /[\p{Script=Hebrew}\p{Script=Arabic}\p{Script=Syriac}\p{Script=Thaana}\p{Script=Nko}\p{Script=Samaritan}\p{Script=Mandaic}\p{Script=Adlam}\p{Script=Hanifi_Rohingya}]/u;
-/**
- * Whether a paragraph reads right to left: its first letter is in a right-to-left
- * script, as the Unicode Bidi Algorithm's rules P2 and P3 decide from the first
- * strong character. Bidi at build time (tools/lettering.py) decides the same way.
- */
-export function rightToLeft(text: string): boolean {
-  const first = text.match(/\p{L}/u)?.[0];
-  return !!first && RTL_LETTER.test(first);
-}
+export { rightToLeft };
 /** Right-to-left mark: a line that starts with it keeps its paragraph's direction when shaped alone. */
 const RLM = '\u200f';
 /**
@@ -99,6 +91,8 @@ export async function footerLines(trace: Trace, values: Settings): Promise<strin
   return trace.steps.map((s) => {
     try {
       const lines = [s.meta.title ?? s.step, s.meta.caption ?? ''].map((t) => footerParagraph(String(t)));
+      // wrapCaption shaped each line as it measured it; a right-to-left line is drawn with its mark, so shape that too
+      for (const line of lines.flat()) if (line.startsWith(RLM)) new Text(line, { fontSize: CAPTION.size });
       // Footer text is drawn as outlines too, so a character the fonts lack would be blank.
       const lost = [...takeMissingGlyphs().values()].join('');
       if (lost) throw new Error(`the title or caption has characters the fonts cannot draw: ${[...new Set(lost)].join(' ')}`);
@@ -195,7 +189,7 @@ async function footerColours(dark: boolean) {
 
 async function footer(lines: string[], width: number, colours: { bg: string; fg: string; line: string }) {
   const scene = new Scene(new NullSink()),
-    top = FOOTER_HEIGHT / 2;
+    top = FOOTER_TEXT_TOP;
   // A hairline divides stage from footer when their backgrounds are close.
   scene.add(new Rectangle({ width: 16, height: 0.025, fill: colours.line, stroke: 'none' }).moveTo([0, top - 0.0125]));
   footerText(scene, lines, colours.fg);
@@ -206,7 +200,7 @@ async function footer(lines: string[], width: number, colours: { bg: string; fg:
  * or for a right-to-left paragraph (footerParagraph), ends at its right edge.
  */
 export function footerText(scene: Scene, lines: string[], color: string): Text[] {
-  const top = FOOTER_HEIGHT / 2;
+  const top = FOOTER_TEXT_TOP;
   return lines.map((line, i) => {
     const rtl = line.startsWith(RLM);
     const text = new Text(line, { fontSize: CAPTION.size, color, anchor: rtl ? 'end' : 'start' }).moveTo(
@@ -253,7 +247,7 @@ export async function renderVideo(
   const steps = filmSteps(trace);
   if (!steps.length) throw new Error('A video needs at least one step');
   // The footer must hold every title and caption; fail before FFmpeg starts, naming the step and case.
-  const footerText = withFooter ? await withSceneLettering(variant.Scene, () => footerLines(trace, variant.values)) : steps.map((): string[][] => [[], []]);
+  const footerLinesByStep = withFooter ? await withSceneLettering(variant.Scene, () => footerLines(trace, variant.values)) : steps.map((): string[][] => [[], []]);
   out = resolve(out);
   await mkdir(dirname(out), { recursive: true });
   const temp = await mkdtemp(join(dirname(out), '.lantern-video-'));
@@ -323,7 +317,7 @@ export async function renderVideo(
     if (withFooter) {
       // Light or dark tokens to match the stage, judged by its top-left pixel.
       colours ??= await footerColours(0.2126 * stage[0]! + 0.7152 * stage[1]! + 0.0722 * stage[2]! < 128);
-      const pixels = (footers[step]![part] ??= await withSceneLettering(variant.Scene, () => footer(footerText[step]![part]!, width, colours!)));
+      const pixels = (footers[step]![part] ??= await withSceneLettering(variant.Scene, () => footer(footerLinesByStep[step]![part]!, width, colours!)));
       frame = Buffer.concat([stage, pixels]);
     }
     for (let i = 0; i < count; i++) {

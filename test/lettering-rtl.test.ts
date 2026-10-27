@@ -8,8 +8,8 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
-import { Scene, NullSink, loadFonts } from '../src/index.ts';
-import { runKey, withSceneLettering } from '../src/lettering-outlines.ts';
+import { Scene, NullSink, Text, MathTex, TransformMatchingText, loadFonts } from '../src/index.ts';
+import { bindLettering, runKey, withSceneLettering } from '../src/lettering-outlines.ts';
 import type { LetteringSnapshot } from '../src/lettering-outlines.ts';
 import { collectProject, defaultVariant, ROOT } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
@@ -54,6 +54,9 @@ test('a right-to-left title or caption: its footer lines lead with RLM and end a
   assert.equal(rightToLeft('שלום world'), true);
   assert.equal(rightToLeft('2026: שלום'), true, 'digits and punctuation are not strong');
   assert.equal(rightToLeft('Rayner גרסה'), false);
+  // Bidi marks are strong characters too (UAX #9 P2), as python-bidi and the page's CSS take them
+  assert.equal(rightToLeft('\u200fRayner גרסה'), true);
+  assert.equal(rightToLeft('\u200eשלום'), false);
   await loadFonts();
   assert.deepEqual(footerParagraph('Plain caption'), ['Plain caption'], 'a left-to-right paragraph is as it was');
   const project = await collectProject(join(ROOT, 'test/lettering/hebrew'), { write: false });
@@ -102,6 +105,34 @@ test('TransformMatchingText pairs whole clusters: a conjunct that replaces a let
   assert.deepEqual(match('joining'), { matched: 3, morphed: 0, removed: 0, added: 1 });
 });
 
+test('footerLines shapes each right-to-left line as the footer draws it, so a missing run fails before the video starts', async () => {
+  const project = await collectProject(join(ROOT, 'test/lettering/hebrew'), { write: false });
+  const v = defaultVariant(project);
+  const s = await stored('hebrew');
+  // Without the RLM-led lines, only the footer itself would find out, after FFmpeg had started
+  const runs = Object.fromEntries(Object.entries(s.runs).filter(([key]) => !JSON.parse(key)[1].startsWith('\u200f')));
+  class Plain extends Scene {}
+  const Bound = bindLettering(Plain, { ...s, runs });
+  await assert.rejects(withSceneLettering(Bound, () => footerLines(v.trace, v.values)), /no run for "\u200f/);
+});
+
+test('cluster keys pair a match only when every Text in it has them; a Text built outside the scene pairs by character', async () => {
+  const s = await stored('matching');
+  await loadFonts();
+  const outside = new Text('ab');
+  let summary: ReturnType<TransformMatchingText['summary']> | undefined;
+  class Mixed extends Scene {
+    override async construct() {
+      this.add(outside);
+      const t = new TransformMatchingText(outside, new Text('abd'));
+      await this.play(t);
+      summary = t.summary();
+    }
+  }
+  await new (bindLettering(Mixed, s))(new NullSink()).run();
+  assert.deepEqual(summary, { matched: 2, morphed: 0, removed: 0, added: 1 });
+});
+
 const capture = process.env.EXPLAIN_LETTERING === '1';
 test('hebrew: stored glyph IDs, clusters, advances and offsets agree with independent HarfBuzz', { skip: !capture && 'set EXPLAIN_LETTERING=1 for the build-time oracle' }, async () => {
   const s = await stored('hebrew');
@@ -121,4 +152,14 @@ test('capture of the Hebrew and matching fixtures is deterministic', { skip: !ca
     const project = await collectProject(join(ROOT, 'test/lettering', id), { captureLettering: true, write: false });
     assert.deepEqual(project.outlineLettering, await stored(id), id);
   }
+});
+
+test('morphing maths reshapes nothing: no run for the TeX source is captured', { skip: !capture && 'set EXPLAIN_LETTERING=1 to capture' }, async () => {
+  const dir = await mkdtemp(join(folder, 'math-'));
+  const { writeFile } = await import('node:fs/promises');
+  await writeFile(join(dir, 'scene.ts'), `import{Scene,Math,TransformMatchingText}from'rayner';export default class L extends Scene{static meta={id:'m',lettering:{math:true,faces:{sans:'eb-garamond'}}};async construct(){await this.step('one');const a=new Math('a+b');this.add(a);await this.play(new TransformMatchingText(a,new Math('a+c')));}}`);
+  const project = await collectProject(join(dir, 'scene.ts'), { captureLettering: true, write: false });
+  const keys = Object.keys(project.outlineLettering!.runs).map((k) => JSON.parse(k) as [string, string, boolean]);
+  assert.ok(keys.some(([f, t]) => f === 'math' && t === 'a+b'));
+  assert.deepEqual(keys.filter(([f, t]) => f !== 'math' && (t === 'a+b' || t === 'a+c')), [], 'the formula source was not shaped as text');
 });
