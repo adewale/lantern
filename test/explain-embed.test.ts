@@ -15,8 +15,9 @@ import { fc, params } from './lib/pbt.ts';
 import { resolveSettings } from '../explain/index.ts';
 import type { Settings } from '../explain/index.ts';
 import { pictureHtml, pictureSummary } from '../explain/trace.ts';
-import { NARROW_PX, READ_PX, closeUps, labelsToRead, stageScale, stepLayouts, viewBox } from '../app/embed-closeup.ts';
+import { NARROW_PX, READ_PX, closeUps, labelsToRead, stageScale, stepLayouts, toView, viewBox } from '../app/embed-closeup.ts';
 import type { StepLayout } from '../app/embed-closeup.ts';
+import { labelOf } from '../explain/diagrams.ts';
 import { zoomOfView } from '../app/embed-zoom.ts';
 
 const enabled = !!process.env.EXPLAIN_BROWSER,
@@ -1671,3 +1672,71 @@ test(
     );
   },
 );
+
+// #21: readable labels are insufficient when a caption's evidence is in another view.
+// Exercise the visible route to that evidence, rather than only asserting the zoom scale.
+test('PKCE mobile views expose the derivation and the unsent verifier without advancing the step', options, async () => {
+  const project = projects.get('oauth-pkce')!;
+  for (const variant of project.variants) {
+    const targets = new Map<string, number[][]>();
+    await new variant.Scene({
+      async frame() {},
+      async stepEnd(scene, step) {
+        if (!['secret', 'authorize'].includes(step.name)) return;
+        const found: number[][] = [];
+        const walk = (m: import('../src/index.ts').Mobject) => {
+          const label = labelOf(m);
+          if (label && (step.name === 'secret' ? ['code_verifier', 'code_challenge'].includes(label.text) : label.text === 'not sent')) {
+            const box = m.box();
+            if (box) found.push(toView(box, scene.frame.box()!));
+          }
+          for (const child of m.children) walk(child);
+        };
+        for (const m of scene.mobjects) walk(m);
+        targets.set(step.name, found);
+      },
+    }, { skipUntil: Infinity }).run();
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: variant.values.attacker === 'yes' ? 'no-preference' : 'reduce' });
+    try {
+      const page = await context.newPage();
+      await page.goto(`${embed}/oauth-pkce.html?attacker=${variant.values.attacker}`);
+      await page.waitForSelector('[data-ready=true]');
+      for (const step of ['secret', 'authorize']) {
+        if (step === 'authorize') await page.getByRole('button', { name: 'Next step', exact: true }).click();
+        await quiet(page);
+        assert.equal(new URL(page.url()).searchParams.get('step'), step);
+        assert.ok(await page.locator('.view-help').isVisible());
+        assert.match(await page.locator('.view-help').innerText(), /Next below advances the step/);
+        const size = await page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
+        const count = Number((await page.locator('.view-controls>span').innerText()).match(/of (\d+)/)![1]);
+        assert.ok(count > 1);
+        const evidence = targets.get(step)!;
+        assert.ok(evidence.length > 0, `${step}: the fixture must contain the named evidence`);
+        const seen = new Set<number>();
+        for (let i = 0; i < count; i++) {
+          assert.equal(await page.locator('.view-controls>span').innerText(), `View ${i + 1} of ${count}`);
+          const zoom = await settledZoom(page);
+          assert.ok(zoom, 'the view is zoomed');
+          const visible = viewBox(zoom, size.w, size.h);
+          for (const [j, box] of evidence.entries()) {
+            const x = (box[0]! + box[2]!) / 2, y = (box[1]! + box[3]!) / 2;
+            if (x >= visible[0] && x <= visible[2] && y >= visible[1] && y <= visible[3]) seen.add(j);
+          }
+          const control = page.getByRole('button', { name: 'Next view', exact: true });
+          const rect = await control.boundingBox();
+          assert.ok(rect && rect.height >= 44, 'touch target is at least 44 px tall');
+          await control.focus();
+          await page.keyboard.press('Enter');
+          await settledZoom(page);
+          assert.equal(new URL(page.url()).searchParams.get('step'), step, 'view navigation keeps the step');
+        }
+        assert.equal(seen.size, evidence.length, `${step}: every referenced label is reachable`);
+      }
+      await page.getByRole('button', { name: 'Whole picture', exact: true }).click();
+      await settledZoom(page);
+      assert.ok(await page.locator('.view-controls').isVisible());
+      assert.ok(await page.getByRole('button', { name: 'Whole picture', exact: true }).isDisabled());
+      assert.equal(zoomOf(await paintedView(page)), null);
+    } finally { await context.close(); }
+  }
+});

@@ -2,7 +2,9 @@
 
 Rayner turns a TypeScript program into an explainer that a reader steps through at their own pace. A slide deck holds a fixed picture per slide. In Rayner one program computes every step: change a reader setting, such as the token bucket's refill rate, and the program runs again, so the numbers, the diagram and the captions follow that case. Every case is built and checked before anyone sees it, and the same scene also renders a silent, captioned video. Diagrams come from [Agentic Mermaid](https://github.com/adewale/agentic-mermaid) at build time and are stored beside the scene, so the page runs no diagram renderer and makes no network requests.
 
-Rayner is a fork of Ivar Vong's [Lantern](https://github.com/ivarvong/lantern) at commit `2c7bad5`, maintained by [Ade Oshineye](https://github.com/adewale). It keeps Lantern's engine: shapes and glyphs stored as Bézier points, a fixed clock, and seeking by replay. [Upstream](docs/UPSTREAM.md) lists each engine change with the test that proves it. It deletes Lantern's development player, Cloudflare Worker, JSON scene format and flowchart parser. In their place, a build sits between the scene and the reader: Agentic Mermaid draws the diagrams, every reader setting becomes a case that is checked before it ships, and the output is a portable HTML page or a captioned video. Agents lose the Worker's endpoints in that trade. The explainers are published at [oshineye.dev/projects/rayner](https://oshineye.dev/projects/rayner). The npm package `rayner` has not been published.
+Rayner is for engineers and technical educators who write TypeScript and want readers to explore a protocol, algorithm or code change. It works best when changing a setting changes the explanation: a cache hit takes a different path from a miss, or exchanging an intercepted authorization code fails without the verifier. Authors need to test the model and review the pictures; the build checks cannot establish whether the explanation is true.
+
+Start with [Your first explainer](docs/TUTORIAL.md), then use the [reference](docs/REFERENCE.md) while writing and [publishing guide](docs/PUBLISHING.md) when the page is ready. The [authoring skill](skills/rayner-explainers/SKILL.md) gives agents the same workflow, including how to test the model and review every case. The published examples are at [oshineye.dev/projects/rayner](https://oshineye.dev/projects/rayner). Work from a checkout for now; the npm package `rayner` has not been published.
 
 ## Requirements
 
@@ -36,6 +38,8 @@ Open http://127.0.0.1:5175/explainers/. Three to start with:
 The collection has 26 explainers with 140 cases between them, and uses all 15 Agentic Mermaid diagram families. Captured diagrams use 8 styles, which `out/explainers/evidence.json` lists per explainer; ring-buffer (dusk), seasons (tokyo-night) and token-bucket (github-dark) use a style only as the stage palette. Twenty have a video; six are pages only (`video: false` in `scenes/explainers/catalog.ts`).
 
 ## Write one
+
+For a guided walkthrough, follow [Your first explainer](docs/TUTORIAL.md). These are the commands it uses:
 
 ```sh
 npm run explain -- init my-explainer
@@ -94,8 +98,8 @@ A scene is an ordinary Rayner scene, so beside the helpers it can use the engine
 
 ## Limits
 
-- Lettering is the embedded Inter or JetBrains Mono, with faux bold and no italic, unless an explainer asks for more with `meta.lettering` ([lettering on request](docs/LETTERING.md)): a style's own face, real bold and italic, Latin Extended, Greek, Cyrillic, Arabic, Devanagari, Hebrew and Chinese, or maths. Capturing a request needs Python with HarfBuzz and the fonts; building from the committed snapshot does not.
-- Beyond Latin-1, only numerals draw (Arabic-Indic, Devanagari and Chinese, from small Noto subsets) in an explainer that asks for nothing. Any script it did not ask for fails the build.
+- Default lettering uses embedded Inter and JetBrains Mono, with Noto subsets for Arabic-Indic, Devanagari and Chinese numerals. Bold is the Regular outline stroked, and there is no italic. A diagram style does not select its own font.
+- Scenes can request Latin Extended, Greek and Cyrillic, or opt into Arabic, Devanagari, Hebrew and Chinese letters, registered replacement faces (such as a style's own face), real bold and italic, and typeset maths. The [lettering guide](docs/LETTERING.md) lists the supported requests, capture dependencies and snapshot rules. Unrequested characters and unsupported scripts fail the build.
 - Descriptions of the pictures are generated in English or French only.
 - On a phone each step opens on a close-up of what it changed, so a reader pans for the rest.
 - The models are small and cited, and no subject expert has reviewed the explainers.
@@ -109,7 +113,12 @@ A scene is an ordinary Rayner scene, so beside the helpers it can use the engine
 - [Upstream](docs/UPSTREAM.md): the fork base, engine changes and Agentic Mermaid
 - [Design record](specs/rayner.md): why the project is shaped this way, and the open decisions
 - [Changelog](CHANGELOG.md)
-- [Agent skill](skills/rayner-explainers/SKILL.md)
+- [Lettering](docs/LETTERING.md): requested scripts, fonts, maths and snapshot capture
+- [Authoring skill](skills/rayner-explainers/SKILL.md): the authoring and review workflow for agents
+
+## Fork and engine
+
+Rayner is a fork of Ivar Vong's [Lantern](https://github.com/ivarvong/lantern) at commit `2c7bad5`, maintained by [Ade Oshineye](https://github.com/adewale). It keeps Lantern's engine: shapes and glyphs stored as Bézier points, a fixed clock, and seeking by replay. [Upstream](docs/UPSTREAM.md) lists each engine change with the test that proves it. It deletes Lantern's development player, Cloudflare Worker, JSON scene format and flowchart parser. In their place, a build sits between the scene and the reader: Agentic Mermaid draws the diagrams, every reader setting becomes a case that is checked before it ships, and the output is a portable HTML page or a captioned video. Agents lose the Worker's endpoints in that trade.
 
 ## License and attribution
 
