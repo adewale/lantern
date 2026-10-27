@@ -1734,7 +1734,8 @@ test('PKCE mobile views expose the derivation and the unsent verifier without ad
       }
       await page.getByRole('button', { name: 'Whole picture', exact: true }).click();
       await settledZoom(page);
-      assert.equal(await page.locator('.view-controls').isHidden(), true);
+      assert.ok(await page.locator('.view-controls').isVisible());
+      assert.ok(await page.getByRole('button', { name: 'Whole picture', exact: true }).isDisabled());
       assert.equal(zoomOf(await paintedView(page)), null);
     } finally { await context.close(); }
   }

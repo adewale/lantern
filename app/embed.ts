@@ -196,10 +196,14 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       h = stage.clientHeight,
       on = narrow() && zoom.k > 1;
     stage.classList.toggle('narrow', narrow());
-    overview.hidden = views.hidden = !on;
+    overview.hidden = !on;
+    views.hidden = !narrow();
+    wholePicture.disabled = !on;
+    nextView.disabled = tour.length < 2;
+    const count = on ? t.viewCount(stop + 1, Math.max(1, tour.length)) : t.wholePicture;
+    if (viewCount.textContent !== count) viewCount.textContent = count;
     if (!on) return;
-    overview.disabled = nextView.disabled = tour.length < 2;
-    viewCount.textContent = t.viewCount(stop + 1, Math.max(1, tour.length));
+    overview.disabled = tour.length < 2;
     const label = t.nextCloseUp(((stop + 1) % Math.max(1, tour.length)) + 1, Math.max(1, tour.length));
     overview.setAttribute('aria-label', label);
     overview.title = label;
@@ -217,6 +221,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   }
   overview.onclick = nextView.onclick = () => {
     if (tour.length < 2) return;
+    if (zoom.k <= 1) { closer.click(); return; }
     stop = (stop + 1) % tour.length;
     zoom.to(tour[stop]!, true);
   };
@@ -238,7 +243,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     },
     reader.paint,
   );
-  wholePicture.onclick = () => zoomFit.click();
+  wholePicture.onclick = () => { zoomFit.click(); stage.focus(); };
   zoomIn.onclick = () => zoom.zoomAt(1.6, undefined, undefined, true);
   zoomOut.onclick = () => zoom.zoomAt(1 / 1.6, undefined, undefined, true);
   /** The whole picture; on a narrow stage, for the steps that follow too. */
