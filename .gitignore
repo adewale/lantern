@@ -2,3 +2,4 @@ node_modules/
 out/
 dist/
 .claude/scheduled_tasks.lock
+__pycache__/
