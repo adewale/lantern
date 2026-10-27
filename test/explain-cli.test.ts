@@ -69,7 +69,7 @@ test('`rayner --version` and `rayner version` print the version; the word as an 
   const cli = join(ROOT, 'tools/explain.ts'),
     { version } = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8'));
   for (const args of [['--version'], ['version']])
-    assert.equal(execFileSync(process.execPath, [cli, ...args], { encoding: 'utf8' }).trim(), version, args[0]);
+    assert.equal(execFileSync(process.execPath, [cli, ...args], { encoding: 'utf8' }).trim(), version, args.join(' '));
   const scene = join(ROOT, 'scenes/explainers/fork/scene.ts');
   for (const args of [['shots', scene, '--case', 'x=--version'], ['shots', scene, '--out', '--version']]) {
     const r = spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8' });
