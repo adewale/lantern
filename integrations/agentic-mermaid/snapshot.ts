@@ -110,6 +110,7 @@ function validateSnapshot(value: DiagramSnapshot): void {
     !value ||
     value.version !== 1 ||
     value.renderer !== RENDERER ||
+    typeof value.family !== 'string' ||
     !finite(value.width) ||
     !finite(value.height) ||
     value.width <= 0 ||
