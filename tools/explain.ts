@@ -56,15 +56,6 @@ A default install leaves out what diagrams, PNGs and video need:
                       or set CHROMIUM_EXECUTABLE_PATH
   PNG and video       ${install(RASTER)}; render also needs ffmpeg on PATH
 `;
-/**
- * An error's message as the CLI prints it. The lettering builder's own sources are inputs to
- * every lettering snapshot's builderHash, so their recovery text still names the old command;
- * editing it would make every committed snapshot stale. Both catch sites print through here.
- */
-export function cliMessage(error: Error): string {
-  return String(error.message).replaceAll('run explain snapshots', 'run rayner snapshots');
-}
-
 export async function main(args = process.argv.slice(2)): Promise<void> {
   if (!args.length || args.includes('--help') || args[0] === 'help') {
     console.log(HELP);
@@ -244,7 +235,7 @@ export default class MyExplainer extends Scene {
               await contactSheet(next, shots);
               console.log(`Rebuilt ${slug}: ${next.variants.length} cases`);
             } catch (error) {
-              console.error(`rayner: ${cliMessage(error as Error)} (still serving the last good build)`);
+              console.error(`rayner: ${(error as Error).message} (still serving the last good build)`);
             }
           });
         }, 200);
@@ -264,7 +255,7 @@ if (
     console.error(
       missing
         ? `rayner: this command needs ${missing}${group ? `. Install: ${install(group)}` : ''}`
-        : `rayner: ${cliMessage(error)}`,
+        : `rayner: ${error.message}`,
     );
     process.exitCode = 1;
   });

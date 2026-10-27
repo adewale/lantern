@@ -1,4 +1,4 @@
-# Optional build-time inputs for `explain snapshots` with meta.lettering.
+# Optional build-time inputs for `rayner snapshots` with meta.lettering.
 fonttools==4.67.0
 brotli==1.2.1
 uharfbuzz==0.57.0

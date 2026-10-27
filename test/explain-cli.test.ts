@@ -149,10 +149,7 @@ test('`rayner see` prints describeExplainer\'s words for the step, so the two ca
 });
 
 
-test('lettering errors name the rayner capture command wherever the CLI prints them', async () => {
-  // The watch rebuild prints through cliMessage too; the builder's own text must stay as it is (see cliMessage).
-  const { cliMessage } = await import('../tools/explain.ts');
-  assert.equal(cliMessage(new Error('stale; run explain snapshots a.ts')), 'stale; run rayner snapshots a.ts');
+test('lettering errors name the rayner capture command', async () => {
   const folder = await mkdtemp(join(tmpdir(), 'rayner-missing-lettering-'));
   try {
     const file = join(folder, 'scene.ts');
