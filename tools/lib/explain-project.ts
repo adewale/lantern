@@ -1,5 +1,5 @@
-import { prepareLettering as prepareOutlineLettering } from './lettering.ts';
-import { offPage, usesOutlineLettering, withSceneLettering } from '../../src/lettering-outlines.ts';
+import { offPage, prepareLettering as prepareOutlineLettering } from './lettering.ts';
+import { usesOutlineLettering, withSceneLettering } from '../../src/lettering-outlines.ts';
 import type { LetteringSnapshot } from '../../src/lettering-outlines.ts';
 import { build } from 'esbuild';
 import type { Plugin } from 'esbuild';

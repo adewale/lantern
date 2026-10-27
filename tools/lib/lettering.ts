@@ -2,13 +2,14 @@
 // lettering snapshot; check/build/video from a fresh snapshot need none of them.
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { execFileSync } from 'node:child_process';
 import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { loadFont } from '../../vendor/glyph.js';
 import { SANS, MONO, FALLBACK } from '../../src/font-data.ts';
-import { bindLettering, cutFace, defaultCutFace, isOffPage, letteringOf, packLettering, unpackLettering, numericAlphabet, requestCuts, runKey, scaledRun, scriptCuts, scriptFaceNames, snapshotProvider, usesLettering } from '../../src/lettering-outlines.ts';
+import { bindLettering, cutFace, defaultCutFace, letteringOf, packLettering, unpackLettering, numericAlphabet, requestCuts, runKey, scaledRun, scriptCuts, scriptFaceNames, snapshotProvider, usesLettering } from '../../src/lettering-outlines.ts';
 import type { LetteringCut, LetteringSnapshot, LetteringProvider, LetteringRequest } from '../../src/lettering-outlines.ts';
 import type { ExplainerClass } from '../../explain/settings.ts';
 import type { Run } from '../../vendor/glyph.js';
@@ -57,6 +58,14 @@ const GLYPH_FEATURES = ['rvrn', 'ccmp', 'locl', 'rlig', 'calt', 'clig', 'liga', 
 const subsetFeatures = (name: string) =>
   name.startsWith('jetbrains-mono') ? GLYPH_FEATURES.filter((f) => !['calt', 'clig', 'liga'].includes(f)) : GLYPH_FEATURES;
 const STYLES = ['bold', 'italic'];
+/**
+ * Text the build shapes but no page draws (video footer lines, the wrapping that
+ * measures them, contact-sheet titles) is shaped inside offPage(), so capture
+ * lists its runs in the snapshot's offPage. Scoped to the async work it wraps.
+ */
+const offPageWork = new AsyncLocalStorage<true>();
+export const offPage = <T>(work: () => Promise<T>): Promise<T> => offPageWork.run(true, work);
+const isOffPage = (): boolean => offPageWork.getStore() === true;
 export function validateLettering(request: LetteringRequest): void {
   if (!request || typeof request !== 'object' || Array.isArray(request)) throw new Error('lettering must be an object');
   for (const k of Object.keys(request)) if (!['faces', 'scripts', 'math', 'styles'].includes(k)) throw new Error(`Unknown lettering option: ${k}`);
@@ -103,10 +112,15 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
   const builderHash = hash((await Promise.all(['src/lettering-outlines.ts', 'src/math.ts', 'src/italic.ts', 'src/font-data.ts', 'src/fonts.ts', 'src/text.ts', 'tools/lib/lettering.ts', 'tools/lib/lettering-validation.ts', 'tools/lettering.py', 'tools/lettering-requirements.txt', 'vendor/glyph.js', 'vendor/glyph-math.js'].map((name) => readFile(join(root, name), 'utf8')))).join('\n'));
   const path = file.replace(/\.[^.]+$/, '') + '.lettering.json';
   if (!capture) {
-    const snapshot: LetteringSnapshot | undefined = await readFile(path, 'utf8').then((text) => unpackLettering(JSON.parse(text))).catch((e: NodeJS.ErrnoException) => {
+    const raw: unknown = await readFile(path, 'utf8').then(JSON.parse).catch((e: NodeJS.ErrnoException) => {
       if (e.code === 'ENOENT') return undefined;
       throw e;
     });
+    let snapshot: LetteringSnapshot | undefined;
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      try { snapshot = unpackLettering(raw as LetteringSnapshot); }
+      catch (e) { throw new Error(`${(e as Error).message.replace(/; run rayner snapshots.*$/, '')}; run rayner snapshots ${file}`); }
+    }
     if (!snapshot || snapshot.version !== 1 || snapshot.sourceHash !== sourceHash || snapshot.builderHash !== builderHash || json(snapshot.request) !== json(request))
       throw new Error('Missing or stale lettering snapshot; run rayner snapshots ' + file);
     validateLetteringSnapshot(snapshot);
@@ -291,7 +305,7 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
  */
 function snapshotFile(snapshot: LetteringSnapshot): string {
   const lines = (entries: [string, unknown][]) => entries.map(([key, value]) => `    ${JSON.stringify(key)}: ${JSON.stringify(value)}`).join(',\n');
-  const body = Object.entries(snapshot).map(([key, value]) => {
+  const body = Object.entries(snapshot).filter(([, value]) => value !== undefined).map(([key, value]) => {
     if (key === 'runs') return `  "runs": {\n${lines(Object.entries(value as object))}\n  }`;
     if (key === 'outlines') return `  "outlines": [\n${(value as unknown[]).map((o) => '    ' + JSON.stringify(o)).join(',\n')}\n  ]`;
     return `  ${JSON.stringify(key)}: ${JSON.stringify(value, null, 2).replace(/\n/g, '\n  ')}`;
@@ -300,7 +314,8 @@ function snapshotFile(snapshot: LetteringSnapshot): string {
 }
 export async function letteringWeight(snapshot: LetteringSnapshot) {
   return {
-    bytes: Buffer.byteLength(JSON.stringify(snapshot)),
+    /** The snapshot as stored: packed, each outline once. */
+    bytes: Buffer.byteLength(JSON.stringify(packLettering(snapshot))),
     /** What the page's script carries of it (pageSnapshot). */
     pageBytes: Buffer.byteLength(JSON.stringify(await pageSnapshot(snapshot))),
     faceBytes: Object.fromEntries(Object.entries(snapshot.faces).map(([name, face]) => [name, Buffer.from(face.data, 'base64').length])),

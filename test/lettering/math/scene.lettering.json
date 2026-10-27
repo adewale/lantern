@@ -1,7 +1,7 @@
 {
   "version": 1,
   "sourceHash": "55448a5629a303adbca8f30ca08043cc4a8788eff57d72491bc4428c42f95a97",
-  "builderHash": "c668e1ac4f9b644bd2d7dd17fcce75ae3f26b1c0d7e48d93aa255e0e50ddbb99",
+  "builderHash": "6da9c8c3095395bff5a71823827033f59c79b30c6209cd84b9324f78e4144c9a",
   "request": {
     "math": true
   },
@@ -16,7 +16,7 @@
     }
   },
   "shaper": "uharfbuzz+python-bidi/fonttools; glyph-math@6398654",
-  "payloadHash": "336668a466313cc4d986142685cb5173982ea74314260b6fa32f0edbbdbded8d",
+  "payloadHash": "be5275f09b743d2d50d19a63dd80a740e8dcc56b9c7d7a52e84ccfee602ea0fd",
   "outlines": [
     [{"tag":"MoveTo","x":419,"y":0},{"tag":"LineTo","x":419,"y":31},{"tag":"LineTo","x":387,"y":31},{"tag":"CubicTo","x1":297,"y1":31,"x2":294,"y2":42,"x":294,"y":79},{"tag":"LineTo","x":294,"y":640},{"tag":"CubicTo","x1":294,"y1":664,"x2":294,"y2":666,"x":271,"y":666},{"tag":"CubicTo","x1":209,"y1":602,"x2":121,"y2":602,"x":89,"y":602},{"tag":"LineTo","x":89,"y":571},{"tag":"CubicTo","x1":109,"y1":571,"x2":168,"y2":571,"x":220,"y":597},{"tag":"LineTo","x":220,"y":79},{"tag":"CubicTo","x1":220,"y1":43,"x2":217,"y2":31,"x":127,"y":31},{"tag":"LineTo","x":95,"y":31},{"tag":"LineTo","x":95,"y":0},{"tag":"CubicTo","x1":130,"y1":3,"x2":217,"y2":3,"x":257,"y":3},{"tag":"CubicTo","x1":297,"y1":3,"x2":384,"y2":3,"x":419,"y":0},{"tag":"Close"}],
     [{"tag":"MoveTo","x":449,"y":174},{"tag":"LineTo","x":424,"y":174},{"tag":"CubicTo","x1":419,"y1":144,"x2":412,"y2":100,"x":402,"y":85},{"tag":"CubicTo","x1":395,"y1":77,"x2":329,"y2":77,"x":307,"y":77},{"tag":"LineTo","x":127,"y":77},{"tag":"LineTo","x":233,"y":180},{"tag":"CubicTo","x1":389,"y1":318,"x2":449,"y2":372,"x":449,"y":472},{"tag":"CubicTo","x1":449,"y1":586,"x2":359,"y2":666,"x":237,"y":666},{"tag":"CubicTo","x1":124,"y1":666,"x2":50,"y2":574,"x":50,"y":485},{"tag":"CubicTo","x1":50,"y1":429,"x2":100,"y2":429,"x":103,"y":429},{"tag":"CubicTo","x1":120,"y1":429,"x2":155,"y2":441,"x":155,"y":482},{"tag":"CubicTo","x1":155,"y1":508,"x2":137,"y2":534,"x":102,"y":534},{"tag":"CubicTo","x1":94,"y1":534,"x2":92,"y2":534,"x":89,"y":533},{"tag":"CubicTo","x1":112,"y1":598,"x2":166,"y2":635,"x":224,"y":635},{"tag":"CubicTo","x1":315,"y1":635,"x2":358,"y2":554,"x":358,"y":472},{"tag":"CubicTo","x1":358,"y1":392,"x2":308,"y2":313,"x":253,"y":251},{"tag":"LineTo","x":61,"y":37},{"tag":"CubicTo","x1":50,"y1":26,"x2":50,"y2":24,"x":50,"y":0},{"tag":"LineTo","x":421,"y":0},{"tag":"Close"}],

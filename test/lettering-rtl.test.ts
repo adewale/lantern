@@ -4,7 +4,8 @@
 // to the paragraph's direction, and TransformMatchingText to pairing whole clusters.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
@@ -150,6 +151,27 @@ test('a page leaves out the runs only the build draws, and every snapshot stores
   assert.ok(shipped * 10 < unpacked, `the page carries ${shipped} bytes of the ${unpacked} the runs take unpacked`);
 });
 
+test('a packed snapshot unpacks only whole: every glyph names a stored outline and every outline is used', async () => {
+  const raw = (): LetteringSnapshot => JSON.parse(readFileSync(join(ROOT, 'test/lettering/hebrew/scene.lettering.json'), 'utf8'));
+  // A shallow copy unpacks without touching the original, which stays packed
+  const original = raw(), copy = unpackLettering({ ...original });
+  assert.ok(Array.isArray(original.outlines) && copy.outlines === undefined);
+  assert.deepEqual(unpackLettering(original), copy);
+  const junk = raw();
+  junk.outlines!.push([{ tag: 'MoveTo', x: 0, y: 0 }]);
+  assert.throws(() => unpackLettering(junk), /Invalid lettering snapshot outlines/);
+  const bad = raw();
+  (Object.values(bad.runs)[0]!.glyphs[0] as unknown as { o: number }).o = 1e9;
+  assert.throws(() => unpackLettering(bad), /Invalid lettering snapshot outlines/);
+  // On disk, a damaged table names the file to rebuild
+  const dir = await mkdtemp(join(folder, 'packed-'));
+  await writeFile(join(dir, 'scene.ts'), await readFile(join(ROOT, 'test/lettering/hebrew/scene.ts'), 'utf8'));
+  await writeFile(join(dir, 'scene.lettering.json'), JSON.stringify(junk));
+  await assert.rejects(collectProject(dir, { write: false }), /Invalid lettering snapshot outlines; run rayner snapshots .*scene\.ts/);
+  await writeFile(join(dir, 'scene.lettering.json'), 'null');
+  await assert.rejects(collectProject(dir, { write: false }), /Missing or stale lettering snapshot/);
+});
+
 const capture = process.env.EXPLAIN_LETTERING === '1';
 test('hebrew: stored glyph IDs, clusters, advances and offsets agree with independent HarfBuzz', { skip: !capture && 'set EXPLAIN_LETTERING=1 for the build-time oracle' }, async () => {
   const s = await stored('hebrew');
@@ -173,7 +195,6 @@ test('capture of the Hebrew and matching fixtures is deterministic', { skip: !ca
 
 test('morphing maths reshapes nothing: no run for the TeX source is captured', { skip: !capture && 'set EXPLAIN_LETTERING=1 to capture' }, async () => {
   const dir = await mkdtemp(join(folder, 'math-'));
-  const { writeFile } = await import('node:fs/promises');
   await writeFile(join(dir, 'scene.ts'), `import{Scene,Math,TransformMatchingText}from'rayner';export default class L extends Scene{static meta={id:'m',lettering:{math:true,faces:{sans:'eb-garamond'}}};async construct(){await this.step('one');const a=new Math('a+b');this.add(a);await this.play(new TransformMatchingText(a,new Math('a+c')));}}`);
   const project = await collectProject(join(dir, 'scene.ts'), { captureLettering: true, write: false });
   const keys = Object.keys(project.outlineLettering!.runs).map((k) => JSON.parse(k) as [string, string, boolean]);

@@ -68,26 +68,32 @@ export function packLettering(snapshot: LetteringSnapshot): LetteringSnapshot {
   }])) as unknown as LetteringSnapshot['runs'];
   return { ...snapshot, runs, outlines };
 }
-/** A packed snapshot made whole again, in place; an unpacked one is returned as it is. */
+/**
+ * A packed snapshot made whole again: its runs are replaced by new ones with
+ * each glyph's outline back in `path`, and `outlines` is dropped. Glyph objects
+ * are new, so a shallow copy of a packed snapshot leaves the original packed.
+ * An unpacked snapshot is returned as it is. Every stored outline must be used.
+ */
 export function unpackLettering(snapshot: LetteringSnapshot): LetteringSnapshot {
   const outlines = snapshot.outlines;
-  if (!outlines) return snapshot;
-  for (const run of Object.values(snapshot.runs)) for (const glyph of run.glyphs as (Run['glyphs'][number] & { o?: number })[]) {
-    const path = Number.isInteger(glyph.o) ? outlines[glyph.o!] : undefined;
-    if (!Array.isArray(path)) throw new Error('Invalid lettering snapshot outline index; run rayner snapshots to rebuild it');
-    glyph.path = path as Run['glyphs'][number]['path'];
-    delete glyph.o;
+  if (outlines === undefined) return snapshot;
+  const fail = (): never => { throw new Error('Invalid lettering snapshot outlines; run rayner snapshots to rebuild it'); };
+  if (!Array.isArray(outlines) || !outlines.every(Array.isArray) || !snapshot.runs || typeof snapshot.runs !== 'object') fail();
+  const used = new Set<number>();
+  const runs: LetteringSnapshot['runs'] = {};
+  for (const [key, run] of Object.entries(snapshot.runs)) {
+    if (!run || !Array.isArray(run.glyphs)) fail();
+    runs[key] = { ...run, glyphs: (run.glyphs as (Run['glyphs'][number] & { o?: number })[]).map(({ o, ...glyph }) => {
+      if (!Number.isInteger(o) || !(o! >= 0 && o! < outlines.length)) fail();
+      used.add(o!);
+      return { ...glyph, path: outlines[o!] as Run['glyphs'][number]['path'] };
+    }) };
   }
+  if (used.size !== outlines.length) fail();
+  snapshot.runs = runs;
   delete snapshot.outlines;
   return snapshot;
 }
-/** Set while the build shapes text only it draws: see LetteringSnapshot.offPage. */
-let offPageDepth = 0;
-export async function offPage<T>(work: () => Promise<T>): Promise<T> {
-  offPageDepth++;
-  try { return await work(); } finally { offPageDepth--; }
-}
-export const isOffPage = (): boolean => offPageDepth > 0;
 export interface LetteringProvider {
   /** What the scene asked for; styles decide which cuts Text may use. */
   request?: LetteringRequest;
