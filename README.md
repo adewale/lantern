@@ -2,11 +2,13 @@
 
 Rayner turns a TypeScript program into an explainer that a reader steps through at their own pace. A slide deck holds a fixed picture per slide. In Rayner one program computes every step: change a reader setting, such as the token bucket's refill rate, and the program runs again, so the numbers, the diagram and the captions follow that case. Every case is built and checked before anyone sees it, and the same scene also renders a silent, captioned video. Diagrams come from [Agentic Mermaid](https://github.com/adewale/agentic-mermaid) at build time and are stored beside the scene, so the page runs no diagram renderer and makes no network requests.
 
-Rayner is a fork of Ivar Vong's [Lantern](https://github.com/ivarvong/lantern) at commit `2c7bad5`, maintained by [Ade Oshineye](https://github.com/adewale). It keeps Lantern's engine: shapes and glyphs stored as Bézier points, a fixed clock, and seeking by replay. [Upstream](docs/UPSTREAM.md) lists each engine change with the test that proves it. It deletes Lantern's development player, Cloudflare Worker, JSON scene format and flowchart parser. In their place, a build sits between the scene and the reader: Agentic Mermaid draws the diagrams, every reader setting becomes a case that is checked before it ships, and the output is a portable HTML page or a captioned video. Agents lose the Worker's endpoints in that trade. The explainers are published at [oshineye.dev/projects/rayner](https://oshineye.dev/projects/rayner).
+Rayner is for engineers and technical educators who write TypeScript and want readers to explore a protocol, algorithm or code change. It works best when changing a setting changes the explanation: a cache hit takes a different path from a miss, or exchanging an intercepted authorization code fails without the verifier. Authors need to test the model and review the pictures; the build checks cannot establish whether the explanation is true.
+
+Start with [Your first explainer](docs/TUTORIAL.md), then use the [reference](docs/REFERENCE.md) while writing and [publishing guide](docs/PUBLISHING.md) when the page is ready. The [authoring skill](skills/rayner-explainers/SKILL.md) gives agents the same workflow, including how to test the model and review every case. The published examples are at [oshineye.dev/projects/rayner](https://oshineye.dev/projects/rayner). Work from a checkout for now; the npm package `rayner` has not been published.
 
 ## Requirements
 
-Node 26 or later. CI is set up on Ubuntu 24.04 and the suite has also passed on macOS; other platforms have not been checked. Install the package with `npm i -D rayner`. In a checkout, `npm ci` installs everything except Chromium and FFmpeg. A package install leaves out the capture and picture packages; `explain --help` prints these lines:
+Node 26 or later. CI is configured for Ubuntu 24.04; other platforms have not been checked. In a checkout, `npm ci` installs everything except Chromium and FFmpeg. A package install leaves out the capture and picture packages; `rayner --help` prints these lines:
 
 | Needed for | Install |
 | --- | --- |
@@ -17,6 +19,18 @@ Node 26 or later. CI is set up on Ubuntu 24.04 and the suite has also passed on 
 `check` and `build` from committed snapshots need none of them.
 
 Optional per-scene fonts, Arabic/Devanagari shaping, and typeset maths are documented in [Lettering on request](docs/LETTERING.md). Existing scenes retain their original output.
+
+## Install after the first release
+
+The package is not published yet. Once 0.1.0 is available:
+
+```sh
+npm install --save-dev rayner
+npx rayner init my-explainer
+npx rayner preview my-explainer/scene.ts --watch
+```
+
+Until then, use a checkout and the commands below.
 
 ## See the demos
 
@@ -37,15 +51,14 @@ The collection has 26 explainers with 140 cases between them, and uses all 15 Ag
 
 ## Write one
 
-```sh
-npm i -D rayner
-npx rayner init my-explainer
-npx rayner preview my-explainer/scene.ts --watch
-npx rayner check my-explainer/scene.ts
-npx rayner build my-explainer/scene.ts --out public/my-explainer.html
-```
+For a guided walkthrough, follow [Your first explainer](docs/TUTORIAL.md). These are the commands it uses:
 
-In a checkout of this repository, run the same commands as `npm run rayner -- <command>`. `npx rayner --version` prints the installed version.
+```sh
+npm run rayner -- init my-explainer
+npm run rayner -- preview my-explainer/scene.ts --watch
+npm run rayner -- check my-explainer/scene.ts
+npm run rayner -- build my-explainer/scene.ts --out public/my-explainer.html
+```
 
 `init` writes this scene, which has one setting and two steps:
 
@@ -97,8 +110,8 @@ A scene is an ordinary Rayner scene, so beside the helpers it can use the engine
 
 ## Limits
 
-- Lettering is the embedded Inter or JetBrains Mono, so styles lose their own fonts.
-- Beyond Latin-1, only numerals draw (Arabic-Indic, Devanagari and Chinese, from small Noto subsets) unless an explainer asks for Latin Extended, Greek or Cyrillic ([lettering on request](docs/REFERENCE.md#lettering-on-request)). Other scripts, such as Arabic, Hebrew, Devanagari and Chinese letters, fail the build.
+- Default lettering uses embedded Inter and JetBrains Mono, with Noto subsets for Arabic-Indic, Devanagari and Chinese numerals. A diagram style does not select its own font.
+- Scenes can request Latin Extended, Greek and Cyrillic, or opt into Arabic, Devanagari, Hebrew and Chinese letters, registered replacement faces and typeset maths. The [lettering guide](docs/LETTERING.md) lists the supported requests, capture dependencies and snapshot rules. Unrequested characters and unsupported scripts fail the build.
 - Descriptions of the pictures are generated in English or French only.
 - On a phone each step opens on a close-up of what it changed, so a reader pans for the rest.
 - The models are small and cited, and no subject expert has reviewed the explainers.
@@ -112,10 +125,15 @@ A scene is an ordinary Rayner scene, so beside the helpers it can use the engine
 - [Upstream](docs/UPSTREAM.md): the fork base, engine changes and Agentic Mermaid
 - [Design record](specs/rayner.md): why the project is shaped this way, and the open decisions
 - [Changelog](CHANGELOG.md)
-- [Agent skill](skills/rayner-explainers/SKILL.md)
+- [Lettering](docs/LETTERING.md): requested scripts, fonts, maths and snapshot capture
+- [Authoring skill](skills/rayner-explainers/SKILL.md): the authoring and review workflow for agents
+
+## Fork and engine
+
+Rayner is a fork of Ivar Vong's [Lantern](https://github.com/ivarvong/lantern) at commit `2c7bad5`, maintained by [Ade Oshineye](https://github.com/adewale). It keeps Lantern's engine: shapes and glyphs stored as Bézier points, a fixed clock, and seeking by replay. [Upstream](docs/UPSTREAM.md) lists each engine change with the test that proves it. It deletes Lantern's development player, Cloudflare Worker, JSON scene format and flowchart parser. In their place, a build sits between the scene and the reader: Agentic Mermaid draws the diagrams, every reader setting becomes a case that is checked before it ships, and the output is a portable HTML page or a captioned video. Agents lose the Worker's endpoints in that trade.
 
 ## License and attribution
 
-Rayner is MIT (`package.json`). `LICENSE` carries Lantern's notice (Lantern is MIT, copyright 2026 Ivar Vong) and the fork's (copyright 2026 Ade Oshineye). `vendor/glyph.js` is Ivar Vong's glyph, also MIT, with its notice in `vendor/licenses/glyph-MIT.txt`. Inter 4.1, JetBrains Mono 2.242 and the Noto Sans Arabic, Devanagari and SC subsets are under the SIL Open Font License, with notices in `vendor/licenses/`. Agentic Mermaid 0.4.1 is an optional, build-only dependency. Neither project endorses this fork.
+Rayner is MIT (`package.json`). `LICENSE` carries Lantern's notice: Lantern is MIT, copyright 2026 Ivar Vong. Inter 4.1, JetBrains Mono 2.242 and the Noto Sans Arabic, Devanagari and SC subsets are under the SIL Open Font License, with notices in `vendor/licenses/`. Agentic Mermaid 0.4.1 is an optional, build-only dependency. Neither project endorses this fork.
 
 Report problems in [GitHub issues](https://github.com/adewale/rayner/issues).

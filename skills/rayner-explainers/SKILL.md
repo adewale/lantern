@@ -5,11 +5,11 @@ description: Author, check and publish Rayner explainers as reader-paced HTML em
 
 # Rayner explainers
 
-An explainer is one Rayner `Scene`. The CLI builds it into a step-through HTML page and, optionally, a video. It needs no server or MCP. Read the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) before you host a page or export a video.
+An explainer is one Rayner `Scene`. The CLI builds it into a step-through HTML page and, optionally, a video. It needs no server or MCP. Start with [Your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md) for a worked cache example. Read the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) before you host a page or export a video.
 
 ## Loop
 
-Commands are `rayner <command>` (`npx rayner <command>` in a project that installs the package), or `npm run rayner -- <command>` in a checkout; `rayner --help` prints the install lines for capture and video.
+Commands are `rayner <command>`, or `npm run rayner -- <command>` in a checkout; `rayner --help` prints the install lines for capture and video.
 
 1. `rayner init <directory>` writes a working `scene.ts`. Keep one default-exported `Scene` subclass with static `meta` (id, title, sources, and `lang` if not English) and, if a second case teaches something, static `settings`.
 2. Derive every value on screen from a small model of the system, kept apart from the drawing code, and test it; the checks cannot tell whether a caption is true. See [Test the model](#test-the-model).
@@ -56,7 +56,7 @@ The scene asks the model; it never states an answer it did not get from one. The
 - Finish every change before a step's last `play()` ends: the picture must not move during the caption hold.
 - A setting may change diagrams, captions, numbers and which steps exist; keep the palette fixed. Keep cases few; the limit is 64.
 - Do not weaken a check, bless a corrupt snapshot or skip a case to get a pass. Add a regression test that fails before the fix.
-- Lettering is embedded Inter or JetBrains Mono, plus Arabic-Indic, Devanagari and Chinese numerals. For Latin Extended, Greek or Cyrillic letters, ask with `lettering: { scripts: [...] }` in `static meta` (`static meta = { id, title, lettering: { scripts: ['Grek'] } }`) and commit the `scene.lettering.json` the build writes; any other script fails every command. Picture descriptions are generated in English or French.
+- Default lettering uses embedded Inter and JetBrains Mono, plus Arabic-Indic, Devanagari and Chinese numerals. Request additional scripts with `lettering: { scripts: ['Grek'] }` in `static meta`. Plain `Latn`, `Grek` and `Cyrl` requests use font subsets; requests for `Arab`, `Deva`, `Hebr`, `Hani`, replacement `faces` or `math: true` use outline snapshots. Follow [Lettering on request](https://github.com/adewale/rayner/blob/main/docs/LETTERING.md) for supported faces and capture dependencies. Commit `scene.lettering.json`; refresh outline snapshots with `rayner snapshots scene.ts` after changing source or captions. Unsupported or unrequested characters fail the build. Picture descriptions are generated in English or French.
 - Leave out panel titles and asides that repeat the heading, caption or values. Write titles and captions with [anti-slop-writing](https://github.com/adewale/anti-slop-writing): name the value or mechanism on screen, and state contrasts with because, although or so.
 
 ## Reporting
