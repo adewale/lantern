@@ -39,6 +39,24 @@ test('editing a contour without changing metadata is caught by the payload check
   } finally { await rm(folder, { recursive: true, force: true }); }
 });
 
+test('a cached snapshot rejects a glyph cluster one past the source even with fresh fingerprints and checksum', async () => {
+  const folder = await mkdtemp(join(tmpdir(), 'lettering-audit-cluster-'));
+  try {
+    const snapshot = await sourceAt(folder);
+    const file = join(folder, 'scene.lettering.json');
+    await writeFile(file, JSON.stringify(snapshot));
+    const control = await collectProject(folder, { write: false });
+    assert.ok(control.outlineLettering, 'the unchanged cached snapshot is fresh');
+    const [key, run] = Object.entries(snapshot.runs).find(([key, value]) =>
+      [...JSON.parse(key)[1]].length > 0 && (value as { glyphs: unknown[] }).glyphs.length > 0,
+    )! as [string, { glyphs: { cluster: number }[] }];
+    run.glyphs[0]!.cluster = [...JSON.parse(key)[1]].length;
+    snapshot.payloadHash = createHash('sha256').update(JSON.stringify({ ...snapshot, payloadHash: undefined })).digest('hex');
+    await writeFile(file, JSON.stringify(snapshot));
+    await assert.rejects(collectProject(folder, { write: false }), /^Error: Invalid lettering snapshot glyph;/);
+  } finally { await rm(folder, { recursive: true, force: true }); }
+});
+
 test('numbered contact-sheet titles are captured and drawn with the requested script', { skip: process.env.EXPLAIN_LETTERING !== '1' }, async () => {
   const folder = await mkdtemp(join(tmpdir(), 'lettering-audit-sheet-'));
   try {

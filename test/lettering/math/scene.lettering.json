@@ -1,7 +1,7 @@
 {
   "version": 1,
   "sourceHash": "55448a5629a303adbca8f30ca08043cc4a8788eff57d72491bc4428c42f95a97",
-  "builderHash": "8b8d7fcf42a6db6cab98b2db15fdf45d86db50b09c2995c82a308cbc1f27482d",
+  "builderHash": "ad1bc1c23539ea7b729476c58d3b2447cd24eaec943c36a166476e416d117068",
   "request": {
     "math": true
   },
@@ -903,5 +903,5 @@
     }
   },
   "shaper": "uharfbuzz+python-bidi/fonttools; glyph-math@6398654",
-  "payloadHash": "397b16c71fb8f9cc7384afe55598f50c4753d8d30003100b040b85524f578bb7"
+  "payloadHash": "db64722995b139a66b0ed06320b664502ce23f4200f8d57751afb76d60bbd032"
 }

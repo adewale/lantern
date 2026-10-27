@@ -17,6 +17,7 @@ export function validateLetteringSnapshot(value: unknown): asserts value is Lett
     if (!Array.isArray(parts) || parts.length !== 3 || !['sans', 'mono', 'math'].includes(String(parts[0])) ||
         typeof parts[1] !== 'string' || typeof parts[2] !== 'boolean') fail('run key');
     const text = (parts as [string, string, boolean])[1];
+    const sourceLength = [...text].length;
     if (!object(value)) fail('run');
     const run = value as Record<string, unknown>;
     if (![run.width, run.ascent, run.descent].every(finite) || Number(run.width) < 0 ||
@@ -25,7 +26,7 @@ export function validateLetteringSnapshot(value: unknown): asserts value is Lett
       if (!object(raw)) fail('glyph');
       const glyph = raw as Record<string, unknown>;
       if (!Number.isInteger(glyph.gid) || Number(glyph.gid) < -1 || !Number.isInteger(glyph.cluster) || Number(glyph.cluster) < 0 ||
-          Number(glyph.cluster) > [...text].length || ![glyph.x, glyph.dx, glyph.dy, glyph.ax].every(finite) ||
+          Number(glyph.cluster) >= sourceLength || ![glyph.x, glyph.dx, glyph.dy, glyph.ax].every(finite) ||
           (glyph.s !== undefined && (!finite(glyph.s) || glyph.s <= 0)) || !Array.isArray(glyph.path)) fail('glyph');
       for (const raw of glyph.path as unknown[]) {
         if (!object(raw)) fail('outline');
