@@ -1,6 +1,7 @@
 """Independent regressions for Unicode itemization and modern UAX #9 ordering.
 The expected source maps are literal UAX #9 results, not a second call to the
 snapshot builder. Font comparisons use one-face HarfBuzz runs as the oracle.
+The Node test supplies independent embedded-font fixtures in a temporary folder.
 """
 import importlib.util
 import os
@@ -13,6 +14,7 @@ spec = importlib.util.spec_from_file_location('lettering', ROOT / 'tools/letteri
 lettering = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(lettering)
 FONTS = Path(os.environ.get('RAYNER_LETTERING_FONTS', ROOT / 'out/lettering-fonts'))
+EMBEDDED = Path(os.environ['RAYNER_TEST_EMBEDDED_FONTS'])
 INTER = FONTS / 'inter-ui-4.1.1/package/web/Inter-Regular.woff2'
 GARAMOND = FONTS / 'fontsource-eb-garamond-5.3.0/package/files/eb-garamond-latin-400-normal.woff2'
 HEBREW = FONTS / 'fontsource-noto-sans-hebrew-5.3.0/package/files/noto-sans-hebrew-hebrew-400-normal.woff2'
@@ -64,7 +66,7 @@ class UnicodeAudit(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_mono_punctuation_and_numbers_remain_mono_after_hebrew(self):
-        mono = FONTS / 'mono.woff2'
+        mono = EMBEDDED / 'mono.woff2'
         text = 'abc ( אב ) 123'
         actual = shape(text, [mono, HEBREW], preferred={'Hebr': 1}, mono=True)
         expected = shape('123', [mono], mono=True)
@@ -74,7 +76,7 @@ class UnicodeAudit(unittest.TestCase):
 
     def test_a_base_and_combining_mark_fall_back_as_one_cluster(self):
         expected = shape('e\u0301', [INTER])
-        actual = shape('e\u0301', [FONTS / 'sans.woff2', INTER])
+        actual = shape('e\u0301', [EMBEDDED / 'sans.woff2', INTER])
         self.assertEqual(actual['glyphs'], expected['glyphs'])
 
     def test_arabic_joiners_reach_harfbuzz_with_original_source_clusters(self):
