@@ -72,3 +72,5 @@ Report the commands you ran, the artifact paths and what the checks found. Do no
 - that a passing build replaces a visual review.
 
 The engine is a fork of Lantern by Ivar Vong (MIT). Keep the MIT and font notices, and do not imply endorsement by Lantern or Agentic Mermaid.
+
+Before publishing, run `rayner review scene.ts` (or `npm run rayner -- review scene.ts` in a checkout). It runs the checks and opens every case and step at phone and desktop widths, saving screenshots and a receipt. Add `scene.review.json` with independent caption subjects where helper intent does not name the story; see [reader review](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md#reader-review). `build` writes artifacts without repeating these checks.

@@ -2,7 +2,7 @@
 
 Oct 24, 2026 · @Ade Oshineye
 
-Why the project has the shape it has, and the decisions still open. Contracts are in [the reference](../docs/REFERENCE.md), history in [the changelog](../CHANGELOG.md), and the fork base and engine changes in [upstream](../docs/UPSTREAM.md).
+This is the dated design record, with later updates called out below. Current authoring contracts are in the reference. Contracts are in [the reference](../docs/REFERENCE.md), history in [the changelog](../CHANGELOG.md), and the fork base and engine changes in [upstream](../docs/UPSTREAM.md).
 
 ## Decision and purpose
 
@@ -14,7 +14,7 @@ Five commitments define the project:
 
 1. **Native scenes stay the authoring model.** An explainer is a Lantern `Scene` with named steps and captions. There is no JSON format, scene language or second runtime.
 2. **A helper library does the repetitive work.** Small functions for common explanation techniques: show a diagram and build it in, send a token along its links, move it to its next version, focus on a part, show a card. Scenes call them like any other Lantern code and mix them freely with native drawing.
-3. **Agentic Mermaid's styles are honoured.** A diagram looks the way Agentic Mermaid draws it in the chosen style, mark for mark except its lettering, which is Lantern's embedded Inter stretched to each label's width; the hand-drawn style shows the difference most, and embedding style fonts is a later option. Every mark is addressable by its Mermaid id.
+3. **Agentic Mermaid's styles are honoured.** A diagram keeps Agentic Mermaid's marks and colours. Default labels use embedded Inter; scenes can explicitly request replacement faces, including a style's face, through the lettering workflow. Labels still fit the captured layout's widths, and styles do not choose a font automatically. Every mark is addressable by its Mermaid id.
 4. **The stepper comes first.** A reader moves through the explanation one step at a time, at their own pace, and can go back or link to any step.
 5. **Reader settings offer another case to step through.** A scene may declare a few named options, such as whether an attacker is present, or a city. Each choice is a complete, stepped case, built and tested ahead of time.
 
@@ -93,7 +93,7 @@ The stepper is the primary way to read an explainer, because the author decides 
 Reader settings serve the stepper. A setting offers another *case* of the same explanation, and that case is again a full, stepped sequence. It is not a slider or a free input.
 
 - **Declared by the scene.** `static settings = [{ id, label, options, default }]`. The scene reads the values with `settingsOf(this)` and may change its diagrams, captions, numbers and even which steps exist.
-- **Finite and built ahead.** The build runs every combination, and every case is checked before anyone sees it.
+- **Finite and built ahead.** The build runs every combination. Authors run `check` or `review` before publishing; `build` does not repeat validation.
 - **Under the title.** Cases are a segmented choice next to what they change. Switching keeps the reader's step, matched by name.
 - **Optional.** The Lantern self-explainer has none, because nothing in it has a case worth choosing.
 
@@ -119,7 +119,7 @@ Rebuilding Lantern's examples in a prototype (the `agentic-mermaid` branch of a 
 | --- | --- |
 | The ring buffer wrapped its animations in a `try`/`catch` for `Full`. The catch also swallowed the player's internal stop signal, so jumping to a step showed a different picture from playing to it. Lantern's seek test caught it | `check` runs the seek, motion and bare-runtime tests on every case of every scene, and fails a broad `catch` in `construct()` |
 | Three scenes flashed black before their first diagram, because the stage's default paper was not the style's | The stage takes paper, ink and accent from the Agentic Mermaid style itself; hand-written palettes are optional |
-| Decision chains laid out left to right became tall staircases; top to bottom became too narrow to read | Choose direction by shape, and check legibility: `check` now fails labels under 14 px at a 1280 px stage, and `preview` prints a contact sheet of every step |
+| Decision chains laid out left to right became tall staircases; top to bottom became too narrow to read | Choose direction by shape, and check legibility: `check` now fails labels under 14 px at a 1280 px stage, and `shots` prints a contact sheet of every step |
 | A node used in an edge before its labelled definition lost its label in Agentic Mermaid | Report upstream; until fixed, the build warns |
 | Ten of the prototype's fourteen explainers needed native drawing; the ring buffer has no diagram at all | The helpers are two layers: the stage (paper, cards, code, settings), useful in any scene, and diagrams on top of it |
 | Every Lantern example works by asking the program | A named pattern with a test helper: a scene's state at each step must equal the program's |

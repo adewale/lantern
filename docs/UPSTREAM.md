@@ -108,14 +108,14 @@ This offers the general engine work from a downstream fork, [adewale/rayner](htt
 
 ### Not offered
 
-The fork's product layer: `explain/`, the `app/` embed and reader-zoom code, `integrations/`, `scenes/explainers/`, the explainer tools (including `tools/lib/explain-check.ts`), lettering on request (`src/lettering.ts`, which only `rayner build` and a lettered page import, with `tools/lettering-fonts.sh` and `vendor/lettering/`), `specs/`, the product docs, and its package changes (Node 24, `dist/src/` exports, the `rayner/explain` entry, optional peer packages). The fork's deletions and removals. Several engine docs mention the explainer layer (EMPHASIS's motivation, GRAPHING's last section, and the "In the explainers" sections of ANIMATIONS, CAMERA, CODE, EMPHASIS, GRAPHING, MATCHING and VIEWS) and can be trimmed.
+The fork's product layer: `explain/`, the `app/` embed and reader-zoom code, `integrations/`, `scenes/explainers/`, the explainer tools (including `tools/lib/explain-check.ts`), lettering on request (`src/lettering.ts`, which only `rayner build` and a lettered page import, with `tools/lettering-fonts.sh` and `vendor/lettering/`), `specs/`, the product docs, and its package changes (Node 24, `dist/src/` exports, the `rayner/explain` entry, included authoring dependencies). The fork's deletions and removals. Several engine docs mention the explainer layer (EMPHASIS's motivation, GRAPHING's last section, and the "In the explainers" sections of ANIMATIONS, CAMERA, CODE, EMPHASIS, GRAPHING, MATCHING and VIEWS) and can be trimmed.
 
 Docs: `docs/ANIMATIONS.md`, `CAMERA.md`, `CODE.md`, `EMPHASIS.md`, `GRAPHING.md`, `MATCHING.md`, `VIEWS.md` and `ENGINE.md` (a map). Lantern's `VERIFY.md` and `PERF.md` would gain short sections on evidence, the stop flag and the cut-in rule, and on run merging; the fork no longer carries those files, so they are written against Lantern's copies when the branch is cut.
 ````
 
 ## Agentic Mermaid
 
-The build pins Agentic Mermaid 0.4.1, an optional peer package; pages never load it. `integrations/agentic-mermaid/build/capture.ts` is the only code that depends on its internals: it registers a capture backend through `registerBackend`, renders through `createMermaidRenderer`, and keeps each mark's `drawNode` output, which is not a documented API. Capture must equal `renderMermaidSVG` byte for byte.
+The build pins Agentic Mermaid 0.4.1 as an authoring dependency; pages never load it. `integrations/agentic-mermaid/build/capture.ts` is the only code that depends on its internals: it registers a capture backend through `registerBackend`, renders through `createMermaidRenderer`, and keeps each mark's `drawNode` output, which is not a documented API. Capture must equal `renderMermaidSVG` byte for byte.
 
 Agentic Mermaid is the same owner's project. These changes would remove the workarounds, and none is released as of 0.4.1:
 

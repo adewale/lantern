@@ -4,7 +4,13 @@ How to put a built page on a website. The contracts (URL parameters, the resize 
 
 ## Publish a page
 
-1. Build it:
+1. Review every case, then build it:
+
+   ```sh
+   rayner review scene.ts
+   ```
+
+   Review runs the checks and served-reader audit; `build` writes files without repeating validation. Test the model and inspect the screenshots too. Then build:
 
    ```sh
    rayner build scene.ts --out public/cache.html
@@ -20,7 +26,7 @@ How to put a built page on a website. The contracts (URL parameters, the resize 
    - The page that embeds it needs the artifact's origin in its own `frame-src`, and the loader's in `script-src` if it uses the loader.
    - The recipe's `Cache-Control` revalidates on every load. Long-lived caching is safe only for a URL that changes when the content does, such as one with the receipt's `artifactHash` in it.
 
-   For the demo collection, `npm run demos:build && npm run site:export -- <site-root>` copies every page, poster and the loader into a site and writes the matching `_headers` block to `out/site-headers.txt`. For agents it also writes each explainer's [`describeExplainer`](REFERENCE.md#describe) object as `<id>.json` beside its page, and `llms.txt` at the site root listing every page and its JSON. `demos:build` writes that object as `out/explainers/<id>/describe.json`, and `site:export` copies it. Before it writes anything, `site:export` checks each explainer's `out/explainers/<id>/inputs.json`, where `demos:build` records the scene's code hash, the engine hash and a hash of the scene's folder. If any of them changed since the build, it fails and says to run `demos:build`. It does not notice a change to the player (`app/`) or the build tools, so run `demos:build` after those too.
+   For the demo collection, `npm run demos:build && npm run site:export -- <site-root>` copies every page, poster, the generated gallery and the loader into a site, updates its `_headers`, and writes a copy of the response-header recipe to `out/site-headers.txt`. For agents it also writes each explainer's [`describeExplainer`](REFERENCE.md#describe) object as `<id>.json` beside its page, and `llms.txt` at the site root listing every page and its JSON. `demos:build` writes that object as `out/explainers/<id>/describe.json`, and `site:export` copies it. Before it writes anything, `site:export` checks each explainer's `out/explainers/<id>/inputs.json`, where `demos:build` records the scene's code hash, the engine hash and a hash of the scene's folder. If any of them changed since the build, it fails and says to run `demos:build`. The versioned build fingerprint also covers the player, CSS, tools, dependencies and notices. Changes to those inputs require a rebuild. Export validates a staging directory before replacing the Rayner subtree, writes a deployment manifest with each file's SHA-256, and replaces the collection's existing `_headers` rules while preserving other host rules. It includes `index.html`, the generated gallery, and `evidence.json`; use those as the catalog's source of truth instead of maintaining a second list of counts and titles.
 
 4. Embed it with a plain iframe:
 
@@ -57,4 +63,6 @@ How to put a built page on a website. The contracts (URL parameters, the resize 
    - `curl -sI https://your.site/explainers/cache.html` shows the CSP and `Cache-Control` from the recipe.
    - The page opens at the step and case in its URL, Next plays, and the transcript opens.
    - With two embeds on one page, opening one transcript resizes only that iframe.
-   - Record the `artifactHash` from the receipt beside the URL you published.
+   - Record the `artifactHash` from the receipt beside the URL you published. For the collection, compare the served bytes with `deployment.json`; valid CSP hashes alone do not prove that the latest reviewed page was deployed.
+
+The exported `catalog.json` contains the product copy, authoring links, titles, groups and counts used by the generated gallery. A host with its own page design can render that data into its template. Regenerate that page as part of the host build, so a new explainer or a changed requirement cannot leave a second catalog behind.
