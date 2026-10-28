@@ -14,7 +14,7 @@ test('concurrent captures publish complete embedded fonts without exposing parti
   process.env.RAYNER_LETTERING_FONTS = folder;
   const expected = [SANS, MONO, ...FALLBACK.map(([, data]) => data)].map((data) => Buffer.from(data, 'base64'));
   class Styled extends Scene {
-    static meta = { id: 'cache-audit', lettering: { styles: ['italic'] } };
+    static meta = { id: 'cache-audit', lettering: { styles: ['italic' as const] } };
     override async construct() {}
   }
   let started!: () => void, release!: () => void;
