@@ -12,8 +12,40 @@ npm run rayner -- init my-explainer
 
 This writes `my-explainer/scene.ts`. Open it. It is an ordinary `Scene` from `rayner`:
 
+```ts
+import { Scene } from 'rayner';
+import { stage, settingsOf } from 'rayner/explain';
+
+const FLOW = 'graph LR\nRequest[Request] --> Cache[Cache]\nCache -->|hit| Reply[Reply]\nCache -->|miss| Store[Database]\nStore --> Reply';
+const PATH = {
+  hit: [['Request', 'Cache'], ['Cache', 'Reply']],
+  miss: [['Request', 'Cache'], ['Cache', 'Store'], ['Store', 'Reply']],
+} as const;
+
+export default class MyExplainer extends Scene {
+  static meta = { id: 'my-explainer', title: 'Why a cache changes the request path' };
+  static settings = [{ id: 'request', label: 'Follow a request', default: 'hit', options: [{ value: 'hit', label: 'Cache hit' }, { value: 'miss', label: 'Cache miss' }] }];
+  override async construct() {
+    // The heading follows each step title; the style sets the palette and every diagram's look.
+    const s = stage(this, { style: 'nord' });
+    const which = settingsOf(this).request as 'hit' | 'miss';
+
+    await this.step('architecture', { title: 'A cache in front of storage', line: 'The cache sits between the request and the database.', caption: 'A request checks the cache first and reads the database only on a miss.' });
+    const d = await s.show({ source: FLOW }, { box: 'top' });
+
+    await this.step('request', { title: which === 'hit' ? 'A cache hit' : 'A cache miss', line: which === 'hit' ? 'The reply comes from the cache: no database read.' : 'The cache misses, so the database is read once.', caption: which === 'hit' ? 'The value is already cached, so the request returns without reading the database.' : 'The value is absent, so the request reads the database once and then returns.' });
+    // Ask the program, then show its answer: here the path and the read count.
+    const reads = which === 'hit' ? 0 : 1;
+    await d.dim([...new Set(PATH[which].flat())]);
+    await d.walk(PATH[which], { trail: true });
+    await s.card([['Database reads', reads]], { at: 'bottom' });
+    this.state.reads = reads;
+  }
+}
+```
+
 - `static meta` gives the explainer an id (`my-explainer`, which names the output files) and a title.
-- `static settings` declares one setting, `request`, with two options. With one setting, each option is a **case**; every case is built and checked before anyone reads it.
+- `static settings` declares one setting, `request`, with two options. With one setting, each option is a **case**; `check` and `review` visit every case before you publish.
 - `construct()` has two **steps**. Each has a stable name, a title, a line and a caption. `stage(this, { style: 'nord' })` draws the paper and a heading that follows the steps: a step number, the title and the line under it. It also gives every diagram the `nord` style. The page prints the caption under the stage.
 - The second step asks a tiny program for the answer (how many database reads), then shows it: `d.dim` fades the parts off the path, `d.walk(..., { trail: true })` sends a token along the real links and leaves them marked, and `s.card` shows the count.
 
@@ -73,7 +105,17 @@ Make the step leave something on screen that its caption talks about. Replace th
 
 Run `check` again. It passes and prints a report, also saved to `out/checks/my-explainer/report.json`. Its `restingFrames` field draws each step's resting picture roughly in text, and `legibility` gives label sizes on a laptop and a phone. [The reference](REFERENCE.md#checks) lists every check.
 
-## 5. Build the page
+## 5. Review and build the page
+
+Run the served-reader review before publishing:
+
+```sh
+npm run rayner -- review my-explainer/scene.ts
+```
+
+It runs the checks, then opens every case and step at phone and desktop widths in Chromium. It checks actual painted subjects and close-up tours and saves screenshots and a receipt in `out/review/my-explainer/`. For a caption whose subject needs an explicit expectation, add [`scene.review.json`](REFERENCE.md#reader-review) beside the scene. Review the pictures and test your model against its source; automation cannot establish that an arbitrary explanation is true.
+
+`build` writes the page; it does not repeat those checks:
 
 ```sh
 npm run rayner -- build my-explainer/scene.ts --out public/my-explainer.html
@@ -122,7 +164,12 @@ Chart the model's own function, and make a readout a picture of `scene.state` th
 const curve = axes.plot(daylightAt(place.lat), { samples: 145, color: CURVE });
 await this.play(new Create(curve), { runTime: 2 });
 
-const readout = stateView(this, ['tokens', 'lastRefill', 'allowed', 'rejected']);
+const readout = view(this, state => new StateReadout([
+  ['Tokens left', Number(state.tokens).toFixed(1)],
+  ['Last refill (s)', Number(state.lastRefill).toFixed(1)],
+  ['Accepted requests', state.allowed],
+  ['Rejected requests', state.rejected],
+]));
 this.state = record(calls);
 await this.play(readout.sync());
 ```

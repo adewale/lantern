@@ -5,7 +5,9 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { mkdtemp, writeFile, readFile, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, cp, symlink, rm } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -66,23 +68,28 @@ test('explainers that ask for no lettering build the page, headers and receipt t
   for (const id of ids) assert.deepEqual(now[id], pins[id], `${id} no longer builds what it built before lettering on request`);
 });
 
-/** The engine hash as loadScene computes it, with or without src/lettering.ts. */
-async function engineHashOf(lettered: boolean) {
-  const inputs: string[] = [];
-  for (const dir of ['src', 'explain', 'integrations/agentic-mermaid'])
-    for (const name of (await readdir(join(ROOT, dir))).filter((n) => n.endsWith('.ts') && !['lettering-outlines.ts', 'math.ts', 'italic.ts'].includes(n)).sort())
-      if (lettered || dir + '/' + name !== 'src/lettering.ts')
-        inputs.push(dir + '/' + name + '\n' + (await readFile(join(ROOT, dir, name), 'utf8')).replace("import type { LetteringRequest } from '../src/lettering-outlines.ts';\n", '').replace('; lettering?: LetteringRequest', '').replace(/\n\/\/ Optional lettering: tree-shaken[\s\S]*?\/\/ End optional lettering\.\n/, ''));
-  inputs.push(await readFile(join(ROOT, 'vendor/glyph.js'), 'utf8'));
-  return sha256(inputs.join('\n'));
-}
-
-test('the engine hash counts src/lettering.ts only for an explainer that asks for lettering', async () => {
-  const plain = await collectProject(join(ROOT, 'scenes/explainers/seasons'), { write: false });
-  assert.equal(plain.engineHash, await engineHashOf(false));
-  const lettered = await collectProject(FIXTURE, { write: false });
-  assert.equal(lettered.engineHash, await engineHashOf(true));
-  assert.notEqual(plain.engineHash, lettered.engineHash);
+// Mutate real inputs in an isolated package, rather than repeating the producer's hash algorithm.
+test('optional lettering code changes its engine fingerprint without changing an opt-out fingerprint', async () => {
+  const copy = await mkdtemp(join(tmpdir(), 'rayner-hash-contract-'));
+  try {
+    for (const name of ['src', 'explain', 'integrations', 'tools', 'vendor'])
+      await cp(join(ROOT, name), join(copy, name), { recursive: true });
+    await cp(join(ROOT, 'package.json'), join(copy, 'package.json'));
+    await symlink(join(ROOT, 'node_modules'), join(copy, 'node_modules'), 'dir');
+    const plain = join(copy, 'plain.ts'), lettered = join(copy, 'lettered.ts');
+    await writeFile(plain, `import{Scene}from'rayner';export default class Plain extends Scene{}`);
+    await writeFile(lettered, `import{Scene}from'rayner';export default class Lettered extends Scene{static meta={lettering:{scripts:['Grek']}};}`);
+    const run = promisify(execFile);
+    const fingerprints = async () => JSON.parse((await run(process.execPath, ['--input-type=module', '-e',
+      `import{loadScene}from${JSON.stringify(join(copy, 'tools/lib/explain-project.ts'))};console.log(JSON.stringify(await Promise.all(${JSON.stringify([plain, lettered])}.map(async file=>(await loadScene(file)).engineHash))));`
+    ])).stdout) as [string, string];
+    const before = await fingerprints();
+    const optional = join(copy, 'src/lettering.ts');
+    await writeFile(optional, (await readFile(optional, 'utf8')) + '\n// independently changed optional implementation\n');
+    const after = await fingerprints();
+    assert.equal(after[0], before[0], 'opt-out compatibility fingerprint stays stable');
+    assert.notEqual(after[1], before[1], 'requested lettering counts its actual implementation');
+  } finally { await rm(copy, { recursive: true, force: true }); }
 });
 
 test('a page that asks for nothing carries no lettering code, and building a lettered one first leaks nothing into it', async () => {

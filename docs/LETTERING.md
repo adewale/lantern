@@ -90,7 +90,7 @@ left out. Receipts include
 `letteringHash`; the snapshot includes source/font/builder hashes. The legacy
 engine fingerprint deliberately excludes optional modules and type-only
 metadata, so opting out preserves receipts as well as page bytes. A regression
-test pins all 26 pre-feature pages and receipts, across their 140 cases.
+test originally pinned 26 pages across 140 cases; it now pins the complete current catalog. Historical inventories belong to their recorded revisions.
 
 ## Capture from an installed package
 
@@ -256,3 +256,9 @@ draws the same path data Node draws from the same runs (`npm run test:embeds`
 runs it; `CHROMIUM_EXECUTABLE_PATH` may select a system browser). It also checks
 that a Hebrew caption aligns right on the page and an English one left. No screenshot or browser assertion substitutes for the outline and
 receipt comparisons.
+
+## Compatibility and build identity
+
+The legacy opt-out fingerprint and byte pins preserve the unrequested-lettering contract. They are compatibility checks, not a complete list of page inputs. `tools/lib/build-inputs.ts` owns that list for review and export, including the player, build tools, dependencies and notices; installed commands also count the compiled JavaScript they execute. New producer files join the fingerprint automatically. Documentation and generated checkout output do not invalidate it.
+
+Keep changes to the compatibility entrypoint and its pins explicit and review them together with the rendered output. The subset and outline workflows retain their existing snapshot formats. Both public entrypoints export the complete `LetteringRequest` type; the subset implementation uses the narrower `SubsetLetteringRequest` internally.

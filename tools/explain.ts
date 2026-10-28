@@ -25,6 +25,8 @@ Commands:
   check <scene>       Every case: seek, motion, skipped trace, bare runtime, step
                       change, still after the caption hold, text collision,
                       legibility, words for every drawing, catch lint
+  review <scene>      Check every case, then review its served reader at phone
+                      and desktop widths; optional <scene>.review.json claims
   build <scene>       HTML, receipt, header recipe, loader.js
   shots <scene>       Step contact sheet as SVG and PNG
   describe <scene>    Every case and step as JSON for agents: words, state, what
@@ -43,6 +45,7 @@ Options:
   --case id=value     Show (shots, see) one case; repeat for multiple settings
   --port <integer>    Preview server port (default 5174)
   --watch             Preview: rebuild the page on save
+  --claims <path>     Review: use this JSON file instead of <scene>.review.json
   --version           Print the version
 
 Diagram capture is included. Install Chromium once:
@@ -68,6 +71,7 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
       port: { type: 'string', default: '5174' },
       refresh: { type: 'boolean' },
       watch: { type: 'boolean' },
+      claims: { type: 'string' },
     },
   });
   const [command, input, ...extra] = positionals;
@@ -113,10 +117,16 @@ export default class MyExplainer extends Scene {
     console.log(`Created ${join(dir, 'scene.ts')}`);
     return;
   }
-  if (!['preview', 'snapshots', 'check', 'build', 'shots', 'describe', 'see'].includes(command!))
+  if (!['preview', 'snapshots', 'check', 'review', 'build', 'shots', 'describe', 'see'].includes(command!))
     throw new Error(`Unknown command: ${command}`);
-  const project = await collectProject(input, { refresh: flags.refresh, captureLettering: command === 'snapshots' || command === 'preview' });
+  const collection = { refresh: flags.refresh, captureLettering: command === 'snapshots' || command === 'preview' };
+  const project = await collectProject(input, collection);
   const slug = sceneSlug(project);
+  if (command === 'review') {
+    const { reviewScene } = await import('./lib/explain-review-scene.ts');
+    console.log(JSON.stringify(await reviewScene(project, flags.out ?? resolve('out/review', slug), flags.claims), null, 2));
+    return;
+  }
   if (command === 'snapshots') {
     console.log(
       JSON.stringify(
@@ -193,7 +203,7 @@ export default class MyExplainer extends Scene {
         timer = setTimeout(() => {
           running = running.then(async () => {
             try {
-              const next = await collectProject(input!);
+              const next = await collectProject(input!, collection);
               await buildExplainer(next, out);
               console.log(`Rebuilt ${slug}: ${next.variants.length} cases`);
             } catch (error) {
@@ -211,7 +221,7 @@ if (
   import.meta.url === pathToFileURL(realpathSync(resolve(process.argv[1]))).href
 )
   main().catch((error) => {
-    // Capture uses optional packages a default install leaves out; name what to install.
+    // Diagnose an incomplete authoring install with the pinned dependency versions.
     const missing = error.code === 'ERR_MODULE_NOT_FOUND' && /Cannot find package '([^']+)'/.exec(error.message)?.[1];
     const group = missing && [CAPTURE, RASTER].find((g) => g.includes(missing));
     console.error(
