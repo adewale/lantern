@@ -32,7 +32,7 @@ Video export is deferred to 0.3 in [PR #36](https://github.com/adewale/rayner/pu
 
 Before using `.github/workflows/publish.yml`:
 
-1. Enable repository Actions. Issue #9 records the current disabled-Actions error; the integration used during preparation cannot change that setting. Confirm a pull-request run and a main run pass.
+1. Confirm repository Actions are enabled and that a pull-request run and a main run pass. GitHub disables workflows on new forks until an owner enables them; issue #9 records that setup problem. The session integration cannot change the repository's Actions setting.
 2. Establish npm package ownership for the first publication using a maintainer account with 2FA. npm trusted-publisher configuration is a package setting, so its initial setup requires an existing package. Complete that bootstrap deliberately; this PR does not publish a package or set account permissions. If the bootstrap publishes 0.1.0, use the workflow for the next version. To try trusted publishing for 0.1.0 itself, first bootstrap a separately tested prerelease such as 0.1.0-rc.0, then configure the publisher and prepare the stable version. Never republish the bootstrap version.
 3. In npm's package settings, add GitHub Actions as a trusted publisher for owner `adewale`, repository `rayner`, workflow `publish.yml`, environment `npm-publish`. Permit direct `npm publish` for this workflow. Do not create a long-lived publish token.
 4. Create the GitHub environment `npm-publish` with required reviewers and release-tag deployment restrictions before enabling the publishing workflow. Naming an environment in YAML does not configure those protections.
