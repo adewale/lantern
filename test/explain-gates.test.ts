@@ -248,5 +248,6 @@ test('rayner check exits 1 and names the failing gate on stderr', async () => {
     refused = error as { status: number; stderr: Buffer };
   }
   assert.equal(refused?.status, 1, 'check must exit 1 on a scene whose seek differs from play');
-  assert.match(String(refused?.stderr), /^rayner: Seek mismatch at frame \d+/);
+  // The source CLI can follow Node's experimental type-stripping warning.
+  assert.match(String(refused?.stderr), /^rayner: Seek mismatch at frame \d+ in the scene$/m);
 });
