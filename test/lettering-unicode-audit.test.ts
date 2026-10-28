@@ -2,9 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile, execFileSync } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readdir, stat, symlink, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
 import { runKey } from '../src/lettering-outlines.ts';
 import { SANS, MONO } from '../src/font-data.ts';
@@ -20,7 +20,7 @@ test('Unicode audit: requested faces, combining clusters and modern bidi bracket
     // Capture through the real provider too: the Python fix must be wired into
     // the request's chain/preference selection.
     const project = await collectProject(source, { captureLettering: true, write: false });
-    const fonts = process.env.RAYNER_LETTERING_FONTS ?? join(ROOT, 'out/lettering-fonts');
+    const fonts = resolve(process.env.RAYNER_LETTERING_FONTS ?? join(ROOT, 'out/lettering-fonts'));
     const expected = JSON.parse(execFileSync(process.env.RAYNER_LETTERING_PYTHON ?? 'python3', [join(ROOT, 'tools/lettering.py')], {
       input: JSON.stringify({ command: 'shape', text: 'Garamond', fonts: [join(fonts, 'fontsource-eb-garamond-5.3.0/package/files/eb-garamond-latin-400-normal.woff2')] }), encoding: 'utf8',
     }));
@@ -33,8 +33,16 @@ test('Unicode audit: requested faces, combining clusters and modern bidi bracket
       writeFile(join(folder, 'sans.woff2'), Buffer.from(SANS, 'base64')),
       writeFile(join(folder, 'mono.woff2'), Buffer.from(MONO, 'base64')),
     ]);
+    const sources = join(folder, 'sources');
+    await mkdir(sources);
+    for (const name of await readdir(fonts)) {
+      const from = join(fonts, name);
+      if (!name.startsWith('.') && (await stat(from)).isDirectory()) await symlink(from, join(sources, name), 'dir');
+    }
+    // Exclude all generated cache files even in a warm checkout. Reintroducing
+    // the oracle's old cache-filename dependency must fail here too.
     const oracle = await promisify(execFile)(process.env.RAYNER_LETTERING_PYTHON ?? 'python3', [join(ROOT, 'test/lettering/unicode_audit.py')], {
-      cwd: ROOT, env: { ...process.env, RAYNER_LETTERING_FONTS: fonts, RAYNER_TEST_EMBEDDED_FONTS: folder }, encoding: 'utf8',
+      cwd: ROOT, env: { ...process.env, RAYNER_LETTERING_FONTS: sources, RAYNER_TEST_EMBEDDED_FONTS: folder }, encoding: 'utf8',
     });
     assert.match(oracle.stderr, /OK/);
   } finally { await rm(folder, { recursive: true, force: true }); }
