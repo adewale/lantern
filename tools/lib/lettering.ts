@@ -1,6 +1,6 @@
 // Node-only preparation. Optional dependencies are needed only to refresh a
 // lettering snapshot; check/build from a fresh snapshot need none of them.
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, mkdtemp, rename, rm } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { execFileSync } from 'node:child_process';
@@ -176,11 +176,24 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
   // Code points each cut face drew, so a Bold cut carries only the bold text it drew.
   const cutUsed = new Map<string, Set<number>>();
   // The old, already subset faces are the final fallback, unchanged. Write
-  // them into an ignored cache only for the build-time HarfBuzz process.
+  // them into an ignored cache only for the build-time HarfBuzz process. Captures
+  // in other processes share it: never expose an open/truncated font to a reader.
   for (const [name, data] of [['sans', SANS], ['mono', MONO], ...FALLBACK]) {
-    const file = join(folder, name + '.woff2');
-    await writeFile(file, Buffer.from(data!, 'base64'));
-    fonts.set(name!, { file, license: '', hash: hash(Buffer.from(data!, 'base64')) });
+    const bytes = Buffer.from(data!, 'base64'), digest = hash(bytes);
+    const file = join(folder, `${name}-${digest}.woff2`);
+    const cached = await readFile(file).catch((error: NodeJS.ErrnoException) => {
+      if (error.code === 'ENOENT') return undefined;
+      throw error;
+    });
+    if (!cached?.equals(bytes)) {
+      const temporary = await mkdtemp(join(folder, '.embedded-'));
+      try {
+        const pending = join(temporary, 'font.woff2');
+        await writeFile(pending, bytes);
+        await rename(pending, file);
+      } finally { await rm(temporary, { recursive: true, force: true }); }
+    }
+    fonts.set(name!, { file, license: '', hash: digest });
   }
   const coverage = await Promise.all([SANS, MONO, ...FALLBACK.map(([, data]) => data)].map(async (data) => {
     const result = await loadFont(Buffer.from(data, 'base64'));
