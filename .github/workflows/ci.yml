@@ -152,25 +152,44 @@ jobs:
           overwrite: true
 
   compatibility:
+    name: compatibility (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
-        # Current standard ARM image; macos-15 ARM jobs failed to acquire runners.
-        os: [ubuntu-24.04, macos-26, macos-15-intel]
-        node: [24.0.0, 24]
+        include:
+          - os: ubuntu-24.04
+            architecture: x64
+            platform: linux
+          - os: macos-26
+            architecture: arm64
+            platform: darwin
+          - os: macos-15-intel
+            architecture: x64
+            platform: darwin
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30  # types, standard suite, browser checks and installed starter
+    timeout-minutes: 70  # two 30-minute profiles plus checkout; one allocation per OS
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # retain the fork-base source oracle on every platform
-      - uses: actions/setup-node@v4
+      - name: Minimum Node 24
+        uses: ./.github/actions/compatibility
+        timeout-minutes: 30
         with:
-          node-version: ${{ matrix.node }}
-          cache: npm
-      - run: npm ci
-      - run: npm run check
-      - run: npx playwright-core install --with-deps --only-shell chromium
-      - run: npm test
-      - run: npm run test:embeds
-      - run: EXPLAIN_BROWSER=1 npm run pack:smoke  # installed starter preview on Linux and both Mac architectures
+          node-version: '24.0.0'
+          architecture: ${{ matrix.architecture }}
+          platform: ${{ matrix.platform }}
+      - name: Clean checkout for current Node
+        id: current_checkout
+        if: ${{ !cancelled() }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Current Node 24
+        if: ${{ !cancelled() && steps.current_checkout.outcome == 'success' }}
+        uses: ./.github/actions/compatibility
+        timeout-minutes: 30
+        with:
+          node-version: '24'
+          architecture: ${{ matrix.architecture }}
+          platform: ${{ matrix.platform }}

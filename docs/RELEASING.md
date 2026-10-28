@@ -24,9 +24,15 @@ The command retains `out/release/rayner-<version>.tgz` and `manifest.json`, whic
 
 `pack:smoke -- --archive <path>` can retest an existing archive without packing again. Consumer installs compile no package source and download no fonts; capture and PNG dependencies are included.
 
-The compatibility job checks Node 24 on macOS as well as Ubuntu, including an installed starter preview with the normal authoring dependencies. A configured matrix is not evidence of a successful Mac run: require both platforms to pass before tagging.
+Each compatibility job checks Node 24.0.0 and current Node 24 sequentially on one runner, including types, the standard suite, browser checks and an installed starter preview. Ubuntu, Intel Mac and ARM Mac each get one job. Each version records a success notice with its actual Node version, platform and architecture only after all checks pass. A configured matrix is not evidence of a successful Mac run: require both Node versions on all three platforms before tagging.
 
 Video export is deferred to 0.3 in [PR #36](https://github.com/adewale/rayner/pull/36). It is absent from the 0.1 CLI and archive.
+
+## Require CI on main
+
+A repository owner must apply the [required-check ruleset](../.github/main-required-checks.json) in Settings → Rules → Rulesets. It adds required checks on the default branch without replacing other rules. Keep existing protections. If classic protection or an older ruleset requires Node-specific compatibility contexts, replace those contexts with the three combined OS contexts in the file; each now gates both Node versions. The other required checks are `check`, `catalog` and `story`.
+
+Inspect the applied rules after saving. The six contexts must come from GitHub Actions, and branches must be up to date before merging. Runner allocation failures leave the release gate unsatisfied; do not remove ARM checks to work around capacity limits.
 
 ## Enable publishing
 

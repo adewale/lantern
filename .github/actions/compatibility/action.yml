@@ -1,0 +1,49 @@
+name: Check one native Node runtime
+description: Run the type, standard, browser and installed-package checks for one Node version.
+inputs:
+  node-version:
+    description: Node version to install and verify.
+    required: true
+  architecture:
+    description: Native Node architecture expected on this runner.
+    required: true
+  platform:
+    description: Node platform expected on this runner.
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        architecture: ${{ inputs.architecture }}
+        check-latest: ${{ inputs.node-version == '24' }}
+        cache: npm
+    - run: npm ci
+      shell: bash
+    - run: npm run check
+      shell: bash
+    - run: npx playwright-core install --with-deps --only-shell chromium
+      shell: bash
+    - run: npm test
+      shell: bash
+    - run: npm run test:embeds
+      shell: bash
+    - run: EXPLAIN_BROWSER=1 npm run pack:smoke
+      shell: bash
+    - name: Record verified runtime
+      shell: bash
+      env:
+        EXPECTED_NODE: ${{ inputs.node-version }}
+        EXPECTED_ARCHITECTURE: ${{ inputs.architecture }}
+        EXPECTED_PLATFORM: ${{ inputs.platform }}
+      run: |
+        node --input-type=module <<'NODE'
+        import assert from 'node:assert/strict';
+        assert.equal(process.platform, process.env.EXPECTED_PLATFORM);
+        assert.equal(process.arch, process.env.EXPECTED_ARCHITECTURE);
+        const expected = process.env.EXPECTED_NODE;
+        if (expected.includes('.')) assert.equal(process.versions.node, expected);
+        else assert.ok(process.versions.node.startsWith(expected + '.'));
+        console.log(`::notice title=Native compatibility passed::Node ${process.version}; ${process.platform}/${process.arch}; source ${process.env.GITHUB_SHA}`);
+        NODE

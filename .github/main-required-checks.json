@@ -1,0 +1,47 @@
+{
+  "name": "Require Rayner CI on main",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": [
+        "~DEFAULT_BRANCH"
+      ],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "strict_required_status_checks_policy": true,
+        "required_status_checks": [
+          {
+            "context": "check",
+            "integration_id": 15368
+          },
+          {
+            "context": "catalog",
+            "integration_id": 15368
+          },
+          {
+            "context": "story",
+            "integration_id": 15368
+          },
+          {
+            "context": "compatibility (ubuntu-24.04)",
+            "integration_id": 15368
+          },
+          {
+            "context": "compatibility (macos-26)",
+            "integration_id": 15368
+          },
+          {
+            "context": "compatibility (macos-15-intel)",
+            "integration_id": 15368
+          }
+        ]
+      }
+    }
+  ]
+}
