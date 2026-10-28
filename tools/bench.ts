@@ -42,7 +42,8 @@ const reps = Number(flags.reps),
   readMs = Number(flags['read-ms']);
 if (!Number.isSafeInteger(reps) || reps < 1) throw new Error('--reps must be a positive safe integer');
 if (!Number.isFinite(cpu) || cpu < 1) throw new Error('--cpu must be finite and at least 1');
-if (!Number.isFinite(readMs) || readMs < 0) throw new Error('--read-ms must be finite and nonnegative');
+// Playwright waits through Node timers, which reset an overflowing delay to 1 ms.
+if (!Number.isFinite(readMs) || readMs < 0 || readMs > 2_147_483_647) throw new Error('--read-ms must be finite and between 0 and 2147483647');
 if (new Set(ids).size !== ids.length || ids.some((id) => !EXPLAINERS.some((e) => e.id === id))) throw new Error('--explainers must name distinct catalog entries');
 const [{ launch }, { ROOT }, { serve }] = await Promise.all([import('./lib/browser.ts'), import('./lib/explain-project.ts'), import('./lib/explain-serve.ts')]);
 // A phone: the narrow stage opens each step on a close-up, so its layout work is measured too.
