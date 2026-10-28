@@ -2,7 +2,7 @@
 
 Rayner helps engineers and technical educators turn TypeScript models into explanations of protocols, algorithms and code changes. Readers step through at their own pace and choose cases, such as a cache hit or a miss. The model computes the numbers, diagrams and captions for each case. Publish the result as a portable HTML page with a transcript and no runtime network requests.
 
-[![A cache hit follows the cache-to-reply path and reads the database zero times.](https://raw.githubusercontent.com/adewale/rayner/main/docs/images/cache-hit.png)](https://oshineye.dev/projects/rayner/mr-cache?step=request&request=hit)
+[![A cache hit follows the cache-to-reply path and reads the database zero times.](https://raw.githubusercontent.com/adewale/rayner/8d344c16fab72d2fa52554f905cd97bf840c553c/docs/images/cache-hit.png)](https://oshineye.dev/projects/rayner/mr-cache?step=request&request=hit)
 
 [Try the examples](https://oshineye.dev/projects/rayner) · [Write your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md)
 
