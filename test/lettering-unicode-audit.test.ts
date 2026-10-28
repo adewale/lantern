@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
 import { runKey } from '../src/lettering-outlines.ts';
+import { SANS, MONO } from '../src/font-data.ts';
 
 const enabled = process.env.EXPLAIN_LETTERING === '1';
 test('Unicode audit: requested faces, combining clusters and modern bidi bracket ordering', {
@@ -17,7 +18,7 @@ test('Unicode audit: requested faces, combining clusters and modern bidi bracket
     const source = join(folder, 'scene.ts');
     await writeFile(source, `import{Scene,Text}from'rayner';export default class L extends Scene{static meta={id:'style-latin',lettering:{faces:{sans:'eb-garamond'},scripts:['Latn']}};async construct(){await this.step('word');this.add(new Text('Garamond'));}}`);
     // Capture through the real provider too: the Python fix must be wired into
-    // the request's chain/preference selection, and this primes embedded caches.
+    // the request's chain/preference selection.
     const project = await collectProject(source, { captureLettering: true, write: false });
     const fonts = process.env.RAYNER_LETTERING_FONTS ?? join(ROOT, 'out/lettering-fonts');
     const expected = JSON.parse(execFileSync(process.env.RAYNER_LETTERING_PYTHON ?? 'python3', [join(ROOT, 'tools/lettering.py')], {
@@ -26,8 +27,14 @@ test('Unicode audit: requested faces, combining clusters and modern bidi bracket
     // The integrated assertion below uses the recorded style fixture's exact
     // same EB Garamond source font, with no script-default Inter preference.
     assert.deepEqual(project.outlineLettering!.runs[runKey('sans', 'Garamond')]!.glyphs, expected.glyphs);
+    // The oracle owns its embedded-font inputs; private cache filenames and
+    // files left by earlier captures must not determine whether it can run.
+    await Promise.all([
+      writeFile(join(folder, 'sans.woff2'), Buffer.from(SANS, 'base64')),
+      writeFile(join(folder, 'mono.woff2'), Buffer.from(MONO, 'base64')),
+    ]);
     const oracle = await promisify(execFile)(process.env.RAYNER_LETTERING_PYTHON ?? 'python3', [join(ROOT, 'test/lettering/unicode_audit.py')], {
-      cwd: ROOT, env: { ...process.env, RAYNER_LETTERING_FONTS: fonts }, encoding: 'utf8',
+      cwd: ROOT, env: { ...process.env, RAYNER_LETTERING_FONTS: fonts, RAYNER_TEST_EMBEDDED_FONTS: folder }, encoding: 'utf8',
     });
     assert.match(oracle.stderr, /OK/);
   } finally { await rm(folder, { recursive: true, force: true }); }
