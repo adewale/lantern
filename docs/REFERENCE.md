@@ -225,7 +225,7 @@ static settings = [{
 const which = settingsOf(this).request;
 ```
 
-Every case is built and checked ahead of time; a scene may have at most 64. Ids are URL-safe (`[A-Za-z][A-Za-z0-9_-]*`) and distinct; `step`, `theme` and `parentOrigin` are reserved. Option values are unique and include the default. A setting may change diagrams, captions, numbers and which steps exist; keep the palette fixed.
+Every case is built ahead of time; run `check` or `review` to validate every case before publishing. A scene may have at most 64. Ids are URL-safe (`[A-Za-z][A-Za-z0-9_-]*`) and distinct; `step`, `theme` and `parentOrigin` are reserved. Option values are unique and include the default. A setting may change diagrams, captions, numbers and which steps exist; keep the palette fixed.
 
 Other exports: `withSettings(Scene, values)` binds a case without mutating the class; `resolveSettings` validates; `variantsOf(Scene)` lists every case; `caseName(Scene, values)` gives "Label: option · Label: option"; `bindSnapshots(Scene, store)` binds a snapshot store.
 
@@ -276,6 +276,7 @@ Capture asserts that its output equals Agentic Mermaid's `renderMermaidSVG` byte
 | Trace | The trace with frames skipped differs from the played trace |
 | Step change | A step's resting picture, ignoring the heading, equals the previous step's. The camera's view is part of the picture, so a camera move alone is a change |
 | Text | Native text in a resting picture overlaps other text, runs into the heading's number or line, or is cut by the stage edge or the edge of the camera's view; text wholly outside the view is off screen and not judged |
+| Routes over labels | A visible native or imported connector crosses label ink, accounting for stroke width, paint order, genuine endpoint attachments, camera and descendant clips; an opaque label plate counts only where it actually covers the crossing |
 | Legibility | A native label never reaches 14 px at a 1280 px stage in a frame where it is drawn (opacity and draw fraction at least 0.95) and inside the camera's view; an imported label never reaches 14 px in a resting picture inside its diagram's viewport. Sizes are on screen: world size × the camera's zoom, min(16 ÷ view width, 9 ÷ view height). A native label counts at that zoomed size only in a step's completed frame; in other frames it counts at no more than its size with the camera home, so a camera gliding past does not make it read |
 | Words | A kept drawing with no text and no `describe` |
 | Bare runtime | The scene, bundled, gives different steps or state in a context with no DOM, Node, timers or console |
@@ -300,6 +301,28 @@ These checks establish deterministic behaviour and readable pictures. They do no
 
 ## Command line
 
+### Reader review
+
+`rayner review scene.ts` runs `check`, builds a temporary page and visits every resting step of every settings case at 390 and 1180 px in Chromium. It checks actual painted subjects, caption text, complete close-up tours, page overflow, console errors and outside connections. It saves screenshots and `review.json` under `out/review/<id>/`; `--out <directory>` changes that destination. A failed run removes the previous success receipt.
+
+Helpers supply subjects automatically. For an important caption claim or a step with unchanged artwork, add `scene.review.json` beside `scene.ts`:
+
+```json
+{
+  "version": 1,
+  "claims": [
+    {
+      "step": "request",
+      "settings": { "request": "hit" },
+      "opening": true,
+      "targets": [{ "key": "Cache" }, { "text": "Database reads" }]
+    }
+  ]
+}
+```
+
+`settings` selects cases and may be omitted. `opening: true` requires the subjects in the initial view; otherwise the close-up tour must cover them. Each target names a semantic `key` or exact label `text`; `paint: "stroke"` requires route ink, so an arrow's label alone cannot satisfy the claim. Unknown cases, missing steps and missing subjects fail. `--claims <file>` selects another claim file. Write expectations from the explanation's meaning, independently of the close-up planner. These checks cannot establish that arbitrary prose or a model is true.
+
 `rayner <command> <scene.ts | directory> [options]`. In a checkout, run `npm run rayner -- <command> ...`. `rayner --help` prints the commands and Chromium setup instructions.
 
 | Command | What it does |
@@ -308,6 +331,7 @@ These checks establish deterministic behaviour and readable pictures. They do no
 | `preview <scene>` | Build and serve the page; use `shots` for a contact sheet |
 | `snapshots <scene>` | Capture and verify diagrams; replay morph edits |
 | `check <scene>` | The checks above |
+| `review <scene>` | The checks, then [served-reader review](#reader-review) of every case and step at both widths |
 | `build <scene>` | The page, its receipt, its header recipe and `loader.js` |
 | `shots <scene>` | A contact sheet of every step, as SVG and PNG |
 | `describe <scene>` | [`describeExplainer`](#describe) as JSON: every case and step, with words, state, what changed and the picture in words and as text |

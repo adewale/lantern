@@ -24,10 +24,12 @@ import { SANS, MONO, FALLBACK } from './font-data.ts';
 /** Writing systems an explainer can ask for, by ISO 15924 code. `Latn` is Latin beyond Latin-1. */
 export type LetteringScript = 'Latn' | 'Grek' | 'Cyrl';
 /** What `static meta.lettering` asks for. */
-export interface LetteringRequest {
+export interface SubsetLetteringRequest {
   /** Scripts whose letters the explainer draws. They need no shaping beyond what `glyph` does for Latin. */
   scripts: readonly LetteringScript[];
 }
+/** The complete public request; plain Latin/Greek/Cyrillic still use the subset workflow. */
+export type { LetteringRequest } from './lettering-outlines.ts';
 /** The faces a page carries for its request: one WOFF2 subset, base64, per family that draws requested letters. */
 export type LetteringFaces = Readonly<Partial<Record<FontName, string>>>;
 

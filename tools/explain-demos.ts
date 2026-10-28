@@ -2,7 +2,7 @@
 import { mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
-import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
+import { EXPLAINERS, PRODUCT } from '../scenes/explainers/catalog.ts';
 import { collectProject, defaultVariant, ROOT, baseReceipt, sceneInputs } from './lib/explain-project.ts';
 import { describeProject } from './lib/explain-site-describe.ts';
 import { restingTime, htmlEscape, pictureSummary, stepWords } from '../explain/trace.ts';
@@ -102,6 +102,13 @@ await writeFile(
   // A failing check throws before this is written, so `checked` means every case passed.
   JSON.stringify({ version: 2, checked: !!check, totals, scenes: evidence }, null, 2) + '\n',
 );
+await writeFile(join(directory, 'catalog.json'), JSON.stringify({
+  version: 1, product: PRODUCT, totals,
+  scenes: EXPLAINERS.map(item => {
+    const data = evidence.find(scene => scene.id === item.id)!;
+    return { ...item, title: data.title, lang: data.lang, cases: data.cases.length };
+  }),
+}, null, 2) + '\n');
 const tile = (item: (typeof EXPLAINERS)[number], lead = false) => {
   const data = evidence.find((s) => s.id === item.id)!;
   const href = `${item.id}.html?step=${item.step}`;
@@ -138,7 +145,7 @@ ul.tiles .lead{grid-column:1/-1}
 footer{margin-top:64px;font-size:.875rem;color:var(--muted)}
 footer a{color:inherit}
 @media(prefers-reduced-motion:reduce){.tiles img{transition:none}}
-</style></head><body><main><h1>Rayner</h1><p class="intro">Interactive explanations of protocols, algorithms and code changes. Step through a picture at your own pace, or change a setting to follow another case.</p><p class="intro">For engineers and technical educators who write TypeScript: <a href="https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md">write your first explainer</a>, use the <a href="https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md">authoring reference</a>, or follow the <a href="https://github.com/adewale/rayner/blob/main/skills/rayner-explainers/SKILL.md">agent authoring skill</a>.</p><ul class="tiles">${topics.map((t, i) => tile(t, i === 0)).join('')}</ul><h2>How these are made</h2><ul class="tiles">${toolchain.map((t) => tile(t)).join('')}</ul><ul class="more"><li><a href="embed-lab.html">Two embeds on one host page</a></li><li><a href="evidence.json">Build evidence</a></li></ul><footer>Built on <a href="https://github.com/ivarvong/lantern">Lantern</a> by Ivar Vong (MIT) and <a href="https://github.com/adewale/agentic-mermaid">Agentic Mermaid</a>.</footer></main></body></html>`;
+</style></head><body><main><h1>Rayner</h1><p class="intro">${htmlEscape(PRODUCT.summary)} ${htmlEscape(PRODUCT.description)}</p><p class="intro">${htmlEscape(PRODUCT.audience)} <a href="${PRODUCT.tutorial}">Write your first explainer</a>, use the <a href="${PRODUCT.reference}">authoring reference</a>, or follow the <a href="${PRODUCT.skill}">agent authoring skill</a>.</p><ul class="tiles">${topics.map((t, i) => tile(t, i === 0)).join('')}</ul><h2>How these are made</h2><ul class="tiles">${toolchain.map((t) => tile(t)).join('')}</ul><ul class="more"><li><a href="embed-lab.html">Two embeds on one host page</a></li><li><a href="evidence.json">Build evidence</a></li></ul><footer>Built on <a href="https://github.com/ivarvong/lantern">Lantern</a> by Ivar Vong (MIT) and <a href="https://github.com/adewale/agentic-mermaid">Agentic Mermaid</a>.</footer></main></body></html>`;
 await writeFile(join(directory, 'index.html'), html);
 await writeFile(
   join(directory, 'embed-lab.html'),

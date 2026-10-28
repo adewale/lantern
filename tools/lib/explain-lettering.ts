@@ -12,7 +12,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
 import { useLettering, takeLetteringUse } from '../../src/lettering.ts';
-import type { LetteringRequest, LetteringScript, LetteringFaces } from '../../src/lettering.ts';
+import type { SubsetLetteringRequest, LetteringScript, LetteringFaces } from '../../src/lettering.ts';
 import type { FontName } from '../../src/index.ts';
 
 const ROOT = new URL('../../', import.meta.url);
@@ -49,7 +49,7 @@ export interface Lettering {
 }
 
 /** The scene's request, checked; undefined when it asks for nothing. */
-export function letteringRequest(Scene: { meta?: object }): LetteringRequest | undefined {
+export function letteringRequest(Scene: { meta?: object }): SubsetLetteringRequest | undefined {
   const value = (Scene.meta as { lettering?: unknown } | undefined)?.lettering;
   if (value === undefined) return undefined;
   const known = Object.keys(SCRIPTS);
@@ -104,7 +104,7 @@ export function letteringReport(l: Lettering) {
  */
 export async function prepareLettering(
   base: string,
-  request: LetteringRequest,
+  request: SubsetLetteringRequest,
   draw: () => Promise<void>,
   { write = true }: { write?: boolean } = {},
 ): Promise<Lettering> {

@@ -115,6 +115,22 @@ try {
   assert.match(html, /An outside author/);
   assert.match(html, /id="licenses"/);
   assert.ok(!html.includes('node_modules/agentic-mermaid'));
+  if (process.env.EXPLAIN_BROWSER) {
+    await writeFile(join(folder, 'first/scene.review.json'), JSON.stringify({ version: 1, claims: [{ step: 'one', settings: { case: 'b' }, opening: true, targets: [{ text: 'b' }] }] }));
+    await run(bin, ['review', 'first', '--out', 'review'], { cwd: folder });
+    const reviewed = JSON.parse(await readFile(join(folder, 'review/review.json'), 'utf8'));
+    assert.equal(reviewed.cases, 2);
+    assert.equal(reviewed.stepWidths, 4);
+    assert.deepEqual(reviewed.consoleErrors, []);
+    assert.equal(reviewed.artifactHash, JSON.parse(await readFile(join(folder, 'public/outside.html.receipt.json'), 'utf8')).artifactHash, 'review checks the same page that build publishes');
+    const originalCli = await readFile(cli);
+    try {
+      await writeFile(cli, Buffer.concat([originalCli, Buffer.from('\n// independently changed installed command\n')]));
+      await run(bin, ['review', 'first', '--out', 'review-after-command-edit'], { cwd: folder });
+      const changed = JSON.parse(await readFile(join(folder, 'review-after-command-edit/review.json'), 'utf8'));
+      assert.notEqual(changed.buildHash, reviewed.buildHash, 'installed JS is part of the artifact identity');
+    } finally { await writeFile(cli, originalCli); }
+  }
   // Lettering on request from the installed package: the fixture scene with its pinned cuts,
   // so the build reads vendor/lettering/ and src/lettering.js from the archive and needs no fonttools.
   const fixture = join(ROOT, 'test/fixtures/lettering');
@@ -168,6 +184,47 @@ try {
     await run(bin, ['build', target, '--out', 'public/captured-lettering.html'], { cwd: folder, env });
     const receipt = JSON.parse(await readFile(join(folder, 'public/captured-lettering.html.receipt.json'), 'utf8'));
     assert.ok(receipt.letteringHash);
+    if (process.env.EXPLAIN_BROWSER) {
+      // A caption edit invalidates the outline source hash. Watch must capture
+      // again, just as its initial preview does, rather than keep the old page.
+      const captureEnv = { ...process.env, RAYNER_LETTERING_FONTS: process.env.RAYNER_LETTERING_FONTS ?? join(ROOT, 'out/lettering-fonts') };
+      const preview = spawn(bin, ['preview', target, '--watch', '--port', '0', '--out', 'public/watched-lettering.html'], { cwd: folder, env: captureEnv });
+      let log = '';
+      preview.stdout.on('data', data => { log += String(data); });
+      preview.stderr.on('data', data => { log += String(data); });
+      const waitFor = async (predicate: () => boolean) => {
+        const until = Date.now() + 30_000;
+        while (!predicate()) {
+          assert.equal(preview.exitCode, null, log);
+          assert.ok(!log.includes('still serving the last good build'), log);
+          assert.ok(Date.now() < until, log);
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      };
+      let browser: Awaited<ReturnType<typeof import('./lib/browser.ts').launch>> | undefined;
+      try {
+        await waitFor(() => /Preview http:\/\/127\.0\.0\.1:\d+/.test(log));
+        const url = /Preview (http:\/\/127\.0\.0\.1:\d+)/.exec(log)![1]!;
+        browser = await (await import('./lib/browser.ts')).launch();
+        const page = await browser.newPage();
+        await page.goto(url);
+        await page.waitForSelector('[data-ready=true]');
+        assert.equal(await page.locator('.caption').innerText(), 'Arabic');
+        const sceneFile = join(target, 'scene.ts');
+        await writeFile(sceneFile, (await readFile(sceneFile, 'utf8')).replace("caption:'Arabic'", "caption:'Arabic after an edit'"));
+        await waitFor(() => log.includes('Rebuilt'));
+        await page.reload();
+        await page.waitForSelector('[data-ready=true]');
+        assert.equal(await page.locator('.caption').innerText(), 'Arabic after an edit');
+      } finally {
+        await browser?.close();
+        if (preview.exitCode === null && preview.signalCode === null) {
+          const stopped = new Promise<void>(resolve => preview.once('exit', () => resolve()));
+          preview.kill('SIGTERM');
+          await stopped;
+        }
+      }
+    }
   }
   const result = await run(
     process.execPath,

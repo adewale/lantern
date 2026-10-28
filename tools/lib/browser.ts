@@ -1,4 +1,4 @@
-// Chromium for diagram capture and the browser tests, via playwright-core (an optional dependency).
+// Chromium for diagram capture and browser review, via the included playwright-core dependency.
 import { chromium } from 'playwright-core';
 import type { Browser } from 'playwright-core';
 import { existsSync, readdirSync } from 'node:fs';

@@ -12,6 +12,10 @@ import { Frame, StateReadout, View, ViewSync, stateView, viewMismatch, Axes, Num
 import type { FrameFitOpts, SyncOpts, AxesOpts, NumberLineOpts, PlotOpts, BraceOpts, CircumscribeOpts } from 'rayner';
 import type { LetteringRequest } from 'rayner/lettering';
 
+// Both public entrypoints accept the complete request, including outline lettering.
+const requestedLettering: LetteringRequest = { scripts: ['Arab'], styles: ['bold'], math: true };
+const sameRequest: import('rayner').LetteringRequest = requestedLettering;
+
 export class Demo extends Scene {
   // Lettering on request: the build reads it; the type checks it
   static meta = { id: 'demo', lettering: { scripts: ['Grek', 'Cyrl'] } satisfies LetteringRequest };
