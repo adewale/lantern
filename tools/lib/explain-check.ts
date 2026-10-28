@@ -1,3 +1,4 @@
+import { restingRouteProblems } from './explain-layout.ts';
 import { letteringWeight, pageSnapshot } from './lettering.ts';
 import { isHeading } from '../../explain/stage.ts';
 import assert from 'node:assert/strict';
@@ -113,9 +114,8 @@ const readable = (m: Mobject, box: Box | null, viewport: Box) =>
   (m.style.drawFraction ?? 1) >= 0.95;
 
 /**
- * Text a reader would see colliding: a native Text overlapping any other
- * visible text, or a native Text crossing the stage edge. Diagram-internal label
- * placement is Agentic Mermaid's; native text placed over it is the author's.
+ * Text a reader would see colliding, including labels imported from diagrams.
+ * Upstream placement is not an exemption from the reader's visible geometry.
  *
  * With the camera away from home, text is judged in its view as well: native text
  * or the heading across the view's edge is cut off; text wholly outside the view
@@ -174,7 +174,6 @@ export function restingTextProblems(scene: Viewed): string[] {
     for (let j = i + 1; j < texts.length; j++) {
       const a = texts[i]!,
         b = texts[j]!;
-      if (!a.native && !b.native) continue;
       const overlap: Box = [
         Math.max(a.box[0], b.box[0]),
         Math.max(a.box[1], b.box[1]),
@@ -307,7 +306,7 @@ export async function checkProject(project: Project, out: string): Promise<Recor
           restingText.set(scene.frameCount, renderText(scene));
           if (scene.currentStep)
             cardsAtRest[scene.currentStep.name] = scene.familyMembers().filter((m) => m instanceof Card && (m.style.opacity ?? 1) >= 0.5).length;
-          collisions.push(...restingTextProblems(scene).map((p) => `${scene.currentStep?.name}: ${p}`));
+          collisions.push(...[...restingTextProblems(scene), ...restingRouteProblems(scene)].map((p) => `${scene.currentStep?.name}: ${p}`));
         }
         // Sizes on screen: world size times the camera's zoom, inside the camera's view
         // cut by every clip; boxes for the phone's close-ups in the view's own units.

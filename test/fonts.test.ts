@@ -127,3 +127,11 @@ test('Text lays out a mixed run on its advances', () => {
     [...xs].sort((p, q) => p - q),
   );
 });
+
+test('font admission accepts only the literal sans and mono names without coercion', () => {
+  const hostile = { toString() { throw new Error('coercion must not run'); } };
+  fc.assert(fc.property(fc.anything(), (name) => {
+    if (name === 'sans' || name === 'mono') assert.equal(typeof shaperFor(name), 'function');
+    else assert.throws(() => shaperFor(name as import('../src/index.ts').FontName), /Unknown font/);
+  }), params<[unknown]>(500, { examples: [['sans'], ['mono'], ['constructor'], ['toString'], ['__proto__'], [new String('sans')], [hostile], [Symbol('sans')], [() => 'sans']] }));
+});

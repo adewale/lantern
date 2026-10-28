@@ -1,3 +1,5 @@
+> Current 0.1 release proof is in [release validation](../release-0.1/validation.md). Video-specific contracts in this historical audit now live in draft PR #36 for 0.3.
+
 > Subsequent integration with the newer release, player and packed lettering changes is recorded in [latest-main validation](latest-main/validation.md). The inventories and counts below describe the original audit.
 
 # Rayner test audit, October 2026

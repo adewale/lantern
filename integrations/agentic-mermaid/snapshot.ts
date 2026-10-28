@@ -110,6 +110,7 @@ function validateSnapshot(value: DiagramSnapshot): void {
     !value ||
     value.version !== 1 ||
     value.renderer !== RENDERER ||
+    typeof value.family !== 'string' ||
     !finite(value.width) ||
     !finite(value.height) ||
     value.width <= 0 ||
@@ -171,6 +172,9 @@ function validateSnapshot(value: DiagramSnapshot): void {
         !color(shape.style.stroke)
       )
         invalid();
+      // Labels feed descriptions and legibility checks as well as the drawing.
+      if (shape.text != null && (typeof shape.text !== 'string' || shape.fontSize == null)) invalid();
+      if (shape.fontSize != null && (!point(shape.fontSize) || shape.fontSize <= 0)) invalid();
       for (const path of shape.subpaths)
         if (!Array.isArray(path) || path.length < 2 || path.length % 6 !== 2 || !path.every(point))
           invalid();

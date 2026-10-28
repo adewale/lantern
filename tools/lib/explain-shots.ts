@@ -1,7 +1,7 @@
 import { writeFile, mkdir } from 'node:fs/promises';
 import { basename, dirname, extname, join, resolve } from 'node:path';
 import { Scene, Text, NullSink, SnapshotSink, renderAt } from '../../src/index.ts';
-import { rasterize, band } from './explain-video.ts';
+import { rasterize, band } from './explain-raster.ts';
 import { defaultVariant } from './explain-project.ts';
 import { restingTime, stepWords } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';

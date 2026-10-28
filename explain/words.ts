@@ -277,4 +277,4 @@ export function familyNames(words: Words, family: string): [string, string, stri
 }
 /** An emphasis word as a heading over `n` parts: plural where the language has a form for it. */
 export const markHeading = (words: Words, word: string, n: number) =>
-  n < 2 ? word : word.split(', ').map((w) => words.plurals[w] ?? w).join(', ');
+  n < 2 ? word : word.split(', ').map((w) => Object.hasOwn(words.plurals, w) ? words.plurals[w] : w).join(', ');

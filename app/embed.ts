@@ -140,8 +140,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   controls.append(prev, next, tools);
   const notice = el('p', undefined, 'notice');
   notice.setAttribute('role', 'status');
-  // The stage and, over its corner on a narrow stage, the overview: a control outside the
-  // stage, whose role of img makes everything inside it a picture.
+  // Keep navigation outside the picture so controls cannot cover its lettering.
   const frame = el('div', undefined, 'frame');
   // Unseen copies of the caption and the lede, at their width and in their type, measure
   // every step's words so each keeps the room its case's longest needs: the steps list and
@@ -175,7 +174,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const framed = window.parent !== window && !params.has('parentOrigin');
   root.replaceChildren(head, player, steps, transcript, ...(framed ? [standalone] : []));
 
-  // A map of the whole picture over the stage's corner while a narrow stage is zoomed:
+  // A map beside the picture while a narrow stage is zoomed:
   // where the view is, and where the step changed. Pressing it moves to the step's next
   // close-up, so the reader can see every change in turn without hunting for it.
   const overview = el('button', undefined, 'overview'),
@@ -184,7 +183,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   overview.type = 'button';
   overview.hidden = true;
   overview.append(map);
-  frame.append(stage, overview);
+  frame.append(stage);
   // Keep view navigation beside the picture and separate from the step controls.
   const views = el('div', undefined, 'view-controls'),
     viewCount = el('span'),
@@ -194,7 +193,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   nextView.type = wholePicture.type = 'button';
   viewCount.setAttribute('aria-live', 'polite');
   views.hidden = true;
-  views.append(viewCount, nextView, wholePicture, viewHelp);
+  views.append(viewCount, nextView, wholePicture, overview, viewHelp);
   frame.after(views);
   const narrow = () => stage.clientWidth > 0 && stage.clientWidth < NARROW_PX;
   let shownLayout: StepLayout | undefined,
@@ -321,19 +320,24 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       span = el('span');
     ledeRuler.replaceChildren(strong, span);
     let tallest = 0,
-      tallestLede = 0;
+      tallestTitle = 0,
+      tallestLine = 0;
     for (const [i, s] of trace.steps.entries()) {
       const words = stepWords(s);
       ruler.textContent = words.caption;
       fillLede(strong, span, i, words);
       // The exact height: offsetHeight rounds, and a 115.2 px caption would still move the steps list by a fraction.
       tallest = Math.max(tallest, ruler.getBoundingClientRect().height);
-      tallestLede = Math.max(tallestLede, ledeRuler.getBoundingClientRect().height);
+      tallestTitle = Math.max(tallestTitle, strong.getBoundingClientRect().height);
+      tallestLine = Math.max(tallestLine, span.getBoundingClientRect().height);
     }
     ruler.textContent = '';
     ledeRuler.replaceChildren();
     caption.style.minHeight = `${tallest}px`;
-    lede.style.minHeight = `${tallestLede}px`;
+    // Reserve each row separately: a two-line title must not move the line below it.
+    ledeTitle.style.minHeight = `${tallestTitle}px`;
+    ledeLine.style.minHeight = `${tallestLine}px`;
+    lede.style.minHeight = `${tallestTitle + tallestLine}px`;
   }
   new ResizeObserver(reserve).observe(player);
   /**
@@ -423,7 +427,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       return {
         index,
         start: step.t0,
-        // Stop when the picture stops: the caption-reading hold is for video; here the reader sets the pace.
+        // Stop when the picture stops: the reader sets the pace instead of waiting through the caption-reading hold.
         end: step.hold ?? step.t1 ?? at.trace.duration,
         rest: restingTime(step, at.trace.fps),
         container,

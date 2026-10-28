@@ -14,27 +14,20 @@
     "rayner": "node tools/explain.ts",
     "demos:build": "node tools/explain-demos.ts",
     "demos:check": "node tools/explain-demos.ts --check",
-    "demos:render": "node tools/explain-demos.ts --render",
-    "videos": "node tools/explain-demos.ts --render && EXPLAIN_VIDEO=1 node --test test/explain-video.test.ts && EXPLAIN_VIDEO=1 node tools/explain-package-smoke.ts",
     "demos:serve": "node tools/explain-serve.ts",
     "demos:review": "node tools/explain-review.ts",
-    "bench": "node tools/bench.ts",
     "pack:smoke": "node tools/explain-package-smoke.ts",
     "site:export": "node tools/explain-site.ts",
-    "test:embeds": "EXPLAIN_BROWSER=1 node --test test/explain-capture.test.ts test/explain-embed.test.ts test/lettering-browser.test.ts test/lettering-math.test.ts test/bench-measure.test.ts",
-    "test:video": "EXPLAIN_VIDEO=1 node --test test/explain-video.test.ts",
-    "release:check": "node tools/prepare-release.ts"
+    "test:embeds": "EXPLAIN_BROWSER=1 node --test test/explain-capture.test.ts test/explain-embed.test.ts test/lettering-browser.test.ts test/lettering-math.test.ts test/explain-lang.test.ts test/svg-browser.test.ts test/explain-story-review.test.ts test/explain-review-scene.test.ts test/bench-measure.test.ts",
+    "release:check": "node tools/prepare-release.ts",
+    "bench": "node tools/bench.ts"
   },
   "devDependencies": {
-    "@resvg/resvg-js": "2.6.2",
-    "@types/node": "26.6.5",
-    "agentic-mermaid": "0.4.1",
+    "@types/node": "24.19.2",
     "fast-check": "4.10.2",
-    "playwright-core": "1.64.1",
-    "shiki": "4.5.0",
-    "svgpath": "2.6.0"
+    "shiki": "4.5.0"
   },
-  "description": "Step-through explainers from one TypeScript scene, with build-time Agentic Mermaid diagrams and optional captioned video. The browser runtime has no dependencies.",
+  "description": "Step-through technical explainers from one TypeScript scene. Portable HTML with no browser runtime dependencies.",
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
@@ -79,7 +72,7 @@
     "CHANGELOG.md"
   ],
   "engines": {
-    "node": ">=26"
+    "node": ">=24"
   },
   "repository": {
     "type": "git",
@@ -92,32 +85,15 @@
     "explainer",
     "stepper",
     "embed",
-    "mermaid",
-    "video"
+    "mermaid"
   ],
   "dependencies": {
     "esbuild": "0.25.12",
-    "typescript": "5.9.3"
-  },
-  "peerDependencies": {
-    "@resvg/resvg-js": "^2.6.2",
+    "typescript": "5.9.3",
     "agentic-mermaid": "0.4.1",
-    "playwright-core": "^1.64.1",
-    "svgpath": "^2.6.0"
-  },
-  "peerDependenciesMeta": {
-    "@resvg/resvg-js": {
-      "optional": true
-    },
-    "agentic-mermaid": {
-      "optional": true
-    },
-    "playwright-core": {
-      "optional": true
-    },
-    "svgpath": {
-      "optional": true
-    }
+    "playwright-core": "1.64.1",
+    "svgpath": "2.6.0",
+    "@resvg/resvg-js": "2.6.2"
   },
   "homepage": "https://oshineye.dev/projects/rayner",
   "bugs": {

@@ -3,11 +3,10 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { serve } from '../tools/lib/explain-serve.ts';
 import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
 import type { Project } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
-import { trackLanguage, videoTranscript } from '../tools/lib/explain-video.ts';
 import { chromeFor, caseNameIn, CHROME, descriptionLang, descriptionsLang, settingsProblem } from '../app/embed-strings.ts';
 import type { SettingsProblem } from '../app/embed-strings.ts';
 import { caseName, resolveSettings } from '../explain/index.ts';
@@ -101,16 +100,6 @@ const ENGLISH = (() => {
   return new Set(wordsIn(said.join(' ')).filter((w) => !same.has(w)));
 })();
 const englishIn = (t: string) => [...new Set(wordsIn(t).filter((w) => ENGLISH.has(w)))];
-
-test('an MP4 subtitle stream for meta.lang fr is tagged fra; WebM keeps the BCP 47 tag', () => {
-  assert.equal(trackLanguage('fr'), 'fra');
-  assert.equal(trackLanguage('fr-CA'), 'fra');
-  assert.equal(trackLanguage('en'), 'eng');
-  assert.equal(trackLanguage('en-GB'), 'eng');
-  assert.equal(trackLanguage('fra'), 'fra');
-  assert.equal(trackLanguage('fr', true), 'fr');
-  assert.throws(() => trackLanguage('de'), /No ISO 639-2 code for language de/);
-});
 
 test('page words come from a table by primary language, English when there is none', () => {
   assert.equal(chromeFor('fr').transcript, 'Transcription');
@@ -238,6 +227,9 @@ test('French counts, plurals and agreement: 0 and 1 singular, regular and irregu
   assert.equal(markHeading(fr, `${fr.focused}, ${fr.removed}`, 2), 'en surbrillance, supprimées');
   assert.equal(markHeading(fr, fr.marked, 5), 'en évidence');
   assert.equal(markHeading(fr, 'ce foyer', 3), 'ce foyer');
+  for (const lang of ['en', 'fr']) for (const word of ['constructor', '__proto__', 'toString', 'valueOf', 'hasOwnProperty'])
+    for (const n of [1, 2, 3]) assert.equal(markHeading(wordsFor(lang), word, n), word);
+  assert.equal(markHeading(fr, `${fr.added}, constructor`, 2), 'ajoutées, constructor');
   // …and so does a summary, which lists the parts under their word.
   const lines = (mark: string, n: number) => ({ what: 'Code', parts: Array.from({ length: n }, (_, i) => ({ name: `${i + 1}${NB}: x`, mark })) });
   assert.equal(pictureSummary({ picture: picture([lines(fr.added, 2)], new Set(), 'fr') }), `Code. Ajoutées${NB}: 1${NB}: x${NB}; 2${NB}: x.`);
@@ -388,26 +380,17 @@ test('an English page is unchanged: English chrome and no lang attribute on its 
   assert.doesNotMatch(html, /<div lang="en">/);
 });
 
-test('the video transcript marks descriptions lang="en" only on a page in a language they lack', () => {
-  const fr = videoTranscript('Titre', 'fr', built.fr.project.variants[0]!.trace.steps);
-  assert.match(fr, /^<!doctype html><html lang="fr">.*<\/p><ul><li>1 valeur étiquetée/s);
-  assert.doesNotMatch(fr, /lang="en"/);
-  const de = videoTranscript('Titel', 'de', built.de.project.variants[0]!.trace.steps);
-  assert.match(de, /<\/p><div lang="en"><ul><li>1 labelled value/);
-  const en = videoTranscript('Title', 'en', built.en.project.variants[0]!.trace.steps);
-  assert.match(en, /<\/p><ul>/);
-  assert.doesNotMatch(en, /lang="en"><ul>|<div/);
-});
-
 test(
   'in Chromium, the French player speaks French, its descriptions take the page’s language, and its notices are French',
   { skip: process.env.EXPLAIN_BROWSER ? false : 'set EXPLAIN_BROWSER=1 for the browser check' },
   async () => {
-    const browser = await launch();
+    const server = await serve(folder, 0, 'fr.html');
+    let browser: Awaited<ReturnType<typeof launch>> | undefined;
     try {
+      browser = await launch();
       const page = await browser.newPage();
       const read = async (lang: 'fr' | 'en' | 'de', query = '') => {
-        await page.goto(pathToFileURL(built[lang].file).href + query);
+        await page.goto(`${server.url}/${lang}.html${query}`);
         await page.waitForSelector('[data-ready=true]');
         return page.evaluate(() => ({
           next: document.querySelector('.controls .primary span')?.textContent,
@@ -461,7 +444,8 @@ test(
       );
       assert.equal((await read('en', '?n=9')).notice, 'Unknown n option: 9. Showing the default case.');
     } finally {
-      await browser.close();
+      try { await browser?.close(); }
+      finally { server.close(); }
     }
   },
 );

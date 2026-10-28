@@ -16,14 +16,14 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-24.04  # the pinned image the embed tests were validated on
-    timeout-minutes: 60  # full suite, browser gates, all-case demos, installed capture and gallery review
+    timeout-minutes: 60  # full suite, browser gates and installed capture; catalog/story run separately
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # the fork explainer's test reads Lantern's code at the fork base
       - uses: actions/setup-node@v4
         with:
-          node-version: 26
+          node-version: 24
           cache: npm
       - run: npm ci
       # diagram capture and the embed tests run in headless Chromium (tools/lib/browser.ts)
@@ -40,7 +40,6 @@ jobs:
       - run: npm run test:full      # every frame, fast-check properties at ten times the default cases, cache validation, golden trace, leaks
       # Product gates reuse this job and its Chromium installation; no scheduled lane.
       - run: npm run test:embeds    # real origin/source isolation, offline/no-JS reading and style fidelity
-      - run: npm run demos:check    # every explainer case: seek, motion, hold, bare runtime, readable labels
       - run: EXPLAIN_BROWSER=1 EXPLAIN_LETTERING=1 npm run release:check  # retain the exact tested archive
       - uses: actions/upload-artifact@v4
         with:
@@ -49,18 +48,119 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           overwrite: true  # a re-run of a failed job uploads again under the same name
-      - run: npm run demos:review   # every served case at phone and desktop width, headers, two embeds on one page
-      # Videos are made and tested apart from CI, with `npm run videos` (needs FFmpeg).
 
-  compatibility:
+  catalog:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30  # npm ci, two typechecks and the full package smoke
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 26.0.0
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm run check
-      - run: npm run pack:smoke  # installed API and committed snapshots at the supported Node floor
+      - run: npx playwright-core install --with-deps --only-shell chromium
+      - run: npm run demos:check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rayner-catalog-${{ github.sha }}
+          path: out/explainers/
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: true
+
+  story-part:
+    needs: catalog
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [1, 2, 3]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npx playwright-core install --with-deps --only-shell chromium
+      - uses: actions/download-artifact@v4
+        with:
+          name: rayner-catalog-${{ github.sha }}
+          path: out/explainers/
+      - run: npm run demos:review -- --shard ${{ matrix.part }}/3
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rayner-story-${{ github.sha }}-${{ matrix.part }}
+          path: |
+            out/review/shard-${{ matrix.part }}-of-3/
+            out/validation/browser-review-shard-${{ matrix.part }}-of-3.json
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: true
+
+  story:
+    if: always()  # a failed/missing shard must fail this required check, not skip it
+    needs: [catalog, story-part]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require the catalog and every story shard to pass
+        env:
+          CATALOG_RESULT: ${{ needs.catalog.result }}
+          STORY_RESULT: ${{ needs['story-part'].result }}
+        run: test "$CATALOG_RESULT" = success && test "$STORY_RESULT" = success
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: rayner-catalog-${{ github.sha }}
+          path: out/explainers/
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: rayner-story-${{ github.sha }}-*
+          merge-multiple: true
+          path: out/
+      - run: node tools/explain-review-merge.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rayner-story-${{ github.sha }}
+          path: out/validation/browser-review.json
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: true
+
+  compatibility:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, macos-15-intel]
+        node: [24.0.0, 24]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30  # types, standard suite, browser checks and installed starter
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # retain the fork-base source oracle on every platform
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npx playwright-core install --with-deps --only-shell chromium
+      - run: npm test
+      - run: npm run test:embeds
+      - run: EXPLAIN_BROWSER=1 npm run pack:smoke  # installed starter preview on Linux and both Mac architectures

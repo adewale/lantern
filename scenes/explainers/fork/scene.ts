@@ -6,7 +6,7 @@ const LANTERN =
   'graph LR\nDoc[JSON doc]\nParser[Flowchart parser]\nScene[Scene class]\nClock[Fixed dt clock]\nPlayer[Dev player]\nWorker[Worker]\nFrames[SVG frames]\nDoc --> Scene\nParser --> Scene\nScene --> Clock\nClock --> Player\nClock --> Worker\nClock --> Frames';
 // The fork: docs/UPSTREAM.md and the design record's table of what is inherited and what changes.
 const FORK =
-  'graph LR\nSettings[Settings]\nCapture[Agentic Mermaid]\nSnaps[Snapshots]\nScene[Scene class]\nClock[Fixed dt clock]\nPage[Embed page]\nFrames[SVG frames]\nVideo[Captioned video]\nCheck[rayner check]\nSettings --> Scene\nCapture --> Snaps\nSnaps --> Scene\nScene --> Clock\nClock --> Page\nClock --> Frames\nFrames --> Video\nClock --> Check';
+  'graph LR\nSettings[Settings]\nCapture[Agentic Mermaid]\nSnaps[Snapshots]\nScene[Scene class]\nClock[Fixed dt clock]\nPage[Embed page]\nFrames[SVG frames]\nImage[PNG stills]\nCheck[rayner check]\nSettings --> Scene\nCapture --> Snaps\nSnaps --> Scene\nScene --> Clock\nClock --> Page\nClock --> Frames\nFrames --> Image\nClock --> Check';
 // scenes/explainers/token-bucket/scene.ts.
 const SETTINGS = [
   'static settings = [{',
@@ -100,7 +100,7 @@ export default class ForkExplainer extends Scene {
       title: 'The fork puts a build between the scene and the reader',
       line: 'Diagrams are captured once; the page runs no renderer.',
       caption:
-        'Agentic Mermaid draws each diagram in Chromium at build time, and the snapshot is stored beside the scene, so the page runs no diagram renderer. The same scene and clock then feed an embed page, a captioned video and rayner check.',
+        'Agentic Mermaid draws each diagram in Chromium at build time, and the snapshot is stored beside the scene, so the page runs no diagram renderer. The same scene and clock then feed an embed page, PNG stills and rayner check.',
     });
     await flow.morph({ source: FORK });
     await flow.walk(
@@ -128,19 +128,19 @@ export default class ForkExplainer extends Scene {
     await s.code(SETTINGS, { at: BELOW, fontSize: 0.24 });
     await flow.note('Settings', '3 cases, each built, captured and checked', { side: 'above' });
 
-    // The video step reads the timing of the 'fork' step this scene has just played.
+    // The timing step reads the timing of the 'fork' step this scene has just played.
     const shown = this.steps.find((st) => st.name === 'fork')!;
     const words = String(shown.meta.caption).trim().split(/\s+/).length;
     const motion = (shown.hold ?? shown.t1!) - shown.t0,
       held = shown.hold == null ? 0 : shown.t1! - shown.hold;
-    await this.step('video', {
-      title: 'The same steps become a silent, captioned video',
-      line: `Moving ${motion.toFixed(1)} s under its title, then still ${held.toFixed(1)} s under its caption.`,
-      caption: `rayner render draws every frame with resvg and encodes them with FFmpeg. In the video, each step shows its title while it moves, then holds still under its caption long enough to read it at ${Scene.captionWpm} words a minute. Lantern’s render stops at numbered SVG frames.`,
+    await this.step('timing', {
+      title: 'The page holds each resting picture for its caption',
+      line: `Moving ${motion.toFixed(1)} s, then still for ${held.toFixed(1)} s.`,
+      caption: `The scene advances automatically; the page waits for the reader. Its clock gives the fork step ${motion.toFixed(1)} seconds of motion and ${held.toFixed(1)} seconds at rest, allowing its ${words}-word caption to be read at ${Scene.captionWpm} words a minute.`,
     });
     await s.clearOverlays();
-    await flow.dim(['Clock', 'Frames', 'Video']);
-    await flow.focus(['Clock', 'Page', 'Frames', 'Video', 'Check'], { zoom: 0.95 });
+    await flow.dim(['Clock', 'Frames', 'Image']);
+    await flow.focus(['Clock', 'Page', 'Frames', 'Image', 'Check'], { zoom: 0.95 });
     // One bar per phase of the 'fork' step, to scale.
     const unit = 11 / (motion + held),
       x0 = -5.5,
@@ -154,14 +154,14 @@ export default class ForkExplainer extends Scene {
       return new Group(bar, text);
     };
     await s.enter(
-      new Text(`Step 'fork' in the video: ${(motion + held).toFixed(1)} s`, { fontSize: 0.26, color: ink, weight: 'bold' }).moveTo([0, -1.85]),
-      phase(0, motion, s.emphasis, `moving, title in the footer: ${motion.toFixed(1)} s`),
+      new Text(`Step 'fork' on the page: ${(motion + held).toFixed(1)} s`, { fontSize: 0.26, color: ink, weight: 'bold' }).moveTo([0, -1.85]),
+      phase(0, motion, s.emphasis, `moving: ${motion.toFixed(1)} s`),
       phase(motion, held, s.soft, `still, caption of ${words} words: ${held.toFixed(1)} s`),
       {
-        describe: `A timeline of the fork step in the video: ${motion.toFixed(1)} seconds of motion under its title, then ${held.toFixed(1)} seconds still under its ${words}-word caption`,
+        describe: `A timeline of the fork step on the page: ${motion.toFixed(1)} seconds of motion, then ${held.toFixed(1)} seconds still under its ${words}-word caption`,
       },
     );
-    this.state.video = { motion: Number(motion.toFixed(2)), held: Number(held.toFixed(2)), words };
+    this.state.timing = { motion: Number(motion.toFixed(2)), held: Number(held.toFixed(2)), words };
 
     await this.step('checks', {
       title: 'Every case passes rayner check before it ships',

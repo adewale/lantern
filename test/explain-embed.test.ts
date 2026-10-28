@@ -219,7 +219,7 @@ test('Copy link gives the step\'s share page when site:export published one, els
     await context.close();
   }
 });
-test('stepping moves nothing below the caption: Next, the steps list and the transcript stay put', options, async () => {
+test('stepping keeps the phone’s heading line, Next, steps list and transcript in place', options, async () => {
   // Captions run from one line to four, and on a phone send-sync's first step opens on a
   // close-up and shows Fit; neither may push the page down mid-explainer.
   for (const [width, height] of [[1180, 800], [390, 844]] as const)
@@ -236,7 +236,7 @@ test('stepping moves nothing below the caption: Next, the steps list and the tra
         });
         await page.goto(`${embed}/${scene}.html`);
         await page.waitForSelector('[data-ready=true]');
-        const places = new Set<string>();
+        const places = new Set<string>(), linePlaces = new Set<string>();
         const n = await page.locator('.steps button').count();
         for (let i = 0; i < n; i++) {
           const before = await page.evaluate(() => (window as unknown as { __layoutSettles: number }).__layoutSettles);
@@ -249,6 +249,8 @@ test('stepping moves nothing below the caption: Next, the steps list and the tra
               document.querySelectorAll('.steps button')[i]?.getAttribute('aria-current') === 'step';
           }, { before, step, i });
           await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+          if (width < 600 && await page.locator('.lede span').isVisible())
+            linePlaces.add(await page.locator('.lede span').evaluate((line) => (line.getBoundingClientRect().top + scrollY).toFixed(1)));
           places.add(
             await page.evaluate(() =>
               ['.controls', '.steps', '.transcript'].map((s) => (document.querySelector(s)!.getBoundingClientRect().top + scrollY).toFixed(1)).join(' '),
@@ -256,6 +258,7 @@ test('stepping moves nothing below the caption: Next, the steps list and the tra
           );
         }
         assert.equal(places.size, 1, `${scene} at ${width} px: controls, steps and transcript tops per step ${[...places].join(' | ')}`);
+        if (width < 600) assert.equal(linePlaces.size, 1, `${scene}: the line below the phone title stays at one height`);
       } finally {
         await page.close();
       }
@@ -1867,5 +1870,38 @@ test('PKCE mobile views expose the derivation and the unsent verifier without ad
       assert.ok(await page.getByRole('button', { name: 'Whole picture', exact: true }).isDisabled());
       assert.equal(zoomOf(await paintedView(page)), null);
     } finally { await context.close(); }
+  }
+});
+
+
+test('the PKCE attack opens with the stolen-code, guessed-verifier and rejection arrows visible on a phone', options, async () => {
+  const variant = projects.get('oauth-pkce')!.variants.find((v) => v.values.attacker === 'yes')!;
+  const ids = ['message:S->X#0', 'message:X->S#0', 'message:S->X#1'];
+  const boxes = await restingBox(variant.Scene, 'attack', (scene) => {
+    const arrows = scene.familyMembers().filter((m) => ids.includes(m.key ?? ''));
+    assert.equal(arrows.length, 3, 'all three narrative arrows must exist');
+    return arrows;
+  });
+  for (const width of [320, 390]) {
+    const page = await browser.newPage({ viewport: { width, height: 844 }, reducedMotion: 'reduce' });
+    try {
+      await page.goto(`${embed}/oauth-pkce.html?attacker=yes&step=attack`);
+      await page.waitForSelector('[data-ready=true]');
+      await quiet(page);
+      const stageRect = await page.locator('.stage').boundingBox();
+      const mapRect = await page.locator('.overview').boundingBox();
+      assert.ok(stageRect && mapRect && mapRect.y >= stageRect.y + stageRect.height, 'the map must not cover any part of the picture');
+      const seen = await page.locator('.stage svg:not(.leaving)').evaluate((svg, b) => {
+        const matrix = (svg as SVGSVGElement).getScreenCTM()!;
+        const stage = svg.parentElement!.getBoundingClientRect();
+        const a = new DOMPoint(b[0] * 1000, -b[3] * 1000).matrixTransform(matrix);
+        const z = new DOMPoint(b[2] * 1000, -b[1] * 1000).matrixTransform(matrix);
+        return { actual: [a.x, a.y, z.x, z.y], viewport: [stage.left, stage.top, stage.right, stage.bottom] };
+      }, boxes);
+      const [l, t, r, b] = seen.actual, [vl, vt, vr, vb] = seen.viewport;
+      assert.ok(l! >= vl! - 1 && t! >= vt! - 1 && r! <= vr! + 1 && b! <= vb! + 1,
+        `width ${width}: opening must contain the complete attack, not an unrelated card: ${JSON.stringify(seen)}`);
+      assert.equal(await page.locator('[aria-current=step]').getAttribute('data-step'), 'attack');
+    } finally { await page.close(); }
   }
 });

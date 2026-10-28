@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { paletteOf, palettePng } from '../tools/lib/explain-palette.ts';
 import { cardPicture, cardPng } from '../tools/lib/explain-shots.ts';
-import { rasterize } from '../tools/lib/explain-video.ts';
+import { rasterize } from '../tools/lib/explain-raster.ts';
 import { collectProject, defaultVariant } from '../tools/lib/explain-project.ts';
 import { restingTime } from '../explain/trace.ts';
 

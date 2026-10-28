@@ -22,7 +22,7 @@ export interface StageOptions {
   palette?: Palette;
   /**
    * What the heading shows. By default it follows each step's `title`, so the
-   * stage itself (poster, still, stage-only video) says which idea is on screen.
+   * stage itself (poster, still) says which idea is on screen.
    * A string fixes it; `false` leaves the whole frame to the scene.
    */
   heading?: 'step' | string | false;
@@ -400,7 +400,7 @@ export function stage(scene: Scene, options: StageOptions = {}) {
     },
     /** A dimension line from `a` to `b` with `label`, set off by `offset`; drawn in, and kept. */
     async dimension(a: Vec, b: Vec, label: string, opts: { offset?: number; color?: string; size?: number } = {}) {
-      const g = onScreen(dimension(toScreen(a), toScreen(b), label, { color: opts.color ?? emphasis(colors), ...opts }));
+      const g = onScreen(dimension(toScreen(a), toScreen(b), label, { color: opts.color ?? emphasis(colors), background: colors.paper, ...opts }));
       keepAll([g], { describe: () => `A dimension line marked “${label}”` });
       await scene.play(new Create(g, { runTime: 0.6, lagRatio: 0.1 }));
       return g;
@@ -417,7 +417,7 @@ export function stage(scene: Scene, options: StageOptions = {}) {
       const box = Array.isArray(target) ? (target.length === 2 ? ([...target, ...target] as Box) : (target as Box)) : (target as Mobject).box();
       if (!box) throw new Error('callout(): the target has no extent');
       const [a, b] = [toScreen([box[0], box[1]]), toScreen([box[2], box[3]])];
-      const g = onScreen(callout([a[0], a[1], b[0], b[1]], text, { color: opts.color ?? colors.ink, ...opts }));
+      const g = onScreen(callout([a[0], a[1], b[0], b[1]], text, { color: opts.color ?? colors.ink, background: colors.paper, ...opts }));
       keepAll([g], {});
       await scene.play(new Create(g, { runTime: 0.6, lagRatio: 0.15 }));
       return g;

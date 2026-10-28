@@ -460,10 +460,25 @@ export function closeUps(layout: StepLayout | undefined, w: number, h: number, m
     for (const [i, v] of views.entries()) if (holds(v.box) && (open < 0 || shown(v.box) > shown(views[open]!.box) + 1e-9)) open = i;
     open = Math.max(0, open);
   }
+  // A grid covers every point but can split a label across all its seams, even when
+  // the whole label fits a view. Keep the original opening and add a centred view
+  // for each readable label that otherwise has no complete view.
+  const extra: typeof views = [];
+  for (const { box } of read) {
+    if (box[2] - box[0] > vw || box[3] - box[1] > vh ||
+        box[0] < bounds[0] || box[1] < bounds[1] || box[2] > bounds[2] || box[3] > bounds[3]) continue;
+    const complete = (r: Box) => inside(box[0], box[1], r) && inside(box[2], box[3], r);
+    if ([...views, ...extra].some((v) => complete(v.box))) continue;
+    for (const region of tourRegions([box], vw, vh, bounds)) {
+      const zoom = zoomOn(region),
+        shown = viewBox(zoom, w, h);
+      if (complete(shown)) extra.push({ zoom, box: shown });
+    }
+  }
   const starts = stressStarts(layout),
     first: Zoom[] = [],
     rest: Zoom[] = [];
-  for (const v of [...views.slice(open + 1), ...views.slice(0, open)])
+  for (const v of [...views.slice(open + 1), ...views.slice(0, open), ...extra])
     (starts.some(([x, y]) => inside(x, y, v.box)) ? first : rest).push(v.zoom);
   const zooms: Zoom[] = [];
   for (const z of [views[open]!.zoom, ...first, ...rest])

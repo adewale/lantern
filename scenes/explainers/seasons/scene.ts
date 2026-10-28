@@ -712,7 +712,7 @@ export default class SeasonsExplainer extends Scene {
         height: 0.38,
         cornerRadius: 0.06,
         fill: s.palette.paper,
-        fillOpacity: 0.92,
+        fillOpacity: 1,
         stroke: color,
         strokeWidth: 0.014,
       });

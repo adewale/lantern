@@ -2,10 +2,19 @@
  * The collection, in gallery order. `topic` explainers are about subjects a
  * reader might search for; `toolchain` explainers show how these explanations
  * are made (the engine, the diagrams, the text outlines). `step` chooses
- * the default case's step each gallery tile shows and links to. `video: false`
- * leaves an explainer out of `demos:render`, so it ships as a page only.
+ * the default case's step each gallery tile shows and links to.
  */
-export const EXPLAINERS: readonly { id: string; step: string; group: 'topic' | 'toolchain'; video?: false }[] = [
+export const PRODUCT = {
+  summary: 'Interactive explanations of protocols, algorithms and code changes.',
+  audience: 'For engineers and technical educators who write TypeScript.',
+  description: 'Step through a picture at your own pace, or change a setting to follow another case. The model computes the numbers, diagrams and captions. Publish a portable HTML page with a transcript and no runtime network requests.',
+  requirements: 'Node 24 or later and Chromium. Authoring targets Ubuntu and macOS.',
+  tutorial: 'https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md',
+  reference: 'https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md',
+  skill: 'https://github.com/adewale/rayner/blob/main/skills/rayner-explainers/SKILL.md',
+} as const;
+
+export const EXPLAINERS: readonly { id: string; step: string; group: 'topic' | 'toolchain' }[] = [
   { id: 'seasons', step: 'year', group: 'topic' },
   { id: 'oauth-pkce', step: 'attack', group: 'topic' },
   { id: 'exgit', step: 'change', group: 'topic' },
@@ -22,12 +31,12 @@ export const EXPLAINERS: readonly { id: string; step: string; group: 'topic' | '
   { id: 'pg-page', step: 'full', group: 'topic' },
   { id: 'traffic-policy', step: 'shares', group: 'topic' },
   { id: 'isdigit', step: 'outcome', group: 'topic' },
-  { id: 'ical-recurrence', step: 'change', group: 'topic', video: false },
-  { id: 'ext4-space', step: 'users', group: 'topic', video: false },
-  { id: 'trust-proxy', step: 'requests', group: 'topic', video: false },
-  { id: 'tailwind-gamut', step: 'palette', group: 'topic', video: false },
-  { id: 'gnome-files', step: 'give-ups', group: 'topic', video: false },
-  { id: 'wcag-map', step: 'v22', group: 'topic', video: false },
+  { id: 'ical-recurrence', step: 'change', group: 'topic', },
+  { id: 'ext4-space', step: 'users', group: 'topic', },
+  { id: 'trust-proxy', step: 'requests', group: 'topic', },
+  { id: 'tailwind-gamut', step: 'palette', group: 'topic', },
+  { id: 'gnome-files', step: 'give-ups', group: 'topic', },
+  { id: 'wcag-map', step: 'v22', group: 'topic', },
   { id: 'lantern', step: 'objects', group: 'toolchain' },
   { id: 'fork', step: 'fork', group: 'toolchain' },
   { id: 'agentic-mermaid', step: 'repair', group: 'toolchain' },

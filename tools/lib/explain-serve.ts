@@ -9,9 +9,6 @@ const mime: Record<string, string> = {
   '.json': 'application/json',
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
-  '.mp4': 'video/mp4',
-  '.webm': 'video/webm',
-  '.vtt': 'text/vtt',
 };
 /** Serve `root` on 127.0.0.1 (port 0 picks a free one); `/` redirects to `index`. */
 export async function serve(root: string, port: number, index: string): Promise<{ url: string; close(): void }> {
@@ -80,7 +77,13 @@ export async function serve(root: string, port: number, index: string): Promise<
       res.end('Not found');
     }
   });
-  await new Promise<void>((done) => server.listen(port, '127.0.0.1', done));
+  await new Promise<void>((done, reject) => {
+    server.once('error', reject);
+    server.listen(port, '127.0.0.1', () => {
+      server.off('error', reject);
+      done();
+    });
+  });
   return {
     url: `http://127.0.0.1:${(server.address() as { port: number }).port}`,
     close: () => server.close(),

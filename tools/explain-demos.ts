@@ -2,14 +2,12 @@
 import { mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
-import { spawn } from 'node:child_process';
-import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
+import { EXPLAINERS, PRODUCT } from '../scenes/explainers/catalog.ts';
 import { collectProject, defaultVariant, ROOT, baseReceipt, sceneInputs } from './lib/explain-project.ts';
 import { describeProject } from './lib/explain-site-describe.ts';
 import { restingTime, htmlEscape, pictureSummary, stepWords } from '../explain/trace.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
 import { contactSheet, stillPng, cardPng } from './lib/explain-shots.ts';
-import { exporterHash, probeVideo, footerLines } from './lib/explain-video.ts';
 import { checkProject } from './lib/explain-check.ts';
 import { shareable } from './lib/explain-share.ts';
 import { useProjectLettering } from './lib/explain-lettering.ts';
@@ -17,10 +15,10 @@ import type { ShareManifest } from './lib/explain-share.ts';
 
 const directory = join(ROOT, 'out/explainers');
 await mkdir(directory, { recursive: true });
-const { check, render, force } = parseArgs({
-  options: { check: { type: 'boolean' }, render: { type: 'boolean' }, force: { type: 'boolean' } },
+const { check } = parseArgs({
+  options: { check: { type: 'boolean' } },
 }).values;
-// What the gallery and docs point at, plus the hashes that say whether a video is current.
+// What the gallery and docs point at, with source and snapshot fingerprints.
 const evidence: {
   id: string;
   title: string;
@@ -68,12 +66,6 @@ for (const item of EXPLAINERS) {
   await writeFile(join(directory, item.id, 'steps.json'), JSON.stringify(share, null, 2) + '\n');
   await writeFile(join(directory, item.id, 'describe.json'), described);
   if (check) await checkProject(project, join(ROOT, 'out/checks', item.id));
-  // Videos only: every case of an explainer with video must export with the caption footer.
-  if (render && item.video !== false)
-    for (const v of project.variants)
-      await footerLines(v.trace, v.values).catch((error: Error) => {
-        throw new Error(`${item.id}: ${error.message}`);
-      });
   // Last, after the checks, so it vouches for every file above: what they were built from, which
   // site:export compares with the checkout.
   await writeFile(join(directory, item.id, 'inputs.json'), JSON.stringify(await sceneInputs(project), null, 2) + '\n');
@@ -110,6 +102,13 @@ await writeFile(
   // A failing check throws before this is written, so `checked` means every case passed.
   JSON.stringify({ version: 2, checked: !!check, totals, scenes: evidence }, null, 2) + '\n',
 );
+await writeFile(join(directory, 'catalog.json'), JSON.stringify({
+  version: 1, product: PRODUCT, totals,
+  scenes: EXPLAINERS.map(item => {
+    const data = evidence.find(scene => scene.id === item.id)!;
+    return { ...item, title: data.title, lang: data.lang, cases: data.cases.length };
+  }),
+}, null, 2) + '\n');
 const tile = (item: (typeof EXPLAINERS)[number], lead = false) => {
   const data = evidence.find((s) => s.id === item.id)!;
   const href = `${item.id}.html?step=${item.step}`;
@@ -146,91 +145,10 @@ ul.tiles .lead{grid-column:1/-1}
 footer{margin-top:64px;font-size:.875rem;color:var(--muted)}
 footer a{color:inherit}
 @media(prefers-reduced-motion:reduce){.tiles img{transition:none}}
-</style></head><body><main><h1>Rayner</h1><p class="intro">Interactive explanations of protocols, algorithms and code changes. Step through a picture at your own pace, or change a setting to follow another case.</p><p class="intro">For engineers and technical educators who write TypeScript: <a href="https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md">write your first explainer</a>, use the <a href="https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md">authoring reference</a>, or follow the <a href="https://github.com/adewale/rayner/blob/main/skills/rayner-explainers/SKILL.md">agent authoring skill</a>.</p><ul class="tiles">${topics.map((t, i) => tile(t, i === 0)).join('')}</ul><h2>How these are made</h2><ul class="tiles">${toolchain.map((t) => tile(t)).join('')}</ul><ul class="more"><li><a href="embed-lab.html">Two embeds on one host page</a></li><li><a href="evidence.json">Build evidence</a></li></ul><footer>Built on <a href="https://github.com/ivarvong/lantern">Lantern</a> by Ivar Vong (MIT) and <a href="https://github.com/adewale/agentic-mermaid">Agentic Mermaid</a>.</footer></main></body></html>`;
+</style></head><body><main><h1>Rayner</h1><p class="intro">${htmlEscape(PRODUCT.summary)} ${htmlEscape(PRODUCT.description)}</p><p class="intro">${htmlEscape(PRODUCT.audience)} <a href="${PRODUCT.tutorial}">Write your first explainer</a>, use the <a href="${PRODUCT.reference}">authoring reference</a>, or follow the <a href="${PRODUCT.skill}">agent authoring skill</a>.</p><ul class="tiles">${topics.map((t, i) => tile(t, i === 0)).join('')}</ul><h2>How these are made</h2><ul class="tiles">${toolchain.map((t) => tile(t)).join('')}</ul><ul class="more"><li><a href="embed-lab.html">Two embeds on one host page</a></li><li><a href="evidence.json">Build evidence</a></li></ul><footer>Built on <a href="https://github.com/ivarvong/lantern">Lantern</a> by Ivar Vong (MIT) and <a href="https://github.com/adewale/agentic-mermaid">Agentic Mermaid</a>.</footer></main></body></html>`;
 await writeFile(join(directory, 'index.html'), html);
 await writeFile(
   join(directory, 'embed-lab.html'),
   `<!doctype html><html lang="en" data-theme="light"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two embeds on one host page</title><style>${tokens}body{max-width:1200px;margin:0 auto;padding:32px 16px 64px;background:#eceff3;color:var(--fg)}h1{font-size:1.5rem;font-weight:650;letter-spacing:-.015em;margin:0 0 8px;text-wrap:balance}a{color:var(--accent);text-underline-offset:.2em}main{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;align-items:start}section{min-width:0;background:#fff;border-radius:12px;box-shadow:0 1px 2px rgb(0 0 0/.06),0 0 0 1px rgb(0 0 0/.06);overflow:hidden}@media(max-width:850px){main{grid-template-columns:1fr}}</style><h1>Two embeds, each sized to its own content</h1><a href="index.html">All explainers</a><main><section id="git"></section><section id="cache"></section></main><script src="loader.js" data-src="exgit.html?step=change" data-target="git" data-title="Git object ids"></script><script src="loader.js" data-src="mr-cache.html?request=miss&step=request" data-target="cache" data-title="Cache request"></script></html>`,
 );
 console.log(`Gallery: ${join(directory, 'index.html')}\n${JSON.stringify(totals)}`);
-
-if (render) {
-  const exporter = await exporterHash();
-  const queue = EXPLAINERS.filter((e) => e.video !== false);
-  let failed = false;
-  async function worker() {
-    while (queue.length) {
-      const item = queue.shift()!,
-        entry = evidence.find((s) => s.id === item.id)!,
-        out = join(ROOT, 'out/videos', item.id + '.mp4');
-      let fresh = false;
-      if (!force) {
-        try {
-          const receipt = JSON.parse(await readFile(out + '.receipt.json', 'utf8'));
-          fresh =
-            receipt.sourceHash === entry.sourceHash &&
-            receipt.exporterHash === exporter &&
-            receipt.engineHash === entry.engineHash &&
-            JSON.stringify(receipt.snapshotHashes) === JSON.stringify(entry.snapshotHashes) &&
-            receipt.fps === 30 &&
-            receipt.preset === 'caption-footer';
-        } catch (error) {
-          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-        }
-      }
-      if (fresh) {
-        console.log(`Video unchanged: ${item.id}`);
-        continue;
-      }
-      const code = await new Promise<number | null>((resolve, reject) => {
-        const child = spawn(
-          process.execPath,
-          [
-            join(ROOT, 'tools/explain.ts'),
-            'render',
-            join(ROOT, 'scenes/explainers', item.id),
-            '--footer',
-            '--out',
-            out,
-          ],
-          { stdio: ['ignore', 'pipe', 'pipe'], env: process.env },
-        );
-        let log = '';
-        child.stdout.on('data', (c) => {
-          log += c.toString();
-        });
-        child.stderr.on('data', (c) => {
-          process.stderr.write(`[${item.id}] ${c}`);
-        });
-        child.on('error', reject);
-        child.on('close', (code) => {
-          if (code !== 0) console.error(log);
-          resolve(code);
-        });
-      });
-      if (code !== 0) {
-        failed = true;
-        continue;
-      }
-      const probe = probeVideo(out);
-      if (
-        probe.streams.some((s) => s.codec_type === 'audio') ||
-        !probe.streams.some((s) => s.codec_name === 'h264') ||
-        !probe.streams.some((s) => s.codec_name === 'mov_text')
-      )
-        throw new Error(`Invalid streams: ${item.id}`);
-      const receipt = JSON.parse(await readFile(out + '.receipt.json', 'utf8'));
-      const video = probe.streams.find((s) => s.codec_type === 'video')!;
-      if (
-        video.width !== 1280 ||
-        video.height !== 960 ||
-        Number(video.nb_frames) !== receipt.frames ||
-        probe.chapters.length !== receipt.chapters.length
-      )
-        throw new Error(`Video metadata mismatch: ${item.id}`);
-      console.log(`Video verified: ${item.id} · ${receipt.frames} frames`);
-    }
-  }
-  await Promise.all([worker(), worker(), worker()]);
-  if (failed) throw new Error('One or more videos failed; see output above');
-}

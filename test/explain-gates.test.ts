@@ -2,7 +2,6 @@
 // collectProject (load, cases, named steps, drawable text) and checkProject
 // (every check on every case). Each scene breaks exactly one rule and must fail
 // with that gate's own message; the clean scene shows the same shape passes.
-// Render's own gates (footer fit, hold, footer glyphs) are in explain-video.test.ts.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
@@ -18,7 +17,7 @@ import { fixedSnapshot, square } from './lib/random-snapshot.ts';
 const folder = await mkdtemp(join(tmpdir(), 'rayner-gates-'));
 after(() => rm(folder, { recursive: true, force: true }));
 
-const HEAD = `import{Scene,Text,Dot,Rectangle,FadeIn}from'rayner';import{stage,settingsOf}from'rayner/explain';`;
+const HEAD = `import{Scene,Text,Dot,Rectangle,Line,FadeIn}from'rayner';import{stage,settingsOf}from'rayner/explain';`;
 /** A scene module: `pre` at module level, `body` inside construct() after `const s=stage(this)`. */
 const scene = (body: string, pre = '', statics = '') =>
   `${HEAD}${pre}export default class Seeded extends Scene{${statics}async construct(){const s=stage(this);${body}}}`;
@@ -127,6 +126,25 @@ const gates: { gate: string; source: string; message: RegExp; snapshots?: () => 
     gate: 'text collision',
     source: scene(`await this.step('one');${label('first label')}${label('second label', '[0.2,0.05]')}`),
     message: /Resting frames have colliding or cut-off text/,
+  },
+  {
+    gate: 'a connector through a resting label',
+    source: scene(`await this.step('one');const wire=new Line([-2,0],[2,0]);await s.enter(wire,{describe:'wire'});${label('target')}`),
+    message: /A connector crosses "target"/,
+  },
+  {
+    gate: 'two overlapping imported labels',
+    source: scene(`await this.step('one');await s.show(${JSON.stringify(spec)});`),
+    snapshots: () => {
+      const snapshot = smallLabel();
+      for (const [id, text] of [['A', 'First imported'], ['B', 'Second imported']]) {
+        const part = snapshot.parts.find((p) => p.id === id)!;
+        part.shapes = [{ subpaths: [], closed: [], style: { fill: '#ffffff', stroke: 'none', strokeWidth: 0, fillOpacity: 1, strokeOpacity: 1, opacity: 1 }, text, fontSize: 0.4,
+          textRun: { text: text!, x: 200, y: 200, size: 40, matrix: [1, 0, 0, 1, 0, 0] } }];
+      }
+      return { [diagramKey(spec)]: snapshot };
+    },
+    message: /"First imported" overlaps "Second imported"/,
   },
   {
     gate: 'imported legibility: a label readable only mid-sweep',

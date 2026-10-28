@@ -40,7 +40,7 @@ export interface LetteringSnapshot {
   shaper: string;
   payloadHash?: string;
   /**
-   * Run keys only the build draws (video footer lines, contact-sheet titles and the
+   * Run keys only the build draws (contact-sheet titles and the
    * wrapping that measures them), which a page leaves out. Absent when there are none.
    */
   offPage?: string[];
@@ -53,7 +53,7 @@ export interface LetteringSnapshot {
 
 /**
  * A snapshot as written to disk and shipped in a page: each distinct glyph
- * outline stored once. A caption wrapped for the video footer is measured line
+ * outline stored once. A wrapped build-time label is measured line
  * by line, so its glyphs recur in many runs; packing stores each outline once.
  */
 export function packLettering(snapshot: LetteringSnapshot): LetteringSnapshot {
@@ -126,7 +126,7 @@ export function scaledRun(run: Run, size: number): Run {
     glyphs: run.glyphs.map((g) => ({ ...g, x: g.x * size, dx: g.dx * size, dy: g.dy * size, ax: g.ax * size, s: (g.s ?? run.s ?? 1) * size })) };
 }
 
-// DecimalNumber produces intermediate values at the chosen playback/video FPS.
+// DecimalNumber produces intermediate values at the chosen playback FPS.
 // Keep that narrow alphabet available without authorizing new prose at runtime.
 export const numericAlphabet = '0123456789+-.eE,%‰‱$€£¥()−\u0020\u00a0\u202f';
 export const isNumericText = (text: string): boolean =>
@@ -253,7 +253,7 @@ export function snapshotProvider(snapshot: LetteringSnapshot): LetteringProvider
 
 // Text and diagram lowering use the same public font table. Lease it for a
 // complete run, and restore it even on StopScene or errors. Once an optional
-// provider is installed ALL runs participate, so overlapping seeks, videos and
+// provider is installed ALL runs participate, so overlapping seeks and
 // ordinary scenes cannot borrow one another's fonts. No patch is installed on
 // pages which do not request lettering.
 const providers: WeakMap<object, LetteringProvider> = /* @__PURE__ */ new WeakMap();
@@ -500,7 +500,7 @@ function enqueue<T>(p: LetteringProvider | undefined, work: () => Promise<T>): P
   pending = result.then(() => undefined, () => undefined);
   return result;
 }
-/** Build-time text outside a run (caption wrapping, video footers). */
+/** Build-time text outside a run (contact-sheet titles). */
 export function withSceneLettering<T>(Source: object, work: () => Promise<T>): Promise<T> {
   const p = providerOf(Source);
   if (!installed) return work();

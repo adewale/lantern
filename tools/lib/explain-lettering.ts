@@ -12,7 +12,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
 import { useLettering, takeLetteringUse } from '../../src/lettering.ts';
-import type { LetteringRequest, LetteringScript, LetteringFaces } from '../../src/lettering.ts';
+import type { SubsetLetteringRequest, LetteringScript, LetteringFaces } from '../../src/lettering.ts';
 import type { FontName } from '../../src/index.ts';
 
 const ROOT = new URL('../../', import.meta.url);
@@ -49,7 +49,7 @@ export interface Lettering {
 }
 
 /** The scene's request, checked; undefined when it asks for nothing. */
-export function letteringRequest(Scene: { meta?: object }): LetteringRequest | undefined {
+export function letteringRequest(Scene: { meta?: object }): SubsetLetteringRequest | undefined {
   const value = (Scene.meta as { lettering?: unknown } | undefined)?.lettering;
   if (value === undefined) return undefined;
   const known = Object.keys(SCRIPTS);
@@ -97,14 +97,14 @@ export function letteringReport(l: Lettering) {
 
 /**
  * Work out an explainer's lettering. `draw` runs every case once and shapes
- * whatever else is drawn as outlines (the video footer's titles and captions),
+ * other build-time text drawn as outlines,
  * with the whole source faces in place; what each face drew, in the requested
  * scripts, is what its cut holds. Letters outside the request are left out, so
  * they still fail the build. The cuts are pinned in `<base>.lettering.json`.
  */
 export async function prepareLettering(
   base: string,
-  request: LetteringRequest,
+  request: SubsetLetteringRequest,
   draw: () => Promise<void>,
   { write = true }: { write?: boolean } = {},
 ): Promise<Lettering> {

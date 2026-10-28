@@ -30,12 +30,18 @@ export default class Example extends Scene {
 }
 ```
 
-`Text`, `Code`, native stage panels, headings, diagram labels, and video footers
+`Text`, `Code`, native stage panels, headings, diagram labels
 use the requested faces. The browser and resvg draw the same stored paths;
 there is no browser font request, system-font lookup, HarfBuzz or TeX runtime.
 `Math` (also exported as `MathTex`) uses glyph's TeX-subset/OpenType MATH
 layout at build time. `{ display: true }` selects display layout. Invalid TeX,
 unavailable glyphs, and `Math` without `math: true` fail the build.
+
+## macOS setup
+
+The HTML authoring workflow needs Node 24 and Chromium, as in the README. Python and source fonts are needed only when capturing new lettering; committed snapshots need neither.
+
+For new lettering on macOS, install Python with `brew install python@3.12`, create a virtual environment with `python3.12 -m venv .venv`, then run `.venv/bin/pip install -r tools/lettering-requirements.txt`. Set `RAYNER_LETTERING_PYTHON="$PWD/.venv/bin/python"` and `PYFTSUBSET="$PWD/.venv/bin/pyftsubset"`, then run `bash tools/lettering-outline-fonts.sh`. These variables also work on Ubuntu. For new maths, set `RAYNER_MATH_FONT` to the original Latin Modern Math 1.959 `latinmodern-math.otf`; an existing TeX installation can locate it with `kpsewhich latinmodern-math.otf`.
 
 ## Capture, check, build
 
@@ -56,15 +62,15 @@ npm run rayner -- build path/to/scene.ts --out out/example.html
 
 Commit `scene.lettering.json` beside the scene, just like diagram snapshots.
 Capture visits every settings case, including text built during replay and
-caption/footer wrapping. HarfBuzz shapes each distinct string once at unit em;
+contact-sheet titles. HarfBuzz shapes each distinct string once at unit em;
 runs retain glyph IDs, logical source clusters, advances, offsets, and outlines.
 The subset keeps the used code points plus layout/glyph dependencies. Replacement faces also retain a bounded numeric alphabet for animated values, whose intermediate strings depend on playback FPS. Each
 requested font's licence travels with its subset into the page's licence block.
 
-`check`, `build`, `shots`, and `render` require a fresh snapshot and never
+`check`, `build` and `shots` require a fresh snapshot and never
 silently recapture. Changing a caption, imported scene code, the request, or the
 lettering builder, embedded fallback fonts or core shaping code invalidates the snapshot. Cached snapshots validate their run structure and payload checksum before drawing. Run `snapshots` to refresh it.
-`preview` refreshes during authoring. Unrecorded prose fails closed; seek and playback cannot start an unrecorded language case. Formatted numeric values and known simple-script prefix/suffix templates can replay through the existing glyph shaper with the requested subset, so counters work at arbitrary video frame rates. Missing characters
+`preview` refreshes during authoring. Unrecorded prose fails closed; seek and playback cannot start an unrecorded language case. Formatted numeric values and known simple-script prefix/suffix templates can replay through the existing glyph shaper with the requested subset, so counters work at arbitrary animation frame rates. Missing characters
 in an unrequested script still fail, including during capture.
 
 `rayner check` reports `lettering.bytes` (serialized snapshot payload),
@@ -73,8 +79,7 @@ size per face, and the distinct run count. A page carries the request and the
 runs its scene draws, which hold every outline it shows, and only the subsets its
 counters shape with at runtime; hashes and licences stay in the snapshot, and each
 distinct licence notice joins the page's licence block once. Runs that only the
-build draws, the video footer's lines, the wrapping that measured them and the
-contact sheet's numbered titles, are listed in the snapshot's `offPage` and left
+build draws, such as contact sheets’ numbered titles, are listed in the snapshot's `offPage` and left
 out of the page. The snapshot file and the page store each distinct glyph outline
 once (`outlines`, with each glyph's `o` indexing it): a wrapped caption is
 measured line by line, so its glyphs recur in many runs. Subsets keep the layout
@@ -85,7 +90,7 @@ left out. Receipts include
 `letteringHash`; the snapshot includes source/font/builder hashes. The legacy
 engine fingerprint deliberately excludes optional modules and type-only
 metadata, so opting out preserves receipts as well as page bytes. A regression
-test pins all 26 pre-feature pages and receipts, across their 140 cases.
+test originally pinned 26 pages across 140 cases; it now pins the complete current catalog. Historical inventories belong to their recorded revisions.
 
 ## Capture from an installed package
 
@@ -186,7 +191,7 @@ HarfBuzz shapes at capture through `uharfbuzz` (pinned in
 `tools/lettering-requirements.txt`). The build already needs Python and
 fontTools to subset faces, so the Python binding adds one wheel; harfbuzzjs
 would add a WASM dependency to the Node build for the same shaping. The page
-and the video never shape: they draw the stored runs.
+draws the stored runs without shaping them.
 
 Bidi resolves logical runs before shaping, including paired brackets in mixed-direction text; clusters always address the original string, even when the visual glyph order is right to left. The Unicode Bidi Algorithm comes from python-bidi 0.6.12, whose Rust backend is the `unicode-bidi` crate; it supplies resolved UTF-8 levels, and the builder validates that metadata, maps it to source code-point indices and reorders each line (rules L1 and L2). It handles explicit embeddings/overrides, preserves shaping joiners, and rejects unsupported isolate controls. Complex scripts beyond the registered faces remain unsupported.
 
@@ -198,11 +203,7 @@ numbers inside it keep their own order. `test/lettering/hebrew` is the fixture.
   box (`start` is the left edge) whatever the direction, so panels and counters
   lay out as before. Panels lay out left to right: a right-to-left label sits
   where a left-to-right one would.
-- **In the video footer**, a right-to-left title or caption is wrapped as before,
-  each of its lines is led by a right-to-left mark (U+200F), so a wrapped line
-  that starts with a Latin word keeps the paragraph's direction, and the line
-  ends at the right edge of the text column. The video's HTML transcript marks
-  those lines `dir="rtl"`.
+
 - **On the page**, captions, titles, the steps list and the transcript are
   HTML text. A page whose request includes `Arab` or `Hebr` gives them
   `unicode-bidi: plaintext` and `text-align: start`, so each takes its direction
@@ -245,7 +246,7 @@ EXPLAIN_BROWSER=1 node --test test/lettering-browser.test.ts
 
 The first command uses the committed Arabic, Devanagari, Hebrew, maths, serif,
 bold-and-italic and matching fixtures, and runs the legacy cost and bare-runtime/seek
-gates, the visual order of bidi runs, the right-aligned footer and the
+gates, the visual order of bidi runs, the page’s right-to-left captions and the
 cluster pairing. The second also compares stored IDs, clusters and placement with
 a separate direct HarfBuzz oracle (for Hebrew and each bold and italic cut too),
 checks maths symbol glyphs and fraction/script layout, deterministic refresh,
@@ -255,3 +256,9 @@ draws the same path data Node draws from the same runs (`npm run test:embeds`
 runs it; `CHROMIUM_EXECUTABLE_PATH` may select a system browser). It also checks
 that a Hebrew caption aligns right on the page and an English one left. No screenshot or browser assertion substitutes for the outline and
 receipt comparisons.
+
+## Compatibility and build identity
+
+The legacy opt-out fingerprint and byte pins preserve the unrequested-lettering contract. They are compatibility checks, not a complete list of page inputs. `tools/lib/build-inputs.ts` owns that list for review and export, including the player, build tools, dependencies and notices; installed commands also count the compiled JavaScript they execute. New producer files join the fingerprint automatically. Documentation and generated checkout output do not invalidate it.
+
+Keep changes to the compatibility entrypoint and its pins explicit and review them together with the rendered output. The subset and outline workflows retain their existing snapshot formats. Both public entrypoints export the complete `LetteringRequest` type; the subset implementation uses the narrower `SubsetLetteringRequest` internally.

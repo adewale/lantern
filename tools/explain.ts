@@ -8,25 +8,26 @@ import { serve } from './lib/explain-serve.ts';
 import { collectProject, defaultVariant, sceneSlug, ROOT } from './lib/explain-project.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
 
-// Optional peer packages, by what needs them; package.json pins their versions.
+// Authoring packages, grouped for installation error messages.
 const CAPTURE = ['agentic-mermaid', 'playwright-core', 'svgpath'],
   RASTER = ['@resvg/resvg-js'];
-const pkg: { version: string; peerDependencies: Record<string, string> } = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
-const peers = pkg.peerDependencies;
+const pkg: { version: string; dependencies: Record<string, string> } = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+const peers = pkg.dependencies;
 const install = (names: string[]) => 'npm i ' + names.map((n) => `${n}@${peers[n]}`).join(' ');
-const HELP = `Rayner ${pkg.version} (Node 26+)
+const HELP = `Rayner ${pkg.version} (Node 24+)
 
 Usage: rayner <command> <scene.ts | directory> [options]
 
 Commands:
   init <directory>    Write a scene with one setting
-  preview <scene>     Build, print step contact sheet, serve on localhost
+  preview <scene>     Build and serve on localhost
   snapshots <scene>   Run every case, capture/verify diagrams and replay morph edits
   check <scene>       Every case: seek, motion, skipped trace, bare runtime, step
                       change, still after the caption hold, text collision,
                       legibility, words for every drawing, catch lint
+  review <scene>      Check every case, then review its served reader at phone
+                      and desktop widths; optional <scene>.review.json claims
   build <scene>       HTML, receipt, header recipe, loader.js
-  render <scene>      Silent MP4 (or .webm), captions, chapters and receipt
   shots <scene>       Step contact sheet as SVG and PNG
   describe <scene>    Every case and step as JSON for agents: words, state, what
                       changed, the picture in words and drawn as text
@@ -41,20 +42,16 @@ asks for that script with meta.lettering.
 Options:
   --out <path>        Artifact destination
   --refresh           Re-render snapshots instead of using the pinned cache
-  --footer            1280 × 960 caption-footer video preset
-  --width <even>      Stage-only video width (default 1280)
-  --fps <1–120>       Video frame rate (default 30)
-  --all               Export videos for every declared case
-  --case id=value     Export (render) or show (shots, see) one case; repeat for multiple settings
+  --case id=value     Show (shots, see) one case; repeat for multiple settings
   --port <integer>    Preview server port (default 5174)
-  --watch             Preview: rebuild the page and contact sheet on save
+  --watch             Preview: rebuild the page on save
+  --claims <path>     Review: use this JSON file instead of <scene>.review.json
   --version           Print the version
 
-A default install leaves out what diagrams, PNGs and video need:
-  Diagram capture     ${install(CAPTURE)}
-                      and Chromium: npx playwright-core install chromium,
-                      or set CHROMIUM_EXECUTABLE_PATH
-  PNG and video       ${install(RASTER)}; render also needs ffmpeg on PATH
+Diagram capture is included. Install Chromium once:
+  npx playwright-core install chromium
+  or set CHROMIUM_EXECUTABLE_PATH
+PNG output is included.
 `;
 export async function main(args = process.argv.slice(2)): Promise<void> {
   if (!args.length || args.includes('--help') || args[0] === 'help') {
@@ -70,14 +67,11 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     allowPositionals: true,
     options: {
       out: { type: 'string' },
-      width: { type: 'string', default: '1280' },
-      fps: { type: 'string', default: '30' },
       case: { type: 'string', multiple: true },
       port: { type: 'string', default: '5174' },
       refresh: { type: 'boolean' },
-      footer: { type: 'boolean' },
-      all: { type: 'boolean' },
       watch: { type: 'boolean' },
+      claims: { type: 'string' },
     },
   });
   const [command, input, ...extra] = positionals;
@@ -123,10 +117,16 @@ export default class MyExplainer extends Scene {
     console.log(`Created ${join(dir, 'scene.ts')}`);
     return;
   }
-  if (!['preview', 'snapshots', 'check', 'build', 'render', 'shots', 'describe', 'see'].includes(command!))
+  if (!['preview', 'snapshots', 'check', 'review', 'build', 'shots', 'describe', 'see'].includes(command!))
     throw new Error(`Unknown command: ${command}`);
-  const project = await collectProject(input, { refresh: flags.refresh, captureLettering: command === 'snapshots' || command === 'preview' });
+  const collection = { refresh: flags.refresh, captureLettering: command === 'snapshots' || command === 'preview' };
+  const project = await collectProject(input, collection);
   const slug = sceneSlug(project);
+  if (command === 'review') {
+    const { reviewScene } = await import('./lib/explain-review-scene.ts');
+    console.log(JSON.stringify(await reviewScene(project, flags.out ?? resolve('out/review', slug), flags.claims), null, 2));
+    return;
+  }
   if (command === 'snapshots') {
     console.log(
       JSON.stringify(
@@ -166,29 +166,6 @@ export default class MyExplainer extends Scene {
     }
     return defaultVariant(project, values);
   }
-  if (command === 'render') {
-    const { renderVideo } = await import('./lib/explain-video.ts');
-    const variants = flags.all ? project.variants : [selectedVariant()];
-    const output = flags.out ?? resolve('out/videos', slug + '.mp4');
-    for (const v of variants) {
-      const suffix = Object.entries(v.values)
-        .map(([id, value]) => `${encodeURIComponent(id)}=${encodeURIComponent(value)}`)
-        .join('__');
-      const out = variants.length > 1 ? output.replace(/(\.[^.]+)$/, `-${suffix}$1`) : output;
-      console.log(
-        JSON.stringify(
-          await renderVideo(project, v, out, {
-            footer: !!flags.footer,
-            width: Number(flags.width),
-            fps: Number(flags.fps),
-          }),
-          null,
-          2,
-        ),
-      );
-    }
-    return;
-  }
   if (command === 'see') {
     const { see } = await import('./lib/explain-see.ts');
     console.log(await see(project, selectedVariant(), step, flags.out));
@@ -208,10 +185,6 @@ export default class MyExplainer extends Scene {
     `Built ${out} (${Math.round(Buffer.byteLength(result.html) / 1024)} KiB; ${project.variants.length} cases)`,
   );
   if (command === 'preview') {
-    const { contactSheet } = await import('./lib/explain-shots.ts');
-    const shots = out.replace(/\.html$/, '.steps.png');
-    await contactSheet(project, shots);
-    console.log(`Step contact sheet: ${shots}`);
     // The page is served from disk with its header recipe, so a rebuild shows on reload.
     const { url } = await serve(dirname(out), Number(flags.port), basename(out));
     console.log(
@@ -225,14 +198,13 @@ export default class MyExplainer extends Scene {
       watch(dirname(project.file), { recursive: true }, (_, name) => {
         // Source edits only: the rebuild's own outputs (page, sheet, snapshots) must not retrigger it.
         if (!name || !/\.(ts|mts|js|mjs)$/.test(name) || /\.snapshots(\/|\.json$)/.test(name)) return;
-        if ([out, shots].includes(resolve(dirname(project.file), name))) return;
+        if (resolve(dirname(project.file), name) === resolve(out)) return;
         clearTimeout(timer);
         timer = setTimeout(() => {
           running = running.then(async () => {
             try {
-              const next = await collectProject(input!);
+              const next = await collectProject(input!, collection);
               await buildExplainer(next, out);
-              await contactSheet(next, shots);
               console.log(`Rebuilt ${slug}: ${next.variants.length} cases`);
             } catch (error) {
               console.error(`rayner: ${(error as Error).message} (still serving the last good build)`);
@@ -249,7 +221,7 @@ if (
   import.meta.url === pathToFileURL(realpathSync(resolve(process.argv[1]))).href
 )
   main().catch((error) => {
-    // Capture uses optional packages a default install leaves out; name what to install.
+    // Diagnose an incomplete authoring install with the pinned dependency versions.
     const missing = error.code === 'ERR_MODULE_NOT_FOUND' && /Cannot find package '([^']+)'/.exec(error.message)?.[1];
     const group = missing && [CAPTURE, RASTER].find((g) => g.includes(missing));
     console.error(

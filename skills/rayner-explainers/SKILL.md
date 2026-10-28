@@ -1,15 +1,15 @@
 ---
 name: rayner-explainers
-description: Author, check and publish Rayner explainers as reader-paced HTML embeds and optional silent captioned video. Use for step-through diagrams, code-change explanations, protocol walkthroughs and program-driven animation.
+description: Author, check and publish Rayner explainers as reader-paced HTML embeds. Use for step-through diagrams, code-change explanations, protocol walkthroughs and program-driven animation.
 ---
 
 # Rayner explainers
 
-An explainer is one Rayner `Scene`. The CLI builds it into a step-through HTML page and, optionally, a video. It needs no server or MCP. Start with [Your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md) for a worked cache example. Read the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) before you host a page or export a video.
+An explainer is one Rayner `Scene`. The CLI builds it into a step-through HTML page. It needs no server or MCP. Start with [Your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md) for a worked cache example. Read the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) before you host a page.
 
 ## Loop
 
-Commands are `rayner <command>`, or `npm run rayner -- <command>` in a checkout; `rayner --help` prints the install lines for capture and video.
+Commands are `rayner <command>`, or `npm run rayner -- <command>` in a checkout; `rayner --help` prints the install lines for capture and PNG output.
 
 1. `rayner init <directory>` writes a working `scene.ts`. Keep one default-exported `Scene` subclass with static `meta` (id, title, sources, and `lang` if not English) and, if a second case teaches something, static `settings`.
 2. Derive every value on screen from a small model of the system, kept apart from the drawing code, and test it; the checks cannot tell whether a caption is true. See [Test the model](#test-the-model).
@@ -21,7 +21,7 @@ Commands are `rayner <command>`, or `npm run rayner -- <command>` in a checkout;
 8. `rayner preview scene.ts --watch` and `rayner shots scene.ts --case id=value`: look at every step of every case. A passing build is not a visual review.
 9. `rayner check scene.ts`. Fix failures at their cause; `out/checks/<id>/report.json` draws each resting picture roughly in text. Its `legibility.labelsUnder12PxAt390` counts labels a phone reader sees under 12 px in the step's close-up; get it to 0 in every case (a heading at `stage(this, { headingSize: 0.54 })` reads at 12 px). Making text larger so it reads at 12 px fixes the problem; changing the check, its threshold, or hiding labels so they are not counted is weakening it.
 10. `rayner describe scene.ts --out out/<id>.json` and read each step of each case: does the caption claim only what that step's `changed` and `picture` show? Rewrite a caption that names a value, mark or path the step does not show, or change the step so it shows it. `rayner see scene.ts <step> --case id=value` prints one step.
-11. `rayner build scene.ts --out public/<id>.html`; optionally `rayner render scene.ts --out public/<id>.mp4 --footer`, which also writes `<id>.transcript.html`.
+11. `rayner build scene.ts --out public/<id>.html`.
 
 ## Start from an example
 
@@ -69,6 +69,8 @@ Report the commands you ran, the artifact paths and what the checks found. Do no
 - that a local build was deployed, released or tried by an outside author;
 - that a model is a complete implementation, or that a caption proves a security or scientific claim;
 - support for styles, scripts or SVG features the collection does not test;
-- identical video bytes across FFmpeg builds.
+- that a passing build replaces a visual review.
 
 The engine is a fork of Lantern by Ivar Vong (MIT). Keep the MIT and font notices, and do not imply endorsement by Lantern or Agentic Mermaid.
+
+Before publishing, run `rayner review scene.ts` (or `npm run rayner -- review scene.ts` in a checkout). It runs the checks and opens every case and step at phone and desktop widths, saving screenshots and a receipt. Add `scene.review.json` with independent caption subjects where helper intent does not name the story; see [reader review](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md#reader-review). `build` writes artifacts without repeating these checks.

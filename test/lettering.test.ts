@@ -5,7 +5,9 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { mkdtemp, writeFile, readFile, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, cp, symlink, rm } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -19,7 +21,6 @@ import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
 import { loadFonts, shaperFor, SnapshotSink, renderAt } from '../src/index.ts';
 import { useLettering, takeMissingGlyphs } from '../src/lettering.ts';
 import { takeMissingGlyphs as takeEmbeddedMissing } from '../src/index.ts';
-import { footerLines } from '../tools/lib/explain-video.ts';
 import { loadFont } from '../vendor/glyph.js';
 import { restingTime } from '../explain/trace.ts';
 
@@ -67,23 +68,28 @@ test('explainers that ask for no lettering build the page, headers and receipt t
   for (const id of ids) assert.deepEqual(now[id], pins[id], `${id} no longer builds what it built before lettering on request`);
 });
 
-/** The engine hash as loadScene computes it, with or without src/lettering.ts. */
-async function engineHashOf(lettered: boolean) {
-  const inputs: string[] = [];
-  for (const dir of ['src', 'explain', 'integrations/agentic-mermaid'])
-    for (const name of (await readdir(join(ROOT, dir))).filter((n) => n.endsWith('.ts') && !['lettering-outlines.ts', 'math.ts', 'italic.ts'].includes(n)).sort())
-      if (lettered || dir + '/' + name !== 'src/lettering.ts')
-        inputs.push(dir + '/' + name + '\n' + (await readFile(join(ROOT, dir, name), 'utf8')).replace("import type { LetteringRequest } from '../src/lettering-outlines.ts';\n", '').replace('; lettering?: LetteringRequest', '').replace(/\n\/\/ Optional lettering: tree-shaken[\s\S]*?\/\/ End optional lettering\.\n/, ''));
-  inputs.push(await readFile(join(ROOT, 'vendor/glyph.js'), 'utf8'));
-  return sha256(inputs.join('\n'));
-}
-
-test('the engine hash counts src/lettering.ts only for an explainer that asks for lettering', async () => {
-  const plain = await collectProject(join(ROOT, 'scenes/explainers/seasons'), { write: false });
-  assert.equal(plain.engineHash, await engineHashOf(false));
-  const lettered = await collectProject(FIXTURE, { write: false });
-  assert.equal(lettered.engineHash, await engineHashOf(true));
-  assert.notEqual(plain.engineHash, lettered.engineHash);
+// Mutate real inputs in an isolated package, rather than repeating the producer's hash algorithm.
+test('optional lettering code changes its engine fingerprint without changing an opt-out fingerprint', async () => {
+  const copy = await mkdtemp(join(tmpdir(), 'rayner-hash-contract-'));
+  try {
+    for (const name of ['src', 'explain', 'integrations', 'tools', 'vendor'])
+      await cp(join(ROOT, name), join(copy, name), { recursive: true });
+    await cp(join(ROOT, 'package.json'), join(copy, 'package.json'));
+    await symlink(join(ROOT, 'node_modules'), join(copy, 'node_modules'), 'dir');
+    const plain = join(copy, 'plain.ts'), lettered = join(copy, 'lettered.ts');
+    await writeFile(plain, `import{Scene}from'rayner';export default class Plain extends Scene{}`);
+    await writeFile(lettered, `import{Scene}from'rayner';export default class Lettered extends Scene{static meta={lettering:{scripts:['Grek']}};}`);
+    const run = promisify(execFile);
+    const fingerprints = async () => JSON.parse((await run(process.execPath, ['--input-type=module', '-e',
+      `import{loadScene}from${JSON.stringify(join(copy, 'tools/lib/explain-project.ts'))};console.log(JSON.stringify(await Promise.all(${JSON.stringify([plain, lettered])}.map(async file=>(await loadScene(file)).engineHash))));`
+    ])).stdout) as [string, string];
+    const before = await fingerprints();
+    const optional = join(copy, 'src/lettering.ts');
+    await writeFile(optional, (await readFile(optional, 'utf8')) + '\n// independently changed optional implementation\n');
+    const after = await fingerprints();
+    assert.equal(after[0], before[0], 'opt-out compatibility fingerprint stays stable');
+    assert.notEqual(after[1], before[1], 'requested lettering counts its actual implementation');
+  } finally { await rm(copy, { recursive: true, force: true }); }
 });
 
 test('a page that asks for nothing carries no lettering code, and building a lettered one first leaks nothing into it', async () => {
@@ -146,13 +152,14 @@ test('the legacy subset request parser rejects unsupported fields and scripts', 
   assert.deepEqual(letteringRequest({ meta: { lettering: { scripts: ['Cyrl', 'Latn'] } } }), { scripts: ['Cyrl', 'Latn'] });
 });
 
-// The fixture asks for Greek and draws it in Inter (a card's title, free text, the captions the
-// video footer draws) and in JetBrains Mono (a card's values and code). JetBrains Mono has no ῶ,
+// The fixture asks for Greek and draws it in Inter (a card's title and free text) and in
+// JetBrains Mono (a card's values and code). JetBrains Mono has no ῶ,
 // so code's ῶ comes from the Inter cut: the mono chain tries mono's cut, then sans's.
 const greek = (s: string) => [...new Set([...s].filter((c) => SCRIPTS.Grek.some(([a, b]) => c.codePointAt(0)! >= a && c.codePointAt(0)! <= b)))];
 const cps = (chars: string[]) => chars.map((c) => c.codePointAt(0)!).sort((a, b) => a - b);
 const EXPECTED = {
-  sans: cps(greek('Αλφάβητο Ελληνικά λόγος φῶς')),
+  // Sans draws the title/free text and the mono face’s missing omega-with-circumflex.
+  sans: cps(greek('Αλφάβητο Ελληνικά ῶ')),
   mono: cps(greek('λόγος φς αβγ')),
 };
 
@@ -230,17 +237,9 @@ test('a lettered explainer passes every check, its bare runtime included, and re
   assert.equal('lettering' in plain, false);
 });
 
-test('the video footer of a lettered explainer draws its Greek and still fails on a letter nobody asked for', async () => {
+test('a requested face records only the glyphs absent from every available face', async () => {
   const project = await collectProject(FIXTURE, { write: false });
-  const v = defaultVariant(project);
-  const captioned = (caption: string) => ({ ...v.trace, steps: v.trace.steps.map((s) => ({ ...s, meta: { ...s.meta, caption } })) });
-  // Its own titles and captions: the cuts hold their letters
-  assert.equal((await footerLines(v.trace, v.values))[0]![1]!.join(' '), 'The word λόγος means word.');
-  // A Greek letter the explainer never drew is not in the cut, so it fails like any other. The
-  // footer reads the engine's record, which names every letter of the string the embedded faces lack.
-  await assert.rejects(footerLines(captioned('λέξη'), v.values), /cannot draw: λ έ ξ η/);
-  // tools/lib/explain-video.ts reads the engine's record, which a lettered string with a missing letter reaches too
-  await assert.rejects(footerLines(captioned('λόγος жук'), v.values), /cannot draw: ж у к/);
+  await useProjectLettering(project);
   takeMissingGlyphs();
   shaperFor('sans')('λж', 1);
   assert.deepEqual([...takeEmbeddedMissing()], [['λж', 'λж']], 'the engine names all the embedded faces lack');

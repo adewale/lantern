@@ -239,6 +239,7 @@ export default class WcagMapExplainer extends Scene {
           'Drafts of WCAG 2.2 from February 2020 to January 2023 made 2.4.7 Focus Visible level A. From the May 2023 draft on it is AA again, as in 2.0 and 2.1, but the October 2023 Recommendation’s change log still listed the move to A. The December 2024 update deleted that entry.',
       });
       await d.dim([gid('2.4'), cid('2.4.7')]);
+      await d.mark([cid('2.4.7')], { as: 'still level AA' });
       this.state.focusVisible = criteria('2.2', level, '2.4').find((c) => c.num === '2.4.7')!.level;
     }
 

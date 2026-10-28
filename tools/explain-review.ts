@@ -1,23 +1,39 @@
 // Review the built collection as served, not just its source. Run demos:build (or demos:check) first;
-// if demos:render has made videos, their byte ranges are checked too.
-import { stepWords } from '../explain/trace.ts';
+// Checks every resting step in every served case on desktop and phone.
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import type { Browser } from 'playwright-core';
+import type { Browser, Page } from 'playwright-core';
 import { launch } from './lib/browser.ts';
-import { collectProject, defaultVariant, ROOT } from './lib/explain-project.ts';
+import { collectProject, sceneInputs, ROOT } from './lib/explain-project.ts';
 import { serve } from './lib/explain-serve.ts';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
+import {
+  reviewScope,
+  inReviewScope,
+  readStoryPlan,
+  reviewCodeHash,
+  validateReviewedCases,
+} from './lib/explain-review-plan.ts';
+import { reviewStoryVariant, STORY_CLAIMS } from './lib/explain-story-review.ts';
 
-const server = await serve(join(ROOT, 'out'), 0, 'explainers/'),
-  base = server.url;
-let browser: Browser | undefined;
+let server: Awaited<ReturnType<typeof serve>> | undefined;
+let browser: Browser | undefined, page: Page | undefined;
+let codeHash: string | undefined;
+const scope = reviewScope(process.argv.slice(2));
+const suffix = scope.total === 1 ? '' : `shard-${scope.part}-of-${scope.total}`;
+const receipt = join(ROOT, 'out/validation', `browser-review${suffix ? '-' + suffix : ''}.json`);
+const review = join(ROOT, 'out/review', suffix);
 try {
+  await rm(receipt, { force: true });
+  await rm(review, { recursive: true, force: true });
+  codeHash = await reviewCodeHash(ROOT);
+  server = await serve(join(ROOT, 'out'), 0, 'explainers/');
+  const base = server.url;
   browser = await launch();
-  const page = await browser.newPage({ viewport: { width: 1180, height: 980 } });
+  page = await browser.newPage({ viewport: { width: 1180, height: 980 } });
   const errors: string[] = [],
     connections: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
@@ -30,7 +46,6 @@ try {
     connections.push(url);
     return route.abort();
   });
-  const review = join(ROOT, 'out/review');
   await mkdir(review, { recursive: true });
   await page.goto(base + '/explainers/');
   await page.evaluate(async () => {
@@ -39,63 +54,45 @@ try {
     await Promise.all(images.map((image) => image.decode()));
   });
   await page.screenshot({ path: join(review, 'gallery.png'), fullPage: true, animations: 'disabled' });
+  const plan = await readStoryPlan(join(ROOT, 'out/explainers'));
+  const planned = plan.cases.filter((_, i) => inReviewScope(i, scope));
+  assert.ok(planned.length, 'story shard selects no cases');
+  let ordinal = 0;
   const cases = [];
   for (const entry of EXPLAINERS) {
-    const project = await collectProject(join(ROOT, 'scenes/explainers', entry.id), { write: false }),
-      defaults = defaultVariant(project);
-    for (const variant of project.variants) {
-      // The gallery tile's step, or the first, as the player falls back.
-      const step = variant.trace.steps.find((s) => s.step === entry.step) ?? variant.trace.steps[0]!;
-      const query = new URLSearchParams({ ...variant.values, step: step.step });
-      await page.goto(`${base}/explainers/${entry.id}.html?${query}`);
-      await page.waitForSelector('[data-ready=true]').catch((error: Error) => {
-        throw new Error(`${entry.id}?${query} never became ready (${errors.join('; ') || 'no page errors'})`, {
-          cause: error,
-        });
-      });
-      assert.equal(await page.locator('[aria-current=step]').getAttribute('data-step'), step.step);
-      assert.equal(await page.locator('.caption').innerText(), stepWords(step).caption);
-      assert.ok((await page.locator('.stage path').count()) > 0, entry.id + ' has no stage artwork');
-      for (const viewport of [
-        { width: 390, height: 844 },
-        { width: 1180, height: 980 },
-      ]) {
-        await page.setViewportSize(viewport);
-        await page.evaluate(
-          () =>
-            new Promise<void>((resolve) =>
-              requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-            ),
-        );
-        assert.equal(
-          await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),
-          false,
-          entry.id + ' overflows',
-        );
-        if (variant === defaults)
-          await page.screenshot({
-            path: join(review, entry.id + (viewport.width === 390 ? '.mobile.png' : '.desktop.png')),
-            fullPage: true,
-            animations: 'disabled',
-          });
-      }
-      cases.push({ scene: entry.id, settings: variant.values, step: step.step });
+    const project = await collectProject(join(ROOT, 'scenes/explainers', entry.id), { write: false });
+    assert.deepEqual(
+      JSON.parse(await readFile(join(ROOT, 'out/explainers', entry.id, 'inputs.json'), 'utf8')),
+      await sceneInputs(project),
+      `${entry.id}: rebuild stale collection output before reviewing`,
+    );
+    let selected = 0;
+    for (const [index, variant] of project.variants.entries()) {
+      if (!inReviewScope(ordinal++, scope)) continue;
+      selected++;
+      const directory = join(review, 'story', entry.id, String(index));
+      await mkdir(directory, { recursive: true });
+      const steps = await reviewStoryVariant(
+        page,
+        `${base}/explainers/${entry.id}.html`,
+        variant,
+        STORY_CLAIMS[entry.id],
+        directory,
+      );
+      cases.push({ scene: entry.id, settings: variant.values, steps });
     }
+    if (selected) console.log(`${entry.id}: ${selected} selected cases, every resting step passed both widths`);
   }
+
+  validateReviewedCases(cases, planned);
   const headers = await fetch(base + '/explainers/exgit.html', { method: 'HEAD' });
   assert.match(headers.headers.get('content-security-policy') ?? '', /connect-src 'none'/);
   assert.equal(headers.headers.get('x-frame-options'), null);
-  // Videos are made apart from the pages (npm run videos); check their delivery when there are any.
-  const video = await fetch(base + '/videos/exgit.mp4', { method: 'HEAD' });
-  const videos = video.status === 200;
-  if (videos) {
-    const range = await fetch(base + '/videos/exgit.mp4', { headers: { range: 'bytes=0-31' } });
-    assert.equal(range.status, 206);
-    assert.equal((await range.arrayBuffer()).byteLength, 32);
-  }
+
   await page.goto(base + '/explainers/embed-lab.html');
   await page.waitForFunction(() => document.querySelectorAll('iframe').length === 2);
-  for (const frame of page.frames().filter((frame) => frame !== page.mainFrame()))
+  const mainFrame = page.mainFrame();
+  for (const frame of page.frames().filter((frame) => frame !== mainFrame))
     await frame.waitForSelector('[data-ready=true]');
   await page.waitForFunction(() =>
     [...document.querySelectorAll('iframe')].every((frame) => {
@@ -108,18 +105,28 @@ try {
   // Graph and Twitter card tags, with absolute https URLs and pictures at the declared size.
   const site = await mkdtemp(join(tmpdir(), 'rayner-site-'));
   try {
-    const exported = spawnSync(process.execPath, [join(ROOT, 'tools/explain-site.ts'), site, '--origin', 'https://example.org'], { encoding: 'utf8' });
+    const exported = spawnSync(
+      process.execPath,
+      [join(ROOT, 'tools/explain-site.ts'), site, '--origin', 'https://example.org'],
+      { encoding: 'utf8' },
+    );
     assert.equal(exported.status, 0, `site:export --origin failed:\n${exported.stderr.slice(-4000)}`);
     console.log(exported.stdout.split('\n').find((line) => line.includes('Twitter card')));
   } finally {
     await rm(site, { recursive: true, force: true });
   }
+  assert.deepEqual(errors, []);
+  assert.deepEqual(connections, []);
   await mkdir(join(ROOT, 'out/validation'), { recursive: true });
   await writeFile(
-    join(ROOT, 'out/validation/browser-review.json'),
+    receipt,
     JSON.stringify(
       {
+        scope,
+        catalogHash: plan.catalogHash,
+        reviewCodeHash: codeHash,
         cases: cases.length,
+        stepWidths: cases.reduce((n, c) => n + c.steps.length, 0),
         results: cases,
         consoleErrors: errors,
         runtimeConnections: connections,
@@ -128,12 +135,27 @@ try {
       2,
     ) + '\n',
   );
-  assert.deepEqual(errors, []);
-  assert.deepEqual(connections, []);
   console.log(
-    `${cases.length} served cases passed desktop/mobile, caption, artwork, no-error and no-external-connection checks. Response headers${videos ? ', video byte ranges' : ''}, link preview tags and the two-embed host page passed${videos ? '' : '; no videos were built, so their delivery was not checked'}. Screenshots: ${review}`,
+    `${cases.length} served cases, every resting step at both widths, passed caption, actual paint, story-target, no-error and no-external-connection checks. Response headers, link preview tags and the two-embed host page passed. Screenshots: ${review}`,
   );
+} catch (error) {
+  await mkdir(review, { recursive: true });
+  let screenshotError: string | undefined;
+  try {
+    await page?.screenshot({ path: join(review, 'failure.png'), fullPage: true });
+  } catch (e) {
+    screenshotError = String(e);
+  }
+  await writeFile(
+    join(review, 'failure.json'),
+    JSON.stringify(
+      { scope, reviewCodeHash: codeHash, url: page?.url(), error: String(error), screenshotError },
+      null,
+      2,
+    ) + '\n',
+  );
+  throw error;
 } finally {
   await browser?.close();
-  server.close();
+  server?.close();
 }
