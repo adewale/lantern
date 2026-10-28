@@ -1,3 +1,5 @@
+> Historical review of the original proposal. The fixes and final verification are recorded in [reader benchmark validation](reader-bench/validation.md).
+
 # PR #11 benchmark test review
 
 Review target: original reader-benchmark proposal on `origin/claude/reader-bench`, with arithmetic preserved in `out/test-audit/bench-original/tools/lib/bench-stats.ts`. Locations below refer to that proposal, not the current main tree. This review distinguishes a helper's stated semantics from the broader reader experience the benchmark intends to measure.

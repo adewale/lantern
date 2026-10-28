@@ -61,7 +61,9 @@ test('external source and compiled ESM scenes share the CLI engine; source hashe
     assert.match(html, /SIL OPEN FONT LICENSE/);
     const refused = failure(() => execFileSync(process.execPath, [cli, 'not-a-command', a], { stdio: 'pipe' }));
     assert.equal(refused?.status, 1, 'an unknown command must exit 1');
-    assert.match(String(refused?.stderr), /^rayner: Unknown command: not-a-command/);
+    // Node 24.0 emits its type-stripping warning before the source CLI runs.
+    // Require the CLI's own error line without assuming it owns all of stderr.
+    assert.match(String(refused?.stderr), /^rayner: Unknown command: not-a-command$/m);
   } finally {
     await rm(folder, { recursive: true, force: true });
   }
