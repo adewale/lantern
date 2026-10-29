@@ -109,7 +109,7 @@ jobs:
         with:
           name: rayner-catalog-${{ github.sha }}
           path: out/explainers/
-      - run: npm run demos:review -- --shard ${{ matrix.part }}/3
+      - run: node tools/ci-tests.ts "$(command -v npm)" run demos:review -- --shard ${{ matrix.part }}/3
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:

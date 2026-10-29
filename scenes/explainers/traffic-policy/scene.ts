@@ -97,7 +97,9 @@ function byShare(s: Record<string, Q>): [Q, string[]][] {
 const shareRows = (s: Record<string, Q>) =>
   byShare(s).map(([share, ids]) => [podList(ids).replace(/^p/, 'P'), `${frac(share)}${ids.length > 1 ? ' each' : ''} (${percent(share)})`] as const);
 
-const DIAGRAM: Box = [-7.55, -1.25, 7.55, 3.2];
+// The widest Cluster topology needs the full stage width to keep every
+// imported service label above the completed-view readability floor.
+const DIAGRAM: Box = [-7.95, -1.25, 7.95, 3.2];
 const BELOW: Box = [-7.55, -4.25, 7.55, -1.45];
 const SIZE = 0.24;
 
