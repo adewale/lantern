@@ -54,9 +54,9 @@ export default class PasswordExplainer extends Scene {
       suggestion = found.suggestions![0]!;
 
     await this.step('boundary', {
-      title: 'find starts by listing item titles',
-      line: `The agent's find asks op, which lists ${ITEMS.length} sample items.`,
-      caption: `2password lets a coding agent find and use 1Password secrets without seeing them. Here the agent runs find with two queries, ${hitQuery} and the typo ${missQuery}, against three sample items from 2password’s own tests.`,
+      title: 'The agent searches item titles, not secret values',
+      line: `find asks op for the titles of ${ITEMS.length} sample items.`,
+      caption: `The agent needs to choose a secret without receiving its value. 2password first asks op for item titles: it can search those names and return a reference, then let op pass the value to the launched app. Here find searches ${hitQuery} and the typo ${missQuery} among three sample items from 2password’s own tests.`,
     });
     const boundary = await s.show({ source: BOUNDARY }, { box: 'top' });
     await boundary.walk(
@@ -153,7 +153,7 @@ export default class PasswordExplainer extends Scene {
     this.state.auth = auth;
 
     await this.step('reference', {
-      title: 'find prints references and drops the values',
+      title: 'find returns references but does not print secret values',
       line: 'A reference names vault, item and field; no secret value is printed.',
       caption:
         'find returns a reference for each match and suggestion, and drops field values while it decodes op’s reply. A reference names a vault, an item and a field: the underlined parts of the Cloud API reference.',

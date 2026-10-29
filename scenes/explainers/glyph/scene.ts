@@ -113,7 +113,7 @@ function pairLines(pairs: Array<[Mobject, Mobject]>, ghostOf: (m: Mobject) => Mo
 export default class GlyphExplainer extends Scene {
   static meta = {
     id: 'glyph',
-    title: 'Rayner draws text from measured glyph outlines',
+    title: 'Why Rayner measures glyphs before drawing text',
     sources: ['https://github.com/ivarvong/lantern/blob/2c7bad5/src/text.ts'],
   };
   static settings = [
@@ -138,10 +138,10 @@ export default class GlyphExplainer extends Scene {
       theirs = shape(other, WORD);
 
     await this.step('write', {
-      title: 'Letters are outlines from an embedded font',
-      line: 'Write traces every contour; the close-up shows points and handles.',
+      title: 'A letter needs both an outline and a measured width',
+      line: 'Write traces the contour; the next step measures its advance.',
       caption:
-        'Each letter is a vector path from a font bundled with Rayner; no installed font is asked for. Write traces every contour. The close-up shows one glyph’s points and handles.',
+        'Why can the same word take different space in two fonts? Each letter is an outline from a font bundled with Rayner, with an advance that tells the next letter where to start. Write traces those contours here; the close-up shows points and handles. The next step compares the measured widths before later steps show what changes during a morph. No installed font is needed.',
     });
     const text = new Text(WORD, { font, fontSize: font === 'sans' ? 1.5 : 1.15, color: ink, fillOpacity: 0 });
     text.setStroke(ink, 0.018);

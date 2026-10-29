@@ -206,7 +206,7 @@ export default class TailwindGamutExplainer extends Scene {
     await this.step('oklch', {
       title: 'Tailwind 4 writes each colour as lightness, chroma and hue',
       line: 'Each line reads oklch(L C h); C, chroma, is distance from grey.',
-      caption: `Tailwind CSS 4.3.3’s theme.css writes all 286 palette shades as oklch(L C h): lightness, chroma (how far from grey) and hue angle. The v4.0 announcement says the move from rgb to oklch makes colours more vivid where sRGB had limited them. This page takes the ${shade} shade of the ${n} coloured families.`,
+      caption: `Tailwind CSS 4.3.3’s theme.css writes all 286 palette shades as oklch(L C h): lightness, chroma (how far from grey) and hue angle. The v4.0 announcement says the move from rgb to oklch makes colours more vivid where sRGB had limited them. This page takes the ${shade} shade of the ${n} coloured families. We will compare each shade with the limits of sRGB and Display P3, then show what the selected screen does when a colour lies outside its range.`,
     });
     const code = await s.code(
       [`/* theme.css, v4.3.3: the ${shade} shades */`, ...all.map((r) => THEME_LINES[r.line]!.trim())],

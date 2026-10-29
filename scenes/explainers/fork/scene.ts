@@ -24,7 +24,7 @@ const ABOVE = regionBox('top', { bottom: -1.1 }),
 export default class ForkExplainer extends Scene {
   static meta = {
     id: 'fork',
-    title: 'What this fork keeps from Lantern, and what it replaces',
+    title: 'What changes when Lantern’s live player becomes a prebuilt page?',
     sources: [
       'https://github.com/ivarvong/lantern/blob/2c7bad5/README.md',
       'https://github.com/ivarvong/lantern/blob/2c7bad5/app/worker.ts',
@@ -37,10 +37,10 @@ export default class ForkExplainer extends Scene {
     const ink = s.palette.ink;
 
     await this.step('lantern', {
-      title: 'Lantern plays a scene in a live player and a Worker',
-      line: 'A fixed clock feeds the dev player and the Worker alike.',
+      title: 'Lantern runs each scene for its player and Worker',
+      line: 'The same fixed clock feeds both live readers.',
       caption:
-        'Lantern, at commit 2c7bad5, runs a Scene class on a fixed clock. A development player shows it with links to any step, and a Cloudflare Worker serves one frame as SVG or as text, or the whole trace as JSON, to people and agents alike.',
+        'What must change to send a scene as one HTML page instead of running it for each request? At commit 2c7bad5, Lantern’s development player reads a Scene on a fixed clock, while a Cloudflare Worker serves frames, text and traces on demand. We will keep the scene and its clock but replace that delivery path with a build, then count what readers gain and lose.',
     });
     const flow = await s.show({ source: LANTERN }, { box: ABOVE });
     await flow.walk([['Scene', 'Clock']], { trail: true });
@@ -186,7 +186,7 @@ export default class ForkExplainer extends Scene {
     );
 
     await this.step('cost', {
-      title: 'What the fork gave up',
+      title: 'A prebuilt page no longer exposes Lantern’s Worker endpoints',
       line: 'No agent endpoints, Inter everywhere, Chromium to capture.',
       caption:
         'Agents lose the Worker’s endpoints, and every diagram style is lettered in Inter. Capturing a new diagram needs Chromium at build time, though a page built from stored snapshots needs nothing. No engine change has gone upstream.',

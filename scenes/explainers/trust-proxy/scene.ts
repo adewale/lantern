@@ -167,7 +167,7 @@ export default class TrustProxyExplainer extends Scene {
       title: 'Two ways into one app',
       line: 'The load balancer also accepts connections from the internet.',
       caption:
-        'Requests are meant to reach Express through a CDN and then a load balancer, but the load balancer also accepts connections from the internet, so an attacker can skip the CDN. The addresses are examples. Assumed throughout: each proxy appends the address its connection came from to X-Forwarded-For.',
+        'Requests are meant to reach Express through a CDN and then a load balancer, but the load balancer also accepts connections from the internet, so an attacker can skip the CDN. The addresses are examples. Assumed throughout: each proxy appends the address its connection came from to X-Forwarded-For. When the CDN is skipped, does Express report the sender’s address or one the attacker wrote? Follow the header entries to see how the trust setting decides.',
     });
     const d = await s.show({ source: NETWORK }, { box: DIAGRAM });
     const addresses = await s.card(
