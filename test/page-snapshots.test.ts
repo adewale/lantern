@@ -1,7 +1,11 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {pageSnapshots} from '../tools/lib/page-snapshots.ts';
+import {pageSnapshots, packPageSnapshots} from '../tools/lib/page-snapshots.ts';
+import {decodeSnapshotPayload} from '../app/embed-snapshot-codec.ts';
+import {inflateSnapshots} from '../app/embed-snapshots.ts';
+import {gzipSync} from 'node:zlib';
 import type {SnapshotStore} from '../integrations/agentic-mermaid/snapshot.ts';
+import {RENDERER} from '../integrations/agentic-mermaid/snapshot.ts';
 import {fc, params} from './lib/pbt.ts';
 import {collectProject} from '../tools/lib/explain-project.ts';
 import {bindSnapshots} from '../explain/index.ts';
@@ -9,7 +13,7 @@ import {toSvgString} from '../src/index.ts';
 import type {SceneClass} from '../src/index.ts';
 
 const fixture = (points: number[]): SnapshotStore => ({
-  diagram: {version: 1, renderer: 'agentic-mermaid@0.4.1', spec: {source: 'graph LR\nA[Example]'}, family: 'flowchart', width: 123.4567890123, height: 100,
+  diagram: {version: 1, renderer: RENDERER, spec: {source: 'graph LR\nA[Example]'}, family: 'flowchart', width: 123.4567890123, height: 100,
     palette: {paper: '#ffffff', ink: '#000000', accent: '#ff0000', muted: '#808080'},
     parts: [{id: 'A', role: 'node', kind: 'node', shapes: [{subpaths: [points], closed: [false], style: {fill: 'none', stroke: '#000000', strokeWidth: 0.1234567890123}}]}], findings: {ok: true, warnings: []}},
 });
@@ -34,6 +38,100 @@ test('page path compaction preserves exact float32 bytes through JSON, including
   fc.assert(fc.property(fc.array(fc.double({min: -3.402823466e38, max: 3.402823466e38, noNaN: true, noDefaultInfinity: true}), {minLength: 2, maxLength: 38}), check), params(200));
 });
 
+test('path transport preserves independent JSON metadata, numeric bits and prototype-sensitive keys', () => {
+  fc.assert(fc.property(
+    fc.array(fc.double({min: -3.402823466e38, max: 3.402823466e38, noNaN: true, noDefaultInfinity: true}), {minLength: 4, maxLength: 38}),
+    fc.jsonValue(), fc.string(), (points, metadata, source) => {
+      const original = fixture(points);
+      original.diagram!.spec.source = source;
+      original.diagram!.layoutCertification = metadata;
+      original.diagram!.parts[0]!.channels = metadata;
+      original.diagram!.parts[0]!.shapes[0]!.subpaths.push([...points]);
+      const compact = pageSnapshots(Object.fromEntries(['__proto__', 'constructor', 'diagram'].map(key => [key, original.diagram!])));
+      const before = JSON.stringify(compact), independent = JSON.parse(before) as SnapshotStore;
+      const wire = JSON.parse(JSON.stringify(packPageSnapshots(compact)));
+      const decoded = decodeSnapshotPayload(wire);
+      assert.deepEqual(decoded, independent, 'every field and its ordering survives independent JSON transport');
+      assert.equal(JSON.stringify(decoded), before, 'object key order is preserved');
+      assert.equal(JSON.stringify(compact), before, 'packing never mutates its input');
+      assert.equal(Object.getPrototypeOf(decoded), Object.prototype);
+      assert.equal(Object.hasOwn(decoded, '__proto__'), true);
+      const restored = decoded.diagram!.parts[0]!.shapes[0]!.subpaths;
+      for (const path of restored) {
+        const actual = new Float32Array(path), expected = new Float32Array(independent.diagram!.parts[0]!.shapes[0]!.subpaths[0]!);
+        assert.deepEqual(Buffer.from(actual.buffer), Buffer.from(expected.buffer));
+      }
+      assert.notEqual(restored[0], restored[1]);
+      const sensitiveKey: string = 'constructor';
+      assert.notEqual(restored[0], decoded[sensitiveKey]!.parts[0]!.shapes[0]!.subpaths[0]);
+      restored[0]![0] = 42;
+      assert.equal(JSON.stringify(compact), before);
+      assert.deepEqual(decoded[sensitiveKey], independent[sensitiveKey]);
+      assert.deepEqual(restored[1], independent.diagram!.parts[0]!.shapes[0]!.subpaths[1]);
+    }), params(200));
+});
+
+test('only repeated long shape paths become references and restored arrays never alias', async () => {
+  const long = Array.from({length: 20}, (_, i) => i / 13), short = [0, 1], unique = long.map(n => n + 100);
+  const store = fixture(long);
+  store.diagram!.parts[0]!.shapes[0]!.subpaths = [long, [...long], short, [...short], unique];
+  const packed = packPageSnapshots(store);
+  assert.deepEqual(packed.paths, [long]);
+  assert.deepEqual(packed.store.diagram!.parts[0]!.shapes[0]!.subpaths, [0, 0, short, short, unique]);
+  const wire = JSON.stringify(packed);
+  const restored = await inflateSnapshots(gzipSync(wire).toString('base64'));
+  assert.deepEqual(restored, JSON.parse(JSON.stringify(store)));
+  const paths = restored.diagram!.parts[0]!.shapes[0]!.subpaths;
+  assert.notEqual(paths[0], paths[1]); assert.notEqual(paths[2], paths[3]);
+  paths[0]![0] = -123;
+  assert.equal(paths[1]![0], long[0]); assert.equal(packed.paths[0]![0], long[0]);
+  assert.equal(JSON.stringify(packed), wire);
+  paths[2]![0] = -456;
+  assert.deepEqual(paths[3], short);
+});
+
+test('packed transport rejects invalid references and malformed dictionary entries', () => {
+  for (const ref of [-1, 0.5, 1, Number.MAX_SAFE_INTEGER, NaN, Infinity, {}, '0', null, [0, 'bad']]) {
+    const payload = packPageSnapshots(fixture([0, 1]));
+    payload.paths = [[0, 1]];
+    payload.store.diagram!.parts[0]!.shapes[0]!.subpaths = [ref as number];
+    assert.throws(() => decodeSnapshotPayload(payload), /Invalid packed diagram snapshots/);
+  }
+  for (const paths of [null, {}, [null], [[Infinity]], [['1']], [[{}]], Array(1), [Array(2)]]) {
+    assert.throws(() => decodeSnapshotPayload({format: 'rayner-paths-v1', paths, store: {}}), /Invalid packed diagram snapshots/);
+  }
+  assert.throws(() => decodeSnapshotPayload({format: 'rayner-paths-v2', paths: [], store: {}}), /Invalid packed diagram snapshots/);
+  const sparse = packPageSnapshots(fixture([0, 1]));
+  sparse.store.diagram!.parts[0]!.shapes[0]!.subpaths = Array(1);
+  assert.throws(() => decodeSnapshotPayload(sparse), /Invalid packed diagram snapshots/);
+});
+
+test('Chromium expands both legacy gzip and packed gzip with exact values and independent paths', {skip: process.env.EXPLAIN_BROWSER ? false : 'set EXPLAIN_BROWSER=1 for the native browser gzip boundary'}, async () => {
+  const {build} = await import('esbuild');
+  const {launch} = await import('../tools/lib/browser.ts');
+  const bundle = await build({entryPoints: ['app/embed-snapshots.ts'], bundle: true, write: false, format: 'iife', globalName: 'SnapshotCodec', platform: 'browser'});
+  const long = Array.from({length: 20}, (_, i) => i / 13), store = fixture(long);
+  store.diagram!.parts[0]!.shapes[0]!.subpaths.push([...long]);
+  const expected = JSON.stringify(store);
+  const browser = await launch();
+  try {
+    const page = await browser.newPage();
+    await page.addScriptTag({content: bundle.outputFiles[0]!.text});
+    for (const payload of [store, packPageSnapshots(store)]) {
+      const actual = await page.evaluate(async encoded => {
+        const codec = (globalThis as unknown as {SnapshotCodec: {inflateSnapshots(input: string): Promise<SnapshotStore>}}).SnapshotCodec;
+        const restored = await codec.inflateSnapshots(encoded);
+        const paths = restored.diagram!.parts[0]!.shapes[0]!.subpaths;
+        return {json: JSON.stringify(restored), separate: paths[0] !== paths[1]};
+      }, gzipSync(JSON.stringify(payload)).toString('base64'));
+      assert.equal(actual.json, expected);
+      assert.equal(actual.separate, true);
+    }
+  } finally {
+    await browser.close();
+  }
+});
+
 test('compacted real flowchart, timeline and XY snapshots render byte-identical resting SVGs', async () => {
   const frames = async (Source: SceneClass) => {
     const result: string[] = [];
@@ -47,5 +145,7 @@ test('compacted real flowchart, timeline and XY snapshots render byte-identical 
     const original = await frames(Source);
     assert.ok(original.length >= 3, 'compare every resting picture, not an empty render');
     assert.deepEqual(await frames(bindSnapshots(Source, compact)), original, id);
+    const decoded = decodeSnapshotPayload(JSON.parse(JSON.stringify(packPageSnapshots(compact))));
+    assert.deepEqual(await frames(bindSnapshots(Source, decoded)), original, `${id}: packed transport`);
   }
 });

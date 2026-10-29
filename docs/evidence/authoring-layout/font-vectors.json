@@ -1,0 +1,6 @@
+{
+  "font": "@fontsource/eb-garamond@5.3.0/files/eb-garamond-latin-400-normal.woff2",
+  "sha256": "912929dba0faab5e151849ea5e988adba3080ad6d2bcc4dbff27aa427896498d",
+  "oracle": "test/lettering/oracle.py; HarfBuzz over original font bytes before subsetting",
+  "advanceEm": {"Ink": 1.337, "Paper": 2.144}
+}

@@ -14,7 +14,7 @@ import {
 } from '../src/index.ts';
 import type { Box, Mobject } from '../src/index.ts';
 import { stage, bindSnapshots } from '../explain/index.ts';
-import { diagramKey } from '../integrations/agentic-mermaid/snapshot.ts';
+import { diagramKey, RENDERER } from '../integrations/agentic-mermaid/snapshot.ts';
 import type { DiagramSnapshot } from '../explain/index.ts';
 import { cameraBox } from '../explain/diagrams.ts';
 import { labelPx, restingTextProblems, MIN_PX } from '../tools/lib/explain-check.ts';
@@ -41,7 +41,7 @@ function fixture(): DiagramSnapshot {
   });
   return {
     version: 1,
-    renderer: 'agentic-mermaid@0.4.1',
+    renderer: RENDERER,
     spec,
     family: 'flowchart',
     width: 800,

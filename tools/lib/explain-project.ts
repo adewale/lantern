@@ -262,12 +262,18 @@ export async function collectProject(
   const outline = outlineRequested
     ? await prepareOutlineLettering(loaded.Scene, file, loaded.sourceHash, captureLettering, write) : undefined;
   const Source = outline?.Scene ?? loaded.Scene;
+  const request = outlineRequested ? undefined : letteringRequest(Source);
+  const subsetMetrics = request ? hash(JSON.stringify([request, ...(await Promise.all(
+    ['inter.woff2', 'jetbrains-mono.woff2'].map(async (name) =>
+      [name, hash(await readFile(join(ROOT, 'vendor/lettering', name)))]),
+  ))])) : undefined;
   const base = file.replace(/\.[^.]+$/, '');
   const previous: SnapshotStore = refresh ? {} : await readSnapshots(base);
   // Lazy: native scenes never require Agentic Mermaid or Chromium.
   let builder:
     | Awaited<ReturnType<typeof import('../../integrations/agentic-mermaid/build/index.ts').snapshotBuilder>>
     | undefined;
+  let naturalBuilder: typeof builder;
   const store: SnapshotStore = {};
   let edits = 0;
   const warned = new Set<string>();
@@ -282,15 +288,29 @@ export async function collectProject(
   const resolver: DiagramResolver = {
     async diagram(spec) {
       const key = diagramKey(spec);
+      const metricOptions = spec.lettering === 'natural' ? {
+        ...(outline ? { measurementHash: outline.measurementHash } : subsetMetrics ? { measurementHash: subsetMetrics } : {}),
+        styles: outline?.snapshot.request.styles,
+      } : undefined;
+      if (previous[key] && metricOptions) {
+          const { naturalMeasurementIdentity } = await import('../../integrations/agentic-mermaid/build/index.ts');
+          if (previous[key].textMeasurement?.id !== naturalMeasurementIdentity(metricOptions).id) {
+            if (captureLettering) delete previous[key];
+            else throw new Error('Stale natural diagram font metrics; run rayner snapshots ' + file);
+          }
+      }
       if (previous[key]) {
         store[key] = previous[key];
         return inspect(previous[key]);
       }
-      if (!builder) {
+      let active = spec.lettering === 'natural' ? naturalBuilder : builder;
+      if (!active) {
         const { snapshotBuilder } = await import('../../integrations/agentic-mermaid/build/index.ts');
-        builder = await snapshotBuilder(previous);
+        active = await snapshotBuilder(previous, metricOptions);
+        if (spec.lettering === 'natural') naturalBuilder = active;
+        else builder = active;
       }
-      const result = await builder.diagram(spec);
+      const result = await active.diagram(spec);
       store[key] = result;
       return inspect(result);
     },
@@ -302,7 +322,6 @@ export async function collectProject(
   };
   const variants: Project['variants'] = [];
   const undrawable: string[] = [];
-  const request = outlineRequested ? undefined : letteringRequest(Source);
   let lettering: Lettering | undefined;
   try {
     // Only a scene that asks for lettering runs this: once per case with the whole
@@ -371,6 +390,7 @@ export async function collectProject(
     return { ...loaded, Scene: Source, store, variants, edits, ...(lettering ? { lettering } : {}), ...(outline ? { outlineLettering: outline.snapshot } : {}) };
   } finally {
     await builder?.close();
+    await naturalBuilder?.close();
   }
 }
 /** The default case, or the case these values choose with every other setting at its default, as a URL does. */

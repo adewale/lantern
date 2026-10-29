@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "importer": "725da4d8fc61bf77",
-  "renderer": "agentic-mermaid@0.4.1",
+  "importer": "11d0423eb190709f",
+  "renderer": "agentic-mermaid@0.5.1",
   "sourceHash": "aaab0333003f84d18810f8abead2a1cc4737b4af20c60c658292b52b76f7bf64",
   "diagrams": {
     "[\"graph LR\\nAgent[Agent] --> Find[2password find]\\nFind --> Op[op CLI]\\nOp --> Vault[1Password vault]\",\"excalidraw\"]": "a6964a30d5aa9b54.json",

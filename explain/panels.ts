@@ -5,6 +5,8 @@ import { soft, raised, rule, boxCenter, emphasis, good, bad, regionBox, REGIONS,
 import type { Region } from './look.ts';
 import type { Seen } from './trace.ts';
 import { wordsOf } from './words.ts';
+import { layoutDirection } from './layout-direction.ts';
+import type { LayoutDirection } from './layout-direction.ts';
 
 export type CardRow = readonly [label: string, value: unknown];
 export interface CardOptions {
@@ -19,21 +21,23 @@ export interface CardOptions {
   width?: number;
   title?: string;
   fontSize?: number;
+  /** Field arrangement only: RTL puts labels on the right and values on the left. */
+  direction?: LayoutDirection;
 }
 const ROW = 1.9; // row pitch, in font sizes
-/** Shrink a right-anchored value to `room`, never mirroring it. */
-function fitValue(value: Text, room: number): void {
+/** Shrink a value towards its anchored edge, never mirroring it. */
+function fitValue(value: Text, room: number, edge: -1 | 1 = 1): void {
   const w = value.width();
-  if (w > room && w > 0) value.scale(Math.max(room, 0) / w, { aboutEdge: [1, 0] });
+  if (w > room && w > 0) value.scale(Math.max(room, 0) / w, { aboutEdge: [edge, 0] });
 }
 /**
  * Fit a row's label and value into `room`. The label never takes more than
  * 90% of it, so every value (now or after `set`) keeps a positive room.
  */
-function fitRow(label: Text, value: Text, room: number): void {
+function fitRow(label: Text, value: Text, room: number, edge: -1 | 1): void {
   const labelRoom = Math.min(room * 0.9, Math.max(room - value.width(), room * 0.6));
-  if (label.width() > labelRoom) label.scale(labelRoom / label.width(), { aboutEdge: [-1, 0] });
-  fitValue(value, room - label.width());
+  if (label.width() > labelRoom) label.scale(labelRoom / label.width(), { aboutEdge: [-edge, 0] });
+  fitValue(value, room - label.width(), edge);
 }
 const PAD = 0.28;
 /** The raised, ruled panel cards and code sit on. */
@@ -83,19 +87,26 @@ export class Card extends Group {
   readonly values = new Map<string, Text>();
   readonly labels = new Map<string, Text>();
   readonly fontSize: number;
+  readonly direction: LayoutDirection;
   panel: Rectangle;
   bar: Rectangle;
   private valueEdge: number;
   private maxValue: number;
+  /** Three non-collinear panel points recover its affine map even with empty text. */
+  private panelAxes: { right: number; bottom: number; width: number; across: number; down: number };
   /** The row `mark` lit and its word, for the description. */
   private lit: { label: string; as: string } | null = null;
   private repeated: Set<string>;
   private readonly title: string | undefined;
   /** Rows in order (labels may repeat), for the description. */
-  private rows: { label: string; value: Text }[] = [];
+  private rows: { label: string; value: Text; labelWidth: number }[] = [];
 
   constructor(scene: Scene, colors: Palette, rows: readonly CardRow[], options: CardOptions = {}) {
     super();
+    this.direction = layoutDirection(options);
+    const edge = this.direction === 'ltr' ? 1 : -1;
+    const labelAnchor = edge === 1 ? 'start' : 'end';
+    const valueAnchor = edge === 1 ? 'end' : 'start';
     this.scene = scene;
     this.colors = colors;
     this.title = options.title;
@@ -103,12 +114,12 @@ export class Card extends Group {
     // A label may repeat (a card can list parts by kind), but then it names no single row.
     const names = rows.map(([l]) => l);
     this.repeated = new Set(names.filter((l, i) => names.indexOf(l) !== i));
-    const labels = rows.map(([l]) => new Text(l, { fontSize: size, color: soft(colors), anchor: 'start' }));
+    const labels = rows.map(([l]) => new Text(l, { fontSize: size, color: soft(colors), anchor: labelAnchor }));
     const values = rows.map(
-      ([, v]) => new Text(String(v), { fontSize: size * 1.04, font: 'mono', color: colors.ink, anchor: 'end' }),
+      ([, v]) => new Text(String(v), { fontSize: size * 1.04, font: 'mono', color: colors.ink, anchor: valueAnchor }),
     );
     const titleText = options.title
-      ? new Text(options.title, { fontSize: size * 1.05, color: colors.accent, weight: 'bold', anchor: 'start' })
+      ? new Text(options.title, { fontSize: size * 1.05, color: colors.accent, weight: 'bold', anchor: labelAnchor })
       : null;
     const at = typeof options.at === 'string' ? regionBox(options.at) : (options.at ?? [0, 0]);
     const cap = at.length === 4 ? at[2] - at[0] : Infinity;
@@ -125,27 +136,37 @@ export class Card extends Group {
     this.bar = tint(emphasis(colors), width - 0.12, pitch * 0.92).setOpacity(0);
     this.add(this.panel, this.bar);
     emphasises(scene, () => (this.lit ? [[this.bar, `row ${this.lit.label}`]] : []));
-    const left = -width / 2 + PAD;
-    this.valueEdge = width / 2 - PAD;
+    const left = edge * (-width / 2 + PAD);
+    this.valueEdge = edge * (width / 2 - PAD);
     let y = height / 2 - PAD - size * 0.5;
     if (titleText) {
       // A title wider than a capped card shrinks to fit, as values do.
       const room = width - 2 * PAD;
       if (titleText.width() > room && room > 0) titleText.scale(room / titleText.width());
-      titleText.moveTo([left, y], [-1, 0]);
+      titleText.moveTo([left, y], [-edge, 0]);
       this.add(titleText);
       y -= pitch * 1.15;
     }
     this.maxValue = width - 2 * PAD - size * 1.5;
     // Room for at least a glyph's width beside its label; less than that cannot hold a row.
     if (!(this.maxValue >= size)) throw new Error(`A card ${width.toFixed(2)} wide has no room for its rows`);
+    const points = this.panel.subpaths[0]!;
+    let right = 0, bottom = 0;
+    for (let i = 2; i < points.length; i += 2) {
+      if (points[i + 1] === points[1] && points[i]! > points[right]!) right = i;
+      if (points[i + 1]! < points[bottom + 1]!) bottom = i;
+    }
+    this.panelAxes = {
+      right, bottom, width: points[right]! - points[0]!,
+      across: points[bottom]! - points[0]!, down: points[bottom + 1]! - points[1]!,
+    };
     rows.forEach(([label], i) => {
-      const l = labels[i]!.moveTo([left, y], [-1, 0]);
-      const v = values[i]!.moveTo([this.valueEdge, y], [1, 0]);
-      fitRow(l, v, this.maxValue);
+      const l = labels[i]!.moveTo([left, y], [-edge, 0]);
+      const v = values[i]!.moveTo([this.valueEdge, y], [edge, 0]);
+      fitRow(l, v, this.maxValue, edge);
       this.labels.set(label, l);
       this.values.set(label, v);
-      this.rows.push({ label, value: v });
+      this.rows.push({ label, value: v, labelWidth: l.width() });
       this.add(l, v);
       y -= pitch;
     });
@@ -172,6 +193,14 @@ export class Card extends Group {
     return v;
   }
 
+  /** Recover both spatial axes from the panel, independently of label advance. */
+  private basis(): { ex: Vec; ey: Vec } {
+    const p = this.panel.subpaths[0]!, { right, bottom, width, across, down } = this.panelAxes;
+    const ex: Vec = [(p[right]! - p[0]!) / width, (p[right + 1]! - p[1]!) / width];
+    const ey: Vec = [(p[bottom]! - p[0]! - across * ex[0]) / down, (p[bottom + 1]! - p[1]! - across * ex[1]) / down];
+    return { ex, ey };
+  }
+
   /** Crossfade changed values in one play; unchanged rows do not move. */
   async set(changes: Readonly<Record<string, unknown>>, { runTime = 0.45 } = {}): Promise<void> {
     const anims = [];
@@ -180,19 +209,34 @@ export class Card extends Group {
     for (const [label, value] of Object.entries(changes)) {
       const old = this.row(label);
       if (old.text === String(value)) continue;
-      const y = old.anchorPoint()[1];
+      const edge = this.direction === 'ltr' ? 1 : -1;
+      const row = this.rows.find((r) => r.label === label)!;
+      const l = this.labels.get(label)!;
+      // Recover the card's affine basis from its nondegenerate panel.
+      // A replacement therefore follows moved, scaled or rotated panels too.
+      const { ex, ey } = this.basis();
       const next = new Text(String(value), {
         fontSize: this.fontSize * 1.04,
         font: 'mono',
         color: this.colors.ink,
-        anchor: 'end',
-      }).moveTo([old.anchorPoint()[0], y], [1, 0]);
-      fitValue(next, this.maxValue - this.labels.get(label)!.width());
+        anchor: edge === 1 ? 'end' : 'start',
+      });
+      const unchangedBasis = Math.abs(ex[0]! - 1) < 1e-5 && Math.abs(ex[1]!) < 1e-5 && Math.abs(ey[0]!) < 1e-5 && Math.abs(ey[1]! - 1) < 1e-5;
+      // Keep the existing untransformed path (and its float32 rounding) intact.
+      if (unchangedBasis) {
+        next.moveTo(old.anchorPoint(), [edge, 0]);
+        fitValue(next, this.maxValue - l.width(), edge);
+      } else {
+        fitValue(next, this.maxValue - row.labelWidth, edge);
+        next.applyAffine(ex[0]!, ex[1]!, ey[0]!, ey[1]!, 0, 0, { aboutPoint: [0, 0] });
+        const a = old.anchorPoint(), b = next.anchorPoint();
+        next.shift([a[0] - b[0], a[1] - b[1]]);
+      }
       // A faded card stays faded: the new value arrives at the old one's opacity.
       next.setOpacity(old.style.opacity);
       this.add(next);
       this.values.set(label, next);
-      this.rows.find((r) => r.label === label)!.value = next;
+      row.value = next;
       anims.push(
         new FadeOut(old, { shift: [0, 0.12], runTime }),
         new FadeIn(next, { shift: [0, 0.12], runTime }),
@@ -206,9 +250,17 @@ export class Card extends Group {
    * resting frame. `as` is the word the description gives it (default "marked", in the scene's language).
    */
   async mark(label: string | null, { as = wordsOf(this.scene).marked, runTime = 0.4 } = {}): Promise<void> {
-    const y = label == null ? 0 : this.row(label).anchorPoint()[1];
+    const anchor = label == null ? null : this.row(label).anchorPoint();
+    let target: Rectangle | null = null;
+    if (label != null && anchor) {
+      const { ex, ey } = this.basis();
+      const centre: Vec = Math.abs(ex[1]) < 1e-5 && Math.abs(ey[0]) < 1e-5
+        ? [this.panel.center()[0], anchor[1]]
+        : [anchor[0] - this.valueEdge * ex[0], anchor[1] - this.valueEdge * ex[1]];
+      target = this.bar.copy().moveTo(centre);
+    }
     this.lit = label == null ? null : { label, as };
-    await moveBar(this.scene, this.bar, label == null ? null : this.bar.copy().moveTo([this.panel.center()[0], y]), runTime);
+    await moveBar(this.scene, this.bar, target, runTime);
   }
 }
 

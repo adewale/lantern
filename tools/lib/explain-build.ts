@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 import { pageSize } from './page-budget.ts';
-import { pageSnapshots } from './page-snapshots.ts';
+import { pageSnapshots, packPageSnapshots } from './page-snapshots.ts';
 import { SnapshotSink, renderAt } from '../../src/index.ts';
 import { chromeFor, caseNameIn, descriptionLang } from '../../app/embed-strings.ts';
 import { restingTime, pictureHtml, htmlEscape, stepWords, wordsHtml } from '../../explain/trace.ts';
@@ -40,8 +40,11 @@ export async function buildExplainer(
   await renderAt(v.Scene, restingTime(first, v.trace.fps), sink);
   // A page that asked for lettering puts its faces in place before the player shapes anything.
   // Every other page's entry is as it was: it never imports src/lettering.ts.
-  const rawSnapshots = JSON.stringify(pageSnapshots(project.store));
-  const compressed = gzipSync(rawSnapshots).toString('base64');
+  const snapshots = pageSnapshots(project.store);
+  const rawSnapshots = JSON.stringify(snapshots);
+  const rawCompressed = gzipSync(rawSnapshots, {level: 9});
+  const packedCompressed = gzipSync(JSON.stringify(packPageSnapshots(snapshots)), {level: 9});
+  const compressed = (packedCompressed.length < rawCompressed.length ? packedCompressed : rawCompressed).toString('base64');
   const zipped = compressed.length + 512 < rawSnapshots.length;
   const payload = zipped ? `await inflateSnapshots(${JSON.stringify(compressed)})` : rawSnapshots;
   const snapshotImport = zipped ? `import{inflateSnapshots}from ${JSON.stringify(join(ROOT, 'app/embed-snapshots.ts'))};` : '';

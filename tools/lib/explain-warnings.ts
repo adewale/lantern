@@ -1,6 +1,6 @@
 import type { DiagramSnapshot } from '../../integrations/agentic-mermaid/snapshot.ts';
 /** Diagnostic only, not a Mermaid parser: recognize common explicit node-label forms.
- * Agentic Mermaid 0.4.1 can lose a label declared after the node was first referenced. */
+ * Keep a source-to-paint guard even when the pinned renderer fixes known label-loss bugs. */
 export function lostLabelWarnings(snapshot: DiagramSnapshot): string[] {
   if (snapshot.family !== 'flowchart') return [];
   const warnings = new Set<string>();
@@ -13,7 +13,7 @@ export function lostLabelWarnings(snapshot: DiagramSnapshot): string[] {
     const part = snapshot.parts.find((p) => p.id === id && p.role === 'node');
     if (part?.shapes.some((s) => s.text === id))
       warnings.add(
-        `Node ${id} rendered its bare id although the source defines “${label}”. Declare labeled nodes before using them in edges (Agentic Mermaid 0.4.1).`,
+        `Node ${id} rendered its bare id although the source defines “${label}”. Check the source and recapture the diagram.`,
       );
   }
   return [...warnings];

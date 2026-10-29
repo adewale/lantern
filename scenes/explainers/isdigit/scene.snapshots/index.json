@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "importer": "725da4d8fc61bf77",
-  "renderer": "agentic-mermaid@0.4.1",
+  "importer": "11d0423eb190709f",
+  "renderer": "agentic-mermaid@0.5.1",
   "sourceHash": "2b7a3d274a2452b86c182da41396900bd59bd02f751d4d70382e1384cca67de9",
   "diagrams": {}
 }

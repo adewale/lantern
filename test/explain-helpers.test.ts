@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Scene, NullSink, traceScene, loadFonts } from '../src/index.ts';
 import { stage, bindSnapshots, findingsOf, edgePartOf, regionBox, REGIONS } from '../explain/index.ts';
-import { diagramKey, snapshotResolver, useDiagrams, diagramsOf } from '../integrations/agentic-mermaid/snapshot.ts';
+import { diagramKey, snapshotResolver, useDiagrams, diagramsOf, RENDERER } from '../integrations/agentic-mermaid/snapshot.ts';
 import type { DiagramSnapshot } from '../explain/index.ts';
 import { raised, rule, emphasis, soft, good, bad, dimOpacity } from '../explain/look.ts';
 import { PALETTES, palette } from '../explain/palettes.ts';
@@ -112,6 +112,39 @@ test('snapshot JSON with a corrupt point, paint, owner, path, size, finding or c
     snapshotResolver({ [diagramKey(spec)]: { ...good, spec: { source: 'graph LR\\nX-->Y' } } }).diagram(spec),
     /does not match/,
   );
+});
+
+test('marker carriers require an explicit semantic connector owner with identical endpoints', async () => {
+  const good = fixture();
+  good.parts.push({
+    ...structuredClone(good.parts.find((p) => p.id === 'edge:A->B#0')!),
+    id: 'marker-overlay:0', role: 'chrome', owner: 'edge:A->B#0', markerCarrier: true,
+  });
+  assert.equal(await snapshotResolver({ [diagramKey(spec)]: good }).diagram(spec), good);
+  const corruptions: [string, (s: DiagramSnapshot) => void][] = [
+    ...[false, null, 1, 'true', new Boolean(true), {}].map((flag): [string, (s: DiagramSnapshot) => void] => [
+      `flag ${String(flag)}`, (s) => { s.parts.at(-1)!.markerCarrier = flag as true; },
+    ]),
+    ['missing owner', (s) => { delete s.parts.at(-1)!.owner; }],
+    ['missing owner part', (s) => { s.parts.at(-1)!.owner = 'missing'; }],
+    ['self owner', (s) => { s.parts.at(-1)!.owner = 'marker-overlay:0'; }],
+    ['nonconnector carrier', (s) => { s.parts.at(-1)!.kind = 'shape'; }],
+    ['nonconnector owner', (s) => { s.parts.at(-1)!.owner = 'A'; }],
+    ['another marker carrier as owner', (s) => {
+      s.parts.push({ ...structuredClone(s.parts.at(-1)!), id: 'marker-overlay:1', owner: 'marker-overlay:0' });
+    }],
+    ['missing from', (s) => { delete s.parts.at(-1)!.from; }],
+    ['missing to', (s) => { delete s.parts.at(-1)!.to; }],
+    ['empty from', (s) => { s.parts.at(-1)!.from = ''; }],
+    ['empty to', (s) => { s.parts.at(-1)!.to = ''; }],
+    ['different from', (s) => { s.parts.at(-1)!.from = 'B'; }],
+    ['different to', (s) => { s.parts.at(-1)!.to = 'A'; }],
+  ];
+  for (const [name, corrupt] of corruptions) {
+    const broken = structuredClone(good);
+    corrupt(broken);
+    await assert.rejects(snapshotResolver({ [diagramKey(spec)]: broken }).diagram(spec), /Invalid diagram snapshot/, name);
+  }
 });
 
 const specArb = fc.record(
@@ -357,10 +390,26 @@ const multigraph = fc
 test('edgePartOf names the part of the k-th edge, with or without the verifier layout', () => {
   fc.assert(
     fc.property(multigraph, ({ s, edges, ids }) => {
-      edges.forEach((e, k) => assert.equal(edgePartOf(s, `${e.from}->${e.to}#${k}`), ids[k]));
+      const oldProducer = { ...s, renderer: 'agentic-mermaid@0.4.1' } as unknown as DiagramSnapshot;
+      edges.forEach((e, k) => {
+        assert.equal(edgePartOf(s, `${e.from}->${e.to}#${k}`), ids[k]);
+        assert.equal(edgePartOf(oldProducer, `${e.from}->${e.to}#${k}`), ids[k]);
+      });
     }),
     params(),
   );
+});
+
+test('current producer warnings name multigraph parts per pair regardless of global order or layout availability', () => {
+  fc.assert(fc.property(multigraph, ({ s, ids }) => {
+    const current: DiagramSnapshot = { ...s, renderer: RENDERER };
+    for (const id of ids) assert.equal(edgePartOf(current, id.slice('edge:'.length)), id);
+    const warnings = ids.map((id) => ({ code: 'DECISION_BRANCH_UNLABELED', edge: id.slice('edge:'.length) }));
+    assert.deepEqual(findingsOf({ ...current, findings: { ...current.findings, warnings } }).map((w) => w.part), ids);
+    assert.equal(edgePartOf(current, 'missing->edge#0'), undefined);
+    const authored = { ...current, parts: current.parts.map((p, i) => ({ ...p, id: `edge:authored_${i}` })) };
+    authored.parts.forEach((p) => assert.equal(edgePartOf(authored, p.id.slice('edge:'.length)), p.id));
+  }), params());
 });
 
 test('edgePartOf finds nothing for a name whose index or endpoints do not match an edge', () => {

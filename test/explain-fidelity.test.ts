@@ -15,6 +15,7 @@ import {
 import { find, run } from '../scenes/explainers/lib/2password.ts';
 import { Scene, Text, Code, loadFonts, parseUnifiedDiff } from '../src/index.ts';
 import { pictureHtml } from '../explain/trace.ts';
+import { Card } from '../explain/panels.ts';
 import type { VMobject, Sink } from '../src/index.ts';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
@@ -255,6 +256,42 @@ for (const entry of EXPLAINERS)
           for (const [cut, advance] of Object.entries(expected)) assert.ok(Math.abs(actual[cut]! - advance) < 1e-6, `${cut}: raw-font advance ${advance}, scene ${actual[cut]}`);
           const shown = pictureHtml(trace.steps.find(s => s.step === 'cuts')!.after);
           for (const [cut, width] of Object.entries(expected)) assert.ok(shown.includes(`${cut}, advance ${width.toFixed(2)}`), shown);
+          // Independent original-font measurements, recorded with source SHA in
+          // docs/evidence/authoring-layout/font-vectors.json. No Text measurement
+          // is used as the expected diagram width.
+          const diagrams = Object.values(project.store);
+          assert.equal(diagrams.length, 1);
+          assert.equal(diagrams[0]!.spec.lettering, 'natural');
+          const runs = diagrams[0]!.parts.flatMap(p => p.shapes.flatMap(s => s.textRun ? [s.textRun] : []));
+          assert.deepEqual(runs.map(r => r.text).sort(), ['Ink', 'Paper']);
+          const diagramEm: Record<string, number> = {Ink: 1.337, Paper: 2.144};
+          for (const run of runs) {
+            assert.equal(run.natural, true);
+            assert.ok(Math.abs(run.width! - diagramEm[run.text]! * run.size) < 0.001, `${run.text}: layout reserves the actual source-font advance`);
+          }
+          break;
+        }
+        case 'layout-direction': {
+          // The public story promises both cards at once, opposite field sides
+          // and unchanged digit order before and after an update.
+          const seen: string[] = [];
+          await new variant.Scene({
+            async frame() {},
+            async stepEnd(scene, step) {
+              const cards = scene.familyMembers().filter((m): m is Card => m instanceof Card);
+              assert.equal(cards.length, 2);
+              const [left, right] = cards.sort((a, b) => a.center()[0] - b.center()[0]);
+              assert.ok(left!.center()[0] < 0 && right!.center()[0] > 0, 'RTL logical end/start occupy left/right');
+              const expected = step.name === 'columns' ? '123' : '456';
+              for (const card of cards) assert.equal(card.values.get('Field')!.text, expected);
+              assert.ok(left!.labels.get('Field')!.box()![2] < left!.values.get('Field')!.box()![0], 'LTR override puts label before value');
+              assert.ok(right!.values.get('Field')!.box()![2] < right!.labels.get('Field')!.box()![0], 'RTL default puts value before label');
+              assert.equal(left!.direction, 'ltr');
+              assert.equal(right!.direction, 'rtl');
+              seen.push(step.name);
+            },
+          }, {skipUntil: Infinity}).run();
+          assert.deepEqual(seen, ['columns', 'updates']);
           break;
         }
         case 'glyph': {

@@ -21,7 +21,7 @@ import { recordWalk } from './trace.ts';
 import { wordsOf, wordsFor, familyNames } from './words.ts';
 import type { Words } from './words.ts';
 import type { Seen, SeenPart } from './trace.ts';
-import { lerpColor } from '../src/color.ts';
+import { lerpColor, parseColor } from '../src/color.ts';
 import type {
   DiagramSpec,
   DiagramSnapshot,
@@ -750,14 +750,21 @@ export class Diagram {
           st: Style = { ...b };
         if (this.zoom !== 1) scaleStyle(st, this.zoom);
         const text = within(m, (a) => !!labelOf(a));
-        // A part's own labels keep their look; an ER relationship's cardinality markers take its mark.
-        const owned = within(m, (a) => a.key != null && a.key !== id && !a.key.startsWith('card:'));
+        // Labels and other owned subjects keep their look. Cardinality marks
+        // and explicitly captured marker carriers take their connector's mark.
+        const owned = within(m, (a) => a.key != null && a.key !== id && !a.key.startsWith('card:') &&
+          !this.parts.get(a.key)?.info.markerCarrier);
+        const marker = p.info.markerCarrier || within(m, (a) => !!a.key && !!this.parts.get(a.key)?.info.markerCarrier);
+        // Paper inside an aggregation diamond or inheritance triangle denotes
+        // a hollow marker. Colour its outline without turning it solid.
+        const paper = parseColor(this.snapshot.palette.paper);
+        const hollow = marker && parseColor(st.fill)?.every((v, i) => v === paper?.[i]);
         if (color && !owned && !text) {
           if (st.stroke && st.stroke !== 'none' && (st.strokeWidth ?? 0) > 0) {
             st.stroke = color;
             st.strokeWidth = (st.strokeWidth ?? 0) * 1.8;
           }
-          if (st.fill && st.fill !== 'none' && (st.fillOpacity ?? 1) > 0) {
+          if (st.fill && st.fill !== 'none' && (st.fillOpacity ?? 1) > 0 && !hollow) {
             st.fill = connector ? color : lerpColor(st.fill, color, 0.2);
             // A shape drawn by fill alone (a bar, a task) gains an outline: the mark shows by shape, not only hue.
             if (!connector && !(st.stroke && st.stroke !== 'none' && (st.strokeWidth ?? 0) > 0)) {

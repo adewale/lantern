@@ -4,6 +4,8 @@ import type { Scene } from '../../src/scene.ts';
 export interface DiagramSpec {
   source: string;
   style?: string;
+  /** Lay out labels using the scene's requested faces, without horizontal stretching. */
+  lettering?: 'natural';
 }
 export interface Palette {
   paper: string;
@@ -19,6 +21,10 @@ export interface SnapshotTextRun {
   anchor?: string;
   baseline?: string;
   width?: number;
+  natural?: true;
+  font?: 'sans' | 'mono';
+  weight?: 'bold';
+  italic?: true;
   matrix: number[];
 }
 export interface SnapshotShape {
@@ -35,6 +41,8 @@ export interface SnapshotPart {
   kind: string;
   shapes: SnapshotShape[];
   owner?: string;
+  /** Upstream marker-only connector artwork that follows its semantic owner's paint. */
+  markerCarrier?: true;
   from?: string;
   to?: string;
   route?: [number, number][];
@@ -43,7 +51,7 @@ export interface SnapshotPart {
 /** Agentic Mermaid's SVG pixels per scene unit: imported geometry and text divide by this. */
 export const SVG_PX_PER_UNIT = 100;
 /** The renderer every snapshot was captured with; receipts and indexes name it from here. */
-export const RENDERER = 'agentic-mermaid@0.4.1';
+export const RENDERER = 'agentic-mermaid@0.5.1';
 /** The one remedy for a missing, stale or damaged snapshot. */
 const RECAPTURE = 'Run `rayner snapshots <scene> --refresh`.';
 export interface DiagramSnapshot {
@@ -58,6 +66,9 @@ export interface DiagramSnapshot {
   findings: Findings;
   /** An XY chart's series as written: the renderer's channels hold them normalised. */
   chart?: ChartData;
+  /** The actual host metrics and final-paint evidence used by a natural capture. */
+  textMeasurement?: { id: string; version: string };
+  layoutCertification?: unknown;
 }
 export interface ChartData {
   categories?: string[];
@@ -67,7 +78,9 @@ export interface ChartData {
 export interface Findings {
   ok: boolean;
   warnings: Finding[];
-  /** The verifier's layout; its `edges` are every edge in source order, the order a warning's `edge` counts in. */
+  /** Natural captures retain source findings; their geometry uses a separate host profile. */
+  scope?: 'source';
+  /** Source-order endpoints, also used to resolve legacy global warning indices. */
   layout?: { edges?: { from: string; to: string }[] };
 }
 export type SnapshotStore = Record<string, DiagramSnapshot>;
@@ -78,10 +91,13 @@ export interface DiagramResolver {
 }
 const resolvers = new WeakMap<Scene, DiagramResolver>();
 export function diagramKey(spec: DiagramSpec): string {
+  if (spec.lettering !== undefined && spec.lettering !== 'natural')
+    throw new Error("Diagram lettering must be 'natural' when provided");
   return JSON.stringify([
     spec.source.replace(/\r\n/g, '\n').trim(),
     // An empty style renders as the default (capture passes no style), so it is the default's key.
     spec.style || 'default',
+    ...(spec.lettering ? [spec.lettering] : []),
   ]);
 }
 export function useDiagrams(scene: Scene, resolver: DiagramResolver): void {
@@ -117,6 +133,10 @@ function validateSnapshot(value: DiagramSnapshot): void {
     value.height <= 0 ||
     !value.spec ||
     typeof value.spec.source !== 'string' ||
+    (value.spec.lettering !== undefined && value.spec.lettering !== 'natural') ||
+    (value.spec.lettering === 'natural' &&
+      (!value.textMeasurement || typeof value.textMeasurement.id !== 'string' ||
+        !/^rayner:shaped:[a-f0-9]{64}$/.test(value.textMeasurement.id) || value.textMeasurement.version !== '1.0.0')) ||
     !value.palette ||
     ![value.palette.paper, value.palette.ink, value.palette.accent, value.palette.muted].every(color) ||
     !Array.isArray(value.parts)
@@ -127,6 +147,8 @@ function validateSnapshot(value: DiagramSnapshot): void {
   if (
     !findings ||
     typeof findings.ok !== 'boolean' ||
+    (findings.scope !== undefined && findings.scope !== 'source') ||
+    (value.spec.lettering === 'natural' && findings.scope !== 'source') ||
     !Array.isArray(findings.warnings) ||
     !findings.warnings.every((w) => w && text(w.code) && (w.edge == null || text(w.edge))) ||
     (findings.layout?.edges != null &&
@@ -153,6 +175,12 @@ function validateSnapshot(value: DiagramSnapshot): void {
       if (part[key] != null && typeof part[key] !== 'string') invalid();
     // An owner names a part: '' would read as "no owner" in some places and as an id in others.
     if (part.owner === '') invalid();
+    if (part.markerCarrier !== undefined && part.markerCarrier !== true) invalid();
+    if (part.markerCarrier) {
+      const owner = part.owner && ids.get(part.owner);
+      if (part.kind !== 'connector' || !part.from || !part.to || !owner || owner.kind !== 'connector' ||
+          owner.markerCarrier || part.from !== owner.from || part.to !== owner.to) invalid();
+    }
     const ancestors = new Set([part.id]);
     let owner = part.owner;
     while (owner) {
@@ -201,6 +229,13 @@ function validateSnapshot(value: DiagramSnapshot): void {
           r.matrix.length !== 6 ||
           !r.matrix.every(point) ||
           (r.width != null && (!point(r.width) || r.width < 0)) ||
+          (r.natural !== undefined && r.natural !== true) ||
+          (r.font !== undefined && r.font !== 'sans' && r.font !== 'mono') ||
+          (r.weight !== undefined && r.weight !== 'bold') ||
+          (r.italic !== undefined && r.italic !== true) ||
+          (r.natural === true && value.spec.lettering !== 'natural') ||
+          (value.spec.lettering === 'natural' && r.natural !== true) ||
+          (r.natural === true && (!point(r.width) || r.width! < 0 || !['sans', 'mono'].includes(r.font!))) ||
           (r.baseline != null &&
             !['auto', 'alphabetic', 'middle', 'central', 'text-before-edge', 'text-after-edge'].includes(
               r.baseline,
@@ -237,13 +272,18 @@ export interface Finding {
   [key: string]: unknown;
 }
 /**
- * The part id for an edge the verifier names by its position among all edges
- * ("A->C#1"). Snapshot parts number edges per endpoint pair ("edge:A->C#0").
- * The verifier's layout lists edges in global order, so the k-th layout edge
- * and the count of earlier edges with the same endpoints give the part exactly.
+ * Current verifier names are stable per endpoint pair (or authored edge ids),
+ * matching captured edge parts directly. The 0.4.1 producer and structural
+ * fixtures without producer metadata used a global edge index instead.
  */
-export function edgePartOf(snapshot: DiagramSnapshot, globalEdge: string): string | undefined {
-  const named = /^(.*)#(\d+)$/s.exec(globalEdge);
+export function edgePartOf(snapshot: DiagramSnapshot, edgeName: string): string | undefined {
+  const producer: unknown = snapshot.renderer;
+  if (producer === RENDERER) {
+    const id = `edge:${edgeName}`;
+    return snapshot.parts.some((p) => p.id === id && p.from && p.to && !p.owner) ? id : undefined;
+  }
+  if (producer !== undefined && producer !== 'agentic-mermaid@0.4.1') return undefined;
+  const named = /^(.*)#(\d+)$/s.exec(edgeName);
   if (!named) return undefined;
   const index = Number(named[2]);
   const order =

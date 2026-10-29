@@ -28,7 +28,7 @@ this.state.reads = reads;   // program state, recorded at each step boundary
 - Do not put awaited animations inside `try`/`catch` or `.catch()` in `construct()`. Seeking stops a scene by throwing `StopScene`, and a broad catch swallows it, so a jump to a step would show a different picture from playing to it. Handle a known model error in plain code before animating. The engine limits the damage: a `StopScene` from a sink sets `this.stopped`, and from then on `play()`, `wait()`, `step()` and every frame rethrow it before doing anything, so a swallowed stop emits no further frame. Plain code between the catch and the next scene call (a `shift()`, a write to `this.state`) still runs, which is why `check` keeps the lint.
 - `this.frame` is the camera: the box of the stage on screen. `this.play(this.frame.animate.fit(target, { margin }))` zooms onto a mobject or a box, `this.frame.animate.reset()` returns to the whole stage, and `this.frame.zoom` is the magnification. Moving it moves no point; [the camera guide](CAMERA.md) has the rest, and [`d.focus`](#diagrams) moves the same camera with `camera: true`.
 - `this.record(kind, data)` adds `{ kind, ...data }` (copied as JSON) to the step's evidence. Step evidence records what an animation did, where `state` is what the program is; it has nothing to do with the build's `evidence.json`. Steps in the trace carry it as `evidence`, only when they recorded something; seeks record the same evidence as full runs; `this.evidence` holds every record so far. Matching transforms and `TransformDiff` record themselves ([evidence](MATCHING.md#evidence)), so counts on screen can be read from what the transform did; a View's internal morph (`view.sync()`) does not record evidence.
-- By default, lettering uses the embedded fonts, drawn as outlines. JetBrains Mono falls back to Inter, and both fall back to Noto Sans Arabic, Devanagari and SC subsets that hold numerals only (Arabic-Indic and Devanagari digits, Chinese numerals, fullwidth digits). Default diagram labels are Inter stretched to each label's width, so styles with their own fonts differ in letterforms. Bold is the Regular outline stroked, and there is no italic. Every command rejects characters outside the default fonts and requested lettering, naming the case, step and code point. An explainer can request additional scripts, registered faces, real bold and italic, or maths with `meta.lettering`, below.
+- By default, lettering uses the embedded fonts, drawn as outlines. JetBrains Mono falls back to Inter, and both fall back to Noto Sans Arabic, Devanagari and SC subsets that hold numerals only (Arabic-Indic and Devanagari digits, Chinese numerals, fullwidth digits). Diagram labels fit the captured widths unless their spec opts into [natural measurements](LETTERING.md#diagram-measurements). A style does not request its font. Bold is the Regular outline stroked, and there is no italic. Every command rejects characters outside the default fonts and requested lettering, naming the case, step and code point. An explainer can request additional scripts, registered faces, real bold and italic, or maths with `meta.lettering`, below.
 
 ### Lettering on request
 
@@ -107,6 +107,7 @@ const s = stage(this, { style: 'nord' });
 | Option | Effect |
 | --- | --- |
 | `style` | An Agentic Mermaid style: the stage's palette, and the style of every diagram that names none |
+| `direction` | `'ltr'` (default) or `'rtl'`: card field order and the physical halves named by `start`/`end` |
 | `palette` | Colours for the stage, for example `palette('dusk')` in a scene with no diagrams |
 | `heading` | `'step'` (default), a fixed string, or `false` for no heading |
 | `headingSize` | The heading's font size, 0.36 by default; at 0.54 it reads at 12 px on a 390 px page without a close-up |
@@ -117,7 +118,7 @@ With neither `style` nor `palette`, the stage adopts the first diagram's palette
 | Member | What it does |
 | --- | --- |
 | `s.show(spec, { box, build, runTime })` | Draw a diagram and build it in; returns a `Diagram` |
-| `s.card(rows, { at, align, width, title, fontSize, enter })` | Labelled values; returns a `Card` |
+| `s.card(rows, { at, align, width, title, fontSize, direction, enter })` | Labelled values; returns a `Card`. `direction` overrides the stage's field order |
 | `s.code(lines, { at, align, fontSize, title, diff, enter })` | Code on a panel; returns a `CodeBlock`. With `diff`, lines starting `+ ` or `- ` are marked added or removed |
 | `s.note(text, { at, size })` | One line of secondary text, default at `[0, -3.9]` |
 | `s.enter(...mobs, { describe, ...fadeOptions })` | Keep native objects and fade them in together, in one play |
@@ -153,25 +154,42 @@ Emphasis is the style's accent, or orange for styles whose accent is grey or nea
 
 `as` is the word the description gives the mark, such as `'rejected'`. Both are native `Group`s.
 
+### Spatial direction
+
+```ts
+const s = stage(this, { direction: 'rtl' });
+await s.card([['Count', 123]], { at: 'start' });
+await s.card([['Count', 123]], { at: 'end', direction: 'ltr' });
+```
+
+In an RTL stage, the first card goes on the right, with its label on the right and its value on the left. The second goes on the left, where its override puts the label on the left and the value on the right. Values such as `123` retain their digit order. Titles follow the label's edge; rows retain their authored top-to-bottom order. Updates and marks keep those positions.
+
+Stage direction controls spatial placement separately from paragraph shaping. A Hebrew or Arabic paragraph can read right to left in an LTR card. A code panel placed at `start` moves with the region, while its code keeps its source order. Set Mermaid graph flow in its source (`graph RL`, for example); stage direction never rewrites or mirrors a diagram. The [layout-direction example](../scenes/explainers/layout-direction/scene.ts) shows both card orders together.
+
 ### Regions
 
-Stage coordinates are 16 × 9 with the origin at the centre and y up. The heading sits at y = 3.8 (3.98 with a line, which sits under it); content belongs below y = 3.25, and `check` fails text that runs into the heading's number or line. `at` and `box` accept a region name, a point `[x, y]`, or a box `[minX, minY, maxX, maxY]`.
+Stage coordinates are 16 × 9 with the origin at the centre and y up. The heading sits at y = 3.8 (3.98 with a line, which sits under it); content belongs below y = 3.25, and `check` fails text that runs into the heading's number or line. Panel `at` accepts a region, point `[x, y]` or box `[minX, minY, maxX, maxY]`; diagram `box` accepts a region or box.
 
 | Region | Box |
 | --- | --- |
 | `full` | `[-7.55, -4.25, 7.55, 3.25]` |
 | `left`, `right` | the halves of `full` |
+| `start`, `end` | Stage helper aliases for `left`/`right` in LTR; `right`/`left` in RTL |
 | `main`, `side` | about two thirds left and one third right: a diagram beside a card or code |
 | `top` | `[-7.55, -0.35, 7.55, 3.25]` |
 | `bottom` | `[-7.55, -4.25, 7.55, -0.65]` |
 
 `regionBox(region, { left, right, top, bottom })` returns a copy with those edges moved: `regionBox('top', { bottom: 1 })` is a shorter top, `regionBox('full', { left: -2.75 })` a column on the right. `REGIONS` holds the boxes.
 
+Logical aliases work in `s.card` and `s.code` placement, `s.show`'s box and `s.carry`'s destination. The exported `StageRegion` type includes them. `regionBox`, direct panel constructors and physical names such as `left`, `right`, `main` and `side` keep fixed coordinates. Numeric points and boxes also stay fixed. A card's own direction override changes its fields; the stage's direction still resolves its region. `Text.anchor: 'start'` remains the physical left edge of its advance box.
+
 ## Diagrams
 
 ```ts
 const d = await s.show({ source: 'graph LR\nA --> B', style: 'nord' }, { box: 'main', build: 'frame' });
 ```
+
+The diagram spec accepts `lettering: 'natural'` to measure the active requested faces before layout and preserve label proportions. Without it, labels fit the captured widths. Natural capture uses Agentic Mermaid's public host-measurement hook; the snapshot records the font and measurement identity. Refresh with `rayner snapshots scene.ts` after changing the face, requested cuts or measurement inputs. [Diagram measurements](LETTERING.md#diagram-measurements) covers setup and compatibility.
 
 `build: 'frame'` draws only the scaffolding (axes, lanes, lifelines) so the story can arrive with `reveal`.
 

@@ -92,10 +92,9 @@ test('a diagram is described by the counts its source declares, and bare names n
   assert.equal(seq.get('X'), seq.get('actor:X'));
 });
 
-test('the verifier’s warnings name the parts they are about, though it numbers edges globally and parts per pair', async () => {
-  // "A->C#1" is the second edge of the source; it is the first A->C part.
+test('the current verifier’s raw warnings name captured edge parts per endpoint pair', async () => {
   const s = pinned('agentic-mermaid', 'A{Cached} --> B[Reply]');
-  assert.deepEqual(s.findings.warnings.map((w) => w.edge), ['A->B#0', 'A->C#1']);
+  assert.deepEqual(s.findings.warnings.map((w) => w.edge), ['A->B#0', 'A->C#0']);
   assert.deepEqual(findingsOf(s).map((f) => f.part), ['edge:A->B#0', 'edge:A->C#0']);
   assert.deepEqual((await shown(s)).findings(), findingsOf(s));
 });

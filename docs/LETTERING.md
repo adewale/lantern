@@ -149,6 +149,29 @@ the build. Latin Modern Math, for `Math`, is the one exception (GUST Font Licens
 The proposed `stage(..., { lettering: 'style' })` shorthand is not implemented;
 explicit face selection keeps the request visible in `meta`.
 
+## Diagram measurements
+
+A replacement face changes the glyph outlines. Existing diagram specs still fit those outlines into the widths captured by Agentic Mermaid. Opt into natural measurements on each diagram when the layout should use the requested face's actual advances:
+
+```ts
+static meta = {
+  id: 'ink', title: 'Ink on paper',
+  lettering: { faces: { sans: 'eb-garamond' } },
+};
+// In construct():
+const s = stage(this, { style: 'pen-and-ink' });
+await s.show({
+  source: 'graph LR\nA["Ink"] --> B["Paper"]',
+  lettering: 'natural',
+});
+```
+
+Capture supplies the active sans and mono measurements through Agentic Mermaid's host-measurement hook before layout. The style selects which font family a label uses; `meta.lettering` selects the actual face. Bold and italic labels use their requested real cuts, so request the corresponding `styles` entries too. Naming a style alone never installs its suggested face.
+
+The resulting labels retain their natural proportions. Rayner can scale the whole diagram uniformly to fit its stage box. Natural capture checks the laid-out label widths against the active shaper and refuses a mismatch, including an unsupported measurement path, rather than stretching the text to hide it. The [font-metrics example](../scenes/explainers/font-metrics/scene.ts) draws the same requested EB Garamond in native text and a measured diagram.
+
+Run `rayner snapshots scene.ts` and commit both diagram and lettering snapshots after opting in. Natural snapshots record the actual font-byte hashes and measurement identity; changing a requested face, cut, request, shaper or renderer invalidates the capture. Committed snapshots replay without Python or the original source fonts. Diagrams without `lettering: 'natural'` keep their existing width-fitting behavior.
+
 ## Bold and italic
 
 Without a request, `weight: 'bold'` strokes the Regular outline (faux bold) and
@@ -200,9 +223,11 @@ that starts with Hebrew or Arabic letters runs right to left, and Latin words an
 numbers inside it keep their own order. `test/lettering/hebrew` is the fixture.
 
 - **In the picture**, a Text is its advance box; `anchor` names a side of that
-  box (`start` is the left edge) whatever the direction, so panels and counters
-  lay out as before. Panels lay out left to right: a right-to-left label sits
-  where a left-to-right one would.
+  box (`start` is the left edge) whatever the paragraph direction. Choose panel
+  placement and field order separately with `stage(this, { direction: 'rtl' })`
+  and a card's `direction` override. Stage `start`/`end` regions follow that
+  spatial direction; text, digits and code are never mirrored. Mermaid flow
+  follows its authored direction, such as `graph RL`. See [spatial direction](REFERENCE.md#spatial-direction).
 
 - **On the page**, captions, titles, the steps list and the transcript are
   HTML text. A page whose request includes `Arab` or `Hebr` gives them
