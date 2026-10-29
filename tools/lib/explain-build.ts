@@ -2,6 +2,9 @@ import { build } from 'esbuild';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
+import { gzipSync } from 'node:zlib';
+import { pageSize } from './page-budget.ts';
+import { pageSnapshots } from './page-snapshots.ts';
 import { SnapshotSink, renderAt } from '../../src/index.ts';
 import { chromeFor, caseNameIn, descriptionLang } from '../../app/embed-strings.ts';
 import { restingTime, pictureHtml, htmlEscape, stepWords, wordsHtml } from '../../explain/trace.ts';
@@ -37,14 +40,19 @@ export async function buildExplainer(
   await renderAt(v.Scene, restingTime(first, v.trace.fps), sink);
   // A page that asked for lettering puts its faces in place before the player shapes anything.
   // Every other page's entry is as it was: it never imports src/lettering.ts.
-  const mount = `mountEmbed(root,Source,${JSON.stringify(project.store)})`,
+  const rawSnapshots = JSON.stringify(pageSnapshots(project.store));
+  const compressed = gzipSync(rawSnapshots).toString('base64');
+  const zipped = compressed.length + 512 < rawSnapshots.length;
+  const payload = zipped ? `await inflateSnapshots(${JSON.stringify(compressed)})` : rawSnapshots;
+  const snapshotImport = zipped ? `import{inflateSnapshots}from ${JSON.stringify(join(ROOT, 'app/embed-snapshots.ts'))};` : '';
+  const mount = `mountEmbed(root,Source,${payload})`,
     lettered = project.lettering
       ? `import{useLettering}from ${JSON.stringify(join(ROOT, 'src/lettering.ts'))};`
       : '';
   const author = project.outlineLettering
     ? `import Original from 'virtual:author';import{bindLettering}from ${JSON.stringify(join(ROOT, 'src/lettering-outlines.ts'))};const Source=bindLettering(Original,${JSON.stringify(await pageSnapshot(project.outlineLettering))});`
     : `import Source from 'virtual:author';`;
-  const entry = `${author}import{mountEmbed}from ${JSON.stringify(join(ROOT, 'app/embed.ts'))};${lettered}const root=document.getElementById('content');${lettered ? `useLettering(${JSON.stringify(pageFaces(project.lettering))}).then(()=>${mount})` : mount}.then(()=>{root.dataset.ready='true'}).catch(error=>{console.error(error);const p=document.createElement('p');p.setAttribute('role','alert');p.textContent=${JSON.stringify(t.failed)};root.append(p)});`;
+  const entry = `${author}import{mountEmbed}from ${JSON.stringify(join(ROOT, 'app/embed.ts'))};${lettered}${snapshotImport}const root=document.getElementById('content');(async()=>{${lettered ? `await useLettering(${JSON.stringify(pageFaces(project.lettering))});` : ''}await ${mount};root.dataset.ready='true'})().catch(error=>{console.error(error);const p=document.createElement('p');p.setAttribute('role','alert');p.textContent=${JSON.stringify(t.failed)};root.append(p)});`;
   const bundled = await build({
     stdin: { contents: entry, resolveDir: ROOT, sourcefile: 'explainer-entry.ts', loader: 'ts' },
     bundle: true,
@@ -117,7 +125,7 @@ export async function buildExplainer(
       steps: v.trace.steps.length,
       duration: v.trace.duration,
     })),
-    bytes: Buffer.byteLength(html),
+    ...pageSize(html),
     headers: { 'Content-Security-Policy': policy, 'Cache-Control': 'public, max-age=0, must-revalidate' },
     // Only a page that asked for lettering says what it weighs; every other receipt is as it was.
     ...(project.lettering ? { lettering: letteringReport(project.lettering) } : {}),

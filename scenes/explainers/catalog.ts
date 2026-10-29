@@ -12,6 +12,7 @@ export const PRODUCT = {
   tutorial: 'https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md',
   reference: 'https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md',
   skill: 'https://github.com/adewale/rayner/blob/main/skills/rayner-explainers/SKILL.md',
+  entry: {id: 'mr-cache', step: 'before', settings: {request: 'hit'}, label: 'Step through a cache request'},
 } as const;
 
 export const EXPLAINERS: readonly { id: string; step: string; group: 'topic' | 'toolchain' }[] = [
@@ -41,5 +42,6 @@ export const EXPLAINERS: readonly { id: string; step: string; group: 'topic' | '
   { id: 'fork', step: 'fork', group: 'toolchain' },
   { id: 'agentic-mermaid', step: 'repair', group: 'toolchain' },
   { id: 'glyph', step: 'measure', group: 'toolchain' },
+  { id: 'font-metrics', step: 'cuts', group: 'toolchain' },
   { id: 'pen-and-pencil', step: 'plate', group: 'toolchain' },
 ];

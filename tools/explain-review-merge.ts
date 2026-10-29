@@ -1,6 +1,7 @@
 // A passing story check requires all three matching catalog review shards.
 import { readFile, writeFile, rm, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { ROOT } from './lib/explain-project.ts';
 import { readStoryPlan, reviewCodeHash, mergeStoryReviews } from './lib/explain-review-plan.ts';
 import type { ReviewReceipt } from './lib/explain-review-plan.ts';
@@ -16,5 +17,5 @@ const parts = await Promise.all(
   ),
 );
 const merged = mergeStoryReviews(parts, plan.cases, plan.catalogHash, await reviewCodeHash(ROOT));
-await writeFile(output, JSON.stringify(merged, null, 2) + '\n');
+await writeFile(output, JSON.stringify({sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], {cwd: ROOT, encoding: 'utf8'}).trim(), ...merged}, null, 2) + '\n');
 console.log(`${merged.cases} cases and ${merged.stepWidths} step/width states verified across all three shards.`);

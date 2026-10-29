@@ -111,8 +111,10 @@ test('shipped explainers describe their steps: chart values, marks, focus, walks
   const bucket = await steps('token-bucket');
   const summary = (name: string) => pictureSummary(bucket.get(name)!.after);
   // The run is a native chart drawn from the same allow() calls that move the gauge
-  assert.match(summary('trace'), /A chart of the balance over time: it climbs at 1 a second between calls and drops one token for each 200\./);
-  assert.match(summary('trace'), /Grey lines are the same requests at 2 and 4 tokens a second/);
+  assert.match(summary('later'), /A chart of the balance over time: it climbs at 1 a second between calls and drops one token for each 200\./);
+  assert.match(summary('trace'), /1 \/ s: R6, R7 and R9 get 429/);
+  assert.match(summary('trace'), /2 \/ s: R6 and R9 get 429/);
+  assert.match(summary('trace'), /4 \/ s: R6 get 429/);
   assert.match(summary('balance'), /Refill: 2: tokens = min\(5/);
   assert.match(summary('burst'), /R6 at 0\.0 is under the one-token line and got 429/);
   // A step that changes only emphasis lists the rest as it was.

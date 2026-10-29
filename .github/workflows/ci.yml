@@ -18,12 +18,14 @@ jobs:
     runs-on: ubuntu-24.04  # the pinned image the embed tests were validated on
     timeout-minutes: 60  # full suite, browser gates and installed capture; catalog/story run separately
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          persist-credentials: false
           fetch-depth: 0 # the fork explainer's test reads Lantern's code at the fork base
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
+          check-latest: true
           cache: npm
       - run: npm ci
       # diagram capture and the embed tests run in headless Chromium (tools/lib/browser.ts)
@@ -36,50 +38,50 @@ jobs:
           bash tools/lettering-outline-fonts.sh
           echo "RAYNER_LETTERING_PYTHON=$PWD/out/lettering-venv/bin/python" >> "$GITHUB_ENV"
       - name: Check lettering capture and playback
-        run: |
-          set +e
-          EXPLAIN_LETTERING=1 EXPLAIN_BROWSER=1 node --test --test-reporter=spec test/lettering-cache.test.ts test/lettering-outlines.test.ts test/lettering-styles.test.ts test/lettering-rtl.test.ts test/lettering-*-audit.test.ts > out/lettering-tests.log 2>&1
-          lettering_status=$?
-          cat out/lettering-tests.log
-          if [ "$lettering_status" -ne 0 ]; then
-            node --input-type=module -e 'import {readFileSync} from "node:fs"; const log=readFileSync("out/lettering-tests.log","utf8"), at=log.lastIndexOf("✖ failing tests:"), text=(at<0?log.slice(-16000):log.slice(at,at+16000)).replaceAll("%","%25").replaceAll("\r","%0D").replaceAll("\n","%0A"); console.log("::error title=Lettering tests failed::"+text);'
-          fi
-          exit "$lettering_status"
+        run: EXPLAIN_LETTERING=1 EXPLAIN_BROWSER=1 node tools/ci-tests.ts --test --test-reporter=spec test/lettering-cache.test.ts test/lettering-outlines.test.ts test/lettering-styles.test.ts test/lettering-rtl.test.ts test/lettering-*-audit.test.ts
       - run: npm run check          # tsc -b over every project (emits dist/); compile a TS consumer against it
-      - run: npm run test:full      # every frame, fast-check properties at ten times the default cases, cache validation, golden trace, leaks
+      - run: FULL=1 node tools/ci-tests.ts --expose-gc --test test/*.test.ts # full properties, independent oracles and raster boundaries
       # Product gates reuse this job and its Chromium installation; no scheduled lane.
       - run: npm run test:embeds    # real origin/source isolation, offline/no-JS reading and style fidelity
       - run: EXPLAIN_BROWSER=1 EXPLAIN_LETTERING=1 npm run release:check  # retain the exact tested archive
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: rayner-package-${{ github.sha }}
           path: out/release/
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 90
           overwrite: true  # a re-run of a failed job uploads again under the same name
 
   catalog:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
+          check-latest: true
           cache: npm
       - run: npm ci
-      - run: npm run check
       - run: npx playwright-core install --with-deps --only-shell chromium
       - run: npm run demos:check
-      - uses: actions/upload-artifact@v4
+      - run: npm run check:budgets
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: rayner-catalog-${{ github.sha }}
           path: out/explainers/
           if-no-files-found: error
           retention-days: 7
           overwrite: true
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: rayner-page-budgets-${{ github.sha }}
+          path: out/validation/page-budgets.json
+          if-no-files-found: error
+          retention-days: 90
 
   story-part:
     needs: catalog
@@ -90,22 +92,23 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
+          check-latest: true
           cache: npm
       - run: npm ci
-      - run: npm run check
       - run: npx playwright-core install --with-deps --only-shell chromium
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: rayner-catalog-${{ github.sha }}
           path: out/explainers/
       - run: npm run demos:review -- --shard ${{ matrix.part }}/3
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: rayner-story-${{ github.sha }}-${{ matrix.part }}
@@ -127,23 +130,26 @@ jobs:
           CATALOG_RESULT: ${{ needs.catalog.result }}
           STORY_RESULT: ${{ needs['story-part'].result }}
         run: test "$CATALOG_RESULT" = success && test "$STORY_RESULT" = success
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
+          check-latest: true
           cache: npm
       - run: npm ci
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: rayner-catalog-${{ github.sha }}
           path: out/explainers/
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: rayner-story-${{ github.sha }}-*
           merge-multiple: true
           path: out/
       - run: node tools/explain-review-merge.ts
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: rayner-story-${{ github.sha }}
           path: out/validation/browser-review.json
@@ -157,20 +163,41 @@ jobs:
       matrix:
         # Current standard ARM image; macos-15 ARM jobs failed to acquire runners.
         os: [ubuntu-24.04, macos-26, macos-15-intel]
-        node: [24.0.0, 24]
+        node: ['24.0.0', '24']
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30  # types, standard suite, browser checks and installed starter
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          persist-credentials: false
           fetch-depth: 0  # retain the fork-base source oracle on every platform
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ matrix.node }}
+          check-latest: ${{ matrix.node == '24' }}
           cache: npm
       - run: npm ci
-      - run: npm run check
       - run: npx playwright-core install --with-deps --only-shell chromium
-      - run: npm test
-      - run: npm run test:embeds
+      # Pure engine/property assertions have one full owner above. The minimum
+      # Node lane retains the standard suite and reader suite for API/warning drift.
+      - if: matrix.os == 'ubuntu-24.04' && matrix.node == '24.0.0'
+        run: npm run check && node tools/ci-tests.ts --expose-gc --test test/*.test.ts
+      - if: matrix.os == 'ubuntu-24.04' && matrix.node == '24.0.0'
+        run: npm run test:embeds
       - run: EXPLAIN_BROWSER=1 npm run pack:smoke  # installed starter preview on Linux and both Mac architectures
+      # Real browser diversity replaces four duplicate Chromium/property runs.
+      - if: matrix.os == 'macos-26' && matrix.node == '24'
+        run: npx playwright-core install webkit
+      - if: matrix.os == 'macos-26' && matrix.node == '24'
+        run: sudo /usr/bin/safaridriver --enable
+      - if: matrix.os == 'macos-26' && matrix.node == '24'
+        run: EXPLAIN_WEBKIT=1 EXPLAIN_SAFARI=1 node tools/ci-tests.ts --test test/reader-cross-browser.test.ts
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: matrix.os == 'macos-26' && matrix.node == '24' && always()
+        with:
+          name: rayner-safari-${{ github.sha }}
+          path: |
+            out/validation/native-safari.json
+            out/validation/webkit.json
+          if-no-files-found: warn
+          retention-days: 90

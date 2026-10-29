@@ -62,11 +62,22 @@ export const STORY_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = {
       targets: [{ key: 'service:k1' }, { key: 'service:a' }, { key: 'edge:k1->a#0', paint: 'stroke' }, { text: 'from 198.51.100.79' }],
     },
   ],
-  'mr-cache': ['after', 'request'].map((step) => ({ step, targets: [{ text: 'hit' }, { text: 'miss' }] })),
+  'mr-cache': [
+    {step: 'after', targets: [{text: 'hit'}, {text: 'miss'}]},
+    {step: 'request', opening: true, targets: [{text: 'hit'}, {text: 'miss'}, {text: '0 D1 reads'}, {text: '1 D1 read'}, {text: '300 s'}]},
+  ],
   'token-bucket': [
     { step: 'balance', targets: [{ text: 'bucket' }, { text: 'Tokens left' }] },
-    { step: 'trace', targets: [{ text: '1 / s' }, { text: '2 / s' }, { text: '4 / s' }] },
+    { step: 'trace', opening: true, targets: [
+      {text: '1 / s'}, {text: '2 / s'}, {text: '4 / s'},
+      {key: 'result:1:R6:429', paint: 'stroke'}, {key: 'result:1:R7:429', paint: 'stroke'}, {key: 'result:1:R9:429', paint: 'stroke'},
+      {key: 'result:2:R6:429', paint: 'stroke'}, {key: 'result:2:R9:429', paint: 'stroke'}, {key: 'result:4:R6:429', paint: 'stroke'},
+    ] },
   ],
+  'font-metrics': [{step: 'cuts', opening: true, targets: [
+    {text: 'Regular'}, {text: 'Bold'}, {text: 'Italic'}, {text: 'Ink on paper'},
+    {text: '4.41'}, {text: '4.85'}, {text: '4.24'},
+  ]}],
   'wcag-map': ['AA', 'AAA'].map((level) => ({
     step: 'focus-visible',
     settings: { level, guideline: '2.4' },

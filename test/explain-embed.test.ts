@@ -57,6 +57,27 @@ after(async () => {
 function loader(id: string, scene: string) {
   return `<div id="${id}"></div><script src="${embed}/loader.js" data-src="${embed}/${scene}.html" data-target="${id}" data-title="${scene}"></script>`;
 }
+
+test('phone captions stay beside the picture and a single view never advertises Next view', options, async () => {
+  const page = await browser.newPage({viewport: {width: 390, height: 844}, reducedMotion: 'reduce'});
+  try {
+    await page.goto(embed + '/oauth-pkce.html?attacker=yes&step=attack');
+    await page.waitForSelector('[data-ready=true]');
+    await page.locator('.leaving').waitFor({state: 'detached'});
+    const bounds = await page.evaluate(() => {
+      const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+      return {stage: box('.stage').bottom, lede: box('.lede').top, caption: box('.caption').bottom, controls: box('.controls').top};
+    });
+    assert.ok(bounds.lede >= bounds.stage && bounds.lede - bounds.stage <= 24, 'the step title follows the picture');
+    assert.ok(bounds.caption < bounds.controls, 'step controls follow the caption');
+    assert.equal(await page.locator('.view-controls').isVisible(), false, 'a single view needs no tour toolbar');
+    assert.equal(await page.getByRole('button', {name: 'Next view', exact: true}).isVisible(), false);
+    assert.equal(await page.locator('.view-help').isVisible(), false);
+    assert.equal(await page.getByRole('button', {name: 'Fit stage', exact: true}).isEnabled(), true);
+    await page.getByRole('button', {name: 'Zoom in', exact: true}).click();
+    assert.ok(await page.locator('.stage').evaluate(stage => {const box = stage.getBoundingClientRect(); return box.top >= 0 && box.bottom <= innerHeight;}), 'using controls below a long caption brings the changed picture into view');
+  } finally { await page.close(); }
+});
 async function readyFrame(page: Page, scene: string): Promise<Frame> {
   await page.waitForFunction(() => document.querySelectorAll('iframe').length > 0);
   const matches = (f: Frame) => f.url().startsWith(embed + '/' + scene);
@@ -286,9 +307,9 @@ test(
         });
     });
     try {
-      await page.goto(embed + '/mr-cache.html?request=miss&step=request');
+      await page.goto(embed + '/mr-cache.html?request=miss&step=after');
       await page.waitForSelector('[data-ready=true]');
-      assert.match(await page.locator('.caption').innerText(), /KV has no entry/);
+      assert.match(await page.locator('.caption').innerText(), /removes the handler’s edge to D1/);
       // The first Tab stop is the case picker; the page's main region is not one (WCAG 2.4.7).
       await page.keyboard.press('Tab');
       assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('type')), 'radio');
@@ -321,12 +342,12 @@ test(
       const project = projects.get('mr-cache')!,
         values = resolveSettings(project.Scene, { request: 'miss' });
       const size = await page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
-      const layout = (await stepLayouts(project.variants.find((v) => v.values.request === values.request)!.Scene)).get('request')!;
+      const layout = (await stepLayouts(project.variants.find((v) => v.values.request === values.request)!.Scene)).get('after')!;
       const tour = closeUps(layout, size.w, size.h);
       const painted = () => settledZoom(page);
       const near = (a: ReturnType<typeof zoomOf>, b: { k: number; x: number; y: number }) =>
         !!a && Math.abs(a.k - b.k) < 1e-4 * b.k && Math.abs(a.x - b.x) < 0.01 && Math.abs(a.y - b.y) < 0.01;
-      assert.ok(tour[0]!.k > 1 && tour.length > 1, `mr-cache's request step needs a close-up tour: ${JSON.stringify(tour)}`);
+      assert.ok(tour[0]!.k > 1 && tour.length > 1, `mr-cache's detailed edit step needs a close-up tour: ${JSON.stringify(tour)}`);
       assert.ok(near(await painted(), tour[0]!), `opens on the first close-up ${JSON.stringify(tour[0])}`);
       const smallest = Math.min(...labelsToRead(layout).map((l) => l.size));
       assert.ok(smallest * stageScale(size.w, size.h).s * tour[0]!.k >= READ_PX - 1e-6, 'labels near the change read at 12 px');
@@ -390,7 +411,7 @@ test(
       await page.locator('#content').focus();
       await page.keyboard.press('ArrowLeft');
       await page.waitForFunction(
-        () => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === 'after',
+        () => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === 'diff',
       );
       // The first Tab reaches the case picker; its focus ring is drawn on the segment around the radio.
       await page.keyboard.press('Tab');

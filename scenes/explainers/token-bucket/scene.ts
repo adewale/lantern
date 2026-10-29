@@ -14,8 +14,10 @@ import {
   ViewSync,
   view,
   StateReadout,
+  Circle,
+  Cross,
 } from '../../../src/index.ts';
-import type { Animation, SceneState, SyncOpts, View, VMobject } from '../../../src/index.ts';
+import type { Animation, SceneState, SyncOpts, View } from '../../../src/index.ts';
 import { stage, settingsOf } from '../../../explain/index.ts';
 import { TokenBucket } from '../lib/models.ts';
 
@@ -149,7 +151,6 @@ export default class TokenBucketExplainer extends Scene {
       names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
     /** The calls made so far, in order: what every readout and description reports. */
     const calls: Call[] = [];
-    let othersShown = false;
 
     // ---- descriptions of the native drawings, read at every step boundary
     const chartSays = () => {
@@ -158,11 +159,7 @@ export default class TokenBucketExplainer extends Scene {
         ? `A chart of tokens, 0 to ${CAPACITY}, against time, 0 to 2.5 s, with a dashed line at the one token a request needs`
         : `A chart of the balance over time: it climbs at ${rate} a second between calls and drops one token for each 200. ` +
             `Dots mark what R1–${name(calls.length - 1)} found; ` +
-            (refused.length ? `${list(refused)} ${refused.length > 1 ? 'are' : 'is'} under the one-token line and got 429` : 'none is under the one-token line') +
-            (othersShown
-              ? `. Grey lines are the same requests at ${list(RATES.filter((r) => r !== rate).map(String))} tokens a second; ` +
-                `each line's end names its 429s: ${RATES.map((r) => `${r} / s ${list(refusedAt(r)) || 'none'}`).join(', ')}`
-              : '');
+            (refused.length ? `${list(refused)} ${refused.length > 1 ? 'are' : 'is'} under the one-token line and got 429` : 'none is under the one-token line');
     };
     const chipsSay = () => {
       const ok = calls.filter((c) => c.ok).length,
@@ -408,35 +405,33 @@ export default class TokenBucketExplainer extends Scene {
     await this.step('trace', {
       title: 'The same ten requests at 1, 2 and 4 tokens a second',
       line: `429s at 4 / s: ${list(refusedAt(4))}; at 1 / s: ${list(refusedAt(1))}.`,
-      caption: `Each line is one run of allow() over the same ten requests, and the bright one is this case. A faster refill climbs back over one token sooner: at ${refused[2]} gets 429, and at ${refused[0]} do.`,
+      caption: `Each row runs the same ten requests at its labelled refill rate; the outlined row is this case. Circles are accepted requests and crosses are 429s. At ${refused[2]} gets 429; at ${refused[0]} do.`,
     });
-    const others = RATES.filter((r) => r !== rate).map((r) => {
-      const run = runs.get(r)!;
-      const points = run.flatMap((c, i): [number, number][] => [
-        ...climb(i ? run[i - 1]! : START, c, r),
-        [c.at, c.after],
-      ]);
-      return line(points, soft, 0.03)!.setStyle({ strokeOpacity: 0.7 }) as VMobject;
+    // The curves explain refill in earlier steps. End on a large comparison of
+    // their outcomes, so a phone reader sees all three rates together.
+    await s.clear();
+    const comparison = view(this, (state) => {
+      const picture = new Group();
+      const first = -3.7, pitch = 1.12;
+      for (let i = 0; i < TIMES.length; i++)
+        picture.add(new Text(String(i + 1), {fontSize: 0.7, color: ink}).moveTo([first + i * pitch, 2.5]));
+      for (const [row, r] of RATES.entries()) {
+        const y = 1.05 - row * 1.65;
+        picture.add(new Text(`${r} / s`, {fontSize: 0.7, color: ink}).moveTo([-6.25, y]));
+        if (r === rate) picture.add(new Rectangle({width: 14.4, height: 1.3, cornerRadius: 0.12, stroke: s.palette.accent, strokeWidth: 0.05}).moveTo([0, y]));
+        const responses = r === rate ? state.responses as number[] : runs.get(r)!.map(c => c.ok ? 200 : 429);
+        for (const [i, response] of responses.entries()) {
+          const circle = new Circle({radius: 0.24, stroke: response === 200 ? s.good : s.bad, strokeWidth: 0.06}).moveTo([first + i * pitch, y]);
+          const mark = response === 200 ? circle : new Cross(circle, {stroke: s.bad, strokeWidth: 0.06});
+          mark.key = `result:${r}:R${i + 1}:${response}`;
+          picture.add(mark);
+        }
+      }
+      picture.add(new Text('Request', {fontSize: 0.7, color: ink}).moveTo([-6.0, 2.5]));
+      picture.add(new Text('Circle: 200     Cross: 429', {fontSize: 0.7, color: ink}).moveTo([0, -3.8]));
+      return picture;
     });
-    // Each line's end names its rate and, under it, the requests it refused: the table the
-    // three runs make, said where each run ends.
-    const ends = new Group(
-      ...RATES.map((r) => {
-        const last = runs.get(r)!.at(-1)!,
-          p = axes.c2p(last.at, last.after),
-          color = r === rate ? s.palette.accent : soft,
-          weight = r === rate ? ('bold' as const) : ('normal' as const);
-        const rateLabel = new Text(`${r} / s`, { fontSize: 0.2, color, weight }),
-          refusedLabel = new Text(refusedAt(r).length ? `429: ${list(refusedAt(r))}` : 'no 429', { fontSize: 0.2, color, weight });
-        const at: [number, number] = [p[0] + 0.16, Math.max(p[1], Y0 + 0.42)];
-        rateLabel.moveTo([at[0], at[1] + 0.12], [-1, 0]);
-        refusedLabel.moveTo([at[0], at[1] - 0.12], [-1, 0]);
-        return new Group(rateLabel, refusedLabel);
-      }),
-    );
-    await this.play(new FadeOut(code, { runTime: 0.4 }), new FadeOut(needLabel, { runTime: 0.4 }));
-    othersShown = true;
-    s.keep(others[0]!, ...others.slice(1), ends, { describe: chartSays });
-    await this.play(...others.map((o) => new Create(o, { runTime: 1.2 })), new FadeIn(ends));
+    this.readout = comparison;
+    await s.enter(comparison, {describe: () => 'Requests R1 to R10, left to right. ' + RATES.map(r => `${r} / s: ${list(refusedAt(r))} get 429; all other requests get 200`).join('. ') + `. The ${rate} / s row is outlined.`});
   }
 }

@@ -1,0 +1,8 @@
+{
+  "file": "vendor/glyph.js",
+  "bytes": 338176,
+  "sha256": "ee2e084bcf145b1dc47386413d6d2273445f57bd657a3ae6cbe3c7564a6a900a",
+  "introduced": "56a6fc5c0ed7edaa462fff0ce093d8dfc76a8273",
+  "upstreamRevision": null,
+  "note": "The existing Lantern bundle is byte-identical to its pin in merged PR #4. The bundle contains no glyph source revision; introduced records the Lantern commit that added it. Review the source and checksum when rebuilding."
+}

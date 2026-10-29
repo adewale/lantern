@@ -150,9 +150,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     ledeRuler = el('p', undefined, 'lede-ruler');
   ruler.setAttribute('aria-hidden', 'true');
   ledeRuler.setAttribute('aria-hidden', 'true');
-  // The controls sit straight under the picture, above the words, so however long a
-  // caption runs, Next stays beside what it moves.
-  player.append(frame, controls, notice, summary, lede, caption, described, ruler, ledeRuler);
+  // Keep the step's words beside its picture. Navigation follows the caption, so
+  // several rows of phone controls never separate a comparison from its explanation.
+  player.append(frame, lede, caption, described, controls, notice, summary, ruler, ledeRuler);
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', t.stepList);
@@ -188,14 +188,19 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const views = el('div', undefined, 'view-controls'),
     viewCount = el('span'),
     nextView = el('button', t.nextView, 'button'),
-    wholePicture = el('button', t.wholePicture, 'button'),
+    wholePicture = button(t.wholePicture, 'fit'),
     viewHelp = el('p', t.viewHelp, 'view-help');
   nextView.type = wholePicture.type = 'button';
   viewCount.setAttribute('aria-live', 'polite');
   views.hidden = true;
   views.append(viewCount, nextView, wholePicture, overview, viewHelp);
-  frame.after(views);
+  controls.before(views);
   const narrow = () => stage.clientWidth > 0 && stage.clientWidth < NARROW_PX;
+  const revealStage = () => {
+    if (!narrow()) return;
+    const box = stage.getBoundingClientRect();
+    if (box.top < 0 || box.bottom > innerHeight) stage.scrollIntoView({block: 'nearest'});
+  };
   let shownLayout: StepLayout | undefined,
     // The close-ups of the step on show, where it opened first; `stop` is the one last visited.
     tour: Zoom[] = [],
@@ -206,8 +211,10 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       on = narrow() && zoom.k > 1;
     stage.classList.toggle('narrow', narrow());
     player.classList.toggle('narrow', narrow());
-    overview.hidden = !on;
-    views.hidden = !narrow();
+    const multiple = tour.length > 1;
+    overview.hidden = !on || !multiple;
+    views.hidden = !narrow() || !multiple;
+    viewCount.hidden = nextView.hidden = viewHelp.hidden = !multiple;
     wholePicture.disabled = !on;
     nextView.disabled = tour.length < 2;
     const count = on ? t.viewCount(stop + 1, Math.max(1, tour.length)) : t.wholePicture;
@@ -231,6 +238,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   }
   overview.onclick = nextView.onclick = () => {
     if (tour.length < 2) return;
+    revealStage();
     if (zoom.k <= 1) { closer.click(); return; }
     stop = (stop + 1) % tour.length;
     zoom.to(tour[stop]!, true);
@@ -254,8 +262,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     reader.paint,
   );
   wholePicture.onclick = () => { zoomFit.click(); stage.focus(); };
-  zoomIn.onclick = () => zoom.zoomAt(1.6, undefined, undefined, true);
-  zoomOut.onclick = () => zoom.zoomAt(1 / 1.6, undefined, undefined, true);
+  zoomIn.onclick = () => { revealStage(); zoom.zoomAt(1.6, undefined, undefined, true); };
+  zoomOut.onclick = () => { revealStage(); zoom.zoomAt(1 / 1.6, undefined, undefined, true); };
   /** The whole picture; on a narrow stage, for the steps that follow too. */
   const whole = (glide: boolean) => {
     if (narrow()) follow = false;
@@ -370,6 +378,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   }
   async function show(index: number, push = true) {
     if (!trace) return; // Controls exist before the first case has loaded.
+    if (push) revealStage();
     const gen = ++generation;
     playing = false;
     active = undefined;
@@ -397,6 +406,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   /** Forward the way the author wrote it: play the step, then rest on its last frame. */
   async function advance() {
     if (!trace || selected >= trace.steps.length - 1) return;
+    revealStage();
     if (reduced()) return show(selected + 1);
     selected += 1;
     link(true);

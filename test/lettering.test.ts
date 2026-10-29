@@ -46,25 +46,30 @@ async function built(project: Project, name: string) {
 // The full serialized receipt pin includes engineHash; the older canonical receipt
 // pin excludes it. Both historical contracts and the header recipe share one build.
 const PINS = new URL('./lettering-baseline.json', import.meta.url);
-test('explainers that ask for no lettering build the page, headers and receipt they built before it existed', async () => {
-  const pins: Record<string, { html: string; bytes: number; headers: string; receipt: string; fullReceipt: string }> = JSON.parse(
+test('catalog pages retain reviewed output pins; only explicitly lettered examples carry requested lettering', async () => {
+  let pins: Record<string, { html: string; bytes: number; headers: string; receipt: string; fullReceipt: string }> = JSON.parse(
     readFileSync(PINS, 'utf8'),
   );
   const ids = EXPLAINERS.map((e) => e.id);
-  assert.deepEqual(Object.keys(pins).sort(), [...ids].sort(), 'the pins cover exactly the catalog');
   const now: typeof pins = {};
   for (const id of ids) {
     const project = await collectProject(join(ROOT, 'scenes/explainers', id), { write: false });
-    assert.equal(project.lettering, undefined, id);
-    assert.equal(project.outlineLettering, undefined, id);
+    if (id === 'font-metrics') {
+      assert.equal(project.outlineLettering?.request.faces?.sans, 'eb-garamond');
+      assert.deepEqual(project.outlineLettering?.request.styles, ['bold', 'italic']);
+    } else {
+      assert.equal(project.lettering, undefined, id);
+      assert.equal(project.outlineLettering, undefined, id);
+    }
     const { html, receipt, headers } = await built(project, id);
     assert.equal('lettering' in receipt, false, `${id}: only a lettered page reports lettering`);
-    assert.equal('letteringHash' in receipt, false, `${id}: an opt-out page has no outline hash`);
+    assert.equal('letteringHash' in receipt, id === 'font-metrics', `${id}: only a requested page has an outline hash`);
     const { engineHash: _, ...rest } = receipt;
     assert.equal(Buffer.byteLength(html), receipt.bytes, `${id}: receipt reports actual page bytes`);
     now[id] = { html: sha256(html), bytes: Buffer.byteLength(html), headers: sha256(headers), receipt: sha256(JSON.stringify(rest)), fullReceipt: sha256(JSON.stringify(receipt, null, 2) + '\n') };
   }
-  if (process.env.UPDATE_GOLDEN === '1') writeFileSync(PINS, JSON.stringify(now, null, 2) + '\n');
+  if (process.env.UPDATE_GOLDEN === '1') { writeFileSync(PINS, JSON.stringify(now, null, 2) + '\n'); pins = now; }
+  assert.deepEqual(Object.keys(pins).sort(), [...ids].sort(), 'the pins cover exactly the catalog');
   for (const id of ids) assert.deepEqual(now[id], pins[id], `${id} no longer builds what it built before lettering on request`);
 });
 
