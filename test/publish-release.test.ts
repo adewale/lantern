@@ -9,7 +9,7 @@ import {promisify} from 'node:util';
 const run = promisify(execFile);
 const script = new URL('../tools/publish-release.ts', import.meta.url).pathname;
 
-async function attempt({env = {}, change = (m: Record<string, unknown>) => {}, corrupt = false, mode = '', undated = false} = {}) {
+async function attempt({env = {}, change = (m: Record<string, unknown>) => {}, corrupt = false, mode = '', undated = false, staleReport = false} = {}) {
   const folder = await mkdtemp(join(tmpdir(), 'rayner-publish-guard-'));
   try {
     const directory = join(folder, 'out/release'), bin = join(folder, 'bin');
@@ -22,7 +22,7 @@ async function attempt({env = {}, change = (m: Record<string, unknown>) => {}, c
     await writeFile(join(directory, 'manifest.json'), JSON.stringify(manifest));
     await mkdir(join(directory, 'validation'));
     for (const name of ['browser-review.json', 'page-budgets.json', 'native-safari.json', 'webkit.json'])
-      await writeFile(join(directory, 'validation', name), JSON.stringify({sourceCommit: 'a'.repeat(40)}));
+      await writeFile(join(directory, 'validation', name), JSON.stringify({sourceCommit: (staleReport && name === 'native-safari.json' ? 'b' : 'a').repeat(40)}));
     await writeFile(join(folder, 'CHANGELOG.md'), `# Changelog\n\n## 0.1.1 (${undated ? 'unreleased' : '2026-10-29'})\n\nA reviewed fix.\n`);
     const calls = join(folder, 'calls.jsonl');
     // These are the only npm/gh commands reachable from the subprocess. No real
@@ -50,7 +50,7 @@ test('publication refuses invalid context, unvalidated bytes and existing versio
     {env: {NPM_DIST_TAG: 'unexpected'}}, {change: (m: Record<string, unknown>) => {m.dirty = true;}},
     {change: (m: Record<string, unknown>) => {m.gates = {package: true, browser: false, letteringCapture: true};}},
     {corrupt: true}, {mode: 'exists'}, {mode: 'registry-fails'},
-    {undated: true},
+    {undated: true}, {staleReport: true},
   ];
   for (const input of cases) {
     const result = await attempt(input);
