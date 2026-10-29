@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "importer": "725da4d8fc61bf77",
-  "renderer": "agentic-mermaid@0.4.1",
+  "importer": "59db32b3167d3316",
+  "renderer": "agentic-mermaid@0.5.1",
   "sourceHash": "79ae7c07aa3aabe48e7cc5f1c2c83abce48a3dedaac5b12576791217617b34b6",
   "diagrams": {
     "[\"graph LR\\nRequest[Request] --> H[Handler]\\nH --> D1[(D1)]\",\"hand-drawn\"]": "34d31dc97a5ef9fe.json",

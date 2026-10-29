@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "renderer": "agentic-mermaid@0.4.1",
+  "renderer": "agentic-mermaid@0.5.1",
   "spec": {
     "source": "graph LR\nA[Ink] --> B[Paper]",
     "style": "pen-and-ink"
@@ -108,25 +108,25 @@
         {
           "subpaths": [
             [
-              1.409999966621399,
+              1.399999976158142,
               -0.559499979019165,
-              1.43666672706604,
+              1.4266666173934937,
               -0.5678333640098572,
-              1.4633333683013916,
+              1.4533333778381348,
               -0.5761666893959045,
-              1.4900000095367432,
+              1.4800000190734863,
               -0.5845000147819519,
-              1.4633333683013916,
+              1.4533333778381348,
               -0.5928333401679993,
-              1.43666672706604,
+              1.4266666173934937,
               -0.6011666655540466,
-              1.409999966621399,
+              1.399999976158142,
               -0.609499990940094,
-              1.409999966621399,
+              1.399999976158142,
               -0.5928333401679993,
-              1.409999966621399,
+              1.399999976158142,
               -0.5761666893959045,
-              1.409999966621399,
+              1.399999976158142,
               -0.559499979019165
             ]
           ],
@@ -414,18 +414,42 @@
           "x": 40,
           "y": 40,
           "w": 60,
-          "h": 37,
+          "h": 36.900000000000006,
           "shape": "rectangle",
-          "label": "Ink"
+          "label": "Ink",
+          "labelBounds": {
+            "x": 60.133,
+            "y": 50,
+            "w": 19.733999999999998,
+            "h": 16.900000000000002
+          },
+          "labelContainer": {
+            "x": 40,
+            "y": 40,
+            "w": 60,
+            "h": 36.900000000000006
+          }
         },
         {
           "id": "B",
           "x": 148,
           "y": 40,
           "w": 79,
-          "h": 37,
+          "h": 36.900000000000006,
           "shape": "rectangle",
-          "label": "Paper"
+          "label": "Paper",
+          "labelBounds": {
+            "x": 168,
+            "y": 50,
+            "w": 39,
+            "h": 16.900000000000002
+          },
+          "labelContainer": {
+            "x": 148,
+            "y": 40,
+            "w": 79,
+            "h": 36.900000000000006
+          }
         }
       ],
       "edges": [
@@ -436,11 +460,11 @@
           "path": [
             [
               100,
-              58
+              58.45
             ],
             [
               148,
-              58
+              58.45
             ]
           ]
         }
@@ -448,8 +472,48 @@
       "groups": [],
       "bounds": {
         "w": 267,
-        "h": 117
+        "h": 116.9
       }
+    },
+    "checks": {
+      "renderability": "passed",
+      "sourceLoss": "not-detected",
+      "taskCorrectness": "not-checked"
+    },
+    "layoutCertification": {
+      "version": 1,
+      "unit": "px",
+      "scope": "native-scene",
+      "status": "passed",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 267,
+        "height": 116.9
+      },
+      "attempts": 1,
+      "repairs": [],
+      "coverage": {
+        "measured": 5,
+        "unmeasured": 0,
+        "preparedText": 2,
+        "fallbackText": 0,
+        "conditional": 0
+      },
+      "checks": {
+        "primitives": 8,
+        "labels": 2,
+        "occlusionPairs": 8,
+        "maxOcclusionPairs": 100000,
+        "operations": 200,
+        "maxOperations": 400000,
+        "markers": 1
+      },
+      "issues": [],
+      "limitations": [
+        "Prepared occupied text regions bound native geometry; exact glyph ink depends on the resolved font.",
+        "Declared transparency, intentional data-mark overlap and externally modified CSS are outside this proof."
+      ]
     }
   }
 }

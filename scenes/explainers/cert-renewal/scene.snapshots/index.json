@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "importer": "725da4d8fc61bf77",
-  "renderer": "agentic-mermaid@0.4.1",
+  "importer": "59db32b3167d3316",
+  "renderer": "agentic-mermaid@0.5.1",
   "sourceHash": "983b9df1eaf5a7d78123aedc1a6d748c62a0fd475cbd7ca331fd2ece25c104ed",
   "diagrams": {
     "[\"gantt\\n  dateFormat YYYY-MM-DD HH:mm\\n  axisFormat %d %b\\n  section One 160-hour certificate\\n    Valid :life, 2028-03-01 00:00, 160h\\n    Retry window, the default rule :fraction, 2028-03-04 08:00, 80h\\n    Retry window, the 30-day rule :fixed30, 2028-03-01 00:00, 160h\",\"excalidraw\"]": "32195d8a03890775.json",

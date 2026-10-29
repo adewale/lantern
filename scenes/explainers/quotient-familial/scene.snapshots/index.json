@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "importer": "725da4d8fc61bf77",
-  "renderer": "agentic-mermaid@0.4.1",
+  "importer": "59db32b3167d3316",
+  "renderer": "agentic-mermaid@0.5.1",
   "sourceHash": "1654ac7ea24060c0c126407269f4c401fd833f2f9531cf41d311e56f6a714f89",
   "diagrams": {
     "[\"---\\nconfig:\\n  flowchart:\\n    rankSpacing: 24\\n    nodeSpacing: 16\\n---\\ngraph LR\\nRNI[\\\"Revenu net<br/>imposable\\\"] --> QUOT[\\\"÷ parts\\\"]\\nQUOT --> BAR[\\\"Barème\\\"]\\nBAR --> FOIS[\\\"× parts\\\"]\\nFOIS --> PLAF[\\\"Plafonnement\\\"]\\nRNI --> REF[\\\"Sans enfants<br/>2 parts\\\"]\\nREF --> PLAF\\nPLAF --> DEC[\\\"Décote\\\"]\\nDEC --> IMP[\\\"Impôt\\\"]\",\"pen-and-ink\"]": "2f9cbac4cc4d5aaf.json",

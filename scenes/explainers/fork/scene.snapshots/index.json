@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "importer": "725da4d8fc61bf77",
-  "renderer": "agentic-mermaid@0.4.1",
+  "importer": "59db32b3167d3316",
+  "renderer": "agentic-mermaid@0.5.1",
   "sourceHash": "e5e3ec799131b357b923cf6336a03ff69e36f15e68ed32efdfc9956ec01ef01d",
   "diagrams": {
     "[\"graph LR\\nDoc[JSON doc]\\nParser[Flowchart parser]\\nScene[Scene class]\\nClock[Fixed dt clock]\\nPlayer[Dev player]\\nWorker[Worker]\\nFrames[SVG frames]\\nDoc --> Scene\\nParser --> Scene\\nScene --> Clock\\nClock --> Player\\nClock --> Worker\\nClock --> Frames\",\"github-light\"]": "608006a71def6f23.json",

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "renderer": "agentic-mermaid@0.4.1",
+  "renderer": "agentic-mermaid@0.5.1",
   "spec": {
     "source": "graph LR\nT1[\"tree aaa96ce<br/>hello.txt\"]\nHello[\"blob<br/>ce01362\"]\nT1 --> Hello",
     "style": "catppuccin-mocha"
@@ -108,25 +108,25 @@
         {
           "subpaths": [
             [
-              2.007550001144409,
+              1.9975500106811523,
               -0.6439999938011169,
-              2.0342166423797607,
+              2.024216651916504,
               -0.6523333191871643,
-              2.0608832836151123,
+              2.0508832931518555,
               -0.6606667041778564,
-              2.087550163269043,
+              2.077549934387207,
               -0.6690000295639038,
-              2.0608832836151123,
+              2.0508832931518555,
               -0.6773333549499512,
-              2.0342166423797607,
+              2.024216651916504,
               -0.6856666803359985,
-              2.007550001144409,
+              1.9975500106811523,
               -0.6940000057220459,
-              2.007550001144409,
+              1.9975500106811523,
               -0.6773333549499512,
-              2.007550001144409,
+              1.9975500106811523,
               -0.6606667041778564,
-              2.007550001144409,
+              1.9975500106811523,
               -0.6439999938011169
             ]
           ],
@@ -202,7 +202,7 @@
           ],
           "style": {
             "fill": "#232434",
-            "stroke": "#414356",
+            "stroke": "#65697e",
             "strokeWidth": 0.007499999999999999,
             "fillOpacity": 1,
             "strokeOpacity": 1,
@@ -327,7 +327,7 @@
           ],
           "style": {
             "fill": "#232434",
-            "stroke": "#414356",
+            "stroke": "#65697e",
             "strokeWidth": 0.007499999999999999,
             "fillOpacity": 1,
             "strokeOpacity": 1,
@@ -423,19 +423,43 @@
           "id": "T1",
           "x": 40,
           "y": 40,
-          "w": 120,
-          "h": 54,
+          "w": 119.755,
+          "h": 53.800000000000004,
           "shape": "rectangle",
-          "label": "tree aaa96ce\nhello.txt"
+          "label": "tree aaa96ce\nhello.txt",
+          "labelBounds": {
+            "x": 60,
+            "y": 50,
+            "w": 79.755,
+            "h": 33.800000000000004
+          },
+          "labelContainer": {
+            "x": 40,
+            "y": 40,
+            "w": 119.755,
+            "h": 53.800000000000004
+          }
         },
         {
           "id": "Hello",
-          "x": 208,
+          "x": 207.755,
           "y": 40,
-          "w": 89,
-          "h": 54,
+          "w": 89.374,
+          "h": 53.800000000000004,
           "shape": "rectangle",
-          "label": "blob\nce01362"
+          "label": "blob\nce01362",
+          "labelBounds": {
+            "x": 227.755,
+            "y": 50,
+            "w": 49.374,
+            "h": 33.800000000000004
+          },
+          "labelContainer": {
+            "x": 207.755,
+            "y": 40,
+            "w": 89.374,
+            "h": 53.800000000000004
+          }
         }
       ],
       "edges": [
@@ -445,21 +469,61 @@
           "to": "Hello",
           "path": [
             [
-              160,
-              67
+              159.755,
+              66.9
             ],
             [
-              208,
-              67
+              207.755,
+              66.9
             ]
           ]
         }
       ],
       "groups": [],
       "bounds": {
-        "w": 337,
-        "h": 134
+        "w": 337.129,
+        "h": 133.8
       }
+    },
+    "checks": {
+      "renderability": "passed",
+      "sourceLoss": "not-detected",
+      "taskCorrectness": "not-checked"
+    },
+    "layoutCertification": {
+      "version": 1,
+      "unit": "px",
+      "scope": "native-scene",
+      "status": "passed",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 337.129,
+        "height": 133.8
+      },
+      "attempts": 1,
+      "repairs": [],
+      "coverage": {
+        "measured": 5,
+        "unmeasured": 0,
+        "preparedText": 2,
+        "fallbackText": 0,
+        "conditional": 0
+      },
+      "checks": {
+        "primitives": 8,
+        "labels": 2,
+        "occlusionPairs": 8,
+        "maxOcclusionPairs": 100000,
+        "operations": 200,
+        "maxOperations": 400000,
+        "markers": 1
+      },
+      "issues": [],
+      "limitations": [
+        "Prepared occupied text regions bound native geometry; exact glyph ink depends on the resolved font.",
+        "Declared transparency, intentional data-mark overlap and externally modified CSS are outside this proof."
+      ]
     }
   }
 }

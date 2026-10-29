@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "renderer": "agentic-mermaid@0.4.1",
+  "renderer": "agentic-mermaid@0.5.1",
   "spec": {
     "source": "timeline\n  title Let’s Encrypt’s certificate lifetimes\n  2026-05-13 : tlsserver profile, 45 days\n  2027-02-10 : classic profile, 64 days\n  2028-02-16 : classic profile, 45 days\n  2029-03-15 : every public CA, 47 days at most",
     "style": "excalidraw"
@@ -141,7 +141,7 @@
           ],
           "style": {
             "fill": "none",
-            "stroke": "#2a3460",
+            "stroke": "#1e1e1e",
             "strokeWidth": 0.018000000000000002,
             "fillOpacity": 1,
             "strokeOpacity": 1,
@@ -653,7 +653,7 @@
           "fontSize": 0.12,
           "textRun": {
             "text": "2026-05-13",
-            "x": 110.72800000000001,
+            "x": 110.728,
             "y": 97.4,
             "size": 12,
             "anchor": "middle",
@@ -890,7 +890,7 @@
           ],
           "style": {
             "fill": "none",
-            "stroke": "#4263eb",
+            "stroke": "#1e1e1e",
             "strokeWidth": 0.024,
             "fillOpacity": 1,
             "strokeOpacity": 1,
@@ -1607,7 +1607,7 @@
           ],
           "style": {
             "fill": "none",
-            "stroke": "#d2d2d2",
+            "stroke": "#1e1e1e",
             "strokeWidth": 0.016,
             "fillOpacity": 1,
             "strokeOpacity": 1,
@@ -1623,7 +1623,7 @@
           "subpaths": [],
           "closed": [],
           "style": {
-            "fill": "#6a6a6a",
+            "fill": "#1e1e1e",
             "stroke": "#ffffff",
             "strokeWidth": 0.03,
             "fillOpacity": 1,
@@ -1690,7 +1690,7 @@
           ],
           "style": {
             "fill": "none",
-            "stroke": "#2a3460",
+            "stroke": "#1e1e1e",
             "strokeWidth": 0.018000000000000002,
             "fillOpacity": 1,
             "strokeOpacity": 1,
@@ -2439,7 +2439,7 @@
           ],
           "style": {
             "fill": "none",
-            "stroke": "#4263eb",
+            "stroke": "#1e1e1e",
             "strokeWidth": 0.024,
             "fillOpacity": 1,
             "strokeOpacity": 1,
@@ -3134,7 +3134,7 @@
           ],
           "style": {
             "fill": "none",
-            "stroke": "#d2d2d2",
+            "stroke": "#1e1e1e",
             "strokeWidth": 0.016,
             "fillOpacity": 1,
             "strokeOpacity": 1,
@@ -3150,7 +3150,7 @@
           "subpaths": [],
           "closed": [],
           "style": {
-            "fill": "#6a6a6a",
+            "fill": "#1e1e1e",
             "stroke": "#ffffff",
             "strokeWidth": 0.03,
             "fillOpacity": 1,
@@ -3217,7 +3217,7 @@
           ],
           "style": {
             "fill": "none",
-            "stroke": "#2a3460",
+            "stroke": "#1e1e1e",
             "strokeWidth": 0.018000000000000002,
             "fillOpacity": 1,
             "strokeOpacity": 1,
@@ -3729,7 +3729,7 @@
           "fontSize": 0.12,
           "textRun": {
             "text": "2028-02-16",
-            "x": 458.0880000000001,
+            "x": 458.088,
             "y": 97.4,
             "size": 12,
             "anchor": "middle",
@@ -3966,7 +3966,7 @@
           ],
           "style": {
             "fill": "none",
-            "stroke": "#4263eb",
+            "stroke": "#1e1e1e",
             "strokeWidth": 0.024,
             "fillOpacity": 1,
             "strokeOpacity": 1,
@@ -4661,7 +4661,7 @@
           ],
           "style": {
             "fill": "none",
-            "stroke": "#d2d2d2",
+            "stroke": "#1e1e1e",
             "strokeWidth": 0.016,
             "fillOpacity": 1,
             "strokeOpacity": 1,
@@ -4677,7 +4677,7 @@
           "subpaths": [],
           "closed": [],
           "style": {
-            "fill": "#6a6a6a",
+            "fill": "#1e1e1e",
             "stroke": "#ffffff",
             "strokeWidth": 0.03,
             "fillOpacity": 1,
@@ -4693,7 +4693,7 @@
           "fontSize": 0.12,
           "textRun": {
             "text": "classic profile, 45 days",
-            "x": 398.5440000000001,
+            "x": 398.544,
             "y": 183,
             "size": 12,
             "anchor": "start",
@@ -4744,7 +4744,7 @@
           ],
           "style": {
             "fill": "none",
-            "stroke": "#2a3460",
+            "stroke": "#1e1e1e",
             "strokeWidth": 0.018000000000000002,
             "fillOpacity": 1,
             "strokeOpacity": 1,
@@ -5256,7 +5256,7 @@
           "fontSize": 0.12,
           "textRun": {
             "text": "2029-03-15",
-            "x": 639.5440000000001,
+            "x": 639.544,
             "y": 97.4,
             "size": 12,
             "anchor": "middle",
@@ -5493,7 +5493,7 @@
           ],
           "style": {
             "fill": "none",
-            "stroke": "#4263eb",
+            "stroke": "#1e1e1e",
             "strokeWidth": 0.024,
             "fillOpacity": 1,
             "strokeOpacity": 1,
@@ -6276,7 +6276,7 @@
           ],
           "style": {
             "fill": "none",
-            "stroke": "#d2d2d2",
+            "stroke": "#1e1e1e",
             "strokeWidth": 0.016,
             "fillOpacity": 1,
             "strokeOpacity": 1,
@@ -6292,7 +6292,7 @@
           "subpaths": [],
           "closed": [],
           "style": {
-            "fill": "#6a6a6a",
+            "fill": "#1e1e1e",
             "stroke": "#ffffff",
             "strokeWidth": 0.03,
             "fillOpacity": 1,
@@ -6308,7 +6308,7 @@
           "fontSize": 0.12,
           "textRun": {
             "text": "every public CA, 47 days at",
-            "x": 569.6320000000001,
+            "x": 569.632,
             "y": 183,
             "size": 12,
             "anchor": "start",
@@ -6327,7 +6327,7 @@
           "subpaths": [],
           "closed": [],
           "style": {
-            "fill": "#6a6a6a",
+            "fill": "#1e1e1e",
             "stroke": "#ffffff",
             "strokeWidth": 0.03,
             "fillOpacity": 1,
@@ -6343,7 +6343,7 @@
           "fontSize": 0.12,
           "textRun": {
             "text": "most",
-            "x": 569.6320000000001,
+            "x": 569.632,
             "y": 202.2,
             "size": 12,
             "anchor": "start",
@@ -6370,22 +6370,22 @@
           "closed": [],
           "style": {
             "fill": "#1e1e1e",
-            "stroke": "none",
-            "strokeWidth": 0.01,
+            "stroke": "#ffffff",
+            "strokeWidth": 0.03,
             "fillOpacity": 1,
             "strokeOpacity": 1,
             "opacity": 1,
-            "lineCap": "butt",
-            "lineJoin": "miter",
+            "lineCap": "round",
+            "lineJoin": "round",
             "fillRule": "nonzero",
             "miterLimit": 4,
-            "paintOrder": "normal"
+            "paintOrder": "stroke"
           },
           "text": "Let’s Encrypt’s certificate lifetimes",
           "fontSize": 0.18,
           "textRun": {
             "text": "Let’s Encrypt’s certificate lifetimes",
-            "x": 377.72800000000007,
+            "x": 377.728,
             "y": 46,
             "size": 18,
             "anchor": "middle",
@@ -6396,8 +6396,7 @@
               1,
               0,
               0
-            ],
-            "width": 304.02
+            ]
           }
         }
       ]
@@ -6417,7 +6416,19 @@
           "w": 90,
           "h": 36,
           "shape": "rounded",
-          "label": "2026-05-13"
+          "label": "2026-05-13",
+          "labelBounds": {
+            "x": 79.58800000000001,
+            "y": 85.4,
+            "w": 62.28,
+            "h": 15.600000000000001
+          },
+          "labelContainer": {
+            "x": 65.58800000000001,
+            "y": 75.4,
+            "w": 90.28,
+            "h": 35.6
+          }
         },
         {
           "id": "event-0",
@@ -6426,7 +6437,19 @@
           "w": 157,
           "h": 36,
           "shape": "rectangle",
-          "label": "tlsserver profile, 45 days"
+          "label": "tlsserver profile, 45 days",
+          "labelBounds": {
+            "x": 46,
+            "y": 171,
+            "w": 129.45600000000002,
+            "h": 15.600000000000001
+          },
+          "labelContainer": {
+            "x": 32,
+            "y": 161,
+            "w": 157.45600000000002,
+            "h": 35.6
+          }
         },
         {
           "id": "period-1:period",
@@ -6435,7 +6458,19 @@
           "w": 90,
           "h": 36,
           "shape": "rounded",
-          "label": "2027-02-10"
+          "label": "2027-02-10",
+          "labelBounds": {
+            "x": 255.86,
+            "y": 85.4,
+            "w": 62.28,
+            "h": 15.600000000000001
+          },
+          "labelContainer": {
+            "x": 241.86,
+            "y": 75.4,
+            "w": 90.28,
+            "h": 35.6
+          }
         },
         {
           "id": "event-1",
@@ -6444,7 +6479,19 @@
           "w": 147,
           "h": 36,
           "shape": "rectangle",
-          "label": "classic profile, 64 days"
+          "label": "classic profile, 64 days",
+          "labelBounds": {
+            "x": 227.456,
+            "y": 171,
+            "w": 119.08800000000001,
+            "h": 15.600000000000001
+          },
+          "labelContainer": {
+            "x": 213.456,
+            "y": 161,
+            "w": 147.08800000000002,
+            "h": 35.6
+          }
         },
         {
           "id": "period-2:period",
@@ -6453,7 +6500,19 @@
           "w": 90,
           "h": 36,
           "shape": "rounded",
-          "label": "2028-02-16"
+          "label": "2028-02-16",
+          "labelBounds": {
+            "x": 426.9480000000001,
+            "y": 85.4,
+            "w": 62.28,
+            "h": 15.600000000000001
+          },
+          "labelContainer": {
+            "x": 412.9480000000001,
+            "y": 75.4,
+            "w": 90.28,
+            "h": 35.6
+          }
         },
         {
           "id": "event-2",
@@ -6462,7 +6521,19 @@
           "w": 147,
           "h": 36,
           "shape": "rectangle",
-          "label": "classic profile, 45 days"
+          "label": "classic profile, 45 days",
+          "labelBounds": {
+            "x": 398.5440000000001,
+            "y": 171,
+            "w": 119.08800000000001,
+            "h": 15.600000000000001
+          },
+          "labelContainer": {
+            "x": 384.5440000000001,
+            "y": 161,
+            "w": 147.08800000000002,
+            "h": 35.6
+          }
         },
         {
           "id": "period-3:period",
@@ -6471,7 +6542,19 @@
           "w": 90,
           "h": 36,
           "shape": "rounded",
-          "label": "2029-03-15"
+          "label": "2029-03-15",
+          "labelBounds": {
+            "x": 608.4040000000001,
+            "y": 85.4,
+            "w": 62.28,
+            "h": 15.600000000000001
+          },
+          "labelContainer": {
+            "x": 594.4040000000001,
+            "y": 75.4,
+            "w": 90.28,
+            "h": 35.6
+          }
         },
         {
           "id": "event-3",
@@ -6480,7 +6563,19 @@
           "w": 168,
           "h": 51,
           "shape": "rectangle",
-          "label": "every public CA, 47 days at\nmost"
+          "label": "every public CA, 47 days at\nmost",
+          "labelBounds": {
+            "x": 569.6320000000001,
+            "y": 171,
+            "w": 139.82400000000004,
+            "h": 31.200000000000003
+          },
+          "labelContainer": {
+            "x": 555.6320000000001,
+            "y": 161,
+            "w": 167.82400000000004,
+            "h": 51.2
+          }
         }
       ],
       "edges": [],
@@ -6489,6 +6584,46 @@
         "w": 755,
         "h": 258
       }
+    },
+    "checks": {
+      "renderability": "passed",
+      "sourceLoss": "not-detected",
+      "taskCorrectness": "not-checked"
+    },
+    "layoutCertification": {
+      "version": 1,
+      "unit": "px",
+      "scope": "native-scene",
+      "status": "passed",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 755.4560000000001,
+        "height": 258.2
+      },
+      "attempts": 1,
+      "repairs": [],
+      "coverage": {
+        "measured": 30,
+        "unmeasured": 0,
+        "preparedText": 9,
+        "fallbackText": 0,
+        "conditional": 0
+      },
+      "checks": {
+        "primitives": 33,
+        "labels": 8,
+        "occlusionPairs": 104,
+        "maxOcclusionPairs": 100000,
+        "operations": 259,
+        "maxOperations": 400000,
+        "markers": 0
+      },
+      "issues": [],
+      "limitations": [
+        "Prepared occupied text regions bound native geometry; exact glyph ink depends on the resolved font.",
+        "Declared transparency, intentional data-mark overlap and externally modified CSS are outside this proof."
+      ]
     }
   }
 }
