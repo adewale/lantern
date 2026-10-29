@@ -805,7 +805,8 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   eq('Fit hidden', seen.fitHidden, m.k <= 1);
   const narrow = seen.stageW > 0 && seen.stageW < NARROW_PX;
   eq('Close-up hidden', seen.closeUpHidden, !(narrow && !m.follow));
-  eq('overview hidden', seen.overviewHidden, !(narrow && m.k > 1));
+  const multipleViews = narrow && (await tourOf(m, seen.stageW, seen.stageH)).length > 1;
+  eq('overview hidden', seen.overviewHidden, !(multipleViews && m.k > 1));
   // The zoom is painted as a viewBox over the author's frame (data-camera); at k = 1 it is that frame.
   const t = zoomOf(seen.painted && { ...seen.painted, w: seen.stageW, h: seen.stageH });
   if (m.k === 1) eq('viewBox at k=1 (the author frame)', seen.painted?.view, seen.painted?.camera);
@@ -1276,7 +1277,7 @@ test(
             await quiet(d.page);
             const size = await a.page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
             assert.ok(size.w < NARROW_PX);
-            const want = closeUps(layouts.get(step), size.w, size.h)[0]!;
+            const tour = closeUps(layouts.get(step), size.w, size.h), want = tour[0]!;
             const t = await settledZoom(a.page);
             const where = `${name} ${JSON.stringify(v.values)} ${step}`;
             if (want.k === 1) assert.equal(t, null, where);
@@ -1285,7 +1286,7 @@ test(
                 t && Math.abs(t.k - want.k) < 1e-4 * want.k && Math.abs(t.x - want.x) < 0.01 && Math.abs(t.y - want.y) < 0.01,
                 `${where}: painted ${JSON.stringify(t)}, close-up ${JSON.stringify(want)}`,
               );
-            assert.equal(await a.page.locator('.overview').isVisible(), want.k > 1, `${where}: overview`);
+            assert.equal(await a.page.locator('.overview').isVisible(), tour.length > 1 && want.k > 1, `${where}: overview needs another view`);
             // Hold still: the picture Next rests on is the picture a link to the step shows, close-up and all.
             const rested = await stagePicture(a.page);
             const b = await phone.newPage();
