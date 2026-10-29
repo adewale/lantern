@@ -4,7 +4,7 @@ The evidence renders the final `font-metrics/scene.ts` and `layout-direction/sce
 
 The baseline is `712120634ac15db8276e9b463ca7883b98cbfcc5`, before these authoring options existed. Its archived tree receives only the two final scene inputs. Its own locked dependencies and real lettering pipeline generate the baseline snapshots. The baseline ignores the natural-lettering field and still fits EB Garamond into Agentic Mermaid's old widths. Logical `start`/`end` placement fails with `TypeError: REGIONS[r] is not iterable`; there is no fabricated before image for that unsupported surface. The new fixture's caption describes the requested behavior, which the baseline fails to provide.
 
-The current producer is `052c3c6a13202611da23c42ef16766040c2cbd5a`. The later test and evidence commits do not change the rendered source. [Base receipt](base/capture.json) and [current receipt](head/capture.json) record matching hashes for both scene inputs.
+The current producer is `36ee0e7c37d08d12dc5635671bf9caec4b22d666`. The later test and evidence commits do not change the rendered source. [Base receipt](base/capture.json) and [current receipt](head/capture.json) record matching hashes for both scene inputs.
 
 | Fitted lettering at the baseline | Natural lettering |
 | --- | --- |
@@ -29,7 +29,7 @@ node docs/evidence/authoring-layout/capture.ts \
   --ref 712120634ac15db8276e9b463ca7883b98cbfcc5 --unsupported-direction
 node docs/evidence/authoring-layout/capture.ts \
   --source /path/to/head --out out/layout-evidence-head \
-  --ref 052c3c6a13202611da23c42ef16766040c2cbd5a
+  --ref 36ee0e7c37d08d12dc5635671bf9caec4b22d666
 ```
 
 Use the exact recorded producer revisions. A different renderer or source edit requires new snapshots and receipts; copying capture metadata is not regeneration.
