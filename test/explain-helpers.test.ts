@@ -369,7 +369,7 @@ test('edgePartOf names the part of the k-th edge, with or without the verifier l
 
 test('current producer warnings name multigraph parts per pair regardless of global order or layout availability', () => {
   fc.assert(fc.property(multigraph, ({ s, ids }) => {
-    const current = { ...s, renderer: RENDERER };
+    const current: DiagramSnapshot = { ...s, renderer: RENDERER };
     for (const id of ids) assert.equal(edgePartOf(current, id.slice('edge:'.length)), id);
     const warnings = ids.map((id) => ({ code: 'DECISION_BRANCH_UNLABELED', edge: id.slice('edge:'.length) }));
     assert.deepEqual(findingsOf({ ...current, findings: { ...current.findings, warnings } }).map((w) => w.part), ids);

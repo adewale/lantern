@@ -42,7 +42,9 @@ jobs:
       - run: npm run check          # tsc -b over every project (emits dist/); compile a TS consumer against it
       - run: FULL=1 node tools/ci-tests.ts --expose-gc --test test/*.test.ts # full properties, independent oracles and raster boundaries
       # Product gates reuse this job and its Chromium installation; no scheduled lane.
-      - run: node tools/ci-tests.ts "$(command -v npm)" run test:embeds # retain failures in check annotations too
+      - run: |
+          node tools/ci-tests.ts "$(command -v npm)" run test:embeds
+          EXPLAIN_BROWSER=1 node tools/ci-tests.ts --test --test-name-pattern='Chromium expands' test/page-snapshots.test.ts
       - run: EXPLAIN_BROWSER=1 EXPLAIN_LETTERING=1 npm run release:check  # retain the exact tested archive
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
