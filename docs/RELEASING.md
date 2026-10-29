@@ -2,7 +2,7 @@
 
 This is the maintainer's npm release procedure. [Publishing](PUBLISHING.md) covers an author's HTML pages.
 
-The package is not published yet. The `rayner` name returned a registry 404 during preparation; that does not reserve it or prove ownership. Do not announce an installable version until the registry confirms it.
+`rayner@0.1.0` was published on 29 October 2026. Its npm archive and `v0.1.0` tag are immutable. Use a new version for changes; never repack or replace the first release to correct its old “unreleased” changelog heading.
 
 ## Validate the archive
 
@@ -32,18 +32,29 @@ Video export is deferred to 0.3 in [PR #36](https://github.com/adewale/rayner/pu
 
 Before using `.github/workflows/publish.yml`:
 
-1. Confirm repository Actions are enabled and that a pull-request run and a main run pass. GitHub disables workflows on new forks until an owner enables them; issue #9 records that setup problem. The session integration cannot change the repository's Actions setting.
-2. Establish npm package ownership for the first publication using a maintainer account with 2FA. npm trusted-publisher configuration is a package setting, so its initial setup requires an existing package. Complete that bootstrap deliberately; this PR does not publish a package or set account permissions. If the bootstrap publishes 0.1.0, use the workflow for the next version. To try trusted publishing for 0.1.0 itself, first bootstrap a separately tested prerelease such as 0.1.0-rc.0, then configure the publisher and prepare the stable version. Never republish the bootstrap version.
-3. In npm's package settings, add GitHub Actions as a trusted publisher for owner `adewale`, repository `rayner`, workflow `publish.yml`, environment `npm-publish`. Permit direct `npm publish` for this workflow. Do not create a long-lived publish token.
-4. Create the GitHub environment `npm-publish` with required reviewers and release-tag deployment restrictions before enabling the publishing workflow. Naming an environment in YAML does not configure those protections.
+1. Require the nine CI contexts on main: `check`, `catalog`, `story` and the six minimum/current compatibility checks. All must pass on the release commit.
+2. The 0.1.0 manual publication completed package ownership bootstrap. Subsequent versions use npm trusted publishing for owner `adewale`, repository `rayner`, workflow `publish.yml`, environment `npm-publish`. Keep the npm account protected with 2FA; do not create a long-lived publishing token.
+3. The owner configured `npm-publish` with Ade as required reviewer, no admin bypass and a `v*` tag deployment policy. Self-review is allowed because Ade is the sole reviewer. Verify those settings before relying on them; naming an environment in YAML alone does not create its protections.
 
 Trusted publishing requires npm 11.5.1+; the workflow checks that floor and uses Node 24. Its publishing job alone gets `id-token: write`. The normal CI jobs have read-only repository access. The archive gate also runs on Node 24.0.0 to check the declared minimum; the full browser and capture gates run on the current Node 24 release. npm automatically generates provenance for trusted publishing; `repository.url` must match this public repository.
 
 ## Publish a tested version
 
-Update the package and lockfile versions together and record the changes in the changelog. Merge and validate the release commit, then create its matching `v<version>` git tag. Dispatch **publish** on that tag, selecting `next` for an initial candidate or `latest` for the default install.
+Update the package and lockfile versions together and date the changelog entry. Merge and validate the release commit, then create its matching `v<version>` git tag. Dispatch **publish** on that tag with operation `publish`, selecting `next` for an initial candidate or `latest` for the default install. Approve its protected `npm-publish` deployment after reviewing the tested commit and archive.
 
-The workflow runs the reusable CI job, uploads the exact tested archive, waits for the `npm-publish` environment, and downloads that archive into its publishing job. Before calling npm it verifies the git tag, source SHA, clean checkout, package name, required gates and archive integrity. It publishes the tarball directly; no second build occurs.
+The workflow runs reusable CI, retains the exact tested archive for 90 days, waits for the protected environment, and downloads that archive into its publishing job. It verifies the tag, source SHA, clean checkout, package name, gates and integrity. It also refuses an existing npm version and an undated changelog entry. Before publishing, it uploads the tested tarball, manifest, served-story review, size/startup report and WebKit/Safari records to a draft GitHub Release. Every report must name the tagged source commit. It publishes that tarball directly, checks the registry serves the same integrity, then exposes the release. No second build occurs. GitHub Release assets have no Actions-artifact expiration.
+
+If npm succeeds but final release promotion fails, inspect the draft, compare its manifest with `npm view rayner@<version> dist.integrity`, then expose that draft. Do not publish the version again. A failed npm publication leaves the draft and tested bytes available for inspection.
+
+## Preserve an existing publication
+
+For the manual 0.1.0 bootstrap, use the `archive` operation on a branch containing the current workflow:
+
+```sh
+gh workflow run publish.yml --ref main -f operation=archive -f version=0.1.0
+```
+
+The archive job checks out the existing version tag, downloads the original public npm tarball, checks its registry SHA-512, and runs the tagged installed-package gate with browser and lettering capture enabled. It preserves those exact bytes, a manifest and the validation log on GitHub Releases. This is explicitly retrospective validation, not original publication provenance. It does not call `npm publish`, move a tag, overwrite assets or alter an existing public release.
 
 After publication, confirm the version and dist-tag with `npm view rayner version dist-tags dist.integrity --json`, and try installation in a fresh author project. For a candidate, ask an outside author to follow the tutorial before promoting it with `npm dist-tag add rayner@<version> latest`. The README's install section reads the same before and after publication, because npm shows the README from the archive and a published archive cannot change; do not add or remove an "unpublished" note around a release. A published name/version pair cannot be reused, so correct mistakes in a new version.
 

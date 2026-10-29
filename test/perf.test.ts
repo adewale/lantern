@@ -10,7 +10,7 @@ Scene.captionWpm = Infinity;
 // Render caches (path data, element records, merged glyph lines) are checked against a
 // cache-free render: a copy of a mobject hits none of its original's caches. The scene
 // renders every frame, so its caches see the whole history; every EVERY-th frame is compared
-// (FULL=1: every third). One output mode per run: the path cache holds one mode, so
+// (FULL=1: every third), plus the first eleven frames of short scenes. One output mode per run: the path cache holds one mode, so
 // alternating modes would bypass it.
 const EVERY = process.env.FULL ? 3 : 15;
 // The camera comes along: an explainer that zooms (seasons) renders a viewBox of its own
@@ -25,14 +25,14 @@ test('render caches are never stale: every explainer, both output modes, each sa
   for (const [name, Explainer] of await explainers()) {
     let i = 0, compared = 0;
     await new Explainer({ async frame(scene) {
-      if (i++ % EVERY) return void renderElements(scene);
+      if (i++ % EVERY && i > 11) return void renderElements(scene);
       assert.equal(toSvgString(scene), toSvgString(fresh(scene)), `${name}: relative mode, frame ${i - 1}`);
       compared++;
     } }).run();
     let j = 0;
     await new Explainer({ async frame(scene) {
       const els = renderElements(scene, { relative: false });
-      if (j++ % EVERY) return;
+      if (j++ % EVERY && j > 11) return;
       const got = absolute(els);
       assert.equal(got, absolute(renderElements(fresh(scene), { relative: false })), `${name}: absolute mode, frame ${j - 1}`);
       assert.ok(!got.includes('translate('), `${name}: absolute mode emits no translations`);

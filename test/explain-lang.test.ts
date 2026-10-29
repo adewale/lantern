@@ -315,9 +315,8 @@ const GOLDEN_DESCRIPTIONS = [
   {
     id: "mr-cache",
     step: "request",
-    summary:
-      "Flowchart: 5 nodes, 5 links; Code “users.ts”, 7 lines: 1: async function getUser(id, env) { · 2: const hit = await env.KV.get(`user:${id}`, \"json\"); · 3: if (hit) return hit; · 4: const row = await env.DB.prepare(SQL).bind(id).first(); · 5: await env.KV.put(`user:${id}`, JSON.stringify(row), { expirationTtl: 300 }); · 6: return row; · 7: }; Lines 2 to 3, the ones this request runs, outlined. Note: “0 reads” beside D1; travelled: Request → Handler; Handler → KV cache; KV cache → Reply: hit. New in this step: Lines 2 to 3, the ones this request runs, outlined.",
-    html: "<ul><li>Flowchart: 5 nodes, 5 links:<ul><li>“0 reads” beside D1 (note);</li><li>Request → Handler (travelled);</li><li>Handler → KV cache (travelled);</li><li>KV cache → Reply: hit (travelled);</li><li>Request;</li><li>Handler;</li><li>KV cache;</li><li>Reply;</li><li>KV cache → D1: miss (dimmed);</li><li>D1 (dimmed);</li><li>D1 → Reply (dimmed).</li></ul></li><li>Code “users.ts”, 7 lines: 1: async function getUser(id, env) { · 2: const hit = await env.KV.get(`user:${id}`, &quot;json&quot;); · 3: if (hit) return hit; · 4: const row = await env.DB.prepare(SQL).bind(id).first(); · 5: await env.KV.put(`user:${id}`, JSON.stringify(row), { expirationTtl: 300 }); · 6: return row; · 7: };</li><li>Lines 2 to 3, the ones this request runs, outlined.</li></ul>",
+    summary: "Two request paths, hit highlighted: hit goes from KV to Reply with 0 D1 reads; miss goes from KV through D1 to Reply with 1 D1 read and caches the row for 300 seconds.",
+    html: "<ul><li>Two request paths, hit highlighted: hit goes from KV to Reply with 0 D1 reads; miss goes from KV through D1 to Reply with 1 D1 read and caches the row for 300 seconds.</li></ul>",
   },
   {
     id: "glyph",

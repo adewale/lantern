@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, rm, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawnSync, execFileSync } from 'node:child_process';
 import type { Browser, Page } from 'playwright-core';
 import { launch } from './lib/browser.ts';
 import { collectProject, sceneInputs, ROOT } from './lib/explain-project.ts';
@@ -122,6 +122,7 @@ try {
     receipt,
     JSON.stringify(
       {
+        sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], {cwd: ROOT, encoding: 'utf8'}).trim(),
         scope,
         catalogHash: plan.catalogHash,
         reviewCodeHash: codeHash,

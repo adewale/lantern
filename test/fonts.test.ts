@@ -1,7 +1,16 @@
 // The embedded faces as a fallback chain: a character the run's own face lacks is drawn by the first
 // face in the chain that has it (src/fonts.ts), and only characters no face has are reported missing.
 import { test } from 'node:test';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
+
+test('the vendored glyph bundle matches its recorded upstream bytes', () => {
+  const pin = JSON.parse(readFileSync(new URL('../vendor/glyph.pin.json', import.meta.url), 'utf8'));
+  const bytes = readFileSync(new URL('../vendor/glyph.js', import.meta.url));
+  assert.equal(bytes.length, pin.bytes);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), pin.sha256, 'review and record a changed glyph bundle');
+});
 import { fc, params } from './lib/pbt.ts';
 import { loadFonts, shaperFor, takeMissingGlyphs, Text } from '../src/index.ts';
 import { FALLBACK } from '../src/font-data.ts';

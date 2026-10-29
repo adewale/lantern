@@ -52,6 +52,7 @@ Scenes are ordinary TypeScript classes. Diagrams are captured from [Agentic Merm
 - Right-to-left captions and titles are supported; panel and diagram layouts remain left to right. Diagram labels fit the captured layout's widths, even when a different face is requested. A diagram style does not implicitly select its font.
 - Player controls and generated picture descriptions are available in English and French. Other caption languages retain English controls and descriptions.
 - Phones use close-ups and a **Next view** tour. Review the opening and the whole tour so the caption's subject remains visible.
+- Builds enforce 1.5 MiB raw HTML and 450 KiB gzip page budgets. Diagram snapshots expand through the browser’s native `DecompressionStream` API; the transcript remains readable without JavaScript. Split a scene or reduce its cases when it exceeds a budget.
 - The example models are small and cited. They have not had subject-expert review.
 
 ## Documentation and contributions

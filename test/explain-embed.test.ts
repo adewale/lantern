@@ -57,6 +57,27 @@ after(async () => {
 function loader(id: string, scene: string) {
   return `<div id="${id}"></div><script src="${embed}/loader.js" data-src="${embed}/${scene}.html" data-target="${id}" data-title="${scene}"></script>`;
 }
+
+test('phone captions stay beside the picture and a single view never advertises Next view', options, async () => {
+  const page = await browser.newPage({viewport: {width: 390, height: 844}, reducedMotion: 'reduce'});
+  try {
+    await page.goto(embed + '/oauth-pkce.html?attacker=yes&step=attack');
+    await page.waitForSelector('[data-ready=true]');
+    await page.locator('.leaving').waitFor({state: 'detached'});
+    const bounds = await page.evaluate(() => {
+      const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+      return {stage: box('.stage').bottom, lede: box('.lede').top, caption: box('.caption').bottom, controls: box('.controls').top};
+    });
+    assert.ok(bounds.lede >= bounds.stage && bounds.lede - bounds.stage <= 24, 'the step title follows the picture');
+    assert.ok(bounds.caption < bounds.controls, 'step controls follow the caption');
+    assert.equal(await page.locator('.view-controls').isVisible(), false, 'a single view needs no tour toolbar');
+    assert.equal(await page.getByRole('button', {name: 'Next view', exact: true}).isVisible(), false);
+    assert.equal(await page.locator('.view-help').isVisible(), false);
+    assert.equal(await page.getByRole('button', {name: 'Fit stage', exact: true}).isEnabled(), true);
+    await page.getByRole('button', {name: 'Zoom in', exact: true}).click();
+    assert.ok(await page.locator('.stage').evaluate(stage => {const box = stage.getBoundingClientRect(); return box.top >= 0 && box.bottom <= innerHeight;}), 'using controls below a long caption brings the changed picture into view');
+  } finally { await page.close(); }
+});
 async function readyFrame(page: Page, scene: string): Promise<Frame> {
   await page.waitForFunction(() => document.querySelectorAll('iframe').length > 0);
   const matches = (f: Frame) => f.url().startsWith(embed + '/' + scene);
@@ -286,9 +307,9 @@ test(
         });
     });
     try {
-      await page.goto(embed + '/mr-cache.html?request=miss&step=request');
+      await page.goto(embed + '/mr-cache.html?request=miss&step=after');
       await page.waitForSelector('[data-ready=true]');
-      assert.match(await page.locator('.caption').innerText(), /KV has no entry/);
+      assert.match(await page.locator('.caption').innerText(), /removes the handler’s edge to D1/);
       // The first Tab stop is the case picker; the page's main region is not one (WCAG 2.4.7).
       await page.keyboard.press('Tab');
       assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('type')), 'radio');
@@ -321,12 +342,12 @@ test(
       const project = projects.get('mr-cache')!,
         values = resolveSettings(project.Scene, { request: 'miss' });
       const size = await page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
-      const layout = (await stepLayouts(project.variants.find((v) => v.values.request === values.request)!.Scene)).get('request')!;
+      const layout = (await stepLayouts(project.variants.find((v) => v.values.request === values.request)!.Scene)).get('after')!;
       const tour = closeUps(layout, size.w, size.h);
       const painted = () => settledZoom(page);
       const near = (a: ReturnType<typeof zoomOf>, b: { k: number; x: number; y: number }) =>
         !!a && Math.abs(a.k - b.k) < 1e-4 * b.k && Math.abs(a.x - b.x) < 0.01 && Math.abs(a.y - b.y) < 0.01;
-      assert.ok(tour[0]!.k > 1 && tour.length > 1, `mr-cache's request step needs a close-up tour: ${JSON.stringify(tour)}`);
+      assert.ok(tour[0]!.k > 1 && tour.length > 1, `mr-cache's detailed edit step needs a close-up tour: ${JSON.stringify(tour)}`);
       assert.ok(near(await painted(), tour[0]!), `opens on the first close-up ${JSON.stringify(tour[0])}`);
       const smallest = Math.min(...labelsToRead(layout).map((l) => l.size));
       assert.ok(smallest * stageScale(size.w, size.h).s * tour[0]!.k >= READ_PX - 1e-6, 'labels near the change read at 12 px');
@@ -390,7 +411,7 @@ test(
       await page.locator('#content').focus();
       await page.keyboard.press('ArrowLeft');
       await page.waitForFunction(
-        () => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === 'after',
+        () => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === 'diff',
       );
       // The first Tab reaches the case picker; its focus ring is drawn on the segment around the radio.
       await page.keyboard.press('Tab');
@@ -784,7 +805,8 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   eq('Fit hidden', seen.fitHidden, m.k <= 1);
   const narrow = seen.stageW > 0 && seen.stageW < NARROW_PX;
   eq('Close-up hidden', seen.closeUpHidden, !(narrow && !m.follow));
-  eq('overview hidden', seen.overviewHidden, !(narrow && m.k > 1));
+  const multipleViews = narrow && (await tourOf(m, seen.stageW, seen.stageH)).length > 1;
+  eq('overview hidden', seen.overviewHidden, !(multipleViews && m.k > 1));
   // The zoom is painted as a viewBox over the author's frame (data-camera); at k = 1 it is that frame.
   const t = zoomOf(seen.painted && { ...seen.painted, w: seen.stageW, h: seen.stageH });
   if (m.k === 1) eq('viewBox at k=1 (the author frame)', seen.painted?.view, seen.painted?.camera);
@@ -1037,8 +1059,10 @@ const ToggleTranscript = command('ToggleTranscript', always, async (m, r) => {
   m.transcript = !m.transcript;
 });
 const Resize = (width: number, height: number) =>
-  command(`Resize(${width}, ${height})`, always, async (_m, r) => {
+  command(`Resize(${width}, ${height})`, always, async (m, r) => {
     await r.page.setViewportSize({ width, height });
+    const size = await stageSize(r);
+    m.tourK = size.narrow ? (await tourOf(m, size.w, size.h))[0]!.k : null;
   });
 
 // Narrower than 200 CSS px a single unbreakable word (a step title) is wider than the column.
@@ -1163,6 +1187,19 @@ for (const [name, runs, maxCommands] of [['oauth-pkce', 10, 40]] as const)
     },
   );
 
+test('phone tour metadata follows resizing while the current zoom and step stay put', options, async () => {
+  for (const width of [200, 632]) {
+    const {context, model, real} = await openPlayer('oauth-pkce', {values: [undefined], viewport: {width, height: 400}});
+    try {
+      const commands = width === 632
+        ? [Resize(200, 400), DoubleClick(0, 0), OverviewButton]
+        : [Resize(632, 400), Replay, Resize(200, 400), OverviewButton];
+      await fc.asyncModelRun(() => ({model, real}), commands);
+      assert.equal(current(model).step, 'secret');
+    } finally { await context.close(); }
+  }
+});
+
 test(
   'player: from ?attacker=yes&step=attack, choosing "no" falls back to the first step with a notice; Back restores the attack step',
   options,
@@ -1255,7 +1292,7 @@ test(
             await quiet(d.page);
             const size = await a.page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
             assert.ok(size.w < NARROW_PX);
-            const want = closeUps(layouts.get(step), size.w, size.h)[0]!;
+            const tour = closeUps(layouts.get(step), size.w, size.h), want = tour[0]!;
             const t = await settledZoom(a.page);
             const where = `${name} ${JSON.stringify(v.values)} ${step}`;
             if (want.k === 1) assert.equal(t, null, where);
@@ -1264,7 +1301,7 @@ test(
                 t && Math.abs(t.k - want.k) < 1e-4 * want.k && Math.abs(t.x - want.x) < 0.01 && Math.abs(t.y - want.y) < 0.01,
                 `${where}: painted ${JSON.stringify(t)}, close-up ${JSON.stringify(want)}`,
               );
-            assert.equal(await a.page.locator('.overview').isVisible(), want.k > 1, `${where}: overview`);
+            assert.equal(await a.page.locator('.overview').isVisible(), tour.length > 1 && want.k > 1, `${where}: overview needs another view`);
             // Hold still: the picture Next rests on is the picture a link to the step shows, close-up and all.
             const rested = await stagePicture(a.page);
             const b = await phone.newPage();
@@ -1890,7 +1927,9 @@ test('the PKCE attack opens with the stolen-code, guessed-verifier and rejection
       await quiet(page);
       const stageRect = await page.locator('.stage').boundingBox();
       const mapRect = await page.locator('.overview').boundingBox();
-      assert.ok(stageRect && mapRect && mapRect.y >= stageRect.y + stageRect.height, 'the map must not cover any part of the picture');
+      assert.ok(stageRect);
+      assert.equal(await page.locator('.overview').count(), 1);
+      assert.ok(await page.locator('.overview').isHidden() || (mapRect && mapRect.y >= stageRect.y + stageRect.height), 'an absent or below-picture map leaves every attack arrow unobscured');
       const seen = await page.locator('.stage svg:not(.leaving)').evaluate((svg, b) => {
         const matrix = (svg as SVGSVGElement).getScreenCTM()!;
         const stage = svg.parentElement!.getBoundingClientRect();

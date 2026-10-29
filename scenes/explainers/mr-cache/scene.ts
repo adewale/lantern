@@ -4,6 +4,7 @@ import {
   Text,
   Rectangle,
   Group,
+  Arrow,
   Create,
   FadeIn,
   FadeOut,
@@ -246,12 +247,12 @@ export default class CacheMRExplainer extends Scene {
       title: which === 'hit' ? 'A cache hit returns from KV with no D1 read' : 'A cache miss reads D1 once, then caches the row',
       line:
         which === 'hit'
-          ? 'getUser returns on line 3, and D1’s note shows 0 reads.'
-          : 'Lines 4 to 6 read D1, put the row in KV for 300 s, return it.',
+          ? 'The hit row bypasses D1: 0 reads.'
+          : 'The miss row reads D1 once and caches the row for 300 s.',
       caption:
         which === 'hit'
-          ? 'The user is already in KV, so getUser returns on line three, the second outlined line, and the note under D1 shows 0 reads.'
-          : 'KV has no entry, so past the lookup getUser runs on into the outlined lines, which only a miss reaches: it reads the row from D1, puts it in KV for 300 seconds and returns it. Lookups for the same user in that window are hits; D1 still serves every miss.',
+          ? 'The user is already in KV, so getUser returns without reading D1. The highlighted hit row goes straight from KV to Reply; the miss row shows the database work this request avoids.'
+          : 'KV has no entry, so the highlighted miss row goes through D1: one read, then the row is cached for 300 seconds. Lookups for the same user in that window follow the hit row; D1 still serves every miss.',
     });
     const path = PATH[which];
     await flow.clearNotes();
@@ -268,5 +269,29 @@ export default class CacheMRExplainer extends Scene {
     });
     this.state.request = which;
     this.state.reads = which === 'hit' ? 0 : 1;
+    // Keep the comparison together. The preceding walk follows the captured
+    // program path; its result now replaces the detailed diagram/code view.
+    await s.clear();
+    const result = new Group();
+    for (const [kind, y] of [['hit', 1.5], ['miss', -1.8]] as const) {
+      const selected = kind === which;
+      const color = selected ? s.emphasis : s.palette.ink;
+      const row = new Group(new Rectangle({width: 14.4, height: 2.9, cornerRadius: 0.12, stroke: selected ? color : s.soft, strokeWidth: selected ? 0.05 : 0.015} ).moveTo([0, y]));
+      row.add(new Text(kind, {fontSize: 0.75, color, weight: selected ? 'bold' : 'normal'}).moveTo([-6.0, y]));
+      const node = (name: string, x: number, width: number) => {
+        row.add(new Rectangle({width, height: 1.0, cornerRadius: 0.1, stroke: color, strokeWidth: 0.025}).moveTo([x, y]), new Text(name, {fontSize: 0.7, color}).moveTo([x, y]));
+      };
+      node('KV', -3.3, 2.0);
+      node('Reply', 4.6, 2.6);
+      if (kind === 'miss') node('D1', 0.4, 1.8);
+      const arrow = (from: number, to: number) => row.add(new Arrow([from, y], [to, y], {stroke: color, strokeWidth: 0.04, tipLength: 0.16, tipWidth: 0.16}));
+      if (kind === 'hit') arrow(-2.3, 3.3);
+      else { arrow(-2.3, -0.5); arrow(1.3, 3.3); }
+      row.add(new Text(kind === 'hit' ? '0 D1 reads' : '1 D1 read', {fontSize: 0.7, color}).moveTo([0.4, y - 0.95]));
+      if (kind === 'miss') row.add(new Text('300 s', {fontSize: 0.7, color}).moveTo([-3.3, y - 0.95]));
+      row.key = `result:${kind}`;
+      result.add(row);
+    }
+    await s.enter(result, {describe: `Two request paths, ${which} highlighted: hit goes from KV to Reply with 0 D1 reads; miss goes from KV through D1 to Reply with 1 D1 read and caches the row for 300 seconds.`});
   }
 }

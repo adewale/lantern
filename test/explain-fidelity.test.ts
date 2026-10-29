@@ -242,6 +242,21 @@ for (const entry of EXPLAINERS)
           assertStepState(trace, 'cat', { oldShell: original, newShell: run.shell, cat: cat.stdout });
           break;
         }
+        case 'font-metrics': {
+          // Independent uharfbuzz runs over @fontsource/eb-garamond@5.3.0's
+          // original latin WOFF2 files, before subsetting or snapshot capture.
+          const em = {Regular: 4.901, Bold: 5.386, Italic: 4.71};
+          // Text's advance box uses float32 endpoints; allow their rounding,
+          // while keeping the printed hundredths independently exact below.
+          assert.ok(Math.abs(Number(trace.steps.find(s => s.step === 'advance')!.after!.advance) - em.Regular * 1.2) < 1e-6);
+          const expected = Object.fromEntries(Object.entries(em).map(([cut, width]) => [cut, width * 0.9]));
+          const actual = trace.steps.find(s => s.step === 'cuts')!.after!.advances as Record<string, number>;
+          assert.deepEqual(Object.keys(actual), Object.keys(expected));
+          for (const [cut, advance] of Object.entries(expected)) assert.ok(Math.abs(actual[cut]! - advance) < 1e-6, `${cut}: raw-font advance ${advance}, scene ${actual[cut]}`);
+          const shown = pictureHtml(trace.steps.find(s => s.step === 'cuts')!.after);
+          for (const [cut, width] of Object.entries(expected)) assert.ok(shown.includes(`${cut}, advance ${width.toFixed(2)}`), shown);
+          break;
+        }
         case 'glyph': {
           await loadFonts();
           const font = values.font as 'sans' | 'mono',

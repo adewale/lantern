@@ -1,6 +1,17 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.1 (2026-10-29)
+
+- Put step captions next to their pictures. Hide Next view and its instructions when a step has only one view.
+- Refresh phone tour controls after a viewport resize while preserving the reader’s current zoom and step.
+- Keep the cache hit/miss result and the token-bucket rate comparison together at phone widths, with readable labels and model-derived outcomes.
+- Compress embedded diagram snapshots losslessly, enforce raw/gzip page budgets and record startup under 4× CPU slowdown.
+- Add a public EB Garamond example with real bold and italic, captured from the requested source fonts.
+- Add WebKit served-paint review and native macOS Safari reader checks. Keep installed-package checks on both Mac architectures while concentrating pure property tests in the full and minimum-Node lanes.
+- Preserve tested release archives and manifests on GitHub Releases. Refuse an existing npm version or an undated changelog entry, and verify the registry’s integrity before exposing a release.
+- Pin GitHub Actions and the existing vendored glyph bundle. Correct the 0.1.0 release status without changing its tag or published archive.
+
+## 0.1.0 (2026-10-29)
 
 First release of the `rayner` package, a fork of Ivar Vong's Lantern.
 

@@ -353,6 +353,8 @@ Helpers supply subjects automatically. For an important caption claim or a step 
 
 `build` writes one self-contained HTML file: one explainer, all its cases, a poster, a transcript, sources and licence notices. It makes no network requests and uses no storage.
 
+Diagram payloads are compressed losslessly inside the page and decoded with the browser’s native `DecompressionStream` API before the player starts. The transcript remains readable without JavaScript. Builds enforce limits of 1.5 MiB for raw HTML and 450 KiB for its gzip representation, including the poster and transcript. Receipts report `bytes` and `gzipBytes`. Reduce cases or split an explanation that exceeds either budget.
+
 The transcript lists, for every case, each step as a link to it, its caption, and what its resting picture shows. Without JavaScript every case shows. The player shows the current case's section, and its links move the player.
 
 ### URL parameters

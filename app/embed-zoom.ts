@@ -221,7 +221,9 @@ export class StageZoom {
     stage.addEventListener('pointercancel', release);
     // A captured pointer can leave without pointerup; it must not stay a pinch partner.
     stage.addEventListener('lostpointercapture', release);
-    new ResizeObserver(() => this.apply()).observe(stage);
+    // Painting can change reader chrome outside the stage. Keep those layout
+    // writes outside the observer's delivery cycle, including in WebKit.
+    new ResizeObserver(() => requestAnimationFrame(() => this.apply())).observe(stage);
   }
 
   /** Clamp so the drawing always covers the stage, then paint. `glide` eases discrete steps. */
