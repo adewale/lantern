@@ -24,7 +24,9 @@ import type {
 // Both installed packages and checkouts ship these TypeScript inputs. Reading
 // those sources keeps a checkout's capture identity portable to the compiled
 // CLI, while changes to the metric/lowering algorithm invalidate old geometry.
-const policyRoot = new URL(import.meta.url.endsWith('.js') ? '../../../../' : '../../../', import.meta.url);
+// build-cli.ts bundles this build-only module into dist/tools/*.js; tsc does
+// not emit a separate dist/integrations/.../build module.
+const policyRoot = new URL(import.meta.url.endsWith('.js') ? '../../' : '../../../', import.meta.url);
 const metricPolicy = createHash('sha256').update((await Promise.all([
   'src/text.ts', 'src/fonts.ts', 'src/lettering.ts', 'src/lettering-outlines.ts', 'src/italic.ts', 'vendor/glyph.js',
   'integrations/agentic-mermaid/text.ts',
