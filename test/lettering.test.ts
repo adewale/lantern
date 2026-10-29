@@ -41,11 +41,12 @@ async function built(project: Project, name: string) {
   return { html, receipt, headers: await readFile(join(folder, name + '.html.headers.json'), 'utf8') };
 }
 
-// Immutable output pins from the pre-lettering builds, deliberately refreshed only
-// for reviewed engine/player changes in commits that do not modify lettering code.
-// The full serialized receipt pin includes engineHash; the older canonical receipt
-// pin excludes it. Both historical contracts and the header recipe share one build.
-const PINS = new URL('./lettering-baseline.json', import.meta.url);
+// Immutable output pins from reviewed builds, refreshed only for engine/player changes.
+// Snapshot compression uses the host's zlib: Linux and macOS can produce different gzip
+// payloads (and therefore different bundled JS, HTML and CSP) from the same scene.
+// Pin each platform's actual build rather than accepting a second platform's bytes.
+// The full receipt pin includes engineHash; the older canonical pin excludes it.
+const PINS = new URL(process.platform === 'linux' ? './lettering-baseline-linux.json' : './lettering-baseline.json', import.meta.url);
 test('catalog pages retain reviewed output pins; only explicitly lettered examples carry requested lettering', async () => {
   let pins: Record<string, { html: string; bytes: number; headers: string; receipt: string; fullReceipt: string }> = JSON.parse(
     readFileSync(PINS, 'utf8'),
