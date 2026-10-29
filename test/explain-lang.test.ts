@@ -393,6 +393,8 @@ test(
         await page.waitForSelector('[data-ready=true]');
         return page.evaluate(() => ({
           next: document.querySelector('.controls .primary span')?.textContent,
+          earlyNext: document.querySelector('.step-transport .primary span')?.textContent,
+          earlyPrevious: document.querySelector('.step-transport button')?.getAttribute('aria-label'),
           previous: document.querySelector('.controls button')?.getAttribute('aria-label'),
           disclosure: document.querySelector('.described > summary')?.textContent,
           summaryLang: document.getElementById('picture-summary')?.getAttribute('lang'),
@@ -408,6 +410,8 @@ test(
         { ...fr, picture: undefined },
         {
           next: 'Suivant',
+          earlyNext: 'Étape suivante',
+          earlyPrevious: 'Étape précédente',
           previous: 'Étape précédente',
           disclosure: 'Ce que montre l’image',
           summaryLang: null,
@@ -431,6 +435,8 @@ test(
         { ...en, summary: undefined, picture: undefined, notice: undefined },
         {
           next: 'Next',
+          earlyNext: 'Next step',
+          earlyPrevious: 'Previous step',
           previous: 'Previous step',
           disclosure: 'What the picture shows',
           summaryLang: null,

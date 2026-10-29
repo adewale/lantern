@@ -58,6 +58,38 @@ function loader(id: string, scene: string) {
   return `<div id="${id}"></div><script src="${embed}/loader.js" data-src="${embed}/${scene}.html" data-target="${id}" data-title="${scene}"></script>`;
 }
 
+test('step navigation is discoverable before the picture on short phones and desktops', options, async () => {
+  for (const viewport of [{width: 390, height: 568}, {width: 1280, height: 800}]) {
+    const page = await browser.newPage({viewport, reducedMotion: 'reduce'});
+    try {
+      await page.goto(embed + '/mr-cache.html?step=before&request=hit');
+      await page.waitForSelector('[data-ready=true]');
+      const bounds = await page.evaluate(() => {
+        const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+        return {
+          early: box('.step-transport button[aria-label="Next step"]'),
+          stage: box('.stage'),
+          caption: box('.caption'),
+          after: box('.controls button[aria-label="Next step"]'),
+          description: box('.described'),
+          views: box('.view-controls'),
+          height: innerHeight,
+        };
+      });
+      assert.ok(bounds.early.top >= 0 && bounds.early.bottom <= bounds.height, `early Next is visible at ${viewport.width}×${viewport.height}`);
+      assert.ok(bounds.early.bottom <= bounds.stage.top, 'step navigation is outside and before the picture');
+      assert.ok(bounds.caption.bottom < bounds.after.top, 'the second Next follows the explanation');
+      assert.ok(bounds.after.bottom <= bounds.description.top, 'secondary content cannot separate the caption from Next');
+      if (viewport.width < 480) assert.ok(bounds.after.bottom <= bounds.views.top, 'Next step precedes the close-up tour');
+      assert.equal(await page.locator('.step-transport button[aria-label="Previous step"]').isDisabled(), true);
+      await page.locator('.step-transport button[aria-label="Next step"]').click();
+      assert.equal(new URL(page.url()).searchParams.get('step'), 'diff');
+      assert.equal(await page.locator('.step-transport button[aria-label="Previous step"]').isEnabled(), true);
+      assert.equal(await page.locator('.controls button[aria-label="Previous step"]').isEnabled(), true);
+    } finally { await page.close(); }
+  }
+});
+
 test('phone captions stay beside the picture and a single view never advertises Next view', options, async () => {
   const page = await browser.newPage({viewport: {width: 390, height: 844}, reducedMotion: 'reduce'});
   try {
@@ -230,7 +262,7 @@ test('Copy link gives the step\'s share page when site:export published one, els
     assert.equal(await copied(), 'https://example.org/projects/rayner/mr-cache/diff');
     await open(`${embed}/site/odd-steps.html?step=one`);
     assert.equal(await copied(), 'https://example.org/projects/rayner/odd-steps/one');
-    await page.locator('button[aria-label="Next step"]').click();
+    await page.locator('.controls button[aria-label="Next step"]').click();
     await page.waitForURL(/step=two/);
     assert.equal(await copied(), `${embed}/site/odd-steps.html?step=two+words`);
     // Built without site:export: no share pages, so the player URL, as before.
@@ -389,10 +421,10 @@ test(
         await click();
         await page.waitForFunction(() => !document.querySelector('.stage svg[data-old]'));
       };
-      await replaced(() => page.getByRole('button', { name: 'Previous step' }).click());
+      await replaced(() => page.locator('.controls').getByRole('button', { name: 'Previous step' }).click());
       await quiet(page);
       assert.ok(Math.abs(zoomed / (await view())[2]! - 1) < 1e-6, 'zoom kept across steps');
-      await replaced(() => page.getByRole('button', { name: 'Next step' }).click());
+      await replaced(() => page.locator('.controls').getByRole('button', { name: 'Next step' }).click());
       assert.ok(Math.abs(zoomed / (await view())[2]! - 1) < 1e-6, 'zoom kept while the step plays');
       await quiet(page);
       assert.ok(Math.abs(zoomed / (await view())[2]! - 1) < 1e-6, 'zoom kept through an animated step');
@@ -462,7 +494,7 @@ test(
       assert.ok(vx >= cx - 1e-3 && vy >= cy - 1e-3 && vx + vw <= cx + cw + 1e-3 && vy + vh <= cy + ch + 1e-3, 'the view stays inside the author frame');
       // Next plays 'clock', whose s.clear() glides the camera home: every frame keeps the reader's 2.56×.
       const seen: Painted[] = [];
-      await page.getByRole('button', { name: 'Next step' }).click();
+      await page.locator('.controls').getByRole('button', { name: 'Next step' }).click();
       const end = Date.now() + 3000;
       while (Date.now() < end) {
         const p = await paintedView(page).catch(() => null);
@@ -864,7 +896,7 @@ async function reframe(m: PlayerModel, r: PlayerReal) {
   m.tourK = narrow ? (await tourOf(m, w, h))[0]!.k : null;
   if (narrow && m.follow) m.k = m.tourK!;
 }
-const button = (r: PlayerReal, name: string) => r.page.locator(`button[aria-label="${name}"]`);
+const button = (r: PlayerReal, name: string) => r.page.locator(`.controls button[aria-label="${name}"]`);
 /** Show a step of this case: a history entry when the step changes, a fresh resting picture always. */
 function goTo(m: PlayerModel, index: number) {
   const step = steps(m)[index]!.step;
@@ -1285,8 +1317,8 @@ test(
           for (let i = 0; i < list.length; i++) {
             const step = list[i]!.step;
             if (i > 0) {
-              await a.page.locator('button[aria-label="Next step"]').click();
-              await d.page.locator('button[aria-label="Next step"]').click();
+              await a.page.locator('.controls button[aria-label="Next step"]').click();
+              await d.page.locator('.controls button[aria-label="Next step"]').click();
             }
             await quiet(a.page);
             await quiet(d.page);
@@ -1354,7 +1386,7 @@ test('phone: one press of Next view shows what PKCE\'s captions point at, emphas
     for (const [i, step] of ['secret', 'authorize'].entries()) {
       if (i > 0) {
         // Next, with motion: it moves to the next step, as before.
-        await page.getByRole('button', { name: 'Next step', exact: true }).click();
+        await page.locator('.controls').getByRole('button', { name: 'Next step', exact: true }).click();
         await page.waitForURL(/step=authorize/);
         await quiet(page);
       }
@@ -1399,7 +1431,7 @@ test(
         const context = await browser.newContext({ reducedMotion: 'no-preference' });
         try {
           const a = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i]!.step)}`);
-          await a.page.locator('button[aria-label="Next step"]').click();
+          await a.page.locator('.controls button[aria-label="Next step"]').click();
           await a.page.waitForFunction(() => (window as unknown as { __settles: number }).__settles >= 2, undefined, {
             timeout: 30_000,
           });
@@ -1436,9 +1468,9 @@ test(
         try {
           const a = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i]!.step)}`);
           await quiet(a.page);
-          await a.page.locator('button[aria-label="Next step"]').click();
+          await a.page.locator('.controls button[aria-label="Next step"]').click();
           await a.page.waitForTimeout(after);
-          await a.page.locator('button[aria-label="Next step"]').click();
+          await a.page.locator('.controls button[aria-label="Next step"]').click();
           await a.page.waitForFunction((step) => (window as unknown as { __last: { step: string } | null }).__last?.step === step, list[i + 2]!.step, {
             timeout: 30_000,
           });
@@ -1497,7 +1529,7 @@ test(
         const shown = await page.evaluate((t) => (window as unknown as { __shown: Array<{ at: number; born: number | null }> }).__shown.filter((s) => s.at > t), t);
         return { t, shown };
       };
-      const next = await shownDuring(() => page.locator('button[aria-label="Next step"]').click());
+      const next = await shownDuring(() => page.locator('.controls button[aria-label="Next step"]').click());
       assert.ok(next.shown.length >= 1, 'Next showed a picture');
       assert.ok(next.shown[0]!.born !== null && next.shown[0]!.born < next.t, `Next's first picture was drawn after the tap: ${JSON.stringify(next)}`);
       for (const i of [0, 1]) {
@@ -1868,11 +1900,11 @@ test('PKCE mobile views expose the derivation and the unsent verifier without ad
       await page.goto(`${embed}/oauth-pkce.html?attacker=${variant.values.attacker}`);
       await page.waitForSelector('[data-ready=true]');
       for (const step of ['secret', 'authorize']) {
-        if (step === 'authorize') await page.getByRole('button', { name: 'Next step', exact: true }).click();
+        if (step === 'authorize') await page.locator('.controls').getByRole('button', { name: 'Next step', exact: true }).click();
         await quiet(page);
         assert.equal(new URL(page.url()).searchParams.get('step'), step);
         assert.ok(await page.locator('.view-help').isVisible());
-        assert.match(await page.locator('.view-help').innerText(), /Next below advances the step/);
+        assert.match(await page.locator('.view-help').innerText(), /Next step continues the explanation/);
         const size = await page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
         const count = Number((await page.locator('.view-controls>span').innerText()).match(/of (\d+)/)![1]);
         assert.ok(count > 1);

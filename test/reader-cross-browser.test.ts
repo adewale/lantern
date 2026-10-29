@@ -52,7 +52,7 @@ test('WebKit checks served paint for every case of the cache, rate, PKCE and req
     await page.waitForSelector('[data-ready=true]');
     assert.equal(await page.getByRole('button', {name: 'Next view', exact: true}).isVisible(), false);
     assert.equal(await page.locator('.view-help').isVisible(), false);
-    await page.getByRole('button', {name: 'Next step', exact: true}).tap();
+    await page.locator('.step-transport').getByRole('button', {name: 'Next step', exact: true}).tap();
     await page.waitForFunction(() => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === 'exchange');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     assert.deepEqual(errors, []);

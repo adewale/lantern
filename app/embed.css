@@ -24,7 +24,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .segments label:has(input:checked){background:var(--surface);color:var(--fg);font-weight:600;box-shadow:0 1px 2px rgb(0 0 0/.08),0 0 0 1px rgb(0 0 0/.04)}
 .segments label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:1px}
 
-/* Player: picture, its words, then navigation. */
+/* Player: discoverable step navigation, picture, then its words and a second Next. */
 .stage{position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);touch-action:pan-y}
 .stage svg{width:100%;height:100%;display:block}
 .stage svg.glide{transition:transform 220ms var(--ease-out)}
@@ -49,7 +49,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .overview .part{background:color-mix(in srgb,var(--accent) 45%,transparent)}
 .overview .view{box-shadow:inset 0 0 0 1.5px var(--fg);border-radius:1px;transition:left 220ms var(--ease-out),top 220ms var(--ease-out)}
 @keyframes leave{to{opacity:0}}
-.caption,.ruler{margin:16px 0 0;max-width:68ch;min-height:3.2em;font-size:1.125rem;line-height:1.6;text-wrap:pretty}
+.caption,.ruler{margin:16px 0 0;max-width:52ch;min-height:3.2em;font-size:1.125rem;line-height:1.6;text-wrap:pretty}
 .ruler,.lede-ruler{position:absolute;top:0;left:0;margin:0;min-height:0;visibility:hidden;pointer-events:none}
 /* On a narrow stage, the heading the stage draws, as text: number and title, then the line. */
 .lede,.lede-ruler{max-width:68ch;font-size:1rem;line-height:1.45;text-wrap:pretty}
@@ -60,6 +60,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .lede strong,.lede-ruler strong{font-weight:650}
 .lede span,.lede-ruler span{color:var(--muted)}
 .lede span[hidden]{display:none}
+.step-transport{display:flex;align-items:center;gap:8px;margin-bottom:12px}
 .controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:16px}
 .tools{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:2px;margin-left:auto}
 .described{margin:8px 0 0;max-width:68ch;font-size:.9375rem;color:var(--muted)}
@@ -111,7 +112,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 /* Enlarge: the player alone, sized to the screen. */
 .player:fullscreen{display:flex;flex-direction:column;justify-content:center;padding:16px;background:var(--bg);overflow:auto}
 .player:fullscreen .frame{width:min(100%,calc((100dvh - 180px)*16/9));margin:0 auto}.player:fullscreen .stage{border-radius:0}
-.player:fullscreen .lede,.player:fullscreen .caption,.player:fullscreen .described,.player:fullscreen .controls,.player:fullscreen .notice{width:min(100%,calc((100dvh - 180px)*16/9));margin-left:auto;margin-right:auto}
+.player:fullscreen .step-transport,.player:fullscreen .lede,.player:fullscreen .caption,.player:fullscreen .described,.player:fullscreen .controls,.player:fullscreen .notice{width:min(100%,calc((100dvh - 180px)*16/9));margin-left:auto;margin-right:auto}
 
 @media(max-width:480px){.caption,.ruler{font-size:1.0625rem}.controls{gap:6px}}
 @media(prefers-reduced-motion:reduce){.button,.stage svg.glide,.overview .view,.segments label,.steps button{transition:none}.button:active:not(:disabled){transform:none}}
