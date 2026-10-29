@@ -350,7 +350,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     ledeLine.style.minHeight = `${tallestLine}px`;
     lede.style.minHeight = `${tallestTitle + tallestLine}px`;
   }
-  new ResizeObserver(reserve).observe(player);
+  // Reserving caption height changes the observed layout. Write in the next
+  // frame, outside ResizeObserver delivery (WebKit otherwise reports a loop).
+  new ResizeObserver(() => requestAnimationFrame(reserve)).observe(player);
   /**
    * The close-up a step opens on: on a narrow stage while close-ups are on, the zoom that
    * frames what the step changed (app/embed-closeup.ts); otherwise null, and the zoom keeps
