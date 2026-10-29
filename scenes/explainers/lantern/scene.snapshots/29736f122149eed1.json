@@ -2608,7 +2608,9 @@
           3.15786,
           -1.9335
         ]
-      ]
+      ],
+      "owner": "rel:Scene->Mobject#0",
+      "markerCarrier": true
     },
     {
       "id": "marker-overlay:1",
@@ -2693,7 +2695,9 @@
           3.15786,
           -3.1225
         ]
-      ]
+      ],
+      "owner": "rel:Scene->Animation#0",
+      "markerCarrier": true
     },
     {
       "id": "marker-overlay:2",
@@ -2798,7 +2802,9 @@
           3.15786,
           -0.7445
         ]
-      ]
+      ],
+      "owner": "rel:Scene->Sink#0",
+      "markerCarrier": true
     },
     {
       "id": "rel-label:Scene->Mobject#0",
