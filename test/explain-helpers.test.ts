@@ -114,6 +114,39 @@ test('snapshot JSON with a corrupt point, paint, owner, path, size, finding or c
   );
 });
 
+test('marker carriers require an explicit semantic connector owner with identical endpoints', async () => {
+  const good = fixture();
+  good.parts.push({
+    ...structuredClone(good.parts.find((p) => p.id === 'edge:A->B#0')!),
+    id: 'marker-overlay:0', role: 'chrome', owner: 'edge:A->B#0', markerCarrier: true,
+  });
+  assert.equal(await snapshotResolver({ [diagramKey(spec)]: good }).diagram(spec), good);
+  const corruptions: [string, (s: DiagramSnapshot) => void][] = [
+    ...[false, null, 1, 'true', new Boolean(true), {}].map((flag): [string, (s: DiagramSnapshot) => void] => [
+      `flag ${String(flag)}`, (s) => { s.parts.at(-1)!.markerCarrier = flag as true; },
+    ]),
+    ['missing owner', (s) => { delete s.parts.at(-1)!.owner; }],
+    ['missing owner part', (s) => { s.parts.at(-1)!.owner = 'missing'; }],
+    ['self owner', (s) => { s.parts.at(-1)!.owner = 'marker-overlay:0'; }],
+    ['nonconnector carrier', (s) => { s.parts.at(-1)!.kind = 'shape'; }],
+    ['nonconnector owner', (s) => { s.parts.at(-1)!.owner = 'A'; }],
+    ['another marker carrier as owner', (s) => {
+      s.parts.push({ ...structuredClone(s.parts.at(-1)!), id: 'marker-overlay:1', owner: 'marker-overlay:0' });
+    }],
+    ['missing from', (s) => { delete s.parts.at(-1)!.from; }],
+    ['missing to', (s) => { delete s.parts.at(-1)!.to; }],
+    ['empty from', (s) => { s.parts.at(-1)!.from = ''; }],
+    ['empty to', (s) => { s.parts.at(-1)!.to = ''; }],
+    ['different from', (s) => { s.parts.at(-1)!.from = 'B'; }],
+    ['different to', (s) => { s.parts.at(-1)!.to = 'A'; }],
+  ];
+  for (const [name, corrupt] of corruptions) {
+    const broken = structuredClone(good);
+    corrupt(broken);
+    await assert.rejects(snapshotResolver({ [diagramKey(spec)]: broken }).diagram(spec), /Invalid diagram snapshot/, name);
+  }
+});
+
 const specArb = fc.record(
   {
     source: fc.oneof(fc.string({ maxLength: 12 }), fc.constantFrom('graph LR\nA-->B', 'a', ' a ', 'a\r\nb', 'a\nb', 'a\rb')),

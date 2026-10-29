@@ -171,6 +171,19 @@ export async function snapshotBuilder(
         });
         const ids = new Set(parts.map((p) => p.id));
         if (ids.size !== parts.length) throw new Error('Duplicate semantic mark ids in snapshot');
+        const normalized = (id: string) => id.startsWith('node:') ? id.slice(5) : id;
+        const captured = new Map(r.parts.map(({ node }) => [normalized(node.id), node]));
+        for (const { node } of r.parts) {
+          if (node.kind !== 'connector' || node.relationship.kind !== 'marker-carrier') continue;
+          const owner = node.owner && normalized(node.owner.id);
+          const semantic = owner && captured.get(owner);
+          if (!owner || owner === normalized(node.id) || !semantic || semantic.kind !== 'connector' ||
+              semantic.relationship.kind === 'marker-carrier' || semantic.role !== node.owner!.role ||
+              !node.endpoints.from || !node.endpoints.to ||
+              node.endpoints.from !== semantic.endpoints.from || node.endpoints.to !== semantic.endpoints.to)
+            throw new Error(`Marker carrier ${node.id} has no unambiguous semantic connector owner`);
+          Object.assign(parts.find((p) => p.id === normalized(node.id))!, { owner, markerCarrier: true });
+        }
         for (const p of parts) {
           const owner = p.id.startsWith('edge-label:')
             ? p.id.replace('edge-label:', 'edge:')

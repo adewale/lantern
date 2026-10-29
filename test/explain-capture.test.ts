@@ -9,6 +9,72 @@ import { lostLabelWarnings } from '../tools/lib/explain-warnings.ts';
 import { Scene, NullSink, VMobject, toSvgString } from '../src/index.ts';
 import { PALETTES } from '../explain/palettes.ts';
 import { findingsOf } from '../integrations/agentic-mermaid/snapshot.ts';
+import { Diagram } from '../explain/diagrams.ts';
+import { dimOpacity } from '../explain/look.ts';
+
+test('actual class marker carriers follow their explicit relationships through reveal, marking and dimming', {
+  skip: !process.env.EXPLAIN_BROWSER && 'set EXPLAIN_BROWSER=1 for real capture',
+}, async () => {
+  const spec = { source: 'classDiagram\nclass Scene\nclass Mobject\nclass Animation\nclass Sink\nScene *-- Mobject : owns\nScene o-- Animation : plays\nScene --> Sink : emits' };
+  const raw = capture(spec);
+  const carriers = raw.parts.map((p) => p.node).filter((n) => n.kind === 'connector' && n.relationship.kind === 'marker-carrier');
+  assert.equal(carriers.length, 3, 'the three declared relationships each carry an actual arrowhead');
+  const builder = await snapshotBuilder();
+  try {
+    const snapshot = await builder.diagram(spec);
+    const markerShapes = snapshot.parts.filter((p) => p.markerCarrier).flatMap((p) => p.shapes);
+    assert.ok(markerShapes.some((s) => s.subpaths.length && s.style.fill !== 'none' &&
+      (s.style.fillOpacity ?? 1) > 0 && (s.style.opacity ?? 1) > 0), 'the source includes a painted filled marker');
+    assert.ok(markerShapes.some((s) => s.subpaths.length && s.style.stroke !== 'none' &&
+      (s.style.strokeWidth ?? 0) > 0 && (s.style.strokeOpacity ?? 1) > 0 && (s.style.opacity ?? 1) > 0),
+      'the source includes a painted stroked marker');
+    const diagram = new Diagram(new Scene(new NullSink(), { skipUntil: Infinity }), spec, snapshot);
+    await diagram.build('frame');
+    for (const carrier of carriers) {
+      const part = snapshot.parts.find((p) => p.id === carrier.id)!;
+      assert.equal(part.owner, carrier.owner!.id, 'ownership comes from the actual upstream source mark');
+      assert.ok(!diagram.visible.has(carrier.id), 'an arrowhead cannot appear before its relationship');
+      assert.equal(diagram.get(carrier.id).parent, diagram.get(part.owner!));
+      const paint = part.shapes.filter((s) => s.subpaths.length && s.style.stroke !== 'none' &&
+        (s.style.strokeOpacity ?? 1) > 0 && (s.style.opacity ?? 1) > 0);
+      assert.ok(paint.length > 0, 'the owned carrier contains real painted arrowhead geometry');
+      await diagram.reveal([part.owner!], { runTime: 0 });
+      assert.ok(diagram.visible.has(carrier.id), 'revealing a relationship reveals its arrowhead');
+    }
+    await diagram.reveal('rest', { runTime: 0 });
+    assert.equal(diagram.describe().what, 'Class diagram: 4 classes, 3 relationships');
+    const labels = [...diagram.parts.values()].filter((p) => p.info.role === 'label')
+      .flatMap((p) => p.mob.family().filter((m) => !m.children.length));
+    assert.ok(labels.length > 0, 'the class diagram contains actual relationship labels');
+    const labelPaint = labels.map((m) => structuredClone(m.style));
+    const basePaint = new Map(carriers.map((c) => [c.id, diagram.get(c.id).family().map((m) => structuredClone(m.style))]));
+    const before = new Map(carriers.map((c) => [c.id, diagram.get(c.id).family().map((m) => m.style.opacity ?? 1)]));
+    await diagram.dim([], { runTime: 0 });
+    for (const carrier of carriers)
+      assert.deepEqual(diagram.get(carrier.id).family().map((m) => m.style.opacity ?? 1),
+        before.get(carrier.id)!.map((o) => o * dimOpacity(snapshot.palette)), 'the owner dims its arrowhead with the relationship');
+    await diagram.dim(null, { runTime: 0 });
+    await diagram.mark(carriers.map((c) => c.owner!.id), { color: '#ff0000', runTime: 0 });
+    for (const carrier of carriers) {
+      const shapes = snapshot.parts.find((p) => p.id === carrier.id)!.shapes;
+      const route = diagram.parts.get(carrier.id)!.route;
+      const leaves = diagram.get(carrier.id).family().filter((m) => !m.children.length && m !== route);
+      assert.equal(leaves.length, shapes.length, 'each captured marker shape remains an actual leaf');
+      shapes.forEach((s, i) => {
+        if (s.subpaths.length && s.style.stroke !== 'none' && (s.style.strokeWidth ?? 0) > 0 &&
+            (s.style.strokeOpacity ?? 1) > 0 && (s.style.opacity ?? 1) > 0)
+          assert.equal(leaves[i]!.style.stroke, '#ff0000', 'every painted arrowhead stroke follows the mark');
+        if (s.subpaths.length && s.style.fill !== 'none' && (s.style.fillOpacity ?? 1) > 0 && (s.style.opacity ?? 1) > 0)
+          assert.equal(leaves[i]!.style.fill, '#ff0000', 'every painted arrowhead fill follows the mark');
+      });
+    }
+    assert.deepEqual(labels.map((m) => m.style), labelPaint, 'owned relationship labels keep their original paint');
+    await diagram.unmark(undefined, { runTime: 0 });
+    for (const carrier of carriers)
+      assert.deepEqual(diagram.get(carrier.id).family().map((m) => m.style), basePaint.get(carrier.id),
+        'clearing dimming and marking restores each arrowhead exactly');
+  } finally { await builder.close(); }
+});
 
 test('actual branch warnings map both raw per-pair ids to their captured edge parts', {
   skip: !process.env.EXPLAIN_BROWSER && 'set EXPLAIN_BROWSER=1 for real capture',

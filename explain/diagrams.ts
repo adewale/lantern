@@ -750,8 +750,10 @@ export class Diagram {
           st: Style = { ...b };
         if (this.zoom !== 1) scaleStyle(st, this.zoom);
         const text = within(m, (a) => !!labelOf(a));
-        // A part's own labels keep their look; an ER relationship's cardinality markers take its mark.
-        const owned = within(m, (a) => a.key != null && a.key !== id && !a.key.startsWith('card:'));
+        // Labels and other owned subjects keep their look. Cardinality marks
+        // and explicitly captured marker carriers take their connector's mark.
+        const owned = within(m, (a) => a.key != null && a.key !== id && !a.key.startsWith('card:') &&
+          !this.parts.get(a.key)?.info.markerCarrier);
         if (color && !owned && !text) {
           if (st.stroke && st.stroke !== 'none' && (st.strokeWidth ?? 0) > 0) {
             st.stroke = color;

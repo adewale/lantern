@@ -41,6 +41,8 @@ export interface SnapshotPart {
   kind: string;
   shapes: SnapshotShape[];
   owner?: string;
+  /** Upstream marker-only connector artwork that follows its semantic owner's paint. */
+  markerCarrier?: true;
   from?: string;
   to?: string;
   route?: [number, number][];
@@ -173,6 +175,12 @@ function validateSnapshot(value: DiagramSnapshot): void {
       if (part[key] != null && typeof part[key] !== 'string') invalid();
     // An owner names a part: '' would read as "no owner" in some places and as an id in others.
     if (part.owner === '') invalid();
+    if (part.markerCarrier !== undefined && part.markerCarrier !== true) invalid();
+    if (part.markerCarrier) {
+      const owner = part.owner && ids.get(part.owner);
+      if (part.kind !== 'connector' || !part.from || !part.to || !owner || owner.kind !== 'connector' ||
+          owner.markerCarrier || part.from !== owner.from || part.to !== owner.to) invalid();
+    }
     const ancestors = new Set([part.id]);
     let owner = part.owner;
     while (owner) {
