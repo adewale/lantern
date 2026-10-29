@@ -41,6 +41,7 @@ Lantern supplies the execution and rendering model. Agentic Mermaid supplies lay
 | Diagrams | `flowchart()` and Lantern's own Mermaid layout | Replaced by Agentic Mermaid capture, which honours its styles across families |
 | Player | `app/player.ts` | Replaced by the embed player (`app/embed.ts`): stepper first, cases, zoom, accessibility |
 | Builds | Bundled HTML | External scenes, snapshot build, portable pages, receipts |
+| Video | Frame execution and SVG sinks | `rayner render` (`tools/lib/explain-video.ts`) on the film plan (`explain/film.ts`): MP4 and WebM, paced by motion, captions as subtitles, receipts |
 | Inspection | Traces, text views, motion verifier | Kept; the helpers record every walk in the trace so tests can check it |
 
 The owner chose to delete the inherited player, Lantern's Mermaid layout and the nine original scenes once the explainers rebuilt them, so the repository has one of each.
@@ -124,6 +125,7 @@ Rebuilding Lantern's examples in a prototype (the `agentic-mermaid` branch of a 
 | Ten of the prototype's fourteen explainers needed native drawing; the ring buffer has no diagram at all | The helpers are two layers: the stage (paper, cards, code, settings), useful in any scene, and diagrams on top of it |
 | Every Lantern example works by asking the program | A named pattern with a test helper: a scene's state at each step must equal the program's |
 | In the prototype, rebuilt scenes were 87 to 176 lines, against 57 to 267 for the originals | Do not sell the helpers as shorter code. They buy real styles, settings and checks |
+| In the prototype, caption reading holds were most of each explainer's length, and video export took 2 to 11 minutes per explainer | The player stops when the picture stops and waits for the reader; the video is paced by its motion, rests at most 2 s per step, and `check` fails a film that stands still too long. Demo exports skip videos whose inputs did not change |
 | In the prototype, one page held all fourteen explainers in 1.27 MB, 830 KB of it snapshots | A page holds one explainer and its own snapshots |
 
 ## Authoring and embedding
@@ -153,6 +155,14 @@ It is an npm package with a command-line tool, plus an agent skill. An explainer
 | Reader | A static HTML page, or an iframe of it | No account, server or network |
 
 MCP suits live access to a system, like a vault or a ticket queue. An explainer is source that is checked and built once, then served as files, so the CLI comes first.
+
+## Video
+
+The stepper is the primary artefact and the video is its derivative, for places that cannot embed a page. A silent video with captions makes the viewer alternate between reading and watching, which is the split-attention problem the stepper avoids by letting the reader choose when to look. The video is a build target of the same scene, so it needs no second implementation: the exporter runs the scene at a fixed frame rate through Lantern's deterministic loop and rasterises each frame with resvg.
+
+The first exporter reduced the split by holding each resting picture under its full caption for the caption's reading time. That made most of every video a still picture (82% of frames over the 20 demo videos), and a viewer found it slow and annoying. A standalone video, made without this project, showed the alternative: something drawing almost all the time, and little text on screen.
+
+So the video now has its own pace. The caption stays the page's and goes to the video's subtitles and transcript. Each step plays its motion under its title, rests at most 2 s while the view pushes in slightly, and moves on. The split remains for anyone who reads the subtitles, but the picture no longer waits for them. Pacing is now a check, with budgets, like legibility. Narration is not included in this video implementation. The files and the measured pacing are in [the reference](../docs/REFERENCE.md#video-files).
 
 ## Decisions
 

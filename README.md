@@ -8,6 +8,8 @@ Rayner helps engineers and technical educators turn TypeScript models into expla
 
 Use Rayner when a different input changes what you need to explain: which route a request takes, why an attack fails, or how a code change affects the system. Reader settings are finite choices, with every combination built ahead of time. Authors must test the model against its sources and review the pictures; automated checks cannot establish that the explanation is true.
 
+This development branch adds video export for 0.3. Use `rayner render` for MP4 or WebM and `rayner filmstrip` to review motion; [video publishing](https://github.com/adewale/rayner/blob/claude/video-pacing/docs/PUBLISHING.md#export-a-video) lists requirements and outputs.
+
 ## Try a checkout
 
 Requires Node 24 or later and Chromium. Authoring targets Ubuntu and macOS; Windows is not yet supported. The [release guide](https://github.com/adewale/rayner/blob/main/docs/RELEASING.md) records the required platform validation.

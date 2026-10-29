@@ -1,6 +1,6 @@
 {
   "name": "rayner",
-  "version": "0.1.0",
+  "version": "0.3.0-dev.0",
   "type": "module",
   "scripts": {
     "build:lib": "rm -rf dist && tsc -p tsconfig.lib.json && node tools/copy-vendor.ts && node tools/build-cli.ts",
@@ -20,14 +20,17 @@
     "site:export": "node tools/explain-site.ts",
     "test:embeds": "EXPLAIN_BROWSER=1 node --test test/explain-capture.test.ts test/explain-embed.test.ts test/lettering-browser.test.ts test/lettering-math.test.ts test/explain-lang.test.ts test/svg-browser.test.ts test/explain-story-review.test.ts test/explain-review-scene.test.ts test/bench-measure.test.ts",
     "release:check": "node tools/prepare-release.ts",
-    "bench": "node tools/bench.ts"
+    "bench": "node tools/bench.ts",
+    "demos:render": "node tools/explain-demos.ts --render",
+    "videos": "node tools/explain-demos.ts --render && EXPLAIN_VIDEO=1 node --test test/explain-video.test.ts && EXPLAIN_VIDEO=1 node tools/explain-package-smoke.ts",
+    "test:video": "EXPLAIN_VIDEO=1 node --test test/explain-video.test.ts"
   },
   "devDependencies": {
     "@types/node": "24.19.2",
     "fast-check": "4.10.2",
     "shiki": "4.5.0"
   },
-  "description": "Step-through technical explainers from one TypeScript scene. Portable HTML with no browser runtime dependencies.",
+  "description": "Step-through technical explainers from one TypeScript scene, with portable HTML and optional video export.",
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
@@ -85,7 +88,8 @@
     "explainer",
     "stepper",
     "embed",
-    "mermaid"
+    "mermaid",
+    "video"
   ],
   "dependencies": {
     "esbuild": "0.25.12",

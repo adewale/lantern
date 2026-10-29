@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0 (unreleased)
+
+- Add optional MP4 and WebM export with subtitles, chapters, a transcript and an export receipt. FFmpeg is required.
+- Pace exports by each step's motion with a short rest and a small camera push-in. Report pacing budgets in `check`.
+- Add `rayner filmstrip` to inspect frames during motion before publishing a video.
+
+
 ## 0.1.0 (unreleased)
 
 First release of the `rayner` package, a fork of Ivar Vong's Lantern.

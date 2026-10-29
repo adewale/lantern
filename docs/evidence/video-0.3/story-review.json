@@ -1,0 +1,18 @@
+{
+  "scope": {
+    "part": 1,
+    "total": 1
+  },
+  "catalogHash": "4c0247d9f8394af6c8f56fd46c250f675d1ef1db202a7af2a26c7d23721f6679",
+  "reviewCodeHash": "d04c8974793b03cb8177fe5dc5a0a73ad9e0cdbf7a9e02c8b799f8387f8a60c0",
+  "cases": 142,
+  "stepWidths": 2074,
+  "consoleErrors": [],
+  "runtimeConnections": [],
+  "fullReceiptSha256": "ba56d6fc0d41a4acf4292f9545040c78cdf5c9cc0b093b6d740a980872b12dd2",
+  "shardExitCodes": [
+    0,
+    0,
+    0
+  ]
+}

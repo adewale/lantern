@@ -33,7 +33,8 @@ if (origin && !/^https:\/\/[^/]+\/?$/.test(origin)) throw new Error(`--origin mu
 const path = values.path.replace(/\/$/, '');
 if (!/^\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+$/.test(path)) throw new Error('--path must be an absolute URL path without dot segments');
 const destination = resolve(root);
-const built = join(ROOT, 'out/explainers');
+const built = join(ROOT, 'out/explainers'),
+  videos = join(ROOT, 'out/videos');
 const exists = (file: string) => access(file).then(() => true, () => false);
 
 // Refuse an explainer whose scene, scene folder or engine changed since demos:build built it;
@@ -50,7 +51,7 @@ try {
   await mkdir(target, { recursive: true });
   const blocks: string[] = [];
   let shared = 0;
-  for (const { id } of EXPLAINERS) {
+  for (const { id, video } of EXPLAINERS) {
     const page = join(built, id + '.html');
     if (!(await exists(page))) throw new Error(`Missing ${page}: run npm run demos:build first`);
     const share = JSON.parse(await readFile(join(built, id, 'steps.json'), 'utf8')) as ShareManifest;
@@ -64,6 +65,7 @@ try {
       if (origin) await writeFile(join(target, id, s.step + '.html'), sharePage(share, s, origin, path));
       shared++;
     }
+    for (const ext of video === false ? [] : ['.mp4', '.vtt']) if (await exists(join(videos, id + ext))) await copyFile(join(videos, id + ext), join(target, id + ext));
     const headers = JSON.parse(await readFile(join(built, id + '.html.headers.json'), 'utf8')) as Record<string, string>;
     const lines = Object.entries(headers).map(([k, v]) => `  ${k}: ${v}`).join('\n');
     // The host serves /x.html at /x, so the rule covers both spellings.

@@ -23,8 +23,8 @@ this.state.reads = reads;   // program state, recorded at each step boundary
 - `meta.lang` (BCP 47, default `en`) is the language of the page and the transcripts. The player's own words (`app/embed-strings.ts`) and the generated picture descriptions (`explain/words.ts`, whose `families` name each diagram family and its parts) exist in English and French. On a page in any other language both are English, and the descriptions are marked `lang="en"`; `Picture.lang` in the trace records a description's language when it is not English.
 - Step names are URL identifiers. They must be unique and non-empty in every case.
 - `this.state` is recorded before and after each step. Compute values with a model, show its result, and test that each step's state equals the model's (`assertStepState` in `test/lib/explainer-state.ts`).
-- `line` is one short line under the heading: what to see, in about ten words or fewer. The stage draws it in the soft colour and fails every command on a line wider than the heading (14.6 units at 0.3). It is part of the picture and the page transcript.
-- A captioned step holds until its caption could be read at 160 words a minute (`Scene.captionWpm`), counting the step's motion as reading time. The page stops when the picture stops and waits for the reader. The picture must not change once the hold begins.
+- `line` is one short line under the heading: what to see, in about ten words or fewer. The stage draws it in the soft colour and fails every command on a line wider than the heading (14.6 units at 0.3). It is part of the picture, so a video shows it too, and both transcripts give it.
+- A captioned step holds until its caption could be read at 160 words a minute (`Scene.captionWpm`), counting the step's motion as reading time. The page stops when the picture stops; the [video](#video-files) skips the hold and rests briefly instead. The picture must not change once the hold begins.
 - Do not put awaited animations inside `try`/`catch` or `.catch()` in `construct()`. Seeking stops a scene by throwing `StopScene`, and a broad catch swallows it, so a jump to a step would show a different picture from playing to it. Handle a known model error in plain code before animating. The engine limits the damage: a `StopScene` from a sink sets `this.stopped`, and from then on `play()`, `wait()`, `step()` and every frame rethrow it before doing anything, so a swallowed stop emits no further frame. Plain code between the catch and the next scene call (a `shift()`, a write to `this.state`) still runs, which is why `check` keeps the lint.
 - `this.frame` is the camera: the box of the stage on screen. `this.play(this.frame.animate.fit(target, { margin }))` zooms onto a mobject or a box, `this.frame.animate.reset()` returns to the whole stage, and `this.frame.zoom` is the magnification. Moving it moves no point; [the camera guide](CAMERA.md) has the rest, and [`d.focus`](#diagrams) moves the same camera with `camera: true`.
 - `this.record(kind, data)` adds `{ kind, ...data }` (copied as JSON) to the step's evidence. Step evidence records what an animation did, where `state` is what the program is; it has nothing to do with the build's `evidence.json`. Steps in the trace carry it as `evidence`, only when they recorded something; seeks record the same evidence as full runs; `this.evidence` holds every record so far. Matching transforms and `TransformDiff` record themselves ([evidence](MATCHING.md#evidence)), so counts on screen can be read from what the transform did; a View's internal morph (`view.sync()`) does not record evidence.
@@ -280,6 +280,7 @@ Capture asserts that its output equals Agentic Mermaid's `renderMermaidSVG` byte
 | Legibility | A native label never reaches 14 px at a 1280 px stage in a frame where it is drawn (opacity and draw fraction at least 0.95) and inside the camera's view; an imported label never reaches 14 px in a resting picture inside its diagram's viewport. Sizes are on screen: world size × the camera's zoom, min(16 ÷ view width, 9 ÷ view height). A native label counts at that zoomed size only in a step's completed frame; in other frames it counts at no more than its size with the camera home, so a camera gliding past does not make it read |
 | Words | A kept drawing with no text and no `describe` |
 | Bare runtime | The scene, bundled, gives different steps or state in a context with no DOM, Node, timers or console |
+| Pacing | The [film](#video-files) stands still for more than 3 s at once (a rest counts, its push-in being slight); or, in a film of 10 s or more, the scene's picture stands still for more than 20% of its motion (rests aside: waits and pauses inside steps), or the film rests for more than 60% of its length (`PACING` in `explain/film.ts`). Rests are kept out of the still share because each is capped at 2 s |
 | Glyphs | Any text the embedded fonts, and the lettering the explainer asked for, cannot draw (every command checks this) |
 
 The report goes to `out/checks/<id>/report.json`. For each case it holds the full step trace, each step's resting picture as a rough text drawing (`restingFrames`: boxes and lines, with diagram labels as bars), and label sizes (`legibility`):
@@ -291,6 +292,7 @@ The report goes to `out/checks/<id>/report.json`. For each case it holds the ful
 | `labelsOutsideCloseUpsAt390` | Labels no close-up shows whole, which a reader reaches by panning |
 | `minLabelPx390WholeStage` | Smallest label on that phone without close-ups |
 
+`pacing` gives the film's length in seconds, its longest still stretch, the still share of its motion, the share spent resting, and words on the picture per second.
 `cardsAtRest` counts the cards in each step's resting picture.
 
 The phone sizes are reported, not gated; every demo case reports no label under 12 px. A close-up zooms on top of the author's camera, so its sizes multiply the camera zoom by the close-up's.
@@ -334,6 +336,7 @@ Helpers supply subjects automatically. For an important caption claim or a step 
 | `review <scene>` | The checks, then [served-reader review](#reader-review) of every case and step at both widths |
 | `build <scene>` | The page, its receipt, its header recipe and `loader.js` |
 | `shots <scene>` | A contact sheet of every step, as SVG and PNG |
+| `filmstrip <scene>` | The video as a reviewer should see it: a frame every `--every` seconds of film, motion and rests alike, each labelled with its time, step and whether it moves or rests, as PNG |
 | `describe <scene>` | [`describeExplainer`](#describe) as JSON: every case and step, with words, state, what changed and the picture in words and as text |
 | `see <scene> [step]` | One step of [`describeExplainer`](#describe)'s description: its resting picture drawn as text, then its title, caption, the picture in words and what it changed in `scene.state` (`key: before → after`). The last step by default; needs no browser, so an agent can read a scene from a terminal |
 
@@ -341,7 +344,11 @@ Helpers supply subjects automatically. For an important caption claim or a step 
 | --- | --- | --- |
 | `--out <path>` | all but `init` and `snapshots` | The output file; for `check`, the report's directory; for `see`, the resting picture as SVG (nothing is written without it). Defaults under `out/` in the current directory |
 | `--refresh` | all but `init` | Recapture every diagram |
-| `--case id=value` | `shots`, `see` | One case; repeat for several settings |
+| `--case id=value` | `render`, `shots`, `filmstrip`, `see` | One case; repeat for several settings |
+| `--all` | `render` | Every case, each file suffixed `-id=value` |
+| `--width <even>` | `render` | Width, default 1280; the height is 16:9, rounded to an even number |
+| `--every <seconds>` | `filmstrip` | Time between frames, default 1 |
+| `--fps <1–120>` | `render` | Frame rate, default 30 |
 | `--port <n>` | `preview` | Default 5174 |
 | `--watch` | `preview` | Rebuild the page when a source file changes; reload the browser to see it |
 
@@ -390,6 +397,25 @@ Inside an iframe without `parentOrigin` (a raw iframe), the page adds its own "O
 
 `<page>.html.headers.json` is the response-header recipe: a CSP that pins the inline script and style by SHA-256, `connect-src 'none'`, no fonts, base or objects, and `frame-ancestors *`, plus `Cache-Control: public, max-age=0, must-revalidate`. `<page>.html.receipt.json` records source, engine and snapshot hashes, the artifact hash and each case's steps, and, for a page that asked for lettering, what its lettering weighs ([lettering on request](#lettering-on-request)).
 
+## Video files
+
+`rayner render` runs the scene at a fixed frame rate, rasterises each frame with resvg and the embedded fonts, and pipes it to FFmpeg. Each frame is written with `toSvgString(scene, { cull: true })`, which leaves out what the camera cannot show (`shots`, contact sheets and the gallery tiles render culled too), because resvg 2.6.2 aborts on an element with `opacity` whose visible box is empty, such as a fading label outside a zoomed view ([camera](CAMERA.md#rendering-off-screen-content)).
+
+The video is a film of the scene, paced by its motion (`explain/film.ts`). Each step plays its motion under its title, then rests on its picture for a beat: long enough to read the title at 240 words a minute, at least 0.6 s and at most 2 s, and 2.5 s after the last step. The scene's caption hold is skipped. During a rest the view pushes in by up to 2.5% toward its centre, and the next step's motion eases it back out over 0.5 s; the push is the film's own motion, and the scene's picture must still not change during the hold. The full caption goes to the subtitles, across the step's whole stretch of film, and to the transcript. Chapters start at each step's motion.
+
+The film plan reports total duration, the longest still stretch, the share of still motion frames and the share spent resting. `check` applies the [pacing budgets](#checks), and the export receipt records `pacing`. These budgets are authoring heuristics; they do not establish that a video teaches its subject well.
+
+| File | Contents |
+| --- | --- |
+| `.mp4` | Silent H.264, `yuv420p`; one `mov_text` subtitle stream tagged with the ISO 639-2 code for `meta.lang`; chapters |
+| `.webm` | Silent VP9; WebVTT subtitle stream tagged with `meta.lang` |
+| `.vtt` | One cue per captioned step, with a `Language:` header |
+| `.transcript.html` | The video's text alternative: title and case, then each step's title, line, caption and what its picture shows |
+| `.chapters.ffmeta` | One chapter per step, titled by the step title |
+| `.receipt.json` | Hashes, settings, versions of resvg and FFmpeg, size, fps, `frames`, `rasterizedFrames`, `chapters` (each step with its `motion` and `beat` in seconds), `pacing`, `transcript` |
+
+The video is 16:9 at any even width; its height rounds to an even number. Like `check`, `render` fails if the picture changes during a caption hold, and every command fails on a character the fonts cannot draw. An MP4 needs an ISO 639-2 code for `meta.lang`: three-letter tags pass, `en` and `fr` and their regional tags become `eng` and `fra`, and other tags fail. Video bytes may differ between FFmpeg and resvg builds. `--footer` is gone; `render` refuses it with a note on where the caption went.
+
 ## Repository scripts
 
 | Script | What it does |
@@ -399,7 +425,9 @@ Inside an iframe without `parentOrigin` (a raw iframe), the page adds its own "O
 | `npm run test:full` | `FULL=1`: every frame and ten times as many property cases |
 | `npm run test:embeds` | Real Chromium: capture fidelity, cross-origin embeds, history, phone layout, offline, no JavaScript, a lettered page drawing its requested letters |
 | `npm run demos:build` | Build every explainer, the gallery, `evidence.json` and a two-embed page into `out/explainers/`, with each explainer's `describeExplainer` JSON in `<id>/describe.json` for `site:export` |
-| `npm run demos:check` | `demos:build` plus `check` on every case |
+| `npm run demos:check` | `demos:build` plus `check` on every case, pacing included |
+| `npm run demos:render` | `demos:build` plus a video of each default case in `out/videos/`, verified with ffprobe and held to the pacing budgets; unchanged videos are skipped unless `-- --force`; a catalog entry with `video: false` ships as a page only |
+| `npm run videos` | Everything video, kept out of CI: `demos:render`, `test:video` and the package smoke test's installed render. Needs FFmpeg |
 | `npm run demos:serve` | Serve `out/` on port 5175 with each page's headers and byte ranges; `-- --port n` |
 | `npm run demos:review` | Open every served case at 390 px and 1180 px in Chromium and check captions, artwork, errors, outside requests and headers, screenshots in `out/review/` |
 | `npm run bench` | Manual interleaved BASE/HEAD browser measurements; skips identical built pages and reports insufficient samples as inconclusive |

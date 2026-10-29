@@ -1,0 +1,324 @@
+{
+  "videos": 21,
+  "frames": 19902,
+  "cues": 142,
+  "cuesOver240Wpm": 138,
+  "thresholdIsReviewHeuristic": true,
+  "results": [
+    {
+      "id": "seasons",
+      "sha256": "2c207329e30e0e56ea3fc9623e3511b44a53d658355b049767e1b9782520be6a",
+      "frames": 1171,
+      "chapters": 8,
+      "pacing": {
+        "seconds": 39.03,
+        "longestStill": 2.5,
+        "stillShare": 0,
+        "restShare": 0.172,
+        "wordsPerSecond": 1.67
+      },
+      "maxSubtitleWpm": 852,
+      "filmstripSha256": "da1e0abd738aca46f0115de6a47075a7bac5bdc9dfa6f68194467ceb18b6f9f3"
+    },
+    {
+      "id": "oauth-pkce",
+      "sha256": "ab79141004cf4d00a0983cdd70b776cda5b9a085baef5f803c4e15663f235e4c",
+      "frames": 684,
+      "chapters": 6,
+      "pacing": {
+        "seconds": 22.8,
+        "longestStill": 2.5,
+        "stillShare": 0.015,
+        "restShare": 0.241,
+        "wordsPerSecond": 2.32
+      },
+      "maxSubtitleWpm": 974,
+      "filmstripSha256": "3978bead2116111c441d3d9595e6b07c51b1be266f9306e1be31e8c4b309f206"
+    },
+    {
+      "id": "exgit",
+      "sha256": "28d7ba83cb59a8dd902fac82dc1b271f7a50c30da6073df3610588f73ced332e",
+      "frames": 1045,
+      "chapters": 6,
+      "pacing": {
+        "seconds": 34.83,
+        "longestStill": 2.5,
+        "stillShare": 0.005,
+        "restShare": 0.158,
+        "wordsPerSecond": 1.46
+      },
+      "maxSubtitleWpm": 706,
+      "filmstripSha256": "88feda036bb77537029cbe81aad52dd956fdcfda7a04652675741ea7301a59bd"
+    },
+    {
+      "id": "token-bucket",
+      "sha256": "08c7a58cbabccc4d0a96e0e246a19c436353b8eb96fa1176855e0d93a2b88017",
+      "frames": 678,
+      "chapters": 5,
+      "pacing": {
+        "seconds": 22.6,
+        "longestStill": 2.5,
+        "stillShare": 0.046,
+        "restShare": 0.226,
+        "wordsPerSecond": 1.81
+      },
+      "maxSubtitleWpm": 1050,
+      "filmstripSha256": "e27934b4e1a729393610b69dad70a4c538491632b1a6b8996f786325855cd27f"
+    },
+    {
+      "id": "mr-cache",
+      "sha256": "cebf2d82d2cafc013a5437693ac371380e95f47516fe9f9856bfc5f59e573269",
+      "frames": 664,
+      "chapters": 4,
+      "pacing": {
+        "seconds": 22.13,
+        "longestStill": 2.5,
+        "stillShare": 0.021,
+        "restShare": 0.205,
+        "wordsPerSecond": 1.54
+      },
+      "maxSubtitleWpm": 740,
+      "filmstripSha256": "4ae3ee8c344e4c2ac7f8b64ccfb37e77e643e0e702f9ca2dbdd28eaf4c1d0d8e"
+    },
+    {
+      "id": "state-machine",
+      "sha256": "8904180d65789a68475eea6f1496a852dd2e8e54ef2393c04c560ffd5521b20b",
+      "frames": 687,
+      "chapters": 5,
+      "pacing": {
+        "seconds": 22.9,
+        "longestStill": 2.5,
+        "stillShare": 0.059,
+        "restShare": 0.214,
+        "wordsPerSecond": 1.09
+      },
+      "maxSubtitleWpm": 418,
+      "filmstripSha256": "182073052503e920b0afc165f56e53cf02f069862a8a8ec87721a1745d56c89a"
+    },
+    {
+      "id": "ring-buffer",
+      "sha256": "bf7fc33687e8db997263ce26a1750337a3bf9d8dace406eff61d010d35de1b30",
+      "frames": 763,
+      "chapters": 4,
+      "pacing": {
+        "seconds": 25.43,
+        "longestStill": 2.5,
+        "stillShare": 0,
+        "restShare": 0.169,
+        "wordsPerSecond": 1.02
+      },
+      "maxSubtitleWpm": 753,
+      "filmstripSha256": "872f850f965441a28421fd6fd348ebc3dd90cc89c4aca30db6ead8a647bf338c"
+    },
+    {
+      "id": "2password",
+      "sha256": "7dc15565f85593d73b526886a5ba105b9ee0e9041bbe40fd70fd52c949372de9",
+      "frames": 752,
+      "chapters": 6,
+      "pacing": {
+        "seconds": 25.07,
+        "longestStill": 2.5,
+        "stillShare": 0.002,
+        "restShare": 0.221,
+        "wordsPerSecond": 1.95
+      },
+      "maxSubtitleWpm": 1638,
+      "filmstripSha256": "6f29a647c2f078d046d97bb13eaf6caaba503ad1f4630fe11c25a2169bcfeed4"
+    },
+    {
+      "id": "just-bash",
+      "sha256": "a6e4937a27d79531e173a331c017fcccf4048a0ad03f6700f28245b4d6bf3416",
+      "frames": 1192,
+      "chapters": 7,
+      "pacing": {
+        "seconds": 39.73,
+        "longestStill": 2.5,
+        "stillShare": 0.002,
+        "restShare": 0.154,
+        "wordsPerSecond": 1.38
+      },
+      "maxSubtitleWpm": 622,
+      "filmstripSha256": "fd3b17174c0471efe3228a8d788e3f7a2c46b4dffcfa22672b28ed1cf6b6583f"
+    },
+    {
+      "id": "cert-renewal",
+      "sha256": "af5554135c6c3130ecf0114fe2f3cd20300ebc2f0e7b1829676f03fa13005ed1",
+      "frames": 881,
+      "chapters": 9,
+      "pacing": {
+        "seconds": 29.37,
+        "longestStill": 2.5,
+        "stillShare": 0.006,
+        "restShare": 0.264,
+        "wordsPerSecond": 2.49
+      },
+      "maxSubtitleWpm": 1611,
+      "filmstripSha256": "8aa9005d4b84aa2544f16101227fa1581c9f8f6b27ca2a086e725e78e49a247d"
+    },
+    {
+      "id": "quotient-familial",
+      "sha256": "53b30c8be5ff876a776bbb7230f431372470a2cf057d6a1a347e7838f9f79533",
+      "frames": 1501,
+      "chapters": 10,
+      "pacing": {
+        "seconds": 50.03,
+        "longestStill": 2.5,
+        "stillShare": 0.01,
+        "restShare": 0.176,
+        "wordsPerSecond": 1.62
+      },
+      "maxSubtitleWpm": 1376,
+      "filmstripSha256": "9b3c2930bcb200e14ead04a4376ba3aef73e01842f4f827946b3b782838506d8"
+    },
+    {
+      "id": "send-sync",
+      "sha256": "47c8766b52fc612a0dcca39de28660b9bd23f85829422b450a11309c59692b10",
+      "frames": 1072,
+      "chapters": 8,
+      "pacing": {
+        "seconds": 35.73,
+        "longestStill": 2.5,
+        "stillShare": 0.077,
+        "restShare": 0.188,
+        "wordsPerSecond": 1.46
+      },
+      "maxSubtitleWpm": 1350,
+      "filmstripSha256": "91b6687d922fc43690a6ade1763a28edee3ddef4ecd38864ba58a502665b1d46"
+    },
+    {
+      "id": "gtfs",
+      "sha256": "74b666e52973a58e11134944250c8a81e038fc97f465460c6ccfccf449b1d5aa",
+      "frames": 940,
+      "chapters": 9,
+      "pacing": {
+        "seconds": 31.33,
+        "longestStill": 2.5,
+        "stillShare": 0.007,
+        "restShare": 0.288,
+        "wordsPerSecond": 2.49
+      },
+      "maxSubtitleWpm": 1056,
+      "filmstripSha256": "3f893d4cf2903c8ac1a2ba3285567480eb0389aed38167817f35cb847860d0d2"
+    },
+    {
+      "id": "pg-page",
+      "sha256": "e9cd4d89de86f70219a0e28a76b1c5b57185b2eeb7bb2cfe71ce9f1b3172c627",
+      "frames": 799,
+      "chapters": 7,
+      "pacing": {
+        "seconds": 26.63,
+        "longestStill": 2.5,
+        "stillShare": 0.005,
+        "restShare": 0.265,
+        "wordsPerSecond": 2.74
+      },
+      "maxSubtitleWpm": 938,
+      "filmstripSha256": "60b53fde7168cb35fddf0e4be8f0dda96d967cf799f31951295c5fb06d2e0e4c"
+    },
+    {
+      "id": "traffic-policy",
+      "sha256": "4d694792efe73cd11ca5d93db4db91a84317713a995dff74148455e5f10fa9b2",
+      "frames": 850,
+      "chapters": 7,
+      "pacing": {
+        "seconds": 28.33,
+        "longestStill": 2.5,
+        "stillShare": 0.019,
+        "restShare": 0.253,
+        "wordsPerSecond": 2.61
+      },
+      "maxSubtitleWpm": 937,
+      "filmstripSha256": "1471737503bf86566c3f8b524bd69a2e905bc1a3f188ba5cad4a9ee25f277149"
+    },
+    {
+      "id": "isdigit",
+      "sha256": "124930e12fd7527188fd7bef8f3b1424bd254ca88f8b56241ba13d8aebdf163c",
+      "frames": 637,
+      "chapters": 8,
+      "pacing": {
+        "seconds": 21.23,
+        "longestStill": 2.5,
+        "stillShare": 0,
+        "restShare": 0.334,
+        "wordsPerSecond": 2.87
+      },
+      "maxSubtitleWpm": 1470,
+      "filmstripSha256": "15cc62bb8003f25e55cb4200be0cf2f4998fbb1f9dc293ad1e7008cf0a2c5e29"
+    },
+    {
+      "id": "lantern",
+      "sha256": "2478b1cad4aeef7c6b74734fc70ea0f678504c023bebe975f8c93d8ab86f62ae",
+      "frames": 1338,
+      "chapters": 7,
+      "pacing": {
+        "seconds": 44.6,
+        "longestStill": 2.5,
+        "stillShare": 0.01,
+        "restShare": 0.137,
+        "wordsPerSecond": 1.37
+      },
+      "maxSubtitleWpm": 568,
+      "filmstripSha256": "3a8fde86dfc55baf7a569b55346755f8a9e353360d1dc0ee55094b851812bf60"
+    },
+    {
+      "id": "fork",
+      "sha256": "e0f4bb5906ee4e0b8a1bc76e18d0605dd8f9df8f7d8b3cfa60199f8f89ad952f",
+      "frames": 1044,
+      "chapters": 8,
+      "pacing": {
+        "seconds": 34.8,
+        "longestStill": 2.5,
+        "stillShare": 0.007,
+        "restShare": 0.193,
+        "wordsPerSecond": 1.93
+      },
+      "maxSubtitleWpm": 1303,
+      "filmstripSha256": "c9daf1129e5494ce4a9fe3abad176b34d3f4cb1f54f35bbbb4dc035ae8d84c6f"
+    },
+    {
+      "id": "agentic-mermaid",
+      "sha256": "359c3e3330d0a74b23eed065679acb198235d40ae7458a9b603a83ccd3100530",
+      "frames": 868,
+      "chapters": 6,
+      "pacing": {
+        "seconds": 28.93,
+        "longestStill": 2.5,
+        "stillShare": 0.004,
+        "restShare": 0.19,
+        "wordsPerSecond": 1.52
+      },
+      "maxSubtitleWpm": 796,
+      "filmstripSha256": "be197b5fc6cfaa579e835eafb1aa4d24c5b76f972bbf1702da6c46f18123f4e9"
+    },
+    {
+      "id": "glyph",
+      "sha256": "fa44bf38f98adc33d81a1bc72e9a4e4a4ff4ad53b59c9b82eb5d73f4d3c6f605",
+      "frames": 1218,
+      "chapters": 6,
+      "pacing": {
+        "seconds": 40.6,
+        "longestStill": 2.5,
+        "stillShare": 0.001,
+        "restShare": 0.135,
+        "wordsPerSecond": 1.23
+      },
+      "maxSubtitleWpm": 438,
+      "filmstripSha256": "a177c8857a67d811d5a9e73f4e4e16ec0a51406269e62e97f5a1931bebf661d4"
+    },
+    {
+      "id": "pen-and-pencil",
+      "sha256": "97556ef802fe5b8829b9255f87f4b9c23ed1b62f9ca96fe8cdb4235bfe1ee6cc",
+      "frames": 1118,
+      "chapters": 6,
+      "pacing": {
+        "seconds": 37.27,
+        "longestStill": 2.5,
+        "stillShare": 0.01,
+        "restShare": 0.164,
+        "wordsPerSecond": 1.66
+      },
+      "maxSubtitleWpm": 1176,
+      "filmstripSha256": "98d560fc521cd1b7602a50a45e45bf41af3094a98b514ba12d28d1f6e65744b7"
+    }
+  ]
+}

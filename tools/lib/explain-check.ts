@@ -16,7 +16,10 @@ import {
   traceScene,
   renderText,
   Text,
+  renderElements,
 } from '../../src/index.ts';
+import type { ElementRecord } from '../../src/index.ts';
+import { pacing, pacingProblems } from '../../explain/film.ts';
 import { Card } from '../../explain/panels.ts';
 import { ROOT, engineAlias, sceneSlug } from './explain-project.ts';
 import { caseName } from '../../explain/index.ts';
@@ -285,11 +288,22 @@ export async function checkProject(project: Project, out: string): Promise<Recor
     );
     const held = new Map<string, string>(),
       moved = new Set<string>();
+    // The film's pacing: whether each frame's picture differs from the frame before. The renderer
+    // reuses an element's record while nothing about it changes, so identity is enough.
+    const changed: boolean[] = [];
+    let lastRecords: ElementRecord[] = [],
+      lastView = '';
     // Cards on screen at each resting picture: a step that ends on a card says its values in a panel.
     const cardsAtRest: Record<string, number> = {};
     await new v.Scene({
       async frame(scene, dt) {
         await motion.frame(scene);
+        const records = renderElements(scene),
+          viewNow = scene.frame.box()!.join(' ');
+        changed[scene.frameCount] =
+          viewNow !== lastView || records.length !== lastRecords.length || records.some((r, i) => r !== lastRecords[i]);
+        lastRecords = records;
+        lastView = viewNow;
         const hold = dt ? holds.find((h) => scene.frameCount >= h.from && scene.frameCount <= h.to) : undefined;
         if (hold) {
           const svg = toSvgString(scene);
@@ -377,6 +391,8 @@ export async function checkProject(project: Project, out: string): Promise<Recor
     );
     const small = [...labels.values()].filter((label) => label.px < MIN_PX).map(({ text, px }) => ({ text, px }));
     assert.deepEqual(small, [], `Labels never reach ${MIN_PX}px at 1280px stage ${where}: ${JSON.stringify(small)}`);
+    const film = pacing(v.trace, changed);
+    assert.deepEqual(pacingProblems(film), [], `The video drags ${where}`);
     const blank = v.trace.steps.flatMap((s) => undescribed(s.after).map((m) => `${s.step}: ${m}`));
     assert.deepEqual(blank, [], `Every drawing needs words for readers who cannot see it ${where}`);
     // A lettered explainer's bare runtime puts its faces in place first, as its page does.
@@ -413,6 +429,8 @@ export async function checkProject(project: Project, out: string): Promise<Recor
       completedStepLabels: staticLabels.size,
       // What a reader sees: the labels at 1280 px, and on a 390 px phone in each step's close-up.
       legibility: legibilityReport([...labels.values(), ...staticLabels.values()]),
+      // How the video plays: its length, its stillest stretch, and its share of rests.
+      pacing: film,
       // Cards in each step's resting picture: values said in a panel rather than on the drawing.
       cardsAtRest,
       // Each step's resting frame as text, so an author can read it without a browser.

@@ -88,7 +88,14 @@ try {
   const headers = await fetch(base + '/explainers/exgit.html', { method: 'HEAD' });
   assert.match(headers.headers.get('content-security-policy') ?? '', /connect-src 'none'/);
   assert.equal(headers.headers.get('x-frame-options'), null);
-
+  // Videos are made apart from the pages (npm run videos); check their delivery when there are any.
+  const video = await fetch(base + '/videos/exgit.mp4', { method: 'HEAD' });
+  const videos = video.status === 200;
+  if (videos) {
+    const range = await fetch(base + '/videos/exgit.mp4', { headers: { range: 'bytes=0-31' } });
+    assert.equal(range.status, 206);
+    assert.equal((await range.arrayBuffer()).byteLength, 32);
+  }
   await page.goto(base + '/explainers/embed-lab.html');
   await page.waitForFunction(() => document.querySelectorAll('iframe').length === 2);
   const mainFrame = page.mainFrame();

@@ -31,9 +31,9 @@ const DEMO = [
 const CLASSES =
   'classDiagram\n direction LR\n class Scene {\n construct()\n play()\n step()\n }\n class Mobject {\n points\n style\n }\n class Animation {\n interpolate()\n }\n class Sink {\n frame()\n }\n Scene --> Mobject : owns\n Scene --> Animation : plays\n Scene --> Sink : emits';
 const FLOW =
-  'graph LR\nAuthor[Native Scene] --> Clock[Fixed dt loop]\nClock --> Browser[Browser sink]\nClock --> SVG[SVG frames]\nClock --> Trace[State trace]\nSVG --> PNG[PNG stills]';
+  'graph LR\nAuthor[Native Scene] --> Clock[Fixed dt loop]\nClock --> Browser[Browser sink]\nClock --> SVG[SVG frames]\nClock --> Trace[State trace]\nSVG --> Video[Video encoder]';
 const PUBLISH =
-  'graph LR\nAuthor[Native Scene] --> Build[Build snapshots]\nBuild --> Page[Portable HTML]\nBuild --> JSON[Scene description]\nPage --> Reader[Reader-paced steps]';
+  'graph LR\nAuthor[Native Scene] --> Build[Build snapshots]\nBuild --> Page[Portable HTML]\nBuild --> Video[Captioned video]\nPage --> Reader[Reader-paced steps]';
 /** A tiny native scene, run twice inside this one: once played, once seeked. */
 const SEEK_T = 1;
 function demoScene(ink: string, accent: string) {
@@ -82,7 +82,7 @@ async function playedAndSeeked(ink: string, accent: string) {
 export default class LanternExplainer extends Scene {
   static meta = {
     id: 'lantern',
-    title: 'One scene program drives the page, the pictures and the trace',
+    title: 'One scene program drives the page, the video and the trace',
     sources: [
       'https://github.com/ivarvong/lantern',
       'https://github.com/ivarvong/lantern/blob/2c7bad5/src/scene.ts',
@@ -309,8 +309,8 @@ export default class LanternExplainer extends Scene {
         '$ rayner build scenes/explainers/lantern',
         '  lantern.html               steps, cases, poster, transcript',
         '  lantern.html.receipt.json  source, engine and snapshot hashes',
-        '$ rayner describe scenes/explainers/lantern',
-        '  every case and step as JSON',
+        '$ rayner render scenes/explainers/lantern',
+        '  video paced by its motion, captions as subtitles',
       ],
       { at: regionBox('bottom', { top: -0.85 }), fontSize: 0.24 },
     );

@@ -30,7 +30,7 @@ jobs:
       - run: npx playwright-core install --with-deps --only-shell chromium
       - run: |
           sudo apt-get update
-          sudo apt-get install -y fonts-lmodern
+          sudo apt-get install -y fonts-lmodern ffmpeg
           python3 -m venv out/lettering-venv
           out/lettering-venv/bin/pip install -r tools/lettering-requirements.txt
           bash tools/lettering-outline-fonts.sh
@@ -49,6 +49,7 @@ jobs:
       - run: npm run test:full      # every frame, fast-check properties at ten times the default cases, cache validation, golden trace, leaks
       # Product gates reuse this job and its Chromium installation; no scheduled lane.
       - run: npm run test:embeds    # real origin/source isolation, offline/no-JS reading and style fidelity
+      - run: npm run test:video     # real MP4/WebM, subtitle, chapter and HTTP delivery checks
       - run: EXPLAIN_BROWSER=1 EXPLAIN_LETTERING=1 npm run release:check  # retain the exact tested archive
       - uses: actions/upload-artifact@v4
         with:
@@ -173,4 +174,11 @@ jobs:
       - run: npx playwright-core install --with-deps --only-shell chromium
       - run: npm test
       - run: npm run test:embeds
-      - run: EXPLAIN_BROWSER=1 npm run pack:smoke  # installed starter preview on Linux and both Mac architectures
+      - name: Install FFmpeg on Linux
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install FFmpeg on macOS
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg
+      - run: npm run test:video
+      - run: EXPLAIN_BROWSER=1 EXPLAIN_VIDEO=1 npm run pack:smoke  # installed starter and video on Linux and both Mac architectures

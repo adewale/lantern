@@ -83,15 +83,20 @@ export interface RenderOptions {
   cull?: boolean;
   /** Pixel width of the output the cull is for (default 1280): it keeps anything showing 2 or more of its pixels. */
   width?: number;
+  /**
+   * The box of the world to show instead of the camera's, for an exporter's own framing (the
+   * video's push-in during a rest). The scene's camera is untouched; culling uses this box.
+   */
+  view?: Box;
 }
 
 /** One record per drawable leaf: { id, tag, attrs, text }. */
-export function renderElements(scene: Scene, { relative = true, cull = false, width = 1280 }: RenderOptions = {}): ElementRecord[] {
-  return perf.span('render.elements', () => renderElementsImpl(scene, relative, cull, width));
+export function renderElements(scene: Scene, { relative = true, cull = false, width = 1280, view }: RenderOptions = {}): ElementRecord[] {
+  return perf.span('render.elements', () => renderElementsImpl(scene, relative, cull, width, view));
 }
-function renderElementsImpl(scene: Scene, relative: boolean, cull: boolean, width: number): ElementRecord[] {
+function renderElementsImpl(scene: Scene, relative: boolean, cull: boolean, width: number, shown?: Box): ElementRecord[] {
   const out: ElementRecord[] = [];
-  const view = cull ? scene.frame.box()! : null;
+  const view = cull ? shown ?? scene.frame.box()! : null;
   // Culled: the mobject's box, grown by its stroke, leaves less than 2 output pixels
   // of the view in some direction. That drops everything the camera has left (the
   // empty visible box resvg aborts on) and, at most, a strip under 2 px at the
@@ -385,9 +390,11 @@ export interface SvgOptions {
   background?: string;
   /** Leave out what the camera cannot show; see RenderOptions. */
   cull?: boolean;
+  /** Show this box of the world instead of the camera's; see RenderOptions. */
+  view?: Box;
 }
 
-export function toSvgString(scene: Scene, { width = 1280, background = '#1a1a1a', cull = false }: SvgOptions = {}): string {
+export function toSvgString(scene: Scene, { width = 1280, background = '#1a1a1a', cull = false, view }: SvgOptions = {}): string {
   if (typeof width !== 'number' || !Number.isSafeInteger(width) || width < 1)
     throw new TypeError('svg width must be a positive safe integer');
   if (typeof background !== 'string' || !/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(background))
@@ -396,10 +403,10 @@ export function toSvgString(scene: Scene, { width = 1280, background = '#1a1a1a'
   background = '#' + (hex.length === 3 ? [...hex].map((ch) => ch + ch).join('') : hex);
   const height = Number((BigInt(width) * BigInt(FRAME.h) + BigInt(FRAME.w / 2)) / BigInt(FRAME.w));
   // Camera: the viewBox follows the frame; the background rect fills whatever it shows
-  const [vx, vy, vw, vh] = userRect(scene.frame.box()!);
+  const [vx, vy, vw, vh] = userRect(view ?? scene.frame.box()!);
   let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${vx} ${vy} ${vw} ${vh}">`;
   s += `<rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" fill="${background}"/>`;
-  const els = renderElements(scene, { cull, width });
+  const els = renderElements(scene, { cull, width, view });
   const end = perf.begin('render.serialize');
   const parts = [s];
   const clips = clipsOf(els);

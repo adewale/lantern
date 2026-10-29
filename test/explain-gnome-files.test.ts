@@ -9,7 +9,8 @@ import { fc, params } from './lib/pbt.ts';
 import { Scene, NullSink, loadFonts } from '../src/index.ts';
 import { Diagram } from '../explain/diagrams.ts';
 import type { DiagramSnapshot } from '../explain/index.ts';
-import { readSnapshots } from '../tools/lib/explain-project.ts';
+import { collectProject, readSnapshots } from '../tools/lib/explain-project.ts';
+import { footerLines } from '../tools/lib/explain-video.ts';
 import {
   COLOURS,
   GROUPS,
@@ -164,6 +165,16 @@ test('edits replay between any two journeys of the same actor', () => {
     fc.property(arb, arb, fc.constantFrom(...PARTICIPANTS), (a, b, p) => replays(of(a, p), of(b, p))),
     params(200),
   );
+});
+
+// ---------------------------------------------------------------- the scene, every case
+test('every authored case’s title and caption fits the video footer', async () => {
+  const project = await collectProject('scenes/explainers/gnome-files', { write: false });
+  assert.equal(project.variants.length, PARTICIPANTS.length);
+  for (const v of project.variants) {
+    // Step-state fidelity for every participant lives in explain-fidelity.test.ts.
+    await footerLines(v.trace, v.values);
+  }
 });
 
 // ---------------------------------------------------------------- journey words (explain/diagrams.ts)

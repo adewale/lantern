@@ -9,6 +9,9 @@ const mime: Record<string, string> = {
   '.json': 'application/json',
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.vtt': 'text/vtt',
 };
 /** Serve `root` on 127.0.0.1 (port 0 picks a free one); `/` redirects to `index`. */
 export async function serve(root: string, port: number, index: string): Promise<{ url: string; close(): void }> {

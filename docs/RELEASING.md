@@ -26,7 +26,7 @@ The command retains `out/release/rayner-<version>.tgz` and `manifest.json`, whic
 
 The compatibility job checks Node 24 on macOS as well as Ubuntu, including an installed starter preview with the normal authoring dependencies. A configured matrix is not evidence of a successful Mac run: require both platforms to pass before tagging.
 
-Video export is deferred to 0.3 in [PR #36](https://github.com/adewale/rayner/pull/36). It is absent from the 0.1 CLI and archive.
+This branch implements video export for 0.3 in [PR #36](https://github.com/adewale/rayner/pull/36). Before releasing it, also run `npm run videos` with FFmpeg installed.
 
 ## Enable publishing
 

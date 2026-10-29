@@ -67,7 +67,7 @@ runs retain glyph IDs, logical source clusters, advances, offsets, and outlines.
 The subset keeps the used code points plus layout/glyph dependencies. Replacement faces also retain a bounded numeric alphabet for animated values, whose intermediate strings depend on playback FPS. Each
 requested font's licence travels with its subset into the page's licence block.
 
-`check`, `build` and `shots` require a fresh snapshot and never
+`check`, `build`, `shots` and `render` require a fresh snapshot and never
 silently recapture. Changing a caption, imported scene code, the request, or the
 lettering builder, embedded fallback fonts or core shaping code invalidates the snapshot. Cached snapshots validate their run structure and payload checksum before drawing. Run `snapshots` to refresh it.
 `preview` refreshes during authoring. Unrecorded prose fails closed; seek and playback cannot start an unrecorded language case. Formatted numeric values and known simple-script prefix/suffix templates can replay through the existing glyph shaper with the requested subset, so counters work at arbitrary animation frame rates. Missing characters
@@ -79,7 +79,7 @@ size per face, and the distinct run count. A page carries the request and the
 runs its scene draws, which hold every outline it shows, and only the subsets its
 counters shape with at runtime; hashes and licences stay in the snapshot, and each
 distinct licence notice joins the page's licence block once. Runs that only the
-build draws, such as contact sheets’ numbered titles, are listed in the snapshot's `offPage` and left
+build draws, such as contact-sheet numbered titles and caption compatibility outlines, are listed in the snapshot's `offPage` and left
 out of the page. The snapshot file and the page store each distinct glyph outline
 once (`outlines`, with each glyph's `o` indexing it): a wrapped caption is
 measured line by line, so its glyphs recur in many runs. Subsets keep the layout

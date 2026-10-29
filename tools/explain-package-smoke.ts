@@ -263,10 +263,14 @@ try {
     process.env.EXPLAIN_BROWSER ? /^Follow a request: Cache miss · request: .+\n  changed: .*\breads\b/m : /^Case: B · one: .+\n  changed: nothing$/m,
   );
 
+  if (process.env.EXPLAIN_VIDEO) {
+    await run(bin, ['render', 'first', '--out', 'public/outside.mp4', '--fps', '4'], { cwd: folder });
+  }
   console.log(
     'Package gate passed: tested archive install with diagram and PNG authoring, installed TypeScript consumer, executable JS bin, external native author, settings, checks, see, build, describeExplainer and its REFERENCE example, notices, lettering on request, one compiled engine' +
       (process.env.EXPLAIN_LETTERING === '1' ? ', installed Arabic and maths capture' : '') +
       (process.env.EXPLAIN_BROWSER ? ', installed diagram capture' : '') +
+      (process.env.EXPLAIN_VIDEO ? ', installed video export' : '') +
       '.',
   );
 } finally {

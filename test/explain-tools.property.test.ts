@@ -12,6 +12,8 @@ import vm from 'node:vm';
 import { transformSync } from 'esbuild';
 import { Text, Group, Rectangle, loadFonts } from '../src/index.ts';
 import type { Mobject } from '../src/index.ts';
+import { filmPlan, pushAt, pacing, FILM } from '../explain/film.ts';
+import { wrapCaption, FOOTER_TEXT_WIDTH } from '../tools/lib/explain-video.ts';
 import { restingTextProblems, lintConstruct } from '../tools/lib/explain-check.ts';
 import { readSnapshots, writeSnapshots, snapshotFileName, scriptEscape, IMPORTER } from '../tools/lib/explain-project.ts';
 import { diagramKey } from '../integrations/agentic-mermaid/snapshot.ts';
@@ -19,6 +21,222 @@ import type { SnapshotStore } from '../explain/index.ts';
 import { fc, params } from './lib/pbt.ts';
 
 await loadFonts();
+
+// ---- wrapCaption -----------------------------------------------------------------
+
+const word = fc.oneof(
+  fc.stringMatching(/^[A-Za-z0-9,.;'"()-]{1,10}$/),
+  fc.string({ unit: 'grapheme', minLength: 1, maxLength: 8 }).map((w) => w.replace(/\s/g, '') || 'x'),
+);
+const gap = fc.constantFrom(' ', '  ', '\t', '\n', ' \n ', ' ');
+const caption = fc
+  .tuple(fc.array(fc.tuple(word, gap), { maxLength: 30 }), gap, gap)
+  .map(([parts, lead, tail]) => lead + parts.map(([w, g]) => w + g).join('') + tail);
+const width = fc.double({ min: 0.5, max: 30, noNaN: true });
+const size = fc.double({ min: 0.05, max: 1, noNaN: true });
+const words = (text: string) => text.trim().split(/[^\S   ]+/).filter(Boolean);
+/** Wrap, or the documented refusal (a word too wide, or more than four lines). */
+function wrapped(text: string, w: number, s: number): string[] | null {
+  try {
+    return wrapCaption(text, w, s);
+  } catch (error) {
+    assert.match((error as Error).message, /exceeds footer width|four footer lines/);
+    return null;
+  }
+}
+
+test('a guaranteed-fitting caption is accepted with every word intact, including no-break spaces', () => {
+  fc.assert(fc.property(caption, fc.array(word, { minLength: 2, maxLength: 3 }), fc.constantFrom(' ', ' ', ' '), size,
+    (text, group, nb, fontSize) => {
+      const expected = [...words(text), group.join(nb)];
+      // One unbroken rendered line fits this width; accepting it requires no line-breaking oracle.
+      const line = expected.join(' ');
+      const w = new Text(line, { fontSize }).width() + 1;
+      assert.deepEqual(wrapCaption(line, w, fontSize), [line]);
+      const wide = wrapCaption(line, w * 2, fontSize);
+      assert.deepEqual(wide, [line]);
+    }), params());
+});
+
+test('one to four guaranteed-fitting caption lines are accepted without splitting words', () => {
+  fc.assert(fc.property(fc.array(word, { minLength: 1, maxLength: 4 }), size, (ws, fontSize) => {
+    const w = Math.max(...ws.map((text) => new Text(text, { fontSize }).width()));
+    fc.pre(w > 0 && ws.slice(1).every((text, i) => new Text(ws[i] + ' ' + text, { fontSize }).width() > w));
+    assert.deepEqual(wrapCaption(ws.join(' '), w, fontSize), ws);
+  }), params());
+});
+
+test('wrapped caption lines each fit the width', () => {
+  fc.assert(
+    fc.property(caption, width, size, (text, w, s) => {
+      for (const line of wrapped(text, w, s) ?? []) assert.ok(new Text(line, { fontSize: s }).width() <= w, line);
+    }),
+    params(),
+  );
+});
+
+test('wrapped caption lines reassemble the words, in order, none lost or split', () => {
+  fc.assert(
+    fc.property(caption, width, size, (text, w, s) => {
+      const lines = wrapped(text, w, s);
+      if (lines) assert.deepEqual(lines.flatMap((l) => l.split(' ')), words(text));
+    }),
+    params(),
+  );
+});
+
+test('wrapping is greedy: no line could have taken the next line’s first word', () => {
+  fc.assert(
+    fc.property(caption, width, size, (text, w, s) => {
+      const lines = wrapped(text, w, s) ?? [];
+      for (let i = 0; i + 1 < lines.length; i++)
+        assert.ok(new Text(lines[i] + ' ' + lines[i + 1]!.split(' ')[0], { fontSize: s }).width() > w);
+    }),
+    params(),
+  );
+});
+
+test('a caption that needs more than four lines is refused', () => {
+  fc.assert(
+    fc.property(fc.array(word, { minLength: 5, maxLength: 12 }), size, (ws, s) => {
+      // Each line can hold only one of these words, so five or more need five lines.
+      const widest = Math.max(...ws.map((x) => new Text(x, { fontSize: s }).width()));
+      const narrowestPair = Math.min(...ws.slice(1).map((x, i) => new Text(ws[i] + ' ' + x, { fontSize: s }).width()));
+      fc.pre(widest > 0 && narrowestPair > widest);
+      assert.throws(() => wrapCaption(ws.join(' '), widest, s), /four footer lines/);
+    }),
+    params(),
+  );
+});
+
+test('a caption word wider than the line is refused', () => {
+  fc.assert(
+    fc.property(caption, word, size, (text, long, s) => {
+      const w = new Text(long, { fontSize: s }).width() * 0.99;
+      fc.pre(w > 0);
+      assert.throws(() => wrapCaption(long + ' ' + text, w, s), /exceeds footer width/);
+    }),
+    params(),
+  );
+});
+
+test('no-break spaces hold their words on one line', () => {
+  fc.assert(
+    fc.property(caption, fc.array(word, { minLength: 2, maxLength: 3 }), fc.constantFrom(' ', ' ', ' '), width, (text, group, nb, w) => {
+      const glued = group.join(nb);
+      const lines = wrapped(text + ' ' + glued + ' ' + text, w, 0.25);
+      if (lines) assert.ok(lines.some((l) => l.split(' ').includes(glued)), `${JSON.stringify(glued)} split across ${JSON.stringify(lines)}`);
+    }),
+    params(),
+  );
+});
+
+test('a wider line never needs more lines', () => {
+  fc.assert(
+    fc.property(caption, width, width, size, (text, a, b, s) => {
+      const [narrow, wide] = [wrapped(text, Math.min(a, b), s), wrapped(text, Math.max(a, b), s)];
+      if (narrow && wide) assert.ok(wide.length <= narrow.length);
+      if (narrow) assert.ok(wide, 'what fits a narrow line fits a wider one');
+    }),
+    params(),
+  );
+});
+
+test('scale probe: wrapCaption stops measuring once a caption needs a fifth line', () => {
+  const t = performance.now();
+  assert.throws(() => wrapCaption('word '.repeat(200_000), FOOTER_TEXT_WIDTH), /four footer lines/);
+  assert.equal(wrapCaption('word '.repeat(20), 1e6).length, 1);
+  // About 10 ms when it stops at the fifth line; measuring all 200,000 words takes seconds.
+  assert.ok(performance.now() - t < 2000, `${Math.round(performance.now() - t)} ms`);
+});
+
+// ---- the film's plan and pacing (explain/film.ts) ---------------------------------
+
+const planTrace = fc
+  .array(
+    fc.record({
+      motion: fc.integer({ min: 0, max: 120 }),
+      hold: fc.integer({ min: 0, max: 200 }),
+      title: fc.array(fc.constantFrom('a', 'step', 'title'), { maxLength: 14 }),
+    }),
+    { minLength: 1, maxLength: 8 },
+  )
+  .map((rows) => {
+    let at = 0;
+    const steps = rows.map((r, i) => {
+      const frame0 = at;
+      at += r.motion + r.hold;
+      return {
+        step: `s${i}`,
+        frame0,
+        frame1: at,
+        t0: frame0 / 30,
+        t1: at / 30,
+        ...(r.hold ? { hold: (frame0 + r.motion) / 30 } : {}),
+        meta: { title: r.title.join(' ') },
+        before: {},
+      };
+    });
+    return { fps: 30, frames: at, duration: at / 30, steps };
+  });
+
+test('the film plays each step\'s motion, then rests between the shortest and longest beat', () => {
+  fc.assert(
+    fc.property(planTrace, (trace) => {
+      const plan = filmPlan(trace);
+      plan.forEach((s, i) => {
+        const beat = s.beat / trace.fps;
+        if (i === plan.length - 1) assert.ok(beat >= FILM.lastBeat - 1 / trace.fps);
+        else assert.ok(beat >= FILM.minBeat - 1 / trace.fps && beat <= FILM.maxBeat + 1 / trace.fps, `${beat}`);
+        // Motion is the scene's own: up to the caption hold, never the hold itself.
+        assert.equal(s.moveEnd - s.frame0, Math.round(((trace.steps[i]!.hold ?? trace.steps[i]!.t1) * trace.fps)) - s.frame0);
+        assert.ok(s.t0 <= s.rest && s.rest <= s.t1);
+        if (i) assert.equal(s.t0, plan[i - 1]!.t1);
+      });
+    }),
+    params(300),
+  );
+});
+
+test('the push-in rises over a rest, eases out as the next step moves, and stays in [0, 1]', () => {
+  fc.assert(
+    fc.property(planTrace, (trace) => {
+      const plan = filmPlan(trace),
+        end = Math.round(plan.at(-1)!.t1 * trace.fps);
+      let last = 0;
+      for (let f = 0; f < end; f++) {
+        const p = pushAt(plan, trace.fps, f);
+        assert.ok(p >= 0 && p <= 1);
+        // Smooth: never more than a sixth of the way in one frame, so the motion check would not see a jump.
+        assert.ok(Math.abs(p - last) <= 1 / 6 + 1e-9 || f === 0, `${f}: ${last} -> ${p}`);
+        last = p;
+      }
+      // A first step that moves starts unpushed.
+      if (plan[0]!.moveEnd > plan[0]!.frame0) assert.equal(pushAt(plan, trace.fps, 0), 0);
+    }),
+    params(300),
+  );
+});
+
+test('pacing: rests count toward the rest share and longest still; pauses in motion toward the still share', () => {
+  fc.assert(
+    fc.property(planTrace, fc.integer(), (trace, seed) => {
+      const changed = Array.from({ length: trace.frames + 1 }, (_, i) => ((i * 2654435761 + seed) >>> 0) % 3 !== 0);
+      const p = pacing(trace, changed),
+        plan = filmPlan(trace);
+      const rests = plan.reduce((n, s) => n + s.beat, 0),
+        total = plan.reduce((n, s) => n + s.moveEnd - s.frame0 + s.beat, 0);
+      assert.ok(Math.abs(p.seconds - total / trace.fps) < 0.01);
+      // Rests count toward the rest share and the longest still, never toward the still share.
+      assert.ok(Math.abs(p.restShare - rests / total) < 1e-3);
+      const motion = total - rests,
+        still = plan.reduce((n, s) => n + Array.from({ length: s.moveEnd - s.frame0 }, (_, i) => !changed[s.frame0 + 1 + i]).filter(Boolean).length, 0);
+      assert.ok(Math.abs(p.stillShare - (motion ? still / motion : 0)) < 1e-3);
+      assert.ok(p.longestStill >= Math.max(...plan.map((s) => s.beat)) / trace.fps - 0.01);
+    }),
+    params(300),
+  );
+});
 
 // ---- restingTextProblems ---------------------------------------------------------
 
