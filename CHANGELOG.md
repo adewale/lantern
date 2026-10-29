@@ -3,6 +3,7 @@
 ## 0.1.1 (2026-10-29)
 
 - Put step captions next to their pictures. Hide Next view and its instructions when a step has only one view.
+- Refresh phone tour controls after a viewport resize while preserving the reader’s current zoom and step.
 - Keep the cache hit/miss result and the token-bucket rate comparison together at phone widths, with readable labels and model-derived outcomes.
 - Compress embedded diagram snapshots losslessly, enforce raw/gzip page budgets and record startup under 4× CPU slowdown.
 - Add a public EB Garamond example with real bold and italic, captured from the requested source fonts.

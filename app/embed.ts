@@ -202,11 +202,22 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     if (box.top < 0 || box.bottom > innerHeight) stage.scrollIntoView({block: 'nearest'});
   };
   let shownLayout: StepLayout | undefined,
+    caseLayouts: Map<string, StepLayout> | undefined,
+    tourSize = '',
     caseHasTour = false,
     // The close-ups of the step on show, where it opened first; `stop` is the one last visited.
     tour: Zoom[] = [],
     stop = 0;
+  function refreshTour() {
+    const w = stage.clientWidth, h = stage.clientHeight, key = `${w} ${h}`;
+    if (!caseLayouts || w <= 0 || h <= 0 || key === tourSize) return;
+    tourSize = key;
+    tour = closeUps(shownLayout, w, h, zoom.max);
+    stop = Math.min(stop, tour.length - 1);
+    caseHasTour = [...caseLayouts.values()].some(layout => closeUps(layout, w, h, zoom.max).length > 1);
+  }
   function drawOverview() {
+    refreshTour();
     const w = stage.clientWidth,
       h = stage.clientHeight,
       on = narrow() && zoom.k > 1;
@@ -356,25 +367,27 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   /**
    * The close-up a step opens on: on a narrow stage while close-ups are on, the zoom that
    * frames what the step changed (app/embed-closeup.ts); otherwise null, and the zoom keeps
-   * its place. The case's layouts are worked out once, the first time a narrow stage needs
-   * them. The step's other close-ups wait behind the overview, close-ups on or off.
+   * its place. Layouts are prepared once per case, including on desktop, so a later
+   * resize can refresh tour metadata without rerunning the scene or changing zoom.
    */
   async function framing(step: Trace['steps'][number]): Promise<Zoom | null> {
     const at = current,
       gen = generation;
     shownLayout = undefined;
+    caseLayouts = undefined;
+    tourSize = '';
     tour = [];
     stop = 0;
-    if (!at || !narrow()) return null;
+    if (!at) return null;
     at.layouts ??= stepLayouts(at.Scene);
     const layouts = await at.layouts;
     const layout = layouts.get(step.step);
     // A case or step shown while the layouts were worked out owns the overview now.
     if (gen !== generation || at !== current) return null;
-    caseHasTour = [...layouts.values()].some(l => closeUps(l, stage.clientWidth, stage.clientHeight, zoom.max).length > 1);
+    caseLayouts = layouts;
     shownLayout = layout;
-    tour = closeUps(layout, stage.clientWidth, stage.clientHeight, zoom.max);
-    return follow ? tour[0]! : null;
+    refreshTour();
+    return narrow() && follow ? tour[0]! : null;
   }
   function settle(step: Trace['steps'][number], target: Zoom | null) {
     if (target) zoom.to(target);

@@ -1059,8 +1059,10 @@ const ToggleTranscript = command('ToggleTranscript', always, async (m, r) => {
   m.transcript = !m.transcript;
 });
 const Resize = (width: number, height: number) =>
-  command(`Resize(${width}, ${height})`, always, async (_m, r) => {
+  command(`Resize(${width}, ${height})`, always, async (m, r) => {
     await r.page.setViewportSize({ width, height });
+    const size = await stageSize(r);
+    m.tourK = size.narrow ? (await tourOf(m, size.w, size.h))[0]!.k : null;
   });
 
 // Narrower than 200 CSS px a single unbreakable word (a step title) is wider than the column.
@@ -1184,6 +1186,19 @@ for (const [name, runs, maxCommands] of [['oauth-pkce', 10, 40]] as const)
       );
     },
   );
+
+test('phone tour metadata follows resizing while the current zoom and step stay put', options, async () => {
+  for (const width of [200, 632]) {
+    const {context, model, real} = await openPlayer('oauth-pkce', {values: [undefined], viewport: {width, height: 400}});
+    try {
+      const commands = width === 632
+        ? [Resize(200, 400), DoubleClick(0, 0), OverviewButton]
+        : [Resize(632, 400), Replay, Resize(200, 400), OverviewButton];
+      await fc.asyncModelRun(() => ({model, real}), commands);
+      assert.equal(current(model).step, 'secret');
+    } finally { await context.close(); }
+  }
+});
 
 test(
   'player: from ?attacker=yes&step=attack, choosing "no" falls back to the first step with a notice; Back restores the attack step',
