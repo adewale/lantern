@@ -200,6 +200,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     wholePicture = button(t.wholePicture, 'fit'),
     viewHelp = el('p', t.viewHelp, 'view-help');
   nextView.type = wholePicture.type = 'button';
+  viewHelp.id = 'view-help';
+  nextView.setAttribute('aria-describedby', viewHelp.id);
   viewCount.setAttribute('aria-live', 'polite');
   views.hidden = true;
   views.append(viewCount, nextView, wholePicture, overview, viewHelp);

@@ -90,6 +90,25 @@ test('step navigation is discoverable before the picture on short phones and des
   }
 });
 
+test('fullscreen leaves the early step control reachable when the player overflows', options, async () => {
+  const page = await browser.newPage({viewport: {width: 1280, height: 800}, reducedMotion: 'reduce'});
+  try {
+    await page.goto(embed + '/mr-cache.html?step=before&request=hit');
+    await page.waitForSelector('[data-ready=true]');
+    await page.getByRole('button', {name: 'Enlarge'}).click();
+    await page.waitForFunction(() => !!document.fullscreenElement);
+    const bounds = await page.evaluate(() => {
+      const player = document.querySelector<HTMLElement>('.player')!;
+      const early = document.querySelector('.step-transport')!.getBoundingClientRect();
+      return {top: early.top, bottom: early.bottom, viewport: innerHeight, overflow: player.scrollHeight > player.clientHeight};
+    });
+    assert.equal(bounds.overflow, true, 'the test exercises a scrollable fullscreen player');
+    assert.ok(bounds.top >= 0 && bounds.bottom <= bounds.viewport, 'early Next is reachable at scroll position zero');
+    await page.locator('.step-transport button[aria-label="Next step"]').click();
+    assert.equal(new URL(page.url()).searchParams.get('step'), 'diff');
+  } finally { await page.close(); }
+});
+
 test('phone captions stay beside the picture and a single view never advertises Next view', options, async () => {
   const page = await browser.newPage({viewport: {width: 390, height: 844}, reducedMotion: 'reduce'});
   try {
@@ -1904,6 +1923,8 @@ test('PKCE mobile views expose the derivation and the unsent verifier without ad
         await quiet(page);
         assert.equal(new URL(page.url()).searchParams.get('step'), step);
         assert.ok(await page.locator('.view-help').isVisible());
+        assert.equal(await page.getByRole('button', {name: 'Next view', exact: true}).getAttribute('aria-describedby'),
+          await page.locator('.view-help').getAttribute('id'), 'view navigation announces how it differs from step navigation');
         assert.match(await page.locator('.view-help').innerText(), /Next step continues the explanation/);
         const size = await page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
         const count = Number((await page.locator('.view-controls>span').innerText()).match(/of (\d+)/)![1]);

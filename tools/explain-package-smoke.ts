@@ -74,7 +74,7 @@ try {
       page.on('pageerror', (error) => errors.push(error.message));
       await page.goto(url);
       await page.waitForSelector('[data-ready=true]');
-      await page.getByRole('button', { name: 'Next step', exact: true }).click();
+      await page.locator('.step-transport').getByRole('button', { name: 'Next step', exact: true }).click();
       await page.waitForFunction(() => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === 'request');
       assert.match(await page.locator('.caption').innerText(), /without reading the database/);
       await page.goto(url + '/my-explainer.html?request=miss&step=request');
