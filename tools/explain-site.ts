@@ -9,7 +9,7 @@
 // Each explainer's describeExplainer JSON, as demos:build wrote it, is copied to <id>.json, with an
 // llms.txt at the site root (tools/lib/explain-site-describe.ts). Fails, before writing anything, if
 // demos:build has not run since a scene, its folder or the engine changed.
-import { copyFile, mkdir, readFile, writeFile, access, mkdtemp, cp, rename, rm, readdir } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, writeFile, access, mkdtemp, rename, rm, readdir } from 'node:fs/promises';
 import { sharePage, publishedPage, checkCards } from './lib/explain-share.ts';
 import type { ShareManifest } from './lib/explain-share.ts';
 import { join, resolve, dirname } from 'node:path';
@@ -20,6 +20,7 @@ import { ROOT } from './lib/explain-project.ts';
 import { writeDescriptions, checkBuilt } from './lib/explain-site-describe.ts';
 import { replaceHeaderBlocks } from './lib/site-headers.ts';
 import { buildInputs } from './lib/build-inputs.ts';
+import { checkBuiltOutput } from './lib/explain-built-files.ts';
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -39,13 +40,14 @@ const exists = (file: string) => access(file).then(() => true, () => false);
 // Refuse an explainer whose scene, scene folder or engine changed since demos:build built it;
 // check them all before copying any.
 for (const { id } of EXPLAINERS) await checkBuilt(join(built, id), join(ROOT, 'scenes/explainers', id));
+await checkBuiltOutput(built, EXPLAINERS.map(e => e.id));
 
 // Validate an isolated copy before changing any of the host's files.
 await mkdir(dirname(destination), { recursive: true });
 const staging = await mkdtemp(join(dirname(destination), '.rayner-export-'));
 const target = join(staging, path);
 try {
-  if (await exists(join(destination, path))) await cp(join(destination, path), target, { recursive: true });
+  // Stage only the new catalog; copying the old tree would keep removed lessons public.
   if (await exists(join(destination, 'llms.txt'))) await copyFile(join(destination, 'llms.txt'), join(staging, 'llms.txt'));
   await mkdir(target, { recursive: true });
   const blocks: string[] = [];

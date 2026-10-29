@@ -182,10 +182,10 @@
     "fullReceipt": "576f1424be3097ed8523bc4d574e55bee822420b32dbc1ea127225c9b28a8b58"
   },
   "pen-and-pencil": {
-    "html": "b26f8f77df27000caefb94266396931079842bf131c4c5df34d0a7a771053f93",
-    "bytes": 734405,
-    "headers": "0476be15ed038a12689edeb1a56a3e466cadc7f2780293235ff4870579ebe398",
-    "receipt": "999bb55611a1ac7d8d6e6e8d6b81c8f51b85c95541e8a432d1e0f5d6fa555909",
-    "fullReceipt": "7dc0972584d871fa15ec64c4cf35ebd79c317c7a2f2fa054ce8f62b4a620f7a3"
+    "html": "c3053574aeacdaf3f4822d59f4b9493321074244a76f68caf3b7b9bd131540b7",
+    "bytes": 734459,
+    "headers": "ae1fbb35f4e0e7e6a43a865b1bf3c853f8f194e8fc3ab400a2b103f71f39de10",
+    "receipt": "c2970a40bbebe0deed175a37fe7294d58d42b79053f3a098c3f1a5a706ffc314",
+    "fullReceipt": "a489ed9faf33b9cb7f440b85b27bb524b25e29a8bb5b9668b9d2a73762be5d7c"
   }
 }

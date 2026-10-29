@@ -313,8 +313,8 @@ export default class PenAndPencil extends Scene {
       line: `Objects, then words; no ink strays over ${fmt(chartStray)} from its mark.`,
       caption:
         which === 'first'
-          ? `Periods become planks, events become tags hung on strings, and the rail becomes a rope: ${objects} objects drawn on the laid-out marks, no ink more than ${fmt(chartStray)} units from them. Hershey letters come last, inside the boxes the layout gave; a second drawing changes every stroke but moves nothing.`
-          : `The second drawing used another seed, so every wobble, tremor and pencil end differs from the first, yet no ink lies more than ${fmt(chartStray)} units from the same laid-out marks. Only the hand changed; the planks, tags and words stayed put.`,
+          ? `Periods become planks, events become tags hung on strings, and the rail becomes a rope: ${objects} objects drawn on the laid-out marks, no ink more than ${fmt(chartStray)} units from them. Hershey letters come last, inside the boxes the layout gave; a second drawing changes the strokes and scenery without moving the chart’s laid-out boxes.`
+          : `The second drawing used another seed, so its strokes and scenery differ from the first. No chart ink lies more than ${fmt(chartStray)} units from the same laid-out marks; the chart’s planks, tags and words stayed in their boxes.`,
     });
     await drop(ownedShown);
     s.keep(tints, {

@@ -12,10 +12,13 @@ import { checkProject } from './lib/explain-check.ts';
 import { shareable } from './lib/explain-share.ts';
 import { useProjectLettering } from './lib/explain-lettering.ts';
 import { galleryTile } from './lib/explain-gallery.ts';
+import { builtOutputHashes } from './lib/explain-built-files.ts';
 import type { ShareManifest } from './lib/explain-share.ts';
 
 const directory = join(ROOT, 'out/explainers');
 await mkdir(directory, { recursive: true });
+// An interrupted rebuild must not leave an old output pin vouching for changed bytes.
+await rm(join(directory, 'output-hashes.json'), { force: true });
 const { check } = parseArgs({
   options: { check: { type: 'boolean' } },
 }).values;
@@ -148,4 +151,5 @@ await writeFile(
   join(directory, 'embed-lab.html'),
   `<!doctype html><html lang="en" data-theme="light"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two embeds on one host page</title><style>${tokens}body{max-width:1200px;margin:0 auto;padding:32px 16px 64px;background:#eceff3;color:var(--fg)}h1{font-size:1.5rem;font-weight:650;letter-spacing:-.015em;margin:0 0 8px;text-wrap:balance}a{color:var(--accent);text-underline-offset:.2em}main{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;align-items:start}section{min-width:0;background:#fff;border-radius:12px;box-shadow:0 1px 2px rgb(0 0 0/.06),0 0 0 1px rgb(0 0 0/.06);overflow:hidden}@media(max-width:850px){main{grid-template-columns:1fr}}</style><h1>Two embeds, each sized to its own content</h1><a href="index.html">All explainers</a><main><section id="git"></section><section id="cache"></section></main><script src="loader.js" data-src="exgit.html" data-target="git" data-title="Git object ids"></script><script src="loader.js" data-src="mr-cache.html?request=miss" data-target="cache" data-title="Cache request"></script></html>`,
 );
+await writeFile(join(directory, 'output-hashes.json'), JSON.stringify(await builtOutputHashes(directory, EXPLAINERS.map(e => e.id)), null, 2) + '\n');
 console.log(`Gallery: ${join(directory, 'index.html')}\n${JSON.stringify(totals)}`);
