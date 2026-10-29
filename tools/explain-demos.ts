@@ -11,6 +11,7 @@ import { contactSheet, stillPng, cardPng } from './lib/explain-shots.ts';
 import { checkProject } from './lib/explain-check.ts';
 import { shareable } from './lib/explain-share.ts';
 import { useProjectLettering } from './lib/explain-lettering.ts';
+import { galleryTile } from './lib/explain-gallery.ts';
 import type { ShareManifest } from './lib/explain-share.ts';
 
 const directory = join(ROOT, 'out/explainers');
@@ -40,7 +41,7 @@ for (const item of EXPLAINERS) {
   // `rayner describe` does.
   const described = await describeProject(project);
   await buildExplainer(project, join(directory, item.id + '.html'));
-  // The tile links to the default case, so it shows that case's picture.
+  // The poster uses a representative step of the default case; tile links start at step one.
   const variant = defaultVariant(project),
     step = variant.trace.steps.find((s) => s.step === item.step) ?? variant.trace.steps[0]!;
   await writeFile(join(directory, item.id + '.png'), await stillPng(variant.Scene, restingTime(step, variant.trace.fps), 960));
@@ -111,11 +112,7 @@ await writeFile(join(directory, 'catalog.json'), JSON.stringify({
 }, null, 2) + '\n');
 const tile = (item: (typeof EXPLAINERS)[number], lead = false) => {
   const data = evidence.find((s) => s.id === item.id)!;
-  const href = `${item.id}.html?step=${item.step}`;
-  // A title in another language than the gallery's says so, for screen readers and the link.
-  const lang = data.lang === 'en' ? '' : ` lang="${htmlEscape(data.lang)}"`,
-    hreflang = data.lang === 'en' ? '' : ` hreflang="${htmlEscape(data.lang)}"`;
-  return `<li${lead ? ' class="lead"' : ''}><a href="${htmlEscape(href)}"${hreflang}><img src="${item.id}.png" width="960" height="540" alt="" loading="${lead ? 'eager' : 'lazy'}"><span${lang}>${htmlEscape(data.title)}</span></a></li>`;
+  return galleryTile({ id: item.id, title: data.title, lang: data.lang }, lead);
 };
 const topics = EXPLAINERS.filter((e) => e.group === 'topic'),
   toolchain = EXPLAINERS.filter((e) => e.group === 'toolchain');
@@ -149,6 +146,6 @@ footer a{color:inherit}
 await writeFile(join(directory, 'index.html'), html);
 await writeFile(
   join(directory, 'embed-lab.html'),
-  `<!doctype html><html lang="en" data-theme="light"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two embeds on one host page</title><style>${tokens}body{max-width:1200px;margin:0 auto;padding:32px 16px 64px;background:#eceff3;color:var(--fg)}h1{font-size:1.5rem;font-weight:650;letter-spacing:-.015em;margin:0 0 8px;text-wrap:balance}a{color:var(--accent);text-underline-offset:.2em}main{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;align-items:start}section{min-width:0;background:#fff;border-radius:12px;box-shadow:0 1px 2px rgb(0 0 0/.06),0 0 0 1px rgb(0 0 0/.06);overflow:hidden}@media(max-width:850px){main{grid-template-columns:1fr}}</style><h1>Two embeds, each sized to its own content</h1><a href="index.html">All explainers</a><main><section id="git"></section><section id="cache"></section></main><script src="loader.js" data-src="exgit.html?step=change" data-target="git" data-title="Git object ids"></script><script src="loader.js" data-src="mr-cache.html?request=miss&step=request" data-target="cache" data-title="Cache request"></script></html>`,
+  `<!doctype html><html lang="en" data-theme="light"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two embeds on one host page</title><style>${tokens}body{max-width:1200px;margin:0 auto;padding:32px 16px 64px;background:#eceff3;color:var(--fg)}h1{font-size:1.5rem;font-weight:650;letter-spacing:-.015em;margin:0 0 8px;text-wrap:balance}a{color:var(--accent);text-underline-offset:.2em}main{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;align-items:start}section{min-width:0;background:#fff;border-radius:12px;box-shadow:0 1px 2px rgb(0 0 0/.06),0 0 0 1px rgb(0 0 0/.06);overflow:hidden}@media(max-width:850px){main{grid-template-columns:1fr}}</style><h1>Two embeds, each sized to its own content</h1><a href="index.html">All explainers</a><main><section id="git"></section><section id="cache"></section></main><script src="loader.js" data-src="exgit.html" data-target="git" data-title="Git object ids"></script><script src="loader.js" data-src="mr-cache.html?request=miss" data-target="cache" data-title="Cache request"></script></html>`,
 );
 console.log(`Gallery: ${join(directory, 'index.html')}\n${JSON.stringify(totals)}`);

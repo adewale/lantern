@@ -130,7 +130,7 @@ export default class QuotientFamilialExplainer extends Scene {
     await this.step('revenu', {
       title: `Un couple déclare ${rniTexte} de revenu imposable`,
       line: `${majuscule(ENFANTS[enfants]!)}, revenus 2024, hors réductions et crédits d’impôt.`,
-      caption: `Un couple marié ou pacsé, ${ENFANTS[enfants]}, déclare ${rniTexte} de revenu net imposable pour 2024. Le calcul reprend celui d’OpenFisca France 176.1.3, réduit aux étapes du schéma${deux} il s’arrête avant les réductions et crédits d’impôt, et ignore le seuil de 61 € sous lequel l’impôt n’est pas recouvré.`,
+      caption: `Un couple marié ou pacsé, ${ENFANTS[enfants]}, déclare ${rniTexte} de revenu net imposable pour 2024. Le calcul reprend celui d’OpenFisca France 176.1.3, réduit aux étapes du schéma${deux} il s’arrête avant les réductions et crédits d’impôt, et ignore le seuil de 61 € sous lequel l’impôt n’est pas recouvré. ${enfants ? 'Pour mesurer l’avantage des enfants, nous calculerons d’abord l’impôt avec les parts du foyer, puis sur deux parts seulement. Le plafond borne leur écart.' : 'Sans enfant, le foyer a déjà deux parts. Nous comparerons quand même son impôt au calcul de référence sur deux parts : l’avantage et le plafond seront nuls.'}`,
     });
     const flow = await s.show({ source: FLOW }, { box: TOP });
     /** A step's arithmetic, said under the node of the pipeline that does it. */

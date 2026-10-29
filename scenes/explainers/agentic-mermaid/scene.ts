@@ -15,7 +15,7 @@ const SIDE = REGIONS.side,
 export default class MermaidExplainer extends Scene {
   static meta = {
     id: 'agentic-mermaid',
-    title: 'Verify and repair an agent’s Mermaid edit',
+    title: 'How a Mermaid verifier checks and repairs flowchart branches',
     sources: [
       'https://github.com/adewale/agentic-mermaid',
       'https://www.npmjs.com/package/agentic-mermaid/v/0.4.1',
@@ -50,10 +50,11 @@ export default class MermaidExplainer extends Scene {
     };
 
     await this.step('source', {
-      title: 'The agent’s edit, parsed into a snapshot with ids',
-      line: 'Every node and edge carries the id the snapshot gives it.',
-      caption:
-        'The agent’s edit is Mermaid source, and each node and edge is labelled with the id the snapshot gives it. Agentic Mermaid parses, lays out, styles and verifies it at build time, and none of Agentic Mermaid ships to the reader.',
+      title: missing ? 'Two branches leave Cached with no yes or no' : 'Both branches out of Cached already have labels',
+      line: 'The snapshot gives each edge an id so the verifier can name it.',
+      caption: missing
+        ? 'An agent drew two routes out of Cached but did not say which means yes. Agentic Mermaid parses the Mermaid source into a snapshot with an id for each edge, then checks the branches. The next step shows the warnings before a typed edit adds the missing labels; the renderer runs at build time, not in the reader.'
+        : 'The agent’s edit already names both routes out of Cached, yes and no. Agentic Mermaid parses the source into a snapshot with an id for each edge and verifies it at build time. The next step confirms there are no warnings, so this case needs no repair.',
     });
     const d = await s.show({ source: first }, { box: 'main' });
     const source = await code(first.split('\n'));
@@ -177,7 +178,7 @@ export default class MermaidExplainer extends Scene {
       title: 'Source, edit and snapshot share one history',
       line: 'Three commits in order; the renderer stays pinned at 0.4.1.',
       caption:
-        'The git graph shows the Mermaid source, the typed edit and the checked snapshot as three commits in order. The renderer stays pinned at agentic-mermaid@0.4.1, so an upgrade is a deliberate change whose snapshot diff gets reviewed.',
+        'The git graph shows the original Mermaid source, the agent’s edit and its checked snapshot as three commits in order. The edit either adds labels through typed operations or already has them; both paths store what the verifier found. The renderer stays pinned at agentic-mermaid@0.4.1, so an upgrade is a deliberate change whose snapshot diff gets reviewed.',
     });
     await s.clear();
     const git = await s.show(

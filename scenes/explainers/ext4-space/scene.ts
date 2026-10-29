@@ -136,7 +136,7 @@ export default class Ext4SpaceExplainer extends Scene {
       // mke2fs.conf.in:5 blocksize = 4096; initialize.c:266 blocks per group = blocksize * 8.
       caption: `mke2fs.conf sets ${BLOCK}-byte blocks, so ${name} is ${count(l.blocks)} blocks in ${count(l.groups)} groups of ${count(
         BLOCKS_PER_GROUP,
-      )}. Before any file is written, ${count(l.metadata)} blocks, ${of(l.metadata)}, already hold metadata: the filesystem’s own structures. The pie counts blocks as dumpe2fs reports them after a real mkfs.ext4 run.`,
+      )}. Before any file is written, ${count(l.metadata)} blocks, ${of(l.metadata)}, already hold metadata: the filesystem’s own structures. The pie counts blocks as dumpe2fs reports them after a real mkfs.ext4 run. The question is how much of this new disk a regular user can write: metadata consumes blocks now, while the root and kernel reserves hold back some of the remaining free blocks.`,
     });
     await s.show({ source: whole(sp, 'free') }, { box: PIE });
     await s.card(

@@ -111,7 +111,7 @@ const fmt = (n: number, d = 3) => n.toFixed(d);
 export default class PenAndPencil extends Scene {
   static meta = {
     id: 'pen-and-pencil',
-    title: 'A layout engine places the chart; a simulated hand draws the plate',
+    title: 'How a hand-drawn timeline keeps its labels inside fixed boxes',
     sources: [
       'https://pele-art-diagrams.vercel.app/',
       'https://github.com/rheos/secondunit-videos/blob/main/references/pele-diagrams/README.md',
@@ -138,10 +138,10 @@ export default class PenAndPencil extends Scene {
     const drop = (...mobs: Mobject[]) => this.play(...mobs.map((m) => new FadeOut(m, { runTime: 0.3 })));
 
     await this.step('text', {
-      title: 'Each plate starts as a real chart written in Mermaid',
-      line: 'Four real charts on the page; here, a timeline of our own.',
+      title: 'Can a hand draw a diagram without moving its labels?',
+      line: 'A timeline names four periods but gives none of them positions.',
       caption:
-        'The page draws four real charts, a radar, a state diagram, a sankey and a timeline, each inside a made-up world. This explainer models its method on a timeline of its own, not the page’s code: four periods with one event each, and no positions anywhere in the text.',
+        'A simulated hand makes every stroke a little different. If it also decided where the words and boxes went, the timeline could lose its structure. This example starts with four named periods and no positions; the next steps lay out their boxes before drawing them by hand. The pele page uses the same separation for four charts, though this timeline is our own model, not its code.',
     });
     const source = await s.code(WORLD.split('\n'), { at: regionBox('top', { right: -0.4, bottom: 0.9 }), fontSize: 0.3, enter: false });
     const plates = await s.card(PLATES, { at: regionBox('top', { left: 0.2, bottom: 0.9 }), title: 'The page’s four plates', enter: false });
@@ -169,7 +169,6 @@ export default class PenAndPencil extends Scene {
     const width = await s.dimension([ex0, ey0], [ex1, ey0], `${fmt(ex1 - ex0, 2)} units`, { offset: -0.3 });
 
     // ---- Everything the plate needs, worked out from the marks before anything is drawn.
-    const marks = parts.reduce((n, p) => n + p.marks, 1);
     const outlineCount = parts.reduce((n, p) => n + p.outlines, 0),
       filledCount = parts.reduce((n, p) => n + p.filled, 1),
       wordCount = parts.reduce((n, p) => n + p.words, 0);
@@ -238,7 +237,7 @@ export default class PenAndPencil extends Scene {
     const letterCount = letters.reduce((n, l) => n + l.length, 0);
 
     await this.step('marks', {
-      title: `The layout is read back as ${marks} marks and traced in blue`,
+      title: 'Fixed layout marks guide the hand’s later strokes',
       line: 'Every later stroke is drawn from these marks alone.',
       caption: `Like the page, which flattens pele’s SVG into marks a script can select, the drawing reads the layout back: ${outlineCount} outlines, ${filledCount} filled shapes and ${wordCount} words. A blue construction pencil traces them first, and every later stroke is drawn from these marks alone.`,
     });

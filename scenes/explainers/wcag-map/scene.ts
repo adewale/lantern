@@ -143,7 +143,7 @@ export default class WcagMapExplainer extends Scene {
     await this.step('v20', {
       title: `WCAG 2.0 at level ${level} asks for ${t20.total} success criteria`,
       line: `Each number counts the criteria level ${level} asks for.`,
-      caption: `WCAG 2.0 (${PUBLISHED['2.0']}) sorts its success criteria under ${PRINCIPLES.length} principles and ${guidelinesIn('2.0').length} guidelines. Conforming at level ${level} means meeting ${asks[level]}. The number on each topic counts the criteria under it that level ${level} asks for: ${t20.total} in all.`,
+      caption: `WCAG 2.0 (${PUBLISHED['2.0']}) sorts its success criteria under ${PRINCIPLES.length} principles and ${guidelinesIn('2.0').length} guidelines. Conforming at level ${level} means meeting ${asks[level]}. The number on each topic counts the criteria under it that level ${level} asks for: ${t20.total} in all. We will add the criteria from 2.1 and 2.2, then subtract the one 2.2 removed, to see exactly what this conformance level asks for.`,
     });
     let topics = mapTopics('2.0', level);
     const d = await s.show({ source: source(topics) }, { box: 'full' });
