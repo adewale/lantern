@@ -202,6 +202,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     if (box.top < 0 || box.bottom > innerHeight) stage.scrollIntoView({block: 'nearest'});
   };
   let shownLayout: StepLayout | undefined,
+    caseHasTour = false,
     // The close-ups of the step on show, where it opened first; `stop` is the one last visited.
     tour: Zoom[] = [],
     stop = 0;
@@ -213,11 +214,13 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     player.classList.toggle('narrow', narrow());
     const multiple = tour.length > 1;
     overview.hidden = !on || !multiple;
-    views.hidden = !narrow() || !multiple;
-    viewCount.hidden = nextView.hidden = viewHelp.hidden = !multiple;
+    // Reserve the toolbar across a case that needs it, keeping Next and the
+    // transcript still. A single-view step exposes no toolbar or instructions.
+    views.hidden = !narrow() || !caseHasTour;
+    views.style.visibility = multiple ? '' : 'hidden';
     wholePicture.disabled = !on;
     nextView.disabled = tour.length < 2;
-    const count = on ? t.viewCount(stop + 1, Math.max(1, tour.length)) : t.wholePicture;
+    const count = on || !multiple ? t.viewCount(stop + 1, Math.max(1, tour.length)) : t.wholePicture;
     if (viewCount.textContent !== count) viewCount.textContent = count;
     if (!on) return;
     overview.disabled = tour.length < 2;
@@ -362,9 +365,11 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     stop = 0;
     if (!at || !narrow()) return null;
     at.layouts ??= stepLayouts(at.Scene);
-    const layout = (await at.layouts).get(step.step);
+    const layouts = await at.layouts;
+    const layout = layouts.get(step.step);
     // A case or step shown while the layouts were worked out owns the overview now.
     if (gen !== generation || at !== current) return null;
+    caseHasTour = [...layouts.values()].some(l => closeUps(l, stage.clientWidth, stage.clientHeight, zoom.max).length > 1);
     shownLayout = layout;
     tour = closeUps(layout, stage.clientWidth, stage.clientHeight, zoom.max);
     return follow ? tour[0]! : null;
