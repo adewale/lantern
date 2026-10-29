@@ -4,7 +4,7 @@ The evidence renders the final `font-metrics/scene.ts` and `layout-direction/sce
 
 The baseline is `712120634ac15db8276e9b463ca7883b98cbfcc5`, before these authoring options existed. Its archived tree receives only the two final scene inputs. Its own locked dependencies and real lettering pipeline generate the baseline snapshots. The baseline ignores the natural-lettering field and still fits EB Garamond into Agentic Mermaid's old widths. Logical `start`/`end` placement fails with `TypeError: REGIONS[r] is not iterable`; there is no fabricated before image for that unsupported surface. The new fixture's caption describes the requested behavior, which the baseline fails to provide.
 
-The current producer is `36ee0e7c37d08d12dc5635671bf9caec4b22d666`. The later test and evidence commits do not change the rendered source. [Base receipt](base/capture.json) and [current receipt](head/capture.json) record matching hashes for both scene inputs.
+The current producer is `36ee0e7c37d08d12dc5635671bf9caec4b22d666`. Later test, evidence and traffic-policy framing changes leave these two inputs and their rendering unchanged. [Base receipt](base/capture.json) and [current receipt](head/capture.json) record matching hashes for both scene inputs.
 
 | Fitted lettering at the baseline | Natural lettering |
 | --- | --- |
