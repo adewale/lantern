@@ -42,7 +42,7 @@ jobs:
       - run: npm run check          # tsc -b over every project (emits dist/); compile a TS consumer against it
       - run: FULL=1 node tools/ci-tests.ts --expose-gc --test test/*.test.ts # full properties, independent oracles and raster boundaries
       # Product gates reuse this job and its Chromium installation; no scheduled lane.
-      - run: npm run test:embeds    # real origin/source isolation, offline/no-JS reading and style fidelity
+      - run: node tools/ci-tests.ts "$(command -v npm)" run test:embeds # retain failures in check annotations too
       - run: EXPLAIN_BROWSER=1 EXPLAIN_LETTERING=1 npm run release:check  # retain the exact tested archive
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -183,7 +183,7 @@ jobs:
       - if: matrix.os == 'ubuntu-24.04' && matrix.node == '24.0.0'
         run: npm run check && node tools/ci-tests.ts --expose-gc --test test/*.test.ts
       - if: matrix.os == 'ubuntu-24.04' && matrix.node == '24.0.0'
-        run: npm run test:embeds
+        run: node tools/ci-tests.ts "$(command -v npm)" run test:embeds
       - run: EXPLAIN_BROWSER=1 npm run pack:smoke  # installed starter preview on Linux and both Mac architectures
       # Real browser diversity replaces four duplicate Chromium/property runs.
       - if: matrix.os == 'macos-26' && matrix.node == '24'
