@@ -17,15 +17,8 @@ test('cache and rate comparisons keep their readable evidence together in one ph
     const project = await collectProject(`scenes/explainers/${id}`, {write: false});
     assert.equal(project.variants.length, id === 'mr-cache' ? 2 : 3);
     for (const variant of project.variants) {
-      if (id === 'token-bucket') {
-        const expected429 = new Map([[1, [6, 7, 9]], [2, [6, 9]], [4, [6]]]);
-        let shown: string[] | undefined;
-        await new variant.Scene({async frame() {}, async stepEnd(scene, step) {
-          if (step.name === 'trace') shown = scene.familyMembers().map(m => m.key).filter((key): key is string => !!key?.startsWith('result:'));
-        }}, {skipUntil: Infinity}).run();
-        const expected = [...expected429].flatMap(([rate, rejected]) => Array.from({length: 10}, (_, i) => `result:${rate}:R${i + 1}:${rejected.includes(i + 1) ? 429 : 200}`));
-        assert.deepEqual(shown?.sort(), expected.sort(), 'all thirty pictured outcomes agree with the independently fixed schedule');
-      }
+      // Values/mark ordering live in view-readouts.test.ts; this owner checks
+      // the complete comparison's phone geometry and unchanged reading floor.
       const layout = (await stepLayouts(variant.Scene)).get(step)!;
       assert.ok(layout);
       for (const width of [288, 358]) {

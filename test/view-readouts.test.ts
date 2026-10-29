@@ -14,8 +14,8 @@ await loadFonts();
 Scene.captionWpm = Infinity;
 
 /** At the end of every step: the step, its traced state, and the text the readout shows (null before it exists). */
-async function readoutAtSteps(S: SceneClass): Promise<Array<{ step: string; state: SceneState; shown: string[] | null }>> {
-  const out: Array<{ step: string; state: SceneState; shown: string[] | null }> = [];
+async function readoutAtSteps(S: SceneClass): Promise<Array<{ step: string; state: SceneState; shown: string[] | null; marks: string[] }>> {
+  const out: Array<{ step: string; state: SceneState; shown: string[] | null; marks: string[] }> = [];
   class Sink extends TraceSink {
     override async stepEnd(scene: Scene, s: Step): Promise<void> {
       await super.stepEnd(scene, s);
@@ -31,7 +31,8 @@ async function readoutAtSteps(S: SceneClass): Promise<Array<{ step: string; stat
           }
         }
       }
-      out.push({ step: s.path, state: this.events.at(-1)!.state, shown: v ? v.shown : null });
+      out.push({ step: s.path, state: this.events.at(-1)!.state, shown: v ? v.shown : null,
+        marks: v ? v.family().map(m => m.key).filter((key): key is string => !!key?.startsWith('result:')) : [] });
     }
   }
   await new S(new Sink(), { skipUntil: Infinity }).run();
@@ -56,11 +57,21 @@ test('ring-buffer: the readout pairs head, tail and length with their traced val
 /** A number as the token-bucket readout writes it: whole numbers plain, anything else to one decimal. */
 const tenths = (x: number): string => (Number.isInteger(x) ? String(x) : x.toFixed(1));
 
-test('token-bucket: reader labels pair balances, refill times and request outcomes with the full traced values', async () => {
+test('token-bucket: reader labels and comparison marks pair balances, refill times and outcomes with the full traced values', async () => {
+  const expected429 = new Map([[1, [6, 7, 9]], [2, [6, 9]], [4, [6]]]);
   for (const rate of ['1', '2', '4']) {
     const rows = (await readoutAtSteps(withSettings(TokenBucketExplainer, { rate }))).filter((r) => r.shown);
     assert.equal(rows.length, 5, `rate ${rate}: the readout is on screen at all five steps`);
-    for (const { step, state, shown } of rows) {
+    assert.deepEqual(rows.map(r => r.step), ['balance', 'burst', 'refill', 'later', 'trace']);
+    for (const { step, state, shown, marks } of rows) {
+      if (step === 'trace') {
+        assert.deepEqual(shown, [...Array.from({length: 10}, (_, i) => String(i + 1)), '1 / s', '2 / s', '4 / s', 'Request', 'Circle: 200     Cross: 429']);
+        const responses = Array.from({length: 10}, (_, i) => expected429.get(Number(rate))!.includes(i + 1) ? 429 : 200);
+        assert.deepEqual(state.responses, responses, 'selected case has the independently fixed outcomes');
+        const expected = [...expected429].flatMap(([r, rejected]) => Array.from({length: 10}, (_, i) => `result:${r}:R${i + 1}:${rejected.includes(i + 1) ? 429 : 200}`));
+        assert.deepEqual(marks.sort(), expected.sort(), 'all thirty pictured outcomes agree with the independently fixed schedule');
+        continue;
+      }
       const { tokens, lastRefill, allowed, rejected } = state as { tokens: number; lastRefill: number; allowed: number; rejected: string[] };
       assert.deepEqual(
         shown,

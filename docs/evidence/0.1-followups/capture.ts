@@ -6,9 +6,11 @@ import {pathToFileURL} from 'node:url';
 import {mkdir, writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {gzipSync} from 'node:zlib';
+import {execFileSync} from 'node:child_process';
 import {launch} from '../../../tools/lib/browser.ts';
 const {values} = parseArgs({options: {source: {type: 'string'}, out: {type: 'string'}, ref: {type: 'string'}, face: {type: 'boolean'}}});
 const source = resolve(values.source ?? '.'), out = resolve(values.out!);
+const sourceRef = /^[0-9a-f]{40}$/.test(values.ref ?? '') ? values.ref : execFileSync('git', ['rev-parse', '--verify', `${values.ref}^{commit}`], {encoding: 'utf8'}).trim();
 const {collectProject} = await import(pathToFileURL(join(source, 'tools/lib/explain-project.ts')).href);
 const {buildExplainer} = await import(pathToFileURL(join(source, 'tools/lib/explain-build.ts')).href);
 const {serve} = await import(pathToFileURL(join(source, 'tools/lib/explain-serve.ts')).href);
@@ -41,5 +43,5 @@ try {
     rows.push({name, id, query, width, errors, pngSha256: createHash('sha256').update(png).digest('hex'), htmlSha256: createHash('sha256').update(html).digest('hex'), bytes: Buffer.byteLength(html), gzipBytes: gzipSync(html).byteLength, caption: await page.locator('.caption').innerText(), tour: await page.locator('.view-controls>span').textContent(), viewHelpVisible: await page.locator('.view-help').isVisible()});
     await context.close();
   }
-  await writeFile(join(out, 'capture.json'), JSON.stringify({sourceRef: values.ref, browser: browser.version(), rows}, null, 2) + '\n');
+  await writeFile(join(out, 'capture.json'), JSON.stringify({sourceRef, browser: browser.version(), rows}, null, 2) + '\n');
 } finally {await browser.close(); server.close();}

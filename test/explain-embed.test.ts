@@ -1912,7 +1912,9 @@ test('the PKCE attack opens with the stolen-code, guessed-verifier and rejection
       await quiet(page);
       const stageRect = await page.locator('.stage').boundingBox();
       const mapRect = await page.locator('.overview').boundingBox();
-      assert.ok(stageRect && mapRect && mapRect.y >= stageRect.y + stageRect.height, 'the map must not cover any part of the picture');
+      assert.ok(stageRect);
+      assert.equal(await page.locator('.overview').count(), 1);
+      assert.ok(await page.locator('.overview').isHidden() || (mapRect && mapRect.y >= stageRect.y + stageRect.height), 'an absent or below-picture map leaves every attack arrow unobscured');
       const seen = await page.locator('.stage svg:not(.leaving)').evaluate((svg, b) => {
         const matrix = (svg as SVGSVGElement).getScreenCTM()!;
         const stage = svg.parentElement!.getBoundingClientRect();
