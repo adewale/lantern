@@ -1,0 +1,62 @@
+{
+  "sourceRef": "987615e64258b71095013b3c97a2f5b33da9b826",
+  "browser": "154.0.8037.57",
+  "rows": [
+    {
+      "name": "cache",
+      "id": "mr-cache",
+      "query": "step=request&request=hit",
+      "width": 390,
+      "errors": [],
+      "pngSha256": "08ff964d55f5e81d0dcf0007dc4e9453fbd429d8df465994a8750e1a9e65a966",
+      "htmlSha256": "a17ee7418da64ce3f90bd389358c6187a9973cb6e01635cc0e3154e18f53804d",
+      "bytes": 641243,
+      "gzipBytes": 260428,
+      "caption": "The user is already in KV, so getUser returns without reading D1. The highlighted hit row goes straight from KV to Reply; the miss row shows the database work this request avoids.",
+      "tour": "View 1 of 1",
+      "viewHelpVisible": false
+    },
+    {
+      "name": "bucket",
+      "id": "token-bucket",
+      "query": "step=trace&rate=2",
+      "width": 390,
+      "errors": [],
+      "pngSha256": "5ef3cc7e066b7b2ea47cf4c0905932b5ea446d70dde7936fdbf8941a6aafac61",
+      "htmlSha256": "9a7df2edcc1b842b6647b43c352832b211d7a0a4ed0ebd3c87e6af3e2d2a3bcc",
+      "bytes": 750335,
+      "gzipBytes": 264368,
+      "caption": "Each row runs the same ten requests at its labelled refill rate; the outlined row is this case. Circles are accepted requests and crosses are 429s. At 4 tokens a second, R6 gets 429; at 1 token a second, R6, R7 and R9 do.",
+      "tour": "View 1 of 1",
+      "viewHelpVisible": false
+    },
+    {
+      "name": "oauth",
+      "id": "oauth-pkce",
+      "query": "step=attack&attacker=yes",
+      "width": 320,
+      "errors": [],
+      "pngSha256": "927ad20bfffc8702eae23f747ff370af95b7c9de327b1331aa2f50da200d156b",
+      "htmlSha256": "6910a42be2ad0ded8849e07cf4772da86a6438427d6de0e30d62e564d73272d5",
+      "bytes": 747994,
+      "gzipBytes": 277691,
+      "caption": "Another app on the device registered the client’s custom URI scheme, so the operating system handed it the redirect and its code (RFC 7636 §1). It has to guess the verifier; S256 of the guess does not match the bound challenge, so the server answers invalid_grant.",
+      "tour": "View 1 of 1",
+      "viewHelpVisible": false
+    },
+    {
+      "name": "font",
+      "id": "font-metrics",
+      "query": "step=cuts",
+      "width": 390,
+      "errors": [],
+      "pngSha256": "cd926c6297cbf9618413ee43caefa8b8a92ebae8f53a7a3299c8bf574a7d9790",
+      "htmlSha256": "e103f51a84f7a2e9439694ec523d86bf1ed87c04d7216140c6078c3fbea286eb",
+      "bytes": 821930,
+      "gzipBytes": 305902,
+      "caption": "Each row draws the same words at the same size. Regular, Bold and Italic are three source-font cuts, and the number at the right is that row’s advance. The page carries their captured paths, so it needs no font download or system-font match.",
+      "tour": "View 1 of 1",
+      "viewHelpVisible": false
+    }
+  ]
+}
