@@ -119,6 +119,15 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   if (said) summary.lang = picture.lang = said;
   described.append(el('summary', t.picture), picture);
   stage.setAttribute('aria-describedby', summary.id);
+  // The step transport is visible before the picture on short screens too. Keep the
+  // second set after the caption for readers who reach the end of the explanation.
+  const transport = el('div', undefined, 'step-transport');
+  transport.setAttribute('role', 'group');
+  transport.setAttribute('aria-label', t.controls);
+  const earlyPrev = button(t.previous, 'previous'),
+    earlyNext = button(t.nextLabel, 'next', { text: t.nextLabel, className: 'button primary' });
+  earlyNext.append(earlyNext.querySelector('svg')!);
+  transport.append(earlyPrev, earlyNext);
   const controls = el('nav', undefined, 'controls');
   controls.setAttribute('aria-label', t.controls);
   const prev = button(t.previous, 'previous'),
@@ -150,9 +159,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     ledeRuler = el('p', undefined, 'lede-ruler');
   ruler.setAttribute('aria-hidden', 'true');
   ledeRuler.setAttribute('aria-hidden', 'true');
-  // Keep the step's words beside its picture. Navigation follows the caption, so
-  // several rows of phone controls never separate a comparison from its explanation.
-  player.append(frame, lede, caption, described, controls, notice, summary, ruler, ledeRuler);
+  // Keep the caption beside its picture; the controls after it follow immediately,
+  // before disclosures and close-up controls can push the story's Next out of sight.
+  player.append(transport, frame, lede, caption, controls, described, notice, summary, ruler, ledeRuler);
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', t.stepList);
@@ -184,17 +193,19 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   overview.hidden = true;
   overview.append(map);
   frame.append(stage);
-  // Keep view navigation beside the picture and separate from the step controls.
+  // Keep view navigation separate from step navigation, after the story's Next.
   const views = el('div', undefined, 'view-controls'),
     viewCount = el('span'),
     nextView = el('button', t.nextView, 'button'),
     wholePicture = button(t.wholePicture, 'fit'),
     viewHelp = el('p', t.viewHelp, 'view-help');
   nextView.type = wholePicture.type = 'button';
+  viewHelp.id = 'view-help';
+  nextView.setAttribute('aria-describedby', viewHelp.id);
   viewCount.setAttribute('aria-live', 'polite');
   views.hidden = true;
   views.append(viewCount, nextView, wholePicture, overview, viewHelp);
-  controls.before(views);
+  controls.after(views);
   const narrow = () => stage.clientWidth > 0 && stage.clientWidth < NARROW_PX;
   const revealStage = () => {
     if (!narrow()) return;
@@ -313,8 +324,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       words = stepWords(step);
     caption.textContent = words.caption;
     fillLede(ledeTitle, ledeLine, selected, words);
-    prev.disabled = selected === 0;
-    next.disabled = selected === trace.steps.length - 1;
+    prev.disabled = earlyPrev.disabled = selected === 0;
+    next.disabled = earlyNext.disabled = selected === trace.steps.length - 1;
     for (const b of steps.querySelectorAll('button'))
       b.setAttribute('aria-current', b.dataset.step === step.step ? 'step' : 'false');
     stage.setAttribute('aria-label', t.stageLabel(title.textContent!, words.title, words.line));
@@ -634,8 +645,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     reserve();
     await show(selected, push);
   }
-  prev.onclick = () => void show(selected - 1);
-  next.onclick = () => void advance();
+  prev.onclick = earlyPrev.onclick = () => void show(selected - 1);
+  next.onclick = earlyNext.onclick = () => void advance();
   replay.onclick = () => void animate();
   enlarge.onclick = async () => {
     if (document.fullscreenElement) await document.exitFullscreen();
