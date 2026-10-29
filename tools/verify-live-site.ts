@@ -129,7 +129,12 @@ async function main() {
     try {
       for (let hop = 0; hop <= 5; hop++) {
         const response = await fetch(url, {redirect: 'manual', credentials: 'omit', signal});
-        if ([301, 302, 303, 307, 308].includes(response.status)) {
+        const redirected = [301, 302, 303, 307, 308].includes(response.status);
+        if (path === prefix + '/loader.js' && (redirected || response.status === 200)) {
+          const cache = response.headers.get('cache-control') ?? '';
+          assert.ok(cache && loaderRevalidates(cache), `${path}: stable loader URL must revalidate`);
+        }
+        if (redirected) {
           await response.body?.cancel();
           assert.ok(hop < 5 && response.headers.has('location'), `${path}: too many or invalid redirects`);
           url = new URL(response.headers.get('location')!, url);
@@ -166,10 +171,6 @@ async function main() {
         if (recipe) {
           for (const [name, value] of recipe) assert.equal(response.headers.get(name), value, `${path}: ${name} differs from recipe`);
           assert.equal(response.headers.get('x-frame-options'), recipe.get('x-frame-options') ?? null, `${path}: unexpected framing restriction`);
-        }
-        if (path === prefix + '/loader.js') {
-          const cache = response.headers.get('cache-control') ?? '';
-          assert.ok(cache && loaderRevalidates(cache), `${path}: stable loader URL must revalidate`);
         }
         return {path, sha256: expected.sha256, bytes, status: response.status, mediaType};
       }

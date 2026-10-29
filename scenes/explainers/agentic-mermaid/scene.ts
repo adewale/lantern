@@ -18,7 +18,7 @@ export default class MermaidExplainer extends Scene {
     title: 'How a Mermaid verifier checks and repairs flowchart branches',
     sources: [
       'https://github.com/adewale/agentic-mermaid',
-      'https://www.npmjs.com/package/agentic-mermaid/v/0.4.1',
+      'https://www.npmjs.com/package/agentic-mermaid/v/0.5.1',
     ],
   };
   static settings = [
@@ -176,9 +176,9 @@ export default class MermaidExplainer extends Scene {
 
     await this.step('history', {
       title: 'Source, edit and snapshot share one history',
-      line: 'Three commits in order; the renderer stays pinned at 0.4.1.',
+      line: 'Three commits in order; the renderer stays pinned at 0.5.1.',
       caption:
-        'The git graph shows the original Mermaid source, the agent’s edit and its checked snapshot as three commits in order. The edit either adds labels through typed operations or already has them; both paths store what the verifier found. The renderer stays pinned at agentic-mermaid@0.4.1, so an upgrade is a deliberate change whose snapshot diff gets reviewed.',
+        'The git graph shows the original Mermaid source, the agent’s edit and its checked snapshot as three commits in order. The edit either adds labels through typed operations or already has them; both paths store what the verifier found. The renderer stays pinned at agentic-mermaid@0.5.1, so an upgrade is a deliberate change whose snapshot diff gets reviewed.',
     });
     await s.clear();
     const git = await s.show(

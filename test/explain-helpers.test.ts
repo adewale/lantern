@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Scene, NullSink, traceScene, loadFonts } from '../src/index.ts';
 import { stage, bindSnapshots, findingsOf, edgePartOf, regionBox, REGIONS } from '../explain/index.ts';
-import { diagramKey, snapshotResolver, useDiagrams, diagramsOf } from '../integrations/agentic-mermaid/snapshot.ts';
+import { diagramKey, snapshotResolver, useDiagrams, diagramsOf, RENDERER } from '../integrations/agentic-mermaid/snapshot.ts';
 import type { DiagramSnapshot } from '../explain/index.ts';
 import { raised, rule, emphasis, soft, good, bad, dimOpacity } from '../explain/look.ts';
 import { PALETTES, palette } from '../explain/palettes.ts';
@@ -357,10 +357,26 @@ const multigraph = fc
 test('edgePartOf names the part of the k-th edge, with or without the verifier layout', () => {
   fc.assert(
     fc.property(multigraph, ({ s, edges, ids }) => {
-      edges.forEach((e, k) => assert.equal(edgePartOf(s, `${e.from}->${e.to}#${k}`), ids[k]));
+      const oldProducer = { ...s, renderer: 'agentic-mermaid@0.4.1' } as unknown as DiagramSnapshot;
+      edges.forEach((e, k) => {
+        assert.equal(edgePartOf(s, `${e.from}->${e.to}#${k}`), ids[k]);
+        assert.equal(edgePartOf(oldProducer, `${e.from}->${e.to}#${k}`), ids[k]);
+      });
     }),
     params(),
   );
+});
+
+test('current producer warnings name multigraph parts per pair regardless of global order or layout availability', () => {
+  fc.assert(fc.property(multigraph, ({ s, ids }) => {
+    const current = { ...s, renderer: RENDERER };
+    for (const id of ids) assert.equal(edgePartOf(current, id.slice('edge:'.length)), id);
+    const warnings = ids.map((id) => ({ code: 'DECISION_BRANCH_UNLABELED', edge: id.slice('edge:'.length) }));
+    assert.deepEqual(findingsOf({ ...current, findings: { ...current.findings, warnings } }).map((w) => w.part), ids);
+    assert.equal(edgePartOf(current, 'missing->edge#0'), undefined);
+    const authored = { ...current, parts: current.parts.map((p, i) => ({ ...p, id: `edge:authored_${i}` })) };
+    authored.parts.forEach((p) => assert.equal(edgePartOf(authored, p.id.slice('edge:'.length)), p.id));
+  }), params());
 });
 
 test('edgePartOf finds nothing for a name whose index or endpoints do not match an edge', () => {

@@ -33,7 +33,7 @@ async function fixture(exercise: (f: {root: string; report: string; files: Map<s
   let alteration: Alter = () => {};
   const server = createServer((request, response) => {
     const path = request.url!; requests.push(path);
-    const bytes = files.get(path === `${prefix}/sample` ? `${prefix}/sample.html` : path);
+    const bytes = files.get(path === `${prefix}/sample` ? `${prefix}/sample.html` : [`${prefix}/loader-hop.js`, `${prefix}/loader-v1.js`].includes(path) ? `${prefix}/loader.js` : path);
     if (path === '/_headers' || !bytes) { response.writeHead(404).end(); return; }
     response.setHeader('Content-Type', path.endsWith('.json') ? 'application/json; charset=utf-8' : path.endsWith('.png') ? 'image/png' : path.endsWith('.js') ? 'text/javascript; charset=utf-8' : 'text/html; charset=utf-8');
     response.setHeader('X-Content-Type-Options', 'nosniff');
@@ -100,6 +100,26 @@ test('loader revalidation parses numeric cache directives and refuses duplicate 
     for (const value of ['no-cache', 'no-store', 'public,max-age="000",must-revalidate,s-maxage="000",stale-while-revalidate=000']) {
       const result = await f.verify((path, response) => {if (path.endsWith('/loader.js')) response.setHeader('Cache-Control', value);});
       assert.equal(result.code, 0, result.stderr);
+    }
+  });
+});
+
+test('stable loader redirects must revalidate at every hop as well as their final response', async () => {
+  await fixture(async f => {
+    const serve = (first: string | undefined, middle?: string): Alter => (path, response) => {
+      if (path === `${prefix}/loader.js`) {
+        if (first) response.setHeader('Cache-Control', first); else response.removeHeader('Cache-Control');
+        response.writeHead(301, {location: `${prefix}/${middle ? 'loader-hop' : 'loader-v1'}.js`}).end(); return true;
+      }
+      if (path === `${prefix}/loader-hop.js`) {response.writeHead(307, {location: `${prefix}/loader-v1.js`, 'Cache-Control': middle!}).end(); return true;}
+      if (path === `${prefix}/loader-v1.js`) response.setHeader('Cache-Control', cache);
+    };
+    for (const alter of [serve('public,max-age=31536000,immutable'), serve(undefined), serve('no-cache', 'public,max-age=0,must-revalidate,s-maxage="003600"')]) {
+      const result = await f.verify(alter); assert.notEqual(result.code, 0); assert.match(result.stderr, /stable loader URL must revalidate/);
+      await assert.rejects(readFile(f.report), {code: 'ENOENT'});
+    }
+    for (const alter of [serve('no-cache'), serve(cache, 'no-store')]) {
+      const result = await f.verify(alter); assert.equal(result.code, 0, result.stderr);
     }
   });
 });

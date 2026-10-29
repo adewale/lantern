@@ -8,6 +8,23 @@ import { outlineText } from '../integrations/agentic-mermaid/text.ts';
 import { lostLabelWarnings } from '../tools/lib/explain-warnings.ts';
 import { Scene, NullSink, VMobject, toSvgString } from '../src/index.ts';
 import { PALETTES } from '../explain/palettes.ts';
+import { findingsOf } from '../integrations/agentic-mermaid/snapshot.ts';
+
+test('actual branch warnings map both raw per-pair ids to their captured edge parts', {
+  skip: !process.env.EXPLAIN_BROWSER && 'set EXPLAIN_BROWSER=1 for real capture',
+}, async () => {
+  const builder = await snapshotBuilder();
+  try {
+    const snapshot = await builder.diagram({
+      source: 'graph LR\nA{Cached} --> B[Reply]\nA --> C[Database]', style: 'blueprint',
+    });
+    const warnings = snapshot.findings.warnings.filter((w) => w.code === 'DECISION_BRANCH_UNLABELED');
+    assert.deepEqual(warnings.map((w) => w.edge), ['A->B#0', 'A->C#0']);
+    const mapped = findingsOf(snapshot).filter((w) => w.code === 'DECISION_BRANCH_UNLABELED');
+    assert.deepEqual(mapped.map((w) => w.part), ['edge:A->B#0', 'edge:A->C#0']);
+    assert.ok(mapped.every((w) => snapshot.parts.some((p) => p.id === w.part && p.kind === 'connector')));
+  } finally { await builder.close(); }
+});
 
 test('capture delegates the real backend without changing its output', () => {
   const spec = { source: 'graph LR\nA[Client] --> B[Server]', style: 'hand-drawn' };

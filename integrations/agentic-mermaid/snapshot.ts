@@ -78,7 +78,7 @@ export interface Findings {
   warnings: Finding[];
   /** Natural captures retain source findings; their geometry uses a separate host profile. */
   scope?: 'source';
-  /** The verifier's layout; its `edges` are every edge in source order, the order a warning's `edge` counts in. */
+  /** Source-order endpoints, also used to resolve legacy global warning indices. */
   layout?: { edges?: { from: string; to: string }[] };
 }
 export type SnapshotStore = Record<string, DiagramSnapshot>;
@@ -264,13 +264,18 @@ export interface Finding {
   [key: string]: unknown;
 }
 /**
- * The part id for an edge the verifier names by its position among all edges
- * ("A->C#1"). Snapshot parts number edges per endpoint pair ("edge:A->C#0").
- * The verifier's layout lists edges in global order, so the k-th layout edge
- * and the count of earlier edges with the same endpoints give the part exactly.
+ * Current verifier names are stable per endpoint pair (or authored edge ids),
+ * matching captured edge parts directly. The 0.4.1 producer and structural
+ * fixtures without producer metadata used a global edge index instead.
  */
-export function edgePartOf(snapshot: DiagramSnapshot, globalEdge: string): string | undefined {
-  const named = /^(.*)#(\d+)$/s.exec(globalEdge);
+export function edgePartOf(snapshot: DiagramSnapshot, edgeName: string): string | undefined {
+  const producer: unknown = snapshot.renderer;
+  if (producer === RENDERER) {
+    const id = `edge:${edgeName}`;
+    return snapshot.parts.some((p) => p.id === id && p.from && p.to && !p.owner) ? id : undefined;
+  }
+  if (producer !== undefined && producer !== 'agentic-mermaid@0.4.1') return undefined;
+  const named = /^(.*)#(\d+)$/s.exec(edgeName);
   if (!named) return undefined;
   const index = Number(named[2]);
   const order =
