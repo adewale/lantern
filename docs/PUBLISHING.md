@@ -66,3 +66,32 @@ How to put a built page on a website. The contracts (URL parameters, the resize 
    - Record the `artifactHash` from the receipt beside the URL you published. For the collection, compare the served bytes with `deployment.json`; valid CSP hashes alone do not prove that the latest reviewed page was deployed.
 
 The exported `catalog.json` contains the product copy, authoring links, titles, groups and counts used by the generated gallery. A host with its own page design can render that data into its template. Regenerate that page as part of the host build, so a new explainer or a changed requirement cannot leave a second catalog behind.
+
+## Export a video
+
+Video is optional; the page is the main output. A video of a scene has the same steps as the page, paced by their motion rather than by reading time, with a chapter per step, the captions as subtitles, and a transcript. It is silent.
+
+Video needs FFmpeg on `PATH`. Diagram capture and PNG authoring dependencies are included in the package install.
+
+```sh
+rayner render scene.ts --out cache.mp4                                # 1280 × 720
+rayner render scene.ts --out cache-miss.mp4 --case request=miss
+rayner render scene.ts --out cache.mp4 --all                         # one file per case
+rayner render scene.ts --out cache.webm --width 1920                 # VP9
+rayner filmstrip scene.ts --out cache.film.png --every 0.5           # review it first
+```
+
+Each step plays its motion under its title, then rests on its picture for up to 2 s while the view pushes in slightly; the caption is in the subtitles. Look at the filmstrip before publishing: it samples the film mid-motion, where collisions, clipping and stray marks show that a resting picture hides.
+
+Publish `cache.transcript.html` beside the video: it is the text alternative, with each step's title, line, caption and what its picture shows.
+
+`render` stops with an error, naming the step and case, when the picture changes during a caption hold: finish every change before the step's last `play()` ends. `check` fails a film that stands still too long ([pacing](REFERENCE.md#checks)).
+
+Check a file before publishing it:
+
+```sh
+ffprobe -v error -show_streams -show_chapters -of json cache.mp4
+ffmpeg -v error -i cache.mp4 -f null -
+```
+
+Expect one H.264 video stream at the size asked for, one `mov_text` subtitle stream, a data stream that carries the chapters, no audio, one chapter per step, a frame count equal to `frames` in `cache.mp4.receipt.json`, and a decode with no errors. `npm run demos:render` runs these checks for the demo collection. Video bytes can differ between FFmpeg and resvg builds; the receipt records both versions.

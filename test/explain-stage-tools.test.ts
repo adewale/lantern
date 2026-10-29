@@ -214,12 +214,13 @@ test('oneStrokeEach splits strokes, keeps a lettered fill whole, and splits sepa
   assert.ok(g.children[0] instanceof Group && (g.children[0] as Mobject).parent === g);
 });
 
-test("a step's line is in the page transcript, without an empty paragraph when absent", async () => {
+test("a step's line is in every text the page and video give: both transcripts and the no-script page", async () => {
   const { mkdtemp, writeFile } = await import('node:fs/promises');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');
   const { collectProject } = await import('../tools/lib/explain-project.ts');
   const { buildExplainer } = await import('../tools/lib/explain-build.ts');
+  const { videoTranscript } = await import('../tools/lib/explain-video.ts');
   const folder = await mkdtemp(join(tmpdir(), 'explain-line-'));
   await writeFile(
     join(folder, 'lined.ts'),
@@ -229,7 +230,9 @@ await this.step('two',{title:'Second',caption:'No line here.'});await s.enter(ne
   );
   const project = await collectProject(join(folder, 'lined.ts'));
   const { html } = await buildExplainer(project, join(folder, 'lined.html'));
+  const steps = project.variants[0]!.trace.steps;
   const transcript = html.slice(html.indexOf('<details class="transcript"'), html.indexOf('</details>', html.indexOf('<details class="transcript"')));
   assert.ok(transcript.includes('<p><strong>A line &amp; a &lt;tag&gt;.</strong></p><p>The first caption.</p>'), transcript);
   assert.ok(transcript.includes('>Second</a><p>No line here.</p>'), 'a step without a line has no empty paragraph');
+  assert.ok(videoTranscript('Lined', 'en', steps).includes('<h2>First</h2><p><strong>A line &amp; a &lt;tag&gt;.</strong></p><p>The first caption.</p>'));
 });

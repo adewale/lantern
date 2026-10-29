@@ -1,0 +1,249 @@
+{
+  "explainers": 27,
+  "cases": 142,
+  "results": [
+    {
+      "id": "seasons",
+      "cases": 4,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.186,
+      "minSeconds": 35.93,
+      "maxSeconds": 39.03
+    },
+    {
+      "id": "oauth-pkce",
+      "cases": 2,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.247,
+      "minSeconds": 19.8,
+      "maxSeconds": 22.8
+    },
+    {
+      "id": "exgit",
+      "cases": 2,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.162,
+      "minSeconds": 33.93,
+      "maxSeconds": 34.83
+    },
+    {
+      "id": "token-bucket",
+      "cases": 3,
+      "longestStill": 2.5,
+      "maxStillShare": 0.044,
+      "maxRestShare": 0.226,
+      "minSeconds": 22.6,
+      "maxSeconds": 22.6
+    },
+    {
+      "id": "mr-cache",
+      "cases": 2,
+      "longestStill": 2.5,
+      "maxStillShare": 0.019,
+      "maxRestShare": 0.205,
+      "minSeconds": 22.13,
+      "maxSeconds": 22.43
+    },
+    {
+      "id": "state-machine",
+      "cases": 2,
+      "longestStill": 2.5,
+      "maxStillShare": 0.059,
+      "maxRestShare": 0.234,
+      "minSeconds": 18.37,
+      "maxSeconds": 22.9
+    },
+    {
+      "id": "ring-buffer",
+      "cases": 2,
+      "longestStill": 2.87,
+      "maxStillShare": 0.037,
+      "maxRestShare": 0.17,
+      "minSeconds": 25.27,
+      "maxSeconds": 25.43
+    },
+    {
+      "id": "2password",
+      "cases": 2,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.221,
+      "minSeconds": 25.07,
+      "maxSeconds": 25.07
+    },
+    {
+      "id": "just-bash",
+      "cases": 2,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.157,
+      "minSeconds": 38.93,
+      "maxSeconds": 39.73
+    },
+    {
+      "id": "cert-renewal",
+      "cases": 8,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.268,
+      "minSeconds": 28.93,
+      "maxSeconds": 29.53
+    },
+    {
+      "id": "quotient-familial",
+      "cases": 12,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.178,
+      "minSeconds": 49.43,
+      "maxSeconds": 50.63
+    },
+    {
+      "id": "send-sync",
+      "cases": 9,
+      "longestStill": 2.5,
+      "maxStillShare": 0.079,
+      "maxRestShare": 0.193,
+      "minSeconds": 34.63,
+      "maxSeconds": 40.3
+    },
+    {
+      "id": "gtfs",
+      "cases": 6,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.288,
+      "minSeconds": 30.83,
+      "maxSeconds": 31.57
+    },
+    {
+      "id": "pg-page",
+      "cases": 6,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.266,
+      "minSeconds": 26.57,
+      "maxSeconds": 26.63
+    },
+    {
+      "id": "traffic-policy",
+      "cases": 6,
+      "longestStill": 2.5,
+      "maxStillShare": 0.009,
+      "maxRestShare": 0.301,
+      "minSeconds": 25.73,
+      "maxSeconds": 28.33
+    },
+    {
+      "id": "isdigit",
+      "cases": 15,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.334,
+      "minSeconds": 20.93,
+      "maxSeconds": 21.23
+    },
+    {
+      "id": "ical-recurrence",
+      "cases": 6,
+      "longestStill": 2.5,
+      "maxStillShare": 0.03,
+      "maxRestShare": 0.332,
+      "minSeconds": 18.8,
+      "maxSeconds": 19.8
+    },
+    {
+      "id": "ext4-space",
+      "cases": 9,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.244,
+      "minSeconds": 24.97,
+      "maxSeconds": 28.17
+    },
+    {
+      "id": "trust-proxy",
+      "cases": 12,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.228,
+      "minSeconds": 29.43,
+      "maxSeconds": 31.23
+    },
+    {
+      "id": "tailwind-gamut",
+      "cases": 6,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.181,
+      "minSeconds": 31.5,
+      "maxSeconds": 31.87
+    },
+    {
+      "id": "gnome-files",
+      "cases": 6,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.293,
+      "minSeconds": 16.93,
+      "maxSeconds": 17.77
+    },
+    {
+      "id": "wcag-map",
+      "cases": 12,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.369,
+      "minSeconds": 19.73,
+      "maxSeconds": 22.13
+    },
+    {
+      "id": "lantern",
+      "cases": 1,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.137,
+      "minSeconds": 44.6,
+      "maxSeconds": 44.6
+    },
+    {
+      "id": "fork",
+      "cases": 1,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.193,
+      "minSeconds": 34.8,
+      "maxSeconds": 34.8
+    },
+    {
+      "id": "agentic-mermaid",
+      "cases": 2,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.205,
+      "minSeconds": 25.1,
+      "maxSeconds": 28.93
+    },
+    {
+      "id": "glyph",
+      "cases": 2,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.135,
+      "minSeconds": 40.6,
+      "maxSeconds": 40.6
+    },
+    {
+      "id": "pen-and-pencil",
+      "cases": 2,
+      "longestStill": 2.5,
+      "maxStillShare": 0,
+      "maxRestShare": 0.164,
+      "minSeconds": 37.27,
+      "maxSeconds": 37.27
+    }
+  ]
+}

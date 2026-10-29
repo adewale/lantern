@@ -24,11 +24,13 @@ Commands:
   snapshots <scene>   Run every case, capture/verify diagrams and replay morph edits
   check <scene>       Every case: seek, motion, skipped trace, bare runtime, step
                       change, still after the caption hold, text collision,
-                      legibility, words for every drawing, catch lint
+                      legibility, words for every drawing, film pacing, catch lint
   review <scene>      Check every case, then review its served reader at phone
                       and desktop widths; optional <scene>.review.json claims
   build <scene>       HTML, receipt, header recipe, loader.js
+  render <scene>      Silent MP4 (or .webm), captions, chapters and receipt
   shots <scene>       Step contact sheet as SVG and PNG
+  filmstrip <scene>   Frames sampled across the video, mid-motion included, as PNG
   describe <scene>    Every case and step as JSON for agents: words, state, what
                       changed, the picture in words and drawn as text
   see <scene> [step]  One step's resting picture as text, with its caption, its
@@ -42,7 +44,11 @@ asks for that script with meta.lettering.
 Options:
   --out <path>        Artifact destination
   --refresh           Re-render snapshots instead of using the pinned cache
-  --case id=value     Show (shots, see) one case; repeat for multiple settings
+  --width <even>      Video width (default 1280)
+  --fps <1–120>       Video frame rate (default 30)
+  --all               Export videos for every declared case
+  --case id=value     Export (render) or show (shots, filmstrip, see) one case; repeat for multiple settings
+  --every <seconds>   Filmstrip: one frame every this many seconds of film (default 1)
   --port <integer>    Preview server port (default 5174)
   --watch             Preview: rebuild the page on save
   --claims <path>     Review: use this JSON file instead of <scene>.review.json
@@ -51,7 +57,7 @@ Options:
 Diagram capture is included. Install Chromium once:
   npx playwright-core install chromium
   or set CHROMIUM_EXECUTABLE_PATH
-PNG output is included.
+PNG output is included. Video export also needs FFmpeg on PATH.
 `;
 export async function main(args = process.argv.slice(2)): Promise<void> {
   if (!args.length || args.includes('--help') || args[0] === 'help') {
@@ -67,9 +73,14 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     allowPositionals: true,
     options: {
       out: { type: 'string' },
+      width: { type: 'string', default: '1280' },
+      fps: { type: 'string', default: '30' },
       case: { type: 'string', multiple: true },
       port: { type: 'string', default: '5174' },
       refresh: { type: 'boolean' },
+      footer: { type: 'boolean' },
+      every: { type: 'string', default: '1' },
+      all: { type: 'boolean' },
       watch: { type: 'boolean' },
       claims: { type: 'string' },
     },
@@ -117,8 +128,12 @@ export default class MyExplainer extends Scene {
     console.log(`Created ${join(dir, 'scene.ts')}`);
     return;
   }
-  if (!['preview', 'snapshots', 'check', 'review', 'build', 'shots', 'describe', 'see'].includes(command!))
+  if (!['preview', 'snapshots', 'check', 'review', 'build', 'render', 'shots', 'filmstrip', 'describe', 'see'].includes(command!))
     throw new Error(`Unknown command: ${command}`);
+  if (flags.footer)
+    throw new Error(
+      '--footer is gone: a video shows each step\'s title on the picture, and its full caption in the subtitles and transcript',
+    );
   const collection = { refresh: flags.refresh, captureLettering: command === 'snapshots' || command === 'preview' };
   const project = await collectProject(input, collection);
   const slug = sceneSlug(project);
@@ -166,9 +181,38 @@ export default class MyExplainer extends Scene {
     }
     return defaultVariant(project, values);
   }
+  if (command === 'render') {
+    const { renderVideo } = await import('./lib/explain-video.ts');
+    const variants = flags.all ? project.variants : [selectedVariant()];
+    const output = flags.out ?? resolve('out/videos', slug + '.mp4');
+    for (const v of variants) {
+      const suffix = Object.entries(v.values)
+        .map(([id, value]) => `${encodeURIComponent(id)}=${encodeURIComponent(value)}`)
+        .join('__');
+      const out = variants.length > 1 ? output.replace(/(\.[^.]+)$/, `-${suffix}$1`) : output;
+      console.log(
+        JSON.stringify(
+          await renderVideo(project, v, out, {
+            width: Number(flags.width),
+            fps: Number(flags.fps),
+          }),
+          null,
+          2,
+        ),
+      );
+    }
+    return;
+  }
   if (command === 'see') {
     const { see } = await import('./lib/explain-see.ts');
     console.log(await see(project, selectedVariant(), step, flags.out));
+    return;
+  }
+  if (command === 'filmstrip') {
+    const { filmstrip } = await import('./lib/explain-shots.ts');
+    console.log(
+      await filmstrip(project, flags.out ?? resolve('out/shots', slug + '.film.png'), selectedVariant(), Number(flags.every)),
+    );
     return;
   }
   if (command === 'shots') {

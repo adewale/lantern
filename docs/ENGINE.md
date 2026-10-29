@@ -40,6 +40,7 @@ Each for a reason:
 - **Runtime LaTeX.** A TeX engine and its fonts are a large runtime dependency, so neither a page nor a build runs one. Maths is typeset once, when its snapshot is captured, by `glyph`'s TeX subset on Latin Modern Math, and stored as outlines in `scene.lettering.json`, checked in like the diagram snapshots. `MathTex` draws those outlines ([Maths](REFERENCE.md#maths)).
 - **`transform` matrices on the model.** Every move rewrites points, because points are the truth that traces, the verifiers and matching transforms read. The string serializer already writes shape-relative path data plus a `translate`, so a pure move keeps its `d` without a matrix in the model.
 - **Raster images.** A bitmap has no points to morph, would be fetched or embedded as bytes, and would make frames depend on a decoder; everything on stage is paths and glyph outlines.
+- **Narration.** Videos are silent, with each step's title on the picture, the captions as subtitles and WebVTT, and a transcript. An author or authoring agent can add a voice track using an external speech tool and FFmpeg; the engine supplies the chapter timings and does not synthesize speech.
 
 Lantern listed matching morphs as out of scope at the fork base; [MATCHING.md](MATCHING.md) adds them.
 Which of these changes are offered to the original project: [upstream](UPSTREAM.md#offered-upstream-draft-pr-description).

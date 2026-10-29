@@ -1,7 +1,7 @@
 // Right-to-left and bidi lettering, and morphs by cluster. Bidi is resolved once, at build time,
-// with the shaping (tools/lettering.py); the page draws the stored runs. These tests hold
-// stored runs to the Unicode Bidi Algorithm's visual order, the page to the paragraph's direction,
-// and TransformMatchingText to pairing whole clusters.
+// with the shaping (tools/lettering.py); the page and the video draw the stored runs. These
+// tests hold the stored runs to the Unicode Bidi Algorithm's visual order, the footer and page
+// to the paragraph's direction, and TransformMatchingText to pairing whole clusters.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -10,11 +10,12 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { Scene, NullSink, Text, MathTex, TransformMatchingText, loadFonts } from '../src/index.ts';
-import { bindLettering, runKey, unpackLettering, rightToLeft } from '../src/lettering-outlines.ts';
+import { bindLettering, runKey, unpackLettering, withSceneLettering } from '../src/lettering-outlines.ts';
 import type { LetteringSnapshot } from '../src/lettering-outlines.ts';
 import { collectProject, defaultVariant, ROOT } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
 import { pageSnapshot } from '../tools/lib/lettering.ts';
+import { footerLines, footerParagraph, footerText, rightToLeft, FOOTER_TEXT_WIDTH } from '../tools/lib/explain-video.ts';
 
 const folder = await mkdtemp(join(tmpdir(), 'rayner-lettering-rtl-'));
 after(() => rm(folder, { recursive: true, force: true }));
@@ -28,7 +29,7 @@ const indexOf = (text: string, part: string) => [...text.slice(0, text.indexOf(p
 test('a right-to-left paragraph runs right to left; a Latin word and a number in it keep their own order', async () => {
   const s = await stored('hebrew');
   // Pure Hebrew: the first letter is rightmost, and clusters fall from right to left
-  const word = 'שָׁלוֹם עוֹלָם';
+  const word = 'שָׁלוֹם';
   const order = visual(s, word);
   assert.equal(order.at(-1), 0, 'the first letter is rightmost');
   assert.deepEqual(order, [...order].sort((a, b) => b - a), 'logical order runs right to left');
@@ -51,13 +52,36 @@ test('a right-to-left paragraph runs right to left; a Latin word and a number in
   assert.ok(w.indexOf(indexOf(ltr, '2.0')) < w.indexOf(indexOf(ltr, 'גרסה')));
 });
 
-test('paragraph direction follows its first strong character, including bidi marks', () => {
+test('a right-to-left title or caption: its footer lines lead with RLM and end at the right edge of the text column', async () => {
   assert.equal(rightToLeft('שלום world'), true);
   assert.equal(rightToLeft('2026: שלום'), true, 'digits and punctuation are not strong');
   assert.equal(rightToLeft('Rayner גרסה'), false);
   // Bidi marks are strong characters too (UAX #9 P2), as python-bidi and the page's CSS take them
   assert.equal(rightToLeft('\u200fRayner גרסה'), true);
   assert.equal(rightToLeft('\u200eשלום'), false);
+  await loadFonts();
+  assert.deepEqual(footerParagraph('Plain caption'), ['Plain caption'], 'a left-to-right paragraph is as it was');
+  const project = await collectProject(join(ROOT, 'test/lettering/hebrew'), { write: false });
+  const v = defaultVariant(project);
+  const lines = await withSceneLettering(v.Scene, () => footerLines(v.trace, v.values));
+  const caption = lines[1]![1]!;
+  assert.equal(caption.length, 2, 'the mixed caption wraps');
+  for (const line of caption) assert.ok(line.startsWith('\u200f'), JSON.stringify(line));
+  // The second line starts with a Latin word. Alone it would read left to right; led by RLM it
+  // keeps the paragraph's direction, so Rayner, its first word, is drawn at the right end
+  const second = caption[1]!;
+  assert.ok(second.startsWith('\u200fRayner'));
+  const order = visual(await stored('hebrew'), second);
+  const rayner = [...'Rayner'].map((_, i) => order.indexOf(1 + i));
+  assert.deepEqual(rayner, [...rayner].sort((a, b) => a - b), 'Rayner itself reads left to right');
+  assert.ok(Math.min(...rayner) > order.indexOf(indexOf(second, 'בשורה')), 'Rayner is right of the Hebrew that follows it');
+  // Drawn as the footer draws them, from the stored runs: right-aligned, and a Latin line left-aligned
+  await withSceneLettering(v.Scene, async () => {
+    const scene = new Scene(new NullSink());
+    const [rtl, ltr] = [footerText(scene, caption, '#000'), footerText(scene, ['Plain caption'], '#000')];
+    for (const t of rtl) assert.ok(Math.abs(t.box()![2] - FOOTER_TEXT_WIDTH / 2) < 1e-6, `${t.text} ends at the right edge`);
+    assert.ok(Math.abs(ltr[0]!.box()![0] + FOOTER_TEXT_WIDTH / 2) < 1e-6, 'a left-to-right line starts at the left edge');
+  });
 });
 
 test('a page that asks for a right-to-left script sets each caption\'s direction from its text; others are as they were', async () => {
@@ -83,6 +107,17 @@ test('TransformMatchingText pairs whole clusters: a conjunct that replaces a let
   assert.deepEqual(match('joining'), { matched: 3, morphed: 0, removed: 0, added: 1 });
 });
 
+test('footerLines shapes each right-to-left line as the footer draws it, so a missing run fails before the video starts', async () => {
+  const project = await collectProject(join(ROOT, 'test/lettering/hebrew'), { write: false });
+  const v = defaultVariant(project);
+  const s = await stored('hebrew');
+  // Without the RLM-led lines, only the footer itself would find out, after FFmpeg had started
+  const runs = Object.fromEntries(Object.entries(s.runs).filter(([key]) => !JSON.parse(key)[1].startsWith('\u200f')));
+  class Plain extends Scene {}
+  const Bound = bindLettering(Plain, { ...s, runs });
+  await assert.rejects(withSceneLettering(Bound, () => footerLines(v.trace, v.values)), /no run for "\u200f/);
+});
+
 test('cluster keys pair a match only when every Text in it has them; a Text built outside the scene pairs by character', async () => {
   const s = await stored('matching');
   await loadFonts();
@@ -105,7 +140,10 @@ test('a page leaves out the runs only the build draws, and every snapshot stores
   assert.ok(Array.isArray(raw.outlines), 'the committed snapshot is packed');
   assert.equal(new Set(raw.outlines.map((outline: unknown) => JSON.stringify(outline))).size, raw.outlines.length, 'the snapshot stores each distinct outline once');
   const s = await stored('hebrew');
-  // Contact sheets draw numbered titles outside the authored scene. Pages omit those runs.
+  // The footer's RLM-led lines and the wrapping that measured them are drawn only in the video
+  assert.ok(s.offPage!.some((key) => JSON.parse(key)[1].startsWith('\u200f')));
+  for (const key of Object.keys(s.runs)) if (JSON.parse(key)[1].startsWith('\u200f')) assert.ok(s.offPage!.includes(key), key);
+  // Page builds still omit numbered contact-sheet titles as well as footer-only runs.
   for (const text of ['1. ניקוד', '2. כיוונים']) assert.ok(s.offPage!.includes(runKey('sans', text)), text);
   // What the stage draws stays: the heading and the words on stage
   for (const text of ['שָׁלוֹם עוֹלָם', 'Rayner גרסה 2.0']) assert.ok(!s.offPage!.includes(runKey('sans', text)), text);
@@ -114,9 +152,9 @@ test('a page leaves out the runs only the build draws, and every snapshot stores
   assert.ok(Array.isArray(page.outlines));
   assert.equal(new Set(page.outlines.map((outline: unknown) => JSON.stringify(outline))).size, page.outlines.length, 'the page stores each distinct outline once');
   const unpacked = Buffer.byteLength(JSON.stringify(s.runs)), shipped = Buffer.byteLength(JSON.stringify(page));
-  // Removing footer-only runs changes the fixture’s redundancy, so compare actual packed
-  // page bytes with its unpacked runs without promising a fixture-specific compression ratio.
-  assert.ok(shipped < unpacked, `the page carries ${shipped} bytes of the ${unpacked} the runs take unpacked`);
+  // This video fixture retains the redundant footer runs, so its tenfold byte-budget
+  // regression remains applicable alongside the exact outline-uniqueness assertions.
+  assert.ok(shipped * 10 < unpacked, `the page carries ${shipped} bytes of the ${unpacked} the runs take unpacked`);
 });
 
 test('a packed snapshot unpacks only whole: every glyph names a stored outline and every outline is used', async () => {

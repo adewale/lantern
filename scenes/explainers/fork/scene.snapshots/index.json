@@ -2,9 +2,9 @@
   "version": 2,
   "importer": "725da4d8fc61bf77",
   "renderer": "agentic-mermaid@0.4.1",
-  "sourceHash": "fc3a9af2ddb07e89a0bd4e5683c92dd28aa7d5d9a7104d900dc09f75544c921d",
+  "sourceHash": "72024a0d0274d220ea3a8ef9c23d93069d0aba9662ff8e56a71b2b620e297528",
   "diagrams": {
     "[\"graph LR\\nDoc[JSON doc]\\nParser[Flowchart parser]\\nScene[Scene class]\\nClock[Fixed dt clock]\\nPlayer[Dev player]\\nWorker[Worker]\\nFrames[SVG frames]\\nDoc --> Scene\\nParser --> Scene\\nScene --> Clock\\nClock --> Player\\nClock --> Worker\\nClock --> Frames\",\"github-light\"]": "608006a71def6f23.json",
-    "[\"graph LR\\nSettings[Settings]\\nCapture[Agentic Mermaid]\\nSnaps[Snapshots]\\nScene[Scene class]\\nClock[Fixed dt clock]\\nPage[Embed page]\\nFrames[SVG frames]\\nImage[PNG stills]\\nCheck[rayner check]\\nSettings --> Scene\\nCapture --> Snaps\\nSnaps --> Scene\\nScene --> Clock\\nClock --> Page\\nClock --> Frames\\nFrames --> Image\\nClock --> Check\",\"github-light\"]": "100417c02e9126d7.json"
+    "[\"graph LR\\nSettings[Settings]\\nCapture[Agentic Mermaid]\\nSnaps[Snapshots]\\nScene[Scene class]\\nClock[Fixed dt clock]\\nPage[Embed page]\\nFrames[SVG frames]\\nVideo[Captioned video]\\nCheck[rayner check]\\nSettings --> Scene\\nCapture --> Snaps\\nSnaps --> Scene\\nScene --> Clock\\nClock --> Page\\nClock --> Frames\\nFrames --> Video\\nClock --> Check\",\"github-light\"]": "81888eded2625713.json"
   }
 }

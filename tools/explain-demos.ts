@@ -2,12 +2,15 @@
 import { mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
+import { spawn } from 'node:child_process';
 import { EXPLAINERS, PRODUCT } from '../scenes/explainers/catalog.ts';
 import { collectProject, defaultVariant, ROOT, baseReceipt, sceneInputs } from './lib/explain-project.ts';
 import { describeProject } from './lib/explain-site-describe.ts';
 import { restingTime, htmlEscape, pictureSummary, stepWords } from '../explain/trace.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
 import { contactSheet, stillPng, cardPng } from './lib/explain-shots.ts';
+import { exporterHash, probeVideo } from './lib/explain-video.ts';
+import { pacingProblems } from '../explain/film.ts';
 import { checkProject } from './lib/explain-check.ts';
 import { shareable } from './lib/explain-share.ts';
 import { useProjectLettering } from './lib/explain-lettering.ts';
@@ -15,10 +18,10 @@ import type { ShareManifest } from './lib/explain-share.ts';
 
 const directory = join(ROOT, 'out/explainers');
 await mkdir(directory, { recursive: true });
-const { check } = parseArgs({
-  options: { check: { type: 'boolean' } },
+const { check, render, force } = parseArgs({
+  options: { check: { type: 'boolean' }, render: { type: 'boolean' }, force: { type: 'boolean' } },
 }).values;
-// What the gallery and docs point at, with source and snapshot fingerprints.
+// What the gallery and docs point at, plus the hashes that say whether a video is current.
 const evidence: {
   id: string;
   title: string;
@@ -152,3 +155,85 @@ await writeFile(
   `<!doctype html><html lang="en" data-theme="light"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two embeds on one host page</title><style>${tokens}body{max-width:1200px;margin:0 auto;padding:32px 16px 64px;background:#eceff3;color:var(--fg)}h1{font-size:1.5rem;font-weight:650;letter-spacing:-.015em;margin:0 0 8px;text-wrap:balance}a{color:var(--accent);text-underline-offset:.2em}main{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;align-items:start}section{min-width:0;background:#fff;border-radius:12px;box-shadow:0 1px 2px rgb(0 0 0/.06),0 0 0 1px rgb(0 0 0/.06);overflow:hidden}@media(max-width:850px){main{grid-template-columns:1fr}}</style><h1>Two embeds, each sized to its own content</h1><a href="index.html">All explainers</a><main><section id="git"></section><section id="cache"></section></main><script src="loader.js" data-src="exgit.html?step=change" data-target="git" data-title="Git object ids"></script><script src="loader.js" data-src="mr-cache.html?request=miss&step=request" data-target="cache" data-title="Cache request"></script></html>`,
 );
 console.log(`Gallery: ${join(directory, 'index.html')}\n${JSON.stringify(totals)}`);
+
+if (render) {
+  const exporter = await exporterHash();
+  const queue = EXPLAINERS.filter((e) => e.video !== false);
+  let failed = false;
+  async function worker() {
+    while (queue.length) {
+      const item = queue.shift()!,
+        entry = evidence.find((s) => s.id === item.id)!,
+        out = join(ROOT, 'out/videos', item.id + '.mp4');
+      let fresh = false;
+      if (!force) {
+        try {
+          const receipt = JSON.parse(await readFile(out + '.receipt.json', 'utf8'));
+          fresh =
+            receipt.sourceHash === entry.sourceHash &&
+            receipt.exporterHash === exporter &&
+            receipt.engineHash === entry.engineHash &&
+            JSON.stringify(receipt.snapshotHashes) === JSON.stringify(entry.snapshotHashes) &&
+            receipt.fps === 30;
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        }
+      }
+      if (fresh) {
+        console.log(`Video unchanged: ${item.id}`);
+        continue;
+      }
+      const code = await new Promise<number | null>((resolve, reject) => {
+        const child = spawn(
+          process.execPath,
+          [
+            join(ROOT, 'tools/explain.ts'),
+            'render',
+            join(ROOT, 'scenes/explainers', item.id),
+            '--out',
+            out,
+          ],
+          { stdio: ['ignore', 'pipe', 'pipe'], env: process.env },
+        );
+        let log = '';
+        child.stdout.on('data', (c) => {
+          log += c.toString();
+        });
+        child.stderr.on('data', (c) => {
+          process.stderr.write(`[${item.id}] ${c}`);
+        });
+        child.on('error', reject);
+        child.on('close', (code) => {
+          if (code !== 0) console.error(log);
+          resolve(code);
+        });
+      });
+      if (code !== 0) {
+        failed = true;
+        continue;
+      }
+      const probe = probeVideo(out);
+      if (
+        probe.streams.some((s) => s.codec_type === 'audio') ||
+        !probe.streams.some((s) => s.codec_name === 'h264') ||
+        !probe.streams.some((s) => s.codec_name === 'mov_text')
+      )
+        throw new Error(`Invalid streams: ${item.id}`);
+      const receipt = JSON.parse(await readFile(out + '.receipt.json', 'utf8'));
+      const video = probe.streams.find((s) => s.codec_type === 'video')!;
+      if (
+        video.width !== 1280 ||
+        video.height !== 720 ||
+        Number(video.nb_frames) !== receipt.frames ||
+        probe.chapters.length !== receipt.chapters.length
+      )
+        throw new Error(`Video metadata mismatch: ${item.id}`);
+      // The film keeps its pacing budgets, as check found for every case.
+      const slow = pacingProblems(receipt.pacing);
+      if (slow.length) throw new Error(`${item.id}: ${slow.join('; ')}`);
+      console.log(`Video verified: ${item.id} · ${receipt.frames} frames · ${receipt.pacing.seconds} s`);
+    }
+  }
+  await Promise.all([worker(), worker(), worker()]);
+  if (failed) throw new Error('One or more videos failed; see output above');
+}

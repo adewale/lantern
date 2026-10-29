@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { toSvgString } from '../../src/index.ts';
-import type { Scene } from '../../src/index.ts';
+import type { Scene, Box } from '../../src/index.ts';
 import { FRAME } from '../../src/svg.ts';
 
 /** Package ranges, so a missing package's error gives the install line the help gives. */
@@ -15,7 +15,7 @@ export async function rasterize(svg: string) {
 }
 
 /** The horizontal band `height` units tall around y = 0, `width` pixels wide: a window onto the scene's SVG. */
-export function band(scene: Scene, width: number, height: number, background?: string): string {
+export function band(scene: Scene, width: number, height: number, background?: string, view?: Box): string {
   const full = Math.round((width * FRAME.h) / FRAME.w),
     px = Math.round((width * height) / FRAME.w);
   // cull: resvg 2.6.2 aborts on a fading element the camera has left outside the view.
@@ -23,7 +23,6 @@ export function band(scene: Scene, width: number, height: number, background?: s
   // inside a nested svg that clips its viewport when something there reaches past it, as the paper
   // does under a zoomed camera. The outer svg crops the band, which lies inside the inner viewport,
   // so letting the inner one overflow shows nothing more.
-  const stage = toSvgString(scene, { width, background, cull: true }).replace(/^<svg /, '<svg overflow="visible" ');
+  const stage = toSvgString(scene, { width, background, cull: true, view }).replace(/^<svg /, '<svg overflow="visible" ');
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${px}" viewBox="0 ${(full - px) / 2} ${width} ${px}">${stage}</svg>`;
 }
-

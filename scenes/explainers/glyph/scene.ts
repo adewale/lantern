@@ -30,7 +30,7 @@ const HEADING = 0.54;
 const STYLE = 'pen-and-ink';
 const NAME: Record<FontName, string> = { sans: 'Inter', mono: 'JetBrains Mono' };
 const pipeline = (font: string) =>
-  `graph TB\nFont[${font}] --> Shape[Shape text]\nShape --> Paths[Cubic paths]\nPaths --> SVG[SVG player]\nPaths --> PNG[PNG stills]`;
+  `graph TB\nFont[${font}] --> Shape[Shape text]\nShape --> Paths[Cubic paths]\nPaths --> SVG[SVG player]\nPaths --> Video[Video frames]`;
 
 type Pathed = Mobject & { subpaths: Float32Array[] };
 const segmentsOf = (g: Mobject) => (g as Pathed).subpaths.reduce((n, a) => n + (a.length - 2) / 6, 0);
@@ -279,9 +279,9 @@ export default class GlyphExplainer extends Scene {
 
     await this.step('pipeline', {
       title: 'Rayner converts every font segment to a cubic',
-      line: `${mine.quads + mine.lines + mine.cubics} font segments in, as many cubics out, for SVG and PNG.`,
+      line: `${mine.quads + mine.lines + mine.cubics} font segments in, as many cubics out, for SVG and video.`,
       caption:
-        'The font stores quadratic curves and lines, as the note beside it counts. Rayner raises every segment to a cubic, so one kind of path feeds both the SVG player and PNG stills.',
+        'The font stores quadratic curves and lines, as the note beside it counts. Rayner raises every segment to a cubic, so one kind of path feeds both the SVG player and offline video frames.',
     });
     await s.clear();
     const d = await s.show({ source: pipeline(NAME[font]) }, { box: regionBox('full', { right: -0.4 }) });
@@ -293,7 +293,7 @@ export default class GlyphExplainer extends Scene {
       ],
       { trail: true, color: hot },
     );
-    await d.walk([['Paths', 'PNG']], { trail: true, color: hot });
+    await d.walk([['Paths', 'Video']], { trail: true, color: hot });
     const raw = mine.cubics
       ? `${mine.quads} quads, ${mine.lines} lines, ${mine.cubics} cubics`
       : `${mine.quads} quads + ${mine.lines} lines`;
@@ -369,11 +369,11 @@ export default class GlyphExplainer extends Scene {
     const again = await s.show({ source: pipeline(NAME[font]) }, { box: regionBox('full', { right: -1.4 }) });
     const run = again.snapshot.parts
       .flatMap((p) => p.shapes)
-      .find((sh) => sh.textRun?.text === 'PNG stills')!.textRun!;
+      .find((sh) => sh.textRun?.text === 'Video frames')!.textRun!;
     const natural = new Text(run.text, { fontSize: run.size }).advance();
     const k = (run.width ?? natural) / natural;
-    await again.mark(['PNG'], { color: hot });
-    await again.note('PNG', `stretched ×${k.toFixed(3)}`, { side: 'below', color: hot });
+    await again.mark(['Video'], { color: hot });
+    await again.note('Video', `stretched ×${k.toFixed(3)}`, { side: 'below', color: hot });
     const plain = new Text(run.text, { fontSize: 0.9, color: soft }).moveTo([-0.6, 2.4], [-1, 0]);
     const fitted = new Text(run.text, { fontSize: 0.9, color: ink });
     fitted.stretch(k, 0);
