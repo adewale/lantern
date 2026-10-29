@@ -15,10 +15,10 @@ import { dimOpacity } from '../explain/look.ts';
 test('actual class marker carriers follow their explicit relationships through reveal, marking and dimming', {
   skip: !process.env.EXPLAIN_BROWSER && 'set EXPLAIN_BROWSER=1 for real capture',
 }, async () => {
-  const spec = { source: 'classDiagram\nclass Scene\nclass Mobject\nclass Animation\nclass Sink\nScene *-- Mobject : owns\nScene o-- Animation : plays\nScene --> Sink : emits' };
+  const spec = { source: 'classDiagram\nclass Scene\nclass Mobject\nclass Animation\nclass Sink\nclass Subclass\nScene *-- Mobject : owns\nScene o-- Animation : plays\nScene --> Sink : emits\nScene <|-- Subclass : inherits' };
   const raw = capture(spec);
   const carriers = raw.parts.map((p) => p.node).filter((n) => n.kind === 'connector' && n.relationship.kind === 'marker-carrier');
-  assert.equal(carriers.length, 3, 'the three declared relationships each carry an actual arrowhead');
+  assert.equal(carriers.length, 4, 'the four declared relationships each carry an actual arrowhead');
   const builder = await snapshotBuilder();
   try {
     const snapshot = await builder.diagram(spec);
@@ -42,7 +42,7 @@ test('actual class marker carriers follow their explicit relationships through r
       assert.ok(diagram.visible.has(carrier.id), 'revealing a relationship reveals its arrowhead');
     }
     await diagram.reveal('rest', { runTime: 0 });
-    assert.equal(diagram.describe().what, 'Class diagram: 4 classes, 3 relationships');
+    assert.equal(diagram.describe().what, 'Class diagram: 5 classes, 4 relationships');
     const labels = [...diagram.parts.values()].filter((p) => p.info.role === 'label')
       .flatMap((p) => p.mob.family().filter((m) => !m.children.length));
     assert.ok(labels.length > 0, 'the class diagram contains actual relationship labels');
@@ -64,8 +64,11 @@ test('actual class marker carriers follow their explicit relationships through r
         if (s.subpaths.length && s.style.stroke !== 'none' && (s.style.strokeWidth ?? 0) > 0 &&
             (s.style.strokeOpacity ?? 1) > 0 && (s.style.opacity ?? 1) > 0)
           assert.equal(leaves[i]!.style.stroke, '#ff0000', 'every painted arrowhead stroke follows the mark');
-        if (s.subpaths.length && s.style.fill !== 'none' && (s.style.fillOpacity ?? 1) > 0 && (s.style.opacity ?? 1) > 0)
-          assert.equal(leaves[i]!.style.fill, '#ff0000', 'every painted arrowhead fill follows the mark');
+        if (s.subpaths.length && s.style.fill !== 'none' && (s.style.fillOpacity ?? 1) > 0 && (s.style.opacity ?? 1) > 0) {
+          const hollow = carrier.kind === 'connector' && ['Animation', 'Subclass'].includes(carrier.endpoints.to!);
+          assert.equal(leaves[i]!.style.fill, hollow ? s.style.fill : '#ff0000',
+            hollow ? 'aggregation and inheritance stay hollow' : 'composition stays filled and takes the mark');
+        }
       });
     }
     assert.deepEqual(labels.map((m) => m.style), labelPaint, 'owned relationship labels keep their original paint');
