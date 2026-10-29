@@ -93,12 +93,14 @@ try {
     const name = file.slice(staging.length).replaceAll('\\', '/');
     manifestFiles.push({ path: name, sha256: createHash('sha256').update(await readFile(file)).digest('hex') });
   }
-  await writeFile(join(target, 'deployment.json'), JSON.stringify({ version: 1, build: await buildInputs(ROOT), files: manifestFiles.sort((a, b) => a.path.localeCompare(b.path)) }, null, 2) + '\n');
   const hostHeaders = await readFile(join(destination, '_headers'), 'utf8').catch(error => {
     if (error.code === 'ENOENT') return ''; throw error;
   });
   const ownedPaths = EXPLAINERS.flatMap(({ id }) => [`${path}/${id}`, `${path}/${id}.html`]);
-  await writeFile(join(staging, '_headers'), replaceHeaderBlocks(hostHeaders, headers, ownedPaths));
+  const publishedHeaders = replaceHeaderBlocks(hostHeaders, headers, ownedPaths);
+  await writeFile(join(staging, '_headers'), publishedHeaders);
+  manifestFiles.push({ path: '/_headers', sha256: createHash('sha256').update(publishedHeaders).digest('hex') });
+  await writeFile(join(target, 'deployment.json'), JSON.stringify({ version: 1, build: await buildInputs(ROOT), files: manifestFiles.sort((a, b) => a.path.localeCompare(b.path)) }, null, 2) + '\n');
 
   // Replace the dedicated subtree, then its host-level sidecars. Roll back on an I/O failure.
   await mkdir(dirname(join(destination, path)), { recursive: true });
