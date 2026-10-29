@@ -99,6 +99,7 @@ function python(request: object): unknown {
 export interface PreparedLettering {
   Scene: ExplainerClass;
   snapshot: LetteringSnapshot;
+  readonly measurementHash: string;
   finish(): Promise<void>;
 }
 export async function prepareLettering(Source: ExplainerClass, file: string, sourceHash: string, capture: boolean, persist = true): Promise<PreparedLettering | undefined> {
@@ -126,7 +127,11 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
     validateLetteringSnapshot(snapshot);
     if (!snapshot.payloadHash || snapshot.payloadHash !== hash(JSON.stringify({ ...snapshot, payloadHash: undefined })))
       throw new Error('Invalid lettering snapshot payload checksum; run rayner snapshots ' + file);
-    return { Scene: bindLettering(Source, snapshot), snapshot, async finish() {} };
+    return { Scene: bindLettering(Source, snapshot), snapshot,
+      get measurementHash() {
+        if (!snapshot.fontInputs) throw new Error('Missing natural diagram font identity; run rayner snapshots ' + file);
+        return hash(JSON.stringify([snapshot.builderHash, snapshot.shaper, snapshot.request, snapshot.fontInputs]));
+      }, async finish() {} };
   }
   const folder = resolve(process.env.RAYNER_LETTERING_FONTS ?? join(root, 'out/lettering-fonts'));
   await mkdir(folder, { recursive: true });
@@ -281,6 +286,14 @@ export async function prepareLettering(Source: ExplainerClass, file: string, sou
     },
   };
   return { Scene: bindLettering(Source, provider), snapshot,
+    get measurementHash() {
+      // Resolve every requested cut before fixing the identity. Later layout
+      // probes may draw a cut that the scene has not visited yet.
+      for (const family of ['sans', 'mono'] as const)
+        for (const cut of ['', ...requestCuts(request)] as LetteringCut[]) chainOf(family, cut);
+      snapshot.fontInputs = Object.fromEntries([...fonts].sort(([a], [b]) => a.localeCompare(b)).map(([name, face]) => [name, face.hash]));
+      return hash(JSON.stringify([snapshot.builderHash, snapshot.shaper, snapshot.request, snapshot.fontInputs]));
+    },
     async finish() {
       for (const [name, face] of fonts) if (face.license) {
         // A cut carries only what it drew: leave out a cut that drew nothing.

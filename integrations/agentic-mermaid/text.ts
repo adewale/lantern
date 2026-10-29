@@ -1,16 +1,28 @@
-import { Text } from '../../src/index.ts';
+import { Group, Text } from '../../src/index.ts';
+import { ItalicText } from '../../src/italic.ts';
 import type { VMobject, Style } from '../../src/index.ts';
 import { SVG_PX_PER_UNIT as PX } from './snapshot.ts';
 import type { SnapshotTextRun } from './snapshot.ts';
 
 let xHeightEm: number | undefined;
 
+/** SVG styles select a family; the scene's lettering request selects its actual face. */
+export function importedFont(family: string, monospace = false): 'sans' | 'mono' {
+  const first = family.split(',')[0]!.replace(/["']/g, '').trim();
+  return monospace || /mono|share\s*tech/i.test(first) ? 'mono' : 'sans';
+}
+
+export function importedText(run: Pick<SnapshotTextRun, 'text' | 'size' | 'font' | 'weight' | 'italic'>, color?: string): Text {
+  const Type = run.italic ? ItalicText : Text;
+  return new Type(run.text, { fontSize: run.size, font: run.font ?? 'sans', weight: run.weight ?? 'normal', color });
+}
+
 /** Shared lowering of a resolved SVG text run to embedded glyph outlines.
  * Store text/placement once, not thousands of repeated font control points. */
 export function outlineText(run: SnapshotTextRun, style: Style): VMobject[] {
-  const text = new Text(run.text, { fontSize: run.size, color: style.fill });
+  const text = run.natural ? importedText(run, style.fill) : new Text(run.text, { fontSize: run.size, color: style.fill });
   text.build(run.text, run.size, { ...style, strokeWidth: (style.strokeWidth ?? 0) * PX });
-  if (run.width != null && text.advance())
+  if (!run.natural && run.width != null && text.advance())
     text.stretch(run.width / text.advance(), 0, { aboutPoint: [0, 0] });
   const advance = text.advance();
   let offset = 0;
@@ -19,8 +31,14 @@ export function outlineText(run: SnapshotTextRun, style: Style): VMobject[] {
     case 'alphabetic':
       break;
     case 'middle':
-      xHeightEm ??= new Text('x', { fontSize: 1 }).children[0]!.height();
-      offset = (xHeightEm * run.size) / 2;
+      if (run.natural) {
+        const x = importedText({ ...run, text: 'x', size: 1 });
+        offset = (new Group(...x.children).height() * run.size) / 2;
+      }
+      else {
+        xHeightEm ??= new Text('x', { fontSize: 1 }).children[0]!.height();
+        offset = (xHeightEm * run.size) / 2;
+      }
       break;
     case 'central':
       offset = (text.run.ascent - text.run.descent) / 2;

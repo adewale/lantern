@@ -56,6 +56,26 @@ gh workflow run publish.yml --ref main -f operation=archive -f version=0.1.0
 
 The archive job checks out the existing version tag, downloads the original public npm tarball, checks its registry SHA-512, and runs the tagged installed-package gate with browser and lettering capture enabled. It preserves those exact bytes, a manifest and the validation log on GitHub Releases. This is explicitly retrospective validation, not original publication provenance. It does not call `npm publish`, move a tag, overwrite assets or alter an existing public release.
 
+The job reads every page of the release list, including drafts. It reuses a unique empty draft for the exact tag and refuses a public release, retained assets or duplicate matching records. A failed tag lookup is not permission to create another draft. If duplicate records exist, identify each record by its release ID and inspect its assets before deciding how to recover. Preserve the public release, original archive and tag; do not rerun archival to overwrite evidence or resolve an ambiguous record automatically.
+
 After publication, confirm the version and dist-tag with `npm view rayner version dist-tags dist.integrity --json`, and try installation in a fresh author project. For a candidate, ask an outside author to follow the tutorial before promoting it with `npm dist-tag add rayner@<version> latest`. The README's install section reads the same before and after publication, because npm shows the README from the archive and a published archive cannot change; do not add or remove an "unpublished" note around a release. A published name/version pair cannot be reused, so correct mistakes in a new version.
+
+## Verify the deployed collection
+
+A git tag, dated changelog or successful validation job records preparation. Confirm npm publication in the registry and website publication on the public origin separately. A workflow waiting for an environment review has not deployed. The owner must review and approve the configured environment; do not bypass that gate to finish a checklist.
+
+Keep the reviewed website export, including its `deployment.json` and private `_headers` file. After the website deployment completes, compare the public site with those local bytes:
+
+```sh
+node tools/verify-live-site.ts ../website/site \
+  --origin https://your.site --path /projects/rayner \
+  --clean-urls --out out/live-site-verification.json
+```
+
+Use `--clean-urls` when the host serves reader URLs with and without `.html`. The verifier first checks the local manifest, inventory and hashes, then requires the deployed manifest and every public file to match. It checks response media types for the exported HTML, JavaScript, JSON, PNG, CSS, SVG and text assets; unknown extensions require an explicit verifier update. Textual assets must not declare a charset incompatible with UTF-8. HTML, JavaScript and CSS must allow inline rendering. It checks the actual reader CSP, cache and framing headers against `_headers`, which is host configuration and need not be publicly served. The stable loader URL must revalidate, with no positive shared-cache freshness or stale-while-revalidate window. Requests have bounded concurrency, timeout and response lengths; redirects must stay on the supplied origin. `--concurrency` and `--timeout` adjust the defaults of eight requests and 30 seconds per request.
+
+Keep the receipt outside the reviewed site tree. After validating the arguments and checking that output boundary, the verifier removes an earlier receipt at the same path before checking local or deployed content. It writes a new receipt only after all checks pass. An invalid command line leaves existing files alone. Retain the receipt with the reviewed export and deployment commit. These transport checks supplement the browser, story and startup reports; they do not claim a physical iPhone test or prove reader interaction by themselves.
+
+[Issue #48](https://github.com/adewale/rayner/issues/48) remains open until the requested-face example is deployed and verified on the public catalog. A merged example, prepared export or approved publishing configuration alone does not meet that criterion.
 
 Sources: [npm publish](https://docs.npmjs.com/cli/v11/commands/npm-publish), [trusted publishing](https://docs.npmjs.com/trusted-publishers), [provenance](https://docs.npmjs.com/generating-provenance-statements).

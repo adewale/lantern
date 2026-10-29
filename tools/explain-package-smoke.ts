@@ -152,13 +152,20 @@ try {
   assert.ok(!JSON.parse(await readFile(join(folder, 'public/outside.html.receipt.json'), 'utf8')).lettering);
   // Outline snapshots captured against source .ts must remain fresh against
   // the archive's compiled .js engine, without Python or source font caches.
-  for (const name of ['arabic', 'devanagari', 'hebrew', 'math', 'matching', 'style', 'styles']) {
-    const source = join(ROOT, 'test/lettering', name);
+  const outlineFixtures = ['arabic', 'devanagari', 'hebrew', 'math', 'matching', 'style', 'styles'].map((name): [string, string] => [name, join(ROOT, 'test/lettering', name)]);
+  // Exercise new authoring options through the installed compiled CLI as well:
+  // capture-free natural font replay and explicit panel direction are distinct
+  // from the source-checkout properties.
+  const replayFixtures: [string, string][] = [...outlineFixtures,
+    ['font-metrics', join(ROOT, 'scenes/explainers/font-metrics')],
+    ['layout-direction', join(ROOT, 'scenes/explainers/layout-direction')],
+  ];
+  for (const [name, source] of replayFixtures) {
     const target = join(folder, 'outline-' + name);
     await mkdir(target);
     await copyFile(join(source, 'scene.ts'), join(target, 'scene.ts'));
-    await copyFile(join(source, 'scene.lettering.json'), join(target, 'scene.lettering.json'));
-    if (name === 'style') {
+    if (name !== 'layout-direction') await copyFile(join(source, 'scene.lettering.json'), join(target, 'scene.lettering.json'));
+    if (name === 'style' || name === 'font-metrics') {
       await cp(join(source, 'scene.snapshots'), join(target, 'scene.snapshots'), { recursive: true });
     }
     const env = {
@@ -169,7 +176,7 @@ try {
     await run(process.execPath, [cli, 'check', target, '--out', join(folder, 'checks', name)], { cwd: folder, env });
     await run(process.execPath, [cli, 'build', target, '--out', `public/outline-${name}.html`], { cwd: folder, env });
     const receipt = JSON.parse(await readFile(join(folder, `public/outline-${name}.html.receipt.json`), 'utf8'));
-    assert.ok(receipt.letteringHash, name);
+    assert.equal(!!receipt.letteringHash, name !== 'layout-direction', name);
   }
   if (process.env.EXPLAIN_LETTERING === '1') {
     const target = join(folder, 'captured-lettering');

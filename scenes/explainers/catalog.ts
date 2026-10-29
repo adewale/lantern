@@ -42,6 +42,7 @@ export const EXPLAINERS: readonly { id: string; step: string; group: 'topic' | '
   { id: 'fork', step: 'fork', group: 'toolchain' },
   { id: 'agentic-mermaid', step: 'repair', group: 'toolchain' },
   { id: 'glyph', step: 'measure', group: 'toolchain' },
-  { id: 'font-metrics', step: 'cuts', group: 'toolchain' },
+  { id: 'font-metrics', step: 'diagram', group: 'toolchain' },
+  { id: 'layout-direction', step: 'columns', group: 'toolchain' },
   { id: 'pen-and-pencil', step: 'plate', group: 'toolchain' },
 ];

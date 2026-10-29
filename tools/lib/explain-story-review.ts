@@ -77,7 +77,13 @@ export const STORY_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = {
   'font-metrics': [{step: 'cuts', opening: true, targets: [
     {text: 'Regular'}, {text: 'Bold'}, {text: 'Italic'}, {text: 'Ink on paper'},
     {text: '4.41'}, {text: '4.85'}, {text: '4.24'},
+  ]}, {step: 'diagram', opening: true, targets: [
+    {text: 'Ink'}, {text: 'Paper'}, {key: 'edge:A->B#0', paint: 'stroke'},
   ]}],
+  'layout-direction': [
+    {step: 'columns', opening: true, targets: [{text: 'RTL at start'}, {text: 'LTR at end'}, {text: 'Field'}, {text: '123'}]},
+    {step: 'updates', opening: true, targets: [{text: 'RTL at start'}, {text: 'LTR at end'}, {text: 'Field'}, {text: '456'}]},
+  ],
   'wcag-map': ['AA', 'AAA'].map((level) => ({
     step: 'focus-visible',
     settings: { level, guideline: '2.4' },

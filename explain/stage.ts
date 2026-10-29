@@ -14,8 +14,15 @@ import type { Region } from './look.ts';
 import { picture, shownNames } from './trace.ts';
 import { wordsOf, langOf } from './words.ts';
 import type { Seen } from './trace.ts';
+import { layoutDirection } from './layout-direction.ts';
+import type { LayoutDirection } from './layout-direction.ts';
+
+/** Physical regions retain their coordinates; start/end follow the stage's direction. */
+export type StageRegion = Region | 'start' | 'end';
 
 export interface StageOptions {
+  /** Default card field order and the meaning of logical start/end regions. */
+  direction?: LayoutDirection;
   /** An Agentic Mermaid style: the stage's palette and the style of every diagram that names none. */
   style?: string;
   /** Colours for a stage that differ from its style's (or that has no diagrams). */
@@ -63,6 +70,9 @@ const CONTENT: Box = [-7.55, -4.25, 7.55, 3.25];
 const HOME: Box = [-8, -4.5, 8, 4.5];
 
 export function stage(scene: Scene, options: StageOptions = {}) {
+  const direction = layoutDirection(options);
+  const physical = <T extends Vec | Box | StageRegion | undefined>(at: T): Exclude<T, 'start' | 'end'> | Region =>
+    (at === 'start' ? (direction === 'ltr' ? 'left' : 'right') : at === 'end' ? (direction === 'ltr' ? 'right' : 'left') : at) as Exclude<T, 'start' | 'end'> | Region;
   // Without a style or palette, the stage adopts the first diagram's palette.
   const adopt = !options.palette && !options.style;
   let colors = options.palette ?? palette(options.style ?? 'nord');
@@ -298,7 +308,7 @@ export function stage(scene: Scene, options: StageOptions = {}) {
     get bad() {
       return bad(colors);
     },
-    async show(spec: DiagramSpec, opts: ShowOptions = {}): Promise<Diagram> {
+    async show(spec: DiagramSpec, opts: Omit<ShowOptions, 'box'> & { box?: Box | StageRegion } = {}): Promise<Diagram> {
       if (options.style && spec.style == null) spec = { ...spec, style: options.style };
       const snapshot = await diagramsOf(scene).diagram(spec);
       if (adopt) {
@@ -315,18 +325,19 @@ export function stage(scene: Scene, options: StageOptions = {}) {
               m.children[1]!.setFill(emphasis(colors));
             } else m.setFill(soft(colors));
       }
-      const diagram = new Diagram(scene, spec, snapshot, opts);
+      const diagram = new Diagram(scene, spec, snapshot, { ...opts, box: physical(opts.box) });
       diagrams.add(diagram);
       await diagram.build(opts.build, opts.runTime);
       return diagram;
     },
     /** Labelled values; `card.set({...})` updates them, `card.mark(row)` lights one. */
-    async card(rows: readonly CardRow[], opts: CardOptions & Entry = {}): Promise<Card> {
-      return enterPanel(new Card(scene, colors, rows, opts), opts, { runTime: 0.35, shift: [0, -0.08] });
+    async card(rows: readonly CardRow[], opts: Omit<CardOptions, 'at'> & { at?: Vec | Box | StageRegion } & Entry = {}): Promise<Card> {
+      const cardDirection = layoutDirection(opts, direction);
+      return enterPanel(new Card(scene, colors, rows, { ...opts, at: physical(opts.at), direction: cardDirection }), opts, { runTime: 0.35, shift: [0, -0.08] });
     },
     /** Code on a panel; `code.focus(line)` keeps a bar on it. */
-    async code(lines: readonly string[], opts: CodeOptions & Entry = {}): Promise<CodeBlock> {
-      return enterPanel(new CodeBlock(scene, colors, lines, opts), opts, { runTime: 0.4 });
+    async code(lines: readonly string[], opts: Omit<CodeOptions, 'at'> & { at?: Vec | Box | StageRegion } & Entry = {}): Promise<CodeBlock> {
+      return enterPanel(new CodeBlock(scene, colors, lines, { ...opts, at: physical(opts.at) }), opts, { runTime: 0.4 });
     },
     /** A plain line of supporting text in the stage's secondary colour. */
     async note(text: string, { at = [0, -3.9], size = 0.24 }: { at?: Vec; size?: number } = {}): Promise<Text> {
@@ -389,7 +400,8 @@ export function stage(scene: Scene, options: StageOptions = {}) {
      * Move a kept object to a new place in one glide: a point, or a box or region it is scaled
      * down to fit (never up). The idea carried on from the step before, rather than cleared.
      */
-    async carry(m: Mobject, to: Vec | Box | Region, { runTime = 0.8 } = {}) {
+    async carry(m: Mobject, destination: Vec | Box | StageRegion, { runTime = 0.8 } = {}) {
+      const to = physical(destination);
       const target = m.copy();
       if (typeof to === 'string' || to.length === 4) {
         const b = typeof to === 'string' ? regionBox(to) : (to as Box);

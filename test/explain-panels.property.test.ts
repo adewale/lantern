@@ -336,11 +336,12 @@ const cardCase = fc.record({
   width: fc.option(fc.double({ min: 1.2, max: 12, noNaN: true }), { nil: undefined }),
   title: fc.option(fc.string({ maxLength: 20 }), { nil: undefined }),
   align: fc.constantFrom('center' as const, 'top' as const),
+  direction: fc.constantFrom(undefined, 'ltr' as const, 'rtl' as const),
   fontSize: fc.option(fc.double({ min: 0.08, max: 0.5, noNaN: true }), { nil: undefined }),
 });
 const card = (c: Of<typeof cardCase>) => {
   const s = scene();
-  const k = new Card(s, c.colors, c.rows, { ...(c.at ? { at: c.at } : {}), ...(c.width != null ? { width: c.width } : {}), ...(c.title ? { title: c.title } : {}), ...(c.fontSize != null ? { fontSize: c.fontSize } : {}), align: c.align });
+  const k = new Card(s, c.colors, c.rows, { ...(c.at ? { at: c.at } : {}), ...(c.width != null ? { width: c.width } : {}), ...(c.title ? { title: c.title } : {}), ...(c.fontSize != null ? { fontSize: c.fontSize } : {}), ...(c.direction ? { direction: c.direction } : {}), align: c.align });
   s.add(k);
   return { s, k };
 };
@@ -376,7 +377,7 @@ test('arbitrary card layouts are accepted or refused only for insufficient row w
   }), params());
 });
 
-/** Every label and value lies inside the panel horizontally, and no value extends right of its edge. */
+/** Every label and value lies inside the panel, and values retain their anchored padding. */
 function rowsInside(k: Card) {
   const p = k.panel.box()!;
   for (const t of [...k.labels.values(), ...k.values.values()]) {
@@ -386,7 +387,7 @@ function rowsInside(k: Card) {
   }
   for (const v of k.values.values()) {
     const b = v.box();
-    if (b) assert.ok(b[2] <= p[2] - 0.28 + EPS, `value "${v.text}" past its right edge`);
+    if (b) assert.ok(k.direction === 'ltr' ? b[2] <= p[2] - 0.28 + EPS : b[0] >= p[0] + 0.28 - EPS, `value "${v.text}" past its anchored edge`);
   }
 }
 

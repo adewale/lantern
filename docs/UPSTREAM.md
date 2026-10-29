@@ -115,21 +115,10 @@ Docs: `docs/ANIMATIONS.md`, `CAMERA.md`, `CODE.md`, `EMPHASIS.md`, `GRAPHING.md`
 
 ## Agentic Mermaid
 
-The build pins Agentic Mermaid 0.4.1 as an authoring dependency; pages never load it. `integrations/agentic-mermaid/build/capture.ts` is the only code that depends on its internals: it registers a capture backend through `registerBackend`, renders through `createMermaidRenderer`, and keeps each mark's `drawNode` output, which is not a documented API. Capture must equal `renderMermaidSVG` byte for byte.
+The build pins Agentic Mermaid 0.5.1 as an authoring dependency; pages never load it. Natural diagram lettering uses its public `TextMeasurementProfile` host hook. Rayner measures the scene's actual faces and cuts before layout, then checks that the imported SVG advances match the outlines it draws. Cached natural diagrams also record the source-font and measurement-policy identity.
 
-Agentic Mermaid is the same owner's project. These changes would remove the workarounds, and none is released as of 0.4.1:
+`integrations/agentic-mermaid/build/capture.ts` still registers a capture backend through `registerBackend`, renders through `createMermaidRenderer`, and keeps each mark's `drawNode` output. Capture must equal the upstream renderer byte for byte, using the same text-measurement profile. Agentic Mermaid 0.5.1 also exports `renderResolvedScene`; migrating the existing importer to that public parts API is separate work.
 
-1. A documented per-mark render returning stable `{ id, svg }` records, to replace the `drawNode` coupling.
-2. Stable ids for labels, ticks and legend entries across typed mutations, which morphs depend on.
-3. A `state` family report for state diagrams; 0.4.1 reports `flowchart` and the adapter corrects it.
-4. Keep a label declared after the node's first bare use. In 0.4.1 this renders B as "B":
+The earlier 0.4.1 limitations around late node labels and state-family reporting are fixed upstream. Rayner retains a diagnostic for a rendered bare node id that contradicts an explicit source label. The catalog and capture tests exercise the pinned renderer; changing it requires real snapshot recapture and review of all supported families.
 
-   ```mermaid
-   graph LR
-   A --> B
-   B[Database]
-   ```
-
-   Until then, declare labelled nodes before their first edge. The build warns when a captured node shows its bare id although the source gives it a label.
-
-The frontmatter spacing fix on Agentic Mermaid's main branch (commit `bfb2c807`) is also unreleased as of 0.4.1.
+For natural captures, `verifyMermaid` supplies source diagnostics and semantic endpoints only: its default-font layout cannot certify Rayner's custom geometry. Rayner checks the captured geometry, label collisions and visible routes, and reviews the actual served paint at both reader widths.

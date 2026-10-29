@@ -1,5 +1,5 @@
-import {Scene, Text, ItalicText, Group} from '../../../src/index.ts';
-import {stage} from '../../../explain/index.ts';
+import {Scene, Text, ItalicText, Group} from 'rayner';
+import {stage} from 'rayner/explain';
 
 const SAMPLE = 'Ink on paper';
 
@@ -42,5 +42,13 @@ export default class FontMetrics extends Scene {
     }
     this.state.advances = advances;
     await s.enter(rows, {describe: () => `The same words in three EB Garamond cuts: ${Object.entries(advances).map(([cut, advance]) => `${cut}, advance ${advance.toFixed(2)}`).join('; ')}. Each cut was requested and captured from its own source font.`});
+
+    await this.step('diagram', {
+      title: 'The diagram measures its font before layout',
+      line: 'Each label keeps EB Garamond’s natural proportions.',
+      caption: 'Ink points to Paper. Both labels use EB Garamond at its natural width, measured before the nodes are laid out.',
+    });
+    await s.clear();
+    await s.show({source: 'graph LR\nA["Ink"] --> B["Paper"]', lettering: 'natural'});
   }
 }

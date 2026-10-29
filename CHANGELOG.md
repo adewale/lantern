@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Add opt-in natural-width diagram lettering. Capture measures the requested font before layout, so labels retain their proportions; existing diagrams keep their fitted widths.
+- Add explicit LTR/RTL card fields and logical `start`/`end` stage regions. Text shaping, code, numbers and authored Mermaid flow keep their own order.
+- Demonstrate measured EB Garamond diagram labels and panel direction in the public gallery. Document the separate controls for text, panels and graph flow.
+- Verify a deployed collection against the reviewed export, including file hashes, reader response headers and loader caching. Refuse ambiguous release records before archiving an existing npm version.
+
 ## 0.1.1 (2026-10-29)
 
 - Put step captions next to their pictures. Hide Next view and its instructions when a step has only one view.

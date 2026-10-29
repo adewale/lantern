@@ -4,6 +4,8 @@ import type { Scene } from '../../src/scene.ts';
 export interface DiagramSpec {
   source: string;
   style?: string;
+  /** Lay out labels using the scene's requested faces, without horizontal stretching. */
+  lettering?: 'natural';
 }
 export interface Palette {
   paper: string;
@@ -19,6 +21,10 @@ export interface SnapshotTextRun {
   anchor?: string;
   baseline?: string;
   width?: number;
+  natural?: true;
+  font?: 'sans' | 'mono';
+  weight?: 'bold';
+  italic?: true;
   matrix: number[];
 }
 export interface SnapshotShape {
@@ -43,7 +49,7 @@ export interface SnapshotPart {
 /** Agentic Mermaid's SVG pixels per scene unit: imported geometry and text divide by this. */
 export const SVG_PX_PER_UNIT = 100;
 /** The renderer every snapshot was captured with; receipts and indexes name it from here. */
-export const RENDERER = 'agentic-mermaid@0.4.1';
+export const RENDERER = 'agentic-mermaid@0.5.1';
 /** The one remedy for a missing, stale or damaged snapshot. */
 const RECAPTURE = 'Run `rayner snapshots <scene> --refresh`.';
 export interface DiagramSnapshot {
@@ -58,6 +64,9 @@ export interface DiagramSnapshot {
   findings: Findings;
   /** An XY chart's series as written: the renderer's channels hold them normalised. */
   chart?: ChartData;
+  /** The actual host metrics and final-paint evidence used by a natural capture. */
+  textMeasurement?: { id: string; version: string };
+  layoutCertification?: unknown;
 }
 export interface ChartData {
   categories?: string[];
@@ -67,6 +76,8 @@ export interface ChartData {
 export interface Findings {
   ok: boolean;
   warnings: Finding[];
+  /** Natural captures retain source findings; their geometry uses a separate host profile. */
+  scope?: 'source';
   /** The verifier's layout; its `edges` are every edge in source order, the order a warning's `edge` counts in. */
   layout?: { edges?: { from: string; to: string }[] };
 }
@@ -78,10 +89,13 @@ export interface DiagramResolver {
 }
 const resolvers = new WeakMap<Scene, DiagramResolver>();
 export function diagramKey(spec: DiagramSpec): string {
+  if (spec.lettering !== undefined && spec.lettering !== 'natural')
+    throw new Error("Diagram lettering must be 'natural' when provided");
   return JSON.stringify([
     spec.source.replace(/\r\n/g, '\n').trim(),
     // An empty style renders as the default (capture passes no style), so it is the default's key.
     spec.style || 'default',
+    ...(spec.lettering ? [spec.lettering] : []),
   ]);
 }
 export function useDiagrams(scene: Scene, resolver: DiagramResolver): void {
@@ -117,6 +131,10 @@ function validateSnapshot(value: DiagramSnapshot): void {
     value.height <= 0 ||
     !value.spec ||
     typeof value.spec.source !== 'string' ||
+    (value.spec.lettering !== undefined && value.spec.lettering !== 'natural') ||
+    (value.spec.lettering === 'natural' &&
+      (!value.textMeasurement || typeof value.textMeasurement.id !== 'string' ||
+        !/^rayner:shaped:[a-f0-9]{64}$/.test(value.textMeasurement.id) || value.textMeasurement.version !== '1.0.0')) ||
     !value.palette ||
     ![value.palette.paper, value.palette.ink, value.palette.accent, value.palette.muted].every(color) ||
     !Array.isArray(value.parts)
@@ -127,6 +145,8 @@ function validateSnapshot(value: DiagramSnapshot): void {
   if (
     !findings ||
     typeof findings.ok !== 'boolean' ||
+    (findings.scope !== undefined && findings.scope !== 'source') ||
+    (value.spec.lettering === 'natural' && findings.scope !== 'source') ||
     !Array.isArray(findings.warnings) ||
     !findings.warnings.every((w) => w && text(w.code) && (w.edge == null || text(w.edge))) ||
     (findings.layout?.edges != null &&
@@ -201,6 +221,13 @@ function validateSnapshot(value: DiagramSnapshot): void {
           r.matrix.length !== 6 ||
           !r.matrix.every(point) ||
           (r.width != null && (!point(r.width) || r.width < 0)) ||
+          (r.natural !== undefined && r.natural !== true) ||
+          (r.font !== undefined && r.font !== 'sans' && r.font !== 'mono') ||
+          (r.weight !== undefined && r.weight !== 'bold') ||
+          (r.italic !== undefined && r.italic !== true) ||
+          (r.natural === true && value.spec.lettering !== 'natural') ||
+          (value.spec.lettering === 'natural' && r.natural !== true) ||
+          (r.natural === true && (!point(r.width) || r.width! < 0 || !['sans', 'mono'].includes(r.font!))) ||
           (r.baseline != null &&
             !['auto', 'alphabetic', 'middle', 'central', 'text-before-edge', 'text-after-edge'].includes(
               r.baseline,

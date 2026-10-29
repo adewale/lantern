@@ -38,6 +38,8 @@ export interface LetteringSnapshot {
   runs: Record<string, Run>;
   faces: Record<string, { hash: string; data: string; license: string }>;
   shaper: string;
+  /** Original font bytes used by natural diagram metrics; subsets alone cannot identify them. */
+  fontInputs?: Record<string, string>;
   payloadHash?: string;
   /**
    * Run keys only the build draws (contact-sheet titles and the

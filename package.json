@@ -91,7 +91,7 @@
   "dependencies": {
     "esbuild": "0.25.12",
     "typescript": "5.9.3",
-    "agentic-mermaid": "0.4.1",
+    "agentic-mermaid": "0.5.1",
     "playwright-core": "1.64.1",
     "svgpath": "2.6.0",
     "@resvg/resvg-js": "2.6.2"

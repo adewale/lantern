@@ -7,15 +7,16 @@ import {
   registerBackend,
   renderMermaidSVG,
 } from 'agentic-mermaid';
-import type { SceneDoc, SceneNode, StyleBackend } from 'agentic-mermaid';
+import type { SceneDoc, SceneNode, StyleBackend, TextMeasurementProfile, RenderRequestReceipt } from 'agentic-mermaid';
 import type { DiagramSpec, Palette } from '../snapshot.ts';
 
-export function capture(spec: DiagramSpec): {
+export function capture(spec: DiagramSpec, textMeasurement?: TextMeasurementProfile): {
   svg: string;
   marked: string;
   doc: SceneDoc;
   parts: { node: SceneNode; svg: string }[];
   palette: Palette;
+  receipt: RenderRequestReceipt;
 } {
   let real: StyleBackend = DefaultBackend;
   let captured: SceneDoc | undefined;
@@ -38,10 +39,23 @@ export function capture(spec: DiagramSpec): {
         cursor = 0;
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i]!;
-        const at = raw.indexOf(part.svg, cursor);
+        let fragment = part.svg;
+        let at = raw.indexOf(fragment, cursor);
+        // 0.5 applies document contrast safety after drawNode. A simple text
+        // fragment may differ only in fill; locate it by all its other bytes
+        // and preserve the actual rendered paint. Never relax geometry/text.
+        if (at < 0 && part.node.kind === 'text' && /^<text\b[\s\S]*<\/text>$/.test(fragment)) {
+          const withoutFill = (s: string) => s.replace(/\sfill="[^"]*"/g, '');
+          const matches = [...raw.slice(cursor).matchAll(/<text\b[^>]*>[\s\S]*?<\/text>/g)]
+            .filter((m) => withoutFill(m[0]) === withoutFill(fragment));
+          if (matches.length === 1) {
+            fragment = matches[0]![0];
+            at = cursor + matches[0]!.index!;
+          }
+        }
         if (at < 0) throw new Error(`Cannot locate rendered part ${part.node.id}`);
-        marked += raw.slice(cursor, at) + `<g data-lantern-part="${i}">${part.svg}</g>`;
-        cursor = at + part.svg.length;
+        marked += raw.slice(cursor, at) + `<g data-lantern-part="${i}">${fragment}</g>`;
+        cursor = at + fragment.length;
       }
       return marked + raw.slice(cursor);
     },
@@ -49,6 +63,7 @@ export function capture(spec: DiagramSpec): {
   const unregister = registerBackend(backend, { version: '1.0.0', compatibility: { core: '*', scene: '*' } });
   try {
     const renderer = createMermaidRenderer({
+      ...(textMeasurement ? { textMeasurement } : {}),
       backendPolicy: {
         selectBackend(selection) {
           real = getBackend(selection.requestedId) ?? DefaultBackend;
@@ -57,8 +72,11 @@ export function capture(spec: DiagramSpec): {
       },
     });
     const options = spec.style && spec.style !== 'default' ? { style: spec.style } : {};
-    const svg = renderer.renderMermaidSVG(spec.source, options);
-    if (svg !== renderMermaidSVG(spec.source, options))
+    const { svg, receipt } = renderer.renderMermaidSVGWithReceipt(spec.source, options);
+    const reference = textMeasurement
+      ? createMermaidRenderer({ textMeasurement }).renderMermaidSVG(spec.source, options)
+      : renderMermaidSVG(spec.source, options);
+    if (svg !== reference)
       throw new Error('Capture changed Agentic Mermaid output');
     if (!captured) throw new Error('Capture backend was not called');
     // Wrap before final colour/text normalization, only after the equality assertion.
@@ -69,6 +87,7 @@ export function capture(spec: DiagramSpec): {
       svg,
       marked,
       doc: captured,
+      receipt,
       parts,
       palette: {
         paper: colors?.bg ?? captured.colors.bg,

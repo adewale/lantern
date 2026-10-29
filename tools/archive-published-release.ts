@@ -43,15 +43,29 @@ await writeFile(manifest, JSON.stringify({
 assert.equal(process.env.EXPLAIN_BROWSER, '1'); assert.equal(process.env.EXPLAIN_LETTERING, '1');
 const notes = join(directory, 'release-notes.md');
 await writeFile(notes, `Rayner ${version}: TypeScript models become reader-paced technical explainers. Install with \`npm install --save-dev rayner@${version}\`.\n\nThe archive attached here is the exact public npm tarball, verified against its registry SHA-512. The manifest and log record retrospective installed-package, browser and lettering-capture validation. They do not claim original publishing-workflow provenance. The existing tag and npm bytes are preserved.\n\n[Examples](https://oshineye.dev/projects/rayner) · [Tutorial](https://github.com/adewale/rayner/blob/${tag}/docs/TUTORIAL.md)\n`);
-let release: {draft: boolean; assets: unknown[]};
-try { release = JSON.parse(run('gh', ['api', `repos/adewale/rayner/releases/tags/${tag}`])); }
-catch (error) {
-  assert.match(String((error as {stderr?: string}).stderr), /HTTP 404/, 'release lookup must succeed or report a missing release');
+// The tag endpoint can omit drafts. Inspect every page, including drafts, before
+// deciding whether creation is safe. Upload/edit resolve by tag, so ambiguity
+// must refuse rather than risk modifying a different release record.
+type Release = {id: number; tag_name: string; draft: boolean; assets: unknown[]};
+const matchingRelease = (): Release | undefined => {
+  const lines = run('gh', ['api', '--paginate', '--jq', '.[] | @json', 'repos/adewale/rayner/releases?per_page=100']).trim();
+  const releases = lines ? lines.split('\n').map(line => JSON.parse(line) as Release) : [];
+  for (const release of releases) assert.ok(Number.isSafeInteger(release.id) && typeof release.tag_name === 'string' && typeof release.draft === 'boolean' && Array.isArray(release.assets), 'invalid release list response');
+  const matches = releases.filter(release => release.tag_name === tag);
+  assert.ok(matches.length <= 1, `multiple release records match ${tag}; resolve the duplicate records before archiving`);
+  const release = matches[0];
+  if (release) {
+    assert.equal(release.draft, true, 'do not alter an existing public release');
+    assert.equal(release.assets.length, 0, 'do not overwrite previously retained release evidence');
+  }
+  return release;
+};
+let release = matchingRelease();
+if (!release) {
   run('gh', ['release', 'create', tag, '--verify-tag', '--draft', '--title', `Rayner ${version}`, '--notes-file', notes]);
-  release = {draft: true, assets: []};
+  release = matchingRelease();
+  assert.ok(release, 'created draft must be uniquely visible in the complete release list before uploading');
 }
-assert.equal(release.draft, true, 'do not alter an existing public release');
-assert.equal(release.assets.length, 0, 'do not overwrite previously retained release evidence');
 run('gh', ['release', 'upload', tag, archive, manifest, validationLog]);
 run('gh', ['release', 'edit', tag, '--draft=false', '--notes-file', notes, '--title', `Rayner ${version}`]);
 console.log(`Preserved and published the release record for ${tag}`);

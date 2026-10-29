@@ -6,7 +6,7 @@ import { loadFonts, VMobject } from '../../../src/index.ts';
 import type { Style } from '../../../src/index.ts';
 import { SVG_PX_PER_UNIT } from '../snapshot.ts';
 import type { SnapshotShape, SnapshotTextRun } from '../snapshot.ts';
-import { outlineText } from '../text.ts';
+import { importedFont, importedText, outlineText } from '../text.ts';
 
 interface RawShape {
   owner: number;
@@ -18,14 +18,17 @@ interface RawShape {
   anchor?: string;
   baseline?: string;
   width?: number;
+  fontFamily?: string;
+  fontWeight?: number;
+  italic?: boolean;
   matrix: number[];
   style: Style;
 }
 
-export async function readSvg(page: Page, svg: string): Promise<Map<number, SnapshotShape[]>> {
+export async function readSvg(page: Page, svg: string, natural = false): Promise<Map<number, SnapshotShape[]>> {
   await loadFonts();
   await page.setContent(svg);
-  const raw = await page.evaluate(() => {
+  const raw = await page.evaluate((natural) => {
     const root = document.querySelector('svg')!;
     const base = root.getCTM()!.inverse();
     const result: RawShape[] = [];
@@ -159,6 +162,11 @@ export async function readSvg(page: Page, svg: string): Promise<Map<number, Snap
           anchor: cs.textAnchor,
           ...(cs.dominantBaseline === 'auto' ? {} : { baseline: cs.dominantBaseline }),
           ...(el.hasAttribute('textLength') ? { width: number(el, 'textLength') } : {}),
+          ...(natural ? {
+            fontFamily: cs.fontFamily,
+            fontWeight: Number(cs.fontWeight),
+            italic: cs.fontStyle === 'italic',
+          } : {}),
         });
         return;
       }
@@ -196,7 +204,7 @@ export async function readSvg(page: Page, svg: string): Promise<Map<number, Snap
     };
     visit(root, -1);
     return result;
-  });
+  }, natural);
   const out = new Map<number, SnapshotShape[]>();
   for (const r of raw) {
     if (r.text != null) {
@@ -209,7 +217,18 @@ export async function readSvg(page: Page, svg: string): Promise<Map<number, Snap
         ...(r.baseline ? { baseline: r.baseline } : {}),
         matrix: r.matrix,
         ...(r.width != null ? { width: r.width } : {}),
+        ...(natural ? {
+          natural: true as const,
+          font: importedFont(r.fontFamily!),
+          ...(r.fontWeight! >= 600 ? { weight: 'bold' as const } : {}),
+          ...(r.italic ? { italic: true as const } : {}),
+        } : {}),
       };
+      if (natural) {
+        const advance = importedText(run).advance();
+        if (run.width === undefined || Math.abs(run.width - advance) > 0.02)
+          throw new Error(`Natural diagram metrics do not match the rendered label ${JSON.stringify(run.text)}; this family or font style is not supported`);
+      }
       const outlined = outlineText(run, r.style);
       if (outlined.some((p) => p.subpaths.some((a) => !a.every(Number.isFinite))))
         throw new Error(`Non-finite imported text: ${r.text}`);

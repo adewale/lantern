@@ -11,6 +11,8 @@ export function validateLetteringSnapshot(value: unknown): asserts value is Lett
   if (!object(value) || value.version !== 1 || !digest(value.sourceHash) || !digest(value.builderHash) ||
       !digest(value.payloadHash) || !object(value.request) || !object(value.runs) || !object(value.faces) || typeof value.shaper !== 'string') fail('header');
   const snapshot = value as Record<string, unknown> & { runs: Record<string, unknown>; faces: Record<string, unknown> };
+  if (snapshot.fontInputs !== undefined && (!object(snapshot.fontInputs) ||
+      !Object.keys(snapshot.fontInputs).length || !Object.values(snapshot.fontInputs).every(digest))) fail('font inputs');
   for (const [key, value] of Object.entries(snapshot.runs)) {
     let parts: unknown;
     try { parts = JSON.parse(key); } catch { fail('run key'); }
