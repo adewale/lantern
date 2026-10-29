@@ -2,7 +2,7 @@
  * The collection, in gallery order. `topic` explainers are about subjects a
  * reader might search for; `toolchain` explainers show how these explanations
  * are made (the engine, the diagrams, the text outlines). `step` chooses
- * the default case's step each gallery tile shows and links to.
+ * the default case's poster step; gallery links open at step one instead.
  */
 export const PRODUCT = {
   summary: 'Interactive explanations of protocols, algorithms and code changes.',

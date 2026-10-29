@@ -153,7 +153,7 @@ export default class IsDigitExplainer extends Scene {
       title: 'Eight numerals; int() accepts only the top four',
       line: 'Four ways to write 3 on top; isnumeric() is True for all eight.',
       // UnicodeData.txt lines 52, 1598, 2337, 16765, 179, 190, 7719; Unihan_NumericValues.txt line 29.
-      caption: `The Unicode Character Database gives each of these a numeric value. The top row is four ways to write 3; below are superscript two, one half, Roman twelve and the Chinese numeral three. isnumeric() is True for all eight; int() accepts only the top row. This case follows ${c.char}.`,
+      caption: `The Unicode Character Database gives each of these a numeric value. The top row is four ways to write 3; below are superscript two, one half, Roman twelve and the Chinese numeral three. isnumeric() is True for all eight; int() accepts only the top row. This case follows ${c.char}: the next steps ask which Python predicate lets it through, and whether int() can actually parse it.`,
     });
     const cells = LINEUP.map((cid, i) => {
       const ch = CHARS[cid];

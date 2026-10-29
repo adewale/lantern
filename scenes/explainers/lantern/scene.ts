@@ -82,7 +82,7 @@ async function playedAndSeeked(ink: string, accent: string) {
 export default class LanternExplainer extends Scene {
   static meta = {
     id: 'lantern',
-    title: 'One scene program drives the page, the pictures and the trace',
+    title: 'How one scene program becomes a page, pictures and a trace',
     sources: [
       'https://github.com/ivarvong/lantern',
       'https://github.com/ivarvong/lantern/blob/2c7bad5/src/scene.ts',
@@ -94,10 +94,10 @@ export default class LanternExplainer extends Scene {
       accent = s.emphasis;
 
     await this.step('model', {
-      title: 'A scene is an ordinary program',
-      line: 'Each this.step names an idea; each this.play runs one.',
+      title: 'One program names the steps and draws their pictures',
+      line: 'Follow this.step and this.play from the code to the stage.',
       caption:
-        'demo.ts holds one async construct method: each this.step call names an idea and each this.play call runs an animation on the stage beside it, as the labels at the lines’ ends count. The engine calls that method directly, with no lesson interpreter in between.',
+        'How can one scene make both an interactive page and the stills and trace that inspect it? In demo.ts, construct calls this.step to name each idea and this.play to draw it on the stage beside the code. The engine runs that ordinary method; later steps follow its frames into the page, SVG and trace rather than interpreting a separate lesson document.',
     });
     const code = await s.code(DEMO, { at: 'main', fontSize: 0.26 });
     // The same program, running on a small stage beside it.

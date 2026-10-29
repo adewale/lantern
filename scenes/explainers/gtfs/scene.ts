@@ -173,10 +173,10 @@ export default class GtfsExplainer extends Scene {
       ['calendar_dates.txt', FEED.calendarDates.length, 'dated exception'],
     ];
     await this.step('files', {
-      title: 'The GTFS sample feed is a folder of CSV tables',
-      line: 'Seven of its 11 files, each with its count of rows.',
+      title: 'A route row does not promise a departure',
+      line: 'Seven CSV files decide which trips can actually leave a stop.',
       caption:
-        'The GTFS Schedule reference publishes a sample feed for an invented Demo Transit Authority: 11 CSV files, each one table with a header row. This explainer reads the seven listed here. Each count is the file’s rows below its header.',
+        'The Demo Transit Authority’s sample feed contains routes even on dates when none of their trips run. To find departures at the selected stop, we must join trips to stops and check each trip’s service against the selected date. The GTFS Schedule reference publishes 11 CSV files; these seven contain the rows needed for that question, counted below each header.',
     });
     await s.card(
       tables.map(([file, n, what]) => [file, `${n} ${what}`] as [string, string]),
