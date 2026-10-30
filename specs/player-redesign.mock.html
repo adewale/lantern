@@ -38,7 +38,7 @@ body{margin:0;background:var(--bg);color:var(--fg)}
 .tag{display:inline-grid;place-items:center;min-width:26px;height:20px;padding:0 6px;border-radius:6px;background:var(--accent);color:var(--accent-fg);font-size:.75rem;font-weight:650;letter-spacing:.02em;font-variant-numeric:tabular-nums}
 /* A tag pinned to a frame element. */
 .req{position:absolute;top:-10px;inset-inline-end:8px;z-index:2;box-shadow:0 0 0 2px var(--bg)}
-.transport .req{inset-inline-end:auto;inset-inline-start:50%;translate:-50% 0}
+.transport .req{inset-inline-end:auto;inset-inline-start:12px}
 .step-bar .req{top:-6px}
 
 /* ---------- The proposed player, in Rayner's tokens ---------- */
@@ -181,6 +181,7 @@ body{margin:0;background:var(--bg);color:var(--fg)}
             <div class="transport" role="group" aria-label="Steps">
               <span class="tag req">R2</span>
               <button class="button icon" type="button" aria-label="Previous step"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+              <button class="button primary" type="button" aria-label="Next step"><span>Next</span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
               <ol class="step-bar" aria-label="Step progress">
                 <span class="tag req">R3</span>
                 <li><button type="button" tabindex="-1" data-step="before" data-state="done" title="Before: every request reads D1" aria-label="Step 1 of 4: Before: every request reads D1"></button></li>
@@ -188,7 +189,6 @@ body{margin:0;background:var(--bg);color:var(--fg)}
                 <li><button type="button" data-step="after" data-state="current" aria-current="step" title="Replayed on the diagram, the diff adds KV and a hit path" aria-label="Step 3 of 4: Replayed on the diagram, the diff adds KV and a hit path" style="--progress:1"><span class="fill"></span></button></li>
                 <li><button type="button" tabindex="-1" data-step="request" data-state="todo" title="A cache hit returns from KV with no D1 read" aria-label="Step 4 of 4: A cache hit returns from KV with no D1 read"></button></li>
               </ol>
-              <button class="button primary" type="button" aria-label="Next step"><span>Next</span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
               <div class="tools" role="group" aria-label="View tools" style="position:relative">
                 <span class="tag req" style="top:-20px">R6</span>
                 <button class="button icon" type="button" aria-label="Zoom out" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14z"/><path d="M20 20l-4-4"/><path d="M8 11h6"/></svg></button>
@@ -222,7 +222,7 @@ body{margin:0;background:var(--bg);color:var(--fg)}
     </div>
     <ol class="notes">
       <li><span class="tag">R1</span><span>One card: picture, transport and words share a surface and a border. The two Next buttons become one.</span></li>
-      <li><span class="tag">R2</span><span>The stage is capped so stage, transport and the first caption line fit an 800 px window. The transport sits straight under the picture, so it is on screen at load.</span></li>
+      <li><span class="tag">R2</span><span>The stage is capped so stage, transport and the first caption line fit an 800 px window. The transport sits straight under the picture, so it is on screen at load. Prev and Next stay together at the start of the row, where the current player has them; the step bar follows, so Next never drifts with the width.</span></li>
       <li><span class="tag">R3</span><span>The step bar: one segment per step, done segments in the accent, the current one taller and filled by the step's animation, later ones quiet. Each is a button that jumps to its step. Position and extent are visible while reading.</span></li>
       <li><span class="tag">R4</span><span>"Step 3 of 4", the title and the line show on every width, not only on phones.</span></li>
       <li><span class="tag">R5</span><span>The rail sits beside the card when the page is at least 1100 px wide. Each item shows the step's title and its line. The current step is marked by colour, not weight, so nothing shifts.</span></li>
@@ -257,6 +257,7 @@ body{margin:0;background:var(--bg);color:var(--fg)}
               </div></div>
               <div class="transport" role="group" aria-label="Steps">
                 <button class="button icon" type="button" aria-label="Previous step"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+                <button class="button primary" type="button" aria-label="Next step"><span>Next</span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
                 <ol class="step-bar" aria-label="Step progress">
                   <span class="tag req">R3</span>
                   <li><button type="button" tabindex="-1" data-state="done" aria-label="Step 1 of 4: Before: every request reads D1"></button></li>
@@ -264,7 +265,6 @@ body{margin:0;background:var(--bg);color:var(--fg)}
                   <li><button type="button" data-state="current" aria-current="step" aria-label="Step 3 of 4: Replayed on the diagram, the diff adds KV and a hit path" style="--progress:1"><span class="fill"></span></button></li>
                   <li><button type="button" tabindex="-1" data-state="todo" aria-label="Step 4 of 4: A cache hit returns from KV with no D1 read"></button></li>
                 </ol>
-                <button class="button primary" type="button" aria-label="Next step"><span>Next</span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
                 <div class="tools" role="group" aria-label="View tools">
                   <button class="button icon" type="button" aria-label="Zoom out"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14z"/><path d="M20 20l-4-4"/><path d="M8 11h6"/></svg></button>
                   <button class="button icon" type="button" aria-label="Zoom in"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14z"/><path d="M20 20l-4-4"/><path d="M11 8v6"/><path d="M8 11h6"/></svg></button>
@@ -318,26 +318,26 @@ body{margin:0;background:var(--bg);color:var(--fg)}
       <p class="label">Opening, at step 1 of 4, before anything has played. The first segment is current and full; nothing is done yet.</p>
       <div class="transport">
         <button class="button icon" type="button" aria-label="Previous step" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
-        <ol class="step-bar" aria-label="Step progress"><li><button type="button" data-state="current" aria-current="step" style="--progress:1"><span class="fill"></span></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li></ol>
         <button class="button primary" type="button" aria-label="Next step"><span>Next</span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+        <ol class="step-bar" aria-label="Step progress"><li><button type="button" data-state="current" aria-current="step" style="--progress:1"><span class="fill"></span></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li></ol>
       </div>
       <p class="label">Step 3 playing, 40 % through its animation. The fill follows scene time and completes at the step's hold, when the picture rests.</p>
       <div class="transport">
         <button class="button icon" type="button" aria-label="Previous step"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
-        <ol class="step-bar" aria-label="Step progress"><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" data-state="current" aria-current="step" style="--progress:.4"><span class="fill"></span></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li></ol>
         <button class="button primary" type="button" aria-label="Next step"><span>Next</span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+        <ol class="step-bar" aria-label="Step progress"><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" data-state="current" aria-current="step" style="--progress:.4"><span class="fill"></span></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li></ol>
       </div>
       <p class="label">Keyboard focus on the first segment, and the last step reached: Next is disabled, every earlier segment done.</p>
       <div class="transport">
         <button class="button icon" type="button" aria-label="Previous step"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
-        <ol class="step-bar" aria-label="Step progress"><li class="focus-demo"><button type="button" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" data-state="current" aria-current="step" style="--progress:1"><span class="fill"></span></button></li></ol>
         <button class="button primary" type="button" aria-label="Next step" disabled><span>Next</span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+        <ol class="step-bar" aria-label="Step progress"><li class="focus-demo"><button type="button" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" data-state="current" aria-current="step" style="--progress:1"><span class="fill"></span></button></li></ol>
       </div>
       <p class="label">A ten-step explainer (quotient-familial), at step 6, in a 390 px wide row: segments stay distinct at about 24 px each.</p>
       <div class="transport" style="width:390px;max-width:100%">
         <button class="button icon" type="button" aria-label="Previous step"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
-        <ol class="step-bar" aria-label="Step progress"><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" data-state="current" aria-current="step" style="--progress:1"><span class="fill"></span></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li></ol>
         <button class="button primary" type="button" aria-label="Next step"><span>Next</span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+        <ol class="step-bar" aria-label="Step progress"><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" data-state="current" aria-current="step" style="--progress:1"><span class="fill"></span></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li></ol>
       </div>
     </div>
   </section>

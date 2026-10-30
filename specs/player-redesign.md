@@ -107,8 +107,8 @@ DOM, in order, inside `section.player`:
 div.frame > div.stage[role=img]          the picture (unchanged inside)
 div.transport[role=group][aria-label=t.controls]
     button.button.icon  Prev            aria-label t.previous
-    ol.step-bar                          R3
-    button.button.primary  Next          aria-label t.nextLabel, visible text t.next
+    button.button.primary  Next          aria-label t.nextLabel, visible text t.next; Prev and Next stay adjacent at the inline start, where the current player has them
+    ol.step-bar                          R3, fills the room between Next and the tools
     div.tools[role=group][aria-label=t.viewTools]   zoomOut, zoomIn, zoomFit, closer, replay, copy, enlarge   R6
 div.view-controls                        narrow only, unchanged behaviour (R7); moved here from after .controls
 div.words
@@ -150,7 +150,7 @@ Acceptance:
 
 ### R3. The step bar
 
-One segment per step of the current case, between Prev and Next, filling the width between them. It is a stepper's timeline: it shows extent, position and the motion of the current step, and it never pretends to be a seek bar.
+One segment per step of the current case, after the Prev/Next pair, filling the width between Next and the tools. Next keeps a fixed place at the start of the row, so the reader's hand returns to the same spot at every width. It is a stepper's timeline: it shows extent, position and the motion of the current step, and it never pretends to be a seek bar.
 
 Markup, rebuilt in `load()` beside the rail:
 
@@ -274,7 +274,7 @@ Add to `Chrome` in `app/embed-strings.ts`, with both tables:
 
 ### R10. Right-to-left pages
 
-Use logical properties throughout the new CSS. The transport order (Prev, bar, Next, tools) follows the document direction automatically with flex. Extend the RTL rule in `tools/lib/explain-build.ts` (§1.3). Build `layout-direction` and confirm by screenshot that the fill grows from the right and the rail sits on the left at 1280px.
+Use logical properties throughout the new CSS. The transport order (Prev, Next, bar, tools) follows the document direction automatically with flex. Extend the RTL rule in `tools/lib/explain-build.ts` (§1.3). Build `layout-direction` and confirm by screenshot that the fill grows from the right and the rail sits on the left at 1280px.
 
 ### R11. Static shell, budgets and pins
 
