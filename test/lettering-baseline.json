@@ -160,6 +160,20 @@
     "receipt": "a68e894fe7455a730a3b9d4ae751901926cd2f5abde674d849a563fc893a0bd0",
     "fullReceipt": "d21d2c9c1a522835d234bb5123647e19a129be61d801b3311576a98bc7350882"
   },
+  "hello-world": {
+    "html": "15181ff83ed910efd0af0fe2af4c05166b73aae3b0f22ee346c189ee067d2518",
+    "bytes": 453236,
+    "headers": "7a76fd7c44e479906fc26f435ef2fcec8ce6762201d00e2b5a76bd808401b7d5",
+    "receipt": "f16e3de030f1171ff03942031cfab4b27fcc66e9ddc2e28d3bd1e79c4421d0c5",
+    "fullReceipt": "d0627152ef9a89c96989de2f147ddca1b89b2ae166e57a5dcb8e9ea5eaea3c46"
+  },
+  "feature-tour": {
+    "html": "9dd1d7da745c05ceaa37fd934172b0bb9952fb942289eb72fb1b2a75686d7ca5",
+    "bytes": 647072,
+    "headers": "749f75b9c918a167b0246727c38be84001998a0cf97fdb4206303658a0c0ca30",
+    "receipt": "8f98627d8683f1085f1ff356cd201ee7c3fadd11aa34489ede7fac4b3998aa06",
+    "fullReceipt": "ee126f5033b274b9ad101c3820a87149523c043fd4330157e808a41756907800"
+  },
   "lantern": {
     "html": "386735250eb662cf541f56b819b9a45f56669ed675d2ba5cf4e5c8308cac9b1c",
     "bytes": 766934,

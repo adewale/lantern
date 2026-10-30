@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "importer": "11d0423eb190709f",
+  "renderer": "agentic-mermaid@0.5.1",
+  "sourceHash": "129da4cdbc9f9d26c8928f43eca0efd673ba0ee9c3bd9deacfd87842d354459a",
+  "diagrams": {
+    "[\"graph LR\\nA[Start] --> B[Finish]\",\"github-dark\"]": "a215c6fc9c5f12cc.json"
+  }
+}
