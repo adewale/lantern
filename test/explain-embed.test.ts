@@ -20,6 +20,7 @@ import type { StepLayout } from '../app/embed-closeup.ts';
 import { labelOf } from '../explain/diagrams.ts';
 import { labelsSaying, restingBox, wordsOutsideCards } from './lib/scenes.ts';
 import type { Box } from '../src/index.ts';
+import { chromeFor } from '../app/embed-strings.ts';
 
 const enabled = !!process.env.EXPLAIN_BROWSER,
   options = { skip: enabled ? false : 'set EXPLAIN_BROWSER=1 for real cross-origin browser checks' };
@@ -58,39 +59,90 @@ function loader(id: string, scene: string) {
   return `<div id="${id}"></div><script src="${embed}/loader.js" data-src="${embed}/${scene}.html" data-target="${id}" data-title="${scene}"></script>`;
 }
 
-test('step navigation is discoverable before the picture on short phones and desktops', options, async () => {
-  for (const viewport of [{width: 390, height: 568}, {width: 1280, height: 800}]) {
-    const page = await browser.newPage({viewport, reducedMotion: 'reduce'});
+// specs/player-redesign.md R2: the viewports the stepper row must fit at load, and the two pages it is checked on.
+const R2_VIEWPORTS = [[320, 568], [390, 568], [390, 844], [768, 1024], [1280, 800], [1440, 900]] as const;
+const R2_PAGES = ['/mr-cache.html?step=before&request=hit', '/oauth-pkce.html?attacker=yes'];
+type Rect = { top: number; bottom: number; left: number; right: number };
+/** Boxes of the named elements (the first match of each), with the viewport they were read in. */
+const boxesOf = <K extends string>(page: Page, selectors: Record<K, string>) =>
+  page.evaluate((selectors: Record<string, string>) => {
+    const rect = (s: string): Rect | null => {
+      const r = document.querySelector(s)?.getBoundingClientRect();
+      return r ? { top: r.top, bottom: r.bottom, left: r.left, right: r.right } : null;
+    };
+    return {
+      boxes: Object.fromEntries(Object.entries(selectors).map(([k, s]) => [k, rect(s)])),
+      scrollY,
+      width: innerWidth,
+      height: innerHeight,
+      scrollWidth: document.documentElement.scrollWidth,
+    };
+  }, selectors as Record<string, string>) as Promise<{ boxes: Record<K, Rect>; scrollY: number; width: number; height: number; scrollWidth: number }>;
+const insideViewport = (b: Rect, v: { width: number; height: number }) => b.top >= 0 && b.bottom <= v.height && b.left >= 0 && b.right <= v.width;
+
+test('one stepper row: exactly one Next step and one Previous step button', options, async () => {
+  for (const name of projects.keys()) {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+    try {
+      await page.goto(`${embed}/${name}.html`);
+      await page.waitForSelector('[data-ready=true]');
+      const seen = await page.evaluate(() => ({
+        next: document.querySelectorAll('button[aria-label="Next step"]').length,
+        previous: document.querySelectorAll('button[aria-label="Previous step"]').length,
+        // The card: the picture, the stepper row, the words, in that order.
+        order: [...document.querySelector('.player')!.children].filter((e) => e.matches('.frame, .stepper, .words')).map((e) => e.className),
+        stage: !!document.querySelector('.player > .frame > .stage'),
+        group: [document.querySelector('.stepper')?.getAttribute('role'), document.querySelector('.stepper')?.getAttribute('aria-label')],
+        first: [...document.querySelectorAll('.stepper > button')].slice(0, 2).map((b) => b.getAttribute('aria-label')),
+        nextText: document.querySelector('.stepper .primary')?.textContent,
+      }));
+      assert.deepEqual(seen, {
+        next: 1,
+        previous: 1,
+        order: ['frame', 'stepper', 'words'],
+        stage: true,
+        group: ['group', 'Steps'],
+        first: ['Previous step', 'Next step'],
+        nextText: 'Next',
+      }, name);
+    } finally { await page.close(); }
+  }
+  // The one pair works, on a short phone and a desktop.
+  for (const viewport of [{ width: 390, height: 568 }, { width: 1280, height: 800 }]) {
+    const page = await browser.newPage({ viewport, reducedMotion: 'reduce' });
     try {
       await page.goto(embed + '/mr-cache.html?step=before&request=hit');
       await page.waitForSelector('[data-ready=true]');
-      const bounds = await page.evaluate(() => {
-        const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
-        return {
-          early: box('.step-transport button[aria-label="Next step"]'),
-          stage: box('.stage'),
-          caption: box('.caption'),
-          after: box('.controls button[aria-label="Next step"]'),
-          description: box('.described'),
-          views: box('.view-controls'),
-          height: innerHeight,
-        };
-      });
-      assert.ok(bounds.early.top >= 0 && bounds.early.bottom <= bounds.height, `early Next is visible at ${viewport.width}×${viewport.height}`);
-      assert.ok(bounds.early.bottom <= bounds.stage.top, 'step navigation is outside and before the picture');
-      assert.ok(bounds.caption.bottom < bounds.after.top, 'the second Next follows the explanation');
-      assert.ok(bounds.after.bottom <= bounds.description.top, 'secondary content cannot separate the caption from Next');
-      if (viewport.width < 480) assert.ok(bounds.after.bottom <= bounds.views.top, 'Next step precedes the close-up tour');
-      assert.equal(await page.locator('.step-transport button[aria-label="Previous step"]').isDisabled(), true);
-      await page.locator('.step-transport button[aria-label="Next step"]').click();
+      assert.equal(await page.getByRole('button', { name: 'Previous step', exact: true }).isDisabled(), true);
+      await page.getByRole('button', { name: 'Next step', exact: true }).click();
       assert.equal(new URL(page.url()).searchParams.get('step'), 'diff');
-      assert.equal(await page.locator('.step-transport button[aria-label="Previous step"]').isEnabled(), true);
-      assert.equal(await page.locator('.controls button[aria-label="Previous step"]').isEnabled(), true);
+      assert.equal(await page.getByRole('button', { name: 'Previous step', exact: true }).isEnabled(), true);
     } finally { await page.close(); }
   }
 });
 
-test('fullscreen leaves the early step control reachable when the player overflows', options, async () => {
+test('Next is on screen at load', options, async () => {
+  for (const [width, height] of R2_VIEWPORTS)
+    for (const url of R2_PAGES) {
+      const page = await browser.newPage({ viewport: { width, height } });
+      try {
+        await page.goto(embed + url);
+        await page.waitForSelector('[data-ready=true]');
+        const v = await boxesOf(page, { next: 'button[aria-label="Next step"]', stage: '.stage', stepper: '.stepper', caption: '.caption' });
+        const where = `${url} at ${width}×${height}`;
+        assert.equal(v.scrollY, 0, `${where}: opened at the top`);
+        assert.ok(insideViewport(v.boxes.next, v), `${where}: Next ${JSON.stringify(v.boxes.next)}`);
+        if (width === 390 && height === 844) {
+          assert.ok(insideViewport(v.boxes.stage, v), `${where}: the stage ${JSON.stringify(v.boxes.stage)}`);
+          assert.ok(insideViewport(v.boxes.stepper, v), `${where}: the stepper row ${JSON.stringify(v.boxes.stepper)}`);
+          assert.ok(v.boxes.caption.top + 24 <= v.height, `${where}: the caption's first line ${JSON.stringify(v.boxes.caption)}`);
+        }
+        assert.ok(v.scrollWidth <= v.width, `${where}: no horizontal scroll (${v.scrollWidth} > ${v.width})`);
+      } finally { await page.close(); }
+    }
+});
+
+test('fullscreen keeps the stepper row reachable when the player overflows', options, async () => {
   const page = await browser.newPage({viewport: {width: 1280, height: 800}, reducedMotion: 'reduce'});
   try {
     await page.goto(embed + '/mr-cache.html?step=before&request=hit');
@@ -99,35 +151,62 @@ test('fullscreen leaves the early step control reachable when the player overflo
     await page.waitForFunction(() => !!document.fullscreenElement);
     const bounds = await page.evaluate(() => {
       const player = document.querySelector<HTMLElement>('.player')!;
-      const early = document.querySelector('.step-transport')!.getBoundingClientRect();
-      return {top: early.top, bottom: early.bottom, viewport: innerHeight, overflow: player.scrollHeight > player.clientHeight};
+      const row = document.querySelector('.stepper')!.getBoundingClientRect(),
+        stage = document.querySelector('.stage')!.getBoundingClientRect();
+      return {top: row.top, bottom: row.bottom, stage: stage.height, viewport: innerHeight, overflow: player.scrollHeight > player.clientHeight};
     });
     assert.equal(bounds.overflow, true, 'the test exercises a scrollable fullscreen player');
-    assert.ok(bounds.top >= 0 && bounds.bottom <= bounds.viewport, 'early Next is reachable at scroll position zero');
-    await page.locator('.step-transport button[aria-label="Next step"]').click();
+    assert.ok(bounds.stage <= bounds.viewport - 180 + 1, 'the stage keeps within the screen less 180 px');
+    assert.ok(bounds.top >= 0 && bounds.bottom <= bounds.viewport, 'Next is reachable at scroll position zero');
+    await page.getByRole('button', {name: 'Next step', exact: true}).click();
     assert.equal(new URL(page.url()).searchParams.get('step'), 'diff');
   } finally { await page.close(); }
 });
 
-test('phone captions stay beside the picture and a single view never advertises Next view', options, async () => {
+test('phone: the stepper row follows the picture, the words follow it, and a single view never advertises Next view', options, async () => {
   const page = await browser.newPage({viewport: {width: 390, height: 844}, reducedMotion: 'reduce'});
   try {
     await page.goto(embed + '/oauth-pkce.html?attacker=yes&step=attack');
     await page.waitForSelector('[data-ready=true]');
     await page.locator('.leaving').waitFor({state: 'detached'});
-    const bounds = await page.evaluate(() => {
-      const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
-      return {stage: box('.stage').bottom, lede: box('.lede').top, caption: box('.caption').bottom, controls: box('.controls').top};
-    });
-    assert.ok(bounds.lede >= bounds.stage && bounds.lede - bounds.stage <= 24, 'the step title follows the picture');
-    assert.ok(bounds.caption < bounds.controls, 'step controls follow the caption');
+    const {boxes: b} = await boxesOf(page, {stage: '.stage', stepper: '.stepper', lede: '.lede', caption: '.caption'});
+    assert.ok(b.stepper.top >= b.stage.bottom - 1 && b.stepper.top - b.stage.bottom <= 2, 'the stepper row is straight under the picture');
+    assert.ok(b.lede.top >= b.stepper.bottom, 'the step heading follows the stepper row');
+    assert.ok(b.caption.top >= b.lede.bottom, 'the caption follows the step heading');
     assert.equal(await page.locator('.view-controls').isVisible(), false, 'a single view needs no tour toolbar');
     assert.equal(await page.getByRole('button', {name: 'Next view', exact: true}).isVisible(), false);
     assert.equal(await page.locator('.view-help').isVisible(), false);
-    assert.equal(await page.getByRole('button', {name: 'Fit stage', exact: true}).isEnabled(), true);
+    assert.equal(await page.getByRole('button', {name: 'Whole picture', exact: true}).isEnabled(), true);
+    await page.evaluate(() => scrollTo(0, document.body.scrollHeight));
     await page.getByRole('button', {name: 'Zoom in', exact: true}).click();
-    assert.ok(await page.locator('.stage').evaluate(stage => {const box = stage.getBoundingClientRect(); return box.top >= 0 && box.bottom <= innerHeight;}), 'using controls below a long caption brings the changed picture into view');
+    assert.ok(await page.locator('.stage').evaluate(stage => {const box = stage.getBoundingClientRect(); return box.top >= 0 && box.bottom <= innerHeight;}), 'using a view tool brings the changed picture into view');
   } finally { await page.close(); }
+});
+// Every catalog page, built from its scene as demos:check builds it: the player's controls are
+// the same everywhere, in each page's language.
+test('no Replay, Stop or Fit stage button; one Whole picture button on every catalog page', options, async () => {
+  const { EXPLAINERS } = await import('../scenes/explainers/catalog.ts');
+  await mkdir(join(folder, 'catalog'), { recursive: true });
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    const page = await context.newPage();
+    for (const { id } of EXPLAINERS) {
+      const project = await collectProject(`scenes/explainers/${id}`, { write: false });
+      await buildExplainer(project, join(folder, 'catalog', id + '.html'));
+      const t = chromeFor(project.Scene.meta?.lang);
+      // The removed controls' names, in English and in French.
+      const gone = ['Replay step', 'Stop animation', 'Fit stage', 'Rejouer l’étape', 'Arrêter l’animation', 'Adapter à la page'];
+      await page.goto(`${embed}/catalog/${id}.html`);
+      await page.waitForSelector('[data-ready=true]');
+      const seen = await page.evaluate((names) => {
+        const count = (name: string) => document.querySelectorAll(`button[aria-label="${name}"]`).length;
+        return Object.fromEntries(names.map((n) => [n, count(n)]));
+      }, [...gone, t.wholePicture, t.nextLabel, t.previous]);
+      assert.deepEqual(seen, { ...Object.fromEntries(gone.map((n) => [n, 0])), [t.wholePicture]: 1, [t.nextLabel]: 1, [t.previous]: 1 }, id);
+    }
+  } finally {
+    await context.close();
+  }
 });
 async function readyFrame(page: Page, scene: string): Promise<Frame> {
   await page.waitForFunction(() => document.querySelectorAll('iframe').length > 0);
@@ -281,7 +360,7 @@ test('Copy link gives the step\'s share page when site:export published one, els
     assert.equal(await copied(), 'https://example.org/projects/rayner/mr-cache/diff');
     await open(`${embed}/site/odd-steps.html?step=one`);
     assert.equal(await copied(), 'https://example.org/projects/rayner/odd-steps/one');
-    await page.locator('.controls button[aria-label="Next step"]').click();
+    await page.locator('.stepper button[aria-label="Next step"]').click();
     await page.waitForURL(/step=two/);
     assert.equal(await copied(), `${embed}/site/odd-steps.html?step=two+words`);
     // Built without site:export: no share pages, so the player URL, as before.
@@ -293,7 +372,7 @@ test('Copy link gives the step\'s share page when site:export published one, els
 });
 test('stepping keeps the phone’s heading line, Next, steps list and transcript in place', options, async () => {
   // Captions run from one line to four, and on a phone send-sync's first step opens on a
-  // close-up and shows Fit; neither may push the page down mid-explainer.
+  // close-up and shows Whole picture; neither may push the page down mid-explainer.
   for (const [width, height] of [[1180, 800], [390, 844]] as const)
     for (const scene of ['exgit', 'mr-cache', 'send-sync']) {
       const page = await browser.newPage({ viewport: { width, height } });
@@ -325,11 +404,11 @@ test('stepping keeps the phone’s heading line, Next, steps list and transcript
             linePlaces.add(await page.locator('.lede span').evaluate((line) => (line.getBoundingClientRect().top + scrollY).toFixed(1)));
           places.add(
             await page.evaluate(() =>
-              ['.controls', '.steps', '.transcript'].map((s) => (document.querySelector(s)!.getBoundingClientRect().top + scrollY).toFixed(1)).join(' '),
+              ['.stepper', '.steps', '.transcript'].map((s) => (document.querySelector(s)!.getBoundingClientRect().top + scrollY).toFixed(1)).join(' '),
             ),
           );
         }
-        assert.equal(places.size, 1, `${scene} at ${width} px: controls, steps and transcript tops per step ${[...places].join(' | ')}`);
+        assert.equal(places.size, 1, `${scene} at ${width} px: stepper row, steps and transcript tops per step ${[...places].join(' | ')}`);
         if (width < 600) assert.equal(linePlaces.size, 1, `${scene}: the line below the phone title stays at one height`);
       } finally {
         await page.close();
@@ -407,19 +486,19 @@ test(
         const want = tour[i % tour.length]!;
         await until(async () => near(zoomOf(await paintedView(page)), want), `close-up ${i}`);
       }
-      // Fit shows the whole picture, and keeps it for the next steps; Close-up brings the close-ups back.
-      await page.getByRole('button', { name: 'Fit stage' }).click();
-      await until(async () => zoomOf(await paintedView(page)) === null, 'Fit');
+      // Whole picture shows the author's frame, and keeps it for the next steps; Close-up brings the close-ups back.
+      await page.getByRole('button', { name: 'Whole picture' }).click();
+      await until(async () => zoomOf(await paintedView(page)) === null, 'Whole picture');
       assert.equal(await page.getByRole('button', { name: 'Close-up of each step' }).isVisible(), true);
       assert.equal(await page.locator('.overview').isHidden(), true, 'no overview of the whole picture');
       // Zoom: a phone reader can still enlarge the vector stage and pan it, without page overflow.
       // It narrows the viewBox over the author's camera, the way the camera itself zooms, so the
-      // element keeps its size (no layout shift) and Fit is the author's frame.
+      // element keeps its size (no layout shift) and Whole picture is the author's frame.
       const rect = (v: string) => v.split(' ').map(Number);
       const view = async () => rect((await paintedView(page)).view);
       const width = () => page.locator('.stage svg').evaluate((svg) => svg.getBoundingClientRect().width);
       const [fit, fitWidth] = [await view(), await width()];
-      assert.deepEqual(fit, rect((await paintedView(page)).camera), 'Fit shows the author\'s frame');
+      assert.deepEqual(fit, rect((await paintedView(page)).camera), 'Whole picture shows the author\'s frame');
       await page.getByRole('button', { name: 'Zoom in' }).click();
       await page.getByRole('button', { name: 'Zoom in' }).click();
       // Button zoom glides for 220 ms; wait for it to settle at 2.56×.
@@ -440,23 +519,23 @@ test(
         await click();
         await page.waitForFunction(() => !document.querySelector('.stage svg[data-old]'));
       };
-      await replaced(() => page.locator('.controls').getByRole('button', { name: 'Previous step' }).click());
+      await replaced(() => page.locator('.stepper').getByRole('button', { name: 'Previous step' }).click());
       await quiet(page);
       assert.ok(Math.abs(zoomed / (await view())[2]! - 1) < 1e-6, 'zoom kept across steps');
-      await replaced(() => page.locator('.controls').getByRole('button', { name: 'Next step' }).click());
+      await replaced(() => page.locator('.stepper').getByRole('button', { name: 'Next step' }).click());
       assert.ok(Math.abs(zoomed / (await view())[2]! - 1) < 1e-6, 'zoom kept while the step plays');
       await quiet(page);
       assert.ok(Math.abs(zoomed / (await view())[2]! - 1) < 1e-6, 'zoom kept through an animated step');
-      await page.getByRole('button', { name: 'Fit stage' }).click();
-      await until(async () => zoomOf(await paintedView(page)) === null, 'Fit');
-      assert.deepEqual(await view(), fit, 'Fit is the author frame');
-      assert.equal(await page.getByRole('button', { name: 'Fit stage' }).isHidden(), true, 'Fit appears only when zoomed');
+      await page.getByRole('button', { name: 'Whole picture' }).click();
+      await until(async () => zoomOf(await paintedView(page)) === null, 'Whole picture');
+      assert.deepEqual(await view(), fit, 'Whole picture is the author frame');
+      assert.equal(await page.getByRole('button', { name: 'Whole picture' }).isHidden(), true, 'Whole picture appears only when zoomed');
       await page.getByRole('button', { name: 'Close-up of each step' }).click();
       await until(async () => zoomOf(await paintedView(page)) !== null, 'Close-up');
       assert.ok(near(await painted(), tour[0]!), 'Close-up returns to the step\'s first close-up');
       assert.equal(await page.getByRole('button', { name: 'Close-up of each step' }).isHidden(), true);
-      await page.getByRole('button', { name: 'Fit stage' }).click();
-      await until(async () => zoomOf(await paintedView(page)) === null, 'Fit');
+      await page.getByRole('button', { name: 'Whole picture' }).click();
+      await until(async () => zoomOf(await paintedView(page)) === null, 'Whole picture');
       await page.locator('.transcript > summary').click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
       await page.locator('#content').focus();
@@ -483,10 +562,10 @@ test(
   },
 );
 // The author's camera (lantern's 'points' step focuses the camera on Mobject) and the reader's
-// zoom compose: Fit is the author's frame, a zoom narrows it, and the camera's glide home in the
+// zoom compose: Whole picture is the author's frame, a zoom narrows it, and the camera's glide home in the
 // next step plays under a held zoom.
 test(
-  "reader zoom composes with the author's camera: Fit is the author frame, and a camera glide plays under a held zoom",
+  "reader zoom composes with the author's camera: Whole picture is the author frame, and a camera glide plays under a held zoom",
   options,
   async () => {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'no-preference' });
@@ -501,7 +580,7 @@ test(
       const home = '-8000 -4500 16000 9000';
       const author = await paintedView(page);
       assert.notEqual(author.camera, home, 'the step frames part of the stage');
-      assert.equal(author.view, author.camera, 'Fit shows the author frame');
+      assert.equal(author.view, author.camera, 'Whole picture shows the author frame');
       await page.locator('.stage').focus();
       await page.keyboard.press('+');
       await page.keyboard.press('+');
@@ -513,7 +592,7 @@ test(
       assert.ok(vx >= cx - 1e-3 && vy >= cy - 1e-3 && vx + vw <= cx + cw + 1e-3 && vy + vh <= cy + ch + 1e-3, 'the view stays inside the author frame');
       // Next plays 'clock', whose s.clear() glides the camera home: every frame keeps the reader's 2.56×.
       const seen: Painted[] = [];
-      await page.locator('.controls').getByRole('button', { name: 'Next step' }).click();
+      await page.locator('.stepper').getByRole('button', { name: 'Next step' }).click();
       const end = Date.now() + 3000;
       while (Date.now() < end) {
         const p = await paintedView(page).catch(() => null);
@@ -529,7 +608,7 @@ test(
       await page.locator('.stage').focus();
       await page.keyboard.press('0');
       const fit = await paintedView(page);
-      assert.equal(fit.view, fit.camera, 'Fit returns to the author frame');
+      assert.equal(fit.view, fit.camera, 'Whole picture returns to the author frame');
       // On a phone the step's close-up is a reader zoom over that author frame, worked out in its units.
       const phone = await context.browser()!.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
       try {
@@ -589,7 +668,7 @@ test(
 // replay with FC_SEED=<seed> FC_PATH=<path> FC_REPLAY_PATH=<replayPath>.
 //
 // Reduced motion: the model runs under prefers-reduced-motion: reduce, where
-// Next and Replay show the finished step at once. With motion on, Next plays an
+// Next shows the finished step at once. With motion on, Next plays an
 // animation in wall-clock time for an unpredictable number of frames, so the
 // model's per-command assertions would race it; the motion-on path has its own
 // property further down (Next ends on the step's resting picture), which waits
@@ -622,7 +701,7 @@ interface PlayerModel {
   k: number;
   transcript: boolean;
   settles: number;
-  /** On a narrow stage, each step opens on its close-up (docs/REFERENCE.md); Fit turns this off, Close-up on. */
+  /** On a narrow stage, each step opens on its close-up (docs/REFERENCE.md); Whole picture turns this off, Close-up on. */
   follow: boolean;
   /** The scale of the step's close-ups, worked out when it settled on a narrow stage; the overview goes to them. */
   tourK: number | null;
@@ -722,8 +801,8 @@ function observe(ids: string[]) {
     stageH: stage.clientHeight,
     zoomOutDisabled: button('Zoom out')!.disabled,
     zoomInDisabled: button('Zoom in')!.disabled,
-    // Unseen, whether removed or holding its place (Fit keeps its place so the controls do not wrap).
-    fitHidden: ((b) => b.hidden || getComputedStyle(b).visibility === 'hidden')(button('Fit stage')!),
+    // Unseen, whether removed or holding its place (Whole picture keeps its place so the controls do not wrap).
+    wholeHidden: ((b) => b.hidden || getComputedStyle(b).visibility === 'hidden')(button('Whole picture')!),
     closeUpHidden: button('Close-up of each step')!.hidden,
     overviewHidden: document.querySelector<HTMLButtonElement>('.overview')!.hidden,
     transcriptOpen: (document.querySelector('details.transcript') as HTMLDetailsElement).open,
@@ -762,7 +841,7 @@ const paintedView = (page: Page | Frame): Promise<Painted> =>
     w: svg.parentElement!.clientWidth,
     h: svg.parentElement!.clientHeight,
   }));
-/** The reader's zoom painted over the author's frame; null when the stage shows the author's frame (Fit). */
+/** The reader's zoom painted over the author's frame; null when the stage shows the author's frame (Whole picture). */
 function zoomOf(p: Painted | null) {
   if (!p || p.view === p.camera) return null;
   // Read the world interval under the stage independently of the painter.
@@ -853,7 +932,7 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   // Zoom: the scale the model predicts, painted so the drawing covers the stage.
   eq('Zoom out disabled', seen.zoomOutDisabled, m.k <= 1);
   eq('Zoom in disabled', seen.zoomInDisabled, m.k >= ZOOM_MAX);
-  eq('Fit hidden', seen.fitHidden, m.k <= 1);
+  eq('Whole picture hidden', seen.wholeHidden, m.k <= 1);
   const narrow = seen.stageW > 0 && seen.stageW < NARROW_PX;
   eq('Close-up hidden', seen.closeUpHidden, !(narrow && !m.follow));
   const multipleViews = narrow && (await tourOf(m, seen.stageW, seen.stageH)).length > 1;
@@ -915,7 +994,7 @@ async function reframe(m: PlayerModel, r: PlayerReal) {
   m.tourK = narrow ? (await tourOf(m, w, h))[0]!.k : null;
   if (narrow && m.follow) m.k = m.tourK!;
 }
-const button = (r: PlayerReal, name: string) => r.page.locator(`.controls button[aria-label="${name}"]`);
+const button = (r: PlayerReal, name: string) => r.page.locator(`.stepper button[aria-label="${name}"]`);
 /** Show a step of this case: a history entry when the step changes, a fresh resting picture always. */
 function goTo(m: PlayerModel, index: number) {
   const step = steps(m)[index]!.step;
@@ -1002,19 +1081,19 @@ const Forward = command(
     traverse(m, 1);
   },
 );
-const ZoomButton = (which: 'Zoom in' | 'Zoom out' | 'Fit stage') =>
+const ZoomButton = (which: 'Zoom in' | 'Zoom out' | 'Whole picture') =>
   command(
     `ZoomButton(${which})`,
     (m) => (which === 'Zoom in' ? m.k < ZOOM_MAX : m.k > 1),
     async (m, r) => {
       const { narrow } = await stageSize(r);
       await button(r, which).click();
-      m.k = which === 'Fit stage' ? 1 : kAfter(m.k, which === 'Zoom in' ? 1.6 : 1 / 1.6);
-      // On a narrow stage, Fit keeps the whole picture for the steps that follow.
-      if (which === 'Fit stage' && narrow) m.follow = false;
+      m.k = which === 'Whole picture' ? 1 : kAfter(m.k, which === 'Zoom in' ? 1.6 : 1 / 1.6);
+      // On a narrow stage, Whole picture keeps the whole picture for the steps that follow.
+      if (which === 'Whole picture' && narrow) m.follow = false;
     },
   );
-/** Close-up: shown on a narrow stage once Fit has turned close-ups off; it turns them on and frames this step. */
+/** Close-up: shown on a narrow stage once Whole picture has turned close-ups off; it turns them on and frames this step. */
 const CloseUpButton = command('CloseUpButton', (m) => !m.follow, async (m, r) => {
   const { w, h, narrow } = await stageSize(r);
   if (!narrow) return; // hidden, so there is nothing to press
@@ -1028,11 +1107,6 @@ const OverviewButton = command('OverviewButton', always, async (m, r) => {
   if (!(await overview.isVisible()) || (await overview.isDisabled())) return;
   await overview.click();
   m.k = m.tourK!;
-});
-const Replay = command('Replay', always, async (m, r) => {
-  await button(r, 'Replay step').click();
-  m.notice = 'Reduced motion is on, so the finished step is shown.';
-  m.settles++;
 });
 const CopyLink: Cmd = {
   check: always,
@@ -1149,8 +1223,7 @@ function commandArbs(p: Project): fc.Arbitrary<Cmd>[] {
       : []),
     fc.constant(Back),
     fc.constant(Forward),
-    fc.constantFrom('Zoom in', 'Zoom out', 'Fit stage').map((w) => ZoomButton(w as 'Zoom in')),
-    fc.constant(Replay),
+    fc.constantFrom('Zoom in', 'Zoom out', 'Whole picture').map((w) => ZoomButton(w as 'Zoom in')),
     fc.constant(CopyLink),
     fc.tuple(fc.constantFrom('ArrowRight', 'ArrowLeft', 'ArrowUp', '+', '=', '-', '0'), fc.boolean()).map(([k, onStage]) => Key(k, onStage)),
     fc.tuple(fc.double({ min: 0, max: 1, noNaN: true }), fc.double({ min: 0, max: 1, noNaN: true })).map(
@@ -1244,7 +1317,7 @@ test('phone tour metadata follows resizing while the current zoom and step stay 
     try {
       const commands = width === 632
         ? [Resize(200, 400), DoubleClick(0, 0), OverviewButton]
-        : [Resize(632, 400), Replay, Resize(200, 400), OverviewButton];
+        : [Resize(632, 400), Resize(200, 400), OverviewButton];
       await fc.asyncModelRun(() => ({model, real}), commands);
       assert.equal(current(model).step, 'secret');
     } finally { await context.close(); }
@@ -1257,12 +1330,12 @@ test(
   async () => {
     const { context, model, real } = await openPlayer('oauth-pkce', { values: ['yes'], step: 'attack', viewport: { width: 700, height: 900 } });
     try {
-      await fc.asyncModelRun(() => ({ model, real }), [ChooseCase(0, 1), Back, CopyLink, Replay]);
+      await fc.asyncModelRun(() => ({ model, real }), [ChooseCase(0, 1), Back, CopyLink]);
       // Every command ran (a command whose precondition fails is skipped silently), and verify() held after each.
       const first = stepsOf(model.project, { attacker: 'no' })[0]!.step;
       assert.deepEqual(model.entries.map((e) => [e.values.attacker, e.step]), [['yes', 'attack'], ['no', first]]);
       assert.equal(model.index, 0, 'Back returned to the first entry');
-      assert.equal(model.notice, 'Reduced motion is on, so the finished step is shown.');
+      assert.equal(model.notice, 'Link copied.');
     } finally {
       await context.close();
     }
@@ -1297,7 +1370,8 @@ async function quiet(page: Page, ms = 300) {
     await page.waitForFunction(
       () =>
         !document.getElementById('content')!.classList.contains('loading') &&
-        !!document.querySelector('button[aria-label="Replay step"]'),
+        !!document.querySelector('.stepper') &&
+        !document.querySelector('.stage[aria-busy=true]'),
       undefined,
       { timeout: Math.max(1, deadline - Date.now()) },
     );
@@ -1336,8 +1410,8 @@ test(
           for (let i = 0; i < list.length; i++) {
             const step = list[i]!.step;
             if (i > 0) {
-              await a.page.locator('.controls button[aria-label="Next step"]').click();
-              await d.page.locator('.controls button[aria-label="Next step"]').click();
+              await a.page.locator('.stepper button[aria-label="Next step"]').click();
+              await d.page.locator('.stepper button[aria-label="Next step"]').click();
             }
             await quiet(a.page);
             await quiet(d.page);
@@ -1405,7 +1479,7 @@ test('phone: one press of Next view shows what PKCE\'s captions point at, emphas
     for (const [i, step] of ['secret', 'authorize'].entries()) {
       if (i > 0) {
         // Next, with motion: it moves to the next step, as before.
-        await page.locator('.controls').getByRole('button', { name: 'Next step', exact: true }).click();
+        await page.locator('.stepper').getByRole('button', { name: 'Next step', exact: true }).click();
         await page.waitForURL(/step=authorize/);
         await quiet(page);
       }
@@ -1450,7 +1524,7 @@ test(
         const context = await browser.newContext({ reducedMotion: 'no-preference' });
         try {
           const a = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i]!.step)}`);
-          await a.page.locator('.controls button[aria-label="Next step"]').click();
+          await a.page.locator('.stepper button[aria-label="Next step"]').click();
           await a.page.waitForFunction(() => (window as unknown as { __settles: number }).__settles >= 2, undefined, {
             timeout: 30_000,
           });
@@ -1487,9 +1561,9 @@ test(
         try {
           const a = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i]!.step)}`);
           await quiet(a.page);
-          await a.page.locator('.controls button[aria-label="Next step"]').click();
+          await a.page.locator('.stepper button[aria-label="Next step"]').click();
           await a.page.waitForTimeout(after);
-          await a.page.locator('.controls button[aria-label="Next step"]').click();
+          await a.page.locator('.stepper button[aria-label="Next step"]').click();
           await a.page.waitForFunction((step) => (window as unknown as { __last: { step: string } | null }).__last?.step === step, list[i + 2]!.step, {
             timeout: 30_000,
           });
@@ -1548,7 +1622,7 @@ test(
         const shown = await page.evaluate((t) => (window as unknown as { __shown: Array<{ at: number; born: number | null }> }).__shown.filter((s) => s.at > t), t);
         return { t, shown };
       };
-      const next = await shownDuring(() => page.locator('.controls button[aria-label="Next step"]').click());
+      const next = await shownDuring(() => page.locator('.stepper button[aria-label="Next step"]').click());
       assert.ok(next.shown.length >= 1, 'Next showed a picture');
       assert.ok(next.shown[0]!.born !== null && next.shown[0]!.born < next.t, `Next's first picture was drawn after the tap: ${JSON.stringify(next)}`);
       for (const i of [0, 1]) {
@@ -1669,7 +1743,7 @@ test(
   async () => {
     const name = 'oauth-pkce',
       p = projects.get(name)!;
-    const early = fc.array(fc.constantFrom('Next step', 'Previous step', 'Replay step', 'Copy link', 'Zoom in', 'Zoom out', 'ArrowRight', 'ArrowLeft', '+', '0'), {
+    const early = fc.array(fc.constantFrom('Next step', 'Previous step', 'Whole picture', 'Copy link', 'Zoom in', 'Zoom out', 'ArrowRight', 'ArrowLeft', '+', '0'), {
       minLength: 1,
       maxLength: 8,
     });
@@ -1919,7 +1993,7 @@ test('PKCE mobile views expose the derivation and the unsent verifier without ad
       await page.goto(`${embed}/oauth-pkce.html?attacker=${variant.values.attacker}`);
       await page.waitForSelector('[data-ready=true]');
       for (const step of ['secret', 'authorize']) {
-        if (step === 'authorize') await page.locator('.controls').getByRole('button', { name: 'Next step', exact: true }).click();
+        if (step === 'authorize') await page.locator('.stepper').getByRole('button', { name: 'Next step', exact: true }).click();
         await quiet(page);
         assert.equal(new URL(page.url()).searchParams.get('step'), step);
         assert.ok(await page.locator('.view-help').isVisible());
@@ -1957,7 +2031,7 @@ test('PKCE mobile views expose the derivation and the unsent verifier without ad
       await page.getByRole('button', { name: 'Whole picture', exact: true }).click();
       await settledZoom(page);
       assert.ok(await page.locator('.view-controls').isVisible());
-      assert.ok(await page.getByRole('button', { name: 'Whole picture', exact: true }).isDisabled());
+      assert.ok(await page.getByRole('button', { name: 'Whole picture', exact: true }).isHidden(), 'Whole picture shows only while zoomed');
       assert.equal(zoomOf(await paintedView(page)), null);
     } finally { await context.close(); }
   }

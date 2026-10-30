@@ -54,7 +54,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     generation = 0,
     loads = 0,
     playing = false,
-    // On a narrow stage, whether each step opens on its close-up; Fit turns it off, Close-up on.
+    // On a narrow stage, whether each step opens on its close-up; Whole picture turns it off, Close-up on.
     follow = true;
   type Entry = { Scene: ExplainerClass; trace: Trace; layouts?: Promise<Map<string, StepLayout>>; resting: Map<string, Node[]> };
   const cache = new Map<string, Entry>();
@@ -119,38 +119,36 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   if (said) summary.lang = picture.lang = said;
   described.append(el('summary', t.picture), picture);
   stage.setAttribute('aria-describedby', summary.id);
-  // The step transport is visible before the picture on short screens too. Keep the
-  // second set after the caption for readers who reach the end of the explanation.
-  const transport = el('div', undefined, 'step-transport');
-  transport.setAttribute('role', 'group');
-  transport.setAttribute('aria-label', t.controls);
-  const earlyPrev = button(t.previous, 'previous'),
-    earlyNext = button(t.nextLabel, 'next', { text: t.nextLabel, className: 'button primary' });
-  earlyNext.append(earlyNext.querySelector('svg')!);
-  transport.append(earlyPrev, earlyNext);
-  const controls = el('nav', undefined, 'controls');
-  controls.setAttribute('aria-label', t.controls);
+  // One stepper row straight under the picture: Prev and Next at the start, where the
+  // reader's hand returns at every width, then the view tools behind a rule.
+  const stepper = el('div', undefined, 'stepper');
+  stepper.setAttribute('role', 'group');
+  stepper.setAttribute('aria-label', t.controls);
   const prev = button(t.previous, 'previous'),
     next = button(t.nextLabel, 'next', { text: t.next, className: 'button primary' });
   next.append(next.querySelector('svg')!); // the arrow follows the word
   const tools = el('div', undefined, 'tools');
+  tools.setAttribute('role', 'group');
+  tools.setAttribute('aria-label', t.viewTools);
   const zoomOut = button(t.zoomOut, 'zoomOut'),
     zoomIn = button(t.zoomIn, 'zoomIn'),
-    zoomFit = button(t.fit, 'fit'),
-    replay = button(t.replay, 'replay'),
+    wholePicture = button(t.wholePicture, 'fit'),
     copy = button(t.copy, 'link'),
     enlarge = button(t.enlarge, 'enlarge');
   enlarge.setAttribute('aria-pressed', 'false');
-  // On a narrow stage, Fit shows the whole picture from then on; Close-up brings back a
-  // close-up of each step.
+  // On a narrow stage, Whole picture shows the whole picture from then on; Close-up brings
+  // back a close-up of each step.
   const closer = button(t.closeUp, 'closeUp');
   closer.hidden = true;
-  tools.append(zoomOut, zoomIn, zoomFit, closer, replay, copy, ...(document.fullscreenEnabled ? [enlarge] : []));
-  controls.append(prev, next, tools);
+  tools.append(zoomOut, zoomIn, wholePicture, closer, copy, ...(document.fullscreenEnabled ? [enlarge] : []));
+  stepper.append(prev, next, tools);
   const notice = el('p', undefined, 'notice');
   notice.setAttribute('role', 'status');
   // Keep navigation outside the picture so controls cannot cover its lettering.
   const frame = el('div', undefined, 'frame');
+  // The step's words, under the controls, so a long caption never moves Next.
+  const words = el('div', undefined, 'words');
+  words.append(lede, caption, described);
   // Unseen copies of the caption and the lede, at their width and in their type, measure
   // every step's words so each keeps the room its case's longest needs: the steps list and
   // the transcript then stay put as the reader steps. They are not a .caption or a .lede,
@@ -159,9 +157,11 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     ledeRuler = el('p', undefined, 'lede-ruler');
   ruler.setAttribute('aria-hidden', 'true');
   ledeRuler.setAttribute('aria-hidden', 'true');
-  // Keep the caption beside its picture; the controls after it follow immediately,
-  // before disclosures and close-up controls can push the story's Next out of sight.
-  player.append(transport, frame, lede, caption, controls, described, notice, summary, ruler, ledeRuler);
+  // One card: the picture, the stepper row, then the words.
+  player.append(frame, stepper, words, notice, summary, ruler, ledeRuler);
+  // A frame the loader sizes to its content has no viewport height to fit: the card takes
+  // the page's width, and the host page scrolls (embed.css, --player-reserve).
+  if (window.parent !== window && params.has('parentOrigin')) root.style.setProperty('--player-reserve', '0px');
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', t.stepList);
@@ -193,19 +193,18 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   overview.hidden = true;
   overview.append(map);
   frame.append(stage);
-  // Keep view navigation separate from step navigation, after the story's Next.
+  // Keep view navigation separate from step navigation: its own row, under the stepper row.
   const views = el('div', undefined, 'view-controls'),
     viewCount = el('span'),
     nextView = el('button', t.nextView, 'button'),
-    wholePicture = button(t.wholePicture, 'fit'),
     viewHelp = el('p', t.viewHelp, 'view-help');
-  nextView.type = wholePicture.type = 'button';
+  nextView.type = 'button';
   viewHelp.id = 'view-help';
   nextView.setAttribute('aria-describedby', viewHelp.id);
   viewCount.setAttribute('aria-live', 'polite');
   views.hidden = true;
-  views.append(viewCount, nextView, wholePicture, overview, viewHelp);
-  controls.after(views);
+  views.append(viewCount, nextView, overview, viewHelp);
+  stepper.after(views);
   const narrow = () => stage.clientWidth > 0 && stage.clientWidth < NARROW_PX;
   const revealStage = () => {
     if (!narrow()) return;
@@ -240,7 +239,6 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     // transcript still. A single-view step exposes no toolbar or instructions.
     views.hidden = !narrow() || !caseHasTour;
     views.style.visibility = multiple ? '' : 'hidden';
-    wholePicture.disabled = !on;
     nextView.disabled = tour.length < 2;
     const count = on || !multiple ? t.viewCount(stop + 1, Math.max(1, tour.length)) : t.wholePicture;
     if (viewCount.textContent !== count) viewCount.textContent = count;
@@ -270,7 +268,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   };
   // The reader's zoom narrows the viewBox over the author's camera (app/embed-zoom.ts), so the
   // drawing stays crisp, the layout never moves, a camera move keeps playing under a zoom, and
-  // Fit is the author's own frame. Close-ups are reader zooms over that frame too.
+  // Whole picture is the author's own frame. Close-ups are reader zooms over that frame too.
   const reader = new ReaderView(stage),
     readerView = (author: string) => reader.view(author);
   const zoom = new StageZoom(
@@ -280,13 +278,12 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       zoomIn.disabled = zoom.k >= zoom.max;
       // Unseen until zoomed, but it keeps its place, so a step that opens on a close-up
       // does not wrap the controls onto a second row and push the page down.
-      zoomFit.style.visibility = zoom.k <= 1 ? 'hidden' : '';
+      wholePicture.style.visibility = zoom.k <= 1 ? 'hidden' : '';
       closer.hidden = follow || !narrow();
       drawOverview();
     },
     reader.paint,
   );
-  wholePicture.onclick = () => { zoomFit.click(); stage.focus(); };
   zoomIn.onclick = () => { revealStage(); zoom.zoomAt(1.6, undefined, undefined, true); };
   zoomOut.onclick = () => { revealStage(); zoom.zoomAt(1 / 1.6, undefined, undefined, true); };
   /** The whole picture; on a narrow stage, for the steps that follow too. */
@@ -294,7 +291,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     if (narrow()) follow = false;
     zoom.reset(glide);
   };
-  zoomFit.onclick = () => whole(true);
+  wholePicture.onclick = () => whole(true);
   closer.onclick = async () => {
     follow = true;
     const target = trace && (await framing(trace.steps[selected]!));
@@ -324,15 +321,17 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       words = stepWords(step);
     caption.textContent = words.caption;
     fillLede(ledeTitle, ledeLine, selected, words);
-    prev.disabled = earlyPrev.disabled = selected === 0;
-    next.disabled = earlyNext.disabled = selected === trace.steps.length - 1;
+    prev.disabled = selected === 0;
+    next.disabled = selected === trace.steps.length - 1;
     for (const b of steps.querySelectorAll('button'))
       b.setAttribute('aria-current', b.dataset.step === step.step ? 'step' : 'false');
     stage.setAttribute('aria-label', t.stageLabel(title.textContent!, words.title, words.line));
+    // Busy while a step plays: the resting picture, and its description, are still to come.
+    if (playing) stage.setAttribute('aria-busy', 'true');
+    else stage.removeAttribute('aria-busy');
     summary.textContent = pictureSummary(step.after);
     picture.innerHTML = pictureHtml(step.after);
     described.hidden = !picture.innerHTML;
-    setIcon(replay, playing ? t.stop : t.replay, playing ? 'stop' : 'replay');
   }
   let shownCase = '',
     reservedFor = '';
@@ -645,9 +644,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     reserve();
     await show(selected, push);
   }
-  prev.onclick = earlyPrev.onclick = () => void show(selected - 1);
-  next.onclick = earlyNext.onclick = () => void advance();
-  replay.onclick = () => void animate();
+  prev.onclick = () => void show(selected - 1);
+  next.onclick = () => void advance();
   enlarge.onclick = async () => {
     if (document.fullscreenElement) await document.exitFullscreen();
     else {
