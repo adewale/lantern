@@ -1,6 +1,6 @@
 # Look up an authoring feature
 
-[Hello World](https://oshineye.dev/projects/rayner/hello-world) is a minimal build smoke test; its [tutorial](TUTORIAL.md#0-hello-world) prints the whole scene. The [feature tour](https://oshineye.dev/projects/rayner/feature-tour) is an API demo, not a subject lesson. Both have public reader routes in the gallery's separate authoring section. To follow a question from author code through two consequential results, start with [Learn by example](BY-EXAMPLE.md).
+[Hello World](https://oshineye.dev/projects/rayner/hello-world) is a minimal build smoke test; its [tutorial](TUTORIAL.md#0-hello-world) prints the whole scene. The [feature tour](https://oshineye.dev/projects/rayner/feature-tour) is an API demo, not a subject lesson. Both have public reader routes in the gallery's separate authoring section. To learn how to plan, write and check an explainer, start with [the tutorial](TUTORIAL.md).
 
 For the local source gallery, run `npm run demos:build && npm run demos:serve`, then open [Hello World](http://127.0.0.1:5175/explainers/hello-world.html) or the [tour](http://127.0.0.1:5175/explainers/feature-tour.html). The tutorial's installed-project import is `from 'rayner'`; the checked-in Hello World imports its local engine.
 

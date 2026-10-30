@@ -6,9 +6,9 @@ Rayner turns a TypeScript model into a step-through explanation. Readers can cha
 
 ## Start with a question
 
-[Why does a cache hit skip the database?](https://oshineye.dev/projects/rayner/mr-cache?request=hit&step=request) Follow the request, then [switch to a miss](https://oshineye.dev/projects/rayner/mr-cache?request=miss&step=request). The two cases show zero versus one D1 read. The [by-example guide](docs/BY-EXAMPLE.md) puts the author code next to those results and two more problem-led comparisons: `isdigit()` versus `int()`, and a stolen authorization code.
+[Why does a cache hit skip the database?](https://oshineye.dev/projects/rayner/mr-cache?request=hit&step=request) Follow the request, then [switch to a miss](https://oshineye.dev/projects/rayner/mr-cache?request=miss&step=request). The two cases show zero versus one D1 read. [The tutorial](docs/TUTORIAL.md) builds a smaller version of this explainer and sets out the principles behind it.
 
-[Browse the subject lessons](https://oshineye.dev/projects/rayner/) · [Learn by example](docs/BY-EXAMPLE.md) · [API and CLI reference](docs/REFERENCE.md)
+[Browse the subject lessons](https://oshineye.dev/projects/rayner/) · [Write your first explainer](docs/TUTORIAL.md) · [API and CLI reference](docs/REFERENCE.md)
 
 ## Write your first scene
 
@@ -33,11 +33,11 @@ npx rayner review my-explainer/scene.ts
 npx rayner build my-explainer/scene.ts --out public/my-explainer.html
 ```
 
-`review` checks cases and opens each resting step at phone and desktop widths, saving screenshots and a receipt. `build` writes HTML, its receipt, a response-header recipe and an optional iframe loader; it does **not** repeat validation. Check the model against its sources and read the pictures yourself: automated checks cannot establish that an explanation is true. [The tutorial](docs/TUTORIAL.md) walks through this cache scene; [publishing](docs/PUBLISHING.md) covers hosting and embedding it.
+`review` checks cases and opens each resting step at phone and desktop widths, saving screenshots and a receipt. `build` writes HTML, its receipt, a response-header recipe and an optional iframe loader; it does **not** repeat validation. Check the model against its sources and read the pictures yourself: automated checks cannot establish that an explanation is true. [The tutorial](docs/TUTORIAL.md) plans, extends and checks this cache scene; [publishing](docs/PUBLISHING.md) covers hosting and embedding it.
 
 ## Look up an authoring feature
 
-The [feature tour](https://oshineye.dev/projects/rayner/feature-tour) is an **API demo**, not a lesson or a complete inventory. Choose a feature, inspect the **Recipe** for the code an author writes, then advance to **Result**. Its excerpts need the surrounding scene to run; the [feature guide](docs/FEATURE-TOUR.md) links the full source and specialized setup. Use the [by-example lessons](docs/BY-EXAMPLE.md) to see how code, model and result answer a reader question.
+The [feature tour](https://oshineye.dev/projects/rayner/feature-tour) is an **API demo**, not a lesson or a complete inventory. Choose a feature, inspect the **Recipe** for the code an author writes, then advance to **Result**. Its excerpts need the surrounding scene to run; the [feature guide](docs/FEATURE-TOUR.md) links the full source and specialized setup. The [tutorial](docs/TUTORIAL.md) shows how a model, its pictures and their captions answer a reader's question.
 
 ## Work from this repository
 
