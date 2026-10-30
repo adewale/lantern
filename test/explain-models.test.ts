@@ -292,3 +292,41 @@ test('ring-buffer views show the traced state at every step, in both cases', asy
     }
   }
 });
+
+test('Manhattanhenge model: refraction, symmetry, and the published 2026 minutes', async () => {
+  const M = await import('../scenes/explainers/lib/manhattanhenge.ts');
+  // Saemundsson at a true altitude of 0° is 28.9′ (Meeus 16.4); at 45° about 1′.
+  assert.ok(Math.abs(M.refraction(0) * 60 - 28.9) < 0.2);
+  assert.ok(Math.abs(M.refraction(45) * 60 - 1.0) < 0.1);
+  // Sunrise and sunset bearings are mirror images about the meridian within the day's change in declination.
+  for (const [m, d] of [[3, 20], [6, 21], [10, 30], [12, 21]] as const) {
+    const rise = M.sunrise(2026, m, d)!, set = M.sunset(2026, m, d)!;
+    assert.ok(Math.abs(rise.azimuth + set.azimuth - 360) < 0.5, `${m}/${d}: ${rise.azimuth} ${set.azimuth}`);
+  }
+  // The crossing instants land inside the minutes the Hayden Planetarium published for 2026 (via CBS News, space.com, NYC Tourism).
+  const published = [
+    [[5, 28], '8:14 PM EDT'],
+    [[5, 29], '8:13 PM EDT'],
+    [[7, 11], '8:20 PM EDT'],
+    [[7, 12], '8:21 PM EDT'],
+  ] as const;
+  for (const [[m, d], time] of published) {
+    const c = M.crossing(2026, M.span(2026, [m, d], [m, d])[0]!)!;
+    const [h, min] = time.split(/[: ]/);
+    const publishedMs = M.newYork(2026, m, d, Number(h) + 12 + Number(min) / 60);
+    assert.ok(Math.abs(c.ms - publishedMs) <= 60000, `${m}/${d}: model ${M.clock(c.ms, { seconds: true })} vs published ${time}`);
+  }
+  // 30 October 2026, as henge.nyc computes it from VSOP87: sunrise 7:24 AM, solar noon 12:39 PM, sunset 5:54 PM.
+  assert.equal(M.clock(M.sunrise(2026, 10, 30)!.ms), '7:24 AM EDT');
+  assert.equal(M.clock(M.solarNoon(2026, 10, 30)), '12:39 PM EDT');
+  assert.equal(M.clock(M.sunset(2026, 10, 30)!.ms), '5:54 PM EDT');
+  // The sunset bearing passes the grid bearing twice a year, around the June solstice.
+  const year = M.sunsetYear(2026);
+  const above = year.map((a, i) => [a!, i] as const).filter(([a]) => a > M.GRID_BEARING).map(([, i]) => i);
+  assert.ok(above.length > 40 && above.length < 60, `${above.length} evenings north of the grid`);
+  assert.ok(above[0]! > 140 && above.at(-1)! < 200);
+  // Naming: with a flat horizon the two named evenings bracket the horizon.
+  const may = M.alignments(2026, M.span(2026, [5, 20], [6, 5]), 0);
+  assert.equal(may.length, 2);
+  assert.ok(may.every((a) => Math.abs(a.apparent - (a.event === 'half' ? 0 : M.SUN_RADIUS)) < 0.1));
+});

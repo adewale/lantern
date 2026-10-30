@@ -37,6 +37,7 @@ import { check as tailwindGamut } from './lib/fidelity/tailwind-gamut.ts';
 import { check as gnomeFiles } from './lib/fidelity/gnome-files.ts';
 import { check as wcagMap } from './lib/fidelity/wcag-map.ts';
 import { check as penAndPencil } from './lib/fidelity/pen-and-pencil.ts';
+import { check as manhattanhenge } from './lib/fidelity/manhattanhenge.ts';
 
 for (const entry of EXPLAINERS)
   test(`${entry.id}: every authored case exposes the program's answers at step boundaries`, async () => {
@@ -384,6 +385,9 @@ for (const entry of EXPLAINERS)
           break;
         case 'pen-and-pencil':
           penAndPencil(trace);
+          break;
+        case 'manhattanhenge':
+          manhattanhenge(trace, values);
           break;
         default:
           assert.fail(`${entry.id} has no fidelity oracle: compare its step state with the program it explains`);

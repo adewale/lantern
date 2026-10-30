@@ -17,6 +17,7 @@ export const PRODUCT = {
 
 export const EXPLAINERS: readonly { id: string; step: string; group: 'topic' | 'toolchain' }[] = [
   { id: 'seasons', step: 'year', group: 'topic' },
+  { id: 'manhattanhenge', step: 'ladder', group: 'topic' },
   { id: 'oauth-pkce', step: 'attack', group: 'topic' },
   { id: 'exgit', step: 'change', group: 'topic' },
   { id: 'token-bucket', step: 'trace', group: 'topic' },

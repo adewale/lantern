@@ -1,0 +1,591 @@
+<title>Manhattanhenge · by hand</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Layout: one column, picture first. One 16:9 drawing is redrawn for each step; the words sit under it, the controls under the words. */
+:root {
+  --bg: #f5f2ea; --fg: #1f2430; --soft: #5b6376; --line: #cbc6b9; --panel: #ebe7dc;
+  --sun: #d4891b; --sun-ink: #8a5300; --track: #2f5fb3; --accent: #b4461c;
+  --ground: #d9d4c6; --wall: #c4beae; --paper: #ffffff;
+  --display: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171f; --fg: #e7e5dd; --soft: #a0a6b3; --line: #343b4a; --panel: #1d2230;
+    --sun: #e7ab3f; --sun-ink: #f1c36a; --track: #7aa2f7; --accent: #f08c55;
+    --ground: #242938; --wall: #2d3344; --paper: #0f1117; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171f; --fg: #e7e5dd; --soft: #a0a6b3; --line: #343b4a; --panel: #1d2230;
+  --sun: #e7ab3f; --sun-ink: #f1c36a; --track: #7aa2f7; --accent: #f08c55;
+  --ground: #242938; --wall: #2d3344; --paper: #0f1117; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5; font-size: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+main { max-width: 900px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-family: var(--display); font-weight: 600; font-size: clamp(1.6rem, 1.1rem + 2vw, 2.3rem); line-height: 1.15; margin: 0; text-wrap: balance; }
+.lede { margin: 0; color: var(--soft); max-width: 62ch; }
+.settings { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; }
+.setting { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.setting > span { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { font: inherit; font-size: 0.9rem; padding: 5px 12px; border: 0; background: transparent; color: var(--fg); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.seg button:focus-visible, .nav button:focus-visible, .steps button:focus-visible, .evenings button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+figure { margin: 0; display: grid; gap: 12px; }
+.stage { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; display: block; background: var(--paper); border: 1px solid var(--line); border-radius: 4px; }
+.stage text { font-family: var(--body); fill: var(--fg); }
+.stage .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.stage .soft { fill: var(--soft); }
+.stage .ink { stroke: var(--fg); }
+.stage .grid-line { stroke: var(--accent); }
+.stage .sun { fill: var(--sun); }
+.stage .sun-line { stroke: var(--sun); }
+.stage .sun-ink { fill: var(--sun-ink); }
+.stage .track { stroke: var(--track); fill: none; }
+.stage .wall { fill: var(--wall); stroke: var(--line); }
+.stage .ground { fill: var(--ground); }
+.stage .faint { stroke: var(--line); }
+figcaption { display: grid; gap: 6px; }
+.kicker { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); font-variant-numeric: tabular-nums; }
+.step-title { font-family: var(--display); font-weight: 600; font-size: 1.35rem; line-height: 1.25; margin: 0; text-wrap: balance; }
+.caption { margin: 0; max-width: 68ch; }
+.caption b { font-weight: 500; }
+.evenings { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; background: var(--panel); border-radius: 6px; }
+.evenings[hidden] { display: none; }
+.evenings button { font: inherit; font-size: 0.9rem; padding: 5px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--fg); cursor: pointer; }
+.evenings button:disabled { opacity: 0.4; cursor: default; }
+.evenings .readout { font-family: var(--mono); font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+.nav { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
+.nav button { font: inherit; padding: 8px 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--fg); cursor: pointer; }
+.nav button:disabled { opacity: 0.4; cursor: default; }
+.steps { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; justify-content: center; flex-wrap: wrap; }
+.steps button { font: inherit; font-size: 0.85rem; padding: 4px 10px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: var(--soft); cursor: pointer; }
+.steps button[aria-current="step"] { border-color: var(--fg); color: var(--fg); }
+.hint { font-size: 0.85rem; color: var(--soft); text-align: center; margin: 0; }
+.notes { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 8px; font-size: 0.92rem; color: var(--soft); }
+.notes h2 { font: inherit; font-weight: 500; color: var(--fg); margin: 0; }
+.notes p { margin: 0; max-width: 72ch; }
+.notes a { color: inherit; }
+@media (max-width: 560px) { .nav { grid-template-columns: 1fr 1fr; } .nav .steps { grid-column: 1 / -1; order: 3; } }
+@media (prefers-reduced-motion: no-preference) { .stage .sun, .stage .sun-line { transition: cy 0.25s ease, cx 0.25s ease; } }
+</style>
+<main>
+  <h1>Why Manhattanhenge falls on the evenings it does</h1>
+  <p class="lede">Twice a year the setting Sun lines up with Manhattan's cross-streets, on two consecutive evenings each time. The drawing below computes where the Sun is, evening by evening, and shows what picks those four dates out of the year.</p>
+  <div class="settings" role="group" aria-label="Settings">
+    <div class="setting"><span>Cycle</span>
+      <div class="seg" id="cycle"><button type="button" data-v="may" aria-pressed="true">Late May</button><button type="button" data-v="july" aria-pressed="false">Mid July</button></div></div>
+    <div class="setting"><span>Western horizon</span>
+      <div class="seg" id="horizon"><button type="button" data-v="flat" aria-pressed="true">Flat, 0°</button><button type="button" data-v="raised" aria-pressed="false">Raised 0.5°</button></div></div>
+  </div>
+  <figure>
+    <svg class="stage" id="stage" viewBox="0 0 960 540" role="img" aria-labelledby="stage-title stage-desc"><title id="stage-title"></title><desc id="stage-desc"></desc></svg>
+    <div class="evenings" id="evenings" hidden>
+      <button type="button" id="earlier">◀ earlier evening</button>
+      <span class="readout" id="readout"></span>
+      <button type="button" id="later">later evening ▶</button>
+    </div>
+    <figcaption>
+      <div class="kicker" id="kicker"></div>
+      <p class="step-title" id="title"></p>
+      <p class="caption" id="caption"></p>
+    </figcaption>
+  </figure>
+  <nav class="nav" aria-label="Steps">
+    <button type="button" id="prev">Previous</button>
+    <ol class="steps" id="steps"></ol>
+    <button type="button" id="next">Next</button>
+  </nav>
+  <p class="hint">Left and right arrow keys change the step.</p>
+  <section class="notes">
+    <h2>What this page computes, and what it assumes</h2>
+    <p>Sun positions follow the low-precision method in Meeus, <i>Astronomical Algorithms</i> (chapter 25, about 0.01°), with refraction from Saemundsson's formula at a standard atmosphere. The observer is 5th Avenue at 42nd Street (40.7534° N, 73.9807° W) and the street bearing is the Hayden Planetarium's 299.1°. The model is in this page's source; every number drawn comes from it. Its crossing instants fall inside the minutes the planetarium published for 2026 (as reported by <a href="https://www.cbsnews.com/newyork/news/manhattanhenge-2026-nyc-dates/">CBS News</a> and others; the <a href="https://www.amnh.org/research/hayden-planetarium/resources/manhattanhenge">planetarium's own page</a> refuses automated readers).</p>
+    <p>What it does not know is how high the visible western horizon sits from a given street. That one input decides which evening gets which name, which is why it is a setting rather than a fact. The buildings in the drawing are a schematic 30 m wide street seen from 2 km, not a survey.</p>
+  </section>
+</main>
+<script>
+// The solar model, compiled from scenes/explainers/lib/manhattanhenge.ts (Meeus ch. 25; Saemundsson refraction).
+var M = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+  var manhattanhenge_exports = {};
+  __export(manhattanhenge_exports, {
+    GRID_BEARING: () => GRID_BEARING,
+    MONTHS: () => MONTHS,
+    OBSERVER: () => OBSERVER,
+    SUN_RADIUS: () => SUN_RADIUS,
+    alignments: () => alignments,
+    clock: () => clock,
+    crossing: () => crossing,
+    dateOf: () => dateOf,
+    julianDay: () => julianDay,
+    label: () => label,
+    newYork: () => newYork,
+    newYorkOffsetHours: () => newYorkOffsetHours,
+    refraction: () => refraction,
+    solarNoon: () => solarNoon,
+    span: () => span,
+    sunAt: () => sunAt,
+    sunrise: () => sunrise,
+    sunset: () => sunset,
+    sunsetYear: () => sunsetYear
+  });
+  const OBSERVER = { lat: 40.7534, lon: -73.9807 };
+  const GRID_BEARING = 299.1;
+  const SUN_RADIUS = 0.2666;
+  const RAD = Math.PI / 180;
+  const DEG = 180 / Math.PI;
+  const norm360 = (d) => (d % 360 + 360) % 360;
+  function julianDay(ms) {
+    return ms / 864e5 + 24405875e-1;
+  }
+  function refraction(trueAltitude) {
+    const h = trueAltitude;
+    return 1.02 / Math.tan((h + 10.3 / (h + 5.11)) * RAD) / 60;
+  }
+  function sunAt(ms, observer = OBSERVER) {
+    const jd = julianDay(ms);
+    const T = (jd - 2451545) / 36525;
+    const L0 = norm360(280.46646 + 36000.76983 * T + 3032e-7 * T * T);
+    const M = norm360(357.52911 + 35999.05029 * T - 1537e-7 * T * T);
+    const Mr = M * RAD;
+    const C = (1.914602 - 4817e-6 * T - 14e-6 * T * T) * Math.sin(Mr) + (0.019993 - 101e-6 * T) * Math.sin(2 * Mr) + 289e-6 * Math.sin(3 * Mr);
+    const trueLon = L0 + C;
+    const omega = (125.04 - 1934.136 * T) * RAD;
+    const lambda = (trueLon - 569e-5 - 478e-5 * Math.sin(omega)) * RAD;
+    const eps0 = 23 + 26 / 60 + 21.448 / 3600 - (46.815 * T + 59e-5 * T * T - 1813e-6 * T * T * T) / 3600;
+    const eps = (eps0 + 256e-5 * Math.cos(omega)) * RAD;
+    const ra = Math.atan2(Math.cos(eps) * Math.sin(lambda), Math.cos(lambda));
+    const dec = Math.asin(Math.sin(eps) * Math.sin(lambda));
+    const gmst = norm360(280.46061837 + 360.98564736629 * (jd - 2451545) + 387933e-9 * T * T - T * T * T / 3871e4);
+    const H = (norm360(gmst + observer.lon) - ra * DEG) * RAD;
+    const phi = observer.lat * RAD;
+    const altitude = Math.asin(Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(H)) * DEG;
+    const azimuth = norm360(Math.atan2(Math.sin(H), Math.cos(H) * Math.sin(phi) - Math.tan(dec) * Math.cos(phi)) * DEG + 180);
+    return { azimuth, altitude, apparent: altitude + refraction(altitude), declination: dec * DEG };
+  }
+  function newYorkOffsetHours(ms) {
+    const d = new Date(ms);
+    const y = d.getUTCFullYear();
+    const nthSunday = (month, n) => {
+      const first = new Date(Date.UTC(y, month, 1));
+      const day = 1 + (7 - first.getUTCDay()) % 7 + (n - 1) * 7;
+      return Date.UTC(y, month, day, 2 + 5, 0, 0);
+    };
+    const start = nthSunday(2, 2), end = nthSunday(10, 1) - 36e5;
+    return ms >= start && ms < end ? -4 : -5;
+  }
+  function newYork(y, month, day, hour) {
+    const guess = Date.UTC(y, month - 1, day, 0, 0, 0) + (hour + 5) * 36e5;
+    return Date.UTC(y, month - 1, day, 0, 0, 0) + (hour - newYorkOffsetHours(guess)) * 36e5;
+  }
+  function clock(ms, { seconds = false } = {}) {
+    const off = newYorkOffsetHours(ms);
+    const local = new Date(ms + off * 36e5);
+    let h = local.getUTCHours();
+    const m = local.getUTCMinutes(), s = local.getUTCSeconds();
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12 || 12;
+    const mm = String(m).padStart(2, "0");
+    return `${h}:${mm}${seconds ? ":" + String(s).padStart(2, "0") : ""} ${ampm} ${off === -4 ? "EDT" : "EST"}`;
+  }
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  function dateOf(y, doy) {
+    let month = 0, d = doy;
+    const days = [...DAYS];
+    if (y % 4 === 0 && y % 100 !== 0 || y % 400 === 0) days[1] = 29;
+    while (d >= days[month]) d -= days[month++];
+    return { month: month + 1, day: d + 1 };
+  }
+  function label(y, doy) {
+    const { month, day } = dateOf(y, doy);
+    return `${day} ${MONTHS[month - 1]}`;
+  }
+  function solve(f, a, b) {
+    let fa = f(a), fb = f(b);
+    if (fa === 0) return a;
+    if (fb === 0) return b;
+    if (Math.sign(fa) === Math.sign(fb)) return null;
+    for (let i = 0; i < 60 && b - a > 1; i++) {
+      const m = Math.floor((a + b) / 2), fm = f(m);
+      if (Math.sign(fm) === Math.sign(fa)) {
+        a = m;
+        fa = fm;
+      } else {
+        b = m;
+        fb = fm;
+      }
+    }
+    return b;
+  }
+  function sunset(y, month, day, observer = OBSERVER) {
+    const from = newYork(y, month, day, 15), to = newYork(y, month, day, 22);
+    const ms = solve((t) => sunAt(t, observer).altitude + 0.8333, from, to);
+    return ms == null ? null : { ms, azimuth: sunAt(ms, observer).azimuth };
+  }
+  function sunrise(y, month, day, observer = OBSERVER) {
+    const from = newYork(y, month, day, 3), to = newYork(y, month, day, 10);
+    const ms = solve((t) => -(sunAt(t, observer).altitude + 0.8333), from, to);
+    return ms == null ? null : { ms, azimuth: sunAt(ms, observer).azimuth };
+  }
+  function solarNoon(y, month, day, observer = OBSERVER) {
+    const from = newYork(y, month, day, 9), to = newYork(y, month, day, 15);
+    return solve((t) => sunAt(t, observer).azimuth - 180, from, to);
+  }
+  function crossing(y, doy, bearing = GRID_BEARING, observer = OBSERVER) {
+    const { month, day } = dateOf(y, doy);
+    const from = newYork(y, month, day, 15), to = newYork(y, month, day, 23.5);
+    const ms = solve((t) => sunAt(t, observer).azimuth - bearing, from, to);
+    if (ms == null) return null;
+    const at = sunAt(ms, observer);
+    return { doy, ms, apparent: at.apparent, altitude: at.altitude };
+  }
+  function sunsetYear(y, observer = OBSERVER) {
+    const n = y % 4 === 0 && y % 100 !== 0 || y % 400 === 0 ? 366 : 365;
+    return Array.from({ length: n }, (_, doy) => {
+      const { month, day } = dateOf(y, doy);
+      return sunset(y, month, day, observer)?.azimuth ?? null;
+    });
+  }
+  function alignments(y, days, horizon = 0, bearing = GRID_BEARING, observer = OBSERVER) {
+    const xs = days.map((doy) => crossing(y, doy, bearing, observer)).filter((c) => c != null);
+    const nearest = (target) => xs.reduce((best, c) => Math.abs(c.apparent - target) < Math.abs(best.apparent - target) ? c : best);
+    const half = nearest(horizon), full = nearest(horizon + SUN_RADIUS);
+    const out = [
+      { event: "half", doy: half.doy, ms: half.ms, apparent: half.apparent },
+      { event: "full", doy: full.doy, ms: full.ms, apparent: full.apparent }
+    ];
+    return out.sort((a, b) => a.doy - b.doy);
+  }
+  function span(y, from, to) {
+    const doy = (month, day) => {
+      const days = [...DAYS];
+      if (y % 4 === 0 && y % 100 !== 0 || y % 400 === 0) days[1] = 29;
+      return days.slice(0, month - 1).reduce((a2, b2) => a2 + b2, 0) + day - 1;
+    };
+    const a = doy(...from), b = doy(...to);
+    return Array.from({ length: b - a + 1 }, (_, i) => a + i);
+  }
+  return __toCommonJS(manhattanhenge_exports);
+})();
+
+</script>
+<script>
+(() => {
+  const Y = 2026;
+  const RAD = Math.PI / 180;
+  const CYCLES = { may: { from: [5, 20], to: [6, 5], name: 'late May' }, july: { from: [7, 5], to: [7, 20], name: 'mid July' } };
+  const HORIZONS = { flat: 0, raised: 0.5 };
+  const PUBLISHED = {
+    may: { half: { date: '28 May', time: '8:14 PM' }, full: { date: '29 May', time: '8:13 PM' } },
+    july: { full: { date: '11 Jul', time: '8:20 PM' }, half: { date: '12 Jul', time: '8:21 PM' } },
+  };
+  const CANYON_HALF = Math.atan(15 / 2000) / RAD;
+  const deg = (d, p = 2) => d.toFixed(p) + '°';
+  const minutes = (ms) => M.clock(ms).replace(/ (EDT|EST)$/, '');
+  const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+  // ---- the model, asked once per case -------------------------------------
+  const year = M.sunsetYear(Y);
+  const az = year.filter((a) => a != null);
+  const minAz = Math.min(...az), maxAz = Math.max(...az);
+  const gridDays = [];
+  for (let i = 1; i < year.length; i++) {
+    const a = year[i - 1], b = year[i];
+    if ((a - M.GRID_BEARING) * (b - M.GRID_BEARING) < 0) gridDays.push(Math.abs(a - M.GRID_BEARING) < Math.abs(b - M.GRID_BEARING) ? i - 1 : i);
+  }
+  const cycleCache = {};
+  function cycleOf(cycle, horizon) {
+    const key = cycle + horizon;
+    if (cycleCache[key]) return cycleCache[key];
+    const c = CYCLES[cycle];
+    const days = M.span(Y, c.from, c.to);
+    const named = M.alignments(Y, days, horizon);
+    const first = Math.min(...named.map((a) => a.doy)) - 2;
+    const ladder = Array.from({ length: 6 }, (_, i) => M.crossing(Y, first + i));
+    const half = named.find((a) => a.event === 'half'), full = named.find((a) => a.event === 'full');
+    return (cycleCache[key] = { named, ladder, half, full, rate: (ladder[5].apparent - ladder[0].apparent) / 5 });
+  }
+
+  // ---- state ---------------------------------------------------------------
+  const state = { cycle: 'may', horizon: 'flat', step: 0, evening: null };
+  const $ = (id) => document.getElementById(id);
+  const svg = $('stage');
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs = {}, text) => {
+    const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) if (v != null) e.setAttribute(k, v);
+    if (text != null) e.textContent = text;
+    return e;
+  };
+  const add = (parent, tag, attrs, text) => parent.appendChild(el(tag, attrs, text));
+  const label = (parent, text, x, y, opts = {}) =>
+    add(parent, 'text', { x, y, 'text-anchor': opts.anchor ?? 'middle', 'dominant-baseline': opts.baseline ?? 'middle', 'font-size': opts.size ?? 15, class: opts.cls ?? 'soft', 'font-weight': opts.weight }, text);
+
+  // ---- the horizon view: compass bearing across, apparent altitude up ----
+  const K = 108, X0 = 480, Y0 = 440, AZ = 3.2, FLOOR = -0.5;
+  const vx = (a) => X0 + (a - M.GRID_BEARING) * K;
+  const vy = (alt) => Y0 - alt * K;
+  function horizonView(g, horizon) {
+    add(g, 'rect', { x: vx(M.GRID_BEARING - AZ), y: vy(0), width: 2 * AZ * K, height: -FLOOR * K, class: 'ground' });
+    if (horizon > 0) {
+      add(g, 'rect', { x: vx(M.GRID_BEARING - AZ), y: vy(horizon), width: 2 * AZ * K, height: horizon * K, class: 'ground', opacity: 0.6 });
+    }
+    const wall = (side) =>
+      add(g, 'polygon', {
+        points: [
+          [vx(M.GRID_BEARING + side * AZ), vy(2.2)],
+          [vx(M.GRID_BEARING + side * AZ), vy(0)],
+          [vx(M.GRID_BEARING + side * CANYON_HALF), vy(0)],
+          [vx(M.GRID_BEARING + side * CANYON_HALF), vy(1.0)],
+        ].map((p) => p.join(',')).join(' '),
+        class: 'wall', 'fill-opacity': 0.45, 'stroke-width': 1,
+      });
+    wall(-1); wall(1);
+    add(g, 'line', { x1: vx(M.GRID_BEARING - AZ), y1: vy(0), x2: vx(M.GRID_BEARING + AZ), y2: vy(0), class: 'ink', 'stroke-width': 1.5 });
+    if (horizon > 0) add(g, 'line', { x1: vx(M.GRID_BEARING - AZ), y1: vy(horizon), x2: vx(M.GRID_BEARING + AZ), y2: vy(horizon), class: 'ink', 'stroke-width': 1.5 });
+    label(g, horizon > 0 ? `visible horizon, ${deg(horizon, 1)}` : 'flat horizon, 0°', vx(M.GRID_BEARING - AZ) + 8, vy(horizon) - 12, { anchor: 'start', size: 14, cls: '' });
+    add(g, 'line', { x1: X0, y1: vy(0), x2: X0, y2: vy(3.0), class: 'grid-line', 'stroke-width': 1.5, 'stroke-dasharray': '6 5' });
+    for (const b of [297, 298, 299.1, 300, 301])
+      label(g, b === 299.1 ? '299.1°' : `${b}°`, vx(b), vy(FLOOR) - 14, { size: 14, cls: b === 299.1 ? 'num' : 'num soft' });
+    for (const a of [0, 1, 2]) {
+      label(g, `${a}°`, vx(M.GRID_BEARING - AZ) - 10, vy(a), { anchor: 'end', size: 14, cls: 'num soft' });
+      if (a) add(g, 'line', { x1: vx(M.GRID_BEARING - AZ), y1: vy(a), x2: vx(M.GRID_BEARING - AZ) + 10, y2: vy(a), class: 'faint', 'stroke-width': 1 });
+    }
+  }
+  const R = M.SUN_RADIUS * K;
+  const disc = (g, alt, opts = {}) =>
+    add(g, 'circle', { cx: X0, cy: vy(alt), r: R, class: opts.outline ? 'sun-line' : 'sun', fill: opts.outline ? 'none' : undefined, 'fill-opacity': opts.opacity, 'stroke-width': opts.outline ? 1.5 : opts.edge ? 2 : 0, stroke: opts.edge ? 'var(--paper)' : undefined });
+
+  // ---- steps ---------------------------------------------------------------
+  const steps = [
+    {
+      id: 'grid',
+      title: () => 'The cross-streets point 29.1° north of due west',
+      caption: () =>
+        'The 1811 grid is turned about 29° from the compass, so looking west along a cross-street you face bearing <b>299.1°</b>, the figure the Hayden Planetarium uses for 42nd Street. The Sun sets due west only at the equinoxes. For a sunset to be framed by the street, the sunset point has to move 29° north of west along the horizon.',
+      describe: () => 'A compass rose with a dashed line due west and a solid line at bearing 299.1°, 29.1° north of it; beside it, Midtown from above with its cross-streets drawn at that bearing.',
+      draw(g) {
+        const c = [250, 290], r = 150;
+        const ray = (b, len) => [c[0] + len * Math.sin(b * RAD), c[1] - len * Math.cos(b * RAD)];
+        add(g, 'circle', { cx: c[0], cy: c[1], r, fill: 'none', class: 'faint', 'stroke-width': 1.5 });
+        ['N', 'E', 'S', 'W'].forEach((p, i) => { const [x, y] = ray(i * 90, r + 22); label(g, p, x, y, { size: 17, cls: '' }); });
+        const w = ray(270, r);
+        add(g, 'line', { x1: c[0], y1: c[1], x2: w[0], y2: w[1], class: 'ink', 'stroke-width': 1.5, 'stroke-dasharray': '7 6', opacity: 0.7 });
+        label(g, 'due west, 270°', c[0] - 78, c[1] + 20, { size: 14 });
+        const a = ray(299.1, r), b = ray(119.1, 60);
+        add(g, 'line', { x1: b[0], y1: b[1], x2: a[0], y2: a[1], class: 'grid-line', 'stroke-width': 3.5 });
+        label(g, 'cross-streets, 299.1°', a[0] + 6, a[1] - 22, { anchor: 'start', size: 14, cls: '' });
+        const r2 = 92, s0 = ray(270, r2), s1 = ray(299.1, r2);
+        add(g, 'path', { d: `M ${s0[0]} ${s0[1]} A ${r2} ${r2} 0 0 1 ${s1[0]} ${s1[1]}`, fill: 'none', class: 'sun-line', 'stroke-width': 2 });
+        const m = ray(284.5, r2 + 26); label(g, '29.1°', m[0], m[1], { size: 15, cls: 'sun-ink num', weight: 500 });
+        // Midtown from above
+        const o = [700, 290];
+        const along = [Math.sin(299.1 * RAD), -Math.cos(299.1 * RAD)], across = [Math.sin(29.1 * RAD), -Math.cos(29.1 * RAD)];
+        const at = (u, v) => [o[0] + u * along[0] + v * across[0], o[1] + u * along[1] + v * across[1]];
+        for (const k of [-2, -1, 0, 1, 2]) { const p = at(-150, k * 40), q = at(150, k * 40); add(g, 'line', { x1: p[0], y1: p[1], x2: q[0], y2: q[1], class: k === 0 ? 'grid-line' : 'faint', 'stroke-width': k === 0 ? 3 : 1.5 }); }
+        for (const k of [-1, 0, 1]) { const p = at(k * 95, -95), q = at(k * 95, 95); add(g, 'line', { x1: p[0], y1: p[1], x2: q[0], y2: q[1], class: 'faint', 'stroke-width': 1.5 }); }
+        const p0 = at(10, 0), p1 = at(185, 0);
+        add(g, 'line', { x1: p0[0], y1: p0[1], x2: p1[0], y2: p1[1], class: 'sun-line', 'stroke-width': 3 });
+        const tip = p1, back = at(170, 0), n = [-along[1], along[0]];
+        add(g, 'polygon', { points: `${tip[0]},${tip[1]} ${back[0] + 7 * n[0]},${back[1] + 7 * n[1]} ${back[0] - 7 * n[0]},${back[1] - 7 * n[1]}`, class: 'sun' });
+        label(g, 'looking west along 42nd St', p1[0] - 10, p1[1] - 22, { anchor: 'end', size: 14, cls: 'sun-ink' });
+        add(g, 'line', { x1: 905, y1: 120, x2: 905, y2: 60, class: 'ink', 'stroke-width': 1.5 });
+        add(g, 'polygon', { points: '905,54 900,66 910,66', fill: 'var(--fg)' });
+        label(g, 'N', 905, 44, { size: 16, cls: '' });
+        label(g, 'Midtown from above', o[0], 475, { size: 14 });
+      },
+    },
+    {
+      id: 'year',
+      title: () => `The sunset point swings ${Math.round(maxAz - minAz)}° along the horizon in a year`,
+      caption: () =>
+        `Each evening's sunset bearing through ${Y}, with sunset taken as the Sun's upper edge touching a flat horizon. The curve runs from ${deg(minAz, 1)} in December to ${deg(maxAz, 1)} in June and is above 299.1° only between <b>${M.label(Y, gridDays[0])}</b> and <b>${M.label(Y, gridDays[1])}</b>, either side of the solstice. On those evenings the Sun passes the street bearing while still above the horizon; on every other evening it has set before it gets there.`,
+      describe: () => `A chart of sunset bearing by month, a hump peaking in June. A line at 299.1° cuts the hump at ${M.label(Y, gridDays[0])} and ${M.label(Y, gridDays[1])}; a dashed line at 270° marks due west.`,
+      draw(g) {
+        const x0 = 110, x1 = 880, yTop = 60, yBot = 470, lo = 230, hi = 310;
+        const cx = (doy) => x0 + (doy / year.length) * (x1 - x0);
+        const cy = (b) => yBot - ((b - lo) / (hi - lo)) * (yBot - yTop);
+        add(g, 'line', { x1: x0, y1: yBot, x2: x1, y2: yBot, class: 'faint', 'stroke-width': 1.5 });
+        add(g, 'line', { x1: x0, y1: yBot, x2: x0, y2: yTop, class: 'faint', 'stroke-width': 1.5 });
+        for (let b = lo; b <= hi; b += 10) { add(g, 'line', { x1: x0 - 6, y1: cy(b), x2: x0, y2: cy(b), class: 'faint', 'stroke-width': 1.5 }); label(g, `${b}`, x0 - 12, cy(b), { anchor: 'end', size: 13, cls: 'num soft' }); }
+        label(g, 'sunset bearing (°)', x0 - 60, yTop - 24, { anchor: 'start', size: 13 });
+        const cum = [0]; for (const d of [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]) cum.push(cum[cum.length - 1] + d);
+        M.MONTHS.forEach((m, i) => { label(g, m, cx((cum[i] + cum[i + 1]) / 2), yBot + 20, { size: 13 }); add(g, 'line', { x1: cx(cum[i]), y1: yBot, x2: cx(cum[i]), y2: yBot + 6, class: 'faint', 'stroke-width': 1.5 }); });
+        add(g, 'line', { x1: x0, y1: cy(270), x2: x1, y2: cy(270), class: 'ink', 'stroke-width': 1, 'stroke-dasharray': '6 5', opacity: 0.6 });
+        label(g, 'due west, 270°', x1 - 4, cy(270) - 12, { anchor: 'end', size: 13 });
+        add(g, 'line', { x1: x0, y1: cy(M.GRID_BEARING), x2: x1, y2: cy(M.GRID_BEARING), class: 'grid-line', 'stroke-width': 2.5 });
+        label(g, 'cross-streets, 299.1°', x1 - 4, cy(M.GRID_BEARING) - 12, { anchor: 'end', size: 13, cls: '' });
+        add(g, 'path', { d: year.map((b, i) => `${i ? 'L' : 'M'} ${cx(i).toFixed(1)} ${cy(b).toFixed(1)}`).join(' '), class: 'track', 'stroke-width': 3 });
+        for (const d of gridDays) {
+          add(g, 'circle', { cx: cx(d), cy: cy(M.GRID_BEARING), r: 6, class: 'sun' });
+          add(g, 'line', { x1: cx(d), y1: cy(M.GRID_BEARING) + 8, x2: cx(d), y2: cy(M.GRID_BEARING) + 46, class: 'sun-line', 'stroke-width': 1.5 });
+          label(g, M.label(Y, d), cx(d), cy(M.GRID_BEARING) + 60, { size: 14, cls: 'sun-ink', weight: 500 });
+        }
+        const dx = x1 + 26;
+        add(g, 'line', { x1: dx, y1: cy(minAz), x2: dx, y2: cy(maxAz), class: 'ink', 'stroke-width': 1.5 });
+        for (const b of [minAz, maxAz]) add(g, 'line', { x1: dx - 6, y1: cy(b), x2: dx + 6, y2: cy(b), class: 'ink', 'stroke-width': 1.5 });
+        label(g, deg(maxAz - minAz, 1), dx, cy(maxAz) - 16, { size: 14, cls: 'num' });
+      },
+    },
+    {
+      id: 'evening',
+      title: (c) => `On ${M.label(Y, c.half.doy)} the Sun crosses the bearing at ${minutes(c.half.ms)}`,
+      caption: (c, h) =>
+        `Looking west along the street on ${M.label(Y, c.half.doy)}: the Sun at five-minute intervals, compass bearing across and apparent altitude up, refraction included. It slides down and to the right, about 1° lower for every 1° further north. Its centre reaches 299.1° at <b>${M.clock(c.half.ms, { seconds: true })}</b>, <b>${deg(c.half.apparent)}</b> above ${h === 0 ? 'a flat horizon' : `a horizon ${deg(h, 1)} high`}. The buildings are schematic: a 30 m wide street seen from 2 km is an opening ${deg(2 * CANYON_HALF)} wide. The altitude at this one instant is what decides whether the evening gets a name.`,
+      describe: (c) => `The view west along a cross-street. A dashed track descends to the right with faint Sun discs at five-minute intervals and a full disc where the centre crosses 299.1° at ${minutes(c.half.ms)}, ${deg(c.half.apparent)} up.`,
+      draw(g, c, h) {
+        horizonView(g, h);
+        const pts = [];
+        for (let m = -15; m <= 10; m++) { const p = M.sunAt(c.half.ms + m * 60000); if (p.apparent < FLOOR + 0.05) break; pts.push([vx(p.azimuth), vy(p.apparent)]); }
+        add(g, 'path', { d: pts.map((p, i) => `${i ? 'L' : 'M'} ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' '), class: 'track', 'stroke-width': 1.5, 'stroke-dasharray': '6 5' });
+        for (const m of [-15, -10, -5]) {
+          const p = M.sunAt(c.half.ms + m * 60000);
+          add(g, 'circle', { cx: vx(p.azimuth), cy: vy(p.apparent), r: R, class: 'sun', 'fill-opacity': 0.3 });
+          label(g, minutes(c.half.ms + m * 60000), vx(p.azimuth), vy(p.apparent) + R + 14, { size: 13, cls: 'num soft' });
+        }
+        disc(g, c.half.apparent);
+        add(g, 'line', { x1: X0 + R + 4, y1: vy(c.half.apparent), x2: X0 + R + 60, y2: vy(c.half.apparent), class: 'sun-line', 'stroke-width': 1.5 });
+        label(g, `${minutes(c.half.ms)} · centre ${deg(c.half.apparent)} up`, X0 + R + 66, vy(c.half.apparent), { anchor: 'start', size: 14, cls: 'sun-ink num', weight: 500 });
+      },
+    },
+    {
+      id: 'ladder',
+      title: (c) => `Each evening the crossing happens ${deg(Math.abs(c.rate))} ${c.rate > 0 ? 'higher' : 'lower'}`,
+      caption: (c, h) =>
+        `The same view, with the Sun drawn where its centre crosses 299.1° on six consecutive evenings, ${M.label(Y, c.ladder[0].doy)} to ${M.label(Y, c.ladder[5].doy)}. Step through them with the buttons above. The crossing altitude ${c.rate > 0 ? 'rises' : 'falls'} <b>${deg(Math.abs(c.rate))}</b> an evening, about two thirds of the disc's ${deg(2 * M.SUN_RADIUS)} diameter, because the Sun's declination is still ${c.rate > 0 ? 'increasing toward' : 'decreasing after'} the June solstice. The disc goes from hidden to wholly clear of ${h === 0 ? 'a flat horizon' : 'the raised horizon'} in about three evenings. The two evenings with a name are the ones whose disc sits on the horizon.`,
+      describe: (c) => `Six outlined discs stacked at 299.1°, one per evening: ${c.ladder.map((x) => `${M.label(Y, x.doy)} at ${deg(x.apparent)}`).join(', ')}. The chosen evening's disc is filled.`,
+      draw(g, c, h) {
+        horizonView(g, h);
+        const i = state.evening ?? c.ladder.findIndex((x) => x.doy === c.half.doy);
+        c.ladder.forEach((x, k) => {
+          disc(g, x.apparent, { outline: true });
+          add(g, 'circle', { cx: X0, cy: vy(x.apparent), r: 2.5, class: 'sun' });
+          const y = clearOf(vy(x.apparent), h);
+          label(g, M.label(Y, x.doy), X0 - R - 14, y, { anchor: 'end', size: 13, cls: k === i ? 'num' : 'num soft', weight: k === i ? 500 : undefined });
+        });
+        disc(g, c.ladder[i].apparent, { edge: true });
+        const dx = X0 + R + 70;
+        add(g, 'line', { x1: dx, y1: vy(c.ladder[0].apparent), x2: dx, y2: vy(c.ladder[5].apparent), class: 'ink', 'stroke-width': 1.5 });
+        for (const x of [c.ladder[0], c.ladder[5]]) add(g, 'line', { x1: dx - 6, y1: vy(x.apparent), x2: dx + 6, y2: vy(x.apparent), class: 'ink', 'stroke-width': 1.5 });
+        label(g, `${deg(Math.abs(c.ladder[5].apparent - c.ladder[0].apparent))} over 5 evenings`, dx + 12, vy((c.ladder[0].apparent + c.ladder[5].apparent) / 2), { anchor: 'start', size: 14, cls: 'num' });
+      },
+    },
+    {
+      id: 'names',
+      title: (c) => { const [a, b] = c.half.doy < c.full.doy ? [c.half, c.full] : [c.full, c.half]; return `${WORD[a.event]} on ${M.label(Y, a.doy)}, ${WORD[b.event]} on ${M.label(Y, b.doy)}`; },
+      caption: (c, h, cycle) => {
+        const pub = PUBLISHED[cycle];
+        const say = (a) => `${M.label(Y, a.doy)} at ${minutes(a.ms)}`;
+        const agree = M.label(Y, c.half.doy) === pub.half.date && M.label(Y, c.full.doy) === pub.full.date;
+        return `<b>Half Sun on the Grid</b> is the evening whose crossing puts the centre nearest ${h === 0 ? 'a flat horizon' : 'the raised horizon'}: ${say(c.half)}. <b>Full Sun on the Grid</b> puts the lower edge there, the centre one radius higher: ${say(c.full)}. The Hayden Planetarium publishes ${pub.half.date} and ${pub.full.date} for ${CYCLES[cycle].name}. ` +
+          (agree
+            ? 'With this horizon the model names the same evenings, and its instants fall inside the published minutes.'
+            : `Its minutes agree with this model's instants to within a minute, since the clock time of a crossing does not depend on the horizon. Its choice of evening does: a horizon about 0.4° high gives its May pair and about 0.7° its July pair, and no single height gives both. The height of the visible horizon is the one input this model does not measure${h === 0 ? '; the raised setting shows what half a degree does' : ''}.`);
+      },
+      describe: (c, h, cycle) => `Two discs filled in, Half Sun at ${deg(c.half.apparent)} and Full Sun at ${deg(c.full.apparent)}, each labelled with its date and time. A panel lists the Hayden Planetarium's published evenings, ${PUBLISHED[cycle].half.date} and ${PUBLISHED[cycle].full.date}.`,
+      draw(g, c, h, cycle) {
+        horizonView(g, h);
+        c.ladder.forEach((x) => { disc(g, x.apparent, { outline: true }); label(g, M.label(Y, x.doy), X0 - R - 14, clearOf(vy(x.apparent), h), { anchor: 'end', size: 13, cls: 'num soft' }); });
+        const lower = c.half.apparent < c.full.apparent ? c.half : c.full, upper = lower === c.half ? c.full : c.half;
+        disc(g, upper.apparent, { edge: true }); disc(g, lower.apparent, { edge: true });
+        for (const a of [lower, upper]) {
+          add(g, 'line', { x1: X0 + R + 4, y1: vy(a.apparent), x2: X0 + R + 60, y2: vy(a.apparent), class: 'sun-line', 'stroke-width': 1.5 });
+          label(g, `${WORD[a.event]} · ${M.label(Y, a.doy)} · ${minutes(a.ms)}`, X0 + R + 66, vy(a.apparent), { anchor: 'start', size: 14, cls: 'sun-ink num', weight: 500 });
+        }
+        const pub = PUBLISHED[cycle];
+        const px = 60, py = 50;
+        add(g, 'rect', { x: px, y: py, width: 300, height: 92, rx: 4, fill: 'var(--panel)', stroke: 'var(--line)' });
+        label(g, `Hayden Planetarium, ${Y}`, px + 14, py + 20, { anchor: 'start', size: 13, cls: '', weight: 500 });
+        label(g, 'Half Sun', px + 14, py + 48, { anchor: 'start', size: 14 });
+        label(g, `${pub.half.date} · ${pub.half.time}`, px + 130, py + 48, { anchor: 'start', size: 14, cls: 'num' });
+        label(g, 'Full Sun', px + 14, py + 74, { anchor: 'start', size: 14 });
+        label(g, `${pub.full.date} · ${pub.full.time}`, px + 130, py + 74, { anchor: 'start', size: 14, cls: 'num' });
+      },
+    },
+  ];
+  const WORD = { half: 'Half Sun', full: 'Full Sun' };
+  /** A date label sits at its disc's height, nudged off a horizon line so the line never runs through its letters. */
+  function clearOf(y, h) {
+    for (const line of h > 0 ? [0, h] : [0]) { const d = y - vy(line); if (Math.abs(d) < 9) return vy(line) + (d >= 0 ? 9 : -9); }
+    return y;
+  }
+
+  // ---- rendering -----------------------------------------------------------
+  const stepList = $('steps');
+  steps.forEach((s, i) => {
+    const li = document.createElement('li');
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = `${i + 1}`; b.setAttribute('aria-label', `Step ${i + 1}`);
+    b.addEventListener('click', () => go(i)); li.appendChild(b); stepList.appendChild(li);
+  });
+  function render() {
+    const h = HORIZONS[state.horizon];
+    const c = cycleOf(state.cycle, h);
+    const s = steps[state.step];
+    while (svg.childNodes.length > 2) svg.removeChild(svg.lastChild);
+    const g = add(svg, 'g');
+    s.draw(g, c, h, state.cycle);
+    $('kicker').textContent = `Step ${state.step + 1} of ${steps.length}`;
+    $('title').textContent = s.title(c, h, state.cycle);
+    $('caption').innerHTML = s.caption(c, h, state.cycle);
+    $('stage-title').textContent = s.title(c, h, state.cycle);
+    $('stage-desc').textContent = s.describe(c, h, state.cycle);
+    $('prev').disabled = state.step === 0;
+    $('next').disabled = state.step === steps.length - 1;
+    for (const [i, b] of [...stepList.querySelectorAll('button')].entries()) if (i === state.step) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+    const ev = $('evenings');
+    if (s.id === 'ladder') {
+      ev.hidden = false;
+      const i = state.evening ?? c.ladder.findIndex((x) => x.doy === c.half.doy);
+      state.evening = i;
+      const x = c.ladder[i];
+      $('readout').textContent = `${M.label(Y, x.doy)} · ${M.clock(x.ms, { seconds: true })} · centre ${deg(x.apparent)} ${x.apparent >= 0 ? 'above' : 'below'} a flat horizon`;
+      $('earlier').disabled = i === 0; $('later').disabled = i === c.ladder.length - 1;
+    } else ev.hidden = true;
+  }
+  function go(i) { state.step = Math.max(0, Math.min(steps.length - 1, i)); render(); }
+  $('prev').addEventListener('click', () => go(state.step - 1));
+  $('next').addEventListener('click', () => go(state.step + 1));
+  $('earlier').addEventListener('click', () => { state.evening = Math.max(0, state.evening - 1); render(); });
+  $('later').addEventListener('click', () => { state.evening = Math.min(5, state.evening + 1); render(); });
+  for (const id of ['cycle', 'horizon'])
+    $(id).addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      state[id] = b.dataset.v; state.evening = null;
+      for (const o of $(id).querySelectorAll('button')) o.setAttribute('aria-pressed', String(o === b));
+      render();
+    });
+  document.addEventListener('keydown', (e) => {
+    if (e.target.closest('input, textarea, select')) return;
+    if (e.key === 'ArrowRight') { go(state.step + 1); e.preventDefault(); }
+    if (e.key === 'ArrowLeft') { go(state.step - 1); e.preventDefault(); }
+  });
+  render();
+})();
+</script>

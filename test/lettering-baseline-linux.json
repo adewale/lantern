@@ -6,6 +6,13 @@
     "receipt": "edeed82b14485cf02468f247e01066dfb0f6ccb7b4e5a93719dc3c40e97bc1b8",
     "fullReceipt": "6834d4a31ae7be04e3ca5fc6de2d61a0b0cfbd159bf36e2dad789e329ba541bb"
   },
+  "manhattanhenge": {
+    "html": "2830c53448d0752d72f07b7abb783b057b91b95ac557f2e9fb5b2c3b4d673ac8",
+    "bytes": 668504,
+    "headers": "d43743e8a450f40abf81516de35d6e2c7b91b6ce0d8cb782460b356488e7b4e7",
+    "receipt": "e79387779ae5708797c02bf11d724249541ae9a35dff021c7b252d96726c5393",
+    "fullReceipt": "a490239340d2dd5a8bafc689d17b6eeef77c1dae58ab788f91b2bd9b31f4251c"
+  },
   "oauth-pkce": {
     "html": "7d38a3393440e3a6abf96a492b8e6e5098d80889bbc1e1ce267d200f0ce2b946",
     "bytes": 754240,

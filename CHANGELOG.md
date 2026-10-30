@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add the Manhattanhenge explainer: a solar model checked against published instants, with cycle and horizon settings. Record a three-way comparison of the same explanation built with Rayner, Lantern and by hand, and the lessons it draws for Rayner, in `docs/evidence/manhattanhenge-three-ways-2026-10-30.md`.
 - Add opt-in natural-width diagram lettering. Capture measures the requested font before layout, so labels retain their proportions; existing diagrams keep their fitted widths.
 - Upgrade build-time Agentic Mermaid to 0.5.1 for its supported font-measurement hook and recapture the catalog with that renderer.
 - Add explicit LTR/RTL card fields and logical `start`/`end` stage regions. Text shaping, code, numbers and authored Mermaid flow keep their own order.
