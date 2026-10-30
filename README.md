@@ -6,7 +6,7 @@ Rayner turns a TypeScript model into a step-through explanation. Readers can cha
 
 ## Start with a question
 
-[Why does a cache hit skip the database?](https://oshineye.dev/projects/rayner/mr-cache?request=hit&step=request) Follow the request, then [switch to a miss](https://oshineye.dev/projects/rayner/mr-cache?request=miss&step=request). The two cases show zero versus one D1 read. [The tutorial](docs/TUTORIAL.md) builds a smaller version of this explainer and sets out the principles behind it.
+[Why does a cache hit skip the database?](https://oshineye.dev/projects/rayner/mr-cache?request=hit&step=request) Follow the request, then [switch to a miss](https://oshineye.dev/projects/rayner/mr-cache?request=miss&step=request). The two cases show zero versus one D1 read. [The tutorial](docs/TUTORIAL.md) sets out the principles behind it and applies them to a new question: what is the difference between LRU and MRU cache replacement?
 
 [Browse the subject lessons](https://oshineye.dev/projects/rayner/) · [Write your first explainer](docs/TUTORIAL.md) · [API and CLI reference](docs/REFERENCE.md)
 
@@ -33,7 +33,7 @@ npx rayner review my-explainer/scene.ts
 npx rayner build my-explainer/scene.ts --out public/my-explainer.html
 ```
 
-`review` checks cases and opens each resting step at phone and desktop widths, saving screenshots and a receipt. `build` writes HTML, its receipt, a response-header recipe and an optional iframe loader; it does **not** repeat validation. Check the model against its sources and read the pictures yourself: automated checks cannot establish that an explanation is true. [The tutorial](docs/TUTORIAL.md) plans, extends and checks this cache scene; [publishing](docs/PUBLISHING.md) covers hosting and embedding it.
+`review` checks cases and opens each resting step at phone and desktop widths, saving screenshots and a receipt. `build` writes HTML, its receipt, a response-header recipe and an optional iframe loader; it does **not** repeat validation. Check the model against its sources and read the pictures yourself: automated checks cannot establish that an explanation is true. [The tutorial](docs/TUTORIAL.md) plans, writes and checks a complete explainer; [publishing](docs/PUBLISHING.md) covers hosting and embedding it.
 
 ## Look up an authoring feature
 

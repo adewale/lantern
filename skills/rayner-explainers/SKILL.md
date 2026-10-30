@@ -5,7 +5,7 @@ description: Author, check and publish Rayner explainers as reader-paced HTML em
 
 # Rayner explainers
 
-An explainer is one Rayner `Scene`. The CLI builds it into a step-through HTML page. It needs no server or MCP. Start with [Your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md) for a worked cache example. Read the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) before you host a page.
+An explainer is one Rayner `Scene`. The CLI builds it into a step-through HTML page. It needs no server or MCP. Start with [Your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md) for a worked example: LRU versus MRU cache replacement, with its model tested against published examples. Read the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) before you host a page.
 
 ## Editorial gate
 
@@ -43,6 +43,7 @@ Each explainer in [`scenes/explainers/`](https://github.com/adewale/rayner/blob/
 
 | You are explaining | Start from | It shows |
 | --- | --- | --- |
+| Two algorithms or policies on the same input | `scenes/tutorial/lru-mru` | Cards read from the model's trace, one case that favours each policy, captions tested against the model |
 | A code change and what it does to a system | `mr-cache` | `TransformDiff` on the code, the same edit replayed on the diagram with `ops`, a setting for hit or miss |
 | Minimum complete scene | `hello-world` | One step, `Text`, `FadeIn`; copy the exact package-import version from [the tutorial](../../docs/TUTORIAL.md#0-hello-world) |
 | Authoring feature reference | `feature-tour` | Choose a feature case: the recipe step shows the author-written API, the result step runs it. See [scope and specialized APIs](../../docs/FEATURE-TOUR.md) |
