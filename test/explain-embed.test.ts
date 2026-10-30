@@ -558,6 +558,25 @@ test('the footer hint: keys on a fine pointer, taps on a touch screen, wrapping 
     await touch.close();
   }
 });
+// specs/player-guidance.md G7: the changes row, the hint and the thumbnails follow the page's direction.
+test('right to left: the changes row reads from the right and the footer hint sits between the mark and the way out', options, async () => {
+  hostBody = `<!doctype html><style>body{margin:0}</style><iframe title="t" src="${embed}/mr-cache.html?request=hit&step=before" style="width:1280px;height:900px;border:0"></iframe>`;
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(host);
+    const frame = await readyFrame(page, 'mr-cache');
+    const seen = await frame.evaluate(() => {
+      document.documentElement.setAttribute('dir', 'rtl');
+      const box = (e: Element) => e.getBoundingClientRect();
+      const label = box(document.querySelector('.changes > span')!), change = box(document.querySelector('.changes .change')!);
+      const mark = box(document.querySelector('.foot .mark')!), hint = box(document.querySelector('.foot .hint')!), open = box(document.querySelector('.foot .open')!);
+      return { changes: label.left > change.right, hint: mark.left >= hint.right && hint.left >= open.right };
+    });
+    assert.deepEqual(seen, { changes: true, hint: true });
+  } finally {
+    await page.close();
+  }
+});
 // specs/player-guidance.md G2: after the last step, Start again, and for a scene with settings, its next case.
 const endOf = (page: Page) =>
   page.evaluate(() => {

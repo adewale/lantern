@@ -23,6 +23,7 @@ this.state.reads = reads;   // program state, recorded at each step boundary
 - `meta.lang` (BCP 47, default `en`) is the language of the page and the transcripts. The player's own words (`app/embed-strings.ts`) and the generated picture descriptions (`explain/words.ts`, whose `families` name each diagram family and its parts) exist in English and French. On a page in any other language both are English, and the descriptions are marked `lang="en"`; `Picture.lang` in the trace records a description's language when it is not English.
 - Step names are URL identifiers. They must be unique and non-empty in every case.
 - `this.state` is recorded before and after each step. Compute values with a model, show its result, and test that each step's state equals the model's (`assertStepState` in `test/lib/explainer-state.ts`).
+- `meta.watch` names the state a reader should follow, from a `this.state` key to its label in the scene's language: `watch: { tokens: 'Tokens left', allowed: 'Accepted', rejected: 'Rejected' }`. Raw state is developer data and is never shown wholesale; only these keys are. For each step, a watched key whose JSON differs between the step's start and end is a change, shown in `watch` order, at most four: "Tokens left: 5 → 0" (changed), "Rejected: R6" (appeared) or "Tokens left: removed". Numbers are formatted in the scene's language with at most two decimals; strings are cut to 24 characters; booleans read yes or no in the scene's language; a list of numbers, strings or booleans shows four items and "+n". `null`, absent and an empty list have no value. A value that reads the same before and after is no change. An object or a list of objects cannot be said briefly: the key is skipped for that step and `check` reports it. Collection fails on more than eight entries, an empty key or label, or a key that is never in the state of any step of any case. One function, `watchedChanges` in `explain/trace.ts`, formats changes for the player, the transcript, `describeExplainer` and `check`.
 - `line` is one short line under the heading: what to see, in about ten words or fewer. The stage draws it in the soft colour and fails every command on a line wider than the heading (14.6 units at 0.3). It is part of the picture and the page transcript.
 - A captioned step holds until its caption could be read at 160 words a minute (`Scene.captionWpm`), counting the step's motion as reading time. The page stops when the picture stops and waits for the reader. The picture must not change once the hold begins.
 - Do not put awaited animations inside `try`/`catch` or `.catch()` in `construct()`. Seeking stops a scene by throwing `StopScene`, and a broad catch swallows it, so a jump to a step would show a different picture from playing to it. Handle a known model error in plain code before animating. The engine limits the damage: a `StopScene` from a sink sets `this.stopped`, and from then on `play()`, `wait()`, `step()` and every frame rethrow it before doing anything, so a swallowed stop emits no further frame. Plain code between the catch and the next scene call (a `shift()`, a write to `this.state`) still runs, which is why `check` keeps the lint.
@@ -249,7 +250,7 @@ Other exports: `withSettings(Scene, values)` binds a case without mutating the c
 
 ## Describe
 
-`describeExplainer(Scene, { snapshots?, drawings? })`, from `rayner/explain`, returns the explainer as one JSON-safe object for agents and tools: `schema` (1), `id`, `title`, `lang`, `sources`, `settings`, and `cases`. Each case has its setting `values`, its `name` ("Label: option"), its `duration`, its `paper` (the stage's paper colour when the case ends, absent for a scene without a stage) and its `steps`. Each step has its `step` name, `title`, `caption`, `start`, `end` and `hold` in seconds, the `state` the scene recorded (`scene.state` when the step ends), `changed` (each value the step changed, as `{ before, after }`, with a side left out when the value was not set), the resting `picture` in words, and its `drawing` as text unless `drawings: false`. `drawings: 'name'` draws only the step of that name, which is how `rayner see` draws the one step it prints.
+`describeExplainer(Scene, { snapshots?, drawings? })`, from `rayner/explain`, returns the explainer as one JSON-safe object for agents and tools: `schema` (1), `id`, `title`, `lang`, `sources`, `settings`, and `cases`. Each case has its setting `values`, its `name` ("Label: option"), its `duration`, its `paper` (the stage's paper colour when the case ends, absent for a scene without a stage) and its `steps`. Each step has its `step` name, `title`, `caption`, `start`, `end` and `hold` in seconds, the `state` the scene recorded (`scene.state` when the step ends), `changed` (each value the step changed, as `{ before, after }`, with a side left out when the value was not set), `watched` when the scene declares [`meta.watch`](#scene) (the step's watched changes as the player shows them, `{ label, before?, after? }` formatted strings, at most four), the resting `picture` in words, and its `drawing` as text unless `drawings: false`. `drawings: 'name'` draws only the step of that name, which is how `rayner see` draws the one step it prints.
 
 It runs the scene once per case, in Node or a browser, with no Chromium. A scene with diagrams needs its pinned snapshots (`snapshots`, as `rayner` reads them from `scene.snapshots/`) or it throws. `rayner describe <scene>` prints the same object; `--out file.json` writes it. Diagram labels are outlines, so the text drawing shows them as strokes; their words are in `picture`.
 
@@ -310,6 +311,8 @@ The report goes to `out/checks/<id>/report.json`. For each case it holds the ful
 | `minLabelPx390WholeStage` | Smallest label on that phone without close-ups |
 
 `cardsAtRest` counts the cards in each step's resting picture.
+
+`watch`, for a scene that declares [`meta.watch`](#scene), gives each step's formatted changes (`{ step, changes, unformatted }`), where `unformatted` names the watched keys skipped because their value cannot be said briefly. It is reported, not gated.
 
 `words` estimates each step's title, line and caption in lines on a 390 px page (`phoneLines`), from character counts measured against the player's type; system fonts differ, so compare a case's steps with each other rather than reading the counts as exact. For each of `title`, `line` and `caption` it gives the `tallest`, the `median`, `slackLines` (the empty lines the tallest leaves a median step, because the player reserves the tallest for every step) and `outliers` (steps more than two caption lines, or one title or line, past the median). It is reported, not gated.
 
@@ -375,7 +378,7 @@ Helpers supply subjects automatically. For an important caption claim or a step 
 
 Diagram payloads are compressed losslessly inside the page and decoded with the browser’s native `DecompressionStream` API before the player starts. The transcript remains readable without JavaScript. Builds enforce limits of 1.5 MiB for raw HTML and 450 KiB for its gzip representation, including the poster and transcript. Receipts report `bytes` and `gzipBytes`. Reduce cases or split an explanation that exceeds either budget.
 
-The transcript lists, for every case, each step as a link to it, its caption, and what its resting picture shows. Without JavaScript every case shows. The player shows the current case's section, and its links move the player.
+The transcript lists, for every case, each step as a link to it, its caption, a "What changed: Label: before → after; …" line when the scene declares [`meta.watch`](#scene) and the step changes a watched value, and what its resting picture shows. Without JavaScript every case shows. The player shows the current case's section, and its links move the player.
 
 ### URL parameters
 
@@ -384,7 +387,7 @@ The transcript lists, for every case, each step as a link to it, its caption, an
 | `step=<name>` | Open at that step's resting picture |
 | `<setting id>=<value>` | Choose a case; missing settings use defaults |
 | `theme=light\|dark\|auto` | Player chrome only; default `auto`, the device's scheme. The loader passes the host page's scheme |
-| `parentOrigin=<origin>` | Set by the loader; the exact HTTP(S) origin that receives resize messages |
+| `parentOrigin=<origin>` | Set by the loader; the exact HTTP(S) origin that receives resize and step messages and may send goto messages |
 
 An unknown setting or value resets every setting to its default, and a notice names what was wrong. A step the case lacks opens the first step, with a notice. Switching cases keeps the step by name. Back and forward restore case and step. Copy link keeps case and step and drops `parentOrigin`. On a page `site:export --origin` published, which carries `<meta name="rayner:share">`, Copy link on a step of the default case gives that step's share page, `<origin><path>/<id>/<step>`, whose link preview is the step; another case, or a step whose name is not letters, digits, `-` and `_`, keeps `?step=`. A share link drops `theme`.
 
@@ -395,6 +398,14 @@ The explainer is one tile. Everything the page shows is inside one bounded objec
 ### Controls and accessibility
 
 The player is one card: its header, the stage, one stepper row straight under it, then the step's words. **Next** plays the step and stops on its resting picture; pressed while a step plays, it carries that run on to the next step without replaying the scene from its start. Previous then Next plays a step again. The stepper row holds Previous and Next at its start, then the step bar, then the view tools behind a rule: zoom out, zoom in, **Whole picture** (only while zoomed), copy link, and enlarge (full screen, when the iframe allows it); in a window at most 640 px wide the tools take a row of their own. The step bar has one equal segment per step of the case: done steps in the accent colour, the current one taller and filling as its step plays, later ones quiet. It counts steps, not time, and is not a seek bar. Pressing a segment shows its step; pressing the current segment while its step plays rests the picture at once, and at rest does nothing. Under the row, on every width, the step's heading reads "Step 3 of 4", the step's title and its line, then the caption, so a long caption never moves Next; the card is capped by the window's height so that Next is on screen when the page opens. While a step plays the stage is marked `aria-busy`. Cases are a segmented choice beside the title, in the card's header. The steps list, each step's title and line, numbered as the stage's heading numbers them, is a rail beside the card on a page at least 1100 px wide and a closed **All n steps** row in the card, under the words, otherwise; the current step is marked by colour and a filled number, not by weight. The stage's accessible name is the explainer's title, the step's title and its line; the page transcript gives each step's title, line and caption.
+
+Under the caption, a scene with [`meta.watch`](#scene) shows what the step changed of the watched state: a quiet "What changed" label, then each change as "Label: before → after". It is plain text read with the words, not a live region. The row keeps the room its case's tallest needs, so a step with no watched change keeps an empty row and nothing below it moves; a case none of whose steps changes a watched value, and a scene without `meta.watch`, has no row.
+
+At rest on the last step, Next keeps its place and style but reads **Start again**, with a return arrow and the accessible name "Start again from step 1"; it goes back to the first step and adds a history entry, as a step click does. A scene with settings also offers **Try ‘Option’** straight after it, in the row and in the Tab order: the first setting's next option, wrapping, with the other settings kept, from the first step. It goes when the reader leaves the last step. While the last step plays Next still reads Next and rests it; the label changes only at rest. The right arrow at the last step does nothing. The stepper row keeps the room its end face needs, so reaching the end moves nothing below it; on a window at most 640 px wide Try takes the step bar's place beside Next and the bar, narrower, joins the tools' row.
+
+Previous, Next, Zoom in, Zoom out and Whole picture name their key in their tooltip ("Next step (→)") and in `aria-keyshortcuts`. The footer carries one quiet, permanent line between the mark and the way out: "← → to step · click a segment to jump" on a fine pointer, "Tap a segment to jump; tap the current one to finish it" on a coarse one, chosen by `matchMedia('(pointer: coarse)')` and followed as it changes. The page stores nothing, so the hint is never dismissed; it wraps on a narrow card and is hidden at 360 px and under.
+
+The steps rail shows words only. Pictures of each step, drawn in the reader's browser in idle time, were built and measured against a budget and left out: at 4× CPU throttling some of their tasks took 92 to 246 ms of main-thread time, over the 50 ms allowed ([the evidence](evidence/player-guidance/README.md)).
 
 The stage's accessible description is a one-sentence summary of the picture. "What the picture shows", under the caption, opens the full description: each diagram, card, code panel and described drawing, with what is marked, dimmed or changed in this step.
 
@@ -419,6 +430,22 @@ Tab order inside the tile is the case picker, the stage, the stepper row, the wo
 - The page measures its content root, rounds up, and posts only changed heights, only while framed, and only to the exact `parentOrigin`. It measures on load, on each `ResizeObserver` callback, and whenever the player settles on a step, because browsers can stop rendering an offscreen cross-origin iframe.
 - The parent accepts a message only when `event.origin` equals the artifact's origin and `event.source` is that iframe's window. Origin alone cannot tell two embeds from the same host apart.
 - Only that type and version, with an integer height from 1 to 100,000, is accepted. The message carries nothing else.
+
+### Host-page API v1
+
+Under the same rule as the resize message (framed, with a valid `parentOrigin`; accepted only from the expected origin and window), the page and its host exchange two more messages:
+
+```ts
+// Page → host, on every settled step. Nothing else: no captions or other content.
+{ type: 'rayner:step', version: 1, step: 'request', index: 3, total: 4, settings: { request: 'miss' } }
+// Host → page.
+{ type: 'rayner:goto', version: 1, step?: 'request', settings?: { request: 'miss' } }
+```
+
+- The page posts `rayner:step` to `parentOrigin` wherever it dispatches its own `rayner:step` document event: once per settled step. `index` counts from 0.
+- The page accepts `rayner:goto` only when `event.origin` is `parentOrigin` and `event.source` is `window.parent`, and ignores every other message. It validates the step and settings as it validates URL parameters: an undeclared setting id is ignored, an unknown value resets the settings to their defaults with the same notice, and a step the case lacks opens the first step with a notice. Given settings replace those of the case on show; a request without a step keeps the step by name. The navigation replaces the frame's history entry rather than adding one.
+- A raw iframe without `parentOrigin` neither posts nor accepts these messages.
+- The loader dispatches `new CustomEvent('rayner:step', { bubbles: true, detail })` on the iframe for each accepted step message (`detail` is `{ step, index, total, settings }`) and calls `options.onStep(detail)`. `mountExplainer` returns its dispose function with a `goTo(step?, settings?)` method that posts `rayner:goto` to the artifact's origin; after dispose it does nothing. The script-tag form dispatches the same event. Parsing and validation are pure functions in `app/embed-protocol.ts`.
 
 ### Headers
 

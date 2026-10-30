@@ -136,7 +136,7 @@ The lessons from [embed.oshineye.dev](https://embed.oshineye.dev/) and its [impl
 - One self-contained HTML file per explainer, readable without JavaScript (poster and transcript), with no runtime network, fonts, storage or cookies.
 - A raw iframe is the baseline; an optional self-hostable loader sizes it to its content.
 - Step and settings live in the URL, so a link opens one picture, and history restores it.
-- The resize message carries only a height, and the parent accepts it only from the expected origin **and** window, so two embeds on one page cannot resize each other.
+- The resize message carries only a height, and the step message only the step, its place and the settings; the parent accepts them only from the expected origin **and** window, and the page accepts a goto message only from its parent at `parentOrigin`, so two embeds on one page cannot resize, hear or move each other.
 - Hosting headers are generated beside the page, because `frame-ancestors` works only as a response header.
 
 `npm run test:embeds` exercises these in Chromium against real cross-origin pages; the contracts are in [the reference](../docs/REFERENCE.md#page).

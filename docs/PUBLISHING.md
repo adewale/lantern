@@ -1,6 +1,6 @@
 # Publishing
 
-How to put a built page on a website. The contracts (URL parameters, the resize message and headers) are in [the reference](REFERENCE.md).
+How to put a built page on a website. The contracts (URL parameters, the resize, step and goto messages and headers) are in [the reference](REFERENCE.md).
 
 ## Publish a page
 
@@ -60,6 +60,23 @@ How to put a built page on a website. The contracts (URL parameters, the resize 
    The loader needs the page on HTTP(S): for a `file:` URL it throws and mounts nothing.
 
    **Paste-to-embed.** `site:export --origin https://your.site` also writes `<id>.oembed.json` beside each page and a discovery link in its head, so a CMS that speaks oEmbed can turn a pasted page URL into the iframe. The response is fixed at 640 px wide with the page's height there; a static host cannot honour `maxwidth`, and the iframe shrinks with `max-width:100%`. Without `--origin` neither the file nor the link is written. `<id>.embed.json`, written with or without `--origin`, gives `{ "schema": 1, "aspect": "16/9", "heights": { "390": n, "640": n, "900": n } }`, the page's framed height at those widths, for a host that sizes its iframe before loading.
+
+   **Drive an explainer from the host page.** The loader tells the host each step the reader settles on, and lets the host move the player: a scrolling essay can follow along, or a button elsewhere on the page can show a step or a case.
+
+   ```html
+   <div id="cache-explainer"></div>
+   <button id="show-miss">Show a cache miss</button>
+   <script src="/explainers/loader.js"></script>
+   <script>
+     const target = document.getElementById('cache-explainer');
+     const explainer = RaynerEmbed.mountExplainer(target, '/explainers/cache.html', { title: 'Cache' });
+     // Each settled step: { step, index, total, settings }. The event bubbles from the iframe.
+     target.addEventListener('rayner:step', (event) => console.log('rayner:step', event.detail));
+     document.getElementById('show-miss').onclick = () => explainer.goTo('request', { request: 'miss' });
+   </script>
+   ```
+
+   `goTo` is validated inside the page as a URL is, replaces the frame's history entry, and does nothing after `explainer()` has disposed of the embed. `options.onStep` receives the same detail as the event. Messages go only between the host's origin and the artifact's, and only between that iframe and its parent, so two embeds on one page never hear or move each other. The message formats are in [the reference](REFERENCE.md#host-page-api-v1).
 
 5. Check what the host actually serves; the repository's tests run against local files.
    - `curl -sI https://your.site/explainers/cache.html` shows the CSP and `Cache-Control` from the recipe.
