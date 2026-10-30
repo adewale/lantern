@@ -20,7 +20,7 @@ import { RTL_SCRIPTS } from '../../src/lettering-outlines.ts';
  * P2-P3), so an Arabic or Hebrew caption reads and aligns right to left while
  * the player's controls stay as they are. Every other page's style is as it was.
  */
-const RTL_CSS = '\nh1,.caption,.ruler,.lede,.lede *,.transcript h2,.transcript a,.transcript p,.steps button span{unicode-bidi:plaintext;text-align:start}\n';
+const RTL_CSS = '\nh1,.caption,.ruler,.lede,.lede *,.transcript h2,.transcript a,.transcript p,.steps button span,.steps .line{unicode-bidi:plaintext;text-align:start}\n';
 const rightToLeftPage = (project: Project) =>
   !!project.outlineLettering?.request.scripts?.some((script) => RTL_SCRIPTS.includes(script));
 

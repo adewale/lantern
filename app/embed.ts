@@ -172,6 +172,31 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', t.stepList);
+  // The steps list is a rail: beside the card on a wide page, under its heading; under the
+  // card on a narrow one, in a closed disclosure, where the step bar already says where the
+  // reader is. One list, moved between the two, so it is in the page at every width.
+  const railBeside = el('aside', undefined, 'rail'),
+    railHeading = el('h2', t.steps),
+    railUnder = el('details', undefined, 'rail'),
+    railSummary = el('summary');
+  railHeading.id = 'rail-heading';
+  railBeside.setAttribute('aria-labelledby', railHeading.id);
+  railBeside.append(railHeading);
+  railUnder.append(railSummary);
+  const layout = el('div', undefined, 'layout');
+  layout.append(player);
+  // The width embed.css puts the rail beside the card at.
+  const wide = matchMedia('(min-width: 1100px)');
+  const placeRail = () => {
+    const [home, away] = wide.matches ? [railBeside, railUnder] : [railUnder, railBeside];
+    if (steps.parentElement !== home) home.append(steps);
+    away.remove();
+    // Appended after the card, never by moving the card, which would end full screen.
+    if (home.parentElement !== layout) layout.append(home);
+    keepInRail();
+  };
+  placeRail();
+  wide.addEventListener('change', placeRail);
   // The page's transcript holds every case; the player shows the current one, and its links move the player.
   const transcript = root.querySelector<HTMLDetailsElement>('.transcript')!;
   transcript.open = false;
@@ -188,7 +213,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   standalone.target = '_blank';
   standalone.rel = 'noopener';
   const framed = window.parent !== window && !params.has('parentOrigin');
-  root.replaceChildren(head, player, steps, transcript, ...(framed ? [standalone] : []));
+  root.replaceChildren(head, layout, transcript, ...(framed ? [standalone] : []));
 
   // A map beside the picture while a narrow stage is zoomed:
   // where the view is, and where the step changed. Pressing it moves to the step's next
@@ -330,9 +355,13 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     fillLede(ledeKicker, ledeTitle, ledeLine, selected, words);
     prev.disabled = selected === 0;
     next.disabled = selected === trace.steps.length - 1;
-    for (const b of steps.querySelectorAll('button'))
-      b.setAttribute('aria-current', b.dataset.step === step.step ? 'step' : 'false');
-    // Done, current, to do; only the current segment is a Tab stop, full at rest and empty as its step starts.
+    // Done, current, to do, in the rail and on the step bar. Only the current segment is a Tab
+    // stop, full at rest and empty as its step starts.
+    for (const [i, b] of [...steps.querySelectorAll('button')].entries()) {
+      b.dataset.state = i < selected ? 'done' : i === selected ? 'current' : 'todo';
+      b.setAttribute('aria-current', i === selected ? 'step' : 'false');
+    }
+    keepInRail();
     for (const [i, b] of [...bar.querySelectorAll('button')].entries()) {
       const state = i < selected ? 'done' : i === selected ? 'current' : 'todo';
       b.dataset.state = state;
@@ -348,6 +377,16 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     summary.textContent = pictureSummary(step.after);
     picture.innerHTML = pictureHtml(step.after);
     described.hidden = !picture.innerHTML;
+  }
+  /** Beside the card, scroll the rail, never the page, so the current step is in view in it. */
+  function keepInRail() {
+    const item = steps.querySelector<HTMLElement>('[aria-current=step]');
+    if (!item || !railBeside.isConnected || railBeside.scrollHeight <= railBeside.clientHeight) return;
+    // The sticky rail is the item's offset parent, so these are in its scrolled content.
+    const top = item.offsetTop,
+      bottom = top + item.offsetHeight;
+    if (top < railBeside.scrollTop) railBeside.scrollTop = top;
+    else if (bottom > railBeside.scrollTop + railBeside.clientHeight) railBeside.scrollTop = bottom - railBeside.clientHeight;
   }
   let shownCase = '',
     reservedFor = '';
@@ -660,16 +699,15 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       notices.push(t.noStep(name!));
     }
     notice.textContent = notices.join(' ');
+    // Each step's title and its line. The current step is marked by colour and a filled
+    // number, not by weight, so no item changes size as the reader steps.
     steps.replaceChildren(
       ...trace.steps.map((s, i) => {
         const li = el('li'),
           b = el('button'),
-          label = stepWords(s).title,
-          // The current step is bold; an unseen bold copy in the same grid cell gives every
-          // item the bold one's height, so the list keeps its height from step to step.
-          bold = el('span', label, 'bold');
-        bold.setAttribute('aria-hidden', 'true');
-        b.append(el('span', label), bold);
+          words = stepWords(s);
+        b.append(el('span', words.title, 'title'));
+        if (words.line) b.append(el('span', words.line, 'line'));
         b.type = 'button';
         b.dataset.step = s.step;
         b.addEventListener('click', () => void show(i));
@@ -677,6 +715,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
         return li;
       }),
     );
+    railSummary.textContent = t.allSteps(trace.steps.length);
     bar.replaceChildren(
       ...trace.steps.map((s, i, all) => {
         const li = el('li'),

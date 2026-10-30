@@ -479,6 +479,141 @@ test('no horizontal overflow', options, async () => {
       } finally { await page.close(); }
     }
 });
+// specs/player-redesign.md R5, R6, R10: the rail beside the card, the tools beside Next, both following the page's direction.
+test('the rail is beside the card when wide and under a closed details when narrow', options, async () => {
+  const p = projects.get('mr-cache')!,
+    list = stepsOf(p, resolveSettings(p.Scene, { request: 'hit' }));
+  assert.ok(list.every((s) => s.line), "mr-cache's four steps each have a line");
+  const rail = (page: Page) =>
+    page.evaluate(() => {
+      const rail = document.querySelector<HTMLElement>('.rail')!,
+        r = rail.getBoundingClientRect(),
+        c = document.querySelector('.player')!.getBoundingClientRect();
+      return {
+        tag: rail.tagName,
+        rails: document.querySelectorAll('.rail').length,
+        heading: rail.querySelector('h2')?.textContent ?? null,
+        summary: rail.querySelector('summary')?.textContent ?? null,
+        open: (rail as HTMLDetailsElement).open ?? null,
+        holdsList: !!rail.querySelector(':scope > ol.steps'),
+        box: { left: r.left, right: r.right, top: r.top },
+        card: { left: c.left, right: c.right, top: c.top, bottom: c.bottom },
+      };
+    });
+  for (const [width, height] of [[1280, 800], [1440, 900]] as const) {
+    const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
+    try {
+      await page.goto(`${embed}/mr-cache.html?request=hit`);
+      await page.waitForSelector('[data-ready=true]');
+      const seen = await rail(page);
+      const where = `at ${width}×${height}`;
+      assert.deepEqual([seen.tag, seen.rails, seen.heading, seen.holdsList], ['ASIDE', 1, 'Steps', true], where);
+      assert.ok(seen.box.left >= seen.card.right, `${where}: the rail is beside the card ${JSON.stringify(seen)}`);
+      assert.ok(Math.abs(seen.box.top - seen.card.top) <= 2, `${where}: the rail's top is the card's ${JSON.stringify(seen)}`);
+      // Every item shows its title and its line; none is bold, current or not.
+      const items = await page.locator('.steps button').evaluateAll((bs) =>
+        bs.map((b) => ({
+          title: b.querySelector('.title')?.textContent,
+          line: b.querySelector('.line')?.textContent,
+          shown: (b.querySelector('.line') as HTMLElement | null)?.offsetParent != null,
+          weight: getComputedStyle(b.querySelector('.title')!).fontWeight,
+        })),
+      );
+      assert.deepEqual(items, list.map((s) => ({ title: s.title, line: s.line, shown: true, weight: '400' })), where);
+      // Changing step moves neither the page nor the card.
+      const place = () => page.evaluate(() => [scrollY, document.querySelector('.player')!.getBoundingClientRect().top, document.querySelector('.rail')!.getBoundingClientRect().top]);
+      const before = await place();
+      for (const i of [3, 1, 2]) {
+        await page.locator('.steps button').nth(i).click();
+        await page.waitForFunction((step) => document.querySelector('.steps [aria-current=step]')?.getAttribute('data-step') === step, list[i]!.step);
+        assert.deepEqual(await place(), before, `${where}: step ${i + 1} kept the page and the card in place`);
+        assert.equal(await page.locator('.steps [aria-current=step]').getAttribute('data-state'), 'current');
+      }
+      await page.getByRole('button', { name: 'Next step', exact: true }).click();
+      await page.waitForFunction((step) => document.querySelector('.steps [aria-current=step]')?.getAttribute('data-step') === step, list[3]!.step);
+      assert.deepEqual(await place(), before, `${where}: Next kept the page and the card in place`);
+    } finally { await page.close(); }
+  }
+  for (const [width, height] of [[390, 844], [768, 1024]] as const) {
+    const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
+    try {
+      await page.goto(`${embed}/mr-cache.html?request=hit`);
+      await page.waitForSelector('[data-ready=true]');
+      const seen = await rail(page);
+      const where = `at ${width}×${height}`;
+      assert.deepEqual([seen.tag, seen.rails, seen.summary, seen.open, seen.holdsList], ['DETAILS', 1, 'All 4 steps', false, true], where);
+      assert.ok(seen.box.top >= seen.card.bottom, `${where}: the rail is under the card ${JSON.stringify(seen)}`);
+      assert.equal(await page.locator('.steps button').count(), list.length, `${where}: the list is in the page`);
+      await page.locator('details.rail > summary').click();
+      await page.locator('.steps button').nth(2).click();
+      await page.waitForFunction((step) => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === step, list[2]!.step);
+      assert.equal(await page.locator('.caption').innerText(), list[2]!.caption, where);
+    } finally { await page.close(); }
+  }
+  // Across the width the rail moves between the two, keeping the one list.
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/mr-cache.html?request=hit&step=${list[2]!.step}`);
+    await page.waitForSelector('[data-ready=true]');
+    const list0 = await page.locator('.steps').elementHandle();
+    await page.setViewportSize({ width: 600, height: 800 });
+    await page.waitForFunction(() => document.querySelector('.rail')?.tagName === 'DETAILS');
+    assert.equal(await page.evaluate((ol) => ol!.isConnected && ol!.parentElement!.tagName, list0), 'DETAILS');
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.waitForFunction(() => document.querySelector('.rail')?.tagName === 'ASIDE');
+    assert.equal(await page.locator('.steps [aria-current=step]').getAttribute('data-step'), list[2]!.step);
+  } finally { await page.close(); }
+});
+
+test('view tools share Next\'s row when wide and wrap below it when narrow', options, async () => {
+  for (const [width, height] of [[1280, 800], [390, 844]] as const) {
+    const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
+    try {
+      await page.goto(`${embed}/mr-cache.html?step=after&request=hit`);
+      await page.waitForSelector('[data-ready=true]');
+      const v = await boxesOf(page, { next: 'button[aria-label="Next step"]', tools: '.stepper .tools' });
+      const { next, tools } = v.boxes, where = `at ${width}×${height}`;
+      assert.equal(await page.locator('.stepper .tools').getAttribute('role'), 'group');
+      assert.equal(await page.locator('.stepper .tools').getAttribute('aria-label'), 'View tools');
+      if (width >= 1280) {
+        assert.ok(tools.top < next.bottom && tools.bottom > next.top, `${where}: the tools share Next's row ${JSON.stringify(v.boxes)}`);
+        assert.ok(tools.left >= next.right, `${where}: the tools follow Next ${JSON.stringify(v.boxes)}`);
+      } else {
+        assert.ok(tools.top >= next.bottom, `${where}: the tools wrap below Next ${JSON.stringify(v.boxes)}`);
+        // Every control in the row, except the step bar's thin segments, is at least 44 px each way.
+        const small = await page.locator('.stepper > button, .stepper .tools > button:not([hidden])').evaluateAll((bs) =>
+          bs.map((b) => [b.getAttribute('aria-label'), b.getBoundingClientRect().width, b.getBoundingClientRect().height] as const).filter(([, w, h]) => w < 44 || h < 44),
+        );
+        assert.deepEqual(small, [], where);
+      }
+    } finally { await page.close(); }
+  }
+});
+
+test('right to left: the step bar fills from the right and the rail sits on the left', options, async () => {
+  // No catalog page sets dir="rtl" (a right-to-left lettered page keeps its controls as they are),
+  // so this sets it on mr-cache to check the logical properties the stepper row and rail use.
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/mr-cache.html?request=hit&step=diff`);
+    await page.waitForSelector('[data-ready=true]');
+    const seen = await page.evaluate(() => {
+      document.documentElement.setAttribute('dir', 'rtl');
+      const b = document.querySelector<HTMLElement>('.step-bar [aria-current=step]')!;
+      b.style.setProperty('--progress', '0.5');
+      const box = b.getBoundingClientRect(),
+        fill = b.querySelector('.fill')!.getBoundingClientRect(),
+        rail = document.querySelector('.rail')!.getBoundingClientRect(),
+        card = document.querySelector('.player')!.getBoundingClientRect(),
+        prev = document.querySelector('button[aria-label="Previous step"]')!.getBoundingClientRect(),
+        next = document.querySelector('button[aria-label="Next step"]')!.getBoundingClientRect();
+      return { box: [box.left, box.right], fill: [fill.left, fill.right], rail: rail.right, card: card.left, prev: prev.left, next: next.right };
+    });
+    assert.ok(Math.abs(seen.fill[1]! - seen.box[1]!) <= 1 && seen.fill[0]! > seen.box[0]! + 1, `the fill grows from the right: ${JSON.stringify(seen)}`);
+    assert.ok(seen.rail <= seen.card, `the rail is on the card's left: ${JSON.stringify(seen)}`);
+    assert.ok(seen.prev > seen.next, `Previous is right of Next: ${JSON.stringify(seen)}`);
+  } finally { await page.close(); }
+});
 async function readyFrame(page: Page, scene: string): Promise<Frame> {
   await page.waitForFunction(() => document.querySelectorAll('iframe').length > 0);
   const matches = (f: Frame) => f.url().startsWith(embed + '/' + scene);
@@ -676,11 +811,11 @@ test('the transcript does not move between steps', options, async () => {
             linePlaces.add(await page.locator('.lede .line').evaluate((line) => (line.getBoundingClientRect().top + scrollY).toFixed(1)));
           places.add(
             await page.evaluate(() =>
-              ['.stepper', '.steps', '.transcript'].map((s) => (document.querySelector(s)!.getBoundingClientRect().top + scrollY).toFixed(1)).join(' '),
+              ['.stepper', '.rail', '.transcript'].map((s) => (document.querySelector(s)!.getBoundingClientRect().top + scrollY).toFixed(1)).join(' '),
             ),
           );
         }
-        assert.equal(places.size, 1, `${scene} at ${width} px: stepper row, steps and transcript tops per step ${[...places].join(' | ')}`);
+        assert.equal(places.size, 1, `${scene} at ${width} px: stepper row, rail and transcript tops per step ${[...places].join(' | ')}`);
         assert.ok(linePlaces.size <= 1, `${scene} at ${width} px: the line below the step title stays at one height`);
       } finally {
         await page.close();
@@ -858,7 +993,9 @@ test(
       await page.keyboard.press('+');
       const zoomed = await paintedView(page);
       assert.equal(zoomed.camera, author.camera, 'the author frame is unchanged under a reader zoom');
-      assert.ok(Math.abs(rect(zoomed.camera)[2]! / rect(zoomed.view)[2]! - 2.56) < 1e-3, 'two zoom steps narrow the author frame 2.56 times');
+      // Read as a scale over the stage (zoomOf), not a ratio of widths: a stage whose rounded height
+      // makes it a hair less wide than 16:9 is fitted by height, and its view is a little wider.
+      assert.ok(Math.abs(zoomOf(zoomed)!.k - 2.56) < 1e-3, `two zoom steps narrow the author frame 2.56 times: ${JSON.stringify(zoomed)}`);
       const [cx, cy, cw, ch] = rect(zoomed.camera) as [number, number, number, number],
         [vx, vy, vw, vh] = rect(zoomed.view) as [number, number, number, number];
       assert.ok(vx >= cx - 1e-3 && vy >= cy - 1e-3 && vx + vw <= cx + cw + 1e-3 && vy + vh <= cy + ch + 1e-3, 'the view stays inside the author frame');
@@ -874,7 +1011,7 @@ test(
       const gliding = seen.filter((p) => p.camera !== author.camera && p.camera !== home);
       assert.ok(gliding.length > 0, `the camera glide was seen under the zoom: ${seen.map((p) => p.camera).join(' | ')}`);
       for (const p of seen)
-        assert.ok(Math.abs(rect(p.camera)[2]! / rect(p.view)[2]! - 2.56) < 1e-3, `zoom held through the glide: ${p.camera} -> ${p.view}`);
+        assert.ok(Math.abs(zoomOf(p)!.k - 2.56) < 1e-3, `zoom held through the glide: ${p.camera} -> ${p.view}`);
       await quiet(page);
       assert.equal((await paintedView(page)).camera, home, 'the camera is home after clear()');
       await page.locator('.stage').focus();
@@ -1297,6 +1434,9 @@ const ClickStep = (i: number) =>
     `ClickStep(${i})`,
     (m) => i < steps(m).length,
     async (m, r) => {
+      // On a narrow page the rail is a closed disclosure under the card: the reader opens it first.
+      const closed = r.page.locator('details.rail:not([open]) > summary');
+      if (await closed.count()) await closed.click();
       await r.page.locator('.steps button').nth(i).click();
       goTo(m, i);
     },
