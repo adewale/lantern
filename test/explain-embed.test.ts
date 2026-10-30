@@ -187,15 +187,25 @@ test('phone: the stepper row follows the picture, the words follow it, and a sin
 });
 // Every catalog page, built from its scene as demos:check builds it: the player's controls are
 // the same everywhere, in each page's language.
-test('no Replay, Stop or Fit stage button; one Whole picture button on every catalog page', options, async () => {
-  const { EXPLAINERS } = await import('../scenes/explainers/catalog.ts');
-  await mkdir(join(folder, 'catalog'), { recursive: true });
-  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
-  try {
-    const page = await context.newPage();
+/** Every catalog explainer, built once from its scene into catalog/ as demos:check builds it. */
+let catalogBuild: Promise<Map<string, Project>> | undefined;
+const catalog = () =>
+  (catalogBuild ??= (async () => {
+    const { EXPLAINERS } = await import('../scenes/explainers/catalog.ts');
+    await mkdir(join(folder, 'catalog'), { recursive: true });
+    const built = new Map<string, Project>();
     for (const { id } of EXPLAINERS) {
       const project = await collectProject(`scenes/explainers/${id}`, { write: false });
       await buildExplainer(project, join(folder, 'catalog', id + '.html'));
+      built.set(id, project);
+    }
+    return built;
+  })());
+test('no Replay, Stop or Fit stage button; one Whole picture button on every catalog page', options, async () => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    const page = await context.newPage();
+    for (const [id, project] of await catalog()) {
       const t = chromeFor(project.Scene.meta?.lang);
       // The removed controls' names, in English and in French.
       const gone = ['Replay step', 'Stop animation', 'Fit stage', 'Rejouer l’étape', 'Arrêter l’animation', 'Adapter à la page'];
@@ -207,6 +217,25 @@ test('no Replay, Stop or Fit stage button; one Whole picture button on every cat
       }, [...gone, t.wholePicture, t.nextLabel, t.previous]);
       assert.deepEqual(seen, { ...Object.fromEntries(gone.map((n) => [n, 0])), [t.wholePicture]: 1, [t.nextLabel]: 1, [t.previous]: 1 }, id);
     }
+  } finally {
+    await context.close();
+  }
+});
+test('every case of every catalog explainer has one step bar segment per step', options, async () => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    const page = await context.newPage();
+    let cases = 0;
+    for (const [id, project] of await catalog())
+      for (const v of project.variants) {
+        const q = new URLSearchParams(v.values as Record<string, string>);
+        await page.goto(`${embed}/catalog/${id}.html?${q}`);
+        await page.waitForSelector('[data-ready=true]');
+        const seen = await page.locator('.step-bar button').evaluateAll((bs) => bs.map((b) => b.getAttribute('data-step')));
+        assert.deepEqual(seen, v.trace.steps.map((s) => s.step), `${id} ?${q}`);
+        cases++;
+      }
+    assert.ok(cases >= 100, `every case visited (${cases})`);
   } finally {
     await context.close();
   }
@@ -234,6 +263,221 @@ test('the step heading shows on every width with the total', options, async () =
       } finally { await page.close(); }
     }
   }
+});
+// specs/player-redesign.md R3: the step bar. One segment per step, the current one filling as it plays.
+/** The step bar as the reader's tools see it: each segment's step, state, Tab stop, name and fill. */
+const stepBarOf = (page: Page) =>
+  page.locator('.step-bar button').evaluateAll((bs) =>
+    bs.map((b) => ({
+      step: b.getAttribute('data-step'),
+      state: b.getAttribute('data-state'),
+      current: b.getAttribute('aria-current') === 'step',
+      tab: (b as HTMLElement).tabIndex,
+      label: b.getAttribute('aria-label'),
+      title: b.getAttribute('title'),
+      progress: getComputedStyle(b).getPropertyValue('--progress').trim(),
+    })),
+  );
+test('the step bar has one segment per step of the current case and rebuilds on a case change', options, async () => {
+  for (const [name, setting, from, to] of [['mr-cache', 'request', 'hit', 'miss'], ['oauth-pkce', 'attacker', 'no', 'yes']] as const) {
+    const p = projects.get(name)!;
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+    try {
+      await page.goto(`${embed}/${name}.html?${setting}=${from}`);
+      await page.waitForSelector('[data-ready=true]');
+      const expected = (value: string) => {
+        const list = stepsOf(p, resolveSettings(p.Scene, { [setting]: value }));
+        return list.map((s, i) => ({ step: s.step, label: `Step ${i + 1} of ${list.length}: ${s.title}`, title: s.title }));
+      };
+      const seen = async () => (await stepBarOf(page)).map(({ step, label, title }) => ({ step, label, title }));
+      assert.deepEqual(await seen(), expected(from), `${name} ${setting}=${from}`);
+      assert.equal(await page.locator('.step-bar').getAttribute('aria-label'), 'Step progress');
+      await page.locator(`input[name="${setting}"][value="${to}"]`).locator('xpath=..').click();
+      await page.waitForURL(new RegExp(`${setting}=${to}`));
+      await page.waitForFunction((n) => document.querySelectorAll('.step-bar button').length === n, expected(to).length);
+      assert.deepEqual(await seen(), expected(to), `${name} ${setting}=${to}`);
+    } finally { await page.close(); }
+  }
+  // oauth-pkce's attacker adds a step: the two counts differ, so the bar was rebuilt, not kept.
+  const pkce = projects.get('oauth-pkce')!;
+  assert.notEqual(stepsOf(pkce, resolveSettings(pkce.Scene, { attacker: 'no' })).length, stepsOf(pkce, resolveSettings(pkce.Scene, { attacker: 'yes' })).length);
+});
+
+test('a segment jumps to its step', options, async () => {
+  const p = projects.get('mr-cache')!,
+    list = stepsOf(p, resolveSettings(p.Scene, { request: 'hit' }));
+  assert.equal(new Set(list.map((s) => s.caption)).size, list.length, 'mr-cache has distinct captions');
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/mr-cache.html?request=hit`);
+    await page.waitForSelector('[data-ready=true]');
+    for (const i of [3, 0, 2, 1]) {
+      await page.locator('.step-bar button').nth(i).click();
+      await page.waitForFunction((step) => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === step, list[i]!.step);
+      assert.equal(await page.locator('.caption').innerText(), list[i]!.caption, `segment ${i + 1}`);
+      assert.equal(await page.locator('.steps [aria-current=step]').getAttribute('data-step'), list[i]!.step, 'the rail agrees');
+      assert.equal(new URL(page.url()).searchParams.get('step'), list[i]!.step);
+    }
+  } finally { await page.close(); }
+});
+
+test('segment states follow the selected step', options, async () => {
+  const p = projects.get('mr-cache')!,
+    list = stepsOf(p, resolveSettings(p.Scene, { request: 'hit' }));
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    const { page } = await counted(context, `${embed}/mr-cache.html?request=hit`);
+    for (const k of [0, 2, 3, 1]) {
+      const n = await page.evaluate(() => (window as unknown as { __settles: number }).__settles);
+      if (k > 0) await page.locator('.steps button').nth(k).click();
+      if (k > 0) await page.waitForFunction((n) => (window as unknown as { __settles: number }).__settles > n, n);
+      const bar = await stepBarOf(page);
+      assert.deepEqual(
+        bar.map(({ step, state, current, tab }) => ({ step, state, current, tab })),
+        list.map((s, i) => ({ step: s.step, state: i < k ? 'done' : i === k ? 'current' : 'todo', current: i === k, tab: i === k ? 0 : -1 })),
+        `at step ${k + 1}`,
+      );
+      assert.equal(bar[k]!.progress, '1', 'the current segment is full at rest');
+    }
+  } finally { await context.close(); }
+});
+
+test('the current segment fills while a step plays and is full when it rests', options, async () => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'no-preference' });
+  try {
+    await context.addInitScript(() => {
+      const w = window as unknown as { __fills: Array<string | 'settled'> };
+      w.__fills = [];
+      document.addEventListener('rayner:step', () => w.__fills.push('settled'));
+      new MutationObserver((records) => {
+        for (const r of records) {
+          const b = r.target as HTMLElement;
+          if (b.matches?.('.step-bar button[data-step="diff"]')) w.__fills.push(getComputedStyle(b).getPropertyValue('--progress').trim());
+        }
+      }).observe(document, { subtree: true, attributes: true, attributeFilter: ['style'] });
+    });
+    const { page, errors } = await counted(context, `${embed}/mr-cache.html?step=before&request=hit`);
+    await quiet(page);
+    const fills = () => page.evaluate(() => (window as unknown as { __fills: Array<string | 'settled'> }).__fills);
+    const before = (await fills()).length;
+    await page.getByRole('button', { name: 'Next step', exact: true }).click();
+    await page.waitForFunction(() => (window as unknown as { __last: { step: string } | null }).__last?.step === 'diff', undefined, { timeout: 30_000 });
+    await quiet(page);
+    const seen = (await fills()).slice(before),
+      settled = seen.indexOf('settled');
+    assert.ok(settled > 0, `the step settled after fills: ${JSON.stringify(seen)}`);
+    const playing = seen.slice(0, settled).map(Number);
+    assert.ok(playing.some((v) => v > 0 && v < 1), `a fill strictly between 0 and 1 before the step rested: ${JSON.stringify(seen)}`);
+    assert.ok(playing.every((v, i) => i === 0 || v >= playing[i - 1]!), `the fill only grows while the step plays: ${JSON.stringify(playing)}`);
+    assert.equal((await stepBarOf(page))[1]!.progress, '1', 'full once the step rests');
+    assert.deepEqual(errors, []);
+  } finally { await context.close(); }
+});
+
+test('reduced motion fills the segment at once', options, async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/mr-cache.html?step=before&request=hit`);
+    await page.waitForSelector('[data-ready=true]');
+    // Read in the same task as the press: nothing has had a frame to animate.
+    const now = await page.evaluate(() => {
+      document.querySelector<HTMLButtonElement>('button[aria-label="Next step"]')!.click();
+      const current = document.querySelector<HTMLElement>('.step-bar [aria-current=step]')!;
+      return { step: current.dataset.step, progress: getComputedStyle(current).getPropertyValue('--progress').trim(), transition: getComputedStyle(current.querySelector('.fill')!).transitionDuration };
+    });
+    assert.deepEqual(now, { step: 'diff', progress: '1', transition: '0s' });
+  } finally { await page.close(); }
+});
+
+test('arrow keys inside the step bar move the step and the focus', options, async () => {
+  const p = projects.get('mr-cache')!,
+    list = stepsOf(p, resolveSettings(p.Scene, { request: 'hit' }));
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/mr-cache.html?step=before&request=hit`);
+    await page.waitForSelector('[data-ready=true]');
+    const focused = () =>
+      page.evaluate(() => {
+        const a = document.activeElement as HTMLElement | null;
+        return { step: a?.closest('.step-bar') ? a.dataset.step : null, current: document.querySelector('.step-bar [aria-current=step]') === a, url: new URL(location.href).searchParams.get('step') };
+      });
+    await page.locator('.step-bar [aria-current=step]').focus();
+    for (const [key, i] of [['ArrowRight', 1], ['ArrowRight', 2], ['ArrowLeft', 1], ['End', 3], ['Home', 0], ['ArrowLeft', 0]] as const) {
+      await page.keyboard.press(key);
+      await page.waitForFunction((step) => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === step, list[i]!.step);
+      assert.deepEqual(await focused(), { step: list[i]!.step, current: true, url: list[i]!.step }, `${key} → step ${i + 1}`);
+    }
+    // One Tab stop in the bar: the current segment.
+    assert.equal(await page.locator('.step-bar button[tabindex="0"]').count(), 1);
+  } finally { await page.close(); }
+});
+
+test('pressing the current segment while a step plays rests the picture', options, async () => {
+  const p = projects.get('mr-cache')!,
+    step = p.variants.find((v) => v.values.request === 'hit')!.trace.steps[1]!,
+    motion = (step.hold ?? step.t1!) - step.t0;
+  assert.equal(step.step, 'diff');
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'no-preference' });
+  try {
+    const { page, errors } = await counted(context, `${embed}/mr-cache.html?step=before&request=hit`);
+    await quiet(page);
+    await page.getByRole('button', { name: 'Next step', exact: true }).click();
+    // Early in the step's motion, press its segment.
+    const pressed = await page.evaluate(
+      () =>
+        new Promise<{ progress: number; settles: number; at: number }>((resolve, reject) => {
+          const w = window as unknown as { __settles: number };
+          const end = performance.now() + 10_000;
+          const look = () => {
+            const b = document.querySelector<HTMLButtonElement>('.step-bar [aria-current=step]')!,
+              progress = Number(getComputedStyle(b).getPropertyValue('--progress'));
+            if (b.dataset.step === 'diff' && progress > 0 && progress < 0.5) {
+              const settles = w.__settles;
+              b.click();
+              resolve({ progress, settles, at: performance.now() });
+            } else if (performance.now() > end) reject(new Error(`never saw the fill mid-step: ${progress}`));
+            else requestAnimationFrame(look);
+          };
+          look();
+        }),
+    );
+    const rested = await page.evaluate(
+      ({ settles }) =>
+        new Promise<number>((resolve) => {
+          const w = window as unknown as { __settles: number };
+          const look = () => (w.__settles > settles ? resolve(performance.now()) : requestAnimationFrame(look));
+          look();
+        }),
+      pressed,
+    );
+    const remaining = (1 - pressed.progress) * motion * 1000;
+    assert.ok(rested - pressed.at < remaining, `rested ${Math.round(rested - pressed.at)} ms after the press, before the ${Math.round(remaining)} ms of motion left`);
+    assert.equal(await page.evaluate(() => (window as unknown as { __last: { step: string } }).__last.step), 'diff');
+    assert.equal((await stepBarOf(page))[1]!.progress, '1', 'full once rested');
+    await quiet(page);
+    // Pressing the current segment at rest does nothing.
+    const settles = await page.evaluate(() => (window as unknown as { __settles: number }).__settles);
+    await page.locator('.step-bar [aria-current=step]').click();
+    await page.waitForTimeout(300);
+    assert.equal(await page.evaluate(() => (window as unknown as { __settles: number }).__settles), settles, 'a press at rest changes nothing');
+    const link = await counted(context, `${embed}/mr-cache.html?step=diff&request=hit`);
+    assert.equal(await stagePicture(page), await stagePicture(link.page), 'the rested picture is the link\'s picture');
+    assert.deepEqual([...errors, ...link.errors], []);
+  } finally { await context.close(); }
+});
+
+test('no horizontal overflow', options, async () => {
+  for (const width of [320, 390, 768, 1280])
+    for (const name of ['mr-cache', 'quotient-familial']) {
+      const page = await browser.newPage({ viewport: { width, height: 844 }, reducedMotion: 'reduce' });
+      try {
+        await page.goto(`${embed}/${name}.html`);
+        await page.waitForSelector('[data-ready=true]');
+        const seen = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, width: innerWidth, segments: document.querySelectorAll('.step-bar button').length }));
+        assert.ok(seen.scroll <= seen.width, `${name} at ${width}: ${JSON.stringify(seen)}`);
+        if (name === 'quotient-familial') assert.equal(seen.segments, 10, 'the ten-step page');
+      } finally { await page.close(); }
+    }
 });
 async function readyFrame(page: Page, scene: string): Promise<Frame> {
   await page.waitForFunction(() => document.querySelectorAll('iframe').length > 0);
@@ -806,6 +1050,7 @@ function observe(ids: string[]) {
     urlCase: Object.fromEntries(ids.map((id) => [id, q.get(id)])),
     current: [...document.querySelectorAll<HTMLElement>('.steps [aria-current=step]')].map((b) => b.dataset.step),
     list: [...document.querySelectorAll<HTMLElement>('.steps button')].map((b) => b.dataset.step),
+    bar: [...document.querySelectorAll<HTMLElement>('.step-bar button')].map((b) => [b.dataset.step, b.dataset.state, b.getAttribute('aria-current')]),
     caption: document.querySelector('.caption')!.textContent,
     lede: [...document.querySelectorAll('.lede > *')].map((e) => ((e as HTMLElement).hidden ? null : e.textContent)),
     stageLabel: stage.getAttribute('aria-label'),
@@ -934,6 +1179,7 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
     settings: Object.fromEntries(ids.map((id) => [id, entry.values[id]])),
   });
   eq('step list', seen.list, list.map((s) => s.step));
+  eq('step bar', seen.bar, list.map((s, j) => [s.step, j < i ? 'done' : j === i ? 'current' : 'todo', j === i ? 'step' : 'false']));
   eq('aria-current', seen.current, [entry.step]);
   eq('caption', seen.caption, spec.caption);
   eq('stage label', seen.stageLabel, `${seen.title}: ${spec.title}${spec.line ? ` — ${spec.line}` : ''}`);
@@ -1053,6 +1299,16 @@ const ClickStep = (i: number) =>
     async (m, r) => {
       await r.page.locator('.steps button').nth(i).click();
       goTo(m, i);
+    },
+  );
+/** A step bar segment: another step jumps there; the current step's, at rest, does nothing. */
+const ClickSegment = (i: number) =>
+  command(
+    `ClickSegment(${i})`,
+    (m) => i < steps(m).length,
+    async (m, r) => {
+      await r.page.locator('.step-bar button').nth(i).click();
+      if (i !== selected(m)) goTo(m, i);
     },
   );
 const TranscriptLink = (i: number) =>
@@ -1245,6 +1501,7 @@ function commandArbs(p: Project): fc.Arbitrary<Cmd>[] {
     fc.constant(Next),
     fc.constant(Previous),
     fc.nat({ max: 7 }).map(ClickStep),
+    fc.nat({ max: 7 }).map(ClickSegment),
     fc.nat({ max: 7 }).map(TranscriptLink),
     ...(settings.length
       ? [fc.tuple(fc.nat({ max: settings.length - 1 }), fc.nat({ max: 2 })).map(([s, o]) => ChooseCase(s, o))]
@@ -2095,7 +2352,7 @@ test('the PKCE attack opens with the stolen-code, guessed-verifier and rejection
       const [l, t, r, b] = seen.actual, [vl, vt, vr, vb] = seen.viewport;
       assert.ok(l! >= vl! - 1 && t! >= vt! - 1 && r! <= vr! + 1 && b! <= vb! + 1,
         `width ${width}: opening must contain the complete attack, not an unrelated card: ${JSON.stringify(seen)}`);
-      assert.equal(await page.locator('[aria-current=step]').getAttribute('data-step'), 'attack');
+      assert.equal(await page.locator('[aria-current=step]').first().getAttribute('data-step'), 'attack');
     } finally { await page.close(); }
   }
 });

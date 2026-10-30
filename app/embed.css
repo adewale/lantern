@@ -67,9 +67,22 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .lede .line,.lede-ruler .line{color:var(--muted)}
 .lede [hidden]{display:none}
 .stepper{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
+/* The step bar: one equal segment per step, between Next and the tools. The hit area is the row's
+   height; the mark is a thin bar. Done segments are the accent, the current one is taller and fills
+   with --progress (0 to 1, 1 at rest), the rest are quiet (at least 3:1 on the card in both themes). */
+.step-bar{list-style:none;margin:0;padding:0;flex:1 1 120px;min-width:0;display:flex;gap:3px;align-self:stretch}
+.step-bar li{flex:1 1 0;min-width:0;display:flex}
+.step-bar button{position:relative;flex:1 1 0;min-width:0;min-height:40px;margin:0;padding:0;border:0;border-radius:4px;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.step-bar button:focus-visible{outline-offset:-2px}
+.step-bar button::before,.step-bar .fill{content:"";position:absolute;inset-inline-start:0;top:50%;height:6px;translate:0 -50%;border-radius:3px}
+.step-bar button::before{inset-inline-end:0;background:color-mix(in srgb,var(--muted) 70%,var(--surface))}
+.step-bar [data-state=done]::before{background:var(--accent)}
+.step-bar [data-state=current]::before{height:8px;background:color-mix(in srgb,var(--accent) 28%,var(--surface))}
+.step-bar .fill{display:none;height:8px;inline-size:calc(var(--progress,1)*100%);background:var(--accent);transition:inline-size 120ms linear}
+.step-bar [data-state=current] .fill{display:block}
 /* View tools stand apart from step navigation, behind a rule; on a narrow row, on their own row. */
 .tools{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:2px;margin-inline-start:auto;padding-inline-start:10px;border-inline-start:1px solid var(--line)}
-@media(max-width:640px){.tools{flex-basis:100%;padding:0;border:0}.stepper .button{min-width:44px;min-height:44px}}
+@media(max-width:640px){.tools{flex-basis:100%;padding:0;border:0}.stepper .button,.step-bar button{min-width:44px;min-height:44px}.step-bar button{min-width:0}}
 .described{margin:2px 0 0;max-width:68ch;font-size:.9375rem;color:var(--muted)}
 .described summary{padding:6px 0;cursor:pointer}
 .described ul,.transcript li ul{margin:4px 0;padding-left:1.25rem;overflow-wrap:anywhere}
@@ -91,7 +104,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
   .segments label:hover{color:var(--fg)}
   .steps button:hover{color:var(--fg);background:var(--surface)}
 }
-@media(pointer:coarse){.button{min-width:44px;min-height:44px}.segments label{min-height:40px}}
+@media(pointer:coarse){.button{min-width:44px;min-height:44px}.step-bar button{min-height:44px}.segments label{min-height:40px}}
 
 /* Steps: where the reader is, and where else they can go. */
 .steps{list-style:none;margin:24px 0 0;padding:16px 0 0;border-top:1px solid var(--line);display:grid;gap:2px;counter-reset:step}
@@ -121,4 +134,4 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .player:fullscreen>*{width:min(100%,calc((100dvh - 180px)*16/9));margin-inline:auto}.player:fullscreen .stage{border-radius:0}
 
 @media(max-width:480px){.caption,.ruler{font-size:1.0625rem}.stepper{gap:6px}}
-@media(prefers-reduced-motion:reduce){.button,.stage svg.glide,.overview .view,.segments label,.steps button{transition:none}.button:active:not(:disabled){transform:none}}
+@media(prefers-reduced-motion:reduce){.button,.stage svg.glide,.overview .view,.segments label,.steps button{transition:none}.button:active:not(:disabled){transform:none}.step-bar .fill{transition:none}}

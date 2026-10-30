@@ -61,7 +61,8 @@ export async function measure(browser: Browser, url: string, { cpu, readMs }: { 
     await page.locator('.stepper .primary').click();
     await until(names[1]!);
     await page.waitForTimeout(readMs);
-    await page.locator('.steps button').last().click();
+    // The step bar's last segment: on a 390 px page the steps list is inside a closed disclosure.
+    await page.locator('.step-bar button').last().click();
     await until(names.at(-1)!);
     // Let observer delivery and two rendering opportunities finish before taking records.
     await page.evaluate(async () => {

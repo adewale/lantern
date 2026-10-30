@@ -143,7 +143,12 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const closer = button(t.closeUp, 'closeUp');
   closer.hidden = true;
   tools.append(zoomOut, zoomIn, wholePicture, closer, copy, ...(document.fullscreenEnabled ? [enlarge] : []));
-  stepper.append(prev, next, tools);
+  // The step bar: one segment per step of the case, between Next and the tools. It shows how
+  // many steps there are, where the reader is, and the current step filling as it plays; it is
+  // a stepper's timeline, never a seek bar.
+  const bar = el('ol', undefined, 'step-bar');
+  bar.setAttribute('aria-label', t.stepBar);
+  stepper.append(prev, next, bar, tools);
   const notice = el('p', undefined, 'notice');
   notice.setAttribute('role', 'status');
   // Keep navigation outside the picture so controls cannot cover its lettering.
@@ -327,6 +332,15 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     next.disabled = selected === trace.steps.length - 1;
     for (const b of steps.querySelectorAll('button'))
       b.setAttribute('aria-current', b.dataset.step === step.step ? 'step' : 'false');
+    // Done, current, to do; only the current segment is a Tab stop, full at rest and empty as its step starts.
+    for (const [i, b] of [...bar.querySelectorAll('button')].entries()) {
+      const state = i < selected ? 'done' : i === selected ? 'current' : 'todo';
+      b.dataset.state = state;
+      b.tabIndex = state === 'current' ? 0 : -1;
+      b.setAttribute('aria-current', state === 'current' ? 'step' : 'false');
+      if (state === 'current') b.style.setProperty('--progress', playing ? '0' : '1');
+      else b.style.removeProperty('--progress');
+    }
     stage.setAttribute('aria-label', t.stageLabel(title.textContent!, words.title, words.line));
     // Busy while a step plays: the resting picture, and its description, are still to come.
     if (playing) stage.setAttribute('aria-busy', 'true');
@@ -449,6 +463,23 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     link(true);
     await animate(true);
   }
+  /**
+   * The current segment's fill while its step plays: the share of the step's motion the scene
+   * has played, written at most once per animation frame, and only while that step is still
+   * the one playing (a rest, a jump or Next mid-motion writes its own value in chrome()).
+   */
+  let filling: { index: number; value: number } | undefined;
+  function fill(index: number, value: number) {
+    const queued = filling;
+    filling = { index, value: Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 1 };
+    if (queued) return;
+    requestAnimationFrame(() => {
+      const f = filling!;
+      filling = undefined;
+      if (playing && f.index === selected)
+        bar.children[f.index]?.querySelector('button')?.style.setProperty('--progress', String(Math.round(f.value * 1000) / 1000));
+    });
+  }
   type Go = { gen: number; target: Zoom | null };
   /**
    * A run of the scene that plays one step's animation, held at the step's first frame until
@@ -524,6 +555,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
           // Superseded while that frame was drawn; a run sent on to the next step waits for it instead.
           if (go && go.gen !== generation) throw stop();
           if (go && !attached) attach(go);
+          if (go) fill(aim.index, (scene.time - aim.start) / (aim.end - aim.start));
         },
       },
       { skipUntil: aim.start },
@@ -645,6 +677,23 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
         return li;
       }),
     );
+    bar.replaceChildren(
+      ...trace.steps.map((s, i, all) => {
+        const li = el('li'),
+          b = el('button'),
+          label = stepWords(s).title;
+        b.type = 'button';
+        b.dataset.step = s.step;
+        b.title = label;
+        b.setAttribute('aria-label', t.stepOf(i + 1, all.length, label));
+        b.append(el('span', undefined, 'fill'));
+        // Another segment jumps to its step; the current one, while its step plays, rests the
+        // picture at once (the stories skip), and at rest does nothing.
+        b.addEventListener('click', () => void (i !== selected ? show(i) : playing && animate()));
+        li.append(b);
+        return li;
+      }),
+    );
     const shown = new URLSearchParams(values).toString();
     for (const section of transcript.querySelectorAll<HTMLElement>('section')) section.hidden = section.dataset.case !== shown;
     shownCase = shown;
@@ -653,6 +702,23 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   }
   prev.onclick = () => void show(selected - 1);
   next.onclick = () => void advance();
+  // Inside the step bar, arrows move a step and Home and End go to the ends; focus follows the
+  // current segment (a roving Tab stop). The root's arrows skip buttons, so the bar has its own.
+  bar.addEventListener('keydown', (e) => {
+    if (!trace) return;
+    const last = trace.steps.length - 1;
+    const keys: Record<string, () => unknown> = {
+      ArrowRight: () => advance(),
+      ArrowLeft: () => selected > 0 && show(selected - 1),
+      Home: () => selected > 0 && show(0),
+      End: () => selected < last && show(last),
+    };
+    const action = keys[e.key];
+    if (!action || e.ctrlKey || e.metaKey || e.altKey) return;
+    e.preventDefault();
+    void action();
+    bar.querySelector<HTMLButtonElement>('[aria-current=step]')?.focus();
+  });
   enlarge.onclick = async () => {
     if (document.fullscreenElement) await document.exitFullscreen();
     else {
