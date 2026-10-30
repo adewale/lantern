@@ -42,7 +42,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
    case, the build): the same mix for every palette, as strong as the weakest palette's contrast allows
    (test/embed-tint.test.ts reads --tint here). Buttons keep the plain surface and lift off it; rules
    inside the tile use --line, its edge and the rail's rule --tile-line. */
-.tile{--inset:16px;--tint:10%;--tile:color-mix(in srgb,var(--paper,var(--surface)) var(--tint),var(--surface));--tile-line:color-mix(in srgb,var(--paper,var(--line)) 30%,var(--line));background:var(--tile);box-shadow:0 0 0 1px var(--tile-line);border-radius:12px;overflow:clip;transition:background-color 200ms}
+.tile{--tint:10%;--tile:color-mix(in srgb,var(--paper,var(--surface)) var(--tint),var(--surface));--tile-line:color-mix(in srgb,var(--paper,var(--line)) 30%,var(--line));--inset:16px;background:var(--tile);box-shadow:0 0 0 1px var(--tile-line);border-radius:12px;overflow:clip;transition:background-color 200ms}
 .layout{display:grid;align-items:start;width:min(100%,var(--player-cap));margin-inline:auto}
 @media(min-width:1100px){
   .layout{width:auto;grid-template-columns:minmax(0,var(--player-cap)) minmax(300px,1fr)}
