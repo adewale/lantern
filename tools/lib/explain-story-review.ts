@@ -111,7 +111,9 @@ export async function storyFrames(
 ): Promise<Map<string, StoryFrame>> {
   const frames = new Map<string, StoryFrame>();
   let previous = new Map<Mobject, string>();
-  let previousPaint = new Map<number, string>();
+  // What the previous step painted, by appearance rather than object id: a View redraws its
+  // picture as new objects, and identical paint under a new id is not a change.
+  let previousPaint = new Set<string>();
   await new Source(
     {
       async frame() {},
@@ -227,7 +229,7 @@ export async function storyFrames(
         // happens to replace or move. With no primary subject, inspect new art.
         const hasPrimary = targets.length > 0 || claims.some((c) => c.step === step.name);
         for (const r of hasPrimary ? [] : records) {
-          if (previousPaint.get(r.id) === paint.get(r.id) || Number(r.attrs.opacity ?? 1) < 0.95) continue;
+          if (previousPaint.has(paint.get(r.id)!) || Number(r.attrs.opacity ?? 1) < 0.95) continue;
           const m = byId.get(r.id);
           if (!m) continue;
           let fixed = false,
@@ -242,7 +244,7 @@ export async function storyFrames(
           add(`changed: ${labelOf(subject)?.text ?? subject.key ?? 'drawing'}`, [subject], false, true);
           added.add(subject);
         }
-        previousPaint = paint;
+        previousPaint = new Set(paint.values());
         for (const claim of claims.filter((c) => c.step === step.name))
           for (const target of claim.targets) {
             const name = 'key' in target ? target.key : target.text;

@@ -147,6 +147,19 @@ test('a caption explaining unchanged artwork must declare its subject', async ()
     }
   }
   await assert.rejects(storyFrames(Unchanged), /unchanged artwork needs a declared story subject/);
+  // A view redraws its picture as new objects each sync: the same paint under new ids is still
+  // unchanged artwork, not a change the reader is meant to look for.
+  class Redrawn extends Scene {
+    override async construct() {
+      await this.step('draw');
+      const first = new Text('word');
+      this.add(first);
+      await this.step('explain');
+      this.remove(first);
+      this.add(new Text('word'));
+    }
+  }
+  await assert.rejects(storyFrames(Redrawn), /explain: unchanged artwork needs a declared story subject/);
   const frames = await storyFrames(Unchanged, [{ step: 'explain', targets: [{ key: 'word' }] }]);
   assert.equal(frames.size, 2);
   assert.ok(frames.get('explain')!.targets.some((t) => t.name === 'word'));
