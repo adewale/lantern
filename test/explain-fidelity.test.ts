@@ -96,6 +96,24 @@ for (const entry of EXPLAINERS)
           assert.equal(walks.filter((w) => w.step === 'request').length, values.request === 'hit' ? 3 : 4);
           await mrCacheDiff(trace, variant.Scene);
           break;
+        case 'latest-search': {
+          // Independent expectation for the two controlled completions: when B
+          // finishes first the unguarded old A overwrites it; when A finishes
+          // first the guarded page stays empty until the latest B arrives.
+          const guarded = values.guard === 'on', newFirst = values.order === 'new-first';
+          const first = newFirst ? 'B' : 'A';
+          assertStepState(trace, 'start', { active: 'B', shown: null, completed: [], writes: [] });
+          assertStepState(trace, 'first', {
+            completed: [first], shown: newFirst ? 'B' : guarded ? null : 'A',
+          });
+          assertStepState(trace, 'second', {
+            completed: [first, newFirst ? 'A' : 'B'],
+            shown: newFirst && !guarded ? 'A' : 'B',
+            writes: newFirst ? guarded ? ['B'] : ['B', 'A'] : guarded ? ['B'] : ['A', 'B'],
+          });
+          assertStepState(trace, 'compare', { unguarded: newFirst ? 'A' : 'B', guarded: 'B' });
+          break;
+        }
         case 'lantern':
           assert.ok(walks.some((w) => w.from === 'Clock' && w.to === 'Browser'));
           assert.ok(walks.some((w) => w.from === 'Clock' && w.to === 'Trace'));

@@ -21,6 +21,7 @@ export const EXPLAINERS: readonly { id: string; step: string; group: 'topic' | '
   { id: 'exgit', step: 'change', group: 'topic' },
   { id: 'token-bucket', step: 'trace', group: 'topic' },
   { id: 'mr-cache', step: 'after', group: 'topic' },
+  { id: 'latest-search', step: 'compare', group: 'topic' },
   { id: 'state-machine', step: 'opened', group: 'topic' },
   { id: 'ring-buffer', step: 'result', group: 'topic' },
   { id: '2password', step: 'suggest', group: 'topic' },
