@@ -41,6 +41,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   document.documentElement.dataset.theme = ['light', 'dark'].includes(params.get('theme') ?? '')
     ? params.get('theme')!
     : 'auto';
+  // A page open in its own tab sizes its column to the window's height (embed.css); inside a
+  // frame the loader sizes the frame to the page, so the width must not depend on that height.
+  if (window.top === window) document.documentElement.dataset.window = 'top';
   const Bound = bindSnapshots(Source, snapshots);
   // The page's own words in the scene's language; so are the generated descriptions, where
   // explain/words.ts has the language (else they are English and marked so).

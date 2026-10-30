@@ -6,6 +6,10 @@
 ::selection{background:color-mix(in srgb,var(--accent) 30%,transparent)}
 body{margin:0;background:var(--bg);color:var(--fg);accent-color:var(--accent)}
 #content{max-width:1080px;margin:0 auto;padding:24px 16px 48px}
+/* In its own tab, keep the picture and the start of its caption on one laptop screen: the column
+   narrows with the window's height (the 321px is the chrome above the stage and a five-line
+   caption), but never below 912px, where the stage's smallest label still draws at 12px. */
+:root[data-window=top] #content{max-width:clamp(912px,calc((100svh - 321px)*16/9 + 32px),1080px)}
 #content:focus{outline:none}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 a{color:var(--accent);text-underline-offset:.2em}
