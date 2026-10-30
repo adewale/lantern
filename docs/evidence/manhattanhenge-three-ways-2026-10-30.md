@@ -81,6 +81,9 @@ The uncomfortable row is the first. A page with no engine, no checks and no anim
 
 ## What this says we should change about Rayner
 
+Eleven of the changes below were made and applied across the catalog the same day; [that record](rayner-changes-2026-10-30.md) measures what they changed and assesses it with the rubric.
+
+
 The three essays the prompt named frame it. Rieseberg: use the instruments experts use, set an unreasonable goal, and never let the model judge itself. Luu, *ambitious*: the cost of building a bespoke thing has collapsed, so build it, but the gap between what can be built and what can be verified is the thing that is widening. Luu, *benchpocalypse*: once the target is a score, you get the score. henge.nyc got AMNH's minutes. Rayner's `check` is a score too; I could have passed it by hiding labels, and the skill says so.
 
 1. **Make the resting picture the authoring unit, and motion the option.** Let a step be a drawing of `scene.state` (`view` already exists) with transitions supplied by the engine or omitted. Most of the choreography in this scene would go; `check` would keep every rule it has, because it already judges resting frames. Subtraction: the `line` field, which I kept rewriting to avoid repeating the title, could be optional and discouraged.

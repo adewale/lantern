@@ -83,7 +83,7 @@ export function checkSummary(report: Record<string, unknown>, file: string): str
     `  ${variants.length} case${variants.length === 1 ? '' : 's'} · ${steps} steps · ${report.diagrams} diagram${report.diagrams === 1 ? '' : 's'} · ${most((v) => v.frames)} frames at most · 0 motion events`,
     `  labels: smallest ${px(least((v) => v.legibility.minLabelPx1280))} at 1280 px, ${px(least((v) => v.legibility.minLabelPx390))} in a phone close-up` +
       (under ? ` (${under} under 12 px)` : ''),
-    `  density: up to ${most((v) => v.density.maxLabels)} labels at rest${densest ? ` (${densest[0]})` : ''}, up to ${most((v) => v.density.maxCaptionNumerals)} numerals and ${most((v) => v.density.maxCaptionWords)} words in a caption`,
+    `  density: up to ${most((v) => v.density.maxCaptionWords)} words and ${most((v) => v.density.maxCaptionNumerals)} numerals in a caption, up to ${most((v) => v.density.maxLabels)} labels at rest${densest ? ` (${densest[0]})` : ''}`,
     `  report: ${file}`,
   ].join('\n');
 }

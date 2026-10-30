@@ -95,7 +95,7 @@ test('a passing check prints a summary a person can read', () => {
       'rayner check: demo passed',
       '  2 cases · 3 steps · 1 diagram · 420 frames at most · 0 motion events',
       '  labels: smallest 15 px at 1280 px, 11.5 px in a phone close-up (1 under 12 px)',
-      '  density: up to 7 labels at rest (a), up to 3 numerals and 40 words in a caption',
+      '  density: up to 40 words and 3 numerals in a caption, up to 7 labels at rest (a)',
       '  report: /tmp/report.json',
     ].join('\n'),
   );
