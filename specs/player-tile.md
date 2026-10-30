@@ -264,8 +264,23 @@ In `test/explain-embed.test.ts` unless noted:
 13. The reader model: add `OpenTranscript` and `OpenSteps` commands if absent, and check after every command that `.player` contains `.head`, `.frame`, `.stepper`, `.words`, `.transcript` and `.foot` in that order.
 14. RTL forced on mr-cache: the mark is at the right, the open link at the left, the rail on the left.
 15. Update the selectors in §1.4.
+16. The crop test, T12.
 
 No property test is required.
+
+### T12. The crop test, as a permanent test
+
+The question in §1.1 becomes a test that runs on every catalog page, in `test/explain-embed.test.ts` as part of the catalog sweep (all 30 explainers, so both languages): **the tile stands alone**. Load the page at 900 × 800 standalone, wait for `#content[data-ready]`, and assert, reading the DOM only (no pixel sampling):
+
+1. **What it is.** Inside `.tile`: one `section.player` whose `aria-label` is `t.player` for the page's language ("Explainer" / "Explication"); one `.stepper` holding the Next button (`t.nextLabel`) and `ol.step-bar` with one segment per step of the default case.
+2. **What it is about.** Inside `.tile`: one `h1` whose text is the scene's `meta.title`; one `.lede .kicker` reading `t.stepOf(1, n)`; one `.case` fieldset per setting of the scene.
+3. **Who made it.** Inside `.tile`: one `.foot a.mark` with visible text "Rayner", `href` equal to `PRODUCT.home`, accessible name `t.madeWith`.
+4. **Where to go.** Standalone: `.foot a.open` is absent, and the transcript and steps disclosures are inside `.tile`. Then reload the same page inside a raw iframe (no `parentOrigin`) and inside the loader: in both, `.foot a.open` is present inside `.tile`, its `href` is this page without `parentOrigin` and with the current `step` and case values.
+5. **The boundary.** Every element under `#content` with a non-empty bounding box is a descendant of `.tile` or is `.tile` itself, and the union of those boxes equals the tile's own box within 1 px on each side. In a frame, additionally, `getComputedStyle(document.body).backgroundColor` is transparent and `#content` has zero padding, so nothing of Rayner's is drawn outside the tile.
+
+Also save, as evidence (not asserted beyond existence), `locator('.tile').screenshot()` for mr-cache and quotient-familial at 900 px to `docs/evidence/player-tile/crop-<id>-900.jpg`; the README names them as the crop test's pictures.
+
+Acceptance: the test fails on `feature/player-step-bar` (where the title, the rail and the transcript are outside the card) and passes on `feature/player-tile`. Confirm both and say so in the report.
 
 ## 5. Order of work and reporting
 
@@ -277,8 +292,9 @@ Work on a branch `feature/player-tile` cut from `feature/player-step-bar`. Commi
 4. T4 (framed mode, loader theme, snippet, embed-lab).
 5. T5 (tint and its gate).
 6. T6 (heights, oEmbed, discovery link).
-7. T10 (docs, CHANGELOG, evidence).
-8. The Linux lettering pin, alone.
+7. T12 (the crop test).
+8. T10 (docs, CHANGELOG, evidence).
+9. The Linux lettering pin, alone.
 
 Push the branch. Do not open a pull request.
 
