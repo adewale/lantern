@@ -937,6 +937,22 @@ test('the tile takes the case\'s paper as --paper: the palette\'s paper, changin
     }
   } finally { await context.close(); }
 });
+// specs/player-tile.md T6: the published height at 640 px is the height the loader gives the frame there.
+test('known heights: mr-cache measures three heights above the floor, and the loader at 640 px settles the frame at heights["640"] within 2 px', options, async () => {
+  const { measureEmbed, embedSizeProblems } = await import('../tools/lib/explain-embed-size.ts');
+  const size = await measureEmbed(browser, embed, 'mr-cache.html');
+  assert.deepEqual(embedSizeProblems(size), [], JSON.stringify(size));
+  assert.ok(size.heights['390'] > size.heights['640'], `a phone's page is taller: ${JSON.stringify(size)}`);
+  // A different host on another origin, as a reader's would be.
+  hostBody = `<!doctype html><style>body{margin:0}</style>${loader('a', 'mr-cache')}<p>After the embed.</p>`;
+  const page = await browser.newPage({ viewport: { width: 640, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(host);
+    const frame = await readyFrame(page, 'mr-cache');
+    const settled = await assertHeight(page, 'a', frame);
+    assert.ok(Math.abs(settled - size.heights['640']) <= 2, `settled at ${settled}, published ${size.heights['640']}`);
+  } finally { await page.close(); }
+});
 // The rest of URL cases, step fallback, history, copy link and reduced motion is the player
 // model's (below), including the fixed fallback scenario.
 test('?theme=dark, light and auto (following the reader\'s colour scheme) set the page colours', options, async () => {

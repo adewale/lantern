@@ -5,10 +5,11 @@
 // resting picture and sends a reader on to the player at that step (<path>/<id>?step=<step>).
 // No script, no styles. Crawlers read the tags of the page they fetched and do not follow its
 // meta refresh, so the preview is the share page's.
-import { readFile, readdir } from 'node:fs/promises';
+import { copyFile, readFile, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { htmlEscape } from '../../explain/trace.ts';
-import { SHARE_META, shareable } from '../../app/embed-share.ts';
+import { HOME, SHARE_META, shareable } from '../../app/embed-share.ts';
+import type { EmbedSize } from './explain-embed-size.ts';
 
 export { shareable };
 
@@ -120,8 +121,51 @@ export function publishedPage(html: string, m: ShareManifest, origin: string, pa
   if (at < 0) throw new Error(`No </head> in the page for ${m.id}`);
   const tags =
     cardTags(card(m, cover, origin, m.title, `${folder(origin, path)}/${m.id}`, path)) +
-    `\n<meta name="${SHARE_META}" content="${htmlEscape(`${folder(origin, path)}/${m.id}/`)}">`;
+    `\n<meta name="${SHARE_META}" content="${htmlEscape(`${folder(origin, path)}/${m.id}/`)}">` +
+    `\n${oembedLink(m, origin, path)}`;
   return html.slice(0, at) + tags + html.slice(at);
+}
+
+/** oEmbed discovery: the link a CMS reads to turn a pasted page URL into its embed. */
+const oembedLink = (m: { id: string; title: string }, origin: string, path: string) =>
+  `<link rel="alternate" type="application/json+oembed" href="${htmlEscape(`${folder(origin, path)}/${m.id}.oembed.json`)}" title="${htmlEscape(m.title)}">`;
+const OEMBED_LINK = /<link rel="alternate" type="application\/json\+oembed" href="([^"]*)" title="[^"]*">/g;
+
+/**
+ * The explainer's oEmbed response (https://oembed.com, type "rich"), fixed at 640 px wide: a static
+ * host cannot honour `maxwidth`, and the iframe shrinks with max-width:100%. Its height is the page's
+ * framed height at 640 (embed.json); the thumbnail is the poster, at its own size.
+ */
+export function oembed(m: { id: string; title: string }, size: EmbedSize, thumbnail: { width: number; height: number }, origin: string, path: string) {
+  const base = folder(origin, path),
+    a = htmlEscape,
+    height = size.heights['640'];
+  return {
+    version: '1.0',
+    type: 'rich',
+    provider_name: 'Rayner',
+    provider_url: HOME,
+    title: m.title,
+    thumbnail_url: `${base}/${m.id}.png`,
+    thumbnail_width: thumbnail.width,
+    thumbnail_height: thumbnail.height,
+    width: 640,
+    height,
+    html: `<iframe src="${a(`${base}/${m.id}.html?theme=light`)}" title="${a(m.title)}" width="640" height="${height}" style="border:0;border-radius:12px;display:block;max-width:100%" allow="fullscreen" loading="lazy"></iframe>`,
+    cache_age: 86400,
+  };
+}
+
+/**
+ * Beside an exported page in `target`: its known heights as <id>.embed.json, and with an origin its
+ * oEmbed response as <id>.oembed.json. `built` is demos:build's folder.
+ */
+export async function writeEmbedFiles(target: string, built: string, m: { id: string; title: string }, origin: string | undefined, path: string): Promise<void> {
+  await copyFile(join(built, m.id, 'embed.json'), join(target, m.id + '.embed.json'));
+  if (!origin) return;
+  const size = JSON.parse(await readFile(join(built, m.id, 'embed.json'), 'utf8')) as EmbedSize,
+    thumbnail = pngSize(await readFile(join(built, m.id + '.png')));
+  await writeFile(join(target, m.id + '.oembed.json'), JSON.stringify(oembed(m, size, thumbnail, origin, path), null, 2) + '\n');
 }
 
 const entities: Record<string, string> = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" };
@@ -174,6 +218,15 @@ export async function checkCards(
     if ((tags.get('twitter:title')?.[0]?.length ?? 0) > TITLE_MAX) say(`twitter:title is over ${TITLE_MAX} characters`);
     // The player's Copy link reads this to give a step's share page.
     if (!page.includes('/') && tags.get(SHARE_META)?.join() !== `${site}/${page.replace(/\.html$/, '')}/`) say(`${SHARE_META} is not ${site}/${page.replace(/\.html$/, '')}/`);
+    // An explainer's page names its oEmbed response once, and the response is there.
+    if (!page.includes('/')) {
+      const id = page.replace(/\.html$/, ''),
+        links = [...head.matchAll(OEMBED_LINK)].map((l) => unescape(l[1]!));
+      if (links.length !== 1 || links[0] !== `${site}/${id}.oembed.json`) say(`${links.length} oEmbed links, not one to ${site}/${id}.oembed.json`);
+      const response = await readFile(join(dir, id + '.oembed.json'), 'utf8').then((t) => JSON.parse(t) as { type?: string; version?: string; html?: string }, () => undefined);
+      if (!response) say(`${id}.oembed.json is missing`);
+      else if (response.type !== 'rich' || response.version !== '1.0' || !/^<iframe [^>]*><\/iframe>$/.test(response.html ?? '')) say(`${id}.oembed.json is not a rich oEmbed 1.0 response with one iframe`);
+    }
     for (const key of ['og:url', 'og:image', 'twitter:image'])
       for (const url of tags.get(key) ?? []) if (!url.startsWith('https://') || !url.startsWith(site + '/')) say(`${key} ${url} is not an https URL under ${site}`);
     const image = tags.get('og:image')?.[0];

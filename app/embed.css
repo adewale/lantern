@@ -8,9 +8,10 @@ body{margin:0;background:var(--bg);color:var(--fg);accent-color:var(--accent)}
 #content{--player-reserve:300px;--player-cap:max(20rem,calc((100dvh - var(--player-reserve))*16/9));max-width:1240px;margin:0 auto;padding:24px 16px 48px}
 #content:focus{outline:none}
 /* In a frame the page is the tile alone: the host's background shows around it and at its corners.
-   The tile keeps 1px off the frame's edges, so its own edge is drawn inside the frame. */
+   The tile keeps 1px off the frame's edges, so its own edge is drawn inside the frame, and #content holds
+   those margins (a flow root), so the height it reports covers them. */
 :root[data-framed] body{background:transparent}
-:root[data-framed] #content{padding:0;max-width:none}
+:root[data-framed] #content{display:flow-root;padding:0;max-width:none}
 :root[data-framed] .layout{margin:1px auto;max-width:calc(100% - 2px)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 a{color:var(--accent);text-underline-offset:.2em}

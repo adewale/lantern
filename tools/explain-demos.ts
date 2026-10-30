@@ -14,6 +14,9 @@ import { useProjectLettering } from './lib/explain-lettering.ts';
 import { galleryTile } from './lib/explain-gallery.ts';
 import { builtOutputHashes } from './lib/explain-built-files.ts';
 import type { ShareManifest } from './lib/explain-share.ts';
+import { measureEmbed, embedSizeProblems } from './lib/explain-embed-size.ts';
+import { serve } from './lib/explain-serve.ts';
+import { launch } from './lib/browser.ts';
 
 const directory = join(ROOT, 'out/explainers');
 await mkdir(directory, { recursive: true });
@@ -90,6 +93,23 @@ for (const item of EXPLAINERS) {
   );
 }
 await buildLoader(join(directory, 'loader.js'));
+// Known heights (tools/lib/explain-embed-size.ts): each page as the loader frames it, served from here.
+{
+  const server = await serve(directory, 0, 'index.html'),
+    browser = await launch();
+  try {
+    for (const item of EXPLAINERS) {
+      const size = await measureEmbed(browser, server.url, item.id + '.html'),
+        problems = embedSizeProblems(size);
+      if (problems.length) throw new Error(`${item.id}/embed.json: ${problems.join('; ')}`);
+      await writeFile(join(directory, item.id, 'embed.json'), JSON.stringify(size, null, 2) + '\n');
+    }
+  } finally {
+    await browser.close();
+    server.close();
+  }
+  console.log(`Embed heights at 390, 640 and 900 px: ${EXPLAINERS.length} explainers`);
+}
 const cases = evidence.reduce((n, s) => n + s.cases.length, 0),
   diagrams = evidence.reduce((n, s) => n + s.diagrams, 0),
   styles = new Set(evidence.flatMap((s) => s.styles)),
