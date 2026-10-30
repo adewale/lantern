@@ -1162,7 +1162,111 @@ test('the loader appends only the iframe, and dispose() removes the iframe and i
     assert.deepEqual(await page.evaluate(() => ({ children: [...document.getElementById('t')!.children].map((e) => e.tagName), links: document.querySelectorAll('a').length, listeners: (window as unknown as { __listeners: number }).__listeners })), { children: ['IFRAME'], links: 0, listeners: 1 });
     await page.evaluate(() => (window as unknown as { __dispose: () => void }).__dispose());
     assert.deepEqual(await page.evaluate(() => ({ children: document.getElementById('t')!.childNodes.length, links: document.querySelectorAll('a, iframe').length, listeners: (window as unknown as { __listeners: number }).__listeners })), { children: 0, links: 0, listeners: 0 });
+    // specs/player-guidance.md G4: goTo after dispose does nothing, and does not throw.
+    assert.equal(await page.evaluate(() => (window as unknown as { __dispose: { goTo(step?: string): unknown } }).__dispose.goTo('request')), undefined);
   } finally { await page.close(); }
+});
+// specs/player-guidance.md G4: the host page hears each settled step and can drive the player.
+type Heard = { step: string; index: number; total: number; settings: Record<string, string> };
+const heard = (page: Page) => page.evaluate(() => (window as unknown as { heard: { a: Heard[]; b: Heard[]; onStep: Heard[] } }).heard);
+const stepOfFrame = (frame: Frame) => frame.evaluate(() => Object.fromEntries(new URL(location.href).searchParams));
+test('two embeds: goTo on A moves only A, replacing its history entry; A\'s rayner:step reaches the host once per settled step with its index and total; B is unaffected', options, async () => {
+  hostBody = `<!doctype html><style>body{margin:0;max-width:700px}</style><div id="a"></div><div id="b"></div><button id="go">Show a miss</button>
+<script src="${embed}/loader.js"></script><script>
+window.heard = { a: [], b: [], onStep: [] };
+const a = RaynerEmbed.mountExplainer(document.getElementById('a'), ${JSON.stringify(embed + '/mr-cache.html')}, { title: 'A', onStep: (d) => heard.onStep.push(d) });
+const b = RaynerEmbed.mountExplainer(document.getElementById('b'), ${JSON.stringify(embed + '/exgit.html')}, { title: 'B' });
+// The event bubbles from each iframe.
+document.getElementById('a').addEventListener('rayner:step', (e) => heard.a.push(e.detail));
+document.getElementById('b').addEventListener('rayner:step', (e) => heard.b.push(e.detail));
+document.getElementById('go').onclick = () => a.goTo('request', { request: 'miss' });
+</script><iframe id="sibling" srcdoc="<p>A sibling at the host's origin</p>"></iframe>`;
+  const page = await browser.newPage({ reducedMotion: 'reduce' });
+  try {
+    await page.goto(host);
+    const a = await readyFrame(page, 'mr-cache'),
+      b = await readyFrame(page, 'exgit');
+    await page.waitForFunction(() => { const h = (window as unknown as { heard: { a: unknown[]; b: unknown[] } }).heard; return h.a.length >= 1 && h.b.length >= 1; });
+    const exgit = stepsOf(projects.get('exgit')!, resolveSettings(projects.get('exgit')!.Scene));
+    const first = await heard(page);
+    assert.deepEqual(first.a, [{ step: 'before', index: 0, total: 4, settings: { request: 'hit' } }]);
+    assert.deepEqual(first.onStep, first.a, 'onStep hears what the event carries');
+    assert.deepEqual(first.b, [{ step: exgit[0]!.step, index: 0, total: exgit.length, settings: { change: 'add' } }]);
+    const before = await a.evaluate(() => history.length),
+      bWas = await stepOfFrame(b);
+    await page.locator('#go').click();
+    await page.waitForFunction(() => (window as unknown as { heard: { a: unknown[] } }).heard.a.length >= 2);
+    await a.waitForSelector('[data-ready=true]');
+    await page.waitForTimeout(500);
+    const after = await heard(page);
+    assert.deepEqual(after.a, [...first.a, { step: 'request', index: 3, total: 4, settings: { request: 'miss' } }], 'once per settled step');
+    assert.deepEqual(after.onStep, after.a);
+    assert.deepEqual(after.b, first.b, 'B heard nothing more');
+    const moved = await stepOfFrame(a);
+    assert.deepEqual([moved.step, moved.request], ['request', 'miss']);
+    assert.equal(await a.locator('input[name=request]:checked').getAttribute('value'), 'miss');
+    assert.equal(await a.evaluate(() => history.length), before, 'host-driven navigation replaces the history entry');
+    assert.deepEqual(await stepOfFrame(b), bWas, 'B did not move');
+    // From a window that is not the parent, at the parent's own origin: nothing.
+    const sibling = page.frames().find((f) => f.url() === 'about:srcdoc')!;
+    await sibling.evaluate(() => parent.document.querySelector<HTMLIFrameElement>('#a iframe')!.contentWindow!.postMessage({ type: 'rayner:goto', version: 1, step: 'before' }, '*'));
+    await page.waitForTimeout(500);
+    assert.equal((await stepOfFrame(a)).step, 'request', 'a sibling window cannot drive the player');
+    assert.equal((await heard(page)).a.length, 2);
+  } finally {
+    await page.close();
+  }
+});
+test('a rayner:goto from another origin does nothing; a raw iframe without parentOrigin neither posts nor accepts messages', options, async () => {
+  const goto = { type: 'rayner:goto', version: 1, step: 'request', settings: { request: 'miss' } };
+  // The frame is told its parent is at `host`; the page that frames it is at another origin.
+  const elsewhere = host.replace('127.0.0.1', 'localhost');
+  hostBody = `<!doctype html><script>window.posts = []; addEventListener('message', (e) => posts.push(e.data));</script><iframe title="t" src="${embed}/mr-cache.html?parentOrigin=${encodeURIComponent(host)}" style="width:700px;height:900px;border:0"></iframe>`;
+  for (const [origin, moves] of [[elsewhere, false], [host, true]] as const) {
+    const page = await browser.newPage({ reducedMotion: 'reduce' });
+    try {
+      await page.goto(origin);
+      const frame = await readyFrame(page, 'mr-cache');
+      await page.evaluate(({ goto, embed }) => frames[0]!.postMessage(goto, embed), { goto, embed });
+      if (moves) await frame.waitForFunction(() => new URL(location.href).searchParams.get('step') === 'request');
+      else await page.waitForTimeout(600);
+      assert.equal((await stepOfFrame(frame)).step, moves ? 'request' : 'before', `the parent at ${origin}`);
+      // The page posts its steps only to the parentOrigin it was given.
+      const steps = (await page.evaluate(() => (window as unknown as { posts: { type?: string }[] }).posts)).filter((m) => m?.type === 'rayner:step');
+      assert.equal(steps.length, moves ? 2 : 0, `step reports heard at ${origin}`);
+    } finally {
+      await page.close();
+    }
+  }
+  // A raw iframe, no parentOrigin: no message out on load or on Next, none taken in.
+  hostBody = `<!doctype html><script>window.posts = []; addEventListener('message', (e) => posts.push(e.data));</script><iframe title="t" src="${embed}/mr-cache.html" style="width:700px;height:900px;border:0"></iframe>`;
+  const page = await browser.newPage({ reducedMotion: 'reduce' });
+  try {
+    await page.goto(host);
+    const frame = await readyFrame(page, 'mr-cache');
+    await frame.locator('.stepper .primary').click();
+    await frame.waitForFunction(() => new URL(location.href).searchParams.get('step') === 'diff');
+    await page.evaluate(({ goto, embed }) => frames[0]!.postMessage(goto, embed), { goto, embed });
+    await page.waitForTimeout(600);
+    assert.equal((await stepOfFrame(frame)).step, 'diff', 'a raw iframe takes no goto');
+    assert.deepEqual(await page.evaluate(() => (window as unknown as { posts: unknown[] }).posts), [], 'a raw iframe posts nothing');
+  } finally {
+    await page.close();
+  }
+});
+test('the script-tag loader dispatches rayner:step on its iframe, and the event bubbles to the host document', options, async () => {
+  hostBody = `<!doctype html><script>window.tagSteps = []; document.addEventListener('rayner:step', (e) => tagSteps.push([e.target.tagName, e.target.parentElement.id, e.detail.step, e.detail.index, e.detail.total]));</script>${loader('a', 'mr-cache')}`;
+  const page = await browser.newPage({ reducedMotion: 'reduce' });
+  try {
+    await page.goto(host);
+    const frame = await readyFrame(page, 'mr-cache');
+    await page.waitForFunction(() => (window as unknown as { tagSteps: unknown[] }).tagSteps.length >= 1);
+    await frame.locator('.stepper .primary').click();
+    await page.waitForFunction(() => (window as unknown as { tagSteps: unknown[] }).tagSteps.length >= 2);
+    assert.deepEqual(await page.evaluate(() => (window as unknown as { tagSteps: unknown[] }).tagSteps), [['IFRAME', 'a', 'before', 0, 4], ['IFRAME', 'a', 'diff', 1, 4]]);
+  } finally {
+    await page.close();
+  }
 });
 /** The colour of one screen pixel of `page`, read back from a screenshot (the host cannot read a cross-origin frame's pixels). */
 async function pixelAt(page: Page, x: number, y: number): Promise<number[]> {
@@ -2923,7 +3027,8 @@ async function heightsSettle(page: Page, frame: Frame) {
   let last: { posted: unknown; content: number; iframe: string } | undefined;
   for (const until = Date.now() + 5000; Date.now() < until; await page.waitForTimeout(50)) {
     const { posted, content } = await frame.evaluate(() => ({
-      posted: (window as unknown as { __posts: Post[] }).__posts.at(-1)?.msg.height,
+      // The resize messages; the frame also reports each settled step (specs/player-guidance.md G4).
+      posted: (window as unknown as { __posts: Post[] }).__posts.filter((p) => p.msg.type === 'rayner:resize').at(-1)?.msg.height,
       content: Math.ceil(document.getElementById('content')!.getBoundingClientRect().height),
     }));
     const iframe = await page.locator('iframe').evaluate((f) => (f as HTMLIFrameElement).style.height);
@@ -2933,10 +3038,10 @@ async function heightsSettle(page: Page, frame: Frame) {
   return last!;
 }
 test(
-  'reportHeight: after any mix of transcript, case, step, viewport and scroll changes, the last posted height equals the content root\'s height, and every message is a new height the host accepts',
+  'reportHeight: after any mix of transcript, case, step, viewport and scroll changes, the last posted height equals the content root\'s height, every resize message is a new height the host accepts, and every other message is a step report it accepts',
   options,
   async () => {
-    const { resizeHeight } = await import('../app/embed-protocol.ts');
+    const { resizeHeight, stepDetail } = await import('../app/embed-protocol.ts');
     await fc.assert(
       fc.asyncProperty(heightActions, async (actions) => {
         hostBody = `<!doctype html><style>body{margin:0}</style>${loader('a', 'oauth-pkce')}<div style="height:4000px"></div>`;
@@ -2961,8 +3066,12 @@ test(
           await heightAct(page, frame, { kind: 'back' });
           const h = await heightsSettle(page, frame);
           assert.deepEqual(h, { posted: h.content, content: h.content, iframe: h.content + 'px' }, 'back in view');
-          const posts = await postsOf(frame),
+          const all = await postsOf(frame),
+            posts = all.filter((p) => p.msg.type === 'rayner:resize'),
             source = {} as MessageEventSource;
+          // Every other message is a step report the loader accepts, to the same origin.
+          for (const p of all.filter((p) => p.msg.type !== 'rayner:resize'))
+            assert.ok(p.origin === host && stepDetail({ origin: host, source, data: p.msg }, host, source), JSON.stringify(p));
           for (const [i, p] of posts.entries()) {
             assert.equal(resizeHeight({ origin: host, source, data: p.msg }, host, source), p.msg.height, JSON.stringify(p));
             if (i) assert.notEqual(p.msg.height, posts[i - 1]!.msg.height, `posts ${i - 1} and ${i} repeat a height`);

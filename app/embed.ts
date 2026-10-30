@@ -6,7 +6,7 @@ import { bindSnapshots, withSettings, resolveSettings } from '../explain/index.t
 import type { ExplainerClass, Settings, SnapshotStore } from '../explain/index.ts';
 import { restingTime, pictureHtml, pictureSummary, stepWords, watchedChanges } from '../explain/trace.ts';
 import { paperOf } from '../explain/stage.ts';
-import { reportHeight } from './embed-protocol.ts';
+import { connectHost, reportHeight } from './embed-protocol.ts';
 import { icon } from './embed-icons.ts';
 import type { IconName } from './embed-icons.ts';
 import { ReaderSink, ReaderView, StageZoom } from './embed-zoom.ts';
@@ -583,6 +583,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     else zoom.apply();
     root.classList.remove('loading');
     document.dispatchEvent(new CustomEvent('rayner:step', { detail: { step: step.step, settings: values } }));
+    toHost({ step: step.step, index: selected, total: trace.steps.length, settings: { ...values } });
     primeNext();
   }
   async function show(index: number, push = true) {
@@ -956,6 +957,16 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     for (const s of Source.settings ?? []) if (q.has(s.id)) request[s.id] = q.get(s.id)!;
     return { request, step: q.get('step') ?? undefined };
   };
+  // A host page drives the player through the loader (specs/player-guidance.md G4): a step by name
+  // and settings by id, validated as the URL's are (an undeclared id is ignored, as in a URL; an
+  // unknown value falls back with the same notice). Given settings replace those of the case on
+  // show; a request without a step keeps the step by name. It replaces the frame's history entry.
+  const toHost = connectHost((request) => {
+    if (!trace) return;
+    const given: Record<string, string> = {};
+    for (const s of Source.settings ?? []) if (request.settings && Object.hasOwn(request.settings, s.id)) given[s.id] = request.settings[s.id]!;
+    void load({ ...(wanted ?? values), ...given }, request.step ?? (() => trace?.steps[selected]?.step), false);
+  });
   window.addEventListener('popstate', () => {
     const q = fromURL();
     void load(q.request, q.step);
