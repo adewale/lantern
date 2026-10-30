@@ -38,7 +38,7 @@ before(async () => {
   browser = await launch();
   await new Promise<void>((r) => hostServer.listen(0, '127.0.0.1', r));
   host = `http://127.0.0.1:${(hostServer.address() as { port: number }).port}`;
-  for (const name of ['mr-cache', 'oauth-pkce', 'exgit', 'lantern', 'send-sync']) {
+  for (const name of ['mr-cache', 'oauth-pkce', 'exgit', 'lantern', 'send-sync', 'feature-tour']) {
     const project = await collectProject(`scenes/explainers/${name}`, { write: false });
     projects.set(name, project);
     await buildExplainer(project, join(folder, name + '.html'));
@@ -88,6 +88,33 @@ test('step navigation is discoverable before the picture on short phones and des
       assert.equal(await page.locator('.controls button[aria-label="Previous step"]').isEnabled(), true);
     } finally { await page.close(); }
   }
+});
+
+test('feature-tour case navigation starts with its recipe, including transcript links, while direct result permalinks still work', options, async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(embed + '/feature-tour.html?feature=camera&step=result');
+    await page.waitForSelector('[data-ready=true]');
+    assert.equal(new URL(page.url()).searchParams.get('step'), 'result', 'a direct result permalink remains valid');
+    const links = await page.locator('.transcript section a').evaluateAll(anchors => anchors.map(a => new URL((a as HTMLAnchorElement).href).searchParams.get('step')));
+    assert.equal(links.length, 15, 'each authoring case offers one entry link');
+    assert.deepEqual([...new Set(links)], ['recipe'], 'entry links start at the code, not the result');
+    await page.locator('fieldset.case input[value="state"]').check();
+    await page.waitForURL(/feature=state&step=recipe/);
+    assert.equal(await page.locator('.steps button[aria-current="step"]').getAttribute('data-step'), 'recipe');
+    await page.locator('.step-transport button[aria-label="Next step"]').click();
+    await page.waitForURL(/feature=state&step=result/);
+    await page.goBack();
+    await page.waitForURL(/feature=state&step=recipe/);
+    await page.goBack();
+    await page.waitForURL(/feature=camera&step=result/);
+    assert.equal(new URL(page.url()).searchParams.get('feature'), 'camera');
+    assert.equal(new URL(page.url()).searchParams.get('step'), 'result');
+    await page.goto(embed + '/mr-cache.html?request=hit&step=request');
+    await page.waitForSelector('[data-ready=true]');
+    await page.locator('fieldset.case input[value="miss"]').check();
+    await page.waitForURL(/request=miss&step=request/);
+  } finally { await page.close(); }
 });
 
 test('fullscreen leaves the early step control reachable when the player overflows', options, async () => {

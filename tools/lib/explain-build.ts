@@ -106,7 +106,10 @@ export async function buildExplainer(
         const href = `?${key ? key + '&' : ''}${new URLSearchParams({ step: s.step })}`,
           shows = pictureHtml(s.after, trace.steps[i - 1]?.after),
           words = stepWords(s);
-        return `<li><a href="${htmlEscape(href)}">${htmlEscape(words.title)}</a>${wordsHtml(words)}${shows ? `<div${descriptionLang(lang)}>${shows}</div>` : ''}</li>`;
+        const entry = project.Scene.meta?.caseNavigation === 'first' && i > 0
+          ? `<span>${htmlEscape(words.title)}</span>`
+          : `<a href="${htmlEscape(href)}">${htmlEscape(words.title)}</a>`;
+        return `<li>${entry}${wordsHtml(words)}${shows ? `<div${descriptionLang(lang)}>${shows}</div>` : ''}</li>`;
       });
       return `<section data-case="${htmlEscape(key)}">${name ? `<h2>${htmlEscape(name)}</h2>` : ''}<ol>${steps.join('')}</ol></section>`;
     })
