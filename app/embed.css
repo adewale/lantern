@@ -27,12 +27,16 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .segments label:has(input:checked){background:var(--surface);color:var(--fg);font-weight:600;box-shadow:0 1px 2px rgb(0 0 0/.08),0 0 0 1px rgb(0 0 0/.04)}
 .segments label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:1px}
 
-/* The card and the rail share a grid. On a wide page the rail is beside the card and takes the
-   width the card's cap leaves; it stays in view as the page scrolls, and scrolls on its own. */
-.layout{display:grid;gap:24px;align-items:start}
+/* The tile: everything the page shows, on one surface inside one edge; outside it the page has only
+   background. The card is its first pane; on a wide page the rail is the second, beside it behind a
+   rule that runs the tile's height, taking the width the card's cap leaves. The rail's body stays in
+   view as the page scrolls, and scrolls on its own. */
+.tile{--tile:var(--surface);--tile-line:var(--line);background:var(--tile);box-shadow:0 0 0 1px var(--tile-line);border-radius:12px;overflow:clip}
+.layout{display:grid;align-items:start;width:min(100%,var(--player-cap));margin-inline:auto}
 @media(min-width:1100px){
-  .layout{grid-template-columns:minmax(0,var(--player-cap)) minmax(300px,1fr)}
-  .rail{position:sticky;top:16px;max-height:calc(100dvh - 32px);overflow:auto}
+  .layout{width:auto;grid-template-columns:minmax(0,var(--player-cap)) minmax(300px,1fr)}
+  aside.rail{align-self:stretch;padding:12px;border-inline-start:1px solid var(--tile-line)}
+  .rail-body{position:sticky;top:16px;max-height:calc(100dvh - 32px);overflow:auto}
 }
 
 /* Player: one card. Its header, the picture, one stepper row straight under it, then the step's words.
@@ -41,7 +45,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
    only the frame, is capped by the viewport's height, so the stage fills the card's width and Next
    is on screen at load; a floor of 20rem keeps a short landscape window's card usable. Tuned
    against the viewports in specs/player-redesign.md R2. */
-.player{position:relative;width:min(100%,var(--player-cap));border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.player{position:relative;min-width:0}
 .frame{position:relative}
 .stage{position:relative;aspect-ratio:16/9;overflow:hidden;background:var(--surface);touch-action:pan-y}
 .stage svg{width:100%;height:100%;display:block}
@@ -122,7 +126,10 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
    current step is marked by colour and a filled number, done steps by an accent ring, never by weight. */
 .rail{min-width:0}
 .rail h2{margin:0;padding:8px 12px 4px;font-size:.8125rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-.rail summary{padding:11px 0;font-weight:600;cursor:pointer}
+/* The card's rows under the words: the steps (narrow) and the transcript, each a closed disclosure. */
+.player>details{padding:0 16px;border-top:1px solid var(--line)}
+.player>details[open]{padding-bottom:12px}
+.player>details>summary{padding:11px 0;font-weight:600;cursor:pointer}
 .steps{list-style:none;margin:0;padding:0;display:grid;gap:2px;counter-reset:step}
 .steps li{counter-increment:step}
 .steps button{font:inherit;position:relative;display:grid;gap:1px;width:100%;min-height:44px;padding-block:8px 9px;padding-inline:40px 12px;border:0;border-radius:8px;background:none;color:var(--fg);text-align:start;text-wrap:pretty;cursor:pointer;transition:background-color 150ms ease}
@@ -134,8 +141,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .steps [aria-current=step]::before{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 
 /* Transcript: the whole explanation as text. */
-.transcript{margin-top:24px;padding-top:8px;border-top:1px solid var(--line);line-height:1.6}
-.transcript summary{padding:11px 0;font-weight:600;cursor:pointer}
+.transcript{line-height:1.6}
 .transcript ol{padding-left:1.25rem;max-width:68ch}
 .transcript li{padding:6px 0}
 .transcript li li{padding:0}
@@ -147,9 +153,10 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .poster{width:100%}
 .loading .stage{opacity:.75}
 
-/* Enlarge: the card alone, its children sized to the screen; the stage within 100dvh - 180px. */
-.player:fullscreen{display:flex;flex-direction:column;justify-content:safe center;padding:16px;border-radius:0;box-shadow:none;overflow:auto}
-.player:fullscreen>*{width:min(100%,calc((100dvh - 180px)*16/9));margin-inline:auto}
+/* Enlarge: the card alone, its children sized to the screen. The stage keeps within 100dvh - 180px and
+   leaves room for the header above it and the step heading below the stepper row (300px, as at load). */
+.player:fullscreen{display:flex;flex-direction:column;justify-content:safe center;padding:16px;background:var(--tile);overflow:auto}
+.player:fullscreen>*{width:min(100%,calc((100dvh - 300px)*16/9));margin-inline:auto}
 
 @media(max-width:480px){.caption,.ruler{font-size:1.0625rem}.stepper{gap:6px}}
 @media(prefers-reduced-motion:reduce){.button,.stage svg.glide,.overview .view,.segments label,.steps button{transition:none}.button:active:not(:disabled){transform:none}.step-bar .fill{transition:none}}

@@ -166,11 +166,15 @@ test('fullscreen keeps the stepper row reachable when the player overflows', opt
       const player = document.querySelector<HTMLElement>('.player')!;
       const row = document.querySelector('.stepper')!.getBoundingClientRect(),
         stage = document.querySelector('.stage')!.getBoundingClientRect();
-      return {top: row.top, bottom: row.bottom, stage: stage.height, viewport: innerHeight, overflow: player.scrollHeight > player.clientHeight};
+      const head = document.querySelector('.head')!.getBoundingClientRect(),
+        lede = document.querySelector('.lede')!.getBoundingClientRect();
+      return {top: row.top, bottom: row.bottom, stage: stage.height, viewport: innerHeight, overflow: player.scrollHeight > player.clientHeight, head: [head.top, head.bottom], lede: [lede.top, lede.bottom]};
     });
     assert.equal(bounds.overflow, true, 'the test exercises a scrollable fullscreen player');
     assert.ok(bounds.stage <= bounds.viewport - 180 + 1, 'the stage keeps within the screen less 180 px');
     assert.ok(bounds.top >= 0 && bounds.bottom <= bounds.viewport, 'Next is reachable at scroll position zero');
+    // specs/player-tile.md T2: the card alone, its header and the step's heading on screen too.
+    assert.ok(bounds.head[0]! >= 0 && bounds.lede[1]! <= bounds.viewport, `the header and the step heading are on screen ${JSON.stringify(bounds)}`);
     await page.getByRole('button', {name: 'Next step', exact: true}).click();
     assert.equal(new URL(page.url()).searchParams.get('step'), 'diff');
   } finally { await page.close(); }
@@ -509,7 +513,7 @@ test('no horizontal overflow', options, async () => {
     }
 });
 // specs/player-redesign.md R5, R6, R10: the rail beside the card, the tools beside Next, both following the page's direction.
-test('the rail is beside the card when wide and under a closed details when narrow', options, async () => {
+test('the rail is a pane beside the card when wide and a closed details row inside the card, under the words, when narrow', options, async () => {
   const p = projects.get('mr-cache')!,
     list = stepsOf(p, resolveSettings(p.Scene, { request: 'hit' }));
   assert.ok(list.every((s) => s.line), "mr-cache's four steps each have a line");
@@ -524,7 +528,8 @@ test('the rail is beside the card when wide and under a closed details when narr
         heading: rail.querySelector('h2')?.textContent ?? null,
         summary: rail.querySelector('summary')?.textContent ?? null,
         open: (rail as HTMLDetailsElement).open ?? null,
-        holdsList: !!rail.querySelector(':scope > ol.steps'),
+        holdsList: !!rail.querySelector(':scope > ol.steps, :scope > .rail-body > ol.steps'),
+        afterWords: rail.parentElement === document.querySelector('.player') && rail.previousElementSibling?.matches('.words, .notice') === true,
         box: { left: r.left, right: r.right, top: r.top },
         card: { left: c.left, right: c.right, top: c.top, bottom: c.bottom },
       };
@@ -571,7 +576,8 @@ test('the rail is beside the card when wide and under a closed details when narr
       const seen = await rail(page);
       const where = `at ${width}×${height}`;
       assert.deepEqual([seen.tag, seen.rails, seen.summary, seen.open, seen.holdsList], ['DETAILS', 1, 'All 4 steps', false, true], where);
-      assert.ok(seen.box.top >= seen.card.bottom, `${where}: the rail is under the card ${JSON.stringify(seen)}`);
+      // specs/player-tile.md T2: a row of the card, under the words.
+      assert.ok(seen.afterWords && seen.box.top < seen.card.bottom, `${where}: the rail is a row in the card, under the words ${JSON.stringify(seen)}`);
       assert.equal(await page.locator('.steps button').count(), list.length, `${where}: the list is in the page`);
       await page.locator('details.rail > summary').click();
       await page.locator('.steps button').nth(2).click();
@@ -592,6 +598,47 @@ test('the rail is beside the card when wide and under a closed details when narr
     await page.waitForFunction(() => document.querySelector('.rail')?.tagName === 'ASIDE');
     assert.equal(await page.locator('.steps [aria-current=step]').getAttribute('data-step'), list[2]!.step);
   } finally { await page.close(); }
+});
+
+// specs/player-tile.md T2: one tile holds everything the page shows.
+test('one tile: the border is on .layout.tile alone, the rail pane runs its height, and the steps and transcript rows are in the card', options, async () => {
+  for (const [width, height] of [[1280, 800], [1440, 900], [390, 844], [768, 1024]] as const) {
+    const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
+    try {
+      await page.goto(`${embed}/mr-cache.html?request=hit`);
+      await page.waitForSelector('[data-ready=true]');
+      const seen = await page.evaluate(() => {
+        const tile = document.querySelector<HTMLElement>('.layout')!,
+          player = document.querySelector<HTMLElement>('.player')!,
+          rail = document.querySelector<HTMLElement>('aside.rail'),
+          shadowed = [...document.querySelectorAll<HTMLElement>('#content *')].filter((e) => getComputedStyle(e).boxShadow !== 'none' && !e.closest('.segments, .stage, .overview, .button'));
+        return {
+          tileClass: tile.className,
+          tileShadow: getComputedStyle(tile).boxShadow !== 'none',
+          tileRadius: getComputedStyle(tile).borderTopLeftRadius,
+          playerShadow: getComputedStyle(player).boxShadow,
+          shadowed: shadowed.map((e) => e.className),
+          outside: [...document.getElementById('content')!.children].map((e) => e.className),
+          tileHeight: tile.getBoundingClientRect().height,
+          railHeight: rail?.getBoundingClientRect().height ?? null,
+          railRule: rail ? getComputedStyle(rail).borderInlineStartWidth : null,
+          rows: [...player.children].filter((e) => e.matches('.words, details.rail, details.transcript')).map((e) => e.className),
+        };
+      });
+      const where = `at ${width}×${height}`;
+      assert.deepEqual([seen.tileClass, seen.tileShadow, seen.tileRadius, seen.playerShadow], ['layout tile', true, '12px', 'none'], where);
+      assert.deepEqual(seen.shadowed, ['layout tile'], `${where}: one element carries the tile's edge`);
+      assert.deepEqual(seen.outside, ['layout tile'], `${where}: #content holds the tile and nothing else`);
+      if (width >= 1100) {
+        assert.equal(seen.railHeight, seen.tileHeight, `${where}: the rail's rule runs the tile's height`);
+        assert.equal(seen.railRule, '1px', where);
+        assert.deepEqual(seen.rows, ['words', 'transcript'], where);
+      } else {
+        assert.equal(seen.railHeight, null, where);
+        assert.deepEqual(seen.rows, ['words', 'rail', 'transcript'], `${where}: the steps row, then the transcript row, under the words`);
+      }
+    } finally { await page.close(); }
+  }
 });
 
 test('view tools share Next\'s row when wide and wrap below it when narrow', options, async () => {
@@ -1196,6 +1243,8 @@ function resolveLoad(p: Project, request: Record<string, string>, step: string |
   return { entry: { values, step: list[found]!.step }, notice: notices.join(' ') };
 }
 
+/** The parts of the card the reader model checks, in order (specs/player-tile.md T2). */
+const CARD_ORDER = 'head frame stepper words transcript';
 /** Everything the reader can see or the host can read, in one snapshot. */
 function observe(ids: string[]) {
   const q = new URL(location.href).searchParams;
@@ -1246,6 +1295,9 @@ function observe(ids: string[]) {
     overviewHidden: document.querySelector<HTMLButtonElement>('.overview')!.hidden,
     transcriptOpen: (document.querySelector('details.transcript') as HTMLDetailsElement).open,
     transcriptLinks: [...document.querySelectorAll<HTMLAnchorElement>('.transcript section:not([hidden]) a')].map((a) => a.href),
+    // specs/player-tile.md T2: the card's parts, in the card's order, and nothing of the page outside the tile.
+    card: [...document.querySelector('.player')!.children].flatMap((e) => ['head', 'frame', 'stepper', 'words', 'transcript', 'foot'].filter((c) => e.classList.contains(c))),
+    outside: [...document.getElementById('content')!.children].map((e) => e.className),
   };
 }
 /** The stage's accessible description as Chromium computes it for assistive technology. */
@@ -1361,6 +1413,8 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   eq('history length', seen.history, r.base + m.entries.length);
   eq('horizontal overflow', seen.overflow, false);
   eq('transcript open', seen.transcriptOpen, m.transcript);
+  eq('card order', seen.card.join(' '), CARD_ORDER);
+  eq('only the tile in the page', seen.outside.join(' '), 'layout tile');
   eq(
     'transcript links',
     seen.transcriptLinks.map((h) => {
@@ -1636,6 +1690,11 @@ const ToggleTranscript = command('ToggleTranscript', always, async (m, r) => {
   await r.page.locator('.transcript > summary').click();
   m.transcript = !m.transcript;
 });
+/** On a narrow page, open or close the steps row in the card; a wide page has no such row, and nothing happens. */
+const ToggleSteps = command('ToggleSteps', always, async (_m, r) => {
+  const row = r.page.locator('details.rail > summary');
+  if (await row.count()) await row.click();
+});
 const Resize = (width: number, height: number) =>
   command(`Resize(${width}, ${height})`, always, async (m, r) => {
     await r.page.setViewportSize({ width, height });
@@ -1686,6 +1745,7 @@ function commandArbs(p: Project): fc.Arbitrary<Cmd>[] {
     fc.integer({ min: -5000, max: 5000 }).map(CtrlWheel),
     fc.tuple(fc.integer({ min: -400, max: 400 }), fc.integer({ min: -400, max: 400 })).map(([x, y]) => Drag(x, y)),
     fc.constant(ToggleTranscript),
+    fc.constant(ToggleSteps),
     viewportArb.map((v) => Resize(v.width, v.height)),
     fc.constant(CloseUpButton),
     fc.constant(OverviewButton),

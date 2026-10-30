@@ -164,43 +164,53 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     ledeRuler = el('p', undefined, 'lede-ruler');
   ruler.setAttribute('aria-hidden', 'true');
   ledeRuler.setAttribute('aria-hidden', 'true');
+  // The page's transcript holds every case; the player shows the current one, and its links move
+  // the player. It is a closed row of the card, under the words (and the steps, on a narrow page).
+  const transcript = root.querySelector<HTMLDetailsElement>('.transcript')!;
+  transcript.open = false;
   // One card: its header (the title and the cases), the picture mounted under it, the stepper
-  // row, then the words.
-  player.append(head, frame, stepper, words, notice, summary, ruler, ledeRuler);
+  // row, the words, then the rows that open under them.
+  player.append(head, frame, stepper, words, notice, transcript, summary, ruler, ledeRuler);
   // A frame the loader sizes to its content has no viewport height to fit: the card takes
   // the page's width, and the host page scrolls (embed.css, --player-reserve).
   if (window.parent !== window && params.has('parentOrigin')) root.style.setProperty('--player-reserve', '0px');
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', t.stepList);
-  // The steps list is a rail: beside the card on a wide page, under its heading; under the
-  // card on a narrow one, in a closed disclosure, where the step bar already says where the
-  // reader is. One list, moved between the two, so it is in the page at every width.
+  // The steps list is a rail: on a wide page a pane of the tile beside the card, under its
+  // heading; on a narrow one a closed disclosure row in the card, under the words, where the step
+  // bar already says where the reader is. One list, moved between the two, so it is in the page
+  // at every width. The pane stretches to the tile's height; its body, not the pane, stays in view.
   const railBeside = el('aside', undefined, 'rail'),
+    railBody = el('div', undefined, 'rail-body'),
     railHeading = el('h2', t.steps),
     railUnder = el('details', undefined, 'rail'),
     railSummary = el('summary');
   railHeading.id = 'rail-heading';
   railBeside.setAttribute('aria-labelledby', railHeading.id);
-  railBeside.append(railHeading);
+  railBody.append(railHeading);
+  railBeside.append(railBody);
   railUnder.append(railSummary);
-  const layout = el('div', undefined, 'layout');
+  // The tile: everything the page shows, on one surface inside one edge.
+  const layout = el('div', undefined, 'layout tile');
   layout.append(player);
   // The width embed.css puts the rail beside the card at.
   const wide = matchMedia('(min-width: 1100px)');
   const placeRail = () => {
-    const [home, away] = wide.matches ? [railBeside, railUnder] : [railUnder, railBeside];
-    if (steps.parentElement !== home) home.append(steps);
-    away.remove();
-    // Appended after the card, never by moving the card, which would end full screen.
-    if (home.parentElement !== layout) layout.append(home);
+    if (wide.matches) {
+      if (steps.parentElement !== railBody) railBody.append(steps);
+      railUnder.remove();
+      // Appended after the card, never by moving the card, which would end full screen.
+      if (railBeside.parentElement !== layout) layout.append(railBeside);
+    } else {
+      if (steps.parentElement !== railUnder) railUnder.append(steps);
+      railBeside.remove();
+      if (railUnder.nextElementSibling !== transcript) transcript.before(railUnder);
+    }
     keepInRail();
   };
   placeRail();
   wide.addEventListener('change', placeRail);
-  // The page's transcript holds every case; the player shows the current one, and its links move the player.
-  const transcript = root.querySelector<HTMLDetailsElement>('.transcript')!;
-  transcript.open = false;
   transcript.addEventListener('click', (e) => {
     const a = (e.target as Element).closest<HTMLAnchorElement>('section a'),
       step = a && new URLSearchParams(a.search).get('step');
@@ -214,7 +224,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   standalone.target = '_blank';
   standalone.rel = 'noopener';
   const framed = window.parent !== window && !params.has('parentOrigin');
-  root.replaceChildren(layout, transcript, ...(framed ? [standalone] : []));
+  root.replaceChildren(layout, ...(framed ? [standalone] : []));
 
   // A map beside the picture while a narrow stage is zoomed:
   // where the view is, and where the step changed. Pressing it moves to the step's next
@@ -382,12 +392,12 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   /** Beside the card, scroll the rail, never the page, so the current step is in view in it. */
   function keepInRail() {
     const item = steps.querySelector<HTMLElement>('[aria-current=step]');
-    if (!item || !railBeside.isConnected || railBeside.scrollHeight <= railBeside.clientHeight) return;
-    // The sticky rail is the item's offset parent, so these are in its scrolled content.
+    if (!item || !railBeside.isConnected || railBody.scrollHeight <= railBody.clientHeight) return;
+    // The sticky rail body is the item's offset parent, so these are in its scrolled content.
     const top = item.offsetTop,
       bottom = top + item.offsetHeight;
-    if (top < railBeside.scrollTop) railBeside.scrollTop = top;
-    else if (bottom > railBeside.scrollTop + railBeside.clientHeight) railBeside.scrollTop = bottom - railBeside.clientHeight;
+    if (top < railBody.scrollTop) railBody.scrollTop = top;
+    else if (bottom > railBody.scrollTop + railBody.clientHeight) railBody.scrollTop = bottom - railBody.clientHeight;
   }
   let shownCase = '',
     reservedFor = '';
