@@ -16,6 +16,12 @@ export const PRODUCT = {
 } as const;
 
 export const EXPLAINERS: readonly { id: string; step: string; group: 'topic' | 'toolchain' }[] = [
+  {id:'python-dict',step:'marker',group:'topic'},
+  {id:'bloom-filter',step:'false-positive',group:'topic'},
+  {id:'git-branches',step:'merge',group:'topic'},
+  {id:'monty-hall',step:'odds',group:'topic'},
+  {id:'birthday-paradox',step:'chance',group:'topic'},
+  {id:'melody-rhythm',step:'bar',group:'topic'},
   { id: 'seasons', step: 'year', group: 'topic' },
   { id: 'oauth-pkce', step: 'attack', group: 'topic' },
   { id: 'exgit', step: 'change', group: 'topic' },
