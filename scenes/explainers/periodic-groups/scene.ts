@@ -17,7 +17,7 @@ const HEADER_Y = 3.03;
 const STRIP_Y = -1.99;
 const fRowY = (row: number) => -2.78 - (row - 1) * PITCH_Y;
 /** The empty rectangle above the d block, periods 1 to 3: where the words go. */
-const NOTE_X = colX(3) - CELL_W / 2 + 0.12, NOTE_RIGHT = colX(12) + CELL_W / 2;
+const NOTE_X = colX(3) - CELL_W / 2, NOTE_RIGHT = colX(12) + CELL_W / 2;
 
 const PAPER = '#fcfcfb', INK = '#1d1d1f';
 // One hue per block (validated as a set for colour-vision deficiency); each block is
@@ -176,12 +176,12 @@ export default class PeriodicGroupsExplainer extends Scene {
             new Text(label, { fontSize: 0.22, color: INK }).moveTo([(x0 + x1) / 2, STRIP_Y - 0.22]),
           );
         };
-        span(1, 2, 's', 's: 2');
-        span(3, 12, 'd', 'd block: 10 columns');
-        span(13, 18, 'p', 'p block: 6 columns');
+        span(1, 2, 's', 's: 2 columns');
+        span(3, 12, 'd', 'd: 10 columns');
+        span(13, 18, 'p', 'p: 6 columns');
         if (!onlyFamily)
-          ['f block:', '14 columns,', 'no group', 'number'].forEach((line, i) =>
-            picture.add(new Text(line, { fontSize: 0.22, color: INK }).moveTo([LEFT + 0.06, fRowY(1) + 0.1 - i * 0.3 - (i > 1 ? 0.06 : 0)], [-1, 0])));
+          ['f: 14 columns,', 'no group', 'number'].forEach((line, i) =>
+            picture.add(new Text(line, { fontSize: 0.22, color: INK }).moveTo([colX(1) - CELL_W / 2, fRowY(1) + 0.12 - i * 0.32], [-1, 0])));
       }
       return picture;
     };
@@ -317,8 +317,8 @@ export default class PeriodicGroupsExplainer extends Scene {
       caption: ({
         na: `Sodium, element 11, shares the first column with ${list(others.map((m) => nameOf(m.symbol)))}. Their atomic numbers jump by ${list(jumps.map(String))}, so atomic number alone cannot say which column an element joins.`,
         cl: `Chlorine, element 17, shares group 17 with ${list(others.map((m) => nameOf(m.symbol)))}, with jumps of ${list(jumps.map(String))}. That chlorine’s atomic number equals its group number is a coincidence: bromine, 35, is in group 17 too.`,
-        fe: `Iron, element 26, shares group 8 with ${list(others.map((m) => nameOf(m.symbol)))}, with jumps of ${list(jumps.map(String))}. Neither 26 nor the jumps contain an 8.`,
-        cu: `Copper, element 29, shares group 11 with ${list(others.map((m) => nameOf(m.symbol)))}, with jumps of ${list(jumps.map(String))}. Neither 29 nor the jumps contain an 11.`,
+        fe: `Iron, element 26, shares group 8 with ${list(others.map((m) => nameOf(m.symbol)))}, with jumps of ${list(jumps.map(String))}. Nothing in those numbers says 8; counting iron’s electrons does.`,
+        cu: `Copper, element 29, shares group 11 with ${list(others.map((m) => nameOf(m.symbol)))}, with jumps of ${list(jumps.map(String))}. Nothing in those numbers says 11; counting copper’s electrons does.`,
         he: `Helium, element 2, heads the last column, above ${list(others.map((m) => nameOf(m.symbol)))}; the jumps are ${list(jumps.map(String))}. Helium has two electrons, yet it is not in group 2.`,
       } satisfies Record<Choice, string>)[choice],
     });
@@ -338,11 +338,11 @@ export default class PeriodicGroupsExplainer extends Scene {
       title: `Cells 1 to ${z}, read in order, are ${name}’s electrons`,
       line: `${configText(filling)}: one cell per electron.`,
       caption: ({
-        na: 'Each cell up to sodium adds one electron. Electrons fill subshells, named by a shell number and a letter, in a fixed order: two in 1s (hydrogen and helium), two in 2s, six in 2p, then one in 3s. Each run of same-coloured cells is one subshell.',
-        cl: 'Each cell up to chlorine adds one electron to a subshell, named by shell number and letter: 1s², 2s², 2p⁶, 3s², then five of the six places in 3p. The gap in rows 2 and 3 is where the ten d columns open from row 4.',
+        na: 'Each cell up to sodium adds one electron to a subshell, named by shell number and letter: two in 1s (hydrogen and helium), two in 2s, six in 2p, then one in 3s. A run of same-coloured cells is one subshell.',
+        cl: 'Each cell up to chlorine adds one electron to a subshell, named by shell number and letter: 1s², 2s², 2p⁶, 3s², then five of the six places in 3p. The gap in rows 2 and 3 is where the 10 d columns open from row 4.',
         fe: 'Each cell up to iron adds one electron to a subshell, named by shell number and letter. Row 4 opens with 4s in potassium and calcium, then six cells of 3d: by the filling rule, 3d fills after 4s.',
         cu: 'Each cell up to copper adds one electron to a subshell, named by shell number and letter. Row 4 opens with 4s, then nine cells of 3d, so the filling rule predicts 4s² 3d⁹ for copper.',
-        he: 'Helium’s two electrons are hydrogen’s cell and its own, both in 1s: shell 1, subshell s. The first row has only two cells because the first shell has one subshell, 1s, with room for two.',
+        he: 'Helium’s two electrons are hydrogen’s cell and its own, both in 1s: shell 1, subshell s. The first row has only two cells because the first shell has one subshell, with room for two.',
       } satisfies Record<Choice, string>)[choice],
     });
     {
@@ -366,10 +366,10 @@ export default class PeriodicGroupsExplainer extends Scene {
       } satisfies Record<Choice, string>)[choice],
       line: core ? `${coreSymbol} closes the row above; count from there.` : 'No noble gas comes before helium.',
       caption: ({
-        na: 'Neon, element 10, closes the row above, and its 10 electrons are sodium’s core. One 3s electron is left over. IUPAC’s 1 to 18 numbering is based on the s, p and d electrons beyond the preceding noble gas: sodium has 1 and sits in group 1.',
+        na: 'Neon closes the row above, and its 10 electrons form sodium’s core, leaving one 3s electron. IUPAC’s numbering is based on the s, p and d electrons beyond the preceding noble gas: sodium has 1, and sits in group 1.',
         cl: 'Chlorine carries neon’s core plus seven: 3s² 3p⁵. Counting from sodium gives 1 and 2, then aluminium counts 3 but sits under 13, and every count after it is 10 short of its column. The count gives chlorine 7, not 17.',
         fe: 'Iron carries argon’s 18-electron core plus 4s² 3d⁶. Two s and six d electrons make 8, and from potassium to iron every cell’s count equals the column number above it.',
-        cu: 'The filling rule predicts 4s² 3d⁹, but NIST lists copper’s ground state as 3d¹⁰ 4s¹, with one electron moved from 4s to 3d. Both arrangements hold 11 electrons beyond argon’s core, so copper is in group 11 either way.',
+        cu: 'The filling rule predicts 4s² 3d⁹, but NIST lists copper’s ground state as 3d¹⁰ 4s¹, one electron moved from 4s to 3d. Both arrangements hold 11 electrons beyond argon’s core, so copper is in group 11 either way.',
         he: 'With no noble gas before it, both of helium’s electrons count. A count of 2 would put helium in group 2, in the dashed cell over beryllium; the table puts it in group 18, over neon.',
       } satisfies Record<Choice, string>)[choice],
     });
@@ -387,12 +387,12 @@ export default class PeriodicGroupsExplainer extends Scene {
       title: 'The 18 columns are 2 for s, 10 for d, 6 for p',
       line: 'Each block is as wide as its subshell holds.',
       caption: ({
-        na: 'The numbered columns are subshells laid side by side: s holds 2 electrons, d holds 10 and p holds 6, so 2 + 10 + 6 = 18. The f block’s 14 columns sit below and have no group number. Sodium’s last electron is in the s block, so its column is the first.',
+        na: 'The blocks are subshells laid side by side: s holds 2 electrons, d holds 10 and p holds 6, so 2 + 10 + 6 = 18 numbered columns. The f block’s 14 columns sit below, unnumbered. Sodium’s last electron is in s, the first column.',
         cl: 'From row 4 down, the 10 d columns fill before p, so bromine counts 2 + 10 + 5 = 17. Chlorine has the same 3s² 3p⁵ ending with no d subshell filled beneath it, so it sits 10 columns past its count of 7, over bromine.',
-        fe: 'The numbered columns are subshells side by side: 2 for s, 10 for d and 6 for p. Iron’s 4s² takes the two s columns and its 3d⁶ reaches the sixth d column: 2 + 6 = 8.',
-        cu: 'The numbered columns are subshells side by side: 2 for s, 10 for d and 6 for p. By the filling rule, copper’s 4s² takes the s columns and 3d⁹ reaches the ninth d column: 2 + 9 = 11, the same total as NIST’s 3d¹⁰ 4s¹.',
+        fe: 'The blocks are subshells laid side by side: 2 columns for s, 10 for d and 6 for p. Iron’s 4s² takes the two s columns and its 3d⁶ reaches the sixth d column: 2 + 6 = 8.',
+        cu: 'The blocks are subshells laid side by side: 2 columns for s, 10 for d and 6 for p. By the filling rule, copper’s 4s² takes the s columns and 3d⁹ reaches the ninth d column: 2 + 9 = 11, as NIST’s 3d¹⁰ 4s¹ also gives.',
         he: 'Each block is as wide as its subshell holds: 2, 10 and 6 make 18 columns. The first shell has only 1s, so helium’s 1s² completes it, as neon’s 2s² 2p⁶ completes the second shell. The table groups helium with the other full shells.',
-      } satisfies Record<Choice, string>)[choice] + ' This table puts lutetium under yttrium, the layout IUPAC endorsed; many textbooks put lanthanum there.',
+      } satisfies Record<Choice, string>)[choice],
     });
     this.state = { ...base, note: 'blocks', band: true, lit: z, core, blocks: true, capacity: CAPACITY, block: here.block };
     await this.play(both(0.9));
@@ -408,11 +408,11 @@ export default class PeriodicGroupsExplainer extends Scene {
       } satisfies Record<Choice, string>)[choice],
       line: 'Each core is the noble gas one row up.',
       caption: ({
-        na: 'Lithium to francium each carry the previous noble gas as a core, plus one s electron. Each jump in atomic number is the row added to the core: 8 for lithium to sodium, up to 32 for caesium to francium. Hydrogen’s 1s¹ has the same ending with no core.',
+        na: 'Lithium to francium each carry the previous noble gas as a core plus one s electron. Each jump in atomic number is the row added to that core: 8 from lithium to sodium, 32 from caesium to francium. Hydrogen’s 1s¹ ends the same way.',
         cl: 'Each halogen ends in s² p⁵. From bromine down, a full d¹⁰ sits beneath that ending and the count reaches 17; fluorine and chlorine count 7 and take the same column. Tennessine is not in NIST’s table.',
         fe: 'NIST lists ruthenium as 4d⁷ 5s¹ rather than iron’s d⁶ s² pattern, yet 7 + 1 is still 8. Osmium and hassium carry 4f¹⁴ and 5f¹⁴, which the count leaves out. The column follows the count of 8 rather than one exact ending.',
         cu: 'NIST lists silver and gold with the same d¹⁰ s¹ ending as copper. Gold also carries 4f¹⁴, which the count leaves out because f electrons have their own 14 unnumbered columns. Roentgenium is not in NIST’s table.',
-        he: 'From neon down, each noble gas ends in s² p⁶, a full outer s and p subshell. Helium’s 1s² is shorter because the first shell has no p subshell; its shell is still full. Counts of 8 and 18 reach column 18 with the 10 d columns.',
+        he: 'From neon down, each noble gas ends in s² p⁶, a full outer s and p. Helium’s 1s² is shorter because the first shell has no p subshell, and it is still full. Neon and argon count 8 and shift 10 columns; krypton onward counts 18.',
       } satisfies Record<Choice, string>)[choice],
     });
     this.state = { ...base, note: 'family', band: true, lit: z, core, blocks: true, family: family.map((m) => ({ symbol: m.symbol, config: m.config, count: m.count })) };
@@ -429,11 +429,11 @@ export default class PeriodicGroupsExplainer extends Scene {
       } satisfies Record<Choice, string>)[choice],
       line: named.cas === named.oldIupac ? `CAS and the old IUPAC system both wrote ${named.cas}.` : `CAS wrote ${named.cas}; the old IUPAC system wrote ${named.oldIupac}.`,
       caption: ({
-        na: 'IUPAC has recommended the numbers 1 to 18 since 1988. Group 1 is also the lithium group, after its first metal; “hydrogen and alkali metals” keeps hydrogen in.',
-        cl: 'IUPAC has recommended the numbers 1 to 18 since 1988. Group 17 is the halogens, or the fluorine group. Both lettered systems use VII, chlorine’s count of 7, and disagree on the letter after it.',
-        fe: 'IUPAC has recommended the numbers 1 to 18 since 1988. Groups 3 to 12 are usually named after their first element, so group 8 is the iron group. The old IUPAC system put groups 8, 9 and 10 together as VIII.',
-        cu: 'IUPAC has recommended the numbers 1 to 18 since 1988. Group 11 is the copper group; “coinage metals” is a looser name for copper, silver and gold.',
-        he: 'IUPAC has recommended the numbers 1 to 18 since 1988. Group 18 is the noble gases, or the helium or neon group. The noble gases were unknown when Mendeleev made his first table; he later added them as a group 0.',
+        na: 'Since 1988 IUPAC has recommended the numbers 1 to 18. Group 1 is also the lithium group; “hydrogen and alkali metals” keeps hydrogen in. Group 3 here holds lutetium, as IUPAC endorsed; many textbooks put lanthanum there.',
+        cl: 'Since 1988 IUPAC has recommended the numbers 1 to 18. Group 17 is the halogens. CAS wrote VIIA and old IUPAC VIIB: both use VII, chlorine’s count of 7. Group 3 here holds lutetium, as IUPAC endorsed; many textbooks put lanthanum there.',
+        fe: 'Since 1988 IUPAC has recommended the numbers 1 to 18. Groups 3 to 12 are usually named after their top element, so group 8 is the iron group. Group 3 here holds lutetium, as IUPAC endorsed; many textbooks put lanthanum there.',
+        cu: 'Since 1988 IUPAC has recommended the numbers 1 to 18. Group 11 is the copper group; “coinage metals” is a looser name for copper, silver and gold. Group 3 here holds lutetium, as IUPAC endorsed; many textbooks put lanthanum there.',
+        he: 'Since 1988 IUPAC has recommended the numbers 1 to 18. Group 18 is the noble gases, unknown when Mendeleev drew his first table; he later added them as group 0. Group 3 here holds lutetium, as IUPAC endorsed; many textbooks put lanthanum there.',
       } satisfies Record<Choice, string>)[choice],
     });
     this.state = { ...base, note: 'names', band: true, lit: z, core, blocks: true, name: named.trivial ?? named.byElement, cas: named.cas, oldIupac: named.oldIupac };
@@ -442,11 +442,11 @@ export default class PeriodicGroupsExplainer extends Scene {
     // ---- 7. the limit -----------------------------------------------------------------
     await this.step('limit', {
       title: ({
-        na: 'Hydrogen shares the ending, not the metal',
+        na: 'Hydrogen ends in 1s¹ but is not an alkali metal',
         cl: 'Tennessine’s place rests on the filling rule alone',
         fe: '“Iron group” can also name a row',
         cu: 'Roentgenium is in group 11; “coinage metal” is disputed',
-        he: 'Helium sits by its full shell, not by its count',
+        he: 'Helium sits over neon because its shell is full',
       } satisfies Record<Choice, string>)[choice],
       line: ({
         na: 'Hydrogen is 1s¹ like the rest, but not a metal.',
@@ -456,9 +456,9 @@ export default class PeriodicGroupsExplainer extends Scene {
         he: 'The dashed cell is where the count would put helium.',
       } satisfies Record<Choice, string>)[choice],
       caption: ({
-        na: 'Hydrogen’s 1s¹ ends like every group 1 element, so it heads the column. It is not a metal, so it is not an alkali metal: the count puts hydrogen in group 1, and the name “alkali metal” also needs a metal.',
+        na: 'Hydrogen’s 1s¹ ends like every group 1 element, so the count puts it at the top of the column. It is not a metal, so it is not an alkali metal: the count picks a column, and a name needs more.',
         cl: 'NIST’s table stops at hassium, 108. Tennessine, 117, is not in it, so its s² p⁵ ending and its place under astatine come from the filling rule alone. For chlorine the count rests on a listed configuration; for tennessine it is a prediction.',
-        fe: 'The column name and a row name collide: “iron group” usually means group 8, but in chemistry it can also mean iron, cobalt and nickel, three neighbours in row 4. The electron count defines the column; it does not settle what a name refers to.',
+        fe: '“Iron group” usually means group 8, but in chemistry it can also mean iron, cobalt and nickel, three neighbours in row 4. The electron count fixes the column; which elements a name covers is a convention.',
         cu: 'Roentgenium, 111, is in group 11 by the filling rule’s count; NIST’s table stops at 108. It is too radioactive and short-lived to use as coinage, so authors differ on calling it a coinage metal.',
         he: 'Some dissent exists about where elements 1 and 2 belong. Helium’s count of 2 matches beryllium’s 2s², which is why the dashed cell sits over beryllium. Placing helium over neon follows its full shell rather than its count.',
       } satisfies Record<Choice, string>)[choice],

@@ -192,10 +192,10 @@
       "step": "blocks",
       "targets": [
         {
-          "text": "d block: 10 columns"
+          "text": "d: 10 columns"
         },
         {
-          "text": "p block: 6 columns"
+          "text": "p: 6 columns"
         },
         {
           "text": "2 + 10 + 6 = 18 numbered columns"

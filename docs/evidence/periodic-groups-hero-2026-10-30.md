@@ -68,6 +68,22 @@ About 580 labels per case sit outside the phone close-ups: a 118-cell table cann
 
 The step transport above the stage now carries one numbered mark per step, joined by a line that fills as the reader moves on. Each mark jumps to its step on click. It sits beside the existing **Next step**, so the reader sees position and remaining length without scrolling to the list under the caption. The rail repeats that list, which keyboard and screen-reader users already have, so it is `aria-hidden` and its buttons are out of the tab order. On narrow screens the marks shrink and wrap under Next. No existing control moved.
 
+## Second pass: prose and posture
+
+An [anti-slop-writing](https://github.com/adewale/anti-slop-writing) review of all 35 captions, titles and lines found these, each fixed in the scene:
+
+- **False gimmick:** "Neither 26 nor the jumps contain an 8", although the jump 18 does. Now: "Nothing in those numbers says 8; counting iron's electrons does."
+- **Factual slip:** helium's family caption said counts of 8 and 18 both reach column 18 "with the 10 d columns"; krypton's 18 already includes its d electrons. Now neon and argon shift 10 columns and krypton onward counts 18.
+- **Inaccurate metaphor:** "The numbered columns are subshells laid side by side"; it is the blocks that are subshells.
+- **Negative-parallel titles:** "Hydrogen shares the ending, not the metal" and "Helium sits by its full shell, not by its count" are now plain claims.
+- **Redundant ending:** "not a metal … also needs a metal" now ends on what transfers: the count picks a column, and a name needs more.
+- **Length:** captions now run 28–47 words, down from up to 69; the group 3 layout note moved to the names step, where membership is the subject.
+
+wikiHow's [posture guide](https://www.wikihow.com/Improve-Your-Posture) is about bodies, so two of its principles were applied as layout rules, and only where they produce a checkable change:
+
+- **Screen at eye level.** At base, the caption ended below the fold at 1280×720, 1280×800, 1366×768, 1440×900 and 1536×864: readers looked down past the picture to read about it. On a page in its own tab the column now narrows with the window's height, never below 912 px (the stage's smallest label stays at 12 px). Measured at the count step, the caption is now fully in view at 1280×800, 1440×900, 1536×864, 1920×1080 and 390×844. At 1366×768 and 1280×720 its last line is still 19 and 67 px below the fold; going narrower would shrink labels below 12 px. Framed pages keep the old width, because the loader sizes the frame to the page.
+- **Neck, back and heels aligned.** The notes above the d block now start on column 3's cell edge, the f-block label on column 1's, and the block labels read in parallel (`s: 2 columns`, `d: 10 columns`, `p: 6 columns`). Title, rail, stage and caption share one left edge.
+
 ## Not done
 
 - The macOS output pins in `test/lettering-baseline.json` must be regenerated on a Mac (`UPDATE_GOLDEN=1 node --test test/lettering.test.ts`): snapshot compression uses the host's zlib, and this change touches every page through the player.
