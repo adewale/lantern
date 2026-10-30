@@ -1,8 +1,8 @@
 # Your first explainer
 
-This builds a two-case explainer of a cache, breaks one of the checks, fixes it, and builds the page. Run the commands from a checkout of this repository; in a project that installs the package, run the same commands as `npx rayner ...`.
+A cache hit and miss run through the same request handler but read the database a different number of times. This tutorial builds the two-case scene that shows why. Run the commands from a checkout of this repository; in a project that installs the package, use `npx rayner ...` instead of `npm run rayner -- ...`.
 
-You need Node 24 or later. In a checkout run `npm ci`; in an author project run `npm install --save-dev rayner`. Diagram capture is included. The scene has a diagram, so the first run captures it with Chromium: install one with `npx playwright-core install chromium`, or point `CHROMIUM_EXECUTABLE_PATH` at an existing one.
+You need Node 24 or later and Chromium for diagram capture and served-reader review. In a checkout run `npm ci`; in an author project run `npm install --save-dev rayner`. Install Chromium with `npx playwright-core install chromium`, or point `CHROMIUM_EXECUTABLE_PATH` at an existing one.
 
 ## 1. Create the scene
 

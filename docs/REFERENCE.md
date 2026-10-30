@@ -1,6 +1,6 @@
 # Reference
 
-[The tutorial](TUTORIAL.md) walks through a first explainer; [publishing](PUBLISHING.md) covers hosting and embedding a page.
+[The tutorial](TUTORIAL.md) builds a two-case cache scene; the [authoring feature tour](FEATURE-TOUR.md) pairs code excerpts with the result of running them. [Publishing](PUBLISHING.md) covers hosting and embedding a page.
 
 Words used throughout: a **setting** is a choice a scene declares (an id, a label and options); a **case** is one value for every setting. A **step** is a named section of the scene, and its **resting picture** is what the step leaves on screen: the picture a reader looks at while reading the caption. The **stage** is the 16 × 9 drawing area. Code and JSON spell case as `variant` (`variantsOf`, `variants` in reports) and resting picture as `restingFrame`.
 
@@ -222,14 +222,14 @@ These are the engine's own features, imported from `rayner` and used beside the 
 
 | Feature | What a scene uses | Guide | Used by |
 | --- | --- | --- | --- |
-| Matching transforms | `TransformMatchingText`, `TransformMatchingShapes` (`shapeKey()`), `TransformMatching` with your own key; `summary()`, `pairs`, `removed`, `added` | [Matching](MATCHING.md) | `glyph`, `exgit`; no explainer yet: `TransformMatching` with your own key |
+| Matching transforms | `TransformMatchingText`, `TransformMatchingShapes` (`shapeKey()`), `TransformMatching` with your own key; `summary()`, `pairs`, `removed`, `added` | [Matching](MATCHING.md) | `feature-tour` (basic text), `glyph`, `exgit`; no explainer yet: `TransformMatching` with your own key |
 | Diff-driven code morph | `new TransformDiff(before, after, { hunks })` and its `plan`; `diffLines`, `parseUnifiedDiff` for hunks | [Diff-driven](MATCHING.md#diff-driven) | `mr-cache`; no explainer yet: the `hunks` option, `diffLines`, `diffTokens`, `parseUnifiedDiff`, `hunkHeader` |
-| Camera | `this.frame.animate.fit(...)`, `.reset()`; `d.focus(…, { camera: true })` | [Camera](CAMERA.md) | `seasons`; `lantern`'s diagram focus with `also` |
-| Emphasis that stays | `SurroundingRectangle`, `Underline`, `Cross`, `Brace`, `BraceLabel`, `Circumscribe({ keep: true })` | [Emphasis](EMPHASIS.md) | `glyph`, `mr-cache`, `state-machine`, `ring-buffer`, `exgit` (`Underline`: `glyph` only); no explainer yet: a bare `Brace`, `tip()`, `putAtTip()` |
-| Charts of the model's numbers | `NumberLine`, `Axes` with `plot`, `lineGraph`, `bar`, `dot`, guide lines, `areaUnder` | [Graphing](GRAPHING.md) | `seasons` (`plot`), `token-bucket` (`lineGraph`); no explainer yet: `bar`, `areaUnder`, a standalone `NumberLine` |
-| Pictures rebuilt from state | `view`, `stateView`, `view.sync()`; `viewMismatch`, and `assertViewFollowsState` in `test/lib/view-fidelity.ts` | [Views](VIEWS.md) | `state-machine`, `ring-buffer` (`view`), `token-bucket` (`stateView`); no explainer yet: `viewMismatch`, which the tests call through `assertViewFollowsState` |
+| Camera | `this.frame.animate.fit(...)`, `.reset()`; `d.focus(…, { camera: true })` | [Camera](CAMERA.md) | `feature-tour` (`s.focus`), `seasons`; `lantern`'s diagram focus with `also` |
+| Emphasis that stays | `SurroundingRectangle`, `Underline`, `Cross`, `Brace`, `BraceLabel`, `Circumscribe({ keep: true })` | [Emphasis](EMPHASIS.md) | `feature-tour` (`Circumscribe`), `glyph`, `mr-cache`, `state-machine`, `ring-buffer`, `exgit` (`Underline`: `glyph` only); no explainer yet: a bare `Brace`, `tip()`, `putAtTip()` |
+| Charts of the model's numbers | `NumberLine`, `Axes` with `plot`, `lineGraph`, `bar`, `dot`, guide lines, `areaUnder` | [Graphing](GRAPHING.md) | `feature-tour`, `seasons` (`plot`), `token-bucket` (`lineGraph`); no explainer yet: `bar`, `areaUnder`, a standalone `NumberLine` |
+| Pictures rebuilt from state | `view`, `stateView`, `view.sync()`; `viewMismatch`, and `assertViewFollowsState` in `test/lib/view-fidelity.ts` | [Views](VIEWS.md) | `feature-tour`, `state-machine`, `ring-buffer` (`view`), `token-bucket` (`stateView`); no explainer yet: `viewMismatch`, which the tests call through `assertViewFollowsState` |
 | Parts of a line of code | `code.span`, `code.token`, `code.lineSpan`; `new Code(lines, { spans })` with spans from `tools/tokens.ts` | [Code](CODE.md) | `mr-cache` (`spans`), `state-machine` (`code.span`, `code.token`); no explainer yet: `code.lineSpan` |
-| Restore, copies, sequencing | `saveState()` and `Restore`, `TransformFromCopy`, `Succession` | [Animations](ANIMATIONS.md) | `state-machine` (`saveState`, `Restore`, `Succession`), `ring-buffer` and `exgit` (`TransformFromCopy`), `ring-buffer` and `token-bucket` (`Succession`); no explainer yet: `restore()` |
+| Restore, copies, sequencing | `saveState()` and `Restore`, `TransformFromCopy`, `Succession` | [Animations](ANIMATIONS.md) | `feature-tour` (`saveState`, `Restore`), `state-machine` (`saveState`, `Restore`, `Succession`), `ring-buffer` and `exgit` (`TransformFromCopy`), `ring-buffer` and `token-bucket` (`Succession`); no explainer yet: `restore()` |
 
 Patterns these scenes write by hand, candidates for `explain/` once two explainers use one and its shape settles: a `Succession` member that writes `scene.state` when its turn comes, so the syncs after it show that operation; card and code-focus changes returned as animations rather than played, so they can join a `Succession`; a `Card` whose values are a view; a `stateView` in the stage's palette; a camera box that keeps the heading out; reading recorded evidence for counts on screen; lines between a matching transform's pairs; a code panel that leaves its `Code` loose for `TransformDiff`, which replaces it.
 
@@ -243,7 +243,7 @@ static settings = [{
 const which = settingsOf(this).request;
 ```
 
-Every case is built ahead of time; run `check` or `review` to validate every case before publishing. A scene may have at most 64. Ids are URL-safe (`[A-Za-z][A-Za-z0-9_-]*`) and distinct; `step`, `theme` and `parentOrigin` are reserved. Option values are unique and include the default. A setting may change diagrams, captions, numbers and which steps exist; keep the palette fixed.
+Every case is built ahead of time; run `check` or `review` to validate every case before publishing. A scene may have at most 64. Ids are URL-safe (`[A-Za-z][A-Za-z0-9_-]*`) and distinct; `step`, `theme` and `parentOrigin` are reserved. Option values are unique and include the default. A setting may change diagrams, captions, numbers and which steps exist; keep the palette fixed. By default a case switch stays on the same named step (or falls back to the first when the new case lacks it). For a recipe-first catalog, set `static meta = { ..., caseNavigation: 'first' }`: switching cases opens the first step and the transcript links to each case's first step. Direct `?step=` links, including later steps, still work.
 
 Other exports: `withSettings(Scene, values)` binds a case without mutating the class; `resolveSettings` validates; `variantsOf(Scene)` lists every case; `caseName(Scene, values)` gives "Label: option · Label: option"; `bindSnapshots(Scene, store)` binds a snapshot store.
 
@@ -429,7 +429,7 @@ Inside an iframe without `parentOrigin` (a raw iframe), the page adds its own "O
 | `npm run fonts` | Regenerate `src/font-data.ts` from Inter, JetBrains Mono and the Noto numeral subsets, reproducibly (needs `fonttools` and `brotli`) |
 | `npm run fonts:lettering` | Regenerate `vendor/lettering/`, the Latin Extended, Greek and Cyrillic of the same Inter and JetBrains Mono that [lettering on request](#lettering-on-request) cuts from; leaves `src/font-data.ts` alone (needs `fonttools` and `brotli`) |
 
-Test environment: `FC_RUNS=n` sets the property cases, and `FC_SEED` with `FC_PATH` replays a fast-check failure. `UPDATE_GOLDEN=1` rewrites `test/golden-traces.json` and `test/lettering-baseline.json` after a deliberate change; re-pin the second in a commit that changes no lettering code. `EXPLAIN_BROWSER=1` enables the browser tests. `test/explain-gates.test.ts` gives each check one seeded defect.
+Test environment: `FC_RUNS=n` sets the property cases, and `FC_SEED` with `FC_PATH` replays a fast-check failure. `UPDATE_GOLDEN=1` rewrites `test/golden-traces.json` after a deliberate change. `EXPLAIN_BROWSER=1` enables the browser tests. `test/explain-gates.test.ts` gives each check one seeded defect.
 
 Tests that hold a model to an outside tool compare against frozen answers, and also run the tool when it is present:
 

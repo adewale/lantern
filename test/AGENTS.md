@@ -6,7 +6,7 @@ When consolidating tests, name the keeper and move each assertion before removin
 
 Use controlled external clocks for timing bookkeeping. Browser latency and paint need real browser evidence. Do not add production exports or reset hooks just for tests.
 
-`lettering.test.ts` owns one build per catalog entry for immutable HTML, byte count, header recipe, canonical receipt and full receipt. Refresh these pins only for an explained product change, in a separate commit from lettering implementation changes. Capture actual outline fixtures with the real pipeline; do not repair their metadata by hand to hide stale inputs. Optional browser/font/video tests must report skips explicitly.
+`lettering.test.ts` builds every catalog entry and asserts named properties: lettering only where requested, and receipts that report the actual page. Do not pin whole generated artifacts by hash: such a pin fails on every intended change, says nothing about what changed, and can only be refreshed. Prefer an assertion that names the property and fails for a reason. Capture actual outline fixtures with the real pipeline; do not repair their metadata by hand to hide stale inputs. Optional browser/font/video tests must report skips explicitly.
 
 Record benchmark or oracle speed comparisons with identical inputs, seeds and environment. Keep elapsed-time claims separate from semantic proof. The audit and retained boundaries are documented in `../docs/TESTING.md`.
 
