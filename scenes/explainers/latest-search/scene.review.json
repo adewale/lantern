@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "claims": [
+    {
+      "step": "compare",
+      "settings": { "guard": "off", "order": "new-first" },
+      "opening": true,
+      "targets": [{ "text": "No guard: A" }, { "text": "Guard: B" }]
+    },
+    {
+      "step": "first",
+      "settings": { "guard": "on", "order": "old-first" },
+      "targets": [{ "text": "0 none    1 A (older)    2 B (latest)" }]
+    }
+  ]
+}

@@ -34,6 +34,13 @@
     "receipt": "13f5af7e49dd15bc805d939ec494e50cd4680c392326fbaaa5336a8c0339dced",
     "fullReceipt": "e60c3d71c0a56c4e1d422b0d2a57e9a6b98d0b948e64fa0c383fe099831e28ee"
   },
+  "latest-search": {
+    "html": "db1c2a3dbc4ec85f02980e6159d00df682179ff6ec2b9a844f035f42f0cab291",
+    "bytes": 694436,
+    "headers": "929ca45910debbc8f15cf74a8e00c3dae281bba681eddf7c2bbe6432e7b6de14",
+    "receipt": "6033cd730e569bab64715eb01a34f00447002d546167bda9e17eab390ff43246",
+    "fullReceipt": "dba9dc661a6228da8505a3d90828694c9911a56a4be6515b012d98479d051597"
+  },
   "state-machine": {
     "html": "ff0c43dc1086ef394b21abed60df28498ff9bd80d2fad00a1b5025cb50b3c564",
     "bytes": 763963,

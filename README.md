@@ -20,7 +20,7 @@ npm run demos:build
 npm run demos:serve
 ```
 
-Open http://127.0.0.1:5175/explainers/. Start with OAuth with PKCE, the seasons, or the KV-cache code change. If Chromium is already installed, set `CHROMIUM_EXECUTABLE_PATH` instead of downloading it.
+Open http://127.0.0.1:5175/explainers/. Start with the KV-cache code change, the latest-search race, or OAuth with PKCE. If Chromium is already installed, set `CHROMIUM_EXECUTABLE_PATH` instead of downloading it.
 
 ## Write and publish one
 
