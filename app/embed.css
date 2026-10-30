@@ -119,6 +119,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
   .button.primary:hover:not(:disabled){background:color-mix(in srgb,var(--accent) 88%,var(--fg))}
   .segments label:hover{color:var(--fg)}
   .steps button:hover{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+  .foot a:hover{color:var(--fg);text-decoration:underline;text-underline-offset:.2em}
 }
 @media(pointer:coarse){.button{min-width:44px;min-height:44px}.step-bar button{min-height:44px}.segments label{min-height:40px}}
 
@@ -147,7 +148,14 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .transcript li li{padding:0}
 .transcript p{margin:4px 0 0;text-wrap:pretty}
 .transcript a{overflow-wrap:anywhere}
-.standalone{display:inline-block;margin-top:16px;font-size:.875rem}
+
+/* The card's footer: the maker's mark at the start; inside a frame, the way out at the end. Each link
+   is the row's height, so it is easy to hit. */
+.foot{display:flex;align-items:center;gap:12px;min-height:40px;padding:0 16px;border-top:1px solid var(--line);font-size:.8125rem;color:var(--muted)}
+.foot a{display:inline-flex;align-items:center;gap:6px;min-height:40px;color:inherit;text-decoration:none}
+.foot svg{width:16px;height:16px}
+.foot .open{margin-inline-start:auto}
+.foot .open svg{width:14px;height:14px}
 
 /* The first view, before the player starts. */
 .poster{width:100%}

@@ -215,7 +215,8 @@ const catalog = () =>
     }
     return built;
   })());
-test('every catalog page, in English and French: no Replay, Stop or Fit stage button, one Whole picture button, and one h1, in the card\'s header above the stage with the case picker', options, async () => {
+test('every catalog page, in English and French: no Replay, Stop or Fit stage button, one Whole picture button, one h1, in the card\'s header above the stage with the case picker, and one footer mark linking home with no way out of a frame it is not in', options, async () => {
+  const { PRODUCT } = await import('../scenes/explainers/catalog.ts');
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
   try {
     const page = await context.newPage();
@@ -247,6 +248,14 @@ test('every catalog page, in English and French: no Replay, Stop or Fit stage bu
         };
       });
       assert.deepEqual(tile, { h1s: 1, inCard: true, inHead: true, headFirst: true, frameNext: 'frame', cases: true }, id);
+      // specs/player-tile.md T3: the maker's mark, in the footer, never on the stage; standalone, no way out.
+      const foot = await page.evaluate(() => ({
+        marks: [...document.querySelectorAll<HTMLAnchorElement>('a.mark')].map((a) => [a.parentElement!.matches('.player > footer.foot'), a.textContent, a.href, a.getAttribute('aria-label'), a.target, a.rel]),
+        last: [...document.querySelector('.player')!.children].filter((e) => !e.matches('[hidden], .ruler, .lede-ruler')).at(-1)?.className,
+        open: document.querySelectorAll('.foot a.open').length,
+        onStage: document.querySelectorAll('.stage a, .stage .foot, .frame a').length,
+      }));
+      assert.deepEqual(foot, { marks: [[true, 'Rayner', PRODUCT.home, t.madeWith, '_blank', 'noopener']], last: 'foot', open: 0, onStage: 0 }, id);
       if (project.Scene.settings?.length) assert.ok(await page.locator('.player .case input').count() > 0, `${id}: the case picker is in the card`);
     }
     assert.ok(languages.size === 2, `both languages visited: ${[...languages]}`);
@@ -666,7 +675,7 @@ test('view tools share Next\'s row when wide and wrap below it when narrow', opt
   }
 });
 
-test('right to left: the step bar fills from the right and the rail sits on the left', options, async () => {
+test('right to left: the step bar fills from the right, the rail sits on the left, and the footer\'s mark is on the right with the way out on the left', options, async () => {
   // No catalog page sets dir="rtl" (a right-to-left lettered page keeps its controls as they are),
   // so this sets it on mr-cache to check the logical properties the stepper row and rail use.
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
@@ -689,6 +698,20 @@ test('right to left: the step bar fills from the right and the rail sits on the 
     assert.ok(seen.rail <= seen.card, `the rail is on the card's left: ${JSON.stringify(seen)}`);
     assert.ok(seen.prev > seen.next, `Previous is right of Next: ${JSON.stringify(seen)}`);
   } finally { await page.close(); }
+  // specs/player-tile.md T9: in a frame, the footer's mark is at the inline start (the right) and the way out at the end (the left).
+  hostBody = `<!doctype html><style>body{margin:0}</style><iframe title="t" src="${embed}/mr-cache.html?request=hit" style="width:1280px;height:800px;border:0"></iframe>`;
+  const host2 = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await host2.goto(host);
+    const frame = await readyFrame(host2, 'mr-cache');
+    const seen = await frame.evaluate(() => {
+      document.documentElement.setAttribute('dir', 'rtl');
+      const box = (s: string) => document.querySelector(s)!.getBoundingClientRect();
+      return { foot: [box('.foot').left, box('.foot').right], mark: [box('.foot .mark').left, box('.foot .mark').right], open: [box('.foot .open').left, box('.foot .open').right], rail: box('.rail').right, card: box('.player').left };
+    });
+    assert.ok(seen.mark[1]! > seen.open[1]! && seen.foot[1]! - seen.mark[1]! < 24 && seen.open[0]! - seen.foot[0]! < 24, `the mark at the right, the way out at the left: ${JSON.stringify(seen)}`);
+    assert.ok(seen.rail <= seen.card, `the rail on the left: ${JSON.stringify(seen)}`);
+  } finally { await host2.close(); }
 });
 async function readyFrame(page: Page, scene: string): Promise<Frame> {
   await page.waitForFunction(() => document.querySelectorAll('iframe').length > 0);
@@ -739,6 +762,9 @@ test(
         b = await readyFrame(page, 'oauth-pkce');
       const ah = await assertHeight(page, 'a', a),
         bh = await assertHeight(page, 'b', b);
+      // specs/player-tile.md T3: the loader adds the iframe and nothing else; the way out is the page's footer.
+      assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#a > *, #b > *')].map((e) => e.tagName)), ['IFRAME', 'IFRAME']);
+      assert.equal(await page.locator('a').count(), 0, 'no link outside the frames');
       await a.locator('.transcript > summary').click();
       const grown = await assertHeight(page, 'a', a);
       assert.ok(grown > ah);
@@ -769,6 +795,29 @@ test(
     }
   },
 );
+// specs/player-tile.md T3: the loader mounts an iframe and nothing else, and dispose() takes it away with its listener.
+test('the loader appends only the iframe, and dispose() removes the iframe and its message listener', options, async () => {
+  hostBody = `<!doctype html><div id="t"></div><script src="${embed}/loader.js"></script>`;
+  const page = await browser.newPage();
+  try {
+    await page.goto(host);
+    await page.evaluate(() => {
+      const w = window as unknown as { __listeners: number };
+      w.__listeners = 0;
+      const add = window.addEventListener.bind(window), remove = window.removeEventListener.bind(window);
+      window.addEventListener = ((type: string, ...rest: [EventListenerOrEventListenerObject, unknown?]) => { if (type === 'message') w.__listeners++; return add(type, ...(rest as [EventListenerOrEventListenerObject])); }) as typeof window.addEventListener;
+      window.removeEventListener = ((type: string, ...rest: [EventListenerOrEventListenerObject, unknown?]) => { if (type === 'message') w.__listeners--; return remove(type, ...(rest as [EventListenerOrEventListenerObject])); }) as typeof window.removeEventListener;
+    });
+    await page.evaluate((src) => {
+      const w = window as unknown as { __dispose: () => void; RaynerEmbed: { mountExplainer: (t: HTMLElement, s: string, o: object) => () => void } };
+      w.__dispose = w.RaynerEmbed.mountExplainer(document.getElementById('t')!, src, { title: 'Cache' });
+    }, `${embed}/mr-cache.html`);
+    await readyFrame(page, 'mr-cache');
+    assert.deepEqual(await page.evaluate(() => ({ children: [...document.getElementById('t')!.children].map((e) => e.tagName), links: document.querySelectorAll('a').length, listeners: (window as unknown as { __listeners: number }).__listeners })), { children: ['IFRAME'], links: 0, listeners: 1 });
+    await page.evaluate(() => (window as unknown as { __dispose: () => void }).__dispose());
+    assert.deepEqual(await page.evaluate(() => ({ children: document.getElementById('t')!.childNodes.length, links: document.querySelectorAll('a, iframe').length, listeners: (window as unknown as { __listeners: number }).__listeners })), { children: 0, links: 0, listeners: 0 });
+  } finally { await page.close(); }
+});
 // The rest of URL cases, step fallback, history, copy link and reduced motion is the player
 // model's (below), including the fixed fallback scenario.
 test('?theme=dark, light and auto (following the reader\'s colour scheme) set the page colours', options, async () => {
@@ -1244,7 +1293,7 @@ function resolveLoad(p: Project, request: Record<string, string>, step: string |
 }
 
 /** The parts of the card the reader model checks, in order (specs/player-tile.md T2). */
-const CARD_ORDER = 'head frame stepper words transcript';
+const CARD_ORDER = 'head frame stepper words transcript foot';
 /** Everything the reader can see or the host can read, in one snapshot. */
 function observe(ids: string[]) {
   const q = new URL(location.href).searchParams;
@@ -2441,7 +2490,7 @@ const parentOriginArb = (hostOrigin: string) =>
     fc.constant({ value: undefined, exact: false }),
   );
 test(
-  'framed with any parentOrigin: messages go to exactly that origin when it is an exact HTTP(S) origin and nowhere otherwise; the player\'s own "Open in a new tab" link shows only when no parentOrigin is set',
+  'framed with any parentOrigin: messages go to exactly that origin when it is an exact HTTP(S) origin and nowhere otherwise; the footer\'s "Open the explainer" link shows with or without parentOrigin and opens this step and case without it',
   options,
   async () => {
     await fc.assert(
@@ -2458,8 +2507,22 @@ test(
           await page.waitForTimeout(100);
           const posts = await postsOf(frame);
           assert.deepEqual([...new Set(posts.map((p) => p.origin))], exact ? [value] : [], `parentOrigin ${JSON.stringify(value)}`);
-          // The loader, which sets parentOrigin, puts its own link beside the frame.
-          assert.equal(await frame.locator('a.standalone').count(), value === undefined ? 1 : 0, `parentOrigin ${JSON.stringify(value)}`);
+          // specs/player-tile.md T3: in any frame the footer's way out opens this page at the reader's step
+          // and case, in a new tab, without parentOrigin.
+          const out = await frame.evaluate(() => ({
+            links: [...document.querySelectorAll<HTMLAnchorElement>('.player > .foot a.open')].map((a) => ({ href: a.href, target: a.target, text: a.textContent })),
+            page: location.origin + location.pathname,
+            step: document.querySelector<HTMLElement>('.steps [aria-current=step]')?.dataset.step,
+            attacker: document.querySelector<HTMLInputElement>('input[name=attacker]:checked')?.value,
+          }));
+          assert.equal(out.links.length, 1, `parentOrigin ${JSON.stringify(value)}`);
+          const href = new URL(out.links[0]!.href);
+          assert.deepEqual(
+            { path: href.origin + href.pathname, step: href.searchParams.get('step'), attacker: href.searchParams.get('attacker'), parentOrigin: href.searchParams.has('parentOrigin'), target: out.links[0]!.target, text: out.links[0]!.text },
+            { path: out.page, step: out.step, attacker: out.attacker, parentOrigin: false, target: '_blank', text: 'Open the explainer' },
+            `parentOrigin ${JSON.stringify(value)}`,
+          );
+          assert.ok(out.step && out.attacker, `the player shows a step and a case: ${JSON.stringify(out)}`);
         } finally {
           await context.close();
         }

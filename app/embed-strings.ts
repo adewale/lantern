@@ -49,7 +49,10 @@ export interface Chrome {
   stepBar: string;
   /** "Step 3 of 4", the step heading's kicker; with a title, a step bar segment's name. */
   stepOf: (i: number, n: number, title?: string) => string;
-  newTab: string;
+  /** The footer mark's accessible name; its visible text is the name "Rayner", never translated. */
+  madeWith: string;
+  /** The footer's way out of a frame: this page, at the reader's step and case, in a new tab. */
+  open: string;
   /** The loader's name for the frame when the host gives none. */
   frame: string;
   reducedMotion: string;
@@ -92,7 +95,8 @@ const EN: Chrome = {
   allSteps: (n) => `All ${n} steps`,
   stepBar: 'Step progress',
   stepOf: (i, n, title) => `Step ${i} of ${n}${title ? `: ${title}` : ''}`,
-  newTab: 'Open in a new tab',
+  madeWith: 'Made with Rayner',
+  open: 'Open the explainer',
   frame: 'Interactive explainer',
   reducedMotion: 'Reduced motion is on, so the finished step is shown.',
   copied: 'Link copied.',
@@ -130,7 +134,8 @@ const FR: Chrome = {
   allSteps: (n) => `Les ${n} étapes`,
   stepBar: 'Progression des étapes',
   stepOf: (i, n, title) => `Étape ${i} sur ${n}${title ? ` : ${title}` : ''}`,
-  newTab: 'Ouvrir dans un nouvel onglet',
+  madeWith: 'Réalisé avec Rayner',
+  open: 'Ouvrir l’explication',
   frame: 'Explication interactive',
   reducedMotion: 'Les animations sont réduites : l’étape s’affiche terminée.',
   copied: 'Lien copié.',

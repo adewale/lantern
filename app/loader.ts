@@ -2,15 +2,16 @@ import { exactHttpOrigin, resizeHeight } from './embed-protocol.ts';
 import { chromeFor } from './embed-strings.ts';
 
 /**
- * Optional host-side convenience. Never required by the artifact itself. Its own words (the
- * link beside the frame) are in `lang`, the host page's language unless given.
+ * Optional host-side convenience. Never required by the artifact itself. It adds the iframe and
+ * nothing else: the page's own footer carries the way out of the frame. `lang` is kept for
+ * compatibility; the script tag's `data-lang` (else the host page's language) chooses the language
+ * of the frame's default name.
  */
 export function mountExplainer(
   target: HTMLElement,
   src: string,
   options: { title: string; height?: number; theme?: 'light' | 'dark' | 'auto'; lang?: string },
 ): () => void {
-  const t = chromeFor(hostLang(options.lang));
   const url = new URL(src, document.baseURI);
   const origin = exactHttpOrigin(url.origin);
   if (!origin) throw new Error('Auto-sizing requires an HTTP(S) artifact URL');
@@ -27,16 +28,10 @@ export function mountExplainer(
     if (height != null) frame.style.height = `${height}px`;
   };
   window.addEventListener('message', receive);
-  const link = document.createElement('a');
-  link.href = src;
-  link.textContent = t.newTab;
-  link.target = '_blank';
-  link.rel = 'noopener';
-  target.append(frame, link);
+  target.append(frame);
   return () => {
     window.removeEventListener('message', receive);
     frame.remove();
-    link.remove();
   };
 }
 

@@ -12,7 +12,7 @@ import type { Zoom } from './embed-zoom.ts';
 import { NARROW_PX, closeUps, stageScale, stepLayouts } from './embed-closeup.ts';
 import type { StepLayout } from './embed-closeup.ts';
 import { chromeFor, descriptionsLang, settingsProblem } from './embed-strings.ts';
-import { SHARE_META, shareable } from './embed-share.ts';
+import { HOME, SHARE_META, shareable } from './embed-share.ts';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, className?: string): HTMLElementTagNameMap[K] => {
   const node = document.createElement(tag);
@@ -168,9 +168,24 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   // the player. It is a closed row of the card, under the words (and the steps, on a narrow page).
   const transcript = root.querySelector<HTMLDetailsElement>('.transcript')!;
   transcript.open = false;
+  // The card's footer: who made it, at the start, and inside a frame (the loader's or any other)
+  // a way out to this page, at the end. A footer inside a section is no landmark of its own.
+  const foot = el('footer', undefined, 'foot'),
+    mark = el('a', undefined, 'mark');
+  mark.href = HOME;
+  mark.target = '_blank';
+  mark.rel = 'noopener';
+  mark.setAttribute('aria-label', t.madeWith);
+  mark.append(icon('mark'), 'Rayner');
+  foot.append(mark);
+  const wayOut = el('a', t.open, 'open');
+  wayOut.target = '_blank';
+  wayOut.rel = 'noopener';
+  wayOut.append(icon('open'));
+  if (window.parent !== window) foot.append(wayOut);
   // One card: its header (the title and the cases), the picture mounted under it, the stepper
-  // row, the words, then the rows that open under them.
-  player.append(head, frame, stepper, words, notice, transcript, summary, ruler, ledeRuler);
+  // row, the words, the rows that open under them, then the footer.
+  player.append(head, frame, stepper, words, notice, transcript, foot, summary, ruler, ledeRuler);
   // A frame the loader sizes to its content has no viewport height to fit: the card takes
   // the page's width, and the host page scrolls (embed.css, --player-reserve).
   if (window.parent !== window && params.has('parentOrigin')) root.style.setProperty('--player-reserve', '0px');
@@ -218,13 +233,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     e.preventDefault();
     void show(trace.steps.findIndex((s) => s.step === step));
   });
-  // Inside a frame, a way out to the full page; a standalone page needs none, and the
-  // loader (which sets parentOrigin) already puts this link beside the frame.
-  const standalone = el('a', t.newTab, 'standalone');
-  standalone.target = '_blank';
-  standalone.rel = 'noopener';
-  const framed = window.parent !== window && !params.has('parentOrigin');
-  root.replaceChildren(layout, ...(framed ? [standalone] : []));
+  root.replaceChildren(layout);
 
   // A map beside the picture while a narrow stage is zoomed:
   // where the view is, and where the step changed. Pressing it moves to the step's next
@@ -357,7 +366,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     (push && url.href !== location.href ? history.pushState : history.replaceState).call(history, null, '', url);
     const out = new URL(url);
     out.searchParams.delete('parentOrigin');
-    standalone.href = out.href;
+    wayOut.href = out.href;
   }
   function chrome() {
     const step = trace.steps[selected]!,
