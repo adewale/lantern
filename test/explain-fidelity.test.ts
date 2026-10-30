@@ -114,6 +114,15 @@ for (const entry of EXPLAINERS)
           assertStepState(trace, 'compare', { unguarded: newFirst ? 'A' : 'B', guarded: 'B' });
           break;
         }
+        case 'hello-world':
+          assert.deepEqual(trace.steps.map(s => s.step), ['hello']);
+          assert.match(String(trace.steps[0]!.meta?.caption), /Hello, world!/);
+          break;
+        case 'feature-tour':
+          assertStepState(trace, 'recipe', { feature: values.feature, phase: 'recipe' });
+          assertStepState(trace, 'result', { feature: values.feature, phase: 'result' });
+          if (values.feature === 'state') assertStepState(trace, 'result', { count: 1 });
+          break;
         case 'lantern':
           assert.ok(walks.some((w) => w.from === 'Clock' && w.to === 'Browser'));
           assert.ok(walks.some((w) => w.from === 'Clock' && w.to === 'Trace'));
