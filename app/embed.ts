@@ -141,7 +141,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const zoomOut = button(t.zoomOut, 'zoomOut'),
     zoomIn = button(t.zoomIn, 'zoomIn'),
     wholePicture = button(t.wholePicture, 'fit'),
-    copy = button(t.copy, 'link'),
+    copy = button(t.copy, 'link', { className: 'button icon share' }),
     enlarge = button(t.enlarge, 'enlarge');
   enlarge.setAttribute('aria-pressed', 'false');
   // On a narrow stage, Whole picture shows the whole picture from then on; Close-up brings
@@ -452,8 +452,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     const kickerHeight = kicker.getBoundingClientRect().height;
     ledeRuler.replaceChildren();
     caption.style.minHeight = `${tallest}px`;
-    // Reserve each row separately: a two-line title must not move the line below it.
-    ledeTitle.style.minHeight = `${tallestTitle}px`;
+    // The line keeps its own room, so its top never moves; the title does not, so it stays with the
+    // line under it. The lede sits at the bottom of its room (embed.css), so the slack a short title
+    // leaves falls above the kicker, between the controls and the words, not inside the heading.
     ledeLine.style.minHeight = `${tallestLine}px`;
     lede.style.minHeight = `${kickerHeight + tallestTitle + tallestLine}px`;
   }

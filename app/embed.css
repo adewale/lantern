@@ -20,15 +20,16 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 
 /* The card's header: the title, then the cases it can show, over a rule; the stage is mounted under it.
    Without JavaScript the page's h1 stands in the card alone. */
-.head,.player>h1{padding:16px;border-bottom:1px solid var(--line)}
+.head,.player>h1{padding:16px var(--inset);border-bottom:1px solid var(--line)}
 .head{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 24px}
-@media(max-width:640px){.head,.player>h1{padding:12px}}
 .head h1{flex:1 1 20rem}
 .case{border:0;margin:0;padding:0;min-width:0;display:flex;flex-direction:column;gap:6px}
-.case legend{float:left;font-size:.875rem;color:var(--muted);padding:0}
+.case legend{float:left;padding:0}
+/* One label style: the case legend, the step kicker, the rail heading and the view count. */
+.case legend,.lede .kicker,.lede-ruler .kicker,.rail h2,.view-controls>span{font-size:.8125rem;font-weight:500;line-height:1.4;letter-spacing:.01em;color:var(--muted);font-variant-numeric:tabular-nums}
 .case legend+*{clear:left}
-.segments{display:inline-flex;flex-wrap:wrap;gap:2px;padding:3px;border-radius:12px;background:color-mix(in srgb,var(--line) 55%,transparent)}
-.segments label{position:relative;display:flex;align-items:center;min-height:36px;padding:0 12px;border-radius:9px;font-size:.9375rem;color:var(--muted);cursor:pointer;transition:background-color 150ms ease,color 150ms ease}
+.segments{display:inline-flex;flex-wrap:wrap;gap:2px;padding:3px;border-radius:11px;background:color-mix(in srgb,var(--line) 55%,transparent)}
+.segments label{position:relative;display:flex;align-items:center;min-height:36px;padding:0 12px;border-radius:8px;font-size:.9375rem;color:var(--muted);cursor:pointer;transition:background-color 150ms ease,color 150ms ease}
 .segments input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
 .segments label:has(input:checked){background:var(--surface);color:var(--fg);font-weight:600;box-shadow:0 1px 2px rgb(0 0 0/.08),0 0 0 1px rgb(0 0 0/.04)}
 .segments label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:1px}
@@ -41,7 +42,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
    case, the build): the same mix for every palette, as strong as the weakest palette's contrast allows
    (test/embed-tint.test.ts reads --tint here). Buttons keep the plain surface and lift off it; rules
    inside the tile use --line, its edge and the rail's rule --tile-line. */
-.tile{--tint:10%;--tile:color-mix(in srgb,var(--paper,var(--surface)) var(--tint),var(--surface));--tile-line:color-mix(in srgb,var(--paper,var(--line)) 30%,var(--line));background:var(--tile);box-shadow:0 0 0 1px var(--tile-line);border-radius:12px;overflow:clip;transition:background-color 200ms}
+.tile{--inset:16px;--tint:10%;--tile:color-mix(in srgb,var(--paper,var(--surface)) var(--tint),var(--surface));--tile-line:color-mix(in srgb,var(--paper,var(--line)) 30%,var(--line));background:var(--tile);box-shadow:0 0 0 1px var(--tile-line);border-radius:12px;overflow:clip;transition:background-color 200ms}
 .layout{display:grid;align-items:start;width:min(100%,var(--player-cap));margin-inline:auto}
 @media(min-width:1100px){
   .layout{width:auto;grid-template-columns:minmax(0,var(--player-cap)) minmax(300px,1fr)}
@@ -66,10 +67,10 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 /* A narrow stage opens each step on a close-up. A vertical swipe still scrolls the page, as
    on a map embedded with cooperative gestures; a sideways drag, a tap or a pinch moves the view. */
 .stage.narrow.zoomed{touch-action:pan-y}
-.view-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 12px 0}
+.view-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px var(--inset) 0}
 .view-controls .button{min-height:44px}
 .view-controls[hidden]{display:none}
-.view-controls>span{font-size:.875rem;color:var(--muted);margin-inline-end:auto}
+.view-controls>span{margin-inline-end:auto}
 .view-help{flex-basis:100%;margin:0;font-size:.875rem;line-height:1.5;color:var(--muted)}
 .view-help[hidden]{display:none}
 .overview{flex:none;display:block;width:44px;height:44px;padding:6px;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -80,19 +81,22 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .overview .part{background:color-mix(in srgb,var(--accent) 45%,transparent)}
 .overview .view{box-shadow:inset 0 0 0 1.5px var(--fg);border-radius:1px;transition:left 220ms var(--ease-out),top 220ms var(--ease-out)}
 @keyframes leave{to{opacity:0}}
-.words{display:grid;gap:6px;padding:14px 16px 16px}
-.player>.caption{padding:14px 16px}
+.words{display:grid;gap:6px;padding:14px var(--inset) 16px}
+.player>.caption{padding:14px var(--inset)}
 .caption,.ruler{margin:0;max-width:52ch;min-height:3.2em;font-size:1.125rem;line-height:1.6;text-wrap:pretty}
 .ruler,.lede-ruler{position:absolute;top:0;left:0;margin:0;min-height:0;visibility:hidden;pointer-events:none}
 /* The step's heading on every width: "Step 3 of 4", the title, then the line. */
 .lede,.lede-ruler{max-width:68ch;font-size:1rem;line-height:1.45;text-wrap:pretty}
-.lede{margin:0}
+.lede{margin:0 0 6px;display:flex;flex-direction:column;justify-content:flex-end}
 .lede>*,.lede-ruler>*{display:block}
-.lede .kicker,.lede-ruler .kicker{font-size:.8125rem;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.01em}
 .lede strong,.lede-ruler strong{font-size:1.0625rem;font-weight:650}
-.lede .line,.lede-ruler .line{color:var(--muted)}
+.lede .line,.lede-ruler .line{font-size:.9375rem;color:var(--muted)}
 .lede [hidden]{display:none}
-.stepper{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
+.stepper{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px var(--inset);border-top:1px solid var(--line)}
+/* Icon buttons draw their glyph inside a 40 px (44 px narrow) hit box: pull Previous and the tools out so the
+   chevron's point and the last glyph sit on the card's inset, the line the title, the words and the rows share. */
+.stepper>.button.icon:first-child{margin-inline-start:-14px}
+@media(max-width:640px){.stepper>.button.icon:first-child{margin-inline-start:-16px}}
 /* The step bar: one equal segment per step, between Next and the tools. The hit area is the row's
    height; the mark is a thin bar. Done segments are the accent, the current one is taller and fills
    with --progress (0 to 1, 1 at rest), the rest are quiet (at least 3:1 on the card in both themes). */
@@ -107,7 +111,8 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .step-bar .fill{display:none;height:8px;inline-size:calc(var(--progress,1)*100%);background:var(--accent);transition:inline-size 120ms linear}
 .step-bar [data-state=current] .fill{display:block}
 /* View tools stand apart from step navigation, behind a rule; on a narrow row, on their own row. */
-.tools{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:2px;margin-inline-start:auto;padding-inline-start:10px;border-inline-start:1px solid var(--line)}
+.tools{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:2px;margin-inline:auto -12px;padding-inline-start:10px;border-inline-start:1px solid var(--line)}
+.tools .share{margin-inline-start:12px}
 @media(max-width:640px){.tools{flex-basis:100%;padding:0;border:0}.stepper .button,.step-bar button{min-width:44px;min-height:44px}.step-bar button{min-width:0}}
 .described{margin:2px 0 0;max-width:68ch;font-size:.9375rem;color:var(--muted)}
 .described summary{padding:6px 0;cursor:pointer}
@@ -116,7 +121,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .notice:empty{display:none}
 
 /* Buttons: one shape; Next is the one primary action. */
-.button{font:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:40px;min-height:40px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;transition:transform 160ms var(--ease-out),background-color 150ms ease,border-color 150ms ease,color 150ms ease}
+.button{font:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:40px;min-height:40px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;transition:transform 160ms var(--ease-out),background-color 150ms ease,border-color 150ms ease,color 150ms ease}
 .button:active:not(:disabled){transform:scale(.97)}
 .button:disabled{opacity:.4;cursor:default}
 .button[hidden]{display:none}
@@ -136,9 +141,9 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 /* The rail: where the reader is, and where else they can go. Each step's title and line; the
    current step is marked by colour and a filled number, done steps by an accent ring, never by weight. */
 .rail{min-width:0}
-.rail h2{margin:0;padding:8px 12px 4px;font-size:.8125rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.rail h2{margin:0;padding:8px 10px 4px}
 /* The card's rows under the words: the steps (narrow) and the transcript, each a closed disclosure. */
-.player>details{padding:0 16px;border-top:1px solid var(--line)}
+.player>details{padding:0 var(--inset);border-top:1px solid var(--line)}
 .player>details[open]{padding-bottom:12px}
 .player>details>summary{padding:11px 0;font-weight:600;cursor:pointer}
 .steps{list-style:none;margin:0;padding:0;display:grid;gap:2px;counter-reset:step}
@@ -161,7 +166,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 
 /* The card's footer: the maker's mark at the start; inside a frame, the way out at the end. Each link
    is the row's height, so it is easy to hit. */
-.foot{display:flex;align-items:center;gap:12px;min-height:40px;padding:0 16px;border-top:1px solid var(--line);font-size:.8125rem;color:var(--muted)}
+.foot{display:flex;align-items:center;gap:12px;min-height:40px;padding:0 var(--inset);border-top:1px solid var(--line);font-size:.8125rem;color:var(--muted)}
 .foot a{display:inline-flex;align-items:center;gap:6px;min-height:40px;color:inherit;text-decoration:none}
 .foot svg{width:16px;height:16px}
 .foot .open{margin-inline-start:auto}

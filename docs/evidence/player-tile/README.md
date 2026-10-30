@@ -39,6 +39,18 @@ The tile alone at 900 px, standalone: [crop-mr-cache-900.jpg](crop-mr-cache-900.
 
 `test/explain-embed.test.ts` "the tile stands alone" asserts the same on every catalog page, standalone, in a raw iframe and in the loader, from the DOM inside `.tile`, and checks that every drawn element under `#content` is the tile or inside its box. Run against `feature/player-step-bar` it fails at the first page with `no .tile in #content`; on `feature/player-tile` it passes for all 30.
 
+## Contrast, repetition, alignment, proximity
+
+After the tile landed, the card was checked against Robin Williams' four principles. `crap-before-*` and `crap-after-*` show mr-cache at 1280 × 800 and 390 × 844.
+
+| Principle | Before | After |
+| --- | --- | --- |
+| Contrast | The step's line (16 px, muted) and the caption (18 px) sat 6 px apart and read as one paragraph | The line is 15 px; 12 px separates the heading from the caption |
+| Repetition | Four small labels in three styles: the legend 14 px, the kicker 13 px, the rail heading 13 px upper case, the view count 14 px; radii of 8, 9, 10 and 12 px inside the tile | One label style (13 px, weight 500, muted, tabular figures, sentence case); one inner radius of 8 px, the case track concentric at 11 px |
+| Alignment | Text at a 16 px inset, the stepper at 12, the phone header at 12 and the phone words at 16; the Previous chevron about 14 px inside the text line | One `--inset` for every row; the chevron's point 4 px inside the line at both widths; the last tool's glyph and the case picker end on the same right edge |
+| Proximity | On a phone, a short title kept the height of the longest, opening a gap between the title and its own line | The heading sits at the bottom of its reserved room, so kicker, title and line stay together and the slack falls between the controls and the words; the line still never moves |
+| Proximity | Zoom and sharing tools separated only by Whole picture's hidden slot, so they ran together while zoomed | Copy link starts a second group, 12 px apart, zoomed or not |
+
 ## Measurements
 
 - `--tint` is 10%. `test/embed-tint.test.ts` passes at 10% for all thirteen palettes in both themes; the weakest pair, relative to its minimum, is `--muted` (#536170) on github-dark's paper (#0d1117) mixed into the light surface: 5.13:1 against 4.5:1.
