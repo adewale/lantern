@@ -329,7 +329,7 @@ export default class PeriodicGroupsExplainer extends Scene {
     this.table = table;
     this.notes = notes;
     s.keep(table, notes, { describe: () => describe(this.state) });
-        const redraw = (runTime: number) => table.sync({ runTime, match: samePlace });
+    const redraw = (runTime: number) => table.sync({ runTime, match: samePlace });
     const both = (runTime: number) => new AnimationGroup([redraw(runTime), notes.sync({ runTime, match: samePlace })], { rateFunc: linear });
     await this.play(new FadeIn(table), new FadeIn(notes), { runTime: 0.8 });
 
