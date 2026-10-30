@@ -38,7 +38,7 @@ body{margin:0;background:var(--bg);color:var(--fg)}
 .tag{display:inline-grid;place-items:center;min-width:26px;height:20px;padding:0 6px;border-radius:6px;background:var(--accent);color:var(--accent-fg);font-size:.75rem;font-weight:650;letter-spacing:.02em;font-variant-numeric:tabular-nums}
 /* A tag pinned to a frame element. */
 .req{position:absolute;top:-10px;inset-inline-end:8px;z-index:2;box-shadow:0 0 0 2px var(--bg)}
-.transport .req{inset-inline-end:auto;inset-inline-start:12px}
+.stepper .req{inset-inline-end:auto;inset-inline-start:12px}
 .step-bar .req{top:-6px}
 
 /* ---------- The proposed player, in Rayner's tokens ---------- */
@@ -56,7 +56,7 @@ body{margin:0;background:var(--bg);color:var(--fg)}
 .layout{display:grid;gap:24px;align-items:start}
 @container (min-width: 1100px){.layout{grid-template-columns:minmax(0,1fr) 300px}}
 
-/* R1: one card holds the picture, the transport and the words. */
+/* R1: one card holds the picture, the stepper row and the words. */
 .player{position:relative;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
 /* R2: the stage never outgrows the viewport; here the frame is sized to an 800 px tall window. */
 .frame{position:relative;width:min(100%,calc((800px - 300px)*16/9));}
@@ -65,8 +65,8 @@ body{margin:0;background:var(--bg);color:var(--fg)}
 .stage .close-up{display:none}
 @container (max-width: 640px){.stage .whole{display:none}.stage .close-up{display:block}}
 
-/* R2, R3, R6: one transport, straight under the stage. */
-.transport{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
+/* R2, R3, R6: one stepper row, straight under the picture. */
+.stepper{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
 .button{font:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:40px;min-height:40px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
 .button.primary{padding:0 14px 0 18px;background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600}
 .button.icon{padding:0;border-color:transparent;background:transparent;color:var(--muted)}
@@ -129,7 +129,7 @@ body{margin:0;background:var(--bg);color:var(--fg)}
 
 /* The states strip. */
 .states{display:grid;gap:10px}
-.states .transport{border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.states .stepper{border:1px solid var(--line);border-radius:12px;background:var(--surface)}
 .states .label{font-size:.875rem;color:var(--muted)}
 .focus-demo button:nth-child(1){outline:2px solid var(--accent);outline-offset:-2px}
 
@@ -144,6 +144,7 @@ body{margin:0;background:var(--bg);color:var(--fg)}
   <header>
     <h1>Rayner player redesign</h1>
     <p>A mock of the proposed stepper, built with the player's own tokens and the KV-cache explainer's real words. The desktop frame is 1180 px wide in an 800 px tall window; the phone frame is 390 px, shown in the dark theme. Tags name the requirements in <code>specs/player-redesign.md</code>.</p>
+    <p>The metaphor is a narrated slide build: the author orders the steps, the reader sets the pace, and every step rests on a picture with its caption. The step bar borrows the stories pattern for position: one segment per step, the current one filling as it plays, a tap to jump. The video player’s vocabulary goes: no Replay, no Stop, no “Fit stage”.</p>
     <p class="muted">Pictures are sketches of the step 3 resting picture, not renders. Nothing here is interactive.</p>
   </header>
 
@@ -178,7 +179,7 @@ body{margin:0;background:var(--bg);color:var(--fg)}
                 <g class="mono" font-size="16"><text x="130" y="512">async function getUser(id, env) {</text><text x="130" y="536">  const hit = await env.KV.get(`user:${id}`, "json");</text><text x="130" y="560">  if (hit) return hit;</text><text x="130" y="584">  const row = await env.DB.prepare(SQL).bind(id).first();</text><text x="130" y="608">  await env.KV.put(`user:${id}`, JSON.stringify(row), { expirationTtl: 300 });</text><text x="130" y="632">  return row;</text><text x="130" y="656">}</text></g>
               </svg>
             </div></div>
-            <div class="transport" role="group" aria-label="Steps">
+            <div class="stepper" role="group" aria-label="Steps">
               <span class="tag req">R2</span>
               <button class="button icon" type="button" aria-label="Previous step"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
               <button class="button primary" type="button" aria-label="Next step"><span>Next</span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
@@ -193,8 +194,7 @@ body{margin:0;background:var(--bg);color:var(--fg)}
                 <span class="tag req" style="top:-20px">R6</span>
                 <button class="button icon" type="button" aria-label="Zoom out" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14z"/><path d="M20 20l-4-4"/><path d="M8 11h6"/></svg></button>
                 <button class="button icon" type="button" aria-label="Zoom in"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14z"/><path d="M20 20l-4-4"/><path d="M11 8v6"/><path d="M8 11h6"/></svg></button>
-                <button class="button icon" type="button" aria-label="Fit stage" style="visibility:hidden"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4"/><path d="M15 4v5h5"/><path d="M9 20v-5H4"/><path d="M15 20v-5h5"/></svg></button>
-                <button class="button icon" type="button" aria-label="Replay step"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 2.64-6.36"/><path d="M3 4v5h5"/></svg></button>
+                <button class="button icon" type="button" aria-label="Whole picture" style="visibility:hidden"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4"/><path d="M15 4v5h5"/><path d="M9 20v-5H4"/><path d="M15 20v-5h5"/></svg></button>
                 <button class="button icon" type="button" aria-label="Copy link"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13.5a4.5 4.5 0 0 0 6.36 0l3-3a4.5 4.5 0 0 0-6.36-6.36l-1.25 1.25"/><path d="M14 10.5a4.5 4.5 0 0 0-6.36 0l-3 3a4.5 4.5 0 0 0 6.36 6.36l1.25-1.25"/></svg></button>
                 <button class="button icon" type="button" aria-label="Enlarge"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg></button>
               </div>
@@ -221,12 +221,12 @@ body{margin:0;background:var(--bg);color:var(--fg)}
       </div>
     </div>
     <ol class="notes">
-      <li><span class="tag">R1</span><span>One card: picture, transport and words share a surface and a border. The two Next buttons become one.</span></li>
-      <li><span class="tag">R2</span><span>The stage is capped so stage, transport and the first caption line fit an 800 px window. The transport sits straight under the picture, so it is on screen at load. Prev and Next stay together at the start of the row, where the current player has them; the step bar follows, so Next never drifts with the width.</span></li>
+      <li><span class="tag">R1</span><span>One card: picture, stepper row and words share a surface and a border. The two Next buttons become one.</span></li>
+      <li><span class="tag">R2</span><span>The stage is capped so picture, stepper row and the first caption line fit an 800 px window. The stepper row sits straight under the picture, so it is on screen at load. Prev and Next stay together at the start of the row, where the current player has them; the step bar follows, so Next never drifts with the width.</span></li>
       <li><span class="tag">R3</span><span>The step bar: one segment per step, done segments in the accent, the current one taller and filled by the step's animation, later ones quiet. Each is a button that jumps to its step. Position and extent are visible while reading.</span></li>
       <li><span class="tag">R4</span><span>"Step 3 of 4", the title and the line show on every width, not only on phones.</span></li>
       <li><span class="tag">R5</span><span>The rail sits beside the card when the page is at least 1100 px wide. Each item shows the step's title and its line. The current step is marked by colour, not weight, so nothing shifts.</span></li>
-      <li><span class="tag">R6</span><span>View tools keep their row but stand apart from step navigation behind a rule.</span></li>
+      <li><span class="tag">R6</span><span>View tools stand apart from step navigation behind a rule: zoom, Whole picture while zoomed, copy link, enlarge. Replay is gone; Prev then Next plays a step again, and a tap on the current segment while it plays rests the picture at once.</span></li>
     </ol>
   </section>
 
@@ -255,7 +255,7 @@ body{margin:0;background:var(--bg);color:var(--fg)}
                   <text x="745" y="352" font-size="17" fill="#6b7680">hit</text><text x="790" y="238" font-size="17" fill="#6b7680">miss</text>
                 </svg>
               </div></div>
-              <div class="transport" role="group" aria-label="Steps">
+              <div class="stepper" role="group" aria-label="Steps">
                 <button class="button icon" type="button" aria-label="Previous step"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
                 <button class="button primary" type="button" aria-label="Next step"><span>Next</span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
                 <ol class="step-bar" aria-label="Step progress">
@@ -268,8 +268,7 @@ body{margin:0;background:var(--bg);color:var(--fg)}
                 <div class="tools" role="group" aria-label="View tools">
                   <button class="button icon" type="button" aria-label="Zoom out"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14z"/><path d="M20 20l-4-4"/><path d="M8 11h6"/></svg></button>
                   <button class="button icon" type="button" aria-label="Zoom in"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14z"/><path d="M20 20l-4-4"/><path d="M11 8v6"/><path d="M8 11h6"/></svg></button>
-                  <button class="button icon" type="button" aria-label="Fit stage"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4"/><path d="M15 4v5h5"/><path d="M9 20v-5H4"/><path d="M15 20v-5h5"/></svg></button>
-                  <button class="button icon" type="button" aria-label="Replay step"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 2.64-6.36"/><path d="M3 4v5h5"/></svg></button>
+                  <button class="button icon" type="button" aria-label="Whole picture"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4"/><path d="M15 4v5h5"/><path d="M9 20v-5H4"/><path d="M15 20v-5h5"/></svg></button>
                   <button class="button icon" type="button" aria-label="Copy link"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13.5a4.5 4.5 0 0 0 6.36 0l3-3a4.5 4.5 0 0 0-6.36-6.36l-1.25 1.25"/><path d="M14 10.5a4.5 4.5 0 0 0-6.36 0l-3 3a4.5 4.5 0 0 0 6.36 6.36l1.25-1.25"/></svg></button>
                   <button class="button icon" type="button" aria-label="Enlarge"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg></button>
                 </div>
@@ -278,7 +277,6 @@ body{margin:0;background:var(--bg);color:var(--fg)}
                 <span class="tag req">R7</span>
                 <span aria-live="polite">View 1 of 3</span>
                 <button class="button" type="button">Next view</button>
-                <button class="button icon" type="button" aria-label="Whole picture"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4"/><path d="M15 4v5h5"/><path d="M9 20v-5H4"/><path d="M15 20v-5h5"/></svg></button>
                 <button class="button icon" type="button" aria-label="Next close-up of this step (2 of 3)"><span class="map"><i></i><b></b></span></button>
               </div>
               <div class="words">
@@ -304,8 +302,8 @@ body{margin:0;background:var(--bg);color:var(--fg)}
       </div>
       <ol class="notes" style="flex:1 1 320px">
         <li><span class="tag">R3</span><span>At phone width the step bar still gives position and extent; the segments are thin, but the row is the hit area, 44 px tall.</span></li>
-        <li><span class="tag">R6</span><span>The view tools wrap to their own row under Prev and Next and keep 44 px targets.</span></li>
-        <li><span class="tag">R7</span><span>Close-ups, Next view, Whole picture and the corner map keep working. Their row sits under the transport, quiet, so view navigation is never confused with step navigation.</span></li>
+        <li><span class="tag">R6</span><span>The view tools wrap to their own row under Prev and Next and keep 44 px targets. There is no Replay: Prev then Next plays a step again.</span></li>
+        <li><span class="tag">R7</span><span>Close-ups, Next view and the corner map keep working; Whole picture is the one button in the tools. Their row sits under the stepper row, quiet, so view navigation is never confused with step navigation.</span></li>
         <li><span class="tag">R5</span><span>The rail goes under the card, closed by default, because the step bar already shows where the reader is. It stays in the DOM for tests and tools.</span></li>
         <li><span class="tag">R4</span><span>The step heading reads as text under the picture, as it does today on phones, with the total added.</span></li>
       </ol>
@@ -316,25 +314,25 @@ body{margin:0;background:var(--bg);color:var(--fg)}
     <h2>Step bar states</h2>
     <div class="states">
       <p class="label">Opening, at step 1 of 4, before anything has played. The first segment is current and full; nothing is done yet.</p>
-      <div class="transport">
+      <div class="stepper">
         <button class="button icon" type="button" aria-label="Previous step" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
         <button class="button primary" type="button" aria-label="Next step"><span>Next</span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
         <ol class="step-bar" aria-label="Step progress"><li><button type="button" data-state="current" aria-current="step" style="--progress:1"><span class="fill"></span></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li></ol>
       </div>
       <p class="label">Step 3 playing, 40 % through its animation. The fill follows scene time and completes at the step's hold, when the picture rests.</p>
-      <div class="transport">
+      <div class="stepper">
         <button class="button icon" type="button" aria-label="Previous step"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
         <button class="button primary" type="button" aria-label="Next step"><span>Next</span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
         <ol class="step-bar" aria-label="Step progress"><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" data-state="current" aria-current="step" style="--progress:.4"><span class="fill"></span></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li></ol>
       </div>
       <p class="label">Keyboard focus on the first segment, and the last step reached: Next is disabled, every earlier segment done.</p>
-      <div class="transport">
+      <div class="stepper">
         <button class="button icon" type="button" aria-label="Previous step"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
         <button class="button primary" type="button" aria-label="Next step" disabled><span>Next</span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
         <ol class="step-bar" aria-label="Step progress"><li class="focus-demo"><button type="button" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" data-state="current" aria-current="step" style="--progress:1"><span class="fill"></span></button></li></ol>
       </div>
       <p class="label">A ten-step explainer (quotient-familial), at step 6, in a 390 px wide row: segments stay distinct at about 24 px each.</p>
-      <div class="transport" style="width:390px;max-width:100%">
+      <div class="stepper" style="width:390px;max-width:100%">
         <button class="button icon" type="button" aria-label="Previous step"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
         <button class="button primary" type="button" aria-label="Next step"><span>Next</span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
         <ol class="step-bar" aria-label="Step progress"><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" tabindex="-1" data-state="done"></button></li><li><button type="button" data-state="current" aria-current="step" style="--progress:1"><span class="fill"></span></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li><li><button type="button" tabindex="-1" data-state="todo"></button></li></ol>
