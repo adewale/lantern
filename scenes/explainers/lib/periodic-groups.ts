@@ -12,7 +12,9 @@
  * A position comes from the prediction: the block is the subshell filled last,
  * the period is the number of noble gases passed, and the group counts the s, d
  * and p electrons beyond the preceding noble gas (f is not counted), as the IUPAC
- * 1 to 18 numbering does. The test compares every position with the IUPAC table.
+ * 1 to 18 numbering does. The test compares every position with an independently
+ * typed 18-column table that puts Sc, Y, Lu and Lr in group 3, the arrangement
+ * Wikipedia reports IUPAC endorsed in 1988 and 2021 (many textbooks use La and Ac).
  * Two adjustments are visible in the scene rather than hidden in the count: before
  * period 4 there is no d subshell, so the p block starts 10 columns over; and
  * helium's two electrons count to 2, but helium sits over neon in group 18.

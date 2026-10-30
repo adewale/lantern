@@ -14,9 +14,11 @@ import { assertViewFollowsState } from './lib/view-fidelity.ts';
 import { check } from './lib/fidelity/periodic-groups.ts';
 import PeriodicGroupsExplainer from '../scenes/explainers/periodic-groups/scene.ts';
 
-// The IUPAC periodic table (2021 recommendation: Sc, Y, Lu and Lr in group 3), typed
-// row by row from the published table and independent of the model's rules. '.' is
-// an empty column; the f rows are La-Yb and Ac-No, which have no group number.
+// The 18-column table with Sc, Y, Lu and Lr in group 3 (the arrangement Wikipedia's
+// Group article reports IUPAC endorsed in 1988 and 2021), typed row by row and
+// independent of the model's rules. IUPAC's own published table still draws the f
+// rows as La-Lu and Ac-Lr; many textbooks put La and Ac in group 3. '.' is an empty
+// column; the f rows here are La-Yb and Ac-No, which have no group number.
 const IUPAC_ROWS = [
   'H  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  He',
   'Li Be .  .  .  .  .  .  .  .  .  .  B  C  N  O  F  Ne',

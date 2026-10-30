@@ -4,7 +4,7 @@ import { stage, settingsOf } from '../../../explain/index.ts';
 import { lerpColor } from '../../../src/color.ts';
 import {
   POSITIONS, GROUP_NAMES, NAMES, CAPACITY, NIST_UP_TO,
-  predicted, listed, coreOf, counted, membersOf, gaps, symbolOf, atomicNumber, configText, shorthand, subshellText, beyondCore,
+  predicted, listed, coreOf, counted, membersOf, gaps, symbolOf, atomicNumber, configText, shorthand, beyondCore,
 } from '../lib/periodic-groups.ts';
 import type { Block, Symbol, Subshell } from '../lib/periodic-groups.ts';
 
@@ -83,7 +83,6 @@ export default class PeriodicGroupsExplainer extends Scene {
     sources: [
       'https://en.wikipedia.org/w/index.php?title=Group_(periodic_table)&oldid=1381612279',
       'https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html',
-      'https://iupac.org/what-we-do/periodic-table-of-elements/',
       'https://github.com/adewale/rayner/blob/main/scenes/explainers/lib/periodic-groups.ts',
     ],
   };
@@ -282,6 +281,31 @@ export default class PeriodicGroupsExplainer extends Scene {
       return picture;
     };
 
+    const coreZ = (st: SceneState) => Number(st.core ?? 0);
+    /** The resting picture in words, from the same state and data the two views draw. */
+    const describe = (st: SceneState) => {
+      const note = String(st.note ?? ''), said: string[] = [];
+      said.push(note === 'family'
+        ? `Only group ${group} remains, ${name} outlined.`
+        : `Periodic table of 118 elements with group ${group} outlined and ${name} (${z}) in bold.`);
+      if (note === 'column') said.push(`Atomic numbers down group ${group}: ${members.map((m) => m.z).join(', ')}, jumping by ${jumps.join(', ')}.`);
+      if (st.lit && note !== 'family') said.push(`Cells 1 to ${st.lit} are filled in by subshell colour${coreZ(st) ? `, cells 1 to ${coreZ(st)} paler as the core` : ''}.`);
+      if (note === 'fill') said.push(`Note: ${String(st.filling)}.`);
+      if (note === 'count') {
+        const k = Number(st.badges);
+        said.push(k === 1 ? `The cell past the core carries the count 1.` : `Cells past the core carry counts 1 to ${k}, the last on ${name}.`);
+        said.push(choice === 'cu'
+          ? `Note: filling rule ${shorthand(filling, z)}; NIST lists ${shorthand(actual, z)}; ${here.count} counted either way = group ${group}.`
+          : `Note: ${shorthand(filling, z)}; ${here.count} counted ${here.count === group ? '=' : '≠'} group ${group}.`);
+      }
+      if (st.ghost) said.push('A dashed cell marked He? sits over beryllium, where a count of 2 would put helium.');
+      if (st.blocks && note !== 'family') said.push('Under the columns, the s block spans 2, d 10 and p 6; the 14 f columns sit below with no group number.');
+      if (note === 'family')
+        said.push(family.map((m) => m.config ? `${m.symbol} ${m.config}, count ${m.count}` : `${m.symbol} not in NIST’s table`).join('; ') + '.');
+      if (note === 'names') said.push(`A list of group names, with group ${group}, ${named.trivial ?? named.byElement}, in bold.`);
+      if (Array.isArray(st.limit)) said.push(`Dashed outlines mark ${(st.limit as string[]).join(', ')}.`);
+      return said.join(' ');
+    };
     const base = { element: symbol, z, group };
     const apply = (next: SceneState) => new Apply(this, next);
 
@@ -304,7 +328,7 @@ export default class PeriodicGroupsExplainer extends Scene {
     const notes = view(this, drawNotes, { place: false });
     this.table = table;
     this.notes = notes;
-    s.keep(table, notes, { describe: () => this.describeState() });
+    s.keep(table, notes, { describe: () => describe(this.state) });
         const redraw = (runTime: number) => table.sync({ runTime, match: samePlace });
     const both = (runTime: number) => new AnimationGroup([redraw(runTime), notes.sync({ runTime, match: samePlace })], { rateFunc: linear });
     await this.play(new FadeIn(table), new FadeIn(notes), { runTime: 0.8 });
@@ -314,11 +338,11 @@ export default class PeriodicGroupsExplainer extends Scene {
       title: `Cells 1 to ${z}, read in order, are ${name}’s electrons`,
       line: `${configText(filling)}: one cell per electron.`,
       caption: ({
-        na: 'Each cell up to sodium adds one electron, in the order subshells fill: two in 1s (hydrogen and helium), two in 2s, six in 2p, then one in 3s. Each run of same-coloured cells is one subshell, and a full run is as long as that subshell holds.',
-        cl: 'Each cell up to chlorine adds one electron: 1s², 2s², 2p⁶, 3s², then five of the six places in 3p. The gap in rows 2 and 3 is where the ten d columns open from row 4.',
-        fe: 'Each cell up to iron adds one electron. Row 4 opens with 4s in potassium and calcium, then six cells of 3d: by the filling rule, 3d fills after 4s.',
-        cu: 'Each cell up to copper adds one electron. Row 4 opens with 4s, then nine cells of 3d, so the filling rule predicts 4s² 3d⁹ for copper.',
-        he: 'Helium’s two electrons are hydrogen’s cell and its own, both in 1s. The first row has only two cells because the first shell has one subshell, 1s, with room for two.',
+        na: 'Each cell up to sodium adds one electron. Electrons fill subshells, named by a shell number and a letter, in a fixed order: two in 1s (hydrogen and helium), two in 2s, six in 2p, then one in 3s. Each run of same-coloured cells is one subshell.',
+        cl: 'Each cell up to chlorine adds one electron to a subshell, named by shell number and letter: 1s², 2s², 2p⁶, 3s², then five of the six places in 3p. The gap in rows 2 and 3 is where the ten d columns open from row 4.',
+        fe: 'Each cell up to iron adds one electron to a subshell, named by shell number and letter. Row 4 opens with 4s in potassium and calcium, then six cells of 3d: by the filling rule, 3d fills after 4s.',
+        cu: 'Each cell up to copper adds one electron to a subshell, named by shell number and letter. Row 4 opens with 4s, then nine cells of 3d, so the filling rule predicts 4s² 3d⁹ for copper.',
+        he: 'Helium’s two electrons are hydrogen’s cell and its own, both in 1s: shell 1, subshell s. The first row has only two cells because the first shell has one subshell, 1s, with room for two.',
       } satisfies Record<Choice, string>)[choice],
     });
     {
@@ -368,7 +392,7 @@ export default class PeriodicGroupsExplainer extends Scene {
         fe: 'The numbered columns are subshells side by side: 2 for s, 10 for d and 6 for p. Iron’s 4s² takes the two s columns and its 3d⁶ reaches the sixth d column: 2 + 6 = 8.',
         cu: 'The numbered columns are subshells side by side: 2 for s, 10 for d and 6 for p. By the filling rule, copper’s 4s² takes the s columns and 3d⁹ reaches the ninth d column: 2 + 9 = 11, the same total as NIST’s 3d¹⁰ 4s¹.',
         he: 'Each block is as wide as its subshell holds: 2, 10 and 6 make 18 columns. The first shell has only 1s, so helium’s 1s² completes it, as neon’s 2s² 2p⁶ completes the second shell. The table groups helium with the other full shells.',
-      } satisfies Record<Choice, string>)[choice],
+      } satisfies Record<Choice, string>)[choice] + ' This table puts lutetium under yttrium, the layout IUPAC endorsed; many textbooks put lanthanum there.',
     });
     this.state = { ...base, note: 'blocks', band: true, lit: z, core, blocks: true, capacity: CAPACITY, block: here.block };
     await this.play(both(0.9));
@@ -442,19 +466,5 @@ export default class PeriodicGroupsExplainer extends Scene {
     const spotlight: Record<Choice, Symbol[]> = { na: ['H'], cl: ['Ts'], fe: ['Fe', 'Co', 'Ni'], cu: ['Rg'], he: ['He', 'Be'] };
     this.state = { ...base, note: 'limit', band: true, lit: z, core, blocks: true, limit: spotlight[choice], ghost: choice === 'he' };
     await this.play(both(0.9));
-  }
-
-  /** The resting picture in words, from the state. */
-  describeState(): string {
-    const st = this.state;
-    const z = Number(st.z), group = Number(st.group), sym = String(st.element);
-    const members = membersOf(group).map((m) => `${m.symbol} ${m.z}`).join(', ');
-    let out = `Periodic table of 118 elements; ${sym} (${z}) is outlined and group ${group} is shaded: ${members}.`;
-    if (st.lit) out += ` Cells 1 to ${st.lit} are filled in by subshell colour.`;
-    if (st.badges) out += ` Cells past the core are numbered 1 to ${Number(st.badges)}.`;
-    if (st.ghost) out += ' A dashed cell over beryllium marks where helium’s count of 2 would put it.';
-    if (Array.isArray(st.limit)) out += ` Dashed outlines mark ${(st.limit as string[]).join(', ')}.`;
-    if (st.blocks) out += ' A strip under the columns marks the s block as 2 columns, d as 10 and p as 6; the f block has 14 columns and no group number.';
-    return out;
   }
 }
