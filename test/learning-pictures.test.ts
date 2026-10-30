@@ -34,3 +34,42 @@ test('both piano rolls put every played pitch, onset and duration at its stated 
   },{skipUntil:Infinity}).run();
   assert.equal(pictures,28);assert.equal(notes,448);
 });
+
+test('Monty Hall paints the host-conditioned percentages beside the correct strategies in every case',async()=>{
+  const project=await collectProject('scenes/explainers/monty-hall',{write:false});
+  assert.equal(project.variants.length,12);
+  let pictures=0,readouts=0,comparisons=0;
+  for(const variant of project.variants) {
+    const visited:string[]=[];
+    await new variant.Scene({
+      async frame(){},
+      async stepEnd(scene,step){
+        if(!['odds','many','rules'].includes(step.name)) return;
+        const words=(key:string)=>{
+          const groups=scene.familyMembers().filter(m=>m.key===key);
+          assert.equal(groups.length,1,`${step.name}: exactly one ${key} must be drawn`);
+          return groups[0]!.family().filter((m):m is Text=>m instanceof Text).map(m=>m.text);
+        };
+        if(step.name==='rules') {
+          assert.deepEqual(words('monty-rules'),[
+            'Host','Goat reveal','Switch wins',
+            'informed','always','66.7%',
+            'random','66.7%','50.0%',
+          ]);
+          comparisons++;
+        } else {
+          // Independent small-world results: an informed host preserves all
+          // initial wrong choices; random-host goat reveals leave equal odds.
+          const expected=variant.values.host==='random'?['50.0%','50.0%']:
+            step.name==='many'?['1.0%','99.0%']:['33.3%','66.7%'];
+          assert.deepEqual(words('monty-stay'),['Stay',expected[0]]);
+          assert.deepEqual(words('monty-switch'),['Switch',expected[1]]);
+          readouts+=2;
+        }
+        pictures++;visited.push(step.name);
+      },
+    },{skipUntil:Infinity}).run();
+    assert.deepEqual(visited,['odds','many','rules']);
+  }
+  assert.equal(pictures,36);assert.equal(readouts,48);assert.equal(comparisons,12);
+});

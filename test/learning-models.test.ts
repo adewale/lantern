@@ -105,7 +105,7 @@ test('branch labels, parents and checked-out files match real Git through both m
 
 // Enumerate prize and remaining-door choices directly. An informed host keeps
 // the prize when it is unchosen; a random host chooses a remaining door uniformly.
-test('host-conditioned odds match complete weighted worlds for 3 through 25 doors',()=>{
+test('host-conditioned odds and displayed rows match complete physical worlds',()=>{
   for(let n=3;n<=25;n++) for(const host of ['informed','random'] as const) {
     let stay=0,swap=0,continues=0;
     for(let prize=0;prize<n;prize++) for(let other=1;other<n;other++) {
@@ -119,6 +119,30 @@ test('host-conditioned odds match complete weighted worlds for 3 through 25 door
   close(monty(100,'informed').switchChance,.99);close(monty(100,'random').continuationChance,.02);
   for(const choice of [0,1,2]) for(const host of ['informed','random'] as const) {
     const worlds=threeDoorWorlds(choice,host);
+    // Independently open physical doors, then inspect the chosen and remaining
+    // doors. Aggregate only the informed host's equivalent goat openings.
+    const expected:{prize:string;opened:string;stay:string;swap:string}[]=[];
+    for(let prize=0;prize<3;prize++) {
+      const openings:{door:string;stay:string;swap:string}[]=[];
+      for(let opened=0;opened<3;opened++) {
+        if(opened===choice||(host==='informed'&&opened===prize)) continue;
+        let remaining=-1;
+        for(let door=0;door<3;door++) if(door!==choice&&door!==opened) remaining=door;
+        const ended=opened===prize;
+        openings.push({door:'ABC'[opened]!,
+          stay:ended?'ends':choice===prize?'win':'lose',
+          swap:ended?'ends':remaining===prize?'win':'lose'});
+      }
+      if(host==='informed') {
+        assert.ok(openings.length>0);
+        const {stay,swap}=openings[0]!;
+        assert.ok(openings.every(o=>o.stay===stay&&o.swap===swap));
+        expected.push({prize:'ABC'[prize]!,opened:openings.map(o=>o.door).join(' or '),stay,swap});
+      } else for(const opening of openings) expected.push({prize:'ABC'[prize]!,
+        opened:`${opening.door}: ${opening.door==='ABC'[prize]?'car':'goat'}`,
+        stay:opening.stay,swap:opening.swap});
+    }
+    assert.deepEqual(worlds,expected,`every displayed ${host} host row with initial door ${'ABC'[choice]}`);
     assert.equal(worlds.length,host==='informed'?3:6);
     assert.equal(worlds.filter(w=>w.stay==='win').length,host==='informed'?1:2);
     assert.equal(worlds.filter(w=>w.swap==='win').length,2);

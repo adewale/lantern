@@ -15,22 +15,39 @@ Sources appear on each page and in `Scene.meta.sources`. The Python source is pi
 
 Validation owners:
 
-- `test/learning-models.test.ts`: native storage and Git, known UTF-8 hashes, exhaustive probabilities, seeded properties and malformed audio metadata.
+- `test/learning-models.test.ts`: native storage and Git, known UTF-8 hashes, exhaustive probabilities, every displayed Monty Hall prize/opening/outcome row, seeded properties and malformed audio metadata.
 - `test/lib/fidelity/learning.ts`: every completed step in every setting case agrees with the separately tested model.
-- `test/learning-pictures.test.ts`: all 448 note rectangles across the music lesson’s 28 pictures have the expected pitch labels, positions and durations.
+- `test/learning-pictures.test.ts`: all 448 note rectangles across the music lesson’s 28 pictures have the expected pitch labels, positions and durations. Independent expectations also check Monty Hall’s 48 strategy readouts and 12 final comparison tables across all 12 cases.
 - `tools/lib/explain-story-review.ts`: explicit caption subjects require the whole relevant comparison in the opening. The six scenes have 28 cases, 196 resting pictures and 392 step/width rows at 390 and 1180 px.
 - `tools/explain-package-smoke.ts`: a fresh archive install builds and plays a typed score clip; ordinary installed pages omit the module.
-- `test/explain-audio.test.ts`: actual Chromium oscillator scheduling, audio-clock/playhead agreement, both tempos, the unchanged control, flattened pitches, Pulse, Stop, pending-resume cancellation and unsupported audio.
+- `test/explain-audio.test.ts`: actual Chromium oscillator scheduling, audio-clock/playhead agreement, both tempos, the unchanged control, flattened pitches, Pulse, Stop, pending-resume cancellation and unsupported audio. It also checks visible button names, native offline rendering of overlapping notes, and the score’s screen position during playback.
 - `test/reader-cross-browser.test.ts`: the Mac lane checks the music journey with WebKit and native Safari. This Linux authoring session cannot establish physical iPhone behavior or speaker output.
 
 The project gates caught crowded labels, heading collisions and repeated pictures during development. Served review caught a clipped dictionary opening and an unnecessary Git close-up. Contact-sheet review caught a collision step describing key 16 while highlighting key 8; it now consistently follows key 16. Shared branch labels also received a wider box. No reading threshold was lowered.
 
 Deliberate defects were rejected before restoring the original source bytes: a wrong FNV multiplier, shortened note rectangles and a removed post-resume cancellation guard. Logs, browser screenshots and the 392-row receipt live under the ignored `out/six-*` paths during authoring. Normal catalog/story CI regenerates its own complete receipt and screenshots; local output is not a deployment record.
 
-Local verification used Node 24.22.1, plus Node 24.0.0 for complete catalog builds. The standard run passed 908 checks and skipped 77 optional checks; its 13 language checks initially failed because that command omitted the system Chromium path. All 13 passed when rerun with `CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium`. The separate enabled reader suite passed all 24 checks. `npm run check`, the three enabled audio checks and the installed-package smoke also passed. GitHub owns the full-property and Mac runs; a queued run is not pass evidence.
+Initial implementation verification used Node 24.22.1, plus Node 24.0.0 for complete catalog builds. The standard run passed 908 checks and skipped 77 optional checks; its 13 language checks initially failed because that command omitted the system Chromium path. All 13 passed when rerun with `CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium`. The separate enabled reader suite passed all 24 checks. `npm run check`, the original three enabled audio checks and the installed-package smoke also passed. GitHub owns the full-property and Mac runs; a queued run is not pass evidence.
 
 The complete catalog passed `npm run demos:check`: 38 explainers, 192 cases, 162 diagrams, nine styles and 15 diagram families. After the unavailable-audio fix, `demos:build` regenerated the complete collection and the three enabled audio checks passed again. The fallback disables Pulse as well as Play, so it cannot invite an unavailable action.
 
-[Hosted Mac run 41106616424](https://github.com/adewale/rayner/actions/runs/41106616424) completed the WebKit and native Safari checks, including music playback, and uploaded its Safari validation record. Both Mac architectures also passed installed-package checks, including the minimum Node version. These results do not establish physical iPhone behavior or speaker output.
+Before this audit, [CI run 41109199700](https://github.com/adewale/rayner/actions/runs/41109199700) passed the Mac compatibility lanes, including WebKit, native Safari and installed-package checks on both Mac architectures. These results do not establish physical iPhone behavior or speaker output. The audit adds explicit score-visibility assertions to both browser journeys; their latest results belong to the new commit’s CI run.
 
 Catalog checks assert actual page bytes, explicit lettering requests and separation of optional code. Model, state, geometry, browser, package and artifact-integrity checks retain their own boundaries.
+
+## Adversarial audit
+
+Five independent reviewers examined the models, reader pages, audio implementation, test boundaries and prose. The writing reviewer used [anti-slop-writing](https://github.com/adewale/anti-slop-writing/blob/main/skills/anti-slop-writing/SKILL.md) and its full doctrine. The audit kept the branch’s existing base; it did not merge or rebase `main`.
+
+| Finding | Repair and proof |
+| --- | --- |
+| Playing music could scroll the score off screen. An auto-height iframe also defeated a fix based on the child window’s viewport. | Put Play/Stop immediately after the picture. Native scrolling reveals the controls and score through the host frame. Served checks exercise click and Enter at 320×568, 390×667 and 1180×800, with both score lanes, controls and painted cursor visible. |
+| A custom audio label could omit the visible “Play A” voice target. | Keep the visible label in the accessible name; test labels unlike the gallery’s own labels. |
+| A valid 256-note chord mixed at full per-note gain and clipped. | Share the monophonic gain among the maximum simultaneous voices. A native `OfflineAudioContext` checks actual output for one note, 256 concurrent notes and notes meeting at an endpoint. |
+| Correct model state and visible groups did not prove correct displayed Monty Hall values. | Independently check every host-opening row and rendered strategy percentage. Mutants that let the informed host open the car or paint the wrong Switch percentage now fail. |
+| Audio tests depended on Hello World, which newer `main` removes. | Give the opt-out check its own temporary plain scene. |
+| Captions misnamed pitch position, treated every birthday outline as a match, introduced unpictured alternate-case figures, and invited unavailable audio. | Correct the visual legends, keep the birthday ending on the selected room size, and make playback optional in the opening. The changelog now distinguishes comparisons within a story from settings that change the result. |
+
+The viewport regression failed all six click/keyboard variants before the fix. Restoring either the old accessible name or the unbounded note gain also failed its new assertion. These controls supplement the earlier hashing, note-width and cancellation defects; they do not replace the existing proof owners. The original CI story failure was an artifact-download error before any story assertion ran.
+
+Final audit verification passed `npm run check`, 11 model/picture checks, six new-scene fidelity checks, and all 14 enabled audio checks. Every new scene passed its project gates; the served review passed all 28 cases and 392 phone/desktop step rows again. A fresh installed-package smoke passed, including playback from the shipped module. An independent run on minimum Node 24.0.0 also passed the model, picture, audio and cross-origin embed checks. Fullscreen playback was checked separately at four phone/desktop sizes. The new WebKit and native Safari visibility assertions are explicitly skipped on this Linux host and await hosted Mac CI. The refreshed `out/six-lessons.zip` contains the reviewed six pages, matching SHA-256 receipts and response-header recipes; it has not been deployed.

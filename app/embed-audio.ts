@@ -3,7 +3,7 @@ import type {AudioClip} from '../explain/audio.ts';
 import {UNITS} from '../src/svg.ts';
 
 /** Optional reader module. Only pages with authored audio import this code. */
-export function mountAudio(stage: HTMLElement, caption: HTMLElement) {
+export function mountAudio(stage: HTMLElement, frame: HTMLElement) {
   const panel=document.createElement('div');panel.className='score-audio';panel.hidden=true;panel.lang='en';
   panel.setAttribute('role','group');panel.setAttribute('aria-label','Listen to this score');
   const buttons=document.createElement('div');buttons.className='score-audio-buttons';
@@ -12,9 +12,16 @@ export function mountAudio(stage: HTMLElement, caption: HTMLElement) {
   const pulseLabel=document.createElement('label'),pulse=document.createElement('input');pulse.type='checkbox';pulse.checked=true;
   pulseLabel.append(pulse,' Pulse');
   const stopButton=document.createElement('button');stopButton.type='button';stopButton.textContent='Stop';stopButton.disabled=true;
-  panel.append(buttons,status);caption.after(panel);
+  panel.append(buttons,status);frame.after(panel);
   let context: AudioContext | null=null, generation=0, animation=0, cursor: SVGLineElement | null=null;
   const active=new Map<OscillatorNode,GainNode>();
+  function revealScore() {
+    // A click or keyboard focus can scroll the controls into view while hiding
+    // the score. Native scrolling also reveals it through a host iframe or a
+    // fullscreen scroll container, where window.scrollBy cannot reach it.
+    panel.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
+    stage.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
+  }
   function stop() {
     generation++;
     cancelAnimationFrame(animation);
@@ -41,7 +48,13 @@ export function mountAudio(stage: HTMLElement, caption: HTMLElement) {
       await ctx.resume();
       if(token!==generation) return;
       const seconds=60/clip.bpm,start=ctx.currentTime+0.04,total=clip.beats*seconds;
-      for(const note of clip.notes) tone(ctx,note.midi,start+note.at*seconds,note.duration*seconds,0.09);
+      // Equal-time note endings precede starts, so adjacent notes retain the
+      // monophonic level. Chords share that level instead of clipping the mix.
+      const events=clip.notes.flatMap(n=>[{at:n.at,change:1},{at:n.at+n.duration,change:-1}])
+        .sort((a,b)=>a.at-b.at||a.change-b.change);
+      let voices=0,peak=1;
+      for(const event of events) {voices+=event.change;peak=Math.max(peak,voices);}
+      for(const note of clip.notes) tone(ctx,note.midi,start+note.at*seconds,note.duration*seconds,0.09/peak);
       if(pulse.checked) for(let beat=0;beat<clip.beats;beat++) tone(ctx,beat%4===0?88:81,start+beat*seconds,0.045,0.025);
       const svg=stage.querySelector('svg:not(.leaving)');
       if(svg&&clip.plot) {
@@ -66,6 +79,7 @@ export function mountAudio(stage: HTMLElement, caption: HTMLElement) {
         animation=requestAnimationFrame(tick);
       };
       tick();
+      revealScore();
     } catch {
       if(token!==generation) return;
       stop();status.textContent='Audio could not start. The score remains available; try Play again.';
@@ -88,7 +102,8 @@ export function mountAudio(stage: HTMLElement, caption: HTMLElement) {
       pulse.disabled=typeof AudioContext==='undefined';
       for(const clip of audio.clips) {
         const b=document.createElement('button');b.type='button';b.textContent=`Play ${clip.id.toUpperCase()}`;
-        b.setAttribute('aria-label',clip.label);b.onclick=()=>void play(clip);
+        // The accessible name must contain the visible button text for voice input.
+        b.setAttribute('aria-label',clip.label.includes(b.textContent)?clip.label:`${b.textContent}: ${clip.label}`);b.onclick=()=>void play(clip);
         b.disabled=typeof AudioContext==='undefined';buttons.append(b);
       }
       buttons.append(stopButton,pulseLabel,elapsed);

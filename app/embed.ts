@@ -37,7 +37,7 @@ function setIcon(b: HTMLButtonElement, label: string, name: IconName) {
 }
 
 export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snapshots: SnapshotStore,
-  audio?: (stage: HTMLElement, caption: HTMLElement) => {set(value: unknown): void; stop(): void}): Promise<void> {
+  audio?: (stage: HTMLElement, frame: HTMLElement) => {set(value: unknown): void; stop(): void}): Promise<void> {
   const params = new URLSearchParams(location.search);
   document.documentElement.dataset.theme = ['light', 'dark'].includes(params.get('theme') ?? '')
     ? params.get('theme')!
@@ -194,7 +194,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   overview.hidden = true;
   overview.append(map);
   frame.append(stage);
-  const sound=audio?.(stage,caption);
+  const sound=audio?.(stage,frame);
   // Keep view navigation separate from step navigation, after the story's Next.
   const views = el('div', undefined, 'view-controls'),
     viewCount = el('span'),

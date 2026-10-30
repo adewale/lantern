@@ -242,7 +242,7 @@ await this.step('listen', {
   title: 'The same pitch on two beats',
   caption: 'Both notes play middle C. The second starts one beat later.',
   audio: {clips: [{
-    id: 'a', label: 'Play two middle Cs', bpm: 96, beats: 2,
+    id: 'a', label: 'Two middle Cs', bpm: 96, beats: 2,
     notes: [{midi: 60, at: 0, duration: 0.8}, {midi: 60, at: 1, duration: 0.8}],
     plot: [-6, -2, 6, 2],
   }]},
@@ -251,7 +251,9 @@ await this.step('listen', {
 
 `plot` is optional: `[left, bottom, right, top]` in scene coordinates. When present, a playhead travels from left to right over the clip’s full beat count. Draw notes from the same score data: horizontal position follows onset and width follows duration. The [melody and rhythm scene](../scenes/explainers/melody-rhythm/scene.ts) does this for two piano rolls.
 
-The audio controls are in English and marked `lang="en"`. The reader synthesizes triangle-wave notes locally with Web Audio. Sound starts only after Play. Stop, a step or case change, Replay, and hiding or leaving the page cancel playback. Pulse adds a beat reference; changing it stops the current clip. Pages without audio omit this module and its styles. Captions and scores remain available without audio support; sound never advances the explanation.
+The audio controls sit immediately below the picture, are in English and are marked `lang="en"`. Play brings the score and controls into view together when the screen can hold them. Each button’s accessible name includes its visible Play label and the clip’s description.
+
+The reader synthesizes triangle-wave notes locally with Web Audio. Simultaneous notes share the monophonic gain to leave headroom for Pulse. Sound starts only after Play. Stop, a step or case change, Replay, and hiding or leaving the page cancel playback. Pulse adds a beat reference; changing it stops the current clip. Pages without audio omit this module and its styles. Captions and scores remain available without audio support; sound never advances the explanation.
 
 Builds reject malformed clips: use one to four distinct lowercase ids, nonempty labels, 40–240 BPM, at most 64 beats and at most 256 notes per clip. MIDI pitches are integers from 0 to 127; every note must start at or after zero, have positive duration and end within the clip. Plot coordinates must be finite with positive width and height.
 

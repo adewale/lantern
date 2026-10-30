@@ -144,7 +144,7 @@ try {
       page.on('pageerror',error=>errors.push(error.message));
       await page.goto(soundServer.url+'/played.html');await page.waitForSelector('[data-ready=true]');
       assert.equal(await page.locator('.score-playhead').count(),0);
-      await page.getByRole('button',{name:'Play middle C',exact:true}).click();
+      await page.getByRole('button',{name:'Play A: Play middle C',exact:true}).click();
       await page.waitForSelector('.score-playhead',{state:'attached'});
       const ink=await page.locator('.score-playhead').evaluate(node=>{const style=getComputedStyle(node);return {stroke:style.stroke,width:parseFloat(style.strokeWidth),opacity:parseFloat(style.opacity),height:(node as SVGGraphicsElement).getBBox().height};});
       assert.ok(ink.stroke!=='none'&&ink.width>0&&ink.opacity>0&&ink.height>0,'the installed playhead has painted stroke');
