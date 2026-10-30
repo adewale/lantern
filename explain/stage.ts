@@ -56,6 +56,11 @@ export function isHeading(m: Mobject): boolean {
   for (let x: Mobject | null = m; x; x = x.parent) if (x.key === '__heading' || x.key === '__chrome') return true;
   return false;
 }
+/**
+ * The colour of the stage's paper (`__paper`, its palette's `paper`) as `scene` has it, or undefined
+ * for a scene drawn without a stage. The player tints its chrome toward it (app/embed.css, --paper).
+ */
+export const paperOf = (scene: Scene): string | undefined => scene.mobjects.find((m) => m.key === '__paper')?.style.fill;
 const isOptions = (v: unknown): v is object => !!v && !(v instanceof Mobject);
 const HEADING_Y = 3.8;
 /** With a line under it, the heading moves up to make room. */

@@ -1,9 +1,11 @@
-import { renderAt, traceScene, SeekSink } from '../src/index.ts';
+import { renderAt, SeekSink } from '../src/index.ts';
+import { traceRun } from '../src/trace.ts';
 import type { Trace } from '../src/index.ts';
 import { StopScene } from '../src/index.ts';
 import { bindSnapshots, withSettings, resolveSettings } from '../explain/index.ts';
 import type { ExplainerClass, Settings, SnapshotStore } from '../explain/index.ts';
 import { restingTime, pictureHtml, pictureSummary, stepWords } from '../explain/trace.ts';
+import { paperOf } from '../explain/stage.ts';
 import { reportHeight } from './embed-protocol.ts';
 import { icon } from './embed-icons.ts';
 import type { IconName } from './embed-icons.ts';
@@ -60,7 +62,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     playing = false,
     // On a narrow stage, whether each step opens on its close-up; Whole picture turns it off, Close-up on.
     follow = true;
-  type Entry = { Scene: ExplainerClass; trace: Trace; layouts?: Promise<Map<string, StepLayout>>; resting: Map<string, Node[]> };
+  type Entry = { Scene: ExplainerClass; trace: Trace; paper?: string; layouts?: Promise<Map<string, StepLayout>>; resting: Map<string, Node[]> };
   const cache = new Map<string, Entry>();
   /** The case on show, with its layouts once a close-up has needed them. */
   let current: Entry | undefined;
@@ -701,8 +703,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     const key = JSON.stringify(next);
     let entry = cache.get(key);
     if (!entry) {
-      const Scene = withSettings(Bound, next);
-      entry = { Scene, trace: await traceScene(Scene), resting: new Map() };
+      const Scene = withSettings(Bound, next),
+        { trace, scene } = await traceRun(Scene);
+      entry = { Scene, trace, paper: paperOf(scene), resting: new Map() };
       cache.set(key, entry);
     }
     if (token !== loads) return;
@@ -714,6 +717,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     current = entry;
     Active = entry.Scene;
     trace = entry.trace;
+    // The tile's chrome takes a tint from the case's paper (embed.css, --tile); a scene without a
+    // stage has none, and the chrome stays on the page's surface.
+    layout.style.setProperty('--paper', entry.paper ?? 'initial');
     if (changed) zoom.reset();
     selected = name ? trace.steps.findIndex((s) => s.step === name) : 0;
     // A previous case's fallback must not describe the restored case; both of this one's show.

@@ -8,7 +8,9 @@ import { dirname, resolve, join, basename, relative, sep } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { createHash, randomUUID } from 'node:crypto';
-import { Scene, NullSink, traceScene } from '../../src/index.ts';
+import { Scene, NullSink } from '../../src/index.ts';
+import { traceRun } from '../../src/trace.ts';
+import { paperOf } from '../../explain/stage.ts';
 import { takeMissingGlyphs } from '../../src/lettering.ts';
 import type { Trace } from '../../src/index.ts';
 import { variantsOf, withSettings, bindSnapshots, caseName, resolveSettings } from '../../explain/index.ts';
@@ -159,7 +161,8 @@ export interface Project {
   sourceHash: string;
   engineHash: string;
   store: SnapshotStore;
-  variants: { values: Settings; Scene: ExplainerClass; trace: Trace }[];
+  /** Each case: its scene, its trace and the stage's paper when the run ends (none without a stage). */
+  variants: { values: Settings; Scene: ExplainerClass; trace: Trace; paper?: string }[];
   edits: number;
   /** The faces cut for `static meta.lettering`; absent when the scene asks for none. */
   lettering?: Lettering;
@@ -365,7 +368,8 @@ export async function collectProject(
       await collect.run();
       blanks();
       const Bound = withSettings(bindSnapshots(Source, store), values);
-      const trace = await traceScene(Bound),
+      const { trace, scene: ran } = await traceRun(Bound),
+        paper = paperOf(ran),
         names = trace.steps.map((s) => s.step);
       if (!names.length || names.some((name) => !name.trim()))
         throw new Error(`Each case needs non-empty named steps: ${JSON.stringify(values)}`);
@@ -381,7 +385,7 @@ export async function collectProject(
 
         }
       }));
-      variants.push({ values, Scene: Bound, trace });
+      variants.push({ values, Scene: Bound, trace, ...(paper ? { paper } : {}) });
     }
     if (undrawable.length)
       throw new Error(`The embedded fonts cannot draw these characters:\n${[...new Set(undrawable)].join('\n')}`);

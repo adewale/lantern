@@ -21,6 +21,12 @@ import { RTL_SCRIPTS } from '../../src/lettering-outlines.ts';
  * the player's controls stay as they are. Every other page's style is as it was.
  */
 const RTL_CSS = '\nh1,.caption,.ruler,.lede,.lede *,.transcript h2,.transcript a,.transcript p,.steps button span,.steps .line{unicode-bidi:plaintext;text-align:start}\n';
+/**
+ * The default case's paper on the tile (specs/player-tile.md T5), so the first paint is already tinted
+ * toward it. It goes in the page's hashed stylesheet: the strict CSP blocks style attributes. The
+ * player sets the case's paper on the tile itself from then on.
+ */
+const paperCss = (paper: string | undefined) => (paper && /^#[0-9a-f]{3,8}$/i.test(paper) ? `.tile{--paper:${paper}}\n` : '');
 const rightToLeftPage = (project: Project) =>
   !!project.outlineLettering?.request.scripts?.some((script) => RTL_SCRIPTS.includes(script));
 
@@ -91,7 +97,7 @@ export async function buildExplainer(
   // laid out, so a frame never shows the padded page first; the CSP pins it by its own hash.
   const framedJs = "if(parent!==window)document.documentElement.dataset.framed=''";
   const js = scriptEscape(bundled.outputFiles[0]!.text),
-    css = (await readFile(join(ROOT, 'app/embed.css'), 'utf8')) + (rightToLeftPage(project) ? RTL_CSS : '');
+    css = (await readFile(join(ROOT, 'app/embed.css'), 'utf8')) + (rightToLeftPage(project) ? RTL_CSS : '') + paperCss(v.paper);
   // Every case, every step: a link to it, its caption and what its resting picture shows.
   // The player shows the current case's section; without JavaScript every case shows.
   const transcript = project.variants

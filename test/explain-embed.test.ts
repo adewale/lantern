@@ -893,6 +893,50 @@ test('the loader passes theme=light or theme=dark from the host page\'s computed
     } finally { await context.close(); }
   }
 });
+// specs/player-tile.md T5: no catalog explainer changes style between cases, so this scene does.
+const TWO_PAPERS = `import{Scene,Text}from'rayner';import{stage,settingsOf}from'rayner/explain';
+export default class TwoPapers extends Scene{static meta={id:'two-papers',title:'Two papers'};
+static settings=[{id:'look',label:'Look',default:'cream',options:[{value:'cream',label:'Cream'},{value:'night',label:'Night'}]}];
+async construct(){const s=stage(this,{style:settingsOf(this).look==='night'?'nord':'hand-drawn'});
+await this.step('one',{caption:'A label.'});await s.enter(new Text('paper',{fontSize:0.4}),{describe:'paper'});
+await this.step('two',{caption:'Another.'});await s.enter(new Text('again',{fontSize:0.4}).moveTo([0,-1]),{describe:'again'});}}`;
+test('the tile takes the case\'s paper as --paper: the palette\'s paper, changing with a case of another style, and in the page before its script runs', options, async () => {
+  const { PALETTES } = await import('../explain/palettes.ts');
+  const dir = join(folder, 'two-papers');
+  await mkdir(dir, { recursive: true });
+  await writeFile(join(dir, 'scene.ts'), TWO_PAPERS);
+  await buildExplainer(await collectProject(dir, { write: false }), join(folder, 'two-papers.html'));
+  const cream = PALETTES['hand-drawn']!.paper, night = PALETTES.nord!.paper;
+  const paper = (page: Page) => page.evaluate(() => ({
+    player: getComputedStyle(document.querySelector('.player')!).getPropertyValue('--paper').trim(),
+    tile: getComputedStyle(document.querySelector('.tile')!).backgroundColor,
+  }));
+  const page = await browser.newPage({ reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/two-papers.html`);
+    await page.waitForSelector('[data-ready=true]');
+    const first = await paper(page);
+    assert.equal(first.player, cream);
+    await page.locator('.case input[value=night]').check();
+    await page.waitForFunction((night) => getComputedStyle(document.querySelector('.player')!).getPropertyValue('--paper').trim() === night, night);
+    await page.waitForTimeout(300); // the tint's 200 ms transition
+    const second = await paper(page);
+    assert.notEqual(second.tile, first.tile, 'the tint follows the paper');
+    // A catalog page, too: mr-cache draws on hand-drawn's paper.
+    await page.goto(`${embed}/mr-cache.html`);
+    await page.waitForSelector('[data-ready=true]');
+    assert.equal((await paper(page)).player, cream);
+  } finally { await page.close(); }
+  // Before (here: without) the script, the shell's card already has the default case's paper.
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  try {
+    const shell = await context.newPage();
+    for (const [id, want] of [['two-papers', cream], ['exgit', PALETTES['catppuccin-mocha']!.paper]] as const) {
+      await shell.goto(`${embed}/${id}.html`);
+      assert.equal((await paper(shell)).player, want, id);
+    }
+  } finally { await context.close(); }
+});
 // The rest of URL cases, step fallback, history, copy link and reduced motion is the player
 // model's (below), including the fixed fallback scenario.
 test('?theme=dark, light and auto (following the reader\'s colour scheme) set the page colours', options, async () => {

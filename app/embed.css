@@ -36,7 +36,11 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
    background. The card is its first pane; on a wide page the rail is the second, beside it behind a
    rule that runs the tile's height, taking the width the card's cap leaves. The rail's body stays in
    view as the page scrolls, and scrolls on its own. */
-.tile{--tile:var(--surface);--tile-line:var(--line);background:var(--tile);box-shadow:0 0 0 1px var(--tile-line);border-radius:12px;overflow:clip}
+/* The tile's chrome takes a tint from the case's paper (--paper, set by the player and, for the default
+   case, the build): the same mix for every palette, as strong as the weakest palette's contrast allows
+   (test/embed-tint.test.ts reads --tint here). Buttons keep the plain surface and lift off it; rules
+   inside the tile use --line, its edge and the rail's rule --tile-line. */
+.tile{--tint:10%;--tile:color-mix(in srgb,var(--paper,var(--surface)) var(--tint),var(--surface));--tile-line:color-mix(in srgb,var(--paper,var(--line)) 30%,var(--line));background:var(--tile);box-shadow:0 0 0 1px var(--tile-line);border-radius:12px;overflow:clip;transition:background-color 200ms}
 .layout{display:grid;align-items:start;width:min(100%,var(--player-cap));margin-inline:auto}
 @media(min-width:1100px){
   .layout{width:auto;grid-template-columns:minmax(0,var(--player-cap)) minmax(300px,1fr)}
@@ -96,9 +100,9 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .step-bar button{position:relative;flex:1 1 0;min-width:0;min-height:40px;margin:0;padding:0;border:0;border-radius:4px;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .step-bar button:focus-visible{outline-offset:-2px}
 .step-bar button::before,.step-bar .fill{content:"";position:absolute;inset-inline-start:0;top:50%;height:6px;translate:0 -50%;border-radius:3px}
-.step-bar button::before{inset-inline-end:0;background:color-mix(in srgb,var(--muted) 70%,var(--surface))}
+.step-bar button::before{inset-inline-end:0;background:color-mix(in srgb,var(--muted) 70%,var(--tile))}
 .step-bar [data-state=done]::before{background:var(--accent)}
-.step-bar [data-state=current]::before{height:8px;background:color-mix(in srgb,var(--accent) 28%,var(--surface))}
+.step-bar [data-state=current]::before{height:8px;background:color-mix(in srgb,var(--accent) 28%,var(--tile))}
 .step-bar .fill{display:none;height:8px;inline-size:calc(var(--progress,1)*100%);background:var(--accent);transition:inline-size 120ms linear}
 .step-bar [data-state=current] .fill{display:block}
 /* View tools stand apart from step navigation, behind a rule; on a narrow row, on their own row. */
@@ -172,4 +176,4 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .player:fullscreen>*{width:min(100%,calc((100dvh - 300px)*16/9));margin-inline:auto}
 
 @media(max-width:480px){.caption,.ruler{font-size:1.0625rem}.stepper{gap:6px}}
-@media(prefers-reduced-motion:reduce){.button,.stage svg.glide,.overview .view,.segments label,.steps button{transition:none}.button:active:not(:disabled){transform:none}.step-bar .fill{transition:none}}
+@media(prefers-reduced-motion:reduce){.tile,.button,.stage svg.glide,.overview .view,.segments label,.steps button{transition:none}.button:active:not(:disabled){transform:none}.step-bar .fill{transition:none}}
