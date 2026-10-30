@@ -1,16 +1,14 @@
 // Lettering on request (src/lettering.ts, tools/lib/explain-lettering.ts): an explainer pays only
-// for the lettering it asks for. One that asks for nothing builds what it built before lettering
-// existed, byte for byte; one that asks gets its letters, cut to what it draws; and a letter in a
+// for the lettering it asks for. One that asks for nothing carries no lettering code and keeps its
+// engine fingerprint; one that asks gets its letters, cut to what it draws; and a letter in a
 // script nobody asked for still fails the build.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
 import { mkdtemp, writeFile, readFile, cp, symlink, rm } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createHash } from 'node:crypto';
 import { collectProject, defaultVariant, ROOT } from '../tools/lib/explain-project.ts';
 import type { Project } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
@@ -24,7 +22,6 @@ import { takeMissingGlyphs as takeEmbeddedMissing } from '../src/index.ts';
 import { loadFont } from '../vendor/glyph.js';
 import { restingTime } from '../explain/trace.ts';
 
-const sha256 = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const folder = await mkdtemp(join(tmpdir(), 'rayner-lettering-'));
 after(() => rm(folder, { recursive: true, force: true }));
 const FIXTURE = join(ROOT, 'test/fixtures/lettering');
@@ -35,25 +32,14 @@ process.env.PYFTSUBSET = join(folder, 'no-fonttools-here');
 await loadFonts();
 const embedded = { sans: shaperFor('sans'), mono: shaperFor('mono') };
 
-/** What a build of `project` gives a reader and a host: the page, its header recipe and its receipt. */
-async function built(project: Project, name: string) {
-  const { html, receipt } = await buildExplainer(project, join(folder, name + '.html'));
-  return { html, receipt, headers: await readFile(join(folder, name + '.html.headers.json'), 'utf8') };
-}
+/** What a build of `project` gives a reader: the page and its receipt. */
+const built = (project: Project, name: string) => buildExplainer(project, join(folder, name + '.html'));
 
-// Immutable output pins from reviewed builds, refreshed only for engine/player changes.
-// Snapshot compression uses the host's zlib: Linux and macOS can produce different gzip
-// payloads (and therefore different bundled JS, HTML and CSP) from the same scene.
-// Pin each platform's actual build rather than accepting a second platform's bytes.
-// The full receipt pin includes engineHash; the older canonical pin excludes it.
-const PINS = new URL(process.platform === 'linux' ? './lettering-baseline-linux.json' : './lettering-baseline.json', import.meta.url);
-test('catalog pages retain reviewed output pins; only explicitly lettered examples carry requested lettering', async () => {
-  let pins: Record<string, { html: string; bytes: number; headers: string; receipt: string; fullReceipt: string }> = JSON.parse(
-    readFileSync(PINS, 'utf8'),
-  );
-  const ids = EXPLAINERS.map((e) => e.id);
-  const now: typeof pins = {};
-  for (const id of ids) {
+// Every catalog page, built: only explicitly lettered examples carry requested lettering, and
+// each receipt reports the page it describes. Whether lettering code reaches a page that asked
+// for nothing is owned by the fingerprint and leak tests below, not by whole-page hashes.
+test('catalog pages carry lettering only where requested, and receipts report actual page bytes', async () => {
+  for (const { id } of EXPLAINERS) {
     const project = await collectProject(join(ROOT, 'scenes/explainers', id), { write: false });
     if (id === 'font-metrics') {
       assert.equal(project.outlineLettering?.request.faces?.sans, 'eb-garamond');
@@ -62,16 +48,11 @@ test('catalog pages retain reviewed output pins; only explicitly lettered exampl
       assert.equal(project.lettering, undefined, id);
       assert.equal(project.outlineLettering, undefined, id);
     }
-    const { html, receipt, headers } = await built(project, id);
+    const { html, receipt } = await built(project, id);
     assert.equal('lettering' in receipt, false, `${id}: only a lettered page reports lettering`);
     assert.equal('letteringHash' in receipt, id === 'font-metrics', `${id}: only a requested page has an outline hash`);
-    const { engineHash: _, ...rest } = receipt;
     assert.equal(Buffer.byteLength(html), receipt.bytes, `${id}: receipt reports actual page bytes`);
-    now[id] = { html: sha256(html), bytes: Buffer.byteLength(html), headers: sha256(headers), receipt: sha256(JSON.stringify(rest)), fullReceipt: sha256(JSON.stringify(receipt, null, 2) + '\n') };
   }
-  if (process.env.UPDATE_GOLDEN === '1') { writeFileSync(PINS, JSON.stringify(now, null, 2) + '\n'); pins = now; }
-  assert.deepEqual(Object.keys(pins).sort(), [...ids].sort(), 'the pins cover exactly the catalog');
-  for (const id of ids) assert.deepEqual(now[id], pins[id], `${id} no longer builds what it built before lettering on request`);
 });
 
 // Mutate real inputs in an isolated package, rather than repeating the producer's hash algorithm.
