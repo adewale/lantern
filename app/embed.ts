@@ -32,6 +32,11 @@ function button(label: string, name: IconName, { text, className }: { text?: str
   if (text) b.append(el('span', text));
   return b;
 }
+/** A control's key: in its tooltip after its name, and as aria-keyshortcuts; `shown` is how the tooltip writes it. */
+function keyed(b: HTMLButtonElement, label: string, key: string, shown = key) {
+  b.title = `${label} (${shown})`;
+  b.setAttribute('aria-keyshortcuts', key);
+}
 function setIcon(b: HTMLButtonElement, label: string, name: IconName) {
   b.setAttribute('aria-label', label);
   b.title = label;
@@ -152,6 +157,11 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     if (face !== (end ? 'end' : 'next')) {
       face = end ? 'end' : 'next';
       next.setAttribute('aria-label', end ? t.startAgainLabel : t.nextLabel);
+      // ArrowRight never starts again: at the end Next's tooltip is its name, with no key.
+      if (end) {
+        next.title = t.startAgainLabel;
+        next.removeAttribute('aria-keyshortcuts');
+      } else keyed(next, t.nextLabel, 'ArrowRight', '→');
       next.querySelector('span')!.textContent = end ? t.startAgain : t.next;
       next.querySelector('svg')!.replaceWith(icon(end ? 'restart' : 'next'));
     }
@@ -173,6 +183,13 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     copy = button(t.copy, 'link', { className: 'button icon share' }),
     enlarge = button(t.enlarge, 'enlarge');
   enlarge.setAttribute('aria-pressed', 'false');
+  // Every control with a key says it, in its tooltip and to assistive technology. The arrows are
+  // not mirrored on a right-to-left page: the root's handler does not mirror them.
+  keyed(prev, t.previous, 'ArrowLeft', '←');
+  keyed(next, t.nextLabel, 'ArrowRight', '→');
+  keyed(zoomIn, t.zoomIn, '+');
+  keyed(zoomOut, t.zoomOut, '-', '−');
+  keyed(wholePicture, t.wholePicture, '0');
   // On a narrow stage, Whole picture shows the whole picture from then on; Close-up brings
   // back a close-up of each step.
   const closer = button(t.closeUp, 'closeUp');
@@ -225,7 +242,14 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   mark.rel = 'noopener';
   mark.setAttribute('aria-label', t.madeWith);
   mark.append(icon('mark'), 'Rayner');
-  foot.append(mark);
+  // One quiet, permanent line on how to move, between the mark and the way out: keys on a fine
+  // pointer, taps on a coarse one. Nothing is stored, so it never needs dismissing.
+  const hint = el('span', undefined, 'hint'),
+    coarse = matchMedia('(pointer: coarse)'),
+    sayHint = () => (hint.textContent = coarse.matches ? t.hintTouch : t.hintKeys);
+  sayHint();
+  coarse.addEventListener('change', sayHint);
+  foot.append(mark, hint);
   const wayOut = el('a', t.open, 'open');
   wayOut.target = '_blank';
   wayOut.rel = 'noopener';

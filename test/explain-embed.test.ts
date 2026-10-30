@@ -255,8 +255,10 @@ test('every catalog page, in English and French: no Replay, Stop or Fit stage bu
         last: [...document.querySelector('.player')!.children].filter((e) => !e.matches('[hidden], .ruler, .lede-ruler, .changes-ruler')).at(-1)?.className,
         open: document.querySelectorAll('.foot a.open').length,
         onStage: document.querySelectorAll('.stage a, .stage .foot, .frame a').length,
+        // specs/player-guidance.md G3: one quiet line on how to move, straight after the mark.
+        hint: [...document.querySelectorAll<HTMLElement>('.foot .hint')].map((h) => [h.textContent, h.previousElementSibling?.classList.contains('mark'), h.checkVisibility()]),
       }));
-      assert.deepEqual(foot, { marks: [[true, 'Rayner', PRODUCT.home, t.madeWith, '_blank', 'noopener']], last: 'foot', open: 0, onStage: 0 }, id);
+      assert.deepEqual(foot, { marks: [[true, 'Rayner', PRODUCT.home, t.madeWith, '_blank', 'noopener']], last: 'foot', open: 0, onStage: 0, hint: [[t.hintKeys, true, true]] }, id);
       if (project.Scene.settings?.length) assert.ok(await page.locator('.player .case input').count() > 0, `${id}: the case picker is in the card`);
     }
     assert.ok(languages.size === 2, `both languages visited: ${[...languages]}`);
@@ -455,6 +457,78 @@ test('what changed: token-bucket\'s burst step lists its three watched changes u
     }
   } finally {
     await page.close();
+  }
+});
+// specs/player-guidance.md G3: the controls teach their keys, and the footer how to move.
+test('every keyed control names its key in its tooltip and aria-keyshortcuts, in English and French; names are unchanged', options, async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    for (const [name, lang] of [['mr-cache', 'en'], ['quotient-familial', 'fr']] as const) {
+      const t = chromeFor(lang);
+      await page.goto(`${embed}/${name}.html`);
+      await page.waitForSelector('[data-ready=true]');
+      const keys = await page.evaluate(
+        (names) => names.map((n) => {
+          const b = document.querySelector<HTMLButtonElement>(`.stepper button[aria-label="${n}"]`);
+          return b && [b.title, b.getAttribute('aria-keyshortcuts')];
+        }),
+        [t.previous, t.nextLabel, t.zoomIn, t.zoomOut, t.wholePicture],
+      );
+      assert.deepEqual(keys, [
+        [`${t.previous} (←)`, 'ArrowLeft'],
+        [`${t.nextLabel} (→)`, 'ArrowRight'],
+        [`${t.zoomIn} (+)`, '+'],
+        [`${t.zoomOut} (−)`, '-'],
+        [`${t.wholePicture} (0)`, '0'],
+      ], name);
+      // At the end ArrowRight does not start again, so Start again names no key.
+      await page.locator('.step-bar button').last().click();
+      await page.waitForFunction((label) => document.querySelector('.stepper .primary')?.getAttribute('aria-label') === label, t.startAgainLabel);
+      assert.deepEqual(await page.locator('.stepper .primary').evaluate((b) => [(b as HTMLButtonElement).title, b.getAttribute('aria-keyshortcuts')]), [t.startAgainLabel, null]);
+      await page.getByRole('button', { name: t.previous, exact: true }).click();
+      await page.waitForFunction((label) => document.querySelector('.stepper .primary')?.getAttribute('aria-label') === label, t.nextLabel);
+      assert.deepEqual(await page.locator('.stepper .primary').evaluate((b) => [(b as HTMLButtonElement).title, b.getAttribute('aria-keyshortcuts')]), [`${t.nextLabel} (→)`, 'ArrowRight']);
+    }
+  } finally {
+    await page.close();
+  }
+});
+test('the footer hint: keys on a fine pointer, taps on a touch screen, wrapping on a narrow card without pushing the mark or the way out off the row', options, async () => {
+  const fine = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  const touch = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, reducedMotion: 'reduce' });
+  try {
+    for (const [name, lang] of [['mr-cache', 'en'], ['quotient-familial', 'fr']] as const) {
+      const t = chromeFor(lang);
+      await fine.goto(`${embed}/${name}.html`);
+      await fine.waitForSelector('[data-ready=true]');
+      assert.equal(await fine.locator('.foot .hint').textContent(), t.hintKeys, name);
+      const page = await touch.newPage();
+      await page.goto(`${embed}/${name}.html`);
+      await page.waitForSelector('[data-ready=true]');
+      assert.equal(await page.evaluate(() => matchMedia('(pointer: coarse)').matches), true);
+      assert.equal(await page.locator('.foot .hint').textContent(), t.hintTouch, name);
+      await page.close();
+    }
+    // Framed at 390 px, with the way out: the hint wraps between them, inside the footer's row.
+    hostBody = `<!doctype html><style>body{margin:0}</style><iframe title="t" src="${embed}/quotient-familial.html" style="width:390px;height:900px;border:0"></iframe>`;
+    const host390 = await browser.newPage({ viewport: { width: 390, height: 900 }, reducedMotion: 'reduce' });
+    try {
+      await host390.goto(host);
+      const frame = await readyFrame(host390, 'quotient-familial');
+      const row = await frame.evaluate(() => {
+        const box = (s: string) => document.querySelector(s)!.getBoundingClientRect();
+        const foot = box('.foot'), mark = box('.foot .mark'), hint = box('.foot .hint'), open = box('.foot .open');
+        return { inside: [mark, hint, open].every((b) => b.left >= foot.left && b.right <= foot.right && b.top >= foot.top && b.bottom <= foot.bottom), order: mark.right <= hint.left && hint.right <= open.left, lines: Math.round(hint.height / 18) };
+      });
+      assert.deepEqual({ ...row, lines: undefined }, { inside: true, order: true, lines: undefined }, JSON.stringify(row));
+      assert.ok(row.lines >= 2, `the hint wraps: ${JSON.stringify(row)}`);
+    } finally { await host390.close(); }
+    // At 360 px and under it may go; the mark and the way out stay.
+    await fine.setViewportSize({ width: 340, height: 700 });
+    assert.equal(await fine.locator('.foot .hint').isVisible(), false);
+  } finally {
+    await fine.close();
+    await touch.close();
   }
 });
 // specs/player-guidance.md G2: after the last step, Start again, and for a scene with settings, its next case.

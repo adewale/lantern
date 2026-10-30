@@ -84,6 +84,9 @@ export interface Chrome {
   startAgainLabel: string;
   /** At rest on the last step of a scene with settings: show the next option of its first setting. */
   tryCase: (label: string) => string;
+  /** The footer's one quiet line on how to move: with a keyboard and pointer, or by touch. */
+  hintKeys: string;
+  hintTouch: string;
 }
 
 const EN: Chrome = {
@@ -131,6 +134,8 @@ const EN: Chrome = {
   startAgain: 'Start again',
   startAgainLabel: 'Start again from step 1',
   tryCase: (label) => `Try ‘${label}’`,
+  hintKeys: '← → to step · click a segment to jump',
+  hintTouch: 'Tap a segment to jump; tap the current one to finish it',
 };
 /** French typography: a narrow no-break space (U+202F) before : ; ! ? and inside « ». */
 const FR: Chrome = {
@@ -184,6 +189,8 @@ const FR: Chrome = {
   startAgain: 'Recommencer',
   startAgainLabel: 'Recommencer à l’étape 1',
   tryCase: (label) => `Essayer «\u202f${label}\u202f»`,
+  hintKeys: '← → pour changer d’étape · cliquez un segment pour y aller',
+  hintTouch: 'Touchez un segment pour y aller\u202f; touchez celui en cours pour le terminer',
 };
 export const CHROME: Readonly<Record<string, Chrome>> = { en: EN, fr: FR };
 
