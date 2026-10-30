@@ -61,8 +61,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   /** The case on show, with its layouts once a close-up has needed them. */
   let current: Entry | undefined;
 
-  // Title, then the cases it can show: the choice sits next to what it changes.
-  // The built page's heading is the title, so the live page says what the static one did.
+  // The card's header: the title, then the cases it can show, so the choice sits next to what
+  // it changes. The built page's heading is the title, so the live page says what the static one did.
   const title = el('h1', root.querySelector('h1')?.textContent ?? Source.meta?.title ?? '');
   const head = el('header', undefined, 'head');
   head.append(title);
@@ -164,8 +164,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     ledeRuler = el('p', undefined, 'lede-ruler');
   ruler.setAttribute('aria-hidden', 'true');
   ledeRuler.setAttribute('aria-hidden', 'true');
-  // One card: the picture, the stepper row, then the words.
-  player.append(frame, stepper, words, notice, summary, ruler, ledeRuler);
+  // One card: its header (the title and the cases), the picture mounted under it, the stepper
+  // row, then the words.
+  player.append(head, frame, stepper, words, notice, summary, ruler, ledeRuler);
   // A frame the loader sizes to its content has no viewport height to fit: the card takes
   // the page's width, and the host page scrolls (embed.css, --player-reserve).
   if (window.parent !== window && params.has('parentOrigin')) root.style.setProperty('--player-reserve', '0px');
@@ -213,7 +214,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   standalone.target = '_blank';
   standalone.rel = 'noopener';
   const framed = window.parent !== window && !params.has('parentOrigin');
-  root.replaceChildren(head, layout, transcript, ...(framed ? [standalone] : []));
+  root.replaceChildren(layout, transcript, ...(framed ? [standalone] : []));
 
   // A map beside the picture while a narrow stage is zoomed:
   // where the view is, and where the step changed. Pressing it moves to the step's next

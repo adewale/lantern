@@ -143,6 +143,16 @@ test('Next is on screen at load', options, async () => {
         assert.ok(v.scrollWidth <= v.width, `${where}: no horizontal scroll (${v.scrollWidth} > ${v.width})`);
       } finally { await page.close(); }
     }
+  // specs/player-tile.md T1: with the header inside the card, the French ten-step page too.
+  for (const [width, height] of [[1280, 800], [1440, 900]] as const) {
+    const page = await browser.newPage({ viewport: { width, height } });
+    try {
+      await page.goto(embed + '/quotient-familial.html');
+      await page.waitForSelector('[data-ready=true]');
+      const v = await boxesOf(page, { next: '.stepper .primary', lede: '.lede' });
+      assert.ok(insideViewport(v.boxes.next, v) && insideViewport(v.boxes.lede, v), `quotient-familial at ${width}×${height}: ${JSON.stringify(v.boxes)}`);
+    } finally { await page.close(); }
+  }
 });
 
 test('fullscreen keeps the stepper row reachable when the player overflows', options, async () => {
@@ -201,12 +211,14 @@ const catalog = () =>
     }
     return built;
   })());
-test('no Replay, Stop or Fit stage button; one Whole picture button on every catalog page', options, async () => {
+test('every catalog page, in English and French: no Replay, Stop or Fit stage button, one Whole picture button, and one h1, in the card\'s header above the stage with the case picker', options, async () => {
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
   try {
     const page = await context.newPage();
+    const languages = new Set<string>();
     for (const [id, project] of await catalog()) {
       const t = chromeFor(project.Scene.meta?.lang);
+      languages.add(project.Scene.meta?.lang ?? 'en');
       // The removed controls' names, in English and in French.
       const gone = ['Replay step', 'Stop animation', 'Fit stage', 'Rejouer l’étape', 'Arrêter l’animation', 'Adapter à la page'];
       await page.goto(`${embed}/catalog/${id}.html`);
@@ -216,7 +228,24 @@ test('no Replay, Stop or Fit stage button; one Whole picture button on every cat
         return Object.fromEntries(names.map((n) => [n, count(n)]));
       }, [...gone, t.wholePicture, t.nextLabel, t.previous]);
       assert.deepEqual(seen, { ...Object.fromEntries(gone.map((n) => [n, 0])), [t.wholePicture]: 1, [t.nextLabel]: 1, [t.previous]: 1 }, id);
+      // specs/player-tile.md T1: the title and the cases are the card's header, the stage is mounted under it.
+      const tile = await page.evaluate(() => {
+        const h1s = document.querySelectorAll('h1'),
+          player = document.querySelector('.player')!,
+          head = document.querySelector('.head')!;
+        return {
+          h1s: h1s.length,
+          inCard: h1s[0]?.closest('.player') === player,
+          inHead: h1s[0]?.parentElement === head,
+          headFirst: player.firstElementChild === head,
+          frameNext: head.nextElementSibling?.className,
+          cases: document.querySelectorAll('.case input').length === document.querySelectorAll('.player .head .case input').length,
+        };
+      });
+      assert.deepEqual(tile, { h1s: 1, inCard: true, inHead: true, headFirst: true, frameNext: 'frame', cases: true }, id);
+      if (project.Scene.settings?.length) assert.ok(await page.locator('.player .case input').count() > 0, `${id}: the case picker is in the card`);
     }
+    assert.ok(languages.size === 2, `both languages visited: ${[...languages]}`);
   } finally {
     await context.close();
   }
