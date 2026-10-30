@@ -1,22 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { collectProject } from '../tools/lib/explain-project.ts';
 import { RECIPES } from '../scenes/explainers/feature-tour/scene.ts';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
 
-const source = readFileSync('scenes/explainers/hello-world/scene.ts', 'utf8');
-
-test('the installed-package Hello World in the tutorial is the actual minimal scene', async () => {
-  const tutorial = readFileSync('docs/TUTORIAL.md', 'utf8');
-  const sample = tutorial.match(/## 0\. Hello, world!\s+```ts\n([\s\S]*?)\n```/)?.[1];
-  assert.ok(sample, 'the first example shows all the code, not just an excerpt');
-  assert.equal(sample.trim(), source.replace("from '../../../src/index.ts'", "from 'rayner'").trim());
-  const project = await collectProject('scenes/explainers/hello-world', { write: false });
-  assert.equal(project.variants.length, 1);
-  assert.deepEqual(project.variants[0]!.trace.steps.map(s => s.step), ['hello']);
-  assert.match(String(project.variants[0]!.trace.steps[0]!.meta?.caption), /Hello, world!/);
-  assert.equal(EXPLAINERS.find(e => e.id === 'hello-world')?.step, 'hello');
+test('retired Hello World is absent from source and active authoring paths', () => {
+  assert.equal(EXPLAINERS.some(e => e.id === 'hello-world'), false);
+  assert.equal(existsSync('scenes/explainers/hello-world'), false);
+  for (const path of ['README.md', 'docs/TUTORIAL.md', 'docs/FEATURE-TOUR.md'])
+    assert.doesNotMatch(readFileSync(path, 'utf8'), /hello.world|BY-EXAMPLE|Learn by example/i, path);
 });
 
 test('every authoring feature offers a case with its user-side code before its result', async () => {
@@ -41,6 +34,7 @@ test('every authoring feature offers a case with its user-side code before its r
   }
   assert.deepEqual([...seen].sort(), Object.keys(RECIPES).sort());
   assert.equal(EXPLAINERS.find(e => e.id === 'feature-tour')?.step, 'result');
+  assert.equal((project.Scene.meta as { caseNavigation?: string }).caseNavigation, 'first', 'changing an authoring feature starts its recipe');
   const state = project.variants.find(v => v.values.feature === 'state')!;
   assert.equal(state.trace.steps[1]!.after!.count, 1, 'the view case must update recorded state');
   assert.match(JSON.stringify(state.trace.steps[1]!.after!.picture), /Recorded count: 1/);
