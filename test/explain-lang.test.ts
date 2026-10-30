@@ -104,6 +104,13 @@ const englishIn = (t: string) => [...new Set(wordsIn(t).filter((w) => ENGLISH.ha
 test('page words come from a table by primary language, English when there is none', () => {
   assert.equal(chromeFor('fr').transcript, 'Transcription');
   assert.equal(chromeFor('fr-BE').next, 'Suivant');
+  // The step heading's kicker, and with a title a step bar segment's name; the rail's disclosure.
+  assert.equal(chromeFor('en').stepOf(3, 4), 'Step 3 of 4');
+  assert.equal(chromeFor('en').stepOf(3, 4, 'Title'), 'Step 3 of 4: Title');
+  assert.equal(chromeFor('fr').stepOf(3, 4), 'Étape 3 sur 4');
+  assert.equal(chromeFor('fr').stepOf(3, 4, 'Titre'), `Étape 3 sur 4${NB}: Titre`);
+  assert.equal(chromeFor('en').allSteps(4), 'All 4 steps');
+  assert.equal(chromeFor('fr').allSteps(4), 'Les 4 étapes');
   assert.equal(chromeFor('de'), CHROME.en);
   assert.equal(chromeFor(), CHROME.en);
   // A tag that names an Object property is a language with no table, not that property.

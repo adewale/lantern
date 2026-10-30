@@ -41,6 +41,14 @@ export interface Chrome {
   viewTools: string;
   /** Accessible name of the list of steps. */
   stepList: string;
+  /** The steps list's visible heading beside the card. */
+  steps: string;
+  /** The steps list's disclosure under the card, on a narrow page. */
+  allSteps: (n: number) => string;
+  /** Accessible name of the step bar. */
+  stepBar: string;
+  /** "Step 3 of 4", the step heading's kicker; with a title, a step bar segment's name. */
+  stepOf: (i: number, n: number, title?: string) => string;
   newTab: string;
   /** The loader's name for the frame when the host gives none. */
   frame: string;
@@ -80,6 +88,10 @@ const EN: Chrome = {
   exitFullScreen: 'Exit full screen',
   viewTools: 'View tools',
   stepList: 'Steps in this explainer',
+  steps: 'Steps',
+  allSteps: (n) => `All ${n} steps`,
+  stepBar: 'Step progress',
+  stepOf: (i, n, title) => `Step ${i} of ${n}${title ? `: ${title}` : ''}`,
   newTab: 'Open in a new tab',
   frame: 'Interactive explainer',
   reducedMotion: 'Reduced motion is on, so the finished step is shown.',
@@ -114,6 +126,10 @@ const FR: Chrome = {
   exitFullScreen: 'Quitter le plein écran',
   viewTools: 'Outils d’affichage',
   stepList: 'Étapes de cette explication',
+  steps: 'Étapes',
+  allSteps: (n) => `Les ${n} étapes`,
+  stepBar: 'Progression des étapes',
+  stepOf: (i, n, title) => `Étape ${i} sur ${n}${title ? ` : ${title}` : ''}`,
   newTab: 'Ouvrir dans un nouvel onglet',
   frame: 'Explication interactive',
   reducedMotion: 'Les animations sont réduites : l’étape s’affiche terminée.',

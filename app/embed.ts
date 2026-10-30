@@ -99,12 +99,14 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const poster = root.querySelector('svg');
   if (poster) stage.append(poster);
   stage.tabIndex = 0;
-  // On a narrow stage the heading the stage draws is too small to read, and a close-up
-  // leaves it out, so the step's number, title and line show here as text.
+  // The step's heading as text on every width: where the reader is of how many, the step's
+  // title and its line. On a narrow stage the heading the stage draws is too small to read,
+  // and a close-up leaves it out.
   const lede = el('p', undefined, 'lede'),
+    ledeKicker = el('span', undefined, 'kicker'),
     ledeTitle = el('strong'),
-    ledeLine = el('span');
-  lede.append(ledeTitle, ledeLine);
+    ledeLine = el('span', undefined, 'line');
+  lede.append(ledeKicker, ledeTitle, ledeLine);
   const caption = el('p', undefined, 'caption');
   caption.setAttribute('aria-live', 'polite');
   // The resting picture in words, for readers who cannot see it or cannot read its labels:
@@ -320,7 +322,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     const step = trace.steps[selected]!,
       words = stepWords(step);
     caption.textContent = words.caption;
-    fillLede(ledeTitle, ledeLine, selected, words);
+    fillLede(ledeKicker, ledeTitle, ledeLine, selected, words);
     prev.disabled = selected === 0;
     next.disabled = selected === trace.steps.length - 1;
     for (const b of steps.querySelectorAll('button'))
@@ -335,41 +337,46 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   }
   let shownCase = '',
     reservedFor = '';
-  /** The lede's words for step `i`: its number and title, then its line when it has one. */
-  function fillLede(strong: HTMLElement, span: HTMLElement, i: number, words: { title: string; line: string }) {
-    strong.textContent = `${i + 1}. ${words.title}`;
+  /** The lede's words for step `i`: its number of the total, its title, then its line when it has one. */
+  function fillLede(kicker: HTMLElement, strong: HTMLElement, span: HTMLElement, i: number, words: { title: string; line: string }) {
+    kicker.textContent = t.stepOf(i + 1, trace.steps.length);
+    strong.textContent = words.title;
     span.textContent = words.line;
     span.hidden = !words.line;
   }
   function reserve() {
     player.classList.toggle('narrow', narrow());
     if (!trace || !caption.clientWidth) return;
-    const key = `${caption.clientWidth} ${shownCase}`;
+    const key = `${caption.clientWidth} ${lede.clientWidth} ${shownCase}`;
     if (key === reservedFor) return;
     reservedFor = key;
-    ruler.style.width = ledeRuler.style.width = `${caption.clientWidth}px`;
-    const strong = el('strong'),
-      span = el('span');
-    ledeRuler.replaceChildren(strong, span);
+    ruler.style.width = `${caption.clientWidth}px`;
+    ledeRuler.style.width = `${lede.clientWidth}px`;
+    const kicker = el('span', undefined, 'kicker'),
+      strong = el('strong'),
+      span = el('span', undefined, 'line');
+    ledeRuler.replaceChildren(kicker, strong, span);
     let tallest = 0,
       tallestTitle = 0,
       tallestLine = 0;
     for (const [i, s] of trace.steps.entries()) {
       const words = stepWords(s);
       ruler.textContent = words.caption;
-      fillLede(strong, span, i, words);
+      fillLede(kicker, strong, span, i, words);
       // The exact height: offsetHeight rounds, and a 115.2 px caption would still move the steps list by a fraction.
       tallest = Math.max(tallest, ruler.getBoundingClientRect().height);
       tallestTitle = Math.max(tallestTitle, strong.getBoundingClientRect().height);
       tallestLine = Math.max(tallestLine, span.getBoundingClientRect().height);
     }
     ruler.textContent = '';
+    // The kicker is one line at every step; measured once, it keeps the lede's total when a step has no line.
+    const kickerHeight = kicker.getBoundingClientRect().height;
     ledeRuler.replaceChildren();
     caption.style.minHeight = `${tallest}px`;
     // Reserve each row separately: a two-line title must not move the line below it.
     ledeTitle.style.minHeight = `${tallestTitle}px`;
     ledeLine.style.minHeight = `${tallestLine}px`;
-    lede.style.minHeight = `${tallestTitle + tallestLine}px`;
+    lede.style.minHeight = `${kickerHeight + tallestTitle + tallestLine}px`;
   }
   // Reserving caption height changes the observed layout. Write in the next
   // frame, outside ResizeObserver delivery (WebKit otherwise reports a loop).

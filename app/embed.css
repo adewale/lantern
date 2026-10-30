@@ -58,14 +58,14 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .words{display:grid;gap:6px;padding:14px 16px 16px}
 .caption,.ruler{margin:0;max-width:52ch;min-height:3.2em;font-size:1.125rem;line-height:1.6;text-wrap:pretty}
 .ruler,.lede-ruler{position:absolute;top:0;left:0;margin:0;min-height:0;visibility:hidden;pointer-events:none}
-/* On a narrow stage, the heading the stage draws, as text: number and title, then the line. */
+/* The step's heading on every width: "Step 3 of 4", the title, then the line. */
 .lede,.lede-ruler{max-width:68ch;font-size:1rem;line-height:1.45;text-wrap:pretty}
-.lede{display:none;margin:0}
-.player.narrow .lede{display:block}
-.lede strong,.lede span,.lede-ruler strong,.lede-ruler span{display:block}
-.lede strong,.lede-ruler strong{font-weight:650}
-.lede span,.lede-ruler span{color:var(--muted)}
-.lede span[hidden]{display:none}
+.lede{margin:0}
+.lede>*,.lede-ruler>*{display:block}
+.lede .kicker,.lede-ruler .kicker{font-size:.8125rem;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.lede strong,.lede-ruler strong{font-size:1.0625rem;font-weight:650}
+.lede .line,.lede-ruler .line{color:var(--muted)}
+.lede [hidden]{display:none}
 .stepper{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
 /* View tools stand apart from step navigation, behind a rule; on a narrow row, on their own row. */
 .tools{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:2px;margin-inline-start:auto;padding-inline-start:10px;border-inline-start:1px solid var(--line)}

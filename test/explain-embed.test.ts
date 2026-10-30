@@ -39,7 +39,8 @@ before(async () => {
   browser = await launch();
   await new Promise<void>((r) => hostServer.listen(0, '127.0.0.1', r));
   host = `http://127.0.0.1:${(hostServer.address() as { port: number }).port}`;
-  for (const name of ['mr-cache', 'oauth-pkce', 'exgit', 'lantern', 'send-sync']) {
+  // quotient-familial is the one scene in French (meta.lang 'fr'), with ten steps.
+  for (const name of ['mr-cache', 'oauth-pkce', 'exgit', 'lantern', 'send-sync', 'quotient-familial']) {
     const project = await collectProject(`scenes/explainers/${name}`, { write: false });
     projects.set(name, project);
     await buildExplainer(project, join(folder, name + '.html'));
@@ -81,29 +82,30 @@ const boxesOf = <K extends string>(page: Page, selectors: Record<K, string>) =>
 const insideViewport = (b: Rect, v: { width: number; height: number }) => b.top >= 0 && b.bottom <= v.height && b.left >= 0 && b.right <= v.width;
 
 test('one stepper row: exactly one Next step and one Previous step button', options, async () => {
-  for (const name of projects.keys()) {
+  for (const [name, project] of projects) {
+    const t = chromeFor(project.Scene.meta?.lang);
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
     try {
       await page.goto(`${embed}/${name}.html`);
       await page.waitForSelector('[data-ready=true]');
-      const seen = await page.evaluate(() => ({
-        next: document.querySelectorAll('button[aria-label="Next step"]').length,
-        previous: document.querySelectorAll('button[aria-label="Previous step"]').length,
+      const seen = await page.evaluate((t) => ({
+        next: document.querySelectorAll(`button[aria-label="${t.nextLabel}"]`).length,
+        previous: document.querySelectorAll(`button[aria-label="${t.previous}"]`).length,
         // The card: the picture, the stepper row, the words, in that order.
         order: [...document.querySelector('.player')!.children].filter((e) => e.matches('.frame, .stepper, .words')).map((e) => e.className),
         stage: !!document.querySelector('.player > .frame > .stage'),
         group: [document.querySelector('.stepper')?.getAttribute('role'), document.querySelector('.stepper')?.getAttribute('aria-label')],
         first: [...document.querySelectorAll('.stepper > button')].slice(0, 2).map((b) => b.getAttribute('aria-label')),
         nextText: document.querySelector('.stepper .primary')?.textContent,
-      }));
+      }), { nextLabel: t.nextLabel, previous: t.previous });
       assert.deepEqual(seen, {
         next: 1,
         previous: 1,
         order: ['frame', 'stepper', 'words'],
         stage: true,
-        group: ['group', 'Steps'],
-        first: ['Previous step', 'Next step'],
-        nextText: 'Next',
+        group: ['group', t.controls],
+        first: [t.previous, t.nextLabel],
+        nextText: t.next,
       }, name);
     } finally { await page.close(); }
   }
@@ -128,10 +130,11 @@ test('Next is on screen at load', options, async () => {
       try {
         await page.goto(embed + url);
         await page.waitForSelector('[data-ready=true]');
-        const v = await boxesOf(page, { next: 'button[aria-label="Next step"]', stage: '.stage', stepper: '.stepper', caption: '.caption' });
+        const v = await boxesOf(page, { next: 'button[aria-label="Next step"]', stage: '.stage', stepper: '.stepper', caption: '.caption', lede: '.lede' });
         const where = `${url} at ${width}×${height}`;
         assert.equal(v.scrollY, 0, `${where}: opened at the top`);
         assert.ok(insideViewport(v.boxes.next, v), `${where}: Next ${JSON.stringify(v.boxes.next)}`);
+        if (width >= 1280) assert.ok(insideViewport(v.boxes.lede, v), `${where}: the step heading ${JSON.stringify(v.boxes.lede)}`);
         if (width === 390 && height === 844) {
           assert.ok(insideViewport(v.boxes.stage, v), `${where}: the stage ${JSON.stringify(v.boxes.stage)}`);
           assert.ok(insideViewport(v.boxes.stepper, v), `${where}: the stepper row ${JSON.stringify(v.boxes.stepper)}`);
@@ -206,6 +209,30 @@ test('no Replay, Stop or Fit stage button; one Whole picture button on every cat
     }
   } finally {
     await context.close();
+  }
+});
+test('the step heading shows on every width with the total', options, async () => {
+  for (const [name, total, kicker] of [['mr-cache', 4, 'Step 1 of 4'], ['quotient-familial', 10, 'Étape 1 sur 10']] as const) {
+    const project = projects.get(name)!,
+      first = stepWords(project.variants.find((v) => sameCase(project, v.values, resolveSettings(project.Scene)))!.trace.steps[0]!);
+    for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
+      const page = await browser.newPage({ viewport, reducedMotion: 'reduce' });
+      try {
+        await page.goto(`${embed}/${name}.html`);
+        await page.waitForSelector('[data-ready=true]');
+        const lede = await page.locator('.lede').evaluate((p) => ({
+          visible: (p as HTMLElement).offsetParent !== null,
+          kicker: p.querySelector('.kicker')?.textContent,
+          title: p.querySelector('strong')?.textContent,
+          line: (p.querySelector('.line') as HTMLElement | null)?.hidden ? null : p.querySelector('.line')?.textContent,
+          // The caption announces the step; the heading is not a second live region.
+          live: p.closest('[aria-live]') !== null,
+        }));
+        const where = `${name} at ${viewport.width}`;
+        assert.deepEqual(lede, { visible: true, kicker, title: first.title, line: first.line || null, live: false }, where);
+        assert.match(lede.kicker!, new RegExp(` ${total}$`), `${where}: the kicker names the total`);
+      } finally { await page.close(); }
+    }
   }
 });
 async function readyFrame(page: Page, scene: string): Promise<Frame> {
@@ -370,9 +397,10 @@ test('Copy link gives the step\'s share page when site:export published one, els
     await context.close();
   }
 });
-test('stepping keeps the phone’s heading line, Next, steps list and transcript in place', options, async () => {
-  // Captions run from one line to four, and on a phone send-sync's first step opens on a
-  // close-up and shows Whole picture; neither may push the page down mid-explainer.
+test('the transcript does not move between steps', options, async () => {
+  // Captions run from one line to four, titles from one line to two, and on a phone send-sync's
+  // first step opens on a close-up and shows Whole picture; none may move the step heading's
+  // line, the stepper row, the steps list or the transcript as the reader steps.
   for (const [width, height] of [[1180, 800], [390, 844]] as const)
     for (const scene of ['exgit', 'mr-cache', 'send-sync']) {
       const page = await browser.newPage({ viewport: { width, height } });
@@ -400,8 +428,8 @@ test('stepping keeps the phone’s heading line, Next, steps list and transcript
               document.querySelectorAll('.steps button')[i]?.getAttribute('aria-current') === 'step';
           }, { before, step, i });
           await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
-          if (width < 600 && await page.locator('.lede span').isVisible())
-            linePlaces.add(await page.locator('.lede span').evaluate((line) => (line.getBoundingClientRect().top + scrollY).toFixed(1)));
+          if (await page.locator('.lede .line').isVisible())
+            linePlaces.add(await page.locator('.lede .line').evaluate((line) => (line.getBoundingClientRect().top + scrollY).toFixed(1)));
           places.add(
             await page.evaluate(() =>
               ['.stepper', '.steps', '.transcript'].map((s) => (document.querySelector(s)!.getBoundingClientRect().top + scrollY).toFixed(1)).join(' '),
@@ -409,7 +437,7 @@ test('stepping keeps the phone’s heading line, Next, steps list and transcript
           );
         }
         assert.equal(places.size, 1, `${scene} at ${width} px: stepper row, steps and transcript tops per step ${[...places].join(' | ')}`);
-        if (width < 600) assert.equal(linePlaces.size, 1, `${scene}: the line below the phone title stays at one height`);
+        assert.ok(linePlaces.size <= 1, `${scene} at ${width} px: the line below the step title stays at one height`);
       } finally {
         await page.close();
       }
@@ -909,7 +937,7 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   eq('aria-current', seen.current, [entry.step]);
   eq('caption', seen.caption, spec.caption);
   eq('stage label', seen.stageLabel, `${seen.title}: ${spec.title}${spec.line ? ` — ${spec.line}` : ''}`);
-  eq('lede', seen.lede, [`${i + 1}. ${spec.title}`, spec.line || null]);
+  eq('lede', seen.lede, [`Step ${i + 1} of ${list.length}`, spec.title, spec.line || null]);
   eq('stage description', seen.summary, spec.summary);
   eq('computed stage description', await stageDescription(r.page), spec.summary.replace(/\s+/g, ' ').trim());
   // Compared as the browser serializes it, which writes &quot; in text as a plain quote.
