@@ -1,6 +1,6 @@
 # Your first explainer
 
-Start with one step and one greeting. The longer cache tutorial below adds cases, a diagram and independent checks. Run the commands from a checkout of this repository; in a project that installs the package, run the same commands as `npx rayner ...`.
+Hello World verifies that you can write and build a scene; it does not explain a technical subject. The cache tutorial below asks why a hit avoids a database read, then adds cases, a diagram and independent checks. For three problem-led lessons with author code beside the result links, see [Learn by example](BY-EXAMPLE.md). Run the cache commands from a checkout of this repository; in a project that installs the package, run the same commands as `npx rayner ...`.
 
 ## 0. Hello, world!
 
@@ -18,7 +18,7 @@ export default class HelloWorld extends Scene {
 
 Save this as `hello-world/scene.ts` in a project with `rayner` installed, then run `npx rayner check hello-world/scene.ts` and `npx rayner build hello-world/scene.ts --out public/hello-world.html`. The checked-in [example scene](../scenes/explainers/hello-world/scene.ts) uses a repository-relative import of the same engine; the code above replaces *only that import* with the public package name. `meta` names the page, `step` gives its one permalink and caption, and `play` fades in a `Text`. There is no setting, diagram, stage helper or additional author-written model. The generated reader controls and transcript do not require author code. This is a starting point, not a claim that every technical explanation needs only one step.
 
-You need Node 24 or later. In a checkout run `npm ci`; in an author project run `npm install --save-dev rayner`. Diagram capture is included. The scene has a diagram, so the first run captures it with Chromium: install one with `npx playwright-core install chromium`, or point `CHROMIUM_EXECUTABLE_PATH` at an existing one.
+You need Node 24 or later. In a checkout run `npm ci`; in an author project run `npm install --save-dev rayner`. Diagram capture is included. Hello World draws plain text, not a captured Mermaid diagram. The cache scene below does capture a diagram: install Chromium with `npx playwright-core install chromium`, or point `CHROMIUM_EXECUTABLE_PATH` at an existing one before previewing it. The served-reader `review` also uses Chromium.
 
 ## 1. Create the scene
 
