@@ -105,11 +105,11 @@
     "fullReceipt": "aaf175ae03e2fd59192d73183b79136e20bfd980d27fc4ee652fd830032d1392"
   },
   "isdigit": {
-    "html": "428731694120d832cb99cba95abd9d9eeaa8c02f050788d97d33e5a4ae94ce99",
-    "bytes": 711627,
-    "headers": "eee32b3853455554cd5661cbe0a2a569805d6cad33eab26e57a95810acc31d7b",
-    "receipt": "1526215b838f13ca0928a6164a5ef60c3bb5bc7540b12cd208a80240927b9665",
-    "fullReceipt": "c4538010561b54c58a447e78c373d90b7adf274541fd789c9c9e302ac23cabcb"
+    "html": "e629b9c8e62cb22248f3ee9376ec826c8826c47d1224f9f6973f22f3b9bad440",
+    "bytes": 711816,
+    "headers": "f51abe46e9346638e67897e57d9bbd7a214358e2c5fc974dadd55fa9046f1a2c",
+    "receipt": "53c9f0fd186b46f9de904539e780549e6256d8965e8cb6f48677def3d6c274f4",
+    "fullReceipt": "c7ab9db7b852ce82e3e5d0b1b730c67f3f7416ec51e17b599f6acb662cfb035d"
   },
   "ical-recurrence": {
     "html": "f0e78c9ec1d972f1c795c6e2c88ab73975585da2bf71ba5b68144a1bab088484",
@@ -161,11 +161,11 @@
     "fullReceipt": "8c465fca52719d6ec4563b27031b94dee1f27b69909b99f69ff8c11694813143"
   },
   "fork": {
-    "html": "bd28d13fec0ad5040d1d6712fd19c389e5e037042a8266e40ba08a1ea87ea46b",
-    "bytes": 737993,
-    "headers": "5e4f9661d58a99facfad77248eb35a4fca70d1c5ee3150d5b16abfafb601c7a6",
-    "receipt": "aef9e92bd0fbc213e2b07f6ecfd9502b47c999dbf7830c2ba461bc792f1ff596",
-    "fullReceipt": "836b9b09e94a6910d49ffda754979c732a51c3bde3ddf495263899eda4db2614"
+    "html": "1633125b6ab2b587a76433495ca5fe136b3de7295bf9760dcb0688e85d4baa34",
+    "bytes": 738153,
+    "headers": "e8b71b6dfbf3f9f3dafc22339eee0ed60dde5cabdf6ddc08dc31ca59b1abf008",
+    "receipt": "abde19577db643a7b10ccc321f8c4e5b69f3cc727c481c2624ef4846c637642a",
+    "fullReceipt": "0e53026f21737c388ccc1b89916e9228f4d46d6feec41bfa8f30b64894a84df6"
   },
   "agentic-mermaid": {
     "html": "481a2922d76ef6d6e20f2a982a44657c2f4622b9102c64796541c916f777d515",
@@ -175,25 +175,25 @@
     "fullReceipt": "9b870c8e161e2fd68ae690f53b6e48450fbf2a18def03176a868779c06e5ecac"
   },
   "glyph": {
-    "html": "92923d2112de49269a387038d5fb8b93fb365c5f49f72fabe8fdf2a3e346f03f",
-    "bytes": 698196,
-    "headers": "24214e7f3c040f9fbbdc7a8bbd459b6c32baf6c72bd4338a79798832d994ee25",
-    "receipt": "9ab29e6fd7f7f11db51f53099d1e499c5145570c06c518b6bf5628326f5a74f4",
-    "fullReceipt": "b1c96eeeab73f8b4675d4f8c5941a6d5f34075198ba851be47f70aa7ce77097f"
+    "html": "62beb4c3d1eb644b347712c6a4ae19cd8a9dee3a442a34c88ffcfb8a4e7ef7e8",
+    "bytes": 698403,
+    "headers": "efb14e0f18429ebbad64a1458e1532f2aa59488188beeda2f578c9a5b092c392",
+    "receipt": "c6c4086cf33b18b314b0c2204aca3710175dd0480d8281497788c9e236ab3ab7",
+    "fullReceipt": "dad1da29128f92100b71e5a6b1d7491bfd12082be1e6c4964baf73a70036afb1"
   },
   "font-metrics": {
-    "html": "0b1256ead09e0d781af4302cf737f4167902e8b3d48d65bbe0f94b4f1fc1de55",
-    "bytes": 854768,
-    "headers": "57221bf64cd77d835d3b7415b96992f55e2c0fc5d2459fd36d387b891ea1167b",
-    "receipt": "5adce4dc0f9e89a6ea979fcd598347d531a6bc7f14b04c95458ac93ff3e23948",
-    "fullReceipt": "867c827c0551e0301e9aef64b8136c1860a2bdd8e9a143f666240fbe14f429ba"
+    "html": "1e08dea01614917e40e66959b6285310dfeeaa86afcf87ba7760a9cc658a5f6c",
+    "bytes": 846619,
+    "headers": "71625e43e6755be68018c41b99791a006e9d2d67518dbb8a289b8a9d07989030",
+    "receipt": "a1979b6212621077fd8505e3957070dd6f66d4b33510ed81eb24f195f8a3ef28",
+    "fullReceipt": "a231b7e125eb5b24c48b6d42418fefddb98bd0eeeb1de0c5a70d600f3b3c6aa4"
   },
   "layout-direction": {
-    "html": "c9e4df86fc830277d2a0808cf0741aff899ac219d8fba91fe0fa96997aff7628",
-    "bytes": 566792,
-    "headers": "d472b36c6897412e1ddf311c602f10ef0a7e5d301613d3de465526990493e62e",
-    "receipt": "c8e48e2d22fea692f57af2d7f5ada72fe0ac31ad7e6cc9eb4d99fa86c243dad1",
-    "fullReceipt": "fb178425a6eeeb67d897eacfd196c48109f5e50334f8bd8e4e75a85c6a597e7b"
+    "html": "19512bfe5b166060180793551d217065a4dbf9a4badc22932fd37c80319703c6",
+    "bytes": 576166,
+    "headers": "f221c586f479f48875ed89596294e304e9a40c695e11680a4b9e1c860ac5dfc5",
+    "receipt": "118ab1f425f48ab0d86087d41dff2a3c3f49db7aecabc7bec73ed8dcab3ca413",
+    "fullReceipt": "1e5ff01312d0e6531f18cb84f8f88eb1aa84cf9b589228399c3dcd44e2a499cd"
   },
   "pen-and-pencil": {
     "html": "a9987fc2278cfd95d3a1e8748ff3c40b33c2f72782405cd40bf317701856751f",

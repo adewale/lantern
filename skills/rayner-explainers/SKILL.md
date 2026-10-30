@@ -7,20 +7,32 @@ description: Author, check and publish Rayner explainers as reader-paced HTML em
 
 An explainer is one Rayner `Scene`. The CLI builds it into a step-through HTML page. It needs no server or MCP. Start with [Your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md) for a worked cache example. Read the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) before you host a page.
 
+## Editorial gate
+
+Before writing the scene, state the reader's specific question, the answer the model can support, and the conditions under which it holds. A source link is not a licence to claim more than the scene tests. For example, a ruler across “Ink on paper” measures that phrase's advance; without a trailing space, it does not locate the next word.
+
+Plan the steps in words before drawing them:
+
+- Open with a concrete puzzle or observable result, then name the code, standard or tool that resolves it. If the tool itself is the subject, show what it does before listing its parts.
+- For each step, write what changes, which prior question it answers, and why the next step follows. Leave its evidence visible while the reader reads. A caption should connect a pictured mark or number to an inference, not narrate controls or repeat the heading.
+- Use an alternate case when it changes the conclusion or exposes a boundary; write conditional captions for its actual outcome. End at the specific result and its limit, not at a claim that the subject is important.
+
+Read the first step, a countercase and the ending as a newcomer would. Can the reader reconstruct the cause without watching the animation? Does every claimed value, path or comparison appear in the resting picture or an identified source? Would any sentence become false when a setting changes? `check` and `review` catch missing or unreadable ink; they cannot answer these questions. Use [anti-slop-writing](https://github.com/adewale/anti-slop-writing) to replace generic importance, decorative contrast and repeated headings with a mechanism or a cut. Keep earned detail, including a caveat when it bounds a claim.
+
 ## Loop
 
 Commands are `rayner <command>`, or `npm run rayner -- <command>` in a checkout; `rayner --help` prints the install lines for capture and PNG output.
 
 1. `rayner init <directory>` writes a working `scene.ts`. Keep one default-exported `Scene` subclass with static `meta` (id, title, sources, and `lang` if not English) and, if a second case teaches something, static `settings`.
 2. Derive every value on screen from a small model of the system, kept apart from the drawing code, and test it; the checks cannot tell whether a caption is true. See [Test the model](#test-the-model).
-3. Give each idea a step with a stable name, a title the picture can prove, a `line` (about ten words: the one thing to see, never a repeat of the title) and a caption naming what is on screen. The page shows all three; the line is drawn on the picture under the title.
+3. Give each idea a step with a stable name, a title the picture can prove, a short `line` telling the reader what to notice (not repeating the title), and a caption connecting the visible evidence to its consequence. The page shows all three; the line is drawn on the picture under the title.
 4. Before you hand-roll motion, read the [engine map](https://github.com/adewale/rayner/blob/main/docs/ENGINE.md): it already has a camera that zooms without moving a point, code that morphs along its own diff (`TransformDiff`), morphs matched by text or shape, emphasis that stays, charts of the model's numbers (`Axes`), pictures rebuilt from `scene.state` (`view`), addressable code spans, and `Restore`, `TransformFromCopy` and `Succession`. [The reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md#engine-features) names an explainer that uses each.
 5. Call `stage(this, { style })` once. Put diagrams (`s.show`), cards (`s.card`) and code (`s.code`) in named regions (`main`, `side`, `top`, `bottom`) so nothing overlaps. For explicit spatial direction, set `direction: 'rtl'` on the stage and use logical `start`/`end` regions; cards inherit RTL columns unless they override `direction`. Physical regions keep their coordinates, and Mermaid flow still follows its source. Native Rayner objects mix freely; bring several in together with `s.enter(...)`, and pass `{ describe: '…' }` to `s.enter` or `s.keep` so readers who cannot see the drawing get it in words.
 6. Design each step's resting picture, what the step leaves on screen, because the reader looks at it while reading the caption. Leave the idea there with `walk(..., { trail: true })`, `mark`, `dim`, `note`, `card.set`, `card.mark` and `code.focus`; give marks an `as` word ("rejected") when they mean something. A token that walks and vanishes leaves nothing. Say a value where it is, with `s.dimension`, `s.pin` or `s.callout`, rather than in a card beside it; keep cards for a few values that belong together (`check` reports `cardsAtRest`).
 7. Make the drawing the show. `s.draw(m, { tool: 'pen' })` draws a mobject stroke by stroke with the tool on its tip; `s.focus(target)` moves the camera close while the heading stays put; `s.carry(m, region)` moves something the next step builds on, instead of clearing and redrawing it.
 8. `rayner preview scene.ts --watch` and `rayner shots scene.ts --case id=value`: look at every step of every case. A passing build is not a visual review.
 9. `rayner check scene.ts`. Fix failures at their cause; `out/checks/<id>/report.json` draws each resting picture roughly in text. Its `legibility.labelsUnder12PxAt390` counts labels a phone reader sees under 12 px in the step's close-up; get it to 0 in every case (a heading at `stage(this, { headingSize: 0.54 })` reads at 12 px). Making text larger so it reads at 12 px fixes the problem; changing the check, its threshold, or hiding labels so they are not counted is weakening it.
-10. `rayner describe scene.ts --out out/<id>.json` and read each step of each case: does the caption claim only what that step's `changed` and `picture` show? Rewrite a caption that names a value, mark or path the step does not show, or change the step so it shows it. `rayner see scene.ts <step> --case id=value` prints one step.
+10. `rayner describe scene.ts --out out/<id>.json` and read each step of each case: does the caption claim only what that step's `changed` and `picture` show? Does the first step deliver on the gallery title, and does the last earn its conclusion in alternate cases? Rewrite a caption that names a value, mark or path the step does not show, or change the step so it shows it. `rayner see scene.ts <step> --case id=value` prints one step.
 11. `rayner build scene.ts --out public/<id>.html`.
 
 ## Start from an example
@@ -64,7 +76,7 @@ The scene asks the model; it never states an answer it did not get from one. The
 - For a diagram that should use the requested face's natural proportions, pass `lettering: 'natural'` in its `s.show` spec. Capture measures the active sans/mono faces and requested cuts before layout; a style alone does not request a face. Refresh and commit the diagram and lettering snapshots together after changing fonts or measurements. Existing specs keep fitting labels to captured widths.
 - Keep paragraph shaping separate from panel placement. Arabic or Hebrew text determines its own reading direction; `stage` and card `direction` choose spatial order. Values and code retain their source order. Set a diagram's flow explicitly in Mermaid, such as `graph RL`.
 - For formulas, set `lettering: { math: true }` and draw `new MathTex('\\frac{a}{b}', { display: true })`. `snapshots` typesets each one once (it needs `RAYNER_MATH_FONT`); commit `scene.lettering.json`. TeX outside `glyph`'s subset (`\color`, `align`, `\substack` …) fails capture. Give each kept formula a `describe` in words, and morph a formula that gains or loses terms with `TransformMatchingText`. See REFERENCE, Maths.
-- Leave out panel titles and asides that repeat the heading, caption or values. Write titles and captions with [anti-slop-writing](https://github.com/adewale/anti-slop-writing): name the value or mechanism on screen, and state contrasts with because, although or so.
+- Leave out panel titles and asides that repeat the heading, caption or values. Apply [anti-slop-writing](https://github.com/adewale/anti-slop-writing) to every title, line and caption: name the pictured mechanism and its consequence, connect contrasts with their cause, and cut significance claims the evidence does not earn.
 
 ## Reporting
 
