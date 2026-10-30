@@ -88,7 +88,7 @@ Diagrams are plain Mermaid strings. At build time every scene runs once per case
 
 ## Reader settings
 
-The stepper is the primary way to read an explainer, because the author decides the order of ideas and the reader decides the pace. The player stops after each step, so the caption can be read before the next idea arrives. Previous, Next, the steps list and the keyboard all work on steps, and `?step=` links to one.
+The stepper is the primary way to read an explainer, because the author decides the order of ideas and the reader decides the pace. The player stops after each step, so the caption can be read before the next idea arrives. Previous, Next, the steps list and the keyboard all work on steps, and `?step=` links to one. A step bar under the picture shows every step and fills as the current one plays; it is a stepper, not a seek bar.
 
 Reader settings serve the stepper. A setting offers another *case* of the same explanation, and that case is again a full, stepped sequence. It is not a slider or a free input.
 
