@@ -311,6 +311,8 @@ The report goes to `out/checks/<id>/report.json`. For each case it holds the ful
 
 `cardsAtRest` counts the cards in each step's resting picture.
 
+`words` estimates each step's title, line and caption in lines on a 390 px page (`phoneLines`), from character counts measured against the player's type; system fonts differ, so compare a case's steps with each other rather than reading the counts as exact. For each of `title`, `line` and `caption` it gives the `tallest`, the `median`, `slackLines` (the empty lines the tallest leaves a median step, because the player reserves the tallest for every step) and `outliers` (steps more than two caption lines, or one title or line, past the median). It is reported, not gated.
+
 The phone sizes are reported, not gated; every demo case reports no label under 12 px. A close-up zooms on top of the author's camera, so its sizes multiply the camera zoom by the close-up's.
 
 Motion is measured on screen, after the camera: a smooth camera move reports nothing, and moving `this.frame` without `.animate` (a cut) reports a teleport for everything in view. A shape that appears over a shape that stays and is no less opaque is not a cut-in when it is a `TransformFromCopy` copy of that shape, or when every shown part of it has the same outline (`shapeKey()`) and the same fill and stroke presence as a part of the staying one. A brighter shape over a faint one, a filled shape popping inside an outline, a hand-made `Transform(t.copy(), other)` that changes glyph shapes on its first frame, and a shape appearing elsewhere are cut-ins.

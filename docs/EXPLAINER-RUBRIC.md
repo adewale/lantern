@@ -17,6 +17,13 @@ Score six dimensions from 0 to 4 (24 total). Apply the same anchors to each: **0
 
 **How to report:** give Q/P/V/B/G/E, total, one observable strength or improvement, the assessed commit/export, and the limits of the review. Sort by total descending, ties together (alphabetical display within a tie is only for finding rows). Regrade after substantive changes; do not compare totals from different editions as if they were controlled reader-study results. As an *unscored* diagnostic, show the countercase's input before its answer and ask an unfamiliar reader to predict the outcome and why; record their actual answer, not a presumed retention or comprehension score. See the dated [29-scene assessment](evidence/explainer-stack-rank-2026-10-30.md).
 
+**Checks from the player redesign** (unscored, but cite them in V and E):
+
+- *Crop test* (V). Open each step from a direct link at phone width and cover the caption. The resting picture should still say which step it is, what it is about and which values matter. A picture that needs its caption to be read at all loses V.
+- *Even steps* (E). `rayner check` reports `words` per case. A step in `caption.outliers` makes every other step show empty space, `caption.slackLines` lines of it at a median step. Record it as an E improvement: shorten the caption or split the step.
+- *Roles* (E). The title states what the picture proves, the line says what to notice, the caption gives the reasoning. A line that reads as a second caption, or a caption that repeats the title, is duplication.
+- *Layout* (V, E). The step's change is the strongest mark; a mark means the same thing in every step; regions share edges; labels sit by their referents.
+
 ## Choose a hero separately
 
 A clear niche lesson can be valuable without being a good front-door example. For a gallery hero, write down the prospective **author's job**, a reproducible reader puzzle, the **Rayner leverage** (what coordinated model, code, state and picture reveal that a still or code diff would not), a **consequential counterfactual**, the source/test trail, and the claim's limit. Score these editorial prompts **J/R/C, 0–4 each**, alongside—not added to—the lesson score:
