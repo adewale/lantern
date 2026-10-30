@@ -263,6 +263,107 @@ test('every catalog page, in English and French: no Replay, Stop or Fit stage bu
     await context.close();
   }
 });
+// specs/player-tile.md T12, the crop test: cut the tile out of any context and it still says what it
+// is, what it is about, who made it and where to go, and nothing of the page lies outside it. DOM only.
+interface CropExpectation {
+  player: string;
+  next: string;
+  title: string;
+  kicker: string;
+  segments: number;
+  cases: number;
+  madeWith: string;
+  home: string;
+  /** For a framed page: the way out's path and query, without parentOrigin. */
+  open: { path: string; query: Record<string, string> } | null;
+}
+function cropTest(e: CropExpectation) {
+  const tile = document.querySelector<HTMLElement>('#content .tile');
+  if (!tile) return ['no .tile in #content'];
+  const problems: string[] = [];
+  const all = (s: string) => [...tile.querySelectorAll<HTMLElement>(s)];
+  const say = (what: string, got: unknown, want: unknown) => {
+    if (JSON.stringify(got) !== JSON.stringify(want)) problems.push(`${what}: ${JSON.stringify(got)}, wanted ${JSON.stringify(want)}`);
+  };
+  // 1. What it is.
+  say('section.player and its name', all('section.player').map((p) => p.getAttribute('aria-label')), [e.player]);
+  say('.stepper holding Next and the step bar', all('.stepper').map((s) => [s.querySelectorAll(`button[aria-label="${e.next}"]`).length, s.querySelectorAll('ol.step-bar > li > button').length]), [[1, e.segments]]);
+  // 2. What it is about.
+  say('h1', all('h1').map((h) => h.textContent), [e.title]);
+  say('.lede .kicker', all('.lede .kicker').map((k) => k.textContent), [e.kicker]);
+  say('.case fieldsets', all('fieldset.case').length, e.cases);
+  // 3. Who made it.
+  say('.foot a.mark', all('.foot a.mark').map((a) => [a.textContent, (a as HTMLAnchorElement).href, a.getAttribute('aria-label')]), [['Rayner', e.home, e.madeWith]]);
+  // 4. Where to go.
+  say('transcript and steps disclosures in the tile', [document.querySelectorAll('details.transcript').length, all('details.transcript').length, document.querySelectorAll('.rail').length, all('.rail').length], [1, 1, 1, 1]);
+  const open = all('.foot a.open') as HTMLAnchorElement[];
+  if (!e.open) say('.foot a.open (standalone)', open.length, 0);
+  else {
+    say('.foot a.open (framed)', open.length, 1);
+    if (open[0]) {
+      const u = new URL(open[0].href);
+      const sorted = (q: [string, string][]) => Object.fromEntries(q.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+      say('the way out', { path: u.origin + u.pathname, query: sorted([...u.searchParams].filter(([k]) => k !== 'theme')), parentOrigin: u.searchParams.has('parentOrigin') }, { path: e.open.path, query: sorted(Object.entries(e.open.query)), parentOrigin: false });
+    }
+    // Nothing of Rayner's drawn outside the tile.
+    say('framed body and #content', [getComputedStyle(document.body).backgroundColor, getComputedStyle(document.getElementById('content')!).padding], ['rgba(0, 0, 0, 0)', '0px']);
+  }
+  // 5. The boundary: every element under #content with a box is the tile or inside it, and inside its box.
+  const t = tile.getBoundingClientRect();
+  for (const el of document.querySelectorAll<HTMLElement>('#content *')) {
+    const r = el.getBoundingClientRect();
+    // A closed disclosure's content keeps a layout box in Chromium but is not drawn (content-visibility).
+    if ((r.width === 0 && r.height === 0) || !el.checkVisibility()) continue;
+    if (el !== tile && !tile.contains(el)) problems.push(`outside the tile: ${el.tagName.toLowerCase()}.${el.className}`);
+    else if (r.left < t.left - 1 || r.top < t.top - 1 || r.right > t.right + 1 || r.bottom > t.bottom + 1)
+      problems.push(`past the tile's edge: ${el.tagName.toLowerCase()}.${el.className} ${JSON.stringify([r.left, r.top, r.right, r.bottom])} vs ${JSON.stringify([t.left, t.top, t.right, t.bottom])}`);
+  }
+  return problems;
+}
+test('the tile stands alone: on every catalog page, standalone, in a raw iframe and in the loader, the tile says what it is, what it is about, who made it and where to go, and nothing lies outside it', options, async () => {
+  const { PRODUCT } = await import('../scenes/explainers/catalog.ts');
+  const context = await browser.newContext({ viewport: { width: 900, height: 800 }, reducedMotion: 'reduce' });
+  let pages = 0;
+  try {
+    const page = await context.newPage();
+    for (const [id, project] of await catalog()) {
+      const t = chromeFor(project.Scene.meta?.lang),
+        values = resolveSettings(project.Scene),
+        first = project.variants.find((v) => sameCase(project, v.values, values))!.trace.steps;
+      const expect: CropExpectation = {
+        player: t.player,
+        next: t.nextLabel,
+        title: project.Scene.meta?.title ?? id,
+        kicker: t.stepOf(1, first.length),
+        segments: first.length,
+        cases: project.Scene.settings?.length ?? 0,
+        madeWith: t.madeWith,
+        home: PRODUCT.home,
+        open: null,
+      };
+      const src = `${embed}/catalog/${id}.html`;
+      await page.goto(src);
+      await page.waitForSelector('#content[data-ready=true]');
+      assert.deepEqual(await page.evaluate(cropTest, expect), [], `${id}, standalone`);
+      const framed = { ...expect, open: { path: src, query: { ...values, step: first[0]!.step } } };
+      for (const [how, body] of [
+        ['a raw iframe', `<!doctype html><style>body{margin:0}</style><iframe title="t" src="${src}" style="width:900px;height:800px;border:0"></iframe>`],
+        ['the loader', `<!doctype html><style>body{margin:0}</style><div id="a"></div><script src="${embed}/loader.js" data-src="${src}" data-target="a" data-title="t"></script>`],
+      ] as const) {
+        hostBody = body;
+        await page.goto(host);
+        await page.waitForFunction(() => !!document.querySelector('iframe'));
+        const frame = (await (await page.locator('iframe').elementHandle())!.contentFrame())!;
+        await frame.waitForSelector('#content[data-ready=true]');
+        assert.deepEqual(await frame.evaluate(cropTest, framed), [], `${id}, in ${how}`);
+      }
+      pages++;
+    }
+  } finally {
+    await context.close();
+  }
+  assert.equal(pages, (await catalog()).size);
+});
 test('every case of every catalog explainer has one step bar segment per step', options, async () => {
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
   try {
