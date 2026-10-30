@@ -95,6 +95,7 @@ Reader settings serve the stepper. A setting offers another *case* of the same e
 - **Declared by the scene.** `static settings = [{ id, label, options, default }]`. The scene reads the values with `settingsOf(this)` and may change its diagrams, captions, numbers and even which steps exist.
 - **Finite and built ahead.** The build runs every combination. Authors run `check` or `review` before publishing; `build` does not repeat validation.
 - **Under the title.** Cases are a segmented choice next to what they change. Switching keeps the reader's step, matched by name.
+- **The page is the tile.** The title, the cases, the picture, the stepper, the words, the steps, the transcript, the maker's mark and the way out are one bounded object; outside it the page has only background, and in a frame the host's.
 - **Optional.** The Lantern self-explainer has none, because nothing in it has a case worth choosing.
 
 A good setting changes what the reader learns. In OAuth with PKCE, "Show an attacker" adds a step in which a stolen code fails. In the seasons explainer, "Observe from" Tromsø, London, Quito or Sydney shows polar day, Sydney's winter in June and the equator's flat year. In the merge-request explainer, "Follow a request" shows a cache hit or a miss after the change. An earlier prototype let readers switch a diagram's style; that was dropped, because a palette change teaches nothing, and each explainer now has one style chosen for it.
