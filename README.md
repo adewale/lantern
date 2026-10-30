@@ -4,7 +4,7 @@ Rayner helps engineers and technical educators turn TypeScript models into expla
 
 [![A cache hit follows the cache-to-reply path and reads the database zero times.](https://raw.githubusercontent.com/adewale/rayner/8d344c16fab72d2fa52554f905cd97bf840c553c/docs/images/cache-hit.png)](https://oshineye.dev/projects/rayner/mr-cache?request=hit)
 
-[Try the examples](https://oshineye.dev/projects/rayner) · [Write your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md)
+[Try the examples](https://oshineye.dev/projects/rayner) · [Hello World source](https://github.com/adewale/rayner/blob/main/scenes/explainers/hello-world/scene.ts) · [Write your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md)
 
 Use Rayner when a different input changes what you need to explain: which route a request takes, why an attack fails, or how a code change affects the system. Reader settings are finite choices, with every combination built ahead of time. Authors must test the model against its sources and review the pictures; automated checks cannot establish that the explanation is true.
 
@@ -20,7 +20,7 @@ npm run demos:build
 npm run demos:serve
 ```
 
-Open http://127.0.0.1:5175/explainers/. Start with OAuth with PKCE, the seasons, or the KV-cache code change. If Chromium is already installed, set `CHROMIUM_EXECUTABLE_PATH` instead of downloading it.
+Open http://127.0.0.1:5175/explainers/. To learn the authoring API, open `hello-world.html` beside its [complete minimal scene](docs/TUTORIAL.md#0-hello-world), then choose a case in `feature-tour.html`: the first step shows the author-side code and the second shows its result. [Feature tour guide](docs/FEATURE-TOUR.md) explains the remaining specialized APIs. For a subject lesson, start with the KV-cache code change. These two new local examples are not in the curated public gallery. If Chromium is already installed, set `CHROMIUM_EXECUTABLE_PATH` instead of downloading it.
 
 ## Write and publish one
 
@@ -58,7 +58,7 @@ Scenes are ordinary TypeScript classes. Diagrams are captured from [Agentic Merm
 
 ## Documentation and contributions
 
-[Tutorial](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md) · [API and CLI reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) · [Engine guides](https://github.com/adewale/rayner/blob/main/docs/ENGINE.md) · [Agent authoring skill](https://github.com/adewale/rayner/blob/main/skills/rayner-explainers/SKILL.md)
+[Tutorial](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md) · [Authoring feature tour](https://github.com/adewale/rayner/blob/main/docs/FEATURE-TOUR.md) · [API and CLI reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) · [Engine guides](https://github.com/adewale/rayner/blob/main/docs/ENGINE.md) · [Agent authoring skill](https://github.com/adewale/rayner/blob/main/skills/rayner-explainers/SKILL.md)
 
 Report bugs in [GitHub issues](https://github.com/adewale/rayner/issues), with the scene, case, step and viewport needed to reproduce them. For code changes, run `npm run check` and `npm test`; [testing guidance](https://github.com/adewale/rayner/blob/main/docs/TESTING.md) covers browser, property and capture checks. [Publishing npm releases](https://github.com/adewale/rayner/blob/main/docs/RELEASING.md) is a separate maintainer workflow.
 

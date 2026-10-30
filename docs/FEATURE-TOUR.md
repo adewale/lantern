@@ -1,0 +1,26 @@
+# See the authoring code
+
+Build the local gallery (`npm run demos:build && npm run demos:serve`) and open [Hello, world!](http://127.0.0.1:5175/explainers/hello-world.html) or the [feature tour](http://127.0.0.1:5175/explainers/feature-tour.html). **These are source examples, not new public website routes.** The [Hello World tutorial](TUTORIAL.md#0-hello-world) prints the whole minimal scene. Its only difference from the checked-in scene is the import path: an installed project writes `from 'rayner'`; the repository example imports its local engine.
+
+The feature tour is one scene with 15 prebuilt cases. Pick a feature, inspect the **Recipe** step for the *code an author writes*, then advance to **Result** to see that feature execute. Each case has a direct link, for example `feature-tour.html?feature=state&step=recipe`. The excerpts show the author-side calls that produce the pictured behavior; the tour's [runnable source](../scenes/explainers/feature-tour/scene.ts) also adds styling, positions and navigation between cases. They are not a second player implementation. In an installed project import the named classes/functions you use from `rayner` and import `stage` and `settingsOf` from `rayner/explain`; [the reference](REFERENCE.md) lists their options. `s` means `const s = stage(this);` **before** the steps in `construct()`; `this` is your `Scene`. Add an excerpt after the step whose picture it changes (unless it includes its own `this.step`). The `settings` recipe's `static settings` declaration belongs in the class body, not inside `construct()`.
+
+| Choose `feature=` | Code and witnessed result | Further options |
+| --- | --- | --- |
+| `steps`, `settings` | `this.step`, `s.enter`, `static settings`, `settingsOf(this)` | [Scene](REFERENCE.md#scene), [settings](REFERENCE.md#settings) |
+| `diagram` | `s.show({source})`, `d.walk(..., {trail: true})` | [Diagram actions and the 15 families](REFERENCE.md#diagrams) |
+| `code`, `code-diff` | `s.code`, `block.focus`, `block.morph` | [Code spans](CODE.md), [native diff](MATCHING.md#diff-driven) |
+| `animation`, `matching`, `restore` | `Transform`, `TransformMatchingText`, `saveState` / `Restore` | [Matching](MATCHING.md), [sequencing and copies](ANIMATIONS.md) |
+| `emphasis`, `annotations`, `drawing` | `Circumscribe({keep:true})`, `s.pin`, `s.draw` | [Emphasis shapes](EMPHASIS.md), [stage helpers](REFERENCE.md#stage) |
+| `camera` | `s.focus(subject)`, `s.focus('all')` | [Camera and framing](CAMERA.md) |
+| `chart` | `Axes`, `axes.lineGraph` | [Plots, bars and number lines](GRAPHING.md) |
+| `state` | `this.state`, `view(this, ...)`, `label.sync()` | [State views and fidelity checks](VIEWS.md) |
+| `direction` | `stage(this, {direction:'rtl'})`, card at `start` | [Logical layout](REFERENCE.md#spatial-direction) |
+
+**Scope:** this tour demonstrates a usable path through each *common authoring family*, not every exported class, option, animation or diagram family. Do not mistake 15 example cases for exhaustive API coverage. The specialized features below have their own runnable examples and build-time prerequisites; a fabricated on-screen “demo” without those prerequisites would be worse than a link to the real source:
+
+- **Additional writing systems, faces, weight and italic:** add `static meta = { id: 'alphabet', title: 'Αλφάβητο', lettering: { scripts: ['Grek'] } };` before drawing `new Text('Αλφάβητο')`; capture and commit `scene.lettering.json` as described in [Lettering](REFERENCE.md#lettering-on-request). Arabic, Devanagari and Hebrew, replacement faces and real bold/italic use the [outline workflow](LETTERING.md#supported-requests).
+- **Maths:** add `lettering: { math: true }` to `static meta`, then draw `new MathTex('x^2', {display: true})` using `s.enter(..., {describe: 'x squared'})`; supply the pinned Latin Modern Math font and run `rayner snapshots` before checking. See the complete [MathTex scene and commands](REFERENCE.md#maths).
+- **Diagram families and geometry:** change `source` in `s.show({source: 'graph LR\nA --> B'})` to a supported family source; call `d.reveal`, `d.mark`, `d.dim`, `d.note`, `d.focus` or `d.morph` as the story requires. For natural font measurements set `s.show({source, lettering: 'natural'})`; it needs an appropriately requested face and refreshed snapshots. See [diagrams](REFERENCE.md#diagrams) and [measurements](LETTERING.md#diagram-measurements).
+- **Native code diffs, matching keys, emphasis shapes, graph areas, copies and sequencing:** the [engine feature inventory](REFERENCE.md#engine-features) links the exact author-side constructor and an existing explainer for each. A test-only `viewMismatch` is a verification tool, not a reader-facing animation; use [view fidelity checks](VIEWS.md) to test your model-driven picture.
+
+Neither a successful check nor this tour proves every explanatory claim true. The examples show API behavior and accessibility descriptions; independently test any domain model before publishing it. Keep the reader's actual question ahead of a feature inventory.
