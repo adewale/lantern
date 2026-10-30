@@ -127,7 +127,12 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const earlyPrev = button(t.previous, 'previous'),
     earlyNext = button(t.nextLabel, 'next', { text: t.nextLabel, className: 'button primary' });
   earlyNext.append(earlyNext.querySelector('svg')!);
-  transport.append(earlyPrev, earlyNext);
+  // Beside Next, one mark per step: where the reader is and how far the explanation runs.
+  // It repeats the numbered list under the caption, which keyboard and screen-reader users
+  // already have, so it is a pointer-only shortcut kept out of the accessibility tree.
+  const rail = el('ol', undefined, 'rail');
+  rail.setAttribute('aria-hidden', 'true');
+  transport.append(earlyPrev, earlyNext, rail);
   const controls = el('nav', undefined, 'controls');
   controls.setAttribute('aria-label', t.controls);
   const prev = button(t.previous, 'previous'),
@@ -328,6 +333,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     next.disabled = earlyNext.disabled = selected === trace.steps.length - 1;
     for (const b of steps.querySelectorAll('button'))
       b.setAttribute('aria-current', b.dataset.step === step.step ? 'step' : 'false');
+    rail.querySelectorAll('li').forEach((li, i) => (li.dataset.at = i < selected ? 'past' : i === selected ? 'now' : 'next'));
     stage.setAttribute('aria-label', t.stageLabel(title.textContent!, words.title, words.line));
     summary.textContent = pictureSummary(step.after);
     picture.innerHTML = pictureHtml(step.after);
@@ -634,6 +640,18 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
         b.append(el('span', label), bold);
         b.type = 'button';
         b.dataset.step = s.step;
+        b.addEventListener('click', () => void show(i));
+        li.append(b);
+        return li;
+      }),
+    );
+    rail.replaceChildren(
+      ...trace.steps.map((s, i) => {
+        const li = el('li'),
+          b = el('button', String(i + 1));
+        b.type = 'button';
+        b.tabIndex = -1;
+        b.title = stepWords(s).title;
         b.addEventListener('click', () => void show(i));
         li.append(b);
         return li;

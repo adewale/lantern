@@ -60,7 +60,15 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .lede strong,.lede-ruler strong{font-weight:650}
 .lede span,.lede-ruler span{color:var(--muted)}
 .lede span[hidden]{display:none}
-.step-transport{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.step-transport{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px}
+/* The rail: one numbered mark per step, joined by a line that fills as the reader moves on. */
+.rail{display:flex;flex-wrap:wrap;align-items:center;row-gap:6px;list-style:none;margin:0 0 0 8px;padding:0}
+.rail li{display:flex;align-items:center}
+.rail li+li::before{content:"";width:12px;height:2px;background:var(--line-strong)}
+.rail li[data-at=past]+li::before,.rail li[data-at=now]::before{background:var(--accent)}
+.rail button{font:inherit;display:grid;place-items:center;width:28px;height:28px;padding:0;border-radius:50%;border:1.5px solid var(--line-strong);background:var(--surface);color:var(--muted);font-size:.75rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1;cursor:pointer;transition:background-color 150ms ease,border-color 150ms ease,color 150ms ease}
+.rail [data-at=past] button{border-color:var(--accent);color:var(--accent)}
+.rail [data-at=now] button{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 .controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:16px}
 .tools{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:2px;margin-left:auto}
 .described{margin:8px 0 0;max-width:68ch;font-size:.9375rem;color:var(--muted)}
@@ -83,6 +91,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
   .button.primary:hover:not(:disabled){background:color-mix(in srgb,var(--accent) 88%,var(--fg))}
   .segments label:hover{color:var(--fg)}
   .steps button:hover{color:var(--fg);background:var(--surface)}
+  .rail [data-at=next] button:hover{border-color:var(--fg);color:var(--fg)}
 }
 @media(pointer:coarse){.button{min-width:44px;min-height:44px}.segments label{min-height:40px}}
 
@@ -114,5 +123,5 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .player:fullscreen .frame{width:min(100%,calc((100dvh - 180px)*16/9));margin:0 auto}.player:fullscreen .stage{border-radius:0}
 .player:fullscreen .step-transport,.player:fullscreen .lede,.player:fullscreen .caption,.player:fullscreen .described,.player:fullscreen .controls,.player:fullscreen .notice{width:min(100%,calc((100dvh - 180px)*16/9));margin-left:auto;margin-right:auto}
 
-@media(max-width:480px){.caption,.ruler{font-size:1.0625rem}.controls{gap:6px}}
-@media(prefers-reduced-motion:reduce){.button,.stage svg.glide,.overview .view,.segments label,.steps button{transition:none}.button:active:not(:disabled){transform:none}}
+@media(max-width:480px){.caption,.ruler{font-size:1.0625rem}.controls{gap:6px}.rail{margin-left:2px}.rail li+li::before{width:6px}.rail button{width:22px;height:22px;font-size:.6875rem}}
+@media(prefers-reduced-motion:reduce){.button,.stage svg.glide,.overview .view,.segments label,.steps button,.rail button{transition:none}.button:active:not(:disabled){transform:none}}
