@@ -91,6 +91,7 @@ export const RECIPES: Record<Feature, { title: string; result: string; code: str
 export default class FeatureTour extends Scene {
   static meta = {
     id: 'feature-tour', title: 'How do I write that in Rayner?',
+    caseNavigation: 'first' as const,
     sources: [
       'https://github.com/adewale/rayner/blob/main/scenes/explainers/feature-tour/scene.ts',
       'https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md',

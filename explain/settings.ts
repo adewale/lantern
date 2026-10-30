@@ -10,7 +10,9 @@ export interface Setting {
 export type Settings = Readonly<Record<string, string>>;
 export type ExplainerClass = SceneClass & {
   /** `lang` is the BCP 47 language of titles, captions and on-stage text (default `en`). */
-  meta?: { id?: string; title?: string; lang?: string; sources?: readonly string[]; lettering?: LetteringRequest };
+  meta?: { id?: string; title?: string; lang?: string; sources?: readonly string[]; lettering?: LetteringRequest;
+    /** A case picker starts at its first step; transcript links enter there too. Direct step URLs still work. */
+    caseNavigation?: 'first' };
   settings?: readonly Setting[];
 };
 /** Settings bound by `withSettings`, per bound class: visible from the first line of any constructor. */

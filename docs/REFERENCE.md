@@ -1,6 +1,6 @@
 # Reference
 
-[The tutorial](TUTORIAL.md) starts with the complete Hello World scene; the [authoring feature tour](FEATURE-TOUR.md) pairs code excerpts with the result of running them. [Publishing](PUBLISHING.md) covers hosting and embedding a page.
+[The tutorial](TUTORIAL.md) builds a two-case cache scene; the [authoring feature tour](FEATURE-TOUR.md) pairs code excerpts with the result of running them. [Publishing](PUBLISHING.md) covers hosting and embedding a page.
 
 Words used throughout: a **setting** is a choice a scene declares (an id, a label and options); a **case** is one value for every setting. A **step** is a named section of the scene, and its **resting picture** is what the step leaves on screen: the picture a reader looks at while reading the caption. The **stage** is the 16 × 9 drawing area. Code and JSON spell case as `variant` (`variantsOf`, `variants` in reports) and resting picture as `restingFrame`.
 
@@ -243,7 +243,7 @@ static settings = [{
 const which = settingsOf(this).request;
 ```
 
-Every case is built ahead of time; run `check` or `review` to validate every case before publishing. A scene may have at most 64. Ids are URL-safe (`[A-Za-z][A-Za-z0-9_-]*`) and distinct; `step`, `theme` and `parentOrigin` are reserved. Option values are unique and include the default. A setting may change diagrams, captions, numbers and which steps exist; keep the palette fixed.
+Every case is built ahead of time; run `check` or `review` to validate every case before publishing. A scene may have at most 64. Ids are URL-safe (`[A-Za-z][A-Za-z0-9_-]*`) and distinct; `step`, `theme` and `parentOrigin` are reserved. Option values are unique and include the default. A setting may change diagrams, captions, numbers and which steps exist; keep the palette fixed. By default a case switch stays on the same named step (or falls back to the first when the new case lacks it). For a recipe-first catalog, set `static meta = { ..., caseNavigation: 'first' }`: switching cases opens the first step and the transcript links to each case's first step. Direct `?step=` links, including later steps, still work.
 
 Other exports: `withSettings(Scene, values)` binds a case without mutating the class; `resolveSettings` validates; `variantsOf(Scene)` lists every case; `caseName(Scene, values)` gives "Label: option · Label: option"; `bindSnapshots(Scene, store)` binds a snapshot store.
 
