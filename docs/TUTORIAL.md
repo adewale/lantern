@@ -23,28 +23,6 @@ You need Node 24 or later. In your project, run `npm install --save-dev rayner`;
 
 This explainer draws no diagrams, so `check`, `preview` and `build` work without a browser. `review` opens the page in Chromium: install it with `npx playwright-core install chromium`, or set `CHROMIUM_EXECUTABLE_PATH` to a Chromium you already have.
 
-## 0. Hello, world!
-
-```ts
-import { Scene, Text, FadeIn } from 'rayner';
-
-export default class HelloWorld extends Scene {
-  static meta = { id: 'hello-world', title: 'Hello, world!' };
-  override async construct() {
-    await this.step('hello', { title: 'Hello, world!', caption: 'The picture says “Hello, world!”.' });
-    await this.play(new FadeIn(new Text('Hello, world!', { fontSize: 1.2 })));
-  }
-}
-```
-
-Save this as `hello-world/scene.ts` and build it:
-
-```sh
-npx rayner build hello-world/scene.ts --out public/hello-world.html
-```
-
-Open `public/hello-world.html` in a browser. A page with one step that fades in "Hello, world!" means your setup works. Every scene has these parts: `meta` names the page, `step` starts a step with its title and caption, and `play` runs an animation. Hello World answers no question, so it is a setup check rather than an explainer.
-
 ## 1. Plan on paper
 
 Write the plan before any code (principle 1):
@@ -204,6 +182,7 @@ export default class LruMru extends Scene {
 
 Read it from the top:
 
+- `static meta` holds the id, which names the output files, the page title and the sources the model was checked against.
 - `static settings` declares one setting with two options. Each option is a case: the reader can switch between them, and `check` and `review` visit both. Both cases send A B C D first, then either repeat the loop or alternate C and D.
 - `trace` asks the model once per case. Every value on the cards comes from it: `rows` turns the trace into what each card shows after the first `n` requests, and `show(n)` updates the three cards and records the same values on `this.state`, where tests and `rayner describe` can read them.
 - `stage(this, { style: 'nord' })` draws the paper and a heading that follows the steps. `s.card` places labelled values in a region of the stage.

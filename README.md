@@ -6,9 +6,9 @@ Rayner turns a TypeScript model into a step-through explanation. Readers can cha
 
 ## Start with a question
 
-[Why does a cache hit skip the database?](https://oshineye.dev/projects/rayner/mr-cache?request=hit&step=request) Follow the request, then [switch to a miss](https://oshineye.dev/projects/rayner/mr-cache?request=miss&step=request). The two cases show zero versus one D1 read. [The tutorial](docs/TUTORIAL.md) sets out the principles behind it and applies them to a new question: what is the difference between LRU and MRU cache replacement?
+[Why does a cache hit skip the database?](https://oshineye.dev/projects/rayner/mr-cache?request=hit&step=request) Follow the request, then [switch to a miss](https://oshineye.dev/projects/rayner/mr-cache?request=miss&step=request). The two cases show zero versus one D1 read. [Read the scene](scenes/explainers/mr-cache/scene.ts) to see how the code and diagram stay in step.
 
-[Browse the subject lessons](https://oshineye.dev/projects/rayner/) · [Write your first explainer](docs/TUTORIAL.md) · [API and CLI reference](docs/REFERENCE.md)
+[Browse the subject lessons](https://oshineye.dev/projects/rayner/) · [Write your first scene](docs/TUTORIAL.md) · [API and CLI reference](docs/REFERENCE.md)
 
 ## Write your first scene
 
@@ -24,7 +24,7 @@ npx rayner init my-explainer
 npx rayner preview my-explainer/scene.ts --watch
 ```
 
-Open the localhost URL printed by `preview`. Switch between **Cache hit** and **Cache miss**, edit `my-explainer/scene.ts`, then reload to see the rebuilt page. If Chromium is already installed, set `CHROMIUM_EXECUTABLE_PATH` instead of downloading it. The [complete nine-line Hello World scene](docs/TUTORIAL.md#0-hello-world) is a smaller smoke test for writing and building a scene; it does not teach a technical subject. [See its reader](https://oshineye.dev/projects/rayner/hello-world).
+Open the localhost URL printed by `preview`. Switch between **Cache hit** and **Cache miss**, edit `my-explainer/scene.ts`, then reload to see the rebuilt page. If Chromium is already installed, set `CHROMIUM_EXECUTABLE_PATH` instead of downloading it.
 
 When your explanation is ready, check every case and review the served page before building the file to publish:
 
@@ -37,7 +37,7 @@ npx rayner build my-explainer/scene.ts --out public/my-explainer.html
 
 ## Look up an authoring feature
 
-The [feature tour](https://oshineye.dev/projects/rayner/feature-tour) is an **API demo**, not a lesson or a complete inventory. Choose a feature, inspect the **Recipe** for the code an author writes, then advance to **Result**. Its excerpts need the surrounding scene to run; the [feature guide](docs/FEATURE-TOUR.md) links the full source and specialized setup. The [tutorial](docs/TUTORIAL.md) shows how a model, its pictures and their captions answer a reader's question.
+The [feature tour](https://oshineye.dev/projects/rayner/feature-tour) is an **API demo**, not a lesson or a complete inventory. Choose a feature to start at **Recipe**, where the code an author writes appears; then advance to **Result**. Its excerpts need the surrounding scene to run; the [feature guide](docs/FEATURE-TOUR.md) links the full source and specialized setup. Direct links to a Result step still work.
 
 ## Work from this repository
 
