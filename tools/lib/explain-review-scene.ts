@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile, writeFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { writeFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { buildExplainer } from './explain-build.ts';
@@ -11,35 +11,16 @@ import { serve } from './explain-serve.ts';
 import { launch } from './browser.ts';
 import { reviewStoryVariant } from './explain-story-review.ts';
 import type { StoryClaim } from './explain-story-review.ts';
+import { readReviewFile, assertPivots, pivotClaims } from './explain-pivots.ts';
 
-/** Independent caption expectations belong beside the author's scene, outside its runtime. */
+/**
+ * Independent caption expectations belong beside the author's scene, outside its runtime: its
+ * claims, plus the witnesses of its pivots (explain-pivots.ts), whose state is asserted first.
+ */
 export async function reviewClaims(project: Project, file?: string): Promise<StoryClaim[]> {
-  const path = file ? resolve(file) : project.file.replace(/\.[^.]+$/, '.review.json');
-  const raw = await readFile(path, 'utf8').catch((error: NodeJS.ErrnoException) => {
-    if (!file && error.code === 'ENOENT') return undefined;
-    throw error;
-  });
-  if (raw === undefined) return [];
-  const value = JSON.parse(raw);
-  const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
-  assert.ok(object(value) && value.version === 1 && Array.isArray(value.claims), `${path}: expected { version: 1, claims: [...] }`);
-  assert.ok(Object.keys(value).every(key => ['version', 'claims'].includes(key)), `${path}: unknown review field`);
-  for (const claim of value.claims) {
-    assert.ok(object(claim) && typeof claim.step === 'string' && claim.step.trim(), `${path}: a claim needs a step`);
-    assert.ok(Object.keys(claim).every(key => ['step', 'settings', 'opening', 'targets'].includes(key)), `${path}: unknown claim field`);
-    assert.ok(claim.opening === undefined || typeof claim.opening === 'boolean', `${path}: opening must be boolean`);
-    assert.ok(claim.settings === undefined || (object(claim.settings) && Object.values(claim.settings).every(v => typeof v === 'string')), `${path}: settings must map names to values`);
-    assert.ok(Array.isArray(claim.targets) && claim.targets.length, `${path}: a claim needs targets`);
-    for (const target of claim.targets)
-      assert.ok(object(target) && ((typeof target.key === 'string' && !!target.key.trim() && target.text === undefined) ||
-        (typeof target.text === 'string' && !!target.text.trim() && target.key === undefined)) &&
-        (target.paint === undefined || target.paint === 'stroke') && Object.keys(target).every(key => ['key', 'text', 'paint'].includes(key)), `${path}: targets need a key or text, with optional paint: "stroke"`);
-    const applicable = project.variants.filter(v => Object.entries(claim.settings ?? {}).every(([key, value]) => v.values[key] === value));
-    assert.ok(applicable.length, `${path}: claim settings select no case`);
-    for (const variant of applicable)
-      assert.ok(variant.trace.steps.some(s => s.step === claim.step), `${path}: ${claim.step} is missing from a selected case`);
-  }
-  return value.claims as StoryClaim[];
+  const { claims, pivots } = await readReviewFile(project, file);
+  assertPivots(project, pivots);
+  return [...claims, ...pivotClaims(pivots)];
 }
 
 /** The same served-paint reviewer used by the catalog, for any installed author's scene. */

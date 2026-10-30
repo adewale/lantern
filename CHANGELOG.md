@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add dials: a setting with `dial: true` varies one value inside a step, with a stepper under the picture, no extra cases or transcript, and `check` running every dial value. Keep a helper for one step with `until: 'next'`; place labels and callouts clear of lines, other labels and the stage edge with `s.label` and `callout`. `Create` lowers its stagger so no row draws in under a quarter of a second, so axes with number labels no longer pop in.
+- Record each explainer's pivotal claim in `scene.review.json` as a pivot (state asserted by `check`, witness painted for `review`); `tools/explain-pivots.ts --write` records a first pivot for every catalog explainer. Report label and caption density per step. A passing `check` prints a summary (`--json` for the report). Build `--stills` (every resting picture, no engine) and `--artifact` (the page without its document skeleton). Declare Node 22.22 as the minimum, which is what runs.
 - Add the Manhattanhenge explainer: a solar model checked against published instants, with cycle and horizon settings. Record a three-way comparison of the same explanation built with Rayner, Lantern and by hand, and the lessons it draws for Rayner, in `docs/evidence/manhattanhenge-three-ways-2026-10-30.md`.
 - Add opt-in natural-width diagram lettering. Capture measures the requested font before layout, so labels retain their proportions; existing diagrams keep their fitted widths.
 - Upgrade build-time Agentic Mermaid to 0.5.1 for its supported font-measurement hook and recapture the catalog with that renderer.

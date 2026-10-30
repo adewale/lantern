@@ -150,6 +150,18 @@ This writes:
 
 The helpers cover diagrams, cards and code panels. For anything else a scene uses the engine itself, imported from `rayner`, and the engine has general features the explainers use. Each excerpt below is shortened from one of the demo scenes in `scenes/explainers/`; [the reference](REFERENCE.md#engine-features) lists them all with their guides.
 
+Keep a reading for one step only, and let the stage remove it. A callout or dimension given `until: 'next'` fades out as the next step begins, in the same play as the heading change (`manhattanhenge`):
+
+```ts
+await s.callout(sun, `${time} · centre ${altitude} up`, { side: 'right', gap: 1.1, until: 'next' });
+```
+
+Place a label clear of lines and other labels instead of nudging coordinates by hand (`manhattanhenge`):
+
+```ts
+await s.label('26 May', [x, y], { size: 0.2, edge: [1, 0] });
+```
+
 Zoom onto what the step is about, then come back. The camera moves no point, so `check` measures labels as the reader sees them (`seasons`):
 
 ```ts

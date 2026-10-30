@@ -6,7 +6,15 @@ export interface Setting {
   label: string;
   default: string;
   options: readonly { value: string; label: string }[];
+  /**
+   * A dial varies one value inside a step rather than choosing a case: the reader turns it
+   * under the picture and the step is drawn again with the new value, without leaving the step.
+   * Cases, the page's transcript and its links are built from the other settings, with every
+   * dial at its default; `rayner check` runs every dial value of every case.
+   */
+  dial?: boolean;
 }
+export const isDial = (s: Setting) => s.dial === true;
 export type Settings = Readonly<Record<string, string>>;
 export type ExplainerClass = SceneClass & {
   /** `lang` is the BCP 47 language of titles, captions and on-stage text (default `en`). */
@@ -52,21 +60,38 @@ export function withSettings(Source: ExplainerClass, values: Settings = {}): Exp
   return Bound;
 }
 
-/** A case as readers see it, "Label: option · Label: option"; empty for a scene without settings. */
+/** A case as readers see it, "Label: option · Label: option"; empty for a scene without settings. A dial is named only when `values` holds it. */
 export function caseName(Scene: ExplainerClass, values: Settings): string {
   return (Scene.settings ?? [])
+    .filter((s) => !isDial(s) || Object.hasOwn(values, s.id))
     .map((s) => `${s.label}: ${s.options.find((o) => o.value === values[s.id])?.label ?? values[s.id]}`)
     .join(' · ');
 }
 
-/** Finite cartesian product, in declaration order; refuse accidental build explosions. */
-export function variantsOf(Scene: ExplainerClass, limit = 64): Settings[] {
+/** The values that name a case: every setting that is not a dial. Dials vary inside a step, not between cases. */
+export function caseValues(Scene: ExplainerClass, values: Settings): Settings {
+  const out: Record<string, string> = {};
+  for (const s of Scene.settings ?? []) if (!isDial(s) && Object.hasOwn(values, s.id)) out[s.id] = values[s.id]!;
+  return Object.freeze(out);
+}
+/** Finite cartesian product of the settings in `pick`, in declaration order, the rest at their defaults. */
+function product(Scene: ExplainerClass, pick: (s: Setting) => boolean, limit: number, what: string): Settings[] {
   resolveSettings(Scene);
-  const total = (Scene.settings ?? []).reduce((n, s) => n * s.options.length, 1);
-  if (!(total <= limit)) throw new Error(`Settings exceed ${limit} cases`);
+  const settings = Scene.settings ?? [];
+  const total = settings.filter(pick).reduce((n, s) => n * s.options.length, 1);
+  if (!(total <= limit)) throw new Error(`Settings exceed ${limit} ${what}`);
   let variants: Settings[] = [Object.freeze({})];
-  for (const s of Scene.settings ?? []) {
-    variants = variants.flatMap((v) => s.options.map((o) => Object.freeze({ ...v, [s.id]: o.value })));
-  }
+  for (const s of settings)
+    variants = pick(s)
+      ? variants.flatMap((v) => s.options.map((o) => Object.freeze({ ...v, [s.id]: o.value })))
+      : variants.map((v) => Object.freeze({ ...v, [s.id]: s.default }));
   return variants;
+}
+/** The cases: every combination of the settings that are not dials, dials at their defaults; refuse accidental build explosions. */
+export function variantsOf(Scene: ExplainerClass, limit = 64): Settings[] {
+  return product(Scene, (s) => !isDial(s), limit, 'cases');
+}
+/** Every combination of cases and dial values: what `rayner check` runs. */
+export function sweepsOf(Scene: ExplainerClass, limit = 256): Settings[] {
+  return product(Scene, () => true, limit, 'checked combinations');
 }

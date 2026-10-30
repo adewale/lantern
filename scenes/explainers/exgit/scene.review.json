@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "commit",
+      "settings": {
+        "change": "add"
+      },
+      "state": {
+        "t1": "aaa96ced2d9a1c8e72c56b253a0e2fe78393feb7",
+        "c1": "161f3920c6abe4771d81f05869e2b962752044f9",
+        "head": "161f3920c6abe4771d81f05869e2b962752044f9"
+      }
+    }
+  ]
+}

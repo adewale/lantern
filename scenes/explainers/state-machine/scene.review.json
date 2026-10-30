@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "opened",
+      "settings": {
+        "events": "success"
+      },
+      "state": {
+        "session": "open",
+        "returns": "open",
+        "event": "OPENED"
+      }
+    }
+  ]
+}

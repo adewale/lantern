@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "after",
+      "settings": {
+        "request": "hit"
+      },
+      "state": {
+        "databaseReads": "misses only"
+      }
+    }
+  ]
+}

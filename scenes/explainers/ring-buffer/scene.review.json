@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "result",
+      "settings": {
+        "operations": "wrap"
+      },
+      "state": {
+        "tail": 2,
+        "length": 5,
+        "returned": null,
+        "operation": "push 7"
+      }
+    }
+  ]
+}

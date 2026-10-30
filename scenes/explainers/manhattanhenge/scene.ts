@@ -1,5 +1,5 @@
-import { Scene, Circle, Line, Text, Group, Polygon, Rectangle, Dot, Arc, Arrow, Axes, VMobject, FadeIn, FadeOut, Create } from '../../../src/index.ts';
-import type { Mobject, Vec } from '../../../src/index.ts';
+import { Scene, Circle, Line, Text, Group, Polygon, Rectangle, Dot, Arc, Arrow, Axes, VMobject, FadeIn, Create } from '../../../src/index.ts';
+import type { Vec } from '../../../src/index.ts';
 import { stage, settingsOf } from '../../../explain/index.ts';
 import * as M from '../lib/manhattanhenge.ts';
 
@@ -59,12 +59,21 @@ export default class ManhattanhengeExplainer extends Scene {
   static settings = [
     { id: 'cycle', label: 'Cycle', default: 'may', options: [{ value: 'may', label: 'Late May' }, { value: 'july', label: 'Mid July' }] },
     { id: 'horizon', label: 'Western horizon', default: 'flat', options: [{ value: 'flat', label: 'Flat, 0°' }, { value: 'raised', label: 'Raised 0.5°' }] },
+    // A dial: which of the six evenings the crossing is drawn for, turned under the picture.
+    {
+      id: 'evening', label: 'Evening', default: '0', dial: true,
+      options: [
+        { value: '-2', label: 'two evenings earlier' }, { value: '-1', label: 'the evening before' }, { value: '0', label: 'the first named evening' },
+        { value: '1', label: 'the evening after' }, { value: '2', label: 'two evenings later' }, { value: '3', label: 'three evenings later' },
+      ],
+    },
   ];
 
   override async construct() {
     const cycle = settingsOf(this).cycle as keyof typeof CYCLES;
     const horizonKey = settingsOf(this).horizon as keyof typeof HORIZONS;
     const horizon = HORIZONS[horizonKey];
+    const dial = Number(settingsOf(this).evening ?? '0');
     const s = stage(this, { style: 'tokyo-night' });
     const ink = s.palette.ink, soft = s.soft, muted = s.palette.muted;
     const label = (text: string, at: Vec, opts: { size?: number; color?: string; edge?: Vec } = {}) =>
@@ -146,7 +155,7 @@ export default class ManhattanhengeExplainer extends Scene {
       axes.shift([-6.5 - axes.c2p(0, 230)[0], -3.95 - axes.c2p(0, 230)[1]]);
       const months = new Group(...M.MONTHS.map((m, i) => label(m, [axes.c2p(i + 0.5, 230)[0], axes.c2p(0, 230)[1] - 0.3], { size: 0.2 })));
       s.keep(axes, months, { describe: 'A chart of sunset bearing in degrees, 230 to 310, through the months January to December' });
-      await this.play(new Create(axes, { lagRatio: 0.05 }), new FadeIn(months), { runTime: 2.4 });
+      await this.play(new Create(axes), new FadeIn(months), { runTime: 2 });
       const dayAt = (x: number) => Math.min(year.length - 1, Math.max(0, (x / 12) * year.length));
       const bearingAt = (x: number) => {
         const d = dayAt(x), i = Math.floor(d), f = d - i;
@@ -175,7 +184,8 @@ export default class ManhattanhengeExplainer extends Scene {
     // --------------------------------------------------------------- evening
     const cyc = cycleOf(cycle, horizon);
     const named = cyc.half.doy < cyc.full.doy ? [cyc.half, cyc.full] : [cyc.full, cyc.half];
-    const evening = cyc.half;
+    // The evening on show: the first named one, or the one the dial turns to.
+    const evening = cyc.ladder[2 + dial]!;
     const K = 1.8, Y0 = -3.3;
     const vx = (az: number) => (az - M.GRID_BEARING) * K;
     const vy = (alt: number) => Y0 + alt * K;
@@ -185,7 +195,6 @@ export default class ManhattanhengeExplainer extends Scene {
         ? new Circle({ radius: M.SUN_RADIUS * K, stroke: SUN, strokeWidth: 0.025, fill: 'none' }).moveTo([vx(az), vy(alt)])
         : new Circle({ radius: M.SUN_RADIUS * K, fill: SUN, fillOpacity: opts.fillOpacity ?? 1, stroke: opts.edged ? s.palette.paper : 'none', strokeWidth: opts.edged ? 0.04 : 0 }).moveTo([vx(az), vy(alt)]);
     const horizonWord = horizon === 0 ? 'a flat horizon' : `a horizon ${deg(horizon, 1)} high`;
-    const eveningInk: Mobject[] = [];
     await this.step('evening', {
       title: `On ${M.label(YEAR, evening.doy)} the Sun crosses the bearing at ${minutes(evening.ms)}`,
       line: 'It slides down and to the right, about 1° lower for every 1° further north.',
@@ -221,7 +230,8 @@ export default class ManhattanhengeExplainer extends Scene {
             new Line([vx(M.GRID_BEARING - AZ), vy(horizon)], [vx(M.GRID_BEARING + AZ), vy(horizon)], { stroke: ink, strokeWidth: 0.03 }),
           )
         : null;
-      const horizonSaid = label(horizon > 0 ? `visible horizon, ${deg(horizon, 1)}` : 'flat horizon, 0°', [vx(M.GRID_BEARING - AZ) + 0.1, vy(horizon) + 0.22], { size: 0.2, color: ink, edge: [-1, 0] });
+      // The horizon's name sits just under the flat line, in the ground band, or just over a raised one.
+      const horizonSaid = label(horizon > 0 ? `visible horizon, ${deg(horizon, 1)}` : 'flat horizon, 0°', [vx(M.GRID_BEARING - AZ) + 0.1, horizon > 0 ? vy(horizon) + 0.22 : vy(0) - 0.2], { size: 0.2, color: ink, edge: [-1, 0] });
       s.keep(ground, flat, ...(raised ? [raised] : []), horizonSaid, bearings, altitudes, centreLine, walls, {
         describe: `The view west along a cross-street: a horizon line${horizon > 0 ? ` with the visible horizon drawn ${deg(horizon, 1)} above it` : ''}, compass bearings 297° to 301° along the bottom with 299.1° in the middle, altitudes 0° to 2° up the left, a dashed vertical line at 299.1°, and schematic buildings on both sides leaving an opening ${deg(2 * CANYON_HALF_WIDTH)} wide.`,
       });
@@ -240,23 +250,27 @@ export default class ManhattanhengeExplainer extends Scene {
         return { m, az: p.azimuth, alt: p.apparent, at: [vx(p.azimuth), vy(p.apparent)] as Vec, time: minutes(evening.ms + m * 60000) };
       });
       const ghosts = new Group(...marks.map((k) => disc(k.az, k.alt, { fillOpacity: 0.3 })));
-      const times = new Group(...marks.map((k) => label(k.time, [k.at[0], k.at[1] - M.SUN_RADIUS * K - 0.22], { size: 0.2 })));
       const sun = disc(M.GRID_BEARING, evening.apparent);
-      s.keep(track, ghosts, times, sun, {
+      // Kept for this step alone: the stage fades the track out as the ladder step begins.
+      s.keep(track, ghosts, sun, {
         describe: `The Sun's dashed track down and to the right, with faint discs at ${marks.map((k) => k.time).join(', ')} and a full disc where its centre crosses 299.1° at ${minutes(evening.ms)}, ${deg(evening.apparent)} up.`,
+        until: 'next',
       });
+      // Each time sits under its disc; one that would lie across the horizon line is moved off it.
+      const times: Text[] = [];
+      for (const k of marks) times.push(await s.label(k.time, [k.at[0], k.at[1] - M.SUN_RADIUS * K - 0.22], { size: 0.2, color: soft, enter: false, until: 'next' }));
       await this.play(new Create(track), { runTime: 1.2 });
-      await this.play(new FadeIn(ghosts), new FadeIn(times), { runTime: 0.6 });
+      await this.play(new FadeIn(ghosts), ...times.map((t) => new FadeIn(t)), { runTime: 0.6 });
       await this.play(new FadeIn(sun), { runTime: 0.5 });
-      const said = await s.callout(sun, `${minutes(evening.ms)} · centre ${deg(evening.apparent)} up`, { side: 'right', gap: 1.1, color: SUN, size: 0.22 });
-      eveningInk.push(track, ghosts, times, sun, said);
+      // A Sun already below the horizon is read from above it, clear of the bearings along the bottom.
+      await s.callout(sun, `${minutes(evening.ms)} · centre ${deg(evening.apparent)} up`, { side: evening.apparent < -0.15 ? 'above' : 'right', gap: evening.apparent < -0.15 ? 0.5 : 1.1, color: SUN, size: 0.22, until: 'next' });
       this.state.evening = { date: M.label(YEAR, evening.doy), time: M.clock(evening.ms, { seconds: true }), apparent: +evening.apparent.toFixed(3) };
+      this.state.dial = dial;
       this.state.track = marks.map((k) => ({ time: k.time, azimuth: +k.az.toFixed(2), apparent: +k.alt.toFixed(2) }));
     }
 
     // ---------------------------------------------------------------- ladder
     const rising = cyc.rate > 0;
-    const ladderInk: Mobject[] = [];
     const ladderNames = cyc.ladder.map((c) => M.label(YEAR, c.doy));
     await this.step('ladder', {
       title: `Each evening the crossing happens ${deg(Math.abs(cyc.rate))} ${rising ? 'higher' : 'lower'}`,
@@ -265,25 +279,26 @@ export default class ManhattanhengeExplainer extends Scene {
         `The same view, with the Sun drawn where its centre crosses 299.1° on six consecutive evenings. The crossing altitude ${rising ? 'rises' : 'falls'} ${deg(Math.abs(cyc.rate))} an evening, about two thirds of the disc's ${deg(2 * M.SUN_RADIUS)} diameter, because the Sun's declination is still ${rising ? 'increasing toward' : 'decreasing after'} the June solstice. The disc goes from hidden to wholly clear of ${horizonWord} in about three evenings. The two evenings with a name are the ones whose disc sits on the horizon.`,
     });
     {
-      await this.play(...eveningInk.map((m) => new FadeOut(m, { runTime: 0.4 })));
       const outlines = new Group(...cyc.ladder.map((c) => disc(M.GRID_BEARING, c.apparent, { outline: true })));
       const centres = new Group(...cyc.ladder.map((c) => new Dot({ radius: 0.05, color: SUN }).moveTo([0, vy(c.apparent)])));
-      // A date label sits at its disc's height, nudged off the horizon lines so the line never runs through its letters.
-      const clear = (y: number) => {
-        for (const h of horizon > 0 ? [0, horizon] : [0]) {
-          const d = y - vy(h);
-          if (Math.abs(d) < 0.15) return vy(h) + (d >= 0 ? 0.15 : -0.15);
-        }
-        return y;
-      };
-      const dates = new Group(...cyc.ladder.map((c, i) => label(ladderNames[i]!, [vx(M.GRID_BEARING - 0.56), clear(vy(c.apparent))], { size: 0.2, color: ink, edge: [1, 0] })));
-      s.keep(outlines, centres, dates, {
+      s.keep(outlines, centres, {
         describe: `Six outlined discs stacked at 299.1°, one per evening, their centres ${cyc.ladder.map((c, i) => `${ladderNames[i]} at ${deg(c.apparent)}`).join(', ')}.`,
       });
-      await this.play(new FadeIn(outlines), new FadeIn(centres), new FadeIn(dates), { runTime: 1.2 });
-      ladderInk.push(await s.dimension([vx(M.GRID_BEARING + 1.25), vy(cyc.ladder[0]!.apparent)], [vx(M.GRID_BEARING + 1.25), vy(cyc.ladder[5]!.apparent)], `${deg(Math.abs(cyc.ladder[5]!.apparent - cyc.ladder[0]!.apparent))} over 5 evenings`, { offset: 0, size: 0.2 }));
+      // Each date sits at its disc's height; the stage moves one off the horizon line when it would lie across it.
+      const dates: Text[] = [];
+      for (const [i, c] of cyc.ladder.entries())
+        dates.push(await s.label(ladderNames[i]!, [vx(M.GRID_BEARING + 0.56), vy(c.apparent)], { size: 0.2, edge: [-1, 0], enter: false }));
+      await this.play(new FadeIn(outlines), new FadeIn(centres), ...dates.map((d) => new FadeIn(d)), { runTime: 1.2 });
+      await s.dimension([vx(M.GRID_BEARING + 2.4), vy(cyc.ladder[0]!.apparent)], [vx(M.GRID_BEARING + 2.4), vy(cyc.ladder[5]!.apparent)], `${deg(Math.abs(cyc.ladder[5]!.apparent - cyc.ladder[0]!.apparent))} over 5 evenings`, { offset: -0.01, size: 0.2, until: 'next' });
+      // The evening the dial is turned to, filled in, and its reading on a line of its own at the top
+      // left, where no disc, date or bearing can meet it; both leave with the step.
+      const chosen = disc(M.GRID_BEARING, evening.apparent, { edged: true });
+      s.keep(chosen, { describe: `The disc of ${M.label(YEAR, evening.doy)} filled in`, until: 'next' });
+      await this.play(new FadeIn(chosen, { runTime: 0.4 }));
+      await s.label(`${M.label(YEAR, evening.doy)} · ${minutes(evening.ms)} · centre ${deg(evening.apparent)} ${evening.apparent >= 0 ? 'above' : 'below'} the horizon`, [vx(M.GRID_BEARING - AZ) + 0.1, vy(2.75)], { size: 0.24, color: SUN, edge: [-1, 0], until: 'next' });
       this.state.ladder = cyc.ladder.map((c, i) => ({ date: ladderNames[i], apparent: +c.apparent.toFixed(3) }));
       this.state.perEvening = +cyc.rate.toFixed(3);
+      this.state.evening = { date: M.label(YEAR, evening.doy), time: M.clock(evening.ms, { seconds: true }), apparent: +evening.apparent.toFixed(3) };
     }
 
     // ----------------------------------------------------------------- names
@@ -301,20 +316,19 @@ export default class ManhattanhengeExplainer extends Scene {
           : `Its minutes agree with this model's instants to within a minute, since the clock time of a crossing does not depend on the horizon. Its choice of evening does: a horizon about 0.4° high gives its May pair and about 0.7° its July pair, and no single height gives both. The height of the visible horizon is the one input this model does not measure${horizon === 0 ? '; the raised setting shows what half a degree does' : ''}.`),
     });
     {
-      await this.play(...ladderInk.map((m) => new FadeOut(m, { runTime: 0.4 })));
       const halfDisc = disc(M.GRID_BEARING, cyc.half.apparent, { edged: true }), fullDisc = disc(M.GRID_BEARING, cyc.full.apparent, { edged: true });
       s.keep(halfDisc, fullDisc, { describe: `Two discs filled in: Half Sun at ${deg(cyc.half.apparent)}, Full Sun at ${deg(cyc.full.apparent)}` });
       await this.play(new FadeIn(halfDisc), new FadeIn(fullDisc), { runTime: 0.6 });
       const lower = cyc.half.apparent < cyc.full.apparent ? cyc.half : cyc.full;
       const upper = lower === cyc.half ? cyc.full : cyc.half;
-      await s.callout(lower === cyc.half ? halfDisc : fullDisc, `${word[lower.event]} · ${say(lower)}`, { side: 'right', gap: 1.3, color: SUN, size: 0.22 });
-      await s.callout(upper === cyc.half ? halfDisc : fullDisc, `${word[upper.event]} · ${say(upper)}`, { side: 'right', gap: 1.3, color: SUN, size: 0.22 });
+      await s.callout(lower === cyc.half ? halfDisc : fullDisc, `${word[lower.event]} · ${say(lower)}`, { side: 'left', gap: 1.2, color: SUN, size: 0.22 });
+      await s.callout(upper === cyc.half ? halfDisc : fullDisc, `${word[upper.event]} · ${say(upper)}`, { side: 'left', gap: 1.2, color: SUN, size: 0.22 });
       await s.card(
         [
           ['Half Sun', `${pub.half.date} · ${pub.half.time.replace(' EDT', '')}`],
           ['Full Sun', `${pub.full.date} · ${pub.full.time.replace(' EDT', '')}`],
         ],
-        { at: [-7.3, 0.9, -1.3, 2.7], title: `Hayden Planetarium, ${YEAR}`, fontSize: 0.22 },
+        { at: [1.3, 0.9, 7.3, 2.7], title: `Hayden Planetarium, ${YEAR}`, fontSize: 0.22 },
       );
       this.state.half = { date: M.label(YEAR, cyc.half.doy), time: M.clock(cyc.half.ms, { seconds: true }), apparent: +cyc.half.apparent.toFixed(3) };
       this.state.full = { date: M.label(YEAR, cyc.full.doy), time: M.clock(cyc.full.ms, { seconds: true }), apparent: +cyc.full.apparent.toFixed(3) };

@@ -200,9 +200,9 @@ export interface GuideLineOpts extends Style {
  * zero is in both ranges, else at the nearest range end (a chart of 1..12
  * along x has its y axis at x = 1). Children: [xAxis, yAxis, xLabel?,
  * yLabel?], by index (see NumberLine). Create draws the x axis and its ticks,
- * then the y axis and its ticks. Create staggers every family member, label
- * glyphs included: with number labels, give it { runTime: 2 } or
- * { lagRatio: 0.1 } (at 1 s each label pops in over a frame or two).
+ * then the y axis and its ticks, staggering every family member, label glyphs
+ * included; Create lowers its stagger so that no row takes less than a quarter
+ * of a second, so number labels arrive over several frames at any run time.
  */
 export class Axes extends Group {
   /** The x and y values where the axes cross. */

@@ -86,6 +86,12 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 }
 @media(pointer:coarse){.button{min-width:44px;min-height:44px}.segments label{min-height:40px}}
 
+/* Dials: one value turned inside a step, under the picture it changes. */
+.dials{display:flex;flex-wrap:wrap;gap:12px 24px;margin-top:12px}
+.dial .segments{display:none}
+.dial-control{display:flex;align-items:center;gap:8px}
+.dial-control output{min-width:10ch;text-align:center;font-weight:600;font-variant-numeric:tabular-nums}
+
 /* Steps: where the reader is, and where else they can go. */
 .steps{list-style:none;margin:24px 0 0;padding:16px 0 0;border-top:1px solid var(--line);display:grid;gap:2px;counter-reset:step}
 .steps li{counter-increment:step}

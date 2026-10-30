@@ -305,6 +305,12 @@ export class Create extends Animation {
   borderWidth: number;
   /** The border was left to the default, so it follows the size of the text it outlines. */
   private autoBorder: boolean;
+  /**
+   * The least time one staggered row may take to draw. A lagRatio that would give a row less
+   * (an Axes with forty ticks and numbers at 1 s) is lowered so each row still arrives over
+   * several frames instead of popping in: a stagger reveals order, and a pop reveals nothing.
+   */
+  static MIN_ROW_SECONDS = 0.25;
 
   constructor(mobject: Mobject, { borderWidth, ...opts }: AnimOpts & { borderWidth?: number } = {}) {
     super(mobject, { lagRatio: 0.2, ...opts });
@@ -318,6 +324,11 @@ export class Create extends Animation {
   override begin(): void {
     this.borders.clear();
     super.begin();
+    const rows = this.slots.count;
+    if (rows > 1 && this.lagRatio > 0) {
+      const widest = (this.runTime / Create.MIN_ROW_SECONDS - 1) / (rows - 1);
+      this.lagRatio = Math.max(0, Math.min(this.lagRatio, widest));
+    }
   }
   private border(sub: Mobject): number {
     if (!this.autoBorder) return this.borderWidth;

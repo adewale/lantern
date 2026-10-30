@@ -10,7 +10,7 @@ Use Rayner when a different input changes what you need to explain: which route 
 
 ## Try a checkout
 
-Requires Node 24 or later and Chromium. Authoring targets Ubuntu and macOS; Windows is not yet supported. The [release guide](https://github.com/adewale/rayner/blob/main/docs/RELEASING.md) records the required platform validation.
+Requires Node 22.22 or later (type stripping is on by default from 22.18) and Chromium. Authoring targets Ubuntu and macOS; Windows is not yet supported. The [release guide](https://github.com/adewale/rayner/blob/main/docs/RELEASING.md) records the required platform validation.
 
 ```sh
 git clone https://github.com/adewale/rayner && cd rayner

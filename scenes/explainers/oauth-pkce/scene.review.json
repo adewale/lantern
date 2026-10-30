@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "attack",
+      "settings": {
+        "attacker": "yes"
+      },
+      "state": {
+        "attackerAccepted": false,
+        "attackerChallenge": "X4OLkcBHvNsGhgg9C1LrdtO7tMJuBUL9EKtkBNQIduc"
+      }
+    }
+  ]
+}

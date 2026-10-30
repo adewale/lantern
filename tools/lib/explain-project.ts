@@ -11,7 +11,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { Scene, NullSink, traceScene } from '../../src/index.ts';
 import { takeMissingGlyphs } from '../../src/lettering.ts';
 import type { Trace } from '../../src/index.ts';
-import { variantsOf, withSettings, bindSnapshots, caseName, resolveSettings } from '../../explain/index.ts';
+import { variantsOf, withSettings, bindSnapshots, caseName, resolveSettings, isDial, sweepsOf, caseValues } from '../../explain/index.ts';
 import type { ExplainerClass, SnapshotStore, Settings } from '../../explain/index.ts';
 import type { DiagramResolver } from '../../integrations/agentic-mermaid/snapshot.ts';
 import { diagramKey, RENDERER } from '../../integrations/agentic-mermaid/snapshot.ts';
@@ -160,6 +160,8 @@ export interface Project {
   engineHash: string;
   store: SnapshotStore;
   variants: { values: Settings; Scene: ExplainerClass; trace: Trace }[];
+  /** Every case at every dial value (explain/settings.ts `sweepsOf`): what `check` runs. The variants, when the scene has no dial. */
+  sweeps: { values: Settings; Scene: ExplainerClass; trace: Trace }[];
   edits: number;
   /** The faces cut for `static meta.lettering`; absent when the scene asks for none. */
   lettering?: Lettering;
@@ -320,7 +322,8 @@ export async function collectProject(
       edits++;
     },
   };
-  const variants: Project['variants'] = [];
+  const variants: Project['variants'] = [], sweeps: Project['sweeps'] = [];
+  const isCase = (values: Settings) => (Source.settings ?? []).every((s) => !isDial(s) || values[s.id] === s.default);
   const undrawable: string[] = [];
   let lettering: Lettering | undefined;
   try {
@@ -347,7 +350,7 @@ export async function collectProject(
         Object.defineProperty(previous, key, { value: store[key], enumerable: true, writable: true, configurable: true });
     }
     await useProjectLettering({ lettering });
-    for (const values of variantsOf(Source)) {
+    for (const values of sweepsOf(Source)) {
       const collect = new (withSettings(bindSnapshots(Source, resolver), values))(new NullSink(), { skipUntil: Infinity });
       // Text the embedded fonts cannot draw shows as nothing: name it by case and step, then fail.
       let step = '(before the first step)';
@@ -381,22 +384,24 @@ export async function collectProject(
 
         }
       }));
-      variants.push({ values, Scene: Bound, trace });
+      sweeps.push({ values, Scene: Bound, trace });
+      if (isCase(values)) variants.push({ values, Scene: Bound, trace });
     }
     if (undrawable.length)
       throw new Error(`The embedded fonts cannot draw these characters:\n${[...new Set(undrawable)].join('\n')}`);
     await outline?.finish();
     if (write) await writeSnapshots(base, store, loaded.sourceHash);
-    return { ...loaded, Scene: Source, store, variants, edits, ...(lettering ? { lettering } : {}), ...(outline ? { outlineLettering: outline.snapshot } : {}) };
+    return { ...loaded, Scene: Source, store, variants, sweeps, edits, ...(lettering ? { lettering } : {}), ...(outline ? { outlineLettering: outline.snapshot } : {}) };
   } finally {
     await builder?.close();
     await naturalBuilder?.close();
   }
 }
-/** The default case, or the case these values choose with every other setting at its default, as a URL does. */
+export { caseValues };
+/** The default case, or the case these values choose with every other setting at its default, as a URL does; a dial's value selects among the checked sweeps. */
 export function defaultVariant(project: Project, values: Settings = {}) {
   const want = resolveSettings(project.Scene, values);
-  return project.variants.find((v) => Object.keys(want).every((key) => v.values[key] === want[key]))!;
+  return project.sweeps.find((v) => Object.keys(want).every((key) => v.values[key] === want[key]))!;
 }
 export const sceneSlug = (p: Project) => p.Scene.meta?.id ?? basename(p.file).replace(/\.[^.]+$/, '');
 /** The fields every page receipt carries: what was built, from which sources. */

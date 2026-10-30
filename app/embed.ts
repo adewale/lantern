@@ -1,7 +1,7 @@
 import { renderAt, traceScene, SeekSink } from '../src/index.ts';
 import type { Trace } from '../src/index.ts';
 import { StopScene } from '../src/index.ts';
-import { bindSnapshots, withSettings, resolveSettings } from '../explain/index.ts';
+import { bindSnapshots, withSettings, resolveSettings, isDial, caseValues } from '../explain/index.ts';
 import type { ExplainerClass, Settings, SnapshotStore } from '../explain/index.ts';
 import { restingTime, pictureHtml, pictureSummary, stepWords } from '../explain/trace.ts';
 import { reportHeight } from './embed-protocol.ts';
@@ -67,8 +67,11 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const head = el('header', undefined, 'head');
   head.append(title);
   const choices = new Map<string, HTMLInputElement[]>();
+  // A dial sits under the picture, as a stepper: the reader turns it and the step is drawn again.
+  const dials = el('div', undefined, 'dials');
+  const dialReadouts = new Map<string, HTMLOutputElement>();
   for (const s of Source.settings ?? []) {
-    const group = el('fieldset', undefined, 'case');
+    const group = el('fieldset', undefined, isDial(s) ? 'case dial' : 'case');
     group.append(el('legend', s.label));
     const segments = el('div', undefined, 'segments');
     const inputs = s.options.map((o) => {
@@ -86,8 +89,42 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       return input;
     });
     group.append(segments);
-    head.append(group);
     choices.set(s.id, inputs);
+    if (!isDial(s)) {
+      head.append(group);
+      continue;
+    }
+    // The dial's own control: previous option, the current option's label, next option.
+    const control = el('div', undefined, 'dial-control'),
+      readout = el('output'),
+      earlier = button(t.previous, 'previous'),
+      later = button(t.nextLabel, 'next');
+    readout.setAttribute('aria-live', 'polite');
+    const turn = (by: number) => {
+      const at = inputs.findIndex((i) => i.checked),
+        to = inputs[Math.max(0, Math.min(inputs.length - 1, at + by))];
+      if (to && !to.checked) {
+        to.checked = true;
+        to.dispatchEvent(new Event('change'));
+      }
+    };
+    earlier.onclick = () => turn(-1);
+    later.onclick = () => turn(1);
+    control.append(earlier, readout, later);
+    group.append(control);
+    dialReadouts.set(s.id, readout);
+    dials.append(group);
+  }
+  /** The dials' readouts and buttons follow the chosen options. */
+  function refreshDials() {
+    for (const [id, readout] of dialReadouts) {
+      const inputs = choices.get(id)!,
+        at = inputs.findIndex((i) => i.checked);
+      readout.value = inputs[at]?.parentElement?.textContent ?? '';
+      const [earlier, later] = [...readout.parentElement!.querySelectorAll('button')];
+      earlier!.disabled = at <= 0;
+      later!.disabled = at >= inputs.length - 1;
+    }
   }
 
   // The player: the picture, what it says, and how to move on. Enlarge shows all three.
@@ -161,7 +198,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   ledeRuler.setAttribute('aria-hidden', 'true');
   // Keep the caption beside its picture; the controls after it follow immediately,
   // before disclosures and close-up controls can push the story's Next out of sight.
-  player.append(transport, frame, lede, caption, controls, described, notice, summary, ruler, ledeRuler);
+  player.append(transport, frame, lede, caption, ...(dialReadouts.size ? [dials] : []), controls, described, notice, summary, ruler, ledeRuler);
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', t.stepList);
@@ -597,6 +634,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     }
     wanted = next;
     for (const [id, inputs] of choices) for (const input of inputs) input.checked = input.value === next[id];
+    refreshDials();
     const key = JSON.stringify(next);
     let entry = cache.get(key);
     if (!entry) {
@@ -639,7 +677,8 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
         return li;
       }),
     );
-    const shown = new URLSearchParams(values).toString();
+    // The transcript has a section per case; a dial's value is not part of a case.
+    const shown = new URLSearchParams(caseValues(Source, values)).toString();
     for (const section of transcript.querySelectorAll<HTMLElement>('section')) section.hidden = section.dataset.case !== shown;
     shownCase = shown;
     reserve();

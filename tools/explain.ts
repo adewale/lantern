@@ -14,7 +14,7 @@ const CAPTURE = ['agentic-mermaid', 'playwright-core', 'svgpath'],
 const pkg: { version: string; dependencies: Record<string, string> } = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
 const peers = pkg.dependencies;
 const install = (names: string[]) => 'npm i ' + names.map((n) => `${n}@${peers[n]}`).join(' ');
-const HELP = `Rayner ${pkg.version} (Node 24+)
+const HELP = `Rayner ${pkg.version} (Node 22.22+)
 
 Usage: rayner <command> <scene.ts | directory> [options]
 
@@ -46,13 +46,47 @@ Options:
   --port <integer>    Preview server port (default 5174)
   --watch             Preview: rebuild the page on save
   --claims <path>     Review: use this JSON file instead of <scene>.review.json
+  --json              Check: print the whole report (by default, a summary; the
+                      report is written to the --out directory either way)
+  --artifact          Build: also write <page>.artifact.html, the page without its
+                      document skeleton, for a host that supplies one (claude.ai)
+  --stills            Build: also write <page>.stills.html, every step's resting
+                      picture as SVG with its words and a stepper, and no engine;
+                      its receipt reports its size
   --version           Print the version
 
 Diagram capture is included. Install Chromium once:
   npx playwright-core install chromium
-  or set CHROMIUM_EXECUTABLE_PATH
+  or set CHROMIUM_EXECUTABLE_PATH, or PLAYWRIGHT_BROWSERS_PATH to a folder of
+  Playwright builds (every layout Playwright has used is recognised)
 PNG output is included.
 `;
+/** A passing check in a few lines: what was checked, the smallest labels, the densest steps, and where the report is. */
+export function checkSummary(report: Record<string, unknown>, file: string): string {
+  type Variant = {
+    steps: number; frames: number; motionEvents: number;
+    legibility: { minLabelPx1280: number | null; minLabelPx390: number | null; labelsUnder12PxAt390: number; labels: number };
+    density: { maxLabels: number; maxCaptionWords: number; maxCaptionNumerals: number; steps: Record<string, { labels: number; captionNumerals: number }> };
+  };
+  const variants = report.variants as Variant[];
+  const least = (pick: (v: Variant) => number | null) => {
+    const values = variants.map(pick).filter((n): n is number => n != null);
+    return values.length ? Math.min(...values) : null;
+  };
+  const most = (pick: (v: Variant) => number) => Math.max(0, ...variants.map(pick));
+  const steps = [...new Set(variants.map((v) => v.steps))].join(' or ');
+  const under = most((v) => v.legibility.labelsUnder12PxAt390);
+  const densest = variants.flatMap((v) => Object.entries(v.density.steps)).sort((a, b) => b[1].labels - a[1].labels)[0];
+  const px = (n: number | null) => (n == null ? 'none' : `${n} px`);
+  return [
+    `rayner check: ${report.scene} passed`,
+    `  ${variants.length} case${variants.length === 1 ? '' : 's'} · ${steps} steps · ${report.diagrams} diagram${report.diagrams === 1 ? '' : 's'} · ${most((v) => v.frames)} frames at most · 0 motion events`,
+    `  labels: smallest ${px(least((v) => v.legibility.minLabelPx1280))} at 1280 px, ${px(least((v) => v.legibility.minLabelPx390))} in a phone close-up` +
+      (under ? ` (${under} under 12 px)` : ''),
+    `  density: up to ${most((v) => v.density.maxLabels)} labels at rest${densest ? ` (${densest[0]})` : ''}, up to ${most((v) => v.density.maxCaptionNumerals)} numerals and ${most((v) => v.density.maxCaptionWords)} words in a caption`,
+    `  report: ${file}`,
+  ].join('\n');
+}
 export async function main(args = process.argv.slice(2)): Promise<void> {
   if (!args.length || args.includes('--help') || args[0] === 'help') {
     console.log(HELP);
@@ -72,6 +106,9 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
       refresh: { type: 'boolean' },
       watch: { type: 'boolean' },
       claims: { type: 'string' },
+      json: { type: 'boolean' },
+      artifact: { type: 'boolean' },
+      stills: { type: 'boolean' },
     },
   });
   const [command, input, ...extra] = positionals;
@@ -151,9 +188,10 @@ export default class MyExplainer extends Scene {
   }
   if (command === 'check') {
     const { checkProject } = await import('./lib/explain-check.ts');
-    console.log(
-      JSON.stringify(await checkProject(project, flags.out ?? resolve('out/checks', slug)), null, 2),
-    );
+    const directory = flags.out ?? resolve('out/checks', slug);
+    const report = await checkProject(project, directory);
+    if (flags.json) console.log(JSON.stringify(report, null, 2));
+    else console.log(checkSummary(report, join(directory, 'report.json')));
     return;
   }
   /** The case every --case id=value chooses, other settings at their defaults. */
@@ -179,10 +217,18 @@ export default class MyExplainer extends Scene {
     return;
   }
   const out = flags.out ?? resolve('out/explainers', slug + '.html');
-  const result = await buildExplainer(project, out);
+  if (flags.stills) {
+    const { buildStills } = await import('./lib/explain-stills.ts');
+    const stills = await buildStills(project, out);
+    console.log(
+      `Built ${stills.out} (${Math.round(stills.bytes / 1024)} KiB, ${Math.round(stills.gzipBytes / 1024)} KiB gzip; ${project.variants.length} cases, ${stills.stills} stills, no engine)`,
+    );
+  }
+  const result = await buildExplainer(project, out, { artifact: flags.artifact });
   await buildLoader(join(dirname(resolve(out)), 'loader.js'));
   console.log(
-    `Built ${out} (${Math.round(Buffer.byteLength(result.html) / 1024)} KiB; ${project.variants.length} cases)`,
+    `Built ${out} (${Math.round(Buffer.byteLength(result.html) / 1024)} KiB; ${project.variants.length} cases)` +
+      (result.artifact ? `\n      ${result.artifact} (the page without its document skeleton, for hosts that supply one)` : ''),
   );
   if (command === 'preview') {
     // The page is served from disk with its header recipe, so a rebuild shows on reload.

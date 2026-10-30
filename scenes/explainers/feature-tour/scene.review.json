@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "result",
+      "settings": {
+        "feature": "steps"
+      },
+      "state": {
+        "phase": "result"
+      }
+    }
+  ]
+}

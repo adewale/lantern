@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "measure",
+      "settings": {
+        "font": "sans"
+      },
+      "state": {
+        "glyphs": 14,
+        "font": "sans",
+        "width": 6.015234470367432
+      }
+    }
+  ]
+}

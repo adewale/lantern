@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "outcome",
+      "settings": {
+        "char": "super",
+        "guard": "isdigit"
+      },
+      "state": {
+        "outcome": "raised"
+      }
+    }
+  ]
+}

@@ -20,12 +20,13 @@ import {
 import { Card } from '../../explain/panels.ts';
 import { ROOT, engineAlias, sceneSlug } from './explain-project.ts';
 import { caseName } from '../../explain/index.ts';
-import { restingFrame, undescribed } from '../../explain/trace.ts';
+import { restingFrame, stepWords, undescribed } from '../../explain/trace.ts';
 import { labelOf } from '../../explain/diagrams.ts';
 import { closeUps, stageScale, stepLayouts, toView, viewBox, viewZoom } from '../../app/embed-closeup.ts';
 import type { Box, Mobject } from '../../src/index.ts';
 import type { Project } from './explain-project.ts';
 import { pageFaces, letteringReport, useProjectLettering } from './explain-lettering.ts';
+import { readReviewFile, assertPivots } from './explain-pivots.ts';
 
 const SWALLOW =
   'Do not catch around awaited animation/step calls in construct(): a broad catch can swallow StopScene. Catch model errors before animation.';
@@ -227,16 +228,52 @@ function legibilityReport(records: LabelSizes[]) {
   };
 }
 
+/** Distinct readable labels in a resting picture, the heading left out: what a reader has to read on the stage. */
+export function labelsAtRest(scene: Viewed): number {
+  const texts = new Set<string>();
+  const seen = new Set<Mobject>();
+  for (const m of scene.familyMembers()) {
+    if (seen.has(m)) continue;
+    seen.add(m);
+    const label = labelOf(m);
+    if (!label?.text.trim() || isHeading(m)) continue;
+    let nested = false;
+    for (let a = m.parent; a; a = a.parent) if (labelOf(a)) nested = true;
+    if (nested) continue;
+    let hidden = false;
+    for (let a: Mobject | null = m; a; a = a.parent) if ((a.style.opacity ?? 1) < 0.5) hidden = true;
+    if (hidden) continue;
+    texts.add(label.text.trim());
+  }
+  return texts.size;
+}
+/** Words and numerals (12, 8:13, 0.19°, 299.1) in a caption. */
+export function captionDensity(caption: string): { captionWords: number; captionNumerals: number } {
+  const trimmed = caption.trim();
+  return {
+    captionWords: trimmed ? trimmed.split(/\s+/).length : 0,
+    captionNumerals: (trimmed.match(/\d[\d.,:]*/g) ?? []).length,
+  };
+}
+function densityReport(steps: Record<string, { labels: number; captionWords: number; captionNumerals: number }>) {
+  const values = Object.values(steps);
+  const max = (key: 'labels' | 'captionWords' | 'captionNumerals') => (values.length ? Math.max(...values.map((v) => v[key])) : 0);
+  return { steps, maxLabels: max('labels'), maxCaptionWords: max('captionWords'), maxCaptionNumerals: max('captionNumerals') };
+}
+
 /** Run every check on every case; write the report to `out`/report.json and return it. */
 export async function checkProject(project: Project, out: string): Promise<Record<string, unknown>> {
   const lint = lintConstruct(await readFile(project.file, 'utf8'));
   assert.deepEqual(lint, [], lint.join('\n'));
+  // The pivotal claim written beside the scene holds in the recorded state (its witness is the review's job).
+  const { pivots } = await readReviewFile(project);
+  assertPivots(project, pivots);
   await mkdir(out, { recursive: true });
   await useProjectLettering(project);
   const variants = [];
   // The lettering the page carries, once for every case: the bare runtime below runs it
   const shipped = project.outlineLettering ? JSON.stringify(await pageSnapshot(project.outlineLettering)) : '';
-  for (const v of project.variants) {
+  for (const v of project.sweeps) {
     const where = `in ${caseName(project.Scene, v.values) || 'the scene'}`;
     const motion = new MotionSink(),
       frames = new Map<number, string>();
@@ -287,6 +324,11 @@ export async function checkProject(project: Project, out: string): Promise<Recor
       moved = new Set<string>();
     // Cards on screen at each resting picture: a step that ends on a card says its values in a panel.
     const cardsAtRest: Record<string, number> = {};
+    // How much each resting picture asks a reader to take in: labels on the stage, and the
+    // numbers and words in the caption beside it. Reported, not gated: the rubric's reader
+    // economy point is where most assessed explainers lose a point, so the count is here to
+    // read before an editor does.
+    const density: Record<string, { labels: number; captionWords: number; captionNumerals: number }> = {};
     await new v.Scene({
       async frame(scene, dt) {
         await motion.frame(scene);
@@ -304,8 +346,11 @@ export async function checkProject(project: Project, out: string): Promise<Recor
           resting.set(scene.frameCount, toSvgString(scene));
           scene.mobjects = all;
           restingText.set(scene.frameCount, renderText(scene));
-          if (scene.currentStep)
+          if (scene.currentStep) {
             cardsAtRest[scene.currentStep.name] = scene.familyMembers().filter((m) => m instanceof Card && (m.style.opacity ?? 1) >= 0.5).length;
+            const words = stepWords({ step: scene.currentStep.name, meta: scene.currentStep.meta });
+            density[scene.currentStep.name] = { labels: labelsAtRest(scene), ...captionDensity(words.caption) };
+          }
           collisions.push(...[...restingTextProblems(scene), ...restingRouteProblems(scene)].map((p) => `${scene.currentStep?.name}: ${p}`));
         }
         // Sizes on screen: world size times the camera's zoom, inside the camera's view
@@ -415,6 +460,8 @@ export async function checkProject(project: Project, out: string): Promise<Recor
       legibility: legibilityReport([...labels.values(), ...staticLabels.values()]),
       // Cards in each step's resting picture: values said in a panel rather than on the drawing.
       cardsAtRest,
+      // Labels at rest and caption numerals per step, with the case's heaviest step: a diagnostic, not a gate.
+      density: densityReport(density),
       // Each step's resting frame as text, so an author can read it without a browser.
       restingFrames: Object.fromEntries(v.trace.steps.map((step) => [step.step, restingText.get(restingFrame(step)) ?? ''])),
     });
@@ -427,6 +474,7 @@ export async function checkProject(project: Project, out: string): Promise<Recor
     ...(project.outlineLettering ? { lettering: await letteringWeight(project.outlineLettering) } : {}),
     // What the requested lettering adds to the page; only an explainer that asked has it.
     ...(project.lettering ? { lettering: letteringReport(project.lettering) } : {}),
+    pivots: pivots.length,
   };
   await writeFile(join(out, 'report.json'), JSON.stringify(report, null, 2) + '\n');
   return report;

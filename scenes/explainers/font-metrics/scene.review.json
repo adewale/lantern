@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "cuts",
+      "state": {
+        "advances": {
+          "Regular": 4.410900115966797,
+          "Bold": 4.847400188446045,
+          "Italic": 4.238999843597412
+        }
+      }
+    }
+  ]
+}

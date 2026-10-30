@@ -1,4 +1,5 @@
-import { Mobject, Group, Rectangle, Circle, Text, FadeIn, FadeOut, Transform, Create } from '../src/index.ts';
+import { Mobject, Group, Rectangle, Circle, Line, Arrow, Text, FadeIn, FadeOut, Transform, Create } from '../src/index.ts';
+import { isDiagramConnector, labelOf } from './diagrams.ts';
 import type { Scene, Vec, Box, FadeOpts, Animation } from '../src/index.ts';
 import { dimension, pin, callout, tool, Draw, oneStrokeEach } from './annotate.ts';
 import type { Side, ToolKind } from './annotate.ts';
@@ -40,6 +41,13 @@ export interface StageOptions {
 }
 /** `enter: false` makes the panel and keeps it without playing, for `s.enter` to bring in with others. */
 type Entry = { enter?: boolean };
+/**
+ * `until: 'next'` keeps something only for the step that made it: the stage fades it out as the
+ * next step begins, in the same play as the heading change, so a callout, dimension or card that
+ * explains one step never has to be removed by hand (and never lingers over the next step's
+ * labels). The step's resting picture keeps it; the next step's does not.
+ */
+export type Scoped = { until?: 'next' };
 /**
  * What kept native objects show, in words, for the description: a sentence, or a
  * function for a drawing that changes. Without it, their visible text is listed.
@@ -157,12 +165,30 @@ export function stage(scene: Scene, options: StageOptions = {}) {
   /** Kept objects, each with what describes it (several kept together share one). */
   const overlays = new Map<Mobject, (() => string) | undefined>();
   const diagrams = new Set<Diagram>();
+  /** Kept for one step only (`until: 'next'`): faded out as the next step begins. */
+  let scoped: Mobject[] = [];
+  /** Labels placed with `s.label` but not yet drawn (`enter: false`): the next label keeps clear of them too. */
+  const pending = new Set<Mobject>();
+  const scope = (mobs: Mobject[], { until }: Scoped) => {
+    if (until === 'next') scoped.push(...mobs);
+  };
+  /** The fade-outs of what the step before kept for itself alone, and the end of their keeping. */
+  const releaseScoped = (): Animation[] => {
+    const present = new Set(scene.familyMembers());
+    const gone = scoped.filter((m) => present.has(m));
+    scoped = [];
+    for (const m of gone) overlays.delete(m);
+    return gone.map((m) => new FadeOut(m, { runTime: 0.3 }));
+  };
 
-  async function setHeading(text: string, line: string, number: number | null, step: string): Promise<void> {
+  async function setHeading(text: string, line: string, number: number | null, step: string, also: Animation[] = []): Promise<void> {
     const next = makeChrome(text, line, number, step);
     const was = [heading.text, ...chrome.map((c) => (c as { text?: string }).text ?? '')].join('|'),
       now = [next.heading.text, ...next.chrome.map((c) => (c as { text?: string }).text ?? '')].join('|');
-    if (was === now && chrome.length === next.chrome.length) return;
+    if (was === now && chrome.length === next.chrome.length) {
+      if (also.length) await scene.play(...also);
+      return;
+    }
     // Away from home, the new heading arrives where the camera shows the old one.
     for (const m of [next.heading, ...next.chrome]) {
       home.set(m, m.copy());
@@ -171,7 +197,7 @@ export function stage(scene: Scene, options: StageOptions = {}) {
       for (const x of m.family()) if (x.style.strokeWidth) x.style.strokeWidth *= view.k;
       m.shift(view.shift);
     }
-    const anims = [];
+    const anims: Animation[] = [...also];
     if (heading.text) anims.push(new FadeOut(heading, { runTime: 0.3 }));
     else scene.remove(heading);
     for (const c of chrome) anims.push(new FadeOut(c, { runTime: 0.3 }));
@@ -183,7 +209,8 @@ export function stage(scene: Scene, options: StageOptions = {}) {
     if (!text) scene.add(heading);
     if (anims.length) await scene.play(...anims);
   }
-  // Follow step titles (and lines) without asking authors to repeat them.
+  // Follow step titles (and lines) without asking authors to repeat them; what the step before
+  // kept for itself alone leaves in the same play.
   if (mode === 'step')
     scene.onStep((s) =>
       setHeading(
@@ -191,8 +218,14 @@ export function stage(scene: Scene, options: StageOptions = {}) {
         typeof s.meta.line === 'string' ? s.meta.line.trim() : '',
         numbered ? scene.steps.length : null,
         s.name,
+        releaseScoped(),
       ),
     );
+  else
+    scene.onStep(async () => {
+      const gone = releaseScoped();
+      if (gone.length) await scene.play(...gone);
+    });
   /** What a sighted reader sees: diagrams, then panels and described drawings, then other kept text. */
   function look(): Seen[] {
     const w = wordsOf(scene);
@@ -278,10 +311,93 @@ export function stage(scene: Scene, options: StageOptions = {}) {
     view = next;
     return anims;
   }
-  async function enterPanel<T extends Mobject>(panel: T, { enter = true }: Entry, fade: FadeOpts): Promise<T> {
+  async function enterPanel<T extends Mobject>(panel: T, { enter = true, until }: Entry & Scoped, fade: FadeOpts): Promise<T> {
     overlays.set(panel, undefined);
+    scope([panel], { until });
     if (enter) await scene.play(new FadeIn(panel, fade));
     return panel;
+  }
+  /** Where content may sit: the stage below the heading, a little inside its edges. */
+  const CLEAR_BOUNDS: Box = [CONTENT[0] - 0.3, CONTENT[1] - 0.15, CONTENT[2] + 0.3, CONTENT[3]];
+  const visibleEnough = (m: Mobject) => {
+    for (let a: Mobject | null = m; a; a = a.parent) if ((a.style.opacity ?? 1) < 0.5) return false;
+    return true;
+  };
+  /** A straight connector a label should not sit on: a line, an arrow's shaft or a diagram's edge. */
+  const connectors = (): [Vec, Vec][] => {
+    const out: [Vec, Vec][] = [];
+    for (const m of scene.familyMembers()) {
+      if (!visibleEnough(m) || isHeading(m)) continue;
+      if (m instanceof Line && (m.style.strokeWidth ?? 0) > 0 && m.style.stroke !== 'none') out.push([m.start(), m.end()]);
+      else if (m instanceof Arrow) {
+        const shaft = m.children[0];
+        if (shaft instanceof Line) out.push([shaft.start(), shaft.end()]);
+      } else if (isDiagramConnector(m)) {
+        const b = m.box();
+        if (b) out.push([[b[0], b[1]], [b[2], b[3]]]);
+      }
+    }
+    return out;
+  };
+  const otherText = (except: Set<Mobject>): Box[] => {
+    const boxes: Box[] = [];
+    const seen = new Set<Mobject>();
+    const present = new Set(scene.familyMembers());
+    for (const p of pending) {
+      if (present.has(p)) pending.delete(p);
+      else if (!except.has(p)) {
+        const b = p.box();
+        if (b) boxes.push(b);
+      }
+    }
+    for (const m of scene.familyMembers()) {
+      if (seen.has(m) || except.has(m) || isHeading(m) || !labelOf(m) || !visibleEnough(m)) continue;
+      seen.add(m);
+      let inside = false;
+      for (let a = m.parent; a; a = a.parent) if (except.has(a) || labelOf(a)) inside = true;
+      if (inside) continue;
+      const b = m.box();
+      if (b) boxes.push(b);
+    }
+    return boxes;
+  };
+  const overlapping = (a: Box, b: Box) => a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3];
+  /** Whether the segment a→b passes through `box` (Liang–Barsky). */
+  const crosses = ([a, b]: [Vec, Vec], box: Box): boolean => {
+    let t0 = 0, t1 = 1;
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    for (const [p, q] of [[-dx, a[0] - box[0]], [dx, box[2] - a[0]], [-dy, a[1] - box[1]], [dy, box[3] - a[1]]] as [number, number][]) {
+      if (p === 0) { if (q < 0) return false; continue; }
+      const r = q / p;
+      if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; }
+      else { if (r < t0) return false; if (r < t1) t1 = r; }
+    }
+    return t0 <= t1;
+  };
+  /**
+   * Move `m` (text, or a text with its paper) by the smallest nudge that puts it inside the stage,
+   * off every other label and off every straight connector; by up to 1.2 units up or down and 0.6 sideways, trying
+   * up and down before sideways. Left where it is when no such place is near.
+   */
+  function clearOf(target: Mobject | Mobject[], extra: Mobject[] = []): void {
+    const parts = Array.isArray(target) ? target : [target];
+    const boxes = parts.map((p) => p.box()).filter((b): b is Box => !!b);
+    if (!boxes.length) return;
+    const box: Box = [Math.min(...boxes.map((b) => b[0])), Math.min(...boxes.map((b) => b[1])), Math.max(...boxes.map((b) => b[2])), Math.max(...boxes.map((b) => b[3]))];
+    const except = new Set([...parts, ...extra, ...parts.flatMap((p) => p.family()), ...extra.flatMap((x) => x.family())]);
+    const lines = connectors(), texts = otherText(except);
+    const pad = 0.04;
+    const fits = (dx: number, dy: number) => {
+      const b: Box = [box[0] + dx - pad, box[1] + dy - pad, box[2] + dx + pad, box[3] + dy + pad];
+      if (b[0] < CLEAR_BOUNDS[0] || b[1] < CLEAR_BOUNDS[1] || b[2] > CLEAR_BOUNDS[2] || b[3] > CLEAR_BOUNDS[3]) return false;
+      return !texts.some((t) => overlapping(b, t)) && !lines.some((l) => crosses(l, b));
+    };
+    for (const dy of [0, 0.15, -0.15, 0.3, -0.3, 0.45, -0.45, 0.6, -0.6, 0.75, -0.75, 0.9, -0.9, 1.05, -1.05, 1.2, -1.2])
+      for (const dx of [0, 0.2, -0.2, 0.4, -0.4, 0.6, -0.6])
+        if (fits(dx, dy)) {
+          if (dx || dy) for (const p of parts) p.shift([dx, dy]);
+          return;
+        }
   }
 
   return {
@@ -331,34 +447,56 @@ export function stage(scene: Scene, options: StageOptions = {}) {
       return diagram;
     },
     /** Labelled values; `card.set({...})` updates them, `card.mark(row)` lights one. */
-    async card(rows: readonly CardRow[], opts: Omit<CardOptions, 'at'> & { at?: Vec | Box | StageRegion } & Entry = {}): Promise<Card> {
+    async card(rows: readonly CardRow[], opts: Omit<CardOptions, 'at'> & { at?: Vec | Box | StageRegion } & Entry & Scoped = {}): Promise<Card> {
       const cardDirection = layoutDirection(opts, direction);
       return enterPanel(new Card(scene, colors, rows, { ...opts, at: physical(opts.at), direction: cardDirection }), opts, { runTime: 0.35, shift: [0, -0.08] });
     },
     /** Code on a panel; `code.focus(line)` keeps a bar on it. */
-    async code(lines: readonly string[], opts: Omit<CodeOptions, 'at'> & { at?: Vec | Box | StageRegion } & Entry = {}): Promise<CodeBlock> {
+    async code(lines: readonly string[], opts: Omit<CodeOptions, 'at'> & { at?: Vec | Box | StageRegion } & Entry & Scoped = {}): Promise<CodeBlock> {
       return enterPanel(new CodeBlock(scene, colors, lines, { ...opts, at: physical(opts.at) }), opts, { runTime: 0.4 });
     },
     /** A plain line of supporting text in the stage's secondary colour. */
-    async note(text: string, { at = [0, -3.9], size = 0.24 }: { at?: Vec; size?: number } = {}): Promise<Text> {
+    async note(text: string, { at = [0, -3.9], size = 0.24, until }: { at?: Vec; size?: number } & Scoped = {}): Promise<Text> {
       const t = new Text(text, { fontSize: size, color: soft(colors) }).moveTo(at);
       if (t.width() > 15) t.setWidth(15);
-      return enterPanel(t, {}, { runTime: 0.3 });
+      return enterPanel(t, { until }, { runTime: 0.3 });
+    },
+    /**
+     * A label on the picture: `text` with its `edge` (centre by default; `[1, 0]` puts its right
+     * edge, `[-1, 0]` its left edge) at `at`, in the stage's ink. With `clear` (on by default) it
+     * is nudged, by the least needed, so that it sits inside the stage, off other labels and off
+     * any straight line it would otherwise lie across; `clear: false` leaves it exactly at `at`.
+     * Kept, and faded in unless `enter: false`; `until: 'next'` keeps it for this step alone.
+     */
+    async label(
+      text: string,
+      at: Vec,
+      { size = 0.22, color, edge = [0, 0], font, clear = true, enter = true, until, describe }: { size?: number; color?: string; edge?: Vec; font?: 'sans' | 'mono'; clear?: boolean } & Entry & Scoped & Describe = {},
+    ): Promise<Text> {
+      const t = new Text(text, { fontSize: size, color: color ?? colors.ink, ...(font ? { font } : {}) }).moveTo(at, edge);
+      if (clear) clearOf(t);
+      keepAll([t], { describe });
+      scope([t], { until });
+      if (enter) await scene.play(new FadeIn(t, { runTime: 0.3 }));
+      else pending.add(t);
+      return t;
     },
     /**
      * Track native objects so `clearOverlays` and `clear` remove them with the rest; returns
      * the first. A last `{ describe }` says in words what they show together.
      */
-    keep<T extends Mobject>(first: T, ...rest: Mobject[] | [...Mobject[], Describe]): T {
-      const options = isOptions(rest.at(-1)) ? (rest.pop() as Describe) : {};
+    keep<T extends Mobject>(first: T, ...rest: Mobject[] | [...Mobject[], Describe & Scoped]): T {
+      const options = isOptions(rest.at(-1)) ? (rest.pop() as Describe & Scoped) : {};
       keepAll([first, ...(rest as Mobject[])], options);
+      scope([first, ...(rest as Mobject[])], options);
       return first;
     },
-    /** Keep these and fade them in together, in one play (options as for FadeIn, plus `describe`). */
-    async enter(...args: Mobject[] | [...Mobject[], FadeOpts & Describe]): Promise<void> {
-      const { describe, ...fade } = isOptions(args.at(-1)) ? (args.pop() as FadeOpts & Describe) : {};
+    /** Keep these and fade them in together, in one play (options as for FadeIn, plus `describe` and `until`). */
+    async enter(...args: Mobject[] | [...Mobject[], FadeOpts & Describe & Scoped]): Promise<void> {
+      const { describe, until, ...fade } = isOptions(args.at(-1)) ? (args.pop() as FadeOpts & Describe & Scoped) : {};
       const mobs = args as Mobject[];
       keepAll(mobs, { describe });
+      scope(mobs, { until });
       if (mobs.length) await scene.play(...mobs.map((m) => new FadeIn(m, fade)));
     },
     /** Fade out cards, code, kept objects and diagram notes, in one play. */
@@ -410,27 +548,36 @@ export function stage(scene: Scene, options: StageOptions = {}) {
       } else target.moveTo(to as Vec);
       await scene.play(new Transform(m, target, { runTime }));
     },
-    /** A dimension line from `a` to `b` with `label`, set off by `offset`; drawn in, and kept. */
-    async dimension(a: Vec, b: Vec, label: string, opts: { offset?: number; color?: string; size?: number } = {}) {
+    /** A dimension line from `a` to `b` with `label`, set off by `offset`; drawn in, and kept (`until: 'next'`: for this step alone). */
+    async dimension(a: Vec, b: Vec, label: string, { until, ...opts }: { offset?: number; color?: string; size?: number } & Scoped = {}) {
       const g = onScreen(dimension(toScreen(a), toScreen(b), label, { color: opts.color ?? emphasis(colors), background: colors.paper, ...opts }));
       keepAll([g], { describe: () => `A dimension line marked “${label}”` });
+      scope([g], { until });
       await scene.play(new Create(g, { runTime: 0.6, lagRatio: 0.1 }));
       return g;
     },
-    /** A pin stuck in at `at`, with an optional label; drawn in, and kept. */
-    async pin(at: Vec, opts: { label?: string; color?: string; size?: number } = {}) {
+    /** A pin stuck in at `at`, with an optional label; drawn in, and kept (`until: 'next'`: for this step alone). */
+    async pin(at: Vec, { until, ...opts }: { label?: string; color?: string; size?: number } & Scoped = {}) {
       const g = onScreen(pin(toScreen(at), { color: opts.color ?? emphasis(colors), ...opts }));
       keepAll([g], { describe: () => (opts.label ? `A pin marked “${opts.label}”` : 'A pin') });
+      scope([g], { until });
       await scene.play(new FadeIn(g, { runTime: 0.4, shift: [0, -0.15] }));
       return g;
     },
-    /** Words beside a target with a leader line to it; drawn in, and kept. */
-    async callout(target: Vec | Box | Mobject, text: string, opts: { side?: Side; gap?: number; color?: string; size?: number } = {}) {
+    /**
+     * Words beside a target with a leader line to it; drawn in, and kept (`until: 'next'`: for this
+     * step alone). With `clear` (on by default) the words and their paper are nudged off other labels,
+     * off straight lines and inside the stage; the leader keeps its end on the target.
+     */
+    async callout(target: Vec | Box | Mobject, text: string, { until, clear = true, ...opts }: { side?: Side; gap?: number; color?: string; size?: number; clear?: boolean } & Scoped = {}) {
       const box = Array.isArray(target) ? (target.length === 2 ? ([...target, ...target] as Box) : (target as Box)) : (target as Mobject).box();
       if (!box) throw new Error('callout(): the target has no extent');
       const [a, b] = [toScreen([box[0], box[1]]), toScreen([box[2], box[3]])];
       const g = onScreen(callout([a[0], a[1], b[0], b[1]], text, { color: opts.color ?? colors.ink, background: colors.paper, ...opts }));
+      // The words and their paper move together; the leader line and its dot stay on the target.
+      if (clear) clearOf(g.children.slice(2), [g]);
       keepAll([g], {});
+      scope([g], { until });
       await scene.play(new Create(g, { runTime: 0.6, lagRatio: 0.15 }));
       return g;
     },
@@ -439,10 +586,11 @@ export function stage(scene: Scene, options: StageOptions = {}) {
      * and keep it. `m` must not be on stage yet. A path of several strokes is split into one path
      * per stroke first; the result is what was drawn and kept. `describe` says what it shows.
      */
-    async draw(m: Mobject, { tool: kind = 'pen', color, runTime = 1.5, describe }: { tool?: ToolKind | false; color?: string; runTime?: number } & Describe = {}) {
+    async draw(m: Mobject, { tool: kind = 'pen', color, runTime = 1.5, describe, until }: { tool?: ToolKind | false; color?: string; runTime?: number } & Describe & Scoped = {}) {
       // One path per stroke, so the tool can follow each in turn.
       m = oneStrokeEach(m);
       keepAll([m], { describe });
+      scope([m], { until });
       const t = kind ? tool(kind, { ink: colors.ink, body: color ?? (kind === 'pen' ? soft(colors) : emphasis(colors)) }) : null;
       if (t) {
         // The tool is sized to the stage, as the camera shows it.

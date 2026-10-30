@@ -121,6 +121,7 @@ With neither `style` nor `palette`, the stage adopts the first diagram's palette
 | `s.card(rows, { at, align, width, title, fontSize, direction, enter })` | Labelled values; returns a `Card`. `direction` overrides the stage's field order |
 | `s.code(lines, { at, align, fontSize, title, diff, enter })` | Code on a panel; returns a `CodeBlock`. With `diff`, lines starting `+ ` or `- ` are marked added or removed |
 | `s.note(text, { at, size })` | One line of secondary text, default at `[0, -3.9]` |
+| `s.label(text, at, { size, color, edge, font, clear, enter })` | A label on the picture, its `edge` at `at`; with `clear` (default) it is nudged by the least needed to sit inside the stage, off other labels and off any straight line it would lie across |
 | `s.enter(...mobs, { describe, ...fadeOptions })` | Keep native objects and fade them in together, in one play |
 | `s.keep(...mobs, { describe })` | Keep native objects without animating them; returns the first |
 | `s.clearOverlays()` | Fade out cards, code, notes (the stage's and the diagrams') and kept objects |
@@ -135,6 +136,12 @@ With neither `style` nor `palette`, the stage adopts the first diagram's palette
 | `s.palette`, `s.paper`, `s.heading` | The current palette, paper rectangle and heading text |
 
 Annotations say a value where it is. Prefer a dimension, pin or callout on the drawing to a card beside it, and `carry` to `clear` when the next step builds on this one: `check` reports how many cards each resting picture holds (`cardsAtRest`).
+
+Every helper that keeps something (`card`, `code`, `note`, `label`, `enter`, `keep`, `dimension`, `pin`, `callout`, `draw`) takes `until: 'next'`: the stage then keeps it for the step that made it alone, and fades it out in the same play as the next step's heading change. The step's resting picture has it; the next step's does not. Use it for a reading, callout or dimension that explains one step, so that it never has to be removed by hand and never lingers over the next step's labels.
+
+`callout` and `label` place their words clear of other labels, straight lines (a `Line`, an arrow's shaft, a diagram's edge) and the stage edge, moving them by the least nudge that works, up to 1.2 units up or down and 0.6 sideways, trying up and down before sideways; `clear: false` leaves them exactly where asked. A callout's leader keeps its end on the target. Labels placed with `enter: false` in the same step see one another.
+
+For a picture that changes with `scene.state`, draw it once as a `view(this, state => …)` and `play(view.sync())` after each change ([views](VIEWS.md)): the engine then animates which part became which, and the fidelity test can hold the drawing to the state. The `latest-search`, `token-bucket`, `ring-buffer` and `state-machine` explainers draw their changing pictures this way.
 
 `{ enter: false }` creates a card or code panel without playing it, so `s.enter(card, code)` can bring several in together.
 
@@ -245,7 +252,19 @@ const which = settingsOf(this).request;
 
 Every case is built ahead of time; run `check` or `review` to validate every case before publishing. A scene may have at most 64. Ids are URL-safe (`[A-Za-z][A-Za-z0-9_-]*`) and distinct; `step`, `theme` and `parentOrigin` are reserved. Option values are unique and include the default. A setting may change diagrams, captions, numbers and which steps exist; keep the palette fixed.
 
-Other exports: `withSettings(Scene, values)` binds a case without mutating the class; `resolveSettings` validates; `variantsOf(Scene)` lists every case; `caseName(Scene, values)` gives "Label: option · Label: option"; `bindSnapshots(Scene, store)` binds a snapshot store.
+### Dials
+
+```ts
+static settings = [
+  { id: 'horizon', label: 'Western horizon', default: 'flat', options: [...] },
+  { id: 'evening', label: 'Evening', default: '0', dial: true, options: [{ value: '-1', label: 'the evening before' }, { value: '0', label: 'the first named evening' }, { value: '1', label: 'the evening after' }] },
+];
+const evening = Number(settingsOf(this).evening);
+```
+
+A setting with `dial: true` varies one value inside a step instead of choosing a case. The reader turns it under the picture (a stepper with the option's label between its arrows) and the step is drawn again with the new value, without leaving the step; a link carries the dial's value with the case and step. Cases, the transcript and the page's sections are built from the other settings, with every dial at its default, so a dial of six options adds no transcript and no case to the page. `rayner check` runs every case at every dial value (`sweepsOf`, at most 256 combinations), so a label that collides only when the dial is turned is still found; `review` and the fidelity tests visit the cases. Put the dial's reading on the picture (a callout, `s.label`) so the picture says what the dial is set to.
+
+Other exports: `withSettings(Scene, values)` binds a case without mutating the class; `resolveSettings` validates; `variantsOf(Scene)` lists every case (dials at their defaults) and `sweepsOf(Scene)` every case at every dial value; `caseValues(Scene, values)` drops the dials; `isDial(setting)`; `caseName(Scene, values)` gives "Label: option · Label: option"; `bindSnapshots(Scene, store)` binds a snapshot store.
 
 ## Describe
 
@@ -309,7 +328,9 @@ The report goes to `out/checks/<id>/report.json`. For each case it holds the ful
 | `labelsOutsideCloseUpsAt390` | Labels no close-up shows whole, which a reader reaches by panning |
 | `minLabelPx390WholeStage` | Smallest label on that phone without close-ups |
 
-`cardsAtRest` counts the cards in each step's resting picture.
+`cardsAtRest` counts the cards in each step's resting picture. `density` counts, for each step, the distinct labels in its resting picture (the heading left out) and the words and numerals in its caption, with the case's largest of each (`maxLabels`, `maxCaptionWords`, `maxCaptionNumerals`). It is reported, not gated: the rubric's reader-economy point is where most assessed explainers lose a point, and the count is there to read before an editor does. `pivots` is how many pivots the scene's review file holds; `check` asserts their state (see [reader review](#reader-review)).
+
+A passing `check` prints a few lines: the cases, steps and frames checked, the smallest labels at 1280 px and in a phone close-up, the densest step, and where the report is. `--json` prints the whole report instead.
 
 The phone sizes are reported, not gated; every demo case reports no label under 12 px. A close-up zooms on top of the author's camera, so its sizes multiply the camera zoom by the close-up's.
 
@@ -341,6 +362,24 @@ Helpers supply subjects automatically. For an important caption claim or a step 
 
 `settings` selects cases and may be omitted. `opening: true` requires the subjects in the initial view; otherwise the close-up tour must cover them. Each target names a semantic `key` or exact label `text`; `paint: "stroke"` requires route ink, so an arrow's label alone cannot satisfy the claim. Unknown cases, missing steps and missing subjects fail. `--claims <file>` selects another claim file. Write expectations from the explanation's meaning, independently of the close-up planner. These checks cannot establish that arbitrary prose or a model is true.
 
+The same file holds the explainer's **pivots**: the claim the explanation turns on, written down as the state a step must record and the subjects a reader must see there.
+
+```json
+{
+  "version": 1,
+  "pivots": [
+    {
+      "step": "names",
+      "settings": { "cycle": "may", "horizon": "flat" },
+      "state": { "half": { "date": "26 May", "time": "8:14:27 PM EDT", "apparent": 0.06 } },
+      "witness": [{ "text": "Half Sun · 26 May · 8:14 PM" }]
+    }
+  ]
+}
+```
+
+`check` asserts each `state` value, key by key, against the step's recorded state in every case the pivot selects, and `review` checks each `witness` is painted where the reader lands, as a claim. The fidelity tests derive the same values from the model; the pivot is the author's reviewed statement of them, so a change that moves the pivotal number fails until the statement is re-read. `node tools/explain-pivots.ts --write` records a first pivot for every catalog explainer that has none, from the catalog step's changed state, for an author to review.
+
 `rayner <command> <scene.ts | directory> [options]`. In a checkout, run `npm run rayner -- <command> ...`. `rayner --help` prints the commands and Chromium setup instructions.
 
 | Command | What it does |
@@ -362,6 +401,9 @@ Helpers supply subjects automatically. For an important caption claim or a step 
 | `--case id=value` | `shots`, `see` | One case; repeat for several settings |
 | `--port <n>` | `preview` | Default 5174 |
 | `--watch` | `preview` | Rebuild the page when a source file changes; reload the browser to see it |
+| `--json` | `check` | Print the whole report; by default a passing check prints a summary and writes the report |
+| `--artifact` | `build`, `preview` | Also write `<page>.artifact.html`: the page without its document skeleton, for a host that supplies one (claude.ai's artifacts) |
+| `--stills` | `build`, `preview` | Also write `<page>.stills.html`: every step's resting picture as SVG with its words and a stepper, and no engine; see [stills](#stills) |
 
 `CHROMIUM_EXECUTABLE_PATH` selects a Chromium for capture; otherwise it is looked up in `PLAYWRIGHT_BROWSERS_PATH` and Playwright's cache. If an authoring package is missing, the command prints the line that installs it.
 
@@ -374,6 +416,10 @@ Helpers supply subjects automatically. For an important caption claim or a step 
 Diagram payloads are compressed losslessly inside the page and decoded with the browser’s native `DecompressionStream` API before the player starts. The transcript remains readable without JavaScript. Builds enforce limits of 1.5 MiB for raw HTML and 450 KiB for its gzip representation, including the poster and transcript. Receipts report `bytes` and `gzipBytes`. Reduce cases or split an explanation that exceeds either budget.
 
 The transcript lists, for every case, each step as a link to it, its caption, and what its resting picture shows. Without JavaScript every case shows. The player shows the current case's section, and its links move the player.
+
+### Stills
+
+`build --stills` writes a second page beside the first with no engine in it: for every case, each step's resting picture as the SVG the player would come to rest on, under it the step's title, line and caption, with the same case choice, step list, transcript, sources and address scheme as the full page. Repeated path data (text is glyph outlines, and a step repeats most of the step before) is shared through one `<defs>` block, so twenty stills weigh about what four do. The receipt beside it reports its bytes. It has no animation, zoom or phone close-ups, so a label that reads at 12 px only in a close-up is small there; for an explanation whose pictures carry it without motion it is the whole reader at a fraction of the download, and an author can publish either or both.
 
 ### URL parameters
 

@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "suggest",
+      "settings": {
+        "auth": "desktop"
+      },
+      "state": {
+        "found": {
+          "opCalls": [
+            "item list --format json",
+            "item get - --format json"
+          ],
+          "fetched": [
+            "Cloud API",
+            "Database"
+          ],
+          "matches": [
+            {
+              "ref": "op://Personal/Cloud API/credential",
+              "title": "Cloud API",
+              "kind": "api-credential",
+              "queries": [
+                "cloud api"
+              ]
+            }
+          ],
+          "suggestions": [
+            {
+              "query": "databse",
+              "ref": "op://Work/Database/password",
+              "title": "Database",
+              "kind": "database"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

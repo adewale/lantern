@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "names",
+      "settings": { "cycle": "may", "horizon": "flat" },
+      "state": {
+        "half": { "date": "26 May", "time": "8:14:27 PM EDT", "apparent": 0.06 },
+        "full": { "date": "27 May", "time": "8:13:51 PM EDT", "apparent": 0.257 },
+        "agree": false
+      },
+      "witness": [{ "text": "Half Sun · 26 May · 8:14 PM" }, { "text": "Full Sun · 27 May · 8:13 PM" }, { "text": "28 May · 8:14 PM" }]
+    },
+    {
+      "step": "names",
+      "settings": { "cycle": "july", "horizon": "raised" },
+      "state": {
+        "half": { "date": "13 Jul", "time": "8:21:17 PM EDT", "apparent": 0.586 },
+        "full": { "date": "12 Jul", "time": "8:20:32 PM EDT", "apparent": 0.768 }
+      },
+      "witness": [{ "text": "Full Sun · 12 Jul · 8:20 PM" }, { "text": "Half Sun · 13 Jul · 8:21 PM" }]
+    },
+    {
+      "step": "ladder",
+      "settings": { "cycle": "may", "horizon": "flat" },
+      "state": { "perEvening": 0.197 }
+    }
+  ]
+}

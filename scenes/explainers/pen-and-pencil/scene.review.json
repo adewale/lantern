@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "plate",
+      "settings": {
+        "hand": "first"
+      },
+      "state": {
+        "plate": {
+          "objects": 13,
+          "stray": 0.005,
+          "letters": 166,
+          "sharpenings": 11
+        }
+      }
+    }
+  ]
+}

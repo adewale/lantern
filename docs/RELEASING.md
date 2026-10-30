@@ -36,7 +36,7 @@ Before using `.github/workflows/publish.yml`:
 2. The 0.1.0 manual publication completed package ownership bootstrap. Subsequent versions use npm trusted publishing for owner `adewale`, repository `rayner`, workflow `publish.yml`, environment `npm-publish`. Keep the npm account protected with 2FA; do not create a long-lived publishing token.
 3. The owner configured `npm-publish` with Ade as required reviewer, no admin bypass and a `v*` tag deployment policy. Self-review is allowed because Ade is the sole reviewer. Verify those settings before relying on them; naming an environment in YAML alone does not create its protections.
 
-Trusted publishing requires npm 11.5.1+; the workflow checks that floor and uses Node 24. Its publishing job alone gets `id-token: write`. The normal CI jobs have read-only repository access. The archive gate also runs on Node 24.0.0 to check the declared minimum; the full browser and capture gates run on the current Node 24 release. npm automatically generates provenance for trusted publishing; `repository.url` must match this public repository.
+Trusted publishing requires npm 11.5.1+; the workflow checks that floor and uses Node 24. Its publishing job alone gets `id-token: write`. The normal CI jobs have read-only repository access. The archive gate also runs on Node 22.22.0 to check the declared minimum; the full browser and capture gates run on the current Node 24 release. npm automatically generates provenance for trusted publishing; `repository.url` must match this public repository.
 
 ## Publish a tested version
 

@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "year",
+      "settings": {
+        "place": "london"
+      },
+      "state": {
+        "polarDay": 0,
+        "polarNight": 0,
+        "daylight": [
+          8,
+          9.6,
+          11.4,
+          13.5,
+          15.3,
+          16.4,
+          16,
+          14.5,
+          12.5,
+          10.4,
+          8.6,
+          7.6
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "full",
+      "settings": {
+        "column": "int4",
+        "fillfactor": "100"
+      },
+      "state": {
+        "full": {
+          "rows": 226,
+          "share": {
+            "data": 904,
+            "headers": 5198,
+            "padding": 1130,
+            "pointers": 904,
+            "pageHeader": 24,
+            "reserved": 0,
+            "free": 32
+          }
+        }
+      }
+    }
+  ]
+}

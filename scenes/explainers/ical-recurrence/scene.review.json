@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "change",
+      "settings": {
+        "change": "move",
+        "copy": "organiser"
+      },
+      "state": {
+        "change": {
+          "change": "move",
+          "stored": {
+            "vevents": 3,
+            "masters": 1,
+            "overrides": 2,
+            "rrules": 1,
+            "exdates": 0,
+            "uids": [
+              "standup"
+            ]
+          },
+          "meetings": [
+            "20261102T090000Z",
+            "20261110T140000Z",
+            "20261116T090000Z",
+            "20261123T090000Z",
+            "20261130T090000Z",
+            "20261207T090000Z"
+          ],
+          "moved": {
+            "from": "20261109T090000Z",
+            "to": "20261110T140000Z"
+          }
+        }
+      }
+    }
+  ]
+}

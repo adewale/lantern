@@ -3,14 +3,50 @@
   "claims": [
     {
       "step": "compare",
-      "settings": { "guard": "off", "order": "new-first" },
+      "settings": {
+        "guard": "off",
+        "order": "new-first"
+      },
       "opening": true,
-      "targets": [{ "text": "No guard: A" }, { "text": "Guard: B" }]
+      "targets": [
+        {
+          "text": "No guard: A"
+        },
+        {
+          "text": "Guard: B"
+        }
+      ]
     },
     {
       "step": "first",
-      "settings": { "guard": "on", "order": "old-first" },
-      "targets": [{ "text": "0 none    1 A (older)    2 B (latest)" }]
+      "settings": {
+        "guard": "on",
+        "order": "old-first"
+      },
+      "targets": [
+        {
+          "text": "0 none    1 A (older)    2 B (latest)"
+        }
+      ]
+    }
+  ],
+  "pivots": [
+    {
+      "step": "compare",
+      "settings": {
+        "guard": "off",
+        "order": "new-first"
+      },
+      "state": {
+        "unguarded": "A",
+        "guarded": "B",
+        "compare": true,
+        "unguardedHistory": [
+          null,
+          "B",
+          "A"
+        ]
+      }
     }
   ]
 }

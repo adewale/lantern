@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "verify",
+      "settings": {
+        "edit": "missing"
+      },
+      "state": {
+        "warnings": [
+          {
+            "code": "DECISION_BRANCH_UNLABELED",
+            "node": "A",
+            "edge": "A->B#0",
+            "part": "edge:A->B#0"
+          },
+          {
+            "code": "DECISION_BRANCH_UNLABELED",
+            "node": "A",
+            "edge": "A->C#0",
+            "part": "edge:A->C#0"
+          }
+        ]
+      }
+    }
+  ]
+}

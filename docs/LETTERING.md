@@ -39,7 +39,7 @@ unavailable glyphs, and `Math` without `math: true` fail the build.
 
 ## macOS setup
 
-The HTML authoring workflow needs Node 24 and Chromium, as in the README. Python and source fonts are needed only when capturing new lettering; committed snapshots need neither.
+The HTML authoring workflow needs Node 22.22 or later and Chromium, as in the README. Python and source fonts are needed only when capturing new lettering; committed snapshots need neither.
 
 For new lettering on macOS, install Python with `brew install python@3.12`, create a virtual environment with `python3.12 -m venv .venv`, then run `.venv/bin/pip install -r tools/lettering-requirements.txt`. Set `RAYNER_LETTERING_PYTHON="$PWD/.venv/bin/python"` and `PYFTSUBSET="$PWD/.venv/bin/pyftsubset"`, then run `bash tools/lettering-outline-fonts.sh`. These variables also work on Ubuntu. For new maths, set `RAYNER_MATH_FONT` to the original Latin Modern Math 1.959 `latinmodern-math.otf`; an existing TeX installation can locate it with `kpsewhich latinmodern-math.otf`.
 

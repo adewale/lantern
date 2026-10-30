@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "plafond",
+      "settings": {
+        "enfants": "1",
+        "revenu": "65673.88"
+      },
+      "state": {
+        "plafond": 1791,
+        "plafonne": true,
+        "plafQf": 4242.124000000002
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "requests",
+      "settings": {
+        "trust": "2",
+        "request": "direct"
+      },
+      "state": {
+        "answers": {
+          "client": "203.0.113.7",
+          "forged": "198.51.100.9",
+          "direct": "1.2.3.4"
+        }
+      }
+    }
+  ]
+}

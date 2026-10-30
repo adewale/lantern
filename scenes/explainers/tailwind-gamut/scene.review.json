@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "palette",
+      "settings": {
+        "shade": "500",
+        "screen": "srgb"
+      },
+      "state": {
+        "furthest": {
+          "family": "lime",
+          "value": 0.024
+        },
+        "outsideSrgb": [
+          "orange",
+          "amber",
+          "yellow",
+          "lime",
+          "green",
+          "emerald",
+          "teal",
+          "cyan",
+          "sky",
+          "blue",
+          "indigo",
+          "violet",
+          "purple",
+          "rose"
+        ]
+      }
+    }
+  ]
+}

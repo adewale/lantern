@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "cat",
+      "settings": {
+        "shell": "new"
+      },
+      "state": {
+        "cat": "HELLO\n"
+      }
+    }
+  ]
+}

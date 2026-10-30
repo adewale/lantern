@@ -165,7 +165,7 @@ jobs:
       matrix:
         # Current standard ARM image; macos-15 ARM jobs failed to acquire runners.
         os: [ubuntu-24.04, macos-26, macos-15-intel]
-        node: ['24.0.0', '24']
+        node: ['22.22.0', '24']
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30  # types, standard suite, browser checks and installed starter
     steps:

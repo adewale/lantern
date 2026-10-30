@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "users",
+      "settings": {
+        "size": "1t",
+        "reserve": "5"
+      },
+      "state": {
+        "users": {
+          "free": 263940198,
+          "users": 250514330,
+          "pie": [
+            {
+              "label": "Metadata",
+              "value": 4495258
+            },
+            {
+              "label": "Users can write",
+              "value": 250514330
+            },
+            {
+              "label": "Root reserve",
+              "value": 13421772
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "other-rule",
+      "settings": {
+        "lifetime": "45d",
+        "rule": "fixed30"
+      },
+      "state": {
+        "otherRule": {
+          "rule": "fraction",
+          "issued": [
+            0,
+            720,
+            1440,
+            2160,
+            2880,
+            3600,
+            4320,
+            5040,
+            5760,
+            6480,
+            7200,
+            7920,
+            8640
+          ],
+          "refused": [],
+          "renewalsPerYear": 12
+        }
+      }
+    }
+  ]
+}

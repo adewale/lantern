@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "wrap-arc",
+      "settings": {
+        "wrapper": "arc",
+        "inner": "cell"
+      },
+      "state": {
+        "built": {
+          "name": "Arc<Cell<i32>>",
+          "send": false,
+          "sync": false,
+          "quadrant": 3
+        }
+      }
+    }
+  ]
+}

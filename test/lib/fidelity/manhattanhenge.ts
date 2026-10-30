@@ -18,8 +18,13 @@ export function check(trace: Trace, values: Record<string, string>): void {
     gridDays: gridDays(year).map((d) => M.label(YEAR, d)),
   });
   const c = cycleOf(cycle, horizon);
+  // The dial chooses which of the six evenings is drawn; at its default, the first named one.
+  const dial = Number(values.evening ?? '0'),
+    shown = c.ladder[2 + dial]!;
+  assert.equal(c.ladder[2]!.doy, Math.min(c.half.doy, c.full.doy));
   assertStepState(trace, 'evening', {
-    evening: { date: M.label(YEAR, c.half.doy), time: M.clock(c.half.ms, { seconds: true }), apparent: +c.half.apparent.toFixed(3) },
+    evening: { date: M.label(YEAR, shown.doy), time: M.clock(shown.ms, { seconds: true }), apparent: +shown.apparent.toFixed(3) },
+    dial,
   });
   assertStepState(trace, 'ladder', {
     ladder: c.ladder.map((x) => ({ date: M.label(YEAR, x.doy), apparent: +x.apparent.toFixed(3) })),

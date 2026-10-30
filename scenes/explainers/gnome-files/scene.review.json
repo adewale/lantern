@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "give-ups",
+      "settings": {
+        "participant": "P1"
+      },
+      "state": {
+        "giveUps": {
+          "mine": [
+            4,
+            7
+          ],
+          "others": {
+            "4": [
+              "P3",
+              "P6"
+            ],
+            "7": [
+              "P2"
+            ]
+          },
+          "total": 11
+        }
+      }
+    }
+  ]
+}

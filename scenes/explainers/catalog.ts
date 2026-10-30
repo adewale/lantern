@@ -8,7 +8,7 @@ export const PRODUCT = {
   summary: 'Interactive explanations of protocols, algorithms and code changes.',
   audience: 'For engineers and technical educators who write TypeScript.',
   description: 'Step through a picture at your own pace, or change a setting to follow another case. The model computes the numbers, diagrams and captions. Publish a portable HTML page with a transcript and no runtime network requests.',
-  requirements: 'Node 24 or later and Chromium. Authoring targets Ubuntu and macOS.',
+  requirements: 'Node 22.22 or later and Chromium. Authoring targets Ubuntu and macOS.',
   tutorial: 'https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md',
   reference: 'https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md',
   skill: 'https://github.com/adewale/rayner/blob/main/skills/rayner-explainers/SKILL.md',

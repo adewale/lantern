@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "later",
+      "settings": {
+        "rate": "2"
+      },
+      "state": {
+        "tokens": 1,
+        "lastRefill": 2,
+        "allowed": 8,
+        "balances": [
+          4,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    }
+  ]
+}

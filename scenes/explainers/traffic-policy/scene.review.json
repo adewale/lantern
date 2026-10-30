@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "claims": [],
+  "pivots": [
+    {
+      "step": "shares",
+      "settings": {
+        "policy": "local",
+        "pods": "3-1-0"
+      },
+      "state": {
+        "shares": {
+          "a": "1/6",
+          "b": "1/6",
+          "c": "1/6",
+          "d": "1/2"
+        }
+      }
+    }
+  ]
+}
