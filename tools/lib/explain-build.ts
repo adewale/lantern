@@ -87,6 +87,9 @@ export async function buildExplainer(
     )
   )
     throw new Error('Build-time diagram renderer leaked into browser artifact');
+  // Framed (specs/player-tile.md T4), the page draws only the tile. This runs before the body is
+  // laid out, so a frame never shows the padded page first; the CSP pins it by its own hash.
+  const framedJs = "if(parent!==window)document.documentElement.dataset.framed=''";
   const js = scriptEscape(bundled.outputFiles[0]!.text),
     css = (await readFile(join(ROOT, 'app/embed.css'), 'utf8')) + (rightToLeftPage(project) ? RTL_CSS : '');
   // Every case, every step: a link to it, its caption and what its resting picture shows.
@@ -116,9 +119,9 @@ export async function buildExplainer(
   const licenses = notices.join('\n\n') + (project.outlineLettering
     ? letteringLicences(project.outlineLettering).filter((notice) => !notices.includes(notice)).map((notice) => '\n\n' + notice).join('')
     : '');
-  const html = `<!doctype html>\n<html lang="${htmlEscape(lang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${htmlEscape(title)}</title><meta name="generator" content="Rayner"><style>${css}</style></head><body><main id="content"><div class="layout tile"><section class="player"><h1>${htmlEscape(title)}</h1><div class="stage poster">${sink.svg}</div><p class="caption">${htmlEscape(stepWords(first).caption)}</p><details class="transcript" open><summary>${htmlEscape(t.transcript)}</summary>${transcript}${sources ? `<h2>${htmlEscape(t.sources)}</h2><ul>${sources}</ul>` : ''}</details></section></div></main><template id="licenses"><pre>${htmlEscape(licenses)}</pre></template><script>${js}</script></body></html>\n`;
+  const html = `<!doctype html>\n<html lang="${htmlEscape(lang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${htmlEscape(title)}</title><meta name="generator" content="Rayner"><style>${css}</style></head><body><script>${framedJs}</script><main id="content"><div class="layout tile"><section class="player"><h1>${htmlEscape(title)}</h1><div class="stage poster">${sink.svg}</div><p class="caption">${htmlEscape(stepWords(first).caption)}</p><details class="transcript" open><summary>${htmlEscape(t.transcript)}</summary>${transcript}${sources ? `<h2>${htmlEscape(t.sources)}</h2><ul>${sources}</ul>` : ''}</details></section></div></main><template id="licenses"><pre>${htmlEscape(licenses)}</pre></template><script>${js}</script></body></html>\n`;
   const sri = (value: string) => "'sha256-" + createHash('sha256').update(value).digest('base64') + "'";
-  const policy = `default-src 'none'; script-src ${sri(js)}; style-src ${sri(css)}; img-src data:; connect-src 'none'; font-src 'none'; base-uri 'none'; object-src 'none'; frame-ancestors *`;
+  const policy = `default-src 'none'; script-src ${sri(framedJs)} ${sri(js)}; style-src ${sri(css)}; img-src data:; connect-src 'none'; font-src 'none'; base-uri 'none'; object-src 'none'; frame-ancestors *`;
   const receipt = {
     ...baseReceipt(project),
     title,

@@ -38,6 +38,10 @@ function setIcon(b: HTMLButtonElement, label: string, name: IconName) {
 
 export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snapshots: SnapshotStore): Promise<void> {
   const params = new URLSearchParams(location.search);
+  // In a frame the page draws nothing but the tile: no padding, no background (embed.css). The
+  // built page's first script says so before the body is laid out; this keeps it so for a page
+  // mounted some other way.
+  if (window.parent !== window) document.documentElement.dataset.framed = '';
   document.documentElement.dataset.theme = ['light', 'dark'].includes(params.get('theme') ?? '')
     ? params.get('theme')!
     : 'auto';

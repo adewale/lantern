@@ -818,6 +818,81 @@ test('the loader appends only the iframe, and dispose() removes the iframe and i
     assert.deepEqual(await page.evaluate(() => ({ children: document.getElementById('t')!.childNodes.length, links: document.querySelectorAll('a, iframe').length, listeners: (window as unknown as { __listeners: number }).__listeners })), { children: 0, links: 0, listeners: 0 });
   } finally { await page.close(); }
 });
+/** The colour of one screen pixel of `page`, read back from a screenshot (the host cannot read a cross-origin frame's pixels). */
+async function pixelAt(page: Page, x: number, y: number): Promise<number[]> {
+  const png = await page.screenshot({ clip: { x, y, width: 1, height: 1 } });
+  const reader = await browser.newPage();
+  try {
+    return await reader.evaluate(async (b64) => {
+      const img = new Image();
+      img.src = 'data:image/png;base64,' + b64;
+      await img.decode();
+      const c = document.createElement('canvas');
+      c.width = c.height = 1;
+      const g = c.getContext('2d')!;
+      g.drawImage(img, 0, 0);
+      return [...g.getImageData(0, 0, 1, 1).data].slice(0, 3);
+    }, png.toString('base64'));
+  } finally { await reader.close(); }
+}
+// specs/player-tile.md T4: in a frame the page is the tile alone, on the host's background.
+test('framed, the page draws only the tile: a transparent body, no padding, and the host\'s background at the tile\'s corner in light and dark device schemes', options, async () => {
+  for (const colorScheme of ['light', 'dark'] as const) {
+    hostBody = `<!doctype html><style>body{margin:0;padding:20px;background:rgb(251,248,243)}</style>${loader('a', 'mr-cache')}`;
+    const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, colorScheme, reducedMotion: 'reduce' });
+    try {
+      const page = await context.newPage();
+      await page.goto(host);
+      const frame = await readyFrame(page, 'mr-cache');
+      await assertHeight(page, 'a', frame);
+      const inside = await frame.evaluate(() => ({
+        framed: document.documentElement.hasAttribute('data-framed'),
+        theme: document.documentElement.dataset.theme,
+        body: getComputedStyle(document.body).backgroundColor,
+        padding: getComputedStyle(document.getElementById('content')!).padding,
+        tile: (() => { const r = document.querySelector('.tile')!.getBoundingClientRect(); return [r.left, r.top, innerWidth - r.right]; })(),
+      }));
+      assert.deepEqual(inside, { framed: true, theme: 'light', body: 'rgba(0, 0, 0, 0)', padding: '0px', tile: [1, 1, 1] }, colorScheme);
+      const box = (await page.locator('#a iframe').boundingBox())!;
+      assert.deepEqual(await pixelAt(page, box.x + 2, box.y + 2), [251, 248, 243], `${colorScheme} device: the host's background at the tile's corner`);
+      // And inside the corner's curve, the tile's own surface.
+      assert.notDeepEqual(await pixelAt(page, box.x + 16, box.y + 16), [251, 248, 243], colorScheme);
+    } finally { await context.close(); }
+  }
+  // Standalone, as before: the page's background and padding.
+  const page = await browser.newPage({ reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/mr-cache.html`);
+    await page.waitForSelector('[data-ready=true]');
+    assert.deepEqual(await page.evaluate(() => ({
+      framed: document.documentElement.hasAttribute('data-framed'),
+      body: getComputedStyle(document.body).backgroundColor,
+      padding: getComputedStyle(document.getElementById('content')!).padding,
+    })), { framed: false, body: 'rgb(246, 247, 249)', padding: '24px 16px 48px' });
+  } finally { await page.close(); }
+});
+test('the loader passes theme=light or theme=dark from the host page\'s computed colour scheme when the theme is auto, and the given theme otherwise', options, async () => {
+  const cases = [
+    { scheme: 'light', host: '', theme: '', want: 'light' },
+    { scheme: 'dark', host: '', theme: '', want: 'light' },
+    { scheme: 'dark', host: 'light dark', theme: '', want: 'dark' },
+    { scheme: 'light', host: 'light dark', theme: '', want: 'light' },
+    { scheme: 'light', host: 'dark', theme: '', want: 'dark' },
+    { scheme: 'dark', host: 'light', theme: 'auto', want: 'light' },
+    { scheme: 'light', host: '', theme: 'dark', want: 'dark' },
+    { scheme: 'dark', host: 'dark', theme: 'light', want: 'light' },
+  ] as const;
+  for (const c of cases) {
+    hostBody = `<!doctype html>${c.host ? `<style>:root{color-scheme:${c.host}}</style>` : ''}<div id="a"></div><script src="${embed}/loader.js" data-src="${embed}/mr-cache.html" data-target="a" data-title="t"${c.theme ? ` data-theme="${c.theme}"` : ''}></script>`;
+    const context = await browser.newContext({ colorScheme: c.scheme });
+    try {
+      const page = await context.newPage();
+      await page.goto(host);
+      const src = new URL(await page.locator('#a iframe').getAttribute('src') ?? '');
+      assert.equal(src.searchParams.get('theme'), c.want, JSON.stringify(c));
+    } finally { await context.close(); }
+  }
+});
 // The rest of URL cases, step fallback, history, copy link and reduced motion is the player
 // model's (below), including the fixed fallback scenario.
 test('?theme=dark, light and auto (following the reader\'s colour scheme) set the page colours', options, async () => {

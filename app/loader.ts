@@ -16,13 +16,15 @@ export function mountExplainer(
   const origin = exactHttpOrigin(url.origin);
   if (!origin) throw new Error('Auto-sizing requires an HTTP(S) artifact URL');
   url.searchParams.set('parentOrigin', location.origin);
-  if (options.theme) url.searchParams.set('theme', options.theme);
+  // The frame is transparent; Chromium paints an opaque canvas under a cross-origin frame whose
+  // colour scheme differs from its host's, so 'auto' means the host page's scheme, not the device's.
+  url.searchParams.set('theme', options.theme && options.theme !== 'auto' ? options.theme : hostScheme());
   const frame = document.createElement('iframe');
   frame.title = options.title;
   frame.loading = 'lazy';
   frame.allow = 'fullscreen';
   frame.src = url.href;
-  frame.style.cssText = `width:100%;height:${options.height ?? 640}px;border:0;display:block`;
+  frame.style.cssText = `width:100%;height:${options.height ?? 640}px;border:0;border-radius:12px;display:block`;
   const receive = (event: MessageEvent) => {
     const height = resizeHeight(event, origin, frame.contentWindow);
     if (height != null) frame.style.height = `${height}px`;
@@ -33,6 +35,17 @@ export function mountExplainer(
     window.removeEventListener('message', receive);
     frame.remove();
   };
+}
+
+/**
+ * The host page's used colour scheme: dark when its computed color-scheme allows only dark, or
+ * allows dark and the device prefers it; light otherwise, including `normal`.
+ */
+function hostScheme(): 'light' | 'dark' {
+  const scheme = getComputedStyle(document.documentElement).colorScheme;
+  const dark = /\bdark\b/.test(scheme),
+    light = /\blight\b/.test(scheme);
+  return dark && (!light || matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
 }
 
 /** The language the loader's words are in: the one given, else the host page's. */
