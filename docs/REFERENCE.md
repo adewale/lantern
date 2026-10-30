@@ -1,6 +1,6 @@
 # Reference
 
-[The tutorial](TUTORIAL.md) walks through a first explainer; [publishing](PUBLISHING.md) covers hosting and embedding a page.
+[The tutorial](TUTORIAL.md) starts with the complete Hello World scene; the [authoring feature tour](FEATURE-TOUR.md) pairs code excerpts with the result of running them. [Publishing](PUBLISHING.md) covers hosting and embedding a page.
 
 Words used throughout: a **setting** is a choice a scene declares (an id, a label and options); a **case** is one value for every setting. A **step** is a named section of the scene, and its **resting picture** is what the step leaves on screen: the picture a reader looks at while reading the caption. The **stage** is the 16 × 9 drawing area. Code and JSON spell case as `variant` (`variantsOf`, `variants` in reports) and resting picture as `restingFrame`.
 
@@ -222,14 +222,14 @@ These are the engine's own features, imported from `rayner` and used beside the 
 
 | Feature | What a scene uses | Guide | Used by |
 | --- | --- | --- | --- |
-| Matching transforms | `TransformMatchingText`, `TransformMatchingShapes` (`shapeKey()`), `TransformMatching` with your own key; `summary()`, `pairs`, `removed`, `added` | [Matching](MATCHING.md) | `glyph`, `exgit`; no explainer yet: `TransformMatching` with your own key |
+| Matching transforms | `TransformMatchingText`, `TransformMatchingShapes` (`shapeKey()`), `TransformMatching` with your own key; `summary()`, `pairs`, `removed`, `added` | [Matching](MATCHING.md) | `feature-tour` (basic text), `glyph`, `exgit`; no explainer yet: `TransformMatching` with your own key |
 | Diff-driven code morph | `new TransformDiff(before, after, { hunks })` and its `plan`; `diffLines`, `parseUnifiedDiff` for hunks | [Diff-driven](MATCHING.md#diff-driven) | `mr-cache`; no explainer yet: the `hunks` option, `diffLines`, `diffTokens`, `parseUnifiedDiff`, `hunkHeader` |
-| Camera | `this.frame.animate.fit(...)`, `.reset()`; `d.focus(…, { camera: true })` | [Camera](CAMERA.md) | `seasons`; `lantern`'s diagram focus with `also` |
-| Emphasis that stays | `SurroundingRectangle`, `Underline`, `Cross`, `Brace`, `BraceLabel`, `Circumscribe({ keep: true })` | [Emphasis](EMPHASIS.md) | `glyph`, `mr-cache`, `state-machine`, `ring-buffer`, `exgit` (`Underline`: `glyph` only); no explainer yet: a bare `Brace`, `tip()`, `putAtTip()` |
-| Charts of the model's numbers | `NumberLine`, `Axes` with `plot`, `lineGraph`, `bar`, `dot`, guide lines, `areaUnder` | [Graphing](GRAPHING.md) | `seasons` (`plot`), `token-bucket` (`lineGraph`); no explainer yet: `bar`, `areaUnder`, a standalone `NumberLine` |
-| Pictures rebuilt from state | `view`, `stateView`, `view.sync()`; `viewMismatch`, and `assertViewFollowsState` in `test/lib/view-fidelity.ts` | [Views](VIEWS.md) | `state-machine`, `ring-buffer` (`view`), `token-bucket` (`stateView`); no explainer yet: `viewMismatch`, which the tests call through `assertViewFollowsState` |
+| Camera | `this.frame.animate.fit(...)`, `.reset()`; `d.focus(…, { camera: true })` | [Camera](CAMERA.md) | `feature-tour` (`s.focus`), `seasons`; `lantern`'s diagram focus with `also` |
+| Emphasis that stays | `SurroundingRectangle`, `Underline`, `Cross`, `Brace`, `BraceLabel`, `Circumscribe({ keep: true })` | [Emphasis](EMPHASIS.md) | `feature-tour` (`Circumscribe`), `glyph`, `mr-cache`, `state-machine`, `ring-buffer`, `exgit` (`Underline`: `glyph` only); no explainer yet: a bare `Brace`, `tip()`, `putAtTip()` |
+| Charts of the model's numbers | `NumberLine`, `Axes` with `plot`, `lineGraph`, `bar`, `dot`, guide lines, `areaUnder` | [Graphing](GRAPHING.md) | `feature-tour`, `seasons` (`plot`), `token-bucket` (`lineGraph`); no explainer yet: `bar`, `areaUnder`, a standalone `NumberLine` |
+| Pictures rebuilt from state | `view`, `stateView`, `view.sync()`; `viewMismatch`, and `assertViewFollowsState` in `test/lib/view-fidelity.ts` | [Views](VIEWS.md) | `feature-tour`, `state-machine`, `ring-buffer` (`view`), `token-bucket` (`stateView`); no explainer yet: `viewMismatch`, which the tests call through `assertViewFollowsState` |
 | Parts of a line of code | `code.span`, `code.token`, `code.lineSpan`; `new Code(lines, { spans })` with spans from `tools/tokens.ts` | [Code](CODE.md) | `mr-cache` (`spans`), `state-machine` (`code.span`, `code.token`); no explainer yet: `code.lineSpan` |
-| Restore, copies, sequencing | `saveState()` and `Restore`, `TransformFromCopy`, `Succession` | [Animations](ANIMATIONS.md) | `state-machine` (`saveState`, `Restore`, `Succession`), `ring-buffer` and `exgit` (`TransformFromCopy`), `ring-buffer` and `token-bucket` (`Succession`); no explainer yet: `restore()` |
+| Restore, copies, sequencing | `saveState()` and `Restore`, `TransformFromCopy`, `Succession` | [Animations](ANIMATIONS.md) | `feature-tour` (`saveState`, `Restore`), `state-machine` (`saveState`, `Restore`, `Succession`), `ring-buffer` and `exgit` (`TransformFromCopy`), `ring-buffer` and `token-bucket` (`Succession`); no explainer yet: `restore()` |
 
 Patterns these scenes write by hand, candidates for `explain/` once two explainers use one and its shape settles: a `Succession` member that writes `scene.state` when its turn comes, so the syncs after it show that operation; card and code-focus changes returned as animations rather than played, so they can join a `Succession`; a `Card` whose values are a view; a `stateView` in the stage's palette; a camera box that keeps the heading out; reading recorded evidence for counts on screen; lines between a matching transform's pairs; a code panel that leaves its `Code` loose for `TransformDiff`, which replaces it.
 
