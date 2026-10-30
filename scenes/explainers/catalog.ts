@@ -43,6 +43,7 @@ export const EXPLAINERS: readonly { id: string; step: string; group: 'topic' | '
   { id: 'tailwind-gamut', step: 'palette', group: 'topic', },
   { id: 'gnome-files', step: 'give-ups', group: 'topic', },
   { id: 'wcag-map', step: 'v22', group: 'topic', },
+  { id: 'feature-tour', step: 'result', group: 'toolchain' },
   { id: 'lantern', step: 'objects', group: 'toolchain' },
   { id: 'fork', step: 'fork', group: 'toolchain' },
   { id: 'agentic-mermaid', step: 'repair', group: 'toolchain' },

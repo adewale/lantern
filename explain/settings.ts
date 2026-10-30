@@ -20,6 +20,8 @@ export type ExplainerClass = SceneClass & {
     lang?: string;
     sources?: readonly string[];
     lettering?: LetteringRequest;
+    /** A case picker starts at its first step; transcript links enter there too. Direct step URLs still work. */
+    caseNavigation?: 'first';
     watch?: Readonly<Record<string, string>>;
   };
   settings?: readonly Setting[];

@@ -52,6 +52,7 @@ Each explainer in [`scenes/explainers/`](https://github.com/adewale/rayner/blob/
 | You are explaining | Start from | It shows |
 | --- | --- | --- |
 | A code change and what it does to a system | `mr-cache` | `TransformDiff` on the code, the same edit replayed on the diagram with `ops`, a setting for hit or miss |
+| Authoring feature reference | `feature-tour` | Choose a feature case: the recipe step shows the author-written API, the result step runs it. See [scope and specialized APIs](../../docs/FEATURE-TOUR.md) |
 | A protocol or request flow | `oauth-pkce` | A sequence diagram revealed message by message (`build: 'frame'`, `reveal`); a setting that adds the attacker's step |
 | A data structure changing step by step | `ring-buffer` | No diagram: native shapes, `Succession`, a `view` of `scene.state` |
 | A state machine | `state-machine` | A state diagram driven by the real reducer, code spans, `Restore` |

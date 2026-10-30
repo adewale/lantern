@@ -89,8 +89,10 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       input.name = s.id;
       input.value = o.value;
       input.addEventListener('change', () => {
-        // Keep the step the reader is on when the new case arrives, even if they moved while it loaded.
-        if (input.checked) void load({ ...(wanted ?? values), [s.id]: o.value }, () => trace?.steps[selected]?.step, true);
+        // A scene may start each new case with its opening step; otherwise keep
+        // the current step by name, read when the new case actually arrives.
+        if (input.checked) void load({ ...(wanted ?? values), [s.id]: o.value },
+          Source.meta?.caseNavigation === 'first' ? undefined : () => trace?.steps[selected]?.step, true);
       });
       label.append(input, el('span', o.label));
       segments.append(label);
