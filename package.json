@@ -58,6 +58,7 @@
     "app/embed*",
     "app/loader.ts",
     "skills",
+    "scenes/tutorial",
     "tools/lettering.py",
     "tools/lib/lettering.ts",
     "tools/lib/lettering-validation.ts",

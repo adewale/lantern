@@ -1,6 +1,6 @@
 # Reference
 
-[The tutorial](TUTORIAL.md) builds a two-case cache scene; the [authoring feature tour](FEATURE-TOUR.md) pairs code excerpts with the result of running them. [Publishing](PUBLISHING.md) covers hosting and embedding a page.
+[The tutorial](TUTORIAL.md) builds a two-case explainer of LRU and MRU cache replacement; the [authoring feature tour](FEATURE-TOUR.md) pairs code excerpts with the result of running them. [Publishing](PUBLISHING.md) covers hosting and embedding a page.
 
 Words used throughout: a **setting** is a choice a scene declares (an id, a label and options); a **case** is one value for every setting. A **step** is a named section of the scene, and its **resting picture** is what the step leaves on screen: the picture a reader looks at while reading the caption. The **stage** is the 16 × 9 drawing area. Code and JSON spell case as `variant` (`variantsOf`, `variants` in reports) and resting picture as `restingFrame`.
 
@@ -118,7 +118,7 @@ With neither `style` nor `palette`, the stage adopts the first diagram's palette
 | Member | What it does |
 | --- | --- |
 | `s.show(spec, { box, build, runTime })` | Draw a diagram and build it in; returns a `Diagram` |
-| `s.card(rows, { at, align, width, title, fontSize, direction, enter })` | Labelled values; returns a `Card`. `direction` overrides the stage's field order |
+| `s.card(rows, { at, align, width, title, columns, fontSize, direction, enter })` | Labelled values; returns a `Card`. `columns` puts values side by side under headings; `direction` overrides the stage's field order |
 | `s.code(lines, { at, align, fontSize, title, diff, enter })` | Code on a panel; returns a `CodeBlock`. With `diff`, lines starting `+ ` or `- ` are marked added or removed |
 | `s.note(text, { at, size })` | One line of secondary text, default at `[0, -3.9]` |
 | `s.enter(...mobs, { describe, ...fadeOptions })` | Keep native objects and fade them in together, in one play |
@@ -146,13 +146,22 @@ Emphasis is the style's accent, or orange for styles whose accent is grey or nea
 
 | Method | What it does |
 | --- | --- |
-| `card.set({ Label: value })` | Crossfade changed values; unchanged rows stay still. A card sizes to its first values, so pass `width` if later ones are longer |
+| `card.set({ Label: value })` | Crossfade changed values; unchanged values stay still. A row with a value per column takes an array, `{ Hits: [0, 3] }`. A card sizes to its first values, so pass `width` if later ones are longer; a wider card gives its columns the spare room |
 | `card.mark(label \| null, { as })` | A bar on one row that stays until moved |
 | `code.focus(i \| [a, b] \| null, { as })` | A bar on zero-based line `i`, or lines `a` to `b` inclusive |
 | `code.morph(next, { markAdded })` | Pair lines by text: survivors move, removed lines fade, added lines arrive, marked if `markAdded` |
 | `code.clearMarks()` | Fade out the added and removed bars |
 
 `as` is the word the description gives the mark, such as `'rejected'`. Both are native `Group`s.
+
+`columns` lays values side by side under headings, so a phone close-up of one card shows a comparison whole:
+
+```ts
+const card = await s.card([['Requests', 'A B C D'], ['Evicted', 'A', 'C'], ['Hits', 0, 0]], { columns: ['LRU', 'MRU'], width: 6.8 });
+await card.set({ Hits: [0, 3] });
+```
+
+A row gives one value per column, or one value that spans them all (Requests above). The headings sit above the first row with a value per column. `mark` lights the whole row. The description names each value by its row and column, "Hits (MRU): 3". `card.cells` holds each row's values; `card.values` keeps each row's last one. The [LRU/MRU tutorial scene](../scenes/tutorial/lru-mru/scene.ts) uses one.
 
 ### Spatial direction
 
@@ -345,7 +354,7 @@ Helpers supply subjects automatically. For an important caption claim or a step 
 
 | Command | What it does |
 | --- | --- |
-| `init <directory>` | Write `scene.ts`, a working scene with one setting |
+| `init <directory>` | Write the tutorial's explainer: `scene.ts` with one setting, its model `model.ts`, and `model.test.ts`, which tests the model against published examples |
 | `preview <scene>` | Build and serve the page; use `shots` for a contact sheet |
 | `snapshots <scene>` | Capture and verify diagrams; replay morph edits |
 | `check <scene>` | The checks above |

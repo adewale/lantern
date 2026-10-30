@@ -6,6 +6,8 @@
 - Upgrade build-time Agentic Mermaid to 0.5.1 for its supported font-measurement hook and recapture the catalog with that renderer.
 - Add explicit LTR/RTL card fields and logical `start`/`end` stage regions. Text shaping, code, numbers and authored Mermaid flow keep their own order.
 - Demonstrate measured EB Garamond diagram labels and panel direction in the public gallery. Document the separate controls for text, panels and graph flow.
+- Add `columns` to cards: values side by side under headings, with rows that span them, so one card can compare two cases and a phone close-up shows the comparison whole.
+- `rayner init` writes the tutorial's LRU/MRU explainer, its model and the model's test, in place of the cache starter. The starter draws no diagram, so it checks and builds without a browser.
 - Rewrite the tutorial around eight principles for planning, writing and checking an explainer, shared with the authoring skill and the editorial rubric. It builds an LRU versus MRU explainer whose model is tested against Wikipedia's worked examples; the finished scene is in `scenes/tutorial/lru-mru/`.
 - Verify a deployed collection against the reviewed export, including file hashes, reader response headers and loader caching. Refuse ambiguous release records before archiving an existing npm version.
 

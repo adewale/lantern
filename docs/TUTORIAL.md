@@ -2,7 +2,7 @@
 
 A Rayner explainer is a web page that answers one technical question in steps. The reader presses Next, something on the stage changes, and the picture then holds still while they read the caption. This tutorial builds one that answers this question: what is the difference between the LRU and MRU cache replacement policies?
 
-You will plan the explainer before writing code, write and test a small model of the two policies, draw its answers, break a check on purpose, fix a caption that claims more than its picture shows, and build the page. Each step applies one of the principles below. The [authoring skill](../skills/rayner-explainers/SKILL.md) gives coding agents the same principles, and the [editorial rubric](EXPLAINER-RUBRIC.md) scores finished explainers against them.
+You will plan the explainer, generate it with `rayner init`, test its model against a published source, read how the scene draws the model's answers, break it on purpose to see what the checks catch and what they miss, and build the page. Each step applies one of the principles below. The [authoring skill](../skills/rayner-explainers/SKILL.md) gives coding agents the same principles, and the [editorial rubric](EXPLAINER-RUBRIC.md) scores finished explainers against them.
 
 ## What makes an explainer work
 
@@ -19,7 +19,7 @@ You will plan the explainer before writing code, write and test a small model of
 
 ## Before you start
 
-You need Node 24 or later. In your project, run `npm install --save-dev rayner`; the commands below then run as `npx rayner <command>`. In a checkout of this repository, run `npm ci` and use `npm run rayner -- <command>` instead. The finished explainer is in [`scenes/tutorial/lru-mru/`](../scenes/tutorial/lru-mru/).
+You need Node 24 or later. In your project, run `npm install --save-dev rayner`; the commands below then run as `npx rayner <command>`. In a checkout of this repository, run `npm ci` and use `npm run rayner -- <command>` instead.
 
 This explainer draws no diagrams, so `check`, `preview` and `build` work without a browser. `review` opens the page in Chromium: install it with `npx playwright-core install chromium`, or set `CHROMIUM_EXECUTABLE_PATH` to a Chromium you already have.
 
@@ -46,9 +46,17 @@ The limit line keeps the explainer inside what it tests. It counts hits, so it c
 
 Then ask whether a still would do. A trace table of eight requests and two policies answers the question for a reader who already reads trace tables. The stepped version earns its place by isolating the one decision where the policies differ before it shows what that decision costs over the whole sequence.
 
-## 2. Write the model
+## 2. Generate the explainer
 
-Create `lru-mru/model.ts`. It has no drawing code, so a test can import it:
+```sh
+npx rayner init lru-mru
+```
+
+This writes three files into `lru-mru/`: the model, the model's test and the scene. Together they are the finished explainer for the plan above, and the same files are in this repository at [`scenes/tutorial/lru-mru/`](../scenes/tutorial/lru-mru/). The rest of the tutorial reads them against the plan, then breaks the scene on purpose twice: once to see what `rayner check` catches, and once to see what it cannot.
+
+## 3. Read the model
+
+`lru-mru/model.ts` has no drawing code, so a test can import it:
 
 <!-- lru-mru/model.ts -->
 ```ts
@@ -78,9 +86,9 @@ export function run(policy: Policy, size: number, requests: string[]): Request[]
 
 The cache is a list ordered by recency, most recently used first, and every request moves its key to the front. A hit changes only the order. A miss in a full cache evicts one item first, and the two policies differ in exactly one expression: LRU removes the last item in the list and MRU removes the first. Because every request moves its key to the front, the first item is always the one requested just before, so an MRU miss evicts the previous request's item.
 
-## 3. Check the model against the source
+## 4. Check the model against the source
 
-Wikipedia's article walks through one example per policy on a cache of four blocks. For LRU and the requests A B C D E D F, "E will replace A" and "F is then accessed, replacing B". For MRU and A B C D E C D B, E replaces D, and C is later replaced because "it was the block accessed just before D". Turn both examples into tests in `lru-mru/model.test.ts`:
+Wikipedia's article walks through one example per policy on a cache of four blocks. For LRU and the requests A B C D E D F, "E will replace A" and "F is then accessed, replacing B". For MRU and A B C D E C D B, E replaces D, and C is later replaced because "it was the block accessed just before D". `lru-mru/model.test.ts` turns both examples into tests:
 
 <!-- lru-mru/model.test.ts -->
 ```ts
@@ -106,11 +114,11 @@ node --test lru-mru/model.test.ts
 
 Both pass. Now swap `cache.at(-1)` and `cache[0]` in `model.ts` and run the tests again: both fail, so they can tell the two policies apart. Swap them back.
 
-Pin what you checked against in the scene's `meta.sources` (principle 3). The scene below links the exact Wikipedia revision it was checked against, not the live page, and the 1985 paper.
+Pin what you checked against in the scene's `meta.sources` (principle 3). The scene links the exact Wikipedia revision it was checked against, not the live page, and the 1985 paper.
 
-## 4. Write the scene
+## 5. Read the scene
 
-Create `lru-mru/scene.ts`:
+`lru-mru/scene.ts`:
 
 <!-- lru-mru/scene.ts -->
 ```ts
@@ -133,49 +141,58 @@ export default class LruMru extends Scene {
   static settings = [{ id: 'next', label: 'After A B C D, request', default: 'loop', options: [{ value: 'loop', label: 'A B C D again' }, { value: 'reuse', label: 'C D C D' }] }];
 
   override async construct() {
-    const s = stage(this, { style: 'nord' });
+    const s = stage(this, { style: 'nord', headingSize: 0.54 });
     const next = settingsOf(this).next as keyof typeof NEXT;
     const requests = [...('ABCD' + NEXT[next])];
     const trace = { lru: run('lru', SIZE, requests), mru: run('mru', SIZE, requests) };
 
-    // What each card shows after the first n requests, read from the model's trace.
-    const rows = (policy: Policy, n: number) => {
-      const done = trace[policy].slice(0, n), hits = done.filter((r) => r.hit).map((r) => r.key);
-      return {
-        'Cache, newest first': done.at(-1)!.cache.join(' '),
-        Evicted: done.flatMap((r) => r.evicted ?? []).join(' ') || 'none',
-        Hits: hits.length ? `${hits.length}: ${hits.join(' ')}` : '0',
+    // What the card shows after the first n requests, read from the model's trace.
+    const shown = (n: number) => {
+      const column = (policy: Policy) => {
+        const done = trace[policy].slice(0, n), hits = done.filter((r) => r.hit).map((r) => r.key);
+        return [done.at(-1)!.cache.join(' '), done.flatMap((r) => r.evicted ?? []).join(' ') || 'none', hits.length ? `${hits.length}: ${hits.join(' ')}` : '0'];
       };
+      const [lru, mru] = [column('lru'), column('mru')];
+      const pair = (i: number): [string, string] => [lru[i]!, mru[i]!];
+      return { Requests: requests.slice(0, n).join(' '), 'Newest first': pair(0), Evicted: pair(1), Hits: pair(2) };
     };
     const show = async (n: number) => {
-      await sent.set({ Requests: requests.slice(0, n).join(' ') });
-      await lru.set(rows('lru', n));
-      await mru.set(rows('mru', n));
-      this.state.lru = rows('lru', n);
-      this.state.mru = rows('mru', n);
+      await card.set(shown(n));
+      Object.assign(this.state, shown(n));
     };
 
     await this.step('full', { title: 'Same items, same order', line: 'A, B and C missed and filled all three slots.', caption: 'Both caches have seen the same three requests, so both hold C, B, A from newest to oldest. The next request, D, misses in both and forces each policy to evict one item.' });
-    const sent = await s.card([['Requests', 'A B C'], ['Cache size', `${SIZE} items`]], { at: 'top', width: 9 });
-    const lru = await s.card(Object.entries(rows('lru', 3)), { at: 'left', title: 'LRU', width: 7 });
-    const mru = await s.card(Object.entries(rows('mru', 3)), { at: 'right', title: 'MRU', width: 7 });
-    await show(3);
+    const first = shown(3);
+    const card = await s.card([
+      ['Requests', first.Requests],
+      ['Slots', SIZE],
+      ['Newest first', ...first['Newest first']],
+      ['Evicted', ...first.Evicted],
+      ['Hits', ...first.Hits],
+    ], { columns: ['LRU', 'MRU'], width: 6.8, fontSize: 0.3 });
+    Object.assign(this.state, first);
 
     const [lruOut, mruOut] = [trace.lru[3]!.evicted, trace.mru[3]!.evicted];
     await this.step('evict', { title: 'D evicts opposite ends', line: `LRU drops ${lruOut}, the oldest; MRU drops ${mruOut}, the newest.`, caption: `LRU evicts the item used longest ago, ${lruOut}. MRU evicts the item used most recently, ${mruOut}. Each then records D as its newest item.` });
     await show(4);
-    await lru.mark('Evicted');
-    await mru.mark('Evicted');
+    await card.mark('Evicted');
 
     const lruHits = trace.lru.filter((r) => r.hit).length, mruHits = trace.mru.filter((r) => r.hit).length;
     await this.step('rest', {
       title: `LRU ${lruHits} hits, MRU ${mruHits}`,
-      line: next === 'loop' ? 'Each item LRU evicts is the next one the loop asks for.' : 'Each item MRU evicts is the next one requested.',
       caption: next === 'loop'
         ? 'The loop asks for A, B, C and D again. LRU always evicts the item the loop needs next, so all eight requests miss. MRU evicted C to make room for D, so on the second pass A, B and D hit and only C misses.'
         : 'C and D now alternate. LRU still holds both after evicting A, so all four repeats hit. MRU evicts the item requested just before, which is always the next one requested, so all four repeats miss.',
     });
     await show(8);
+
+    await this.step('verdict', {
+      title: next === 'loop' ? 'A loop favours MRU' : 'Reuse favours LRU',
+      caption: next === 'loop'
+        ? `On this loop MRU hits ${mruHits} times and LRU ${lruHits}. Four items do not fit in three slots, which is when Chou and DeWitt recommend MRU for a repeated scan; a file that fits should stay in memory. The counts leave out what tracking recency costs.`
+        : `On this pattern LRU hits ${lruHits} times and MRU ${mruHits}, because the items just used are the next ones requested. The counts cover eight requests through three slots and leave out what tracking recency costs.`,
+    });
+    await card.mark('Hits');
   }
 }
 ```
@@ -184,34 +201,28 @@ Read it from the top:
 
 - `static meta` holds the id, which names the output files, the page title and the sources the model was checked against.
 - `static settings` declares one setting with two options. Each option is a case: the reader can switch between them, and `check` and `review` visit both. Both cases send A B C D first, then either repeat the loop or alternate C and D.
-- `trace` asks the model once per case. Every value on the cards comes from it: `rows` turns the trace into what each card shows after the first `n` requests, and `show(n)` updates the three cards and records the same values on `this.state`, where tests and `rayner describe` can read them.
-- `stage(this, { style: 'nord' })` draws the paper and a heading that follows the steps. `s.card` places labelled values in a region of the stage.
-- There are three steps. Each has a stable name used in links, a title, a line and a caption. The stage draws the title and line above the picture; the page prints the caption beside it.
+- `trace` asks the model once per case. Every value on the card comes from it: `shown(n)` turns the trace into what the card shows after the first `n` requests, and `show(n)` updates the card and records the same values on `this.state`, where tests and `rayner describe` can read them.
+- `stage(this, { style: 'nord', headingSize: 0.54 })` draws the paper and a heading that follows the steps. The larger heading keeps the step number readable on a phone.
+- `s.card` draws one card with an LRU column and an MRU column. A row with one value per column compares the policies; a row with a single value, such as Requests, spans both columns because both caches receive the same requests.
+- There are four steps. Each has a stable name used in links, a title and a caption, and the first two have a line under the title. The page prints the caption beside the picture.
 
-The first step opens on the moment the policies are about to diverge (principle 2): both caches hold the same items in the same order and D is about to miss. The second step is the whole difference between the policies, so it gets a step of its own (principle 4), and its marks on the Evicted rows stay on screen while the reader reads why (principle 5). Its captions take the evicted items from the model. The third step's captions are written by hand for each case; they are claims about the model too, so the repository's copy of this scene has [a test](../test/explain-tutorial.test.ts) that checks each one.
+The first step opens on the moment the policies are about to diverge (principle 2): both caches hold the same items in the same order and D is about to miss. The second step is the whole difference between the policies, so it gets a step of its own (principle 4), and its mark on the Evicted row stays on screen while the reader reads why (principle 5). Its captions take the evicted items from the model. Because the two policies share one card, a reader sees both columns of every row at once, including on a phone, where the player zooms onto the card.
 
-## 5. Preview it
+The third step's captions are written by hand for each case; they are claims about the model too, so the repository's copy of this scene has [a test](../test/explain-tutorial.test.ts) that checks each one. The last step marks the Hits row, gives each case a title and caption written for its own outcome (principle 6), and ends on the plan's limit (principle 8). In the loop case that limit is Chou and DeWitt's condition: MRU suits a repeated scan only when the file is too large to fit.
+
+## 6. Preview it
 
 ```sh
 npx rayner preview lru-mru/scene.ts --watch
 ```
 
-Open http://127.0.0.1:5174/ and press Next. Each step plays and then stops on its resting picture, which is what the reader looks at while reading the caption. After step 3 the Evicted row of each card lists every eviction in order. On the loop, LRU's evictions read A B C D A: each item LRU evicts is the next one the loop asks for.
+Open http://127.0.0.1:5174/ and press Next. Each step plays and then stops on its resting picture, which is what the reader looks at while reading the caption. After step 3 the Evicted row lists every eviction in order. On the loop, LRU's evictions read A B C D A: each item LRU evicts is the next one the loop asks for.
 
 Choose C D C D above the stage. The URL names the case and step (`lru-mru.html?next=reuse&step=rest`), so a link opens that exact picture. Now MRU's evictions read C D C D C, and each item MRU evicts is the next one requested. In both cases the losing policy evicts the item needed soonest, the opposite of Bélády's optimal algorithm, which discards the information that "would not be needed for the longest time". Leave the preview running; it rebuilds when you save.
 
-## 6. Add an ending and break a check
+## 7. Break a check
 
-The plan's limit line is not in the scene yet. Here is a first attempt at an ending, added after `await show(8);`:
-
-```ts
-    await this.step('verdict', {
-      title: 'MRU keeps more',
-      caption: 'MRU holds on to older items, so it gets more hits than LRU.',
-    });
-```
-
-Run the checks:
+Delete the last line of `construct()`, `await card.mark('Hits');`, and run the checks:
 
 ```sh
 npx rayner check lru-mru/scene.ts
@@ -227,20 +238,20 @@ rayner: Each step must change the picture; these end exactly as the step before 
 - []
 ```
 
-The new step plays nothing, so it rests on exactly the picture step 3 left. A reader pressing Next would get a new caption and nothing new on the stage to read it against. The check reports the first case where this happens.
+Without the mark, the last step plays nothing, so it rests on exactly the picture step 3 left. A reader pressing Next would get a new caption and nothing new on the stage to read it against. The check reports the first case where this happens. Put the line back and run `check` again: it passes. The report it saves to `out/checks/lru-mru/report.json` includes `legibility.labelsUnder12PxAt390`, the number of labels a phone reader sees smaller than 12 px. Keep it at 0 in every case.
 
-Make the step point at its evidence. Move each card's mark from the Evicted row to the Hits row:
+## 8. Break a caption
+
+The next mistake passes every check. Replace the last step's title and caption with the shortcut the plan set out to test:
 
 ```ts
-    await lru.mark('Hits');
-    await mru.mark('Hits');
+    await this.step('verdict', {
+      title: 'MRU keeps more',
+      caption: 'MRU holds on to older items, so it gets more hits than LRU.',
+    });
 ```
 
-Run `check` again and it passes. The report it saves to `out/checks/lru-mru/report.json` includes `legibility.labelsUnder12PxAt390`, the number of labels a phone reader sees smaller than 12 px. Keep it at 0 in every case.
-
-## 7. Read each step as a newcomer
-
-The check passed, but the caption is still wrong. Print the step as text in the other case:
+`rayner check` still passes. Print the step as text in the other case:
 
 ```sh
 npx rayner see lru-mru/scene.ts verdict --case next=reuse
@@ -252,23 +263,11 @@ After a rough text drawing of the resting picture, it prints:
 lru-mru · step 4 of 4: verdict · After A B C D, request: C D C D
 Title: MRU keeps more
 Caption: MRU holds on to older items, so it gets more hits than LRU.
-Picture: 2 labelled values; “LRU”, 3 labelled values; “MRU”, 3 labelled values. Marked: Hits: 4: C D C D; Hits: 0.
+Picture: 8 labelled values. Marked: Hits (LRU): 4: C D C D; Hits (MRU): 0.
 Changed: nothing in scene.state
 ```
 
-The marked rows say LRU hit four times and MRU never did, so in this case the caption is false. It was written from the loop case and from the shortcut the plan set out to test. Replace the step with one whose title and caption come from each case's own outcome (principle 6) and end on the plan's limit (principle 8):
-
-<!-- lru-mru/scene.ts ending -->
-```ts
-    await this.step('verdict', {
-      title: next === 'loop' ? 'A loop favours MRU' : 'Reuse favours LRU',
-      caption: next === 'loop'
-        ? `On this loop MRU hits ${mruHits} times and LRU ${lruHits}. Four items do not fit in three slots, which is when Chou and DeWitt recommend MRU for a repeated scan; a file that fits should stay in memory. The counts leave out what tracking recency costs.`
-        : `On this pattern LRU hits ${lruHits} times and MRU ${mruHits}, because the items just used are the next ones requested. The counts cover eight requests through three slots and leave out what tracking recency costs.`,
-    });
-    await lru.mark('Hits');
-    await mru.mark('Hits');
-```
+The marked row says LRU hit four times and MRU never did, so in this case the caption is false. It was written from the loop case alone. Undo the change: the scene's own ending takes its title and counts from each case's outcome.
 
 Read every step of every case this way. `npx rayner describe lru-mru/scene.ts --out out/lru-mru.json` writes the whole explainer as JSON, and `npx rayner shots lru-mru/scene.ts --case next=reuse` makes a contact sheet of one case. At each step, ask:
 
@@ -278,7 +277,7 @@ Read every step of every case this way. `npx rayner describe lru-mru/scene.ts --
 - Does the first step deliver what the title promises, and does the last step earn its conclusion in every case?
 - Does any sentence claim more than the sources say? Chou and DeWitt recommend MRU for a looping file only when it is too large to fit, which is why the loop's ending says so.
 
-## 8. Review and build
+## 9. Review and build
 
 ```sh
 npx rayner review lru-mru/scene.ts
@@ -294,6 +293,6 @@ npx rayner build lru-mru/scene.ts --out public/lru-mru.html
 
 ## Next
 
-- To explain another kind of subject, start from the nearest example. The [skill's table](../skills/rayner-explainers/SKILL.md#start-from-an-example) matches subjects such as a protocol, a race, a state machine or a code change to explainers in `scenes/explainers/`. `npx rayner init <directory>` writes a two-case starter scene with a diagram.
+- To explain another kind of subject, start from the nearest example. The [skill's table](../skills/rayner-explainers/SKILL.md#start-from-an-example) matches subjects such as a protocol, a race, a state machine or a code change to explainers in `scenes/explainers/`.
 - The [reference](REFERENCE.md) covers the stage, card, diagram and check APIs. The [engine map](ENGINE.md) covers camera moves, code diffs, charts and pictures rebuilt from state.
 - The [editorial rubric](EXPLAINER-RUBRIC.md) scores a finished explainer against the principles at the top of this page.
