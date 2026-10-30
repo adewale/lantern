@@ -11,6 +11,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { Scene, NullSink } from '../../src/index.ts';
 import { traceRun } from '../../src/trace.ts';
 import { paperOf } from '../../explain/stage.ts';
+import { checkWatch } from '../../explain/trace.ts';
 import { takeMissingGlyphs } from '../../src/lettering.ts';
 import type { Trace } from '../../src/index.ts';
 import { variantsOf, withSettings, bindSnapshots, caseName, resolveSettings } from '../../explain/index.ts';
@@ -389,6 +390,8 @@ export async function collectProject(
     }
     if (undrawable.length)
       throw new Error(`The embedded fonts cannot draw these characters:\n${[...new Set(undrawable)].join('\n')}`);
+    // The state readers follow must be state the scene keeps, in some step of some case.
+    checkWatch(Source.meta?.watch, variants.flatMap((v) => v.trace.steps));
     await outline?.finish();
     if (write) await writeSnapshots(base, store, loaded.sourceHash);
     return { ...loaded, Scene: Source, store, variants, edits, ...(lettering ? { lettering } : {}), ...(outline ? { outlineLettering: outline.snapshot } : {}) };

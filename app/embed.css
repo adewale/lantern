@@ -26,7 +26,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .case{border:0;margin:0;padding:0;min-width:0;display:flex;flex-direction:column;gap:6px}
 .case legend{float:left;padding:0}
 /* One label style: the case legend, the step kicker, the rail heading and the view count. */
-.case legend,.lede .kicker,.lede-ruler .kicker,.rail h2,.view-controls>span{font-size:.8125rem;font-weight:500;line-height:1.4;letter-spacing:.01em;color:var(--muted);font-variant-numeric:tabular-nums}
+.case legend,.lede .kicker,.lede-ruler .kicker,.rail h2,.view-controls>span,.changes>:first-child,.changes-ruler>:first-child{font-size:.8125rem;font-weight:500;line-height:1.4;letter-spacing:.01em;color:var(--muted);font-variant-numeric:tabular-nums}
 .case legend+*{clear:left}
 .segments{display:inline-flex;flex-wrap:wrap;gap:2px;padding:3px;border-radius:11px;background:color-mix(in srgb,var(--line) 55%,transparent)}
 .segments label{position:relative;display:flex;align-items:center;min-height:36px;padding:0 12px;border-radius:8px;font-size:.9375rem;color:var(--muted);cursor:pointer;transition:background-color 150ms ease,color 150ms ease}
@@ -84,7 +84,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .words{display:grid;gap:6px;padding:14px var(--inset) 16px}
 .player>.caption{padding:14px var(--inset)}
 .caption,.ruler{margin:0;max-width:52ch;min-height:3.2em;font-size:1.125rem;line-height:1.6;text-wrap:pretty}
-.ruler,.lede-ruler{position:absolute;top:0;left:0;margin:0;min-height:0;visibility:hidden;pointer-events:none}
+.ruler,.lede-ruler,.changes-ruler{position:absolute;top:0;left:0;margin:0;min-height:0;visibility:hidden;pointer-events:none}
 /* The step's heading on every width: "Step 3 of 4", the title, then the line. */
 .lede,.lede-ruler{max-width:68ch;font-size:1rem;line-height:1.45;text-wrap:pretty}
 .lede{margin:0 0 6px;display:flex;flex-direction:column;justify-content:flex-end}
@@ -92,6 +92,10 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .lede strong,.lede-ruler strong{font-size:1.0625rem;font-weight:650}
 .lede .line,.lede-ruler .line{font-size:.9375rem;color:var(--muted)}
 .lede [hidden]{display:none}
+/* What the step changed of the state its author watches: a quiet label, then each change in a ring. */
+.changes,.changes-ruler{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin:0;max-width:68ch;font-size:.875rem;line-height:1.4}
+.changes[hidden]{display:none}
+.change{padding:1px 8px;border:1px solid var(--line);border-radius:8px;font-variant-numeric:tabular-nums}
 .stepper{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px var(--inset);border-top:1px solid var(--line)}
 /* Icon buttons draw their glyph inside a 40 px (44 px narrow) hit box: pull Previous and the tools out so the
    chevron's point and the last glyph sit on the card's inset, the line the title, the words and the rows share. */

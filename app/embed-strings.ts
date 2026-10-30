@@ -3,7 +3,8 @@
 // descriptions have their own vocabulary (explain/words.ts); a page in a language it lacks
 // shows them in English and marks them lang="en".
 import type { ExplainerClass, Settings } from '../explain/index.ts';
-import { describedIn, primaryLanguage } from '../explain/words.ts';
+import { describedIn, primaryLanguage, wordsFor } from '../explain/words.ts';
+import type { WatchedChange } from '../explain/trace.ts';
 
 /** What is wrong with a URL's settings, so each language can say it in its own words. */
 export type SettingsProblem =
@@ -69,6 +70,15 @@ export interface Chrome {
   sources: string;
   /** Shown when the player cannot start, above the transcript. */
   failed: string;
+  /** The quiet label before a step's changes to the state its author watches (`meta.watch`). */
+  changed: string;
+  /** A boolean watched value; the same words as the descriptions' (explain/words.ts). */
+  yes: string;
+  no: string;
+  /** A watched value the step took away. */
+  removed: string;
+  /** The transcript's line of a step's changes: "What changed: Tokens: 5 → 0; Allowed: 0 → 5". */
+  changes: (...items: string[]) => string;
 }
 
 const EN: Chrome = {
@@ -108,6 +118,11 @@ const EN: Chrome = {
   transcript: 'Transcript',
   sources: 'Sources',
   failed: 'The interactive player could not start. The transcript is available below.',
+  changed: 'What changed',
+  yes: wordsFor('en').yes,
+  no: wordsFor('en').no,
+  removed: 'removed',
+  changes: (...items) => `What changed: ${items.join('; ')}`,
 };
 /** French typography: a narrow no-break space (U+202F) before : ; ! ? and inside « ». */
 const FR: Chrome = {
@@ -153,6 +168,11 @@ const FR: Chrome = {
   transcript: 'Transcription',
   sources: 'Sources',
   failed: 'Le lecteur interactif n’a pas pu démarrer. La transcription se trouve plus bas.',
+  changed: 'Ce qui a changé',
+  yes: wordsFor('fr').yes,
+  no: wordsFor('fr').no,
+  removed: 'supprimé',
+  changes: (...items) => `Ce qui a changé\u202f: ${items.join('\u202f; ')}`,
 };
 export const CHROME: Readonly<Record<string, Chrome>> = { en: EN, fr: FR };
 
@@ -192,3 +212,6 @@ export function caseNameIn(lang: string, Scene: ExplainerClass, values: Settings
     .map((s) => t.setting(s.label, s.options.find((o) => o.value === values[s.id])?.label ?? values[s.id]!))
     .join(' · ');
 }
+/** One watched change as a reader reads it: "Tokens: 5 → 0", "Tokens: 5" (it appeared), "Tokens: removed". */
+export const changeText = (t: Chrome, c: WatchedChange): string =>
+  t.setting(c.label, c.after === undefined ? t.removed : c.before === undefined ? c.after : `${c.before} → ${c.after}`);

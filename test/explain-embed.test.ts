@@ -39,8 +39,9 @@ before(async () => {
   browser = await launch();
   await new Promise<void>((r) => hostServer.listen(0, '127.0.0.1', r));
   host = `http://127.0.0.1:${(hostServer.address() as { port: number }).port}`;
-  // quotient-familial is the one scene in French (meta.lang 'fr'), with ten steps.
-  for (const name of ['mr-cache', 'oauth-pkce', 'exgit', 'lantern', 'send-sync', 'quotient-familial']) {
+  // quotient-familial is the one scene in French (meta.lang 'fr'), with ten steps; token-bucket,
+  // mr-cache and quotient-familial watch state for readers (meta.watch).
+  for (const name of ['mr-cache', 'oauth-pkce', 'exgit', 'lantern', 'send-sync', 'quotient-familial', 'token-bucket']) {
     const project = await collectProject(`scenes/explainers/${name}`, { write: false });
     projects.set(name, project);
     await buildExplainer(project, join(folder, name + '.html'));
@@ -405,6 +406,55 @@ test('the step heading shows on every width with the total', options, async () =
         assert.match(lede.kicker!, new RegExp(` ${total}$`), `${where}: the kicker names the total`);
       } finally { await page.close(); }
     }
+  }
+});
+// specs/player-guidance.md G1: under the caption, what the step changed of the state the author watches.
+const changesOf = (page: Page) =>
+  page.evaluate(() => {
+    const row = document.querySelector<HTMLElement>('.words > .changes');
+    return row && {
+      hidden: row.hidden,
+      label: row.firstElementChild && !row.firstElementChild.classList.contains('change') ? row.firstElementChild.textContent : null,
+      changes: [...row.querySelectorAll('.change')].map((c) => c.textContent),
+      live: row.closest('[aria-live]') !== null,
+      height: row.getBoundingClientRect().height,
+    };
+  });
+test('what changed: token-bucket\'s burst step lists its three watched changes under the caption; a scene without watch has no row', options, async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/token-bucket.html?step=burst`);
+    await page.waitForSelector('[data-ready=true]');
+    const burst = await changesOf(page);
+    assert.deepEqual({ ...burst, height: undefined }, {
+      hidden: false,
+      label: 'What changed',
+      changes: ['Tokens left: 5 → 0', 'Accepted: 0 → 5', 'Rejected: R6'],
+      // Plain text, read with the words: the caption already announces the step.
+      live: false,
+      height: undefined,
+    });
+    // It follows the caption, inside the words.
+    assert.equal(await page.locator('.caption + .changes').count(), 1);
+    // The comparison step changes nothing watched: no items, but the row keeps its room.
+    await page.locator('.steps button[data-step=trace]').click();
+    await page.waitForFunction(() => document.querySelector('.steps [aria-current=step]')?.getAttribute('data-step') === 'trace');
+    const trace = await changesOf(page);
+    assert.deepEqual([trace!.hidden, trace!.label, trace!.changes], [false, null, []]);
+    assert.equal(trace!.height, burst!.height, 'the row keeps the room of its tallest step');
+    // French: the label and the values in French.
+    await page.goto(`${embed}/quotient-familial.html?step=parts`);
+    await page.waitForSelector('[data-ready=true]');
+    assert.deepEqual((await changesOf(page))!.changes, ['Parts\u202f: 2,5']);
+    assert.equal((await changesOf(page))!.label, 'Ce qui a changé');
+    for (const scene of ['exgit', 'send-sync']) {
+      await page.goto(`${embed}/${scene}.html`);
+      await page.waitForSelector('[data-ready=true]');
+      assert.equal(await page.locator('.changes').count(), 0, `${scene}: no changes row`);
+      assert.doesNotMatch((await page.locator('.transcript').textContent())!, /What changed/, `${scene}: no line in the transcript`);
+    }
+  } finally {
+    await page.close();
   }
 });
 // specs/player-redesign.md R3: the step bar. One segment per step, the current one filling as it plays.
@@ -1142,7 +1192,7 @@ test('the transcript does not move between steps', options, async () => {
   // first step opens on a close-up and shows Whole picture; none may move the step heading's
   // line, the stepper row, the steps list or the transcript as the reader steps.
   for (const [width, height] of [[1180, 800], [390, 844]] as const)
-    for (const scene of ['exgit', 'mr-cache', 'send-sync']) {
+    for (const scene of ['exgit', 'mr-cache', 'send-sync', 'token-bucket']) {
       const page = await browser.newPage({ viewport: { width, height } });
       try {
         await page.addInitScript(() => {

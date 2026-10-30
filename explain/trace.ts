@@ -1,4 +1,4 @@
-import type { Scene, StepRecord } from '../src/index.ts';
+import type { Scene, SceneState, StepRecord } from '../src/index.ts';
 import { wordsFor, describedIn, markHeading } from './words.ts';
 import type { Words } from './words.ts';
 interface WalkRecord {
@@ -78,6 +78,89 @@ export function stepWords(s: { step: string; meta: Record<string, unknown> }): {
  */
 export function wordsHtml(words: { line: string; caption: string }, dir: (text: string) => string = () => ''): string {
   return `${words.line ? `<p${dir(words.line)}><strong>${htmlEscape(words.line)}</strong></p>` : ''}<p${dir(words.caption)}>${htmlEscape(words.caption)}</p>`;
+}
+/** The most entries `meta.watch` may name, and the most changes one step shows. */
+export const WATCH_MAX = 8,
+  CHANGES_MAX = 4;
+/** One watched value a step changed, as a reader reads it; a side is absent when it had no value. */
+export interface WatchedChange {
+  label: string;
+  before?: string;
+  after?: string;
+}
+const numberFormats = new Map<string, Intl.NumberFormat>();
+function sayOne(v: unknown, lang: string): string | null {
+  if (typeof v === 'number') {
+    let f = numberFormats.get(lang);
+    if (!f) {
+      const options = { maximumFractionDigits: 2 };
+      // A tag Intl refuses still gets its numbers, written as English writes them.
+      try { f = new Intl.NumberFormat(lang, options); } catch { f = new Intl.NumberFormat('en', options); }
+      numberFormats.set(lang, f);
+    }
+    return f.format(v);
+  }
+  if (typeof v === 'string') {
+    const chars = [...v];
+    return chars.length > 24 ? chars.slice(0, 23).join('') + '…' : v;
+  }
+  if (typeof v === 'boolean') return v ? wordsFor(lang).yes : wordsFor(lang).no;
+  return null;
+}
+/**
+ * A watched state value as a reader reads it: a number in the scene's language, a string cut to 24
+ * characters, yes or no, or up to four such items and how many more; '' when it has no value (null,
+ * absent or an empty list); null when it cannot be said briefly (an object, a list of objects).
+ */
+export function watchedValue(v: unknown, lang = 'en'): string | null {
+  if (v == null) return '';
+  if (!Array.isArray(v)) return sayOne(v, lang);
+  const items = v.map((x) => sayOne(x, lang));
+  if (items.some((x) => x == null)) return null;
+  return items.slice(0, 4).join(', ') + (items.length > 4 ? ` +${items.length - 4}` : '');
+}
+/**
+ * What a step changed of the state its author names for readers (`meta.watch`, key to label): each
+ * watched key whose JSON differs between the step's start and end, in `watch` order, at most four.
+ * A key whose value cannot be said briefly is skipped and its name pushed to `unformatted`; one that
+ * reads the same before and after (0.001 and 0.002 both read 0) is no change to a reader. The player,
+ * the page's transcript, `describeExplainer` and `rayner check` all read changes here.
+ */
+export function watchedChanges(
+  step: { before?: SceneState; after?: SceneState },
+  watch: Readonly<Record<string, string>> | undefined,
+  lang = 'en',
+  unformatted?: string[],
+): WatchedChange[] {
+  const changes: WatchedChange[] = [];
+  for (const [key, label] of Object.entries(watch ?? {})) {
+    const was = step.before?.[key],
+      is = step.after?.[key];
+    if (JSON.stringify(was) === JSON.stringify(is)) continue;
+    const before = watchedValue(was, lang),
+      after = watchedValue(is, lang);
+    if (before == null || after == null) unformatted?.push(key);
+    else if (before !== after && changes.length < CHANGES_MAX)
+      changes.push({ label: label.trim(), ...(before ? { before } : {}), ...(after ? { after } : {}) });
+  }
+  return changes;
+}
+/**
+ * Refuse a `meta.watch` that cannot work: not a record, more than eight entries, an empty key or
+ * label, or a key that is never in the state of any step of any case (`steps`, all cases' steps).
+ */
+export function checkWatch(watch: unknown, steps: readonly { before?: SceneState; after?: SceneState }[]): void {
+  if (watch === undefined) return;
+  if (!watch || typeof watch !== 'object' || Array.isArray(watch))
+    throw new Error('meta.watch must be a record from a state key to the label readers see');
+  const entries = Object.entries(watch);
+  if (entries.length > WATCH_MAX) throw new Error(`meta.watch names ${entries.length} keys; at most ${WATCH_MAX} keep a step's changes readable`);
+  for (const [key, label] of entries) {
+    if (!key) throw new Error('meta.watch has an empty key');
+    if (typeof label !== 'string' || !label.trim()) throw new Error(`meta.watch gives "${key}" an empty label`);
+    if (!steps.some((s) => Object.hasOwn(s.before ?? {}, key) || Object.hasOwn(s.after ?? {}, key)))
+      throw new Error(`meta.watch names "${key}", which is never in the scene's state at any step of any case`);
+  }
 }
 const pictureOf = (state: unknown): Picture | undefined => (state as { picture?: Picture } | undefined)?.picture;
 /**

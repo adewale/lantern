@@ -4,7 +4,7 @@ import type { Trace } from '../src/index.ts';
 import { StopScene } from '../src/index.ts';
 import { bindSnapshots, withSettings, resolveSettings } from '../explain/index.ts';
 import type { ExplainerClass, Settings, SnapshotStore } from '../explain/index.ts';
-import { restingTime, pictureHtml, pictureSummary, stepWords } from '../explain/trace.ts';
+import { restingTime, pictureHtml, pictureSummary, stepWords, watchedChanges } from '../explain/trace.ts';
 import { paperOf } from '../explain/stage.ts';
 import { reportHeight } from './embed-protocol.ts';
 import { icon } from './embed-icons.ts';
@@ -13,7 +13,7 @@ import { ReaderSink, ReaderView, StageZoom } from './embed-zoom.ts';
 import type { Zoom } from './embed-zoom.ts';
 import { NARROW_PX, closeUps, stageScale, stepLayouts } from './embed-closeup.ts';
 import type { StepLayout } from './embed-closeup.ts';
-import { chromeFor, descriptionsLang, settingsProblem } from './embed-strings.ts';
+import { changeText, chromeFor, descriptionsLang, settingsProblem } from './embed-strings.ts';
 import { HOME, SHARE_META, shareable } from './embed-share.ts';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, className?: string): HTMLElementTagNameMap[K] => {
@@ -159,9 +159,22 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   notice.setAttribute('role', 'status');
   // Keep navigation outside the picture so controls cannot cover its lettering.
   const frame = el('div', undefined, 'frame');
+  // What the step changed of the state its author names for readers (meta.watch), under the
+  // caption: plain text, read with the words. A scene that watches nothing has no such row.
+  const watch = Source.meta?.watch,
+    changes = watch ? el('p', undefined, 'changes') : undefined,
+    changesRuler = el('p', undefined, 'changes-ruler');
+  changesRuler.setAttribute('aria-hidden', 'true');
+  if (changes) changes.hidden = true;
+  /** Fill `row` with step `s`'s watched changes: the quiet label, then "Label: before → after" each. */
+  const fillChanges = (row: HTMLElement, s: Trace['steps'][number]) => {
+    const said = watchedChanges(s, watch, lang).map((c) => changeText(t, c));
+    // Spaces between the items keep them apart for assistive technology; flex layout drops them.
+    row.replaceChildren(...(said.length ? [el('span', t.changed), ...said.flatMap((c) => [' ', el('span', c, 'change')])] : []));
+  };
   // The step's words, under the controls, so a long caption never moves Next.
   const words = el('div', undefined, 'words');
-  words.append(lede, caption, described);
+  words.append(lede, caption, ...(changes ? [changes] : []), described);
   // Unseen copies of the caption and the lede, at their width and in their type, measure
   // every step's words so each keeps the room its case's longest needs: the steps list and
   // the transcript then stay put as the reader steps. They are not a .caption or a .lede,
@@ -191,7 +204,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   if (window.parent !== window) foot.append(wayOut);
   // One card: its header (the title and the cases), the picture mounted under it, the stepper
   // row, the words, the rows that open under them, then the footer.
-  player.append(head, frame, stepper, words, notice, transcript, foot, summary, ruler, ledeRuler);
+  player.append(head, frame, stepper, words, notice, transcript, foot, summary, ruler, ledeRuler, ...(changes ? [changesRuler] : []));
   // A frame the loader sizes to its content has no viewport height to fit: the card takes
   // the page's width, and the host page scrolls (embed.css, --player-reserve).
   if (window.parent !== window && params.has('parentOrigin')) root.style.setProperty('--player-reserve', '0px');
@@ -379,6 +392,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       words = stepWords(step);
     caption.textContent = words.caption;
     fillLede(ledeKicker, ledeTitle, ledeLine, selected, words);
+    if (changes) fillChanges(changes, step);
     prev.disabled = selected === 0;
     next.disabled = selected === trace.steps.length - 1;
     // Done, current, to do, in the rail and on the step bar. Only the current segment is a Tab
@@ -435,9 +449,11 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       strong = el('strong'),
       span = el('span', undefined, 'line');
     ledeRuler.replaceChildren(kicker, strong, span);
+    changesRuler.style.width = `${lede.clientWidth}px`;
     let tallest = 0,
       tallestTitle = 0,
-      tallestLine = 0;
+      tallestLine = 0,
+      tallestChanges = 0;
     for (const [i, s] of trace.steps.entries()) {
       const words = stepWords(s);
       ruler.textContent = words.caption;
@@ -446,8 +462,19 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       tallest = Math.max(tallest, ruler.getBoundingClientRect().height);
       tallestTitle = Math.max(tallestTitle, strong.getBoundingClientRect().height);
       tallestLine = Math.max(tallestLine, span.getBoundingClientRect().height);
+      if (changes) {
+        fillChanges(changesRuler, s);
+        tallestChanges = Math.max(tallestChanges, changesRuler.getBoundingClientRect().height);
+      }
     }
     ruler.textContent = '';
+    changesRuler.replaceChildren();
+    // The changes row keeps the room its case's tallest needs, so a step with no change keeps it
+    // empty; a case none of whose steps changes a watched value has no row at all.
+    if (changes) {
+      changes.style.minHeight = `${tallestChanges}px`;
+      changes.hidden = !tallestChanges;
+    }
     // The kicker is one line at every step; measured once, it keeps the lede's total when a step has no line.
     const kickerHeight = kicker.getBoundingClientRect().height;
     ledeRuler.replaceChildren();

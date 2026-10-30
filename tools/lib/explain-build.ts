@@ -6,8 +6,8 @@ import { gzipSync } from 'node:zlib';
 import { pageSize } from './page-budget.ts';
 import { pageSnapshots, packPageSnapshots } from './page-snapshots.ts';
 import { SnapshotSink, renderAt } from '../../src/index.ts';
-import { chromeFor, caseNameIn, descriptionLang } from '../../app/embed-strings.ts';
-import { restingTime, pictureHtml, htmlEscape, stepWords, wordsHtml } from '../../explain/trace.ts';
+import { chromeFor, caseNameIn, changeText, descriptionLang } from '../../app/embed-strings.ts';
+import { restingTime, pictureHtml, htmlEscape, stepWords, watchedChanges, wordsHtml } from '../../explain/trace.ts';
 import { ROOT, engineAlias, defaultVariant, hash, scriptEscape, sceneSlug, baseReceipt } from './explain-project.ts';
 import type { Project } from './explain-project.ts';
 import { pageFaces, letteringReport, useProjectLettering } from './explain-lettering.ts';
@@ -20,7 +20,7 @@ import { RTL_SCRIPTS } from '../../src/lettering-outlines.ts';
  * P2-P3), so an Arabic or Hebrew caption reads and aligns right to left while
  * the player's controls stay as they are. Every other page's style is as it was.
  */
-const RTL_CSS = '\nh1,.caption,.ruler,.lede,.lede *,.transcript h2,.transcript a,.transcript p,.steps button span,.steps .line{unicode-bidi:plaintext;text-align:start}\n';
+const RTL_CSS = '\nh1,.caption,.ruler,.lede,.lede *,.changes span,.transcript h2,.transcript a,.transcript p,.steps button span,.steps .line{unicode-bidi:plaintext;text-align:start}\n';
 /**
  * The default case's paper on the tile (specs/player-tile.md T5), so the first paint is already tinted
  * toward it. It goes in the page's hashed stylesheet: the strict CSP blocks style attributes. The
@@ -98,7 +98,8 @@ export async function buildExplainer(
   const framedJs = "if(parent!==window)document.documentElement.dataset.framed=''";
   const js = scriptEscape(bundled.outputFiles[0]!.text),
     css = (await readFile(join(ROOT, 'app/embed.css'), 'utf8')) + (rightToLeftPage(project) ? RTL_CSS : '') + paperCss(v.paper);
-  // Every case, every step: a link to it, its caption and what its resting picture shows.
+  // Every case, every step: a link to it, its caption, what it changed of the state the author
+  // watches (meta.watch) and what its resting picture shows.
   // The player shows the current case's section; without JavaScript every case shows.
   const transcript = project.variants
     .map(({ values, trace }) => {
@@ -107,8 +108,9 @@ export async function buildExplainer(
       const steps = trace.steps.map((s, i) => {
         const href = `?${key ? key + '&' : ''}${new URLSearchParams({ step: s.step })}`,
           shows = pictureHtml(s.after, trace.steps[i - 1]?.after),
-          words = stepWords(s);
-        return `<li><a href="${htmlEscape(href)}">${htmlEscape(words.title)}</a>${wordsHtml(words)}${shows ? `<div${descriptionLang(lang)}>${shows}</div>` : ''}</li>`;
+          words = stepWords(s),
+          changes = watchedChanges(s, project.Scene.meta?.watch, lang).map((c) => changeText(t, c));
+        return `<li><a href="${htmlEscape(href)}">${htmlEscape(words.title)}</a>${wordsHtml(words)}${changes.length ? `<p>${htmlEscape(t.changes(...changes))}</p>` : ''}${shows ? `<div${descriptionLang(lang)}>${shows}</div>` : ''}</li>`;
       });
       return `<section data-case="${htmlEscape(key)}">${name ? `<h2>${htmlEscape(name)}</h2>` : ''}<ol>${steps.join('')}</ol></section>`;
     })
