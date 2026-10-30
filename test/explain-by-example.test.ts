@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { collectProject } from '../tools/lib/explain-project.ts';
-import { TokenBucket, pkceChallenge } from '../scenes/explainers/lib/models.ts';
+import { pkceChallenge } from '../scenes/explainers/lib/models.ts';
+import { CHARS, guarded } from '../scenes/explainers/lib/isdigit.ts';
 
 const lesson = () => readFileSync('docs/BY-EXAMPLE.md', 'utf8');
 
@@ -10,13 +11,13 @@ test('problem-led examples link to the question, changed input and witnessed res
   const guide = lesson();
   for (const [id, cases, step] of [
     ['mr-cache', ['request=hit', 'request=miss'], 'request'],
-    ['token-bucket', ['rate=1', 'rate=4'], 'trace'],
+    ['isdigit', ['char=super&guard=isdigit', 'char=super&guard=isdecimal'], 'outcome'],
     ['oauth-pkce', ['attacker=yes', 'attacker=no'], 'exchange'],
   ] as const) {
     const project = await collectProject(`scenes/explainers/${id}`, { write: false });
     for (const setting of cases) {
-      const [key, value] = setting.split('=');
-      const variant = project.variants.find(v => v.values[key!] === value);
+      const values = new URLSearchParams(setting);
+      const variant = project.variants.find(v => [...values].every(([key, value]) => v.values[key] === value));
       assert.ok(variant, `${id}: ${setting} exists`);
       assert.ok(variant.trace.steps.some(s => s.step === step), `${id}: ${setting} has ${step}`);
       assert.ok(guide.includes(`https://oshineye.dev/projects/rayner/${id}?${setting}&step=${step}`), `${id}: link the real ${setting} result`);
@@ -42,10 +43,14 @@ test('the example comparisons retain their consequential model outcomes', async 
     const result = variant.trace.steps.find(s => s.step === 'request')!;
     assert.equal(result.after!.reads, reads);
   }
-  const times = [0, 0, 0, 0, 0, 0, 0.5, 1, 1, 2];
-  for (const [rate, rejected] of [[1, ['R6', 'R7', 'R9']], [4, ['R6']]] as const) {
-    const bucket = new TokenBucket(rate);
-    assert.deepEqual(times.flatMap((time, i) => bucket.allow(time) ? [] : [`R${i + 1}`]), rejected);
+  assert.deepEqual(guarded(CHARS.super, 'isdigit'), {
+    passes: true, outcome: 'raised', int: { error: "invalid literal for int() with base 10: '²'" },
+  });
+  assert.equal(guarded(CHARS.super, 'isdecimal').outcome, 'refused');
+  const digits = await collectProject('scenes/explainers/isdigit', { write: false });
+  for (const [guard, outcome] of [['isdigit', 'raised'], ['isdecimal', 'refused']] as const) {
+    const variant = digits.variants.find(v => v.values.char === 'super' && v.values.guard === guard)!;
+    assert.equal(variant.trace.steps.find(s => s.step === 'outcome')!.after!.outcome, outcome);
   }
   const verifier = 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk';
   assert.notEqual(pkceChallenge('attacker-does-not-know-the-original-verifier'), pkceChallenge(verifier));

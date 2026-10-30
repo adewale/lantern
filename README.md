@@ -6,7 +6,7 @@ Rayner turns a TypeScript model into a step-through explanation. Readers can cha
 
 ## Start with a question
 
-[Why does a cache hit skip the database?](https://oshineye.dev/projects/rayner/mr-cache?request=hit&step=request) Follow the request, then [switch to a miss](https://oshineye.dev/projects/rayner/mr-cache?request=miss&step=request). The two cases show zero versus one D1 read. The [by-example guide](docs/BY-EXAMPLE.md) puts the author code next to those results and two more problem-led comparisons: token-bucket refills and a stolen authorization code.
+[Why does a cache hit skip the database?](https://oshineye.dev/projects/rayner/mr-cache?request=hit&step=request) Follow the request, then [switch to a miss](https://oshineye.dev/projects/rayner/mr-cache?request=miss&step=request). The two cases show zero versus one D1 read. The [by-example guide](docs/BY-EXAMPLE.md) puts the author code next to those results and two more problem-led comparisons: `isdigit()` versus `int()`, and a stolen authorization code.
 
 [Browse the subject lessons](https://oshineye.dev/projects/rayner/) · [Learn by example](docs/BY-EXAMPLE.md) · [API and CLI reference](docs/REFERENCE.md)
 

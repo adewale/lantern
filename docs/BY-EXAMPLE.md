@@ -18,24 +18,18 @@ Author code (excerpt from the scene):
 
 Result: [hit, 0 D1 reads](https://oshineye.dev/projects/rayner/mr-cache?request=hit&step=request) · [miss, 1 D1 read](https://oshineye.dev/projects/rayner/mr-cache?request=miss&step=request). The handler and KV lookup are unchanged; only the presence of a row in KV changes. A miss still reads D1 and writes the row to KV for 300 seconds. This is a model of the cited merge request, not a latency benchmark or a guarantee about an external cache. [Code and source trail](../scenes/explainers/mr-cache/scene.ts).
 
-## Why do identical bursts get different answers later?
+## Why can `²` pass `isdigit()` but fail `int()`?
 
-Ten requests hit a five-token bucket. The first six arrive together, so **R6 fails at every refill rate**. Later requests arrive at 0.5, 1 and 2 seconds; only the refill rate changes. The scene feeds the same times through the [model](../scenes/explainers/lib/models.ts) and draws the result in its [full scene](../scenes/explainers/token-bucket/scene.ts).
+Python's numeric predicates do not all ask the same question as `int()`. Keep the input character `²` fixed; change only the guard in `if s.<guard>(): n = int(s)`. The [full scene](../scenes/explainers/isdigit/scene.ts) shows its Unicode fields, CPython flags, guard and parse result. Its [source-backed model](../scenes/explainers/lib/isdigit.ts) combines the predicate's answer with the parser's:
 
-Author-side model code (excerpt; the scene calls `allow` for each request):
-
-<!-- excerpt: scenes/explainers/lib/models.ts -->
+<!-- excerpt: scenes/explainers/lib/isdigit.ts -->
 ```ts
-  allow(now: number): boolean {
-    this.tokens = Math.min(this.capacity, this.tokens + (now - this.lastRefill) * this.rate);
-    this.lastRefill = now;
-    if (this.tokens < 1) return false;
-    this.tokens--;
-    return true;
-  }
+  const passes = predicates(c)[guard],
+    int = intOf(c);
+  return { passes, int, outcome: !passes ? 'refused' : 'value' in int ? 'parsed' : 'raised' };
 ```
 
-Result: [1 token/s: R6, R7 and R9 rejected](https://oshineye.dev/projects/rayner/token-bucket?rate=1&step=trace) · [4 tokens/s: only R6 rejected](https://oshineye.dev/projects/rayner/token-bucket?rate=4&step=trace). At time zero no refill has elapsed, so raising the rate cannot save R6; after time advances it changes the later answers. The toy model assumes a five-token capacity and the ten fixed arrival times, not a measured production traffic pattern.
+Result: [`isdigit()` lets `²` through, then `int()` raises ValueError](https://oshineye.dev/projects/rayner/isdigit?char=super&guard=isdigit&step=outcome) · [`isdecimal()` rejects it before `int()` runs](https://oshineye.dev/projects/rayner/isdigit?char=super&guard=isdecimal&step=outcome). Superscript two has a Unicode digit value but no decimal value; `int()` requires the decimal field for a single non-ASCII digit. The model uses cited Unicode 17.0.0 rows and CPython 3.15.1 behavior checked against CPython in `test/explain-isdigit.test.ts`. For a whole string, `int()` also accepts signs, spaces and underscores, so call `int()` and catch `ValueError` rather than treating `isdecimal()` as a general parser.
 
 ## Why is a stolen authorization code insufficient?
 
