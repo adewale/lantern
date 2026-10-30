@@ -21,13 +21,16 @@ import { writeDescriptions, checkBuilt } from './lib/explain-site-describe.ts';
 import { replaceHeaderBlocks } from './lib/site-headers.ts';
 import { buildInputs } from './lib/build-inputs.ts';
 import { checkBuiltOutput } from './lib/explain-built-files.ts';
+import { selectExport } from './lib/explain-export-selection.ts';
+import type { ExportCatalog, ExportEvidence } from './lib/explain-export-selection.ts';
+import { htmlEscape } from '../explain/trace.ts';
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
-  options: { path: { type: 'string', default: '/projects/rayner' }, origin: { type: 'string' } },
+  options: { path: { type: 'string', default: '/projects/rayner' }, origin: { type: 'string' }, only: { type: 'string' } },
 });
 const root = positionals[0];
-if (!root) throw new Error('usage: npm run site:export -- <site-root> [--path /projects/rayner] [--origin https://example.org]');
+if (!root) throw new Error('usage: npm run site:export -- <site-root> [--path /projects/rayner] [--origin https://example.org] [--only id,id]');
 const origin = values.origin;
 // Link previews need absolute https URLs: crawlers fetch the pictures from the public site.
 if (origin && !/^https:\/\/[^/]+\/?$/.test(origin)) throw new Error(`--origin must be an https site origin like https://example.org, not ${origin}`);
@@ -36,6 +39,14 @@ if (!/^\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+$/.test(path)) throw new Error('--pa
 const destination = resolve(root);
 const built = join(ROOT, 'out/explainers');
 const exists = (file: string) => access(file).then(() => true, () => false);
+const selected = selectExport(
+  values.only,
+  JSON.parse(await readFile(join(built, 'catalog.json'), 'utf8')) as ExportCatalog,
+  JSON.parse(await readFile(join(built, 'evidence.json'), 'utf8')) as ExportEvidence,
+);
+const items = EXPLAINERS.filter(item => selected.ids.includes(item.id));
+if (items.length !== selected.ids.length || items.some((item, i) => item.id !== selected.ids[i]))
+  throw new Error('Built catalog and checkout explainers mismatch');
 
 // Refuse an explainer whose scene, scene folder or engine changed since demos:build built it;
 // check them all before copying any.
@@ -52,7 +63,7 @@ try {
   await mkdir(target, { recursive: true });
   const blocks: string[] = [];
   let shared = 0;
-  for (const { id } of EXPLAINERS) {
+  for (const { id } of items) {
     const page = join(built, id + '.html');
     if (!(await exists(page))) throw new Error(`Missing ${page}: run npm run demos:build first`);
     const share = JSON.parse(await readFile(join(built, id, 'steps.json'), 'utf8')) as ShareManifest;
@@ -72,15 +83,22 @@ try {
     blocks.push(`${path}/${id}\n${lines}\n\n${path}/${id}.html\n${lines}`);
   }
   await copyFile(join(built, 'loader.js'), join(target, 'loader.js'));
-  await copyFile(join(built, 'index.html'), join(target, 'index.html'));
-  await copyFile(join(built, 'embed-lab.html'), join(target, 'embed-lab.html'));
-  await copyFile(join(built, 'evidence.json'), join(target, 'evidence.json'));
-  await copyFile(join(built, 'catalog.json'), join(target, 'catalog.json'));
+  if (values.only === undefined) {
+    await copyFile(join(built, 'index.html'), join(target, 'index.html'));
+    await copyFile(join(built, 'embed-lab.html'), join(target, 'embed-lab.html'));
+    await copyFile(join(built, 'evidence.json'), join(target, 'evidence.json'));
+    await copyFile(join(built, 'catalog.json'), join(target, 'catalog.json'));
+  } else {
+    const links = selected.catalog.scenes.map(s => `<li><a href="${s.id}.html">${htmlEscape(String(s.title))}</a></li>`).join('');
+    await writeFile(join(target, 'index.html'), `<!doctype html><html lang="en"><meta charset="utf-8"><title>Rayner explainers</title><main><h1>Rayner explainers</h1><ul>${links}</ul></main></html>`);
+    await writeFile(join(target, 'evidence.json'), JSON.stringify(selected.evidence, null, 2) + '\n');
+    await writeFile(join(target, 'catalog.json'), JSON.stringify(selected.catalog, null, 2) + '\n');
+  }
   // For agents: each explainer's describeExplainer object as <id>.json beside its page, and llms.txt at the site root.
-  const described = await writeDescriptions(staging, path, EXPLAINERS, built, origin);
-  console.log(`Wrote ${EXPLAINERS.length} <id>.json files (${described.json} bytes) and ${join(resolve(root), 'llms.txt')} (${described.llms} bytes).`);
+  const described = await writeDescriptions(staging, path, items, built, origin);
+  console.log(`Wrote ${items.length} <id>.json files (${described.json} bytes) and ${join(resolve(root), 'llms.txt')} (${described.llms} bytes).`);
   if (origin) {
-    const { pages, problems } = await checkCards(staging, origin, path, EXPLAINERS.map((e) => e.id));
+    const { pages, problems } = await checkCards(staging, origin, path, selected.ids);
     if (problems.length) throw new Error(`Link preview tags are wrong:\n${problems.join('\n')}`);
     console.log(`${pages} pages carry every Open Graph and Twitter card tag, with their pictures at the declared size`);
   }
@@ -96,7 +114,7 @@ try {
   const hostHeaders = await readFile(join(destination, '_headers'), 'utf8').catch(error => {
     if (error.code === 'ENOENT') return ''; throw error;
   });
-  const ownedPaths = EXPLAINERS.flatMap(({ id }) => [`${path}/${id}`, `${path}/${id}.html`]);
+  const ownedPaths = items.flatMap(({ id }) => [`${path}/${id}`, `${path}/${id}.html`]);
   const publishedHeaders = replaceHeaderBlocks(hostHeaders, headers, ownedPaths);
   await writeFile(join(staging, '_headers'), publishedHeaders);
   manifestFiles.push({ path: '/_headers', sha256: createHash('sha256').update(publishedHeaders).digest('hex') });
@@ -124,7 +142,7 @@ try {
   }
   await writeFile(headersFile, headers);
   console.log(
-    `Exported ${EXPLAINERS.length} explainers and ${shared} step pictures to ${join(destination, path)}` +
+    `Exported ${items.length} explainers and ${shared} step pictures to ${join(destination, path)}` +
       (origin ? `, with a share page for each step` : '; pass --origin to add a share page for each step') +
       `\nUpdated ${join(destination, '_headers')} by replacing this collection's URL rules. Header recipe: ${headersFile}.`,
   );
