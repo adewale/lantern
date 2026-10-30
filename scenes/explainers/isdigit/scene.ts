@@ -256,11 +256,11 @@ export default class IsDigitExplainer extends Scene {
 
     // ------------------------------------------------------------------ the nested sets
     await this.step('sets', {
-      title: 'Each predicate’s set holds the one inside it',
+      title: 'Decimals sit inside digits, inside numerics',
       line: `${c.char} sits in ${type === 'Decimal' ? 'the innermost set' : type === 'Digit' ? 'the middle set, not the innermost' : 'the outer set only'}.`,
-      caption: `Run over every code point, CPython 3.15.1 with Unicode 17.0.0 finds ${grouped(COUNTS.isdecimal)} decimals, ${grouped(COUNTS.isdigit)} digits and ${grouped(
+      caption: `A scan of every code point in CPython 3.15.1 (Unicode 17.0.0) finds ${grouped(COUNTS.isdecimal)} characters accepted by isdecimal(), ${grouped(COUNTS.isdigit)} by isdigit() and ${grouped(
         COUNTS.isnumeric,
-      )} numeric characters. A decimal always has a digit value too, and a digit a numeric value, so each set holds the one inside it. ${c.char} is in ${
+      )} by isnumeric(). Every decimal also has a digit value, and every digit has a numeric value, so the sets nest. ${c.char} is in ${
         type === 'Decimal' ? 'the innermost set' : type === 'Digit' ? 'the middle set, not the innermost' : 'the outer set only'
       }.`,
     });

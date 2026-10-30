@@ -6,7 +6,7 @@ const SAMPLE = 'Ink on paper';
 export default class FontMetrics extends Scene {
   static meta = {
     id: 'font-metrics',
-    title: 'A font’s advance places the next word',
+    title: 'Measuring a phrase with EB Garamond before layout',
     sources: ['https://github.com/googlefonts/ebgaramond'],
     lettering: {faces: {sans: 'eb-garamond'}, styles: ['bold', 'italic'] as const},
   };
@@ -15,9 +15,9 @@ export default class FontMetrics extends Scene {
     const s = stage(this, {style: 'pen-and-ink'});
     const color = s.palette.ink;
     await this.step('advance', {
-      title: 'The font gives the word its advance',
-      line: 'The ruler measures where the following word would start.',
-      caption: 'These letters are EB Garamond, explicitly requested by the scene. The pen-and-ink style chooses the paper and colours. The ruler measures the text’s advance, including the space each letter leaves before the next.',
+      title: 'The ruler spans the phrase’s advance',
+      line: 'The ruler ends after the final glyph’s advance.',
+      caption: '“Ink on paper” advances 5.88 scene units in EB Garamond, including the spaces between its words. A following word would add another space, which this ruler does not include. This scene explicitly requests EB Garamond; pen-and-ink supplies the paper and colours.',
     });
     const text = new Text(SAMPLE, {fontSize: 1.2, color}).moveTo([0, 0.8]);
     await s.enter(text);
@@ -26,9 +26,9 @@ export default class FontMetrics extends Scene {
     this.state.advance = text.advance();
 
     await this.step('cuts', {
-      title: 'Real bold and italic have their own measurements',
-      line: 'The words stay the same; each cut supplies its own outlines and advance.',
-      caption: 'Each row draws the same words at the same size. Regular, Bold and Italic are three source-font cuts, and the number at the right is that row’s advance. The page carries their captured paths, so it needs no font download or system-font match.',
+      title: 'The same phrase advances differently in each cut',
+      line: 'Regular, Bold and Italic keep the text and size fixed.',
+      caption: 'The first ruler measured text at 1.2 units; these three rows use 0.9. At that shared size, “Ink on paper” advances 4.41 units in Regular, 4.85 in Bold and 4.24 in Italic. Each EB Garamond cut supplies its own captured paths, so the page needs no font download.',
     });
     await s.clear();
     const rows = new Group();
@@ -44,9 +44,9 @@ export default class FontMetrics extends Scene {
     await s.enter(rows, {describe: () => `The same words in three EB Garamond cuts: ${Object.entries(advances).map(([cut, advance]) => `${cut}, advance ${advance.toFixed(2)}`).join('; ')}. Each cut was requested and captured from its own source font.`});
 
     await this.step('diagram', {
-      title: 'The diagram measures its font before layout',
-      line: 'Each label keeps EB Garamond’s natural proportions.',
-      caption: 'Ink points to Paper. Both labels use EB Garamond at its natural width, measured before the nodes are laid out.',
+      title: 'The diagram measures labels before placing nodes',
+      line: 'Ink and Paper keep EB Garamond’s measured proportions.',
+      caption: 'The arrow connects Ink and Paper, both drawn in the requested EB Garamond face. Natural lettering captures their advances, so the renderer places the boxes without stretching either label to a preset width.',
     });
     await s.clear();
     await s.show({source: 'graph LR\nA["Ink"] --> B["Paper"]', lettering: 'natural'});

@@ -360,10 +360,10 @@ export default class GlyphExplainer extends Scene {
     await s.callout(around(morph.added), `${result.added} grow in: ${letters(after, morph.added)}`, { side: 'below', gap: 0.45, color: hot, size: 0.26 });
 
     await this.step('tradeoff', {
-      title: 'Diagram labels are Inter outlines stretched to textLength',
-      line: 'The style asks for EB Garamond; labels get Inter, stretched to fit.',
+      title: 'This diagram fits Inter labels to recorded widths',
+      line: 'Pen-and-ink does not request EB Garamond for this scene.',
       caption:
-        'The pen-and-ink style asks for EB Garamond, but Rayner draws labels in embedded Inter, stretched to the width agentic-mermaid wrote into each label’s textLength. Box shapes and strokes come from the style; only the letterforms differ.',
+        'This scene uses pen-and-ink paper and strokes but makes no font-face request. Its diagram labels use embedded Inter, stretched to the textLength widths stored by agentic-mermaid; the two “PNG stills” rulers show the change. The font-metrics example explicitly requests EB Garamond and measures its labels before layout.',
     });
     await s.clear();
     const again = await s.show({ source: pipeline(NAME[font]) }, { box: regionBox('full', { right: -1.4 }) });

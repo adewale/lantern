@@ -187,14 +187,14 @@ export default class ForkExplainer extends Scene {
 
     await this.step('cost', {
       title: 'A prebuilt page no longer exposes Lantern’s Worker endpoints',
-      line: 'No agent endpoints, Inter everywhere, Chromium to capture.',
+      line: 'The Worker endpoints are gone; Inter is the default face.',
       caption:
-        'Agents lose the Worker’s endpoints, and every diagram style is lettered in Inter. Capturing a new diagram needs Chromium at build time, though a page built from stored snapshots needs nothing. No engine change has gone upstream.',
+        'Agents lose the Worker’s endpoints. Diagrams use embedded Inter by default; a scene can explicitly request another face and measure it before layout, as font-metrics does. Capturing a new diagram needs Chromium at build time, though a page built from stored snapshots does not. No engine change has gone upstream.',
     });
     await s.clearOverlays();
     await flow.dim(null);
     await flow.mark(['Capture'], { as: 'needs Chromium' });
-    await flow.note('Capture', 'Chromium at build time; Inter in every style', { side: 'below' });
+    await flow.note('Capture', 'Chromium at build time; Inter by default', { side: 'below' });
     await flow.note('Page', 'no agent endpoints', { side: 'above' });
   }
 }
