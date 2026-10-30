@@ -43,6 +43,9 @@ Each case ends at a boundary the Group article names: hydrogen is not an alkali 
 | `npm run rayner -- review scenes/explainers/periodic-groups/scene.ts` | 5 cases, 70 step-widths, no console errors or runtime connections; caption subjects declared in `scene.review.json` |
 | `node --test test/explain-periodic-groups.test.ts` | 10 tests pass |
 | `npm run check` | Passes |
+| `npm test` (Linux) | 990 tests: 913 pass, 76 skip; the one failure was the page-output pins, refreshed in `test/lettering-baseline-linux.json` (11/11 then pass) |
+| `npm run test:embeds` (Linux, Chromium) | 66 pass, 4 skip, 0 fail, before and after the step rail |
+| `npm run demos:build`, `npm run check:budgets` | 33 explainers, 169 cases built; budgets pass (this page 947 KiB raw, 282 KiB gzip) |
 
 About 580 labels per case sit outside the phone close-ups: a 118-cell table cannot fit a 358 px stage. Readers reach them with **Next view** or **Whole picture**; every caption subject is in the opening or the tour.
 
