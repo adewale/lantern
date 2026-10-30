@@ -1,8 +1,8 @@
 {
- "source": "NIST Atomic Spectra Database, Ionization Energies Data (ASD version 5.12), ground shells of neutral atoms H I to Lr I",
- "query": "https://physics.nist.gov/cgi-bin/ASD/ie.pl?spectra=H-Lr+i&units=1&format=2&order=0&at_num_out=on&el_name_out=on&shells_out=on&conf_out=on",
+ "source": "NIST Atomic Spectra Database (version 5.12), Ionization Energies Data: ground shells of the neutral atoms it lists, H I to Hs I",
+ "query": "https://physics.nist.gov/cgi-bin/ASD/ie.pl?spectra=H-Og+i&units=1&format=2&order=0&at_num_out=on&el_name_out=on&seq_out=on&shells_out=on&conf_out=on",
  "retrieved": "2026-10-30",
- "note": "'shells' is NIST's own text; 'configuration' expands its noble-gas (and [Cd], [Hg]) shorthand in shell order, with every count written out.",
+ "note": "NIST lists elements 1 to 108 and nothing heavier. 'shells' is NIST's text; 'configuration' expands its noble-gas, [Cd] and [Hg] shorthand in shell order, with every count written out. The table does not say which configurations are measured and which are computed.",
  "elements": {
   "1": {
    "symbol": "H",
@@ -518,6 +518,31 @@
    "symbol": "Lr",
    "shells": "[Rn].5f14.7s2.7p",
    "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f14 6s2 6p6 7s2 7p1"
+  },
+  "104": {
+   "symbol": "Rf",
+   "shells": "[Rn].5f14.6d2.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f14 6s2 6p6 6d2 7s2"
+  },
+  "105": {
+   "symbol": "Db",
+   "shells": "[Rn].5f14.6d3.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f14 6s2 6p6 6d3 7s2"
+  },
+  "106": {
+   "symbol": "Sg",
+   "shells": "[Rn].5f14.6d4.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f14 6s2 6p6 6d4 7s2"
+  },
+  "107": {
+   "symbol": "Bh",
+   "shells": "[Rn].5f14.6d5.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f14 6s2 6p6 6d5 7s2"
+  },
+  "108": {
+   "symbol": "Hs",
+   "shells": "[Rn].5f14.6d6.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f14 6s2 6p6 6d6 7s2"
   }
  }
 }

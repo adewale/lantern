@@ -12,10 +12,11 @@ export const PRODUCT = {
   tutorial: 'https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md',
   reference: 'https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md',
   skill: 'https://github.com/adewale/rayner/blob/main/skills/rayner-explainers/SKILL.md',
-  entry: {id: 'mr-cache', step: 'before', settings: {request: 'hit'}, label: 'Step through a cache request'},
+  entry: {id: 'periodic-groups', step: 'column', settings: {element: 'na'}, label: 'Step through what puts an element in its group'},
 } as const;
 
 export const EXPLAINERS: readonly { id: string; step: string; group: 'topic' | 'toolchain' }[] = [
+  { id: 'periodic-groups', step: 'blocks', group: 'topic' },
   { id: 'seasons', step: 'year', group: 'topic' },
   { id: 'oauth-pkce', step: 'attack', group: 'topic' },
   { id: 'exgit', step: 'change', group: 'topic' },

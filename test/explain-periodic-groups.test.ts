@@ -2,10 +2,17 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  SYMBOLS, POSITIONS, MEASURED_EXCEPTIONS, MEASURED_UP_TO, GROUP_NAMES,
-  predicted, measured, counted, position, membersOf, gaps, periodLength, configText, shorthand, symbolOf,
+  SYMBOLS, POSITIONS, NIST_EXCEPTIONS, NIST_UP_TO, GROUP_NAMES,
+  predicted, listed, counted, position, membersOf, gaps, periodLength, configText, shorthand, symbolOf,
 } from '../scenes/explainers/lib/periodic-groups.ts';
 import type { Subshell } from '../scenes/explainers/lib/periodic-groups.ts';
+import { loadFonts } from '../src/index.ts';
+import type { View } from '../src/index.ts';
+import { withSettings } from '../explain/index.ts';
+import { collectProject } from '../tools/lib/explain-project.ts';
+import { assertViewFollowsState } from './lib/view-fidelity.ts';
+import { check } from './lib/fidelity/periodic-groups.ts';
+import PeriodicGroupsExplainer from '../scenes/explainers/periodic-groups/scene.ts';
 
 // The IUPAC periodic table (2021 recommendation: Sc, Y, Lu and Lr in group 3), typed
 // row by row from the published table and independent of the model's rules. '.' is
@@ -67,33 +74,33 @@ test('only helium and the period 2 and 3 p block need more than the electron cou
   assert.equal(position(17).group, 17);
 });
 
-test('the model reproduces every NIST ground configuration from element 1 to 103', () => {
-  assert.equal(Object.keys(NIST.elements).length, MEASURED_UP_TO);
-  for (let z = 1; z <= MEASURED_UP_TO; z++) {
+test('the model reproduces every NIST ground configuration, elements 1 to 108', () => {
+  assert.equal(Object.keys(NIST.elements).length, NIST_UP_TO);
+  for (let z = 1; z <= NIST_UP_TO; z++) {
     const nist = NIST.elements[String(z)]!;
     assert.equal(nist.symbol, symbolOf(z));
-    assert.equal(asText(measured(z)), nist.configuration, `${symbolOf(z)} (${z})`);
+    assert.equal(asText(listed(z)), nist.configuration, `${symbolOf(z)} (${z})`);
   }
 });
 
 test('the stored exceptions are exactly the elements where NIST differs from the filling rule', () => {
   const differs = [];
-  for (let z = 1; z <= MEASURED_UP_TO; z++)
+  for (let z = 1; z <= NIST_UP_TO; z++)
     if (asText(predicted(z)) !== NIST.elements[String(z)]!.configuration) differs.push(z);
-  assert.deepEqual(differs, Object.keys(MEASURED_EXCEPTIONS).map(Number));
+  assert.deepEqual(differs, Object.keys(NIST_EXCEPTIONS).map(Number));
   assert.equal(differs.length, 20);
 });
 
-test('measured configurations keep the group count of every d-block exception', () => {
+test('NIST configurations keep the group count of every d-block exception', () => {
   // Chromium, copper, palladium, gold and the rest move an s electron into d or back:
   // the s + d total beyond the core, and so the column, is unchanged.
-  for (const z of Object.keys(MEASURED_EXCEPTIONS).map(Number)) {
+  for (const z of Object.keys(NIST_EXCEPTIONS).map(Number)) {
     const p = position(z);
     if (p.block === 'f') continue;
-    assert.equal(counted(measured(z), z), p.group, symbolOf(z));
+    assert.equal(counted(listed(z), z), p.group, symbolOf(z));
   }
   assert.equal(shorthand(predicted(29), 29), '[Ar] 4s² 3d⁹');
-  assert.equal(shorthand(measured(29), 29), '[Ar] 3d¹⁰ 4s¹');
+  assert.equal(shorthand(listed(29), 29), '[Ar] 3d¹⁰ 4s¹');
 });
 
 test('down a group, each jump in atomic number is one whole period', () => {
@@ -118,4 +125,19 @@ test('group names follow the IUPAC 1 to 18 order with the CAS and old IUPAC lett
   assert.deepEqual([at(17).cas, at(17).oldIupac, at(17).trivial], ['VIIA', 'VIIB', 'halogens']);
   assert.deepEqual([at(18).cas, at(18).oldIupac, at(18).trivial], ['VIIIA', '0', 'noble gases']);
   assert.equal(configText(predicted(11)), '1s² 2s² 2p⁶ 3s¹');
+});
+
+test('every case records the model’s answers at each step', async () => {
+  const project = await collectProject('scenes/explainers/periodic-groups', { write: false });
+  assert.deepEqual(project.variants.map((v) => v.values.element), ['na', 'cl', 'fe', 'cu', 'he']);
+  for (const { values, trace } of project.variants) check(trace, values);
+});
+
+test('the table and the notes are drawn from the recorded state at every resting step', async () => {
+  await loadFonts();
+  for (const element of ['na', 'cl', 'fe', 'cu', 'he']) {
+    const Scene = withSettings(PeriodicGroupsExplainer, { element });
+    assert.equal(await assertViewFollowsState(Scene, (scene) => (scene as PeriodicGroupsExplainer).table as View | null), 7, `${element}: table`);
+    assert.equal(await assertViewFollowsState(Scene, (scene) => (scene as PeriodicGroupsExplainer).notes as View | null), 7, `${element}: notes`);
+  }
 });
