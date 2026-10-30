@@ -79,6 +79,11 @@ export interface Chrome {
   removed: string;
   /** The transcript's line of a step's changes: "What changed: Tokens: 5 → 0; Allowed: 0 → 5". */
   changes: (...items: string[]) => string;
+  /** At rest on the last step, Next's visible word, and its accessible name. */
+  startAgain: string;
+  startAgainLabel: string;
+  /** At rest on the last step of a scene with settings: show the next option of its first setting. */
+  tryCase: (label: string) => string;
 }
 
 const EN: Chrome = {
@@ -123,6 +128,9 @@ const EN: Chrome = {
   no: wordsFor('en').no,
   removed: 'removed',
   changes: (...items) => `What changed: ${items.join('; ')}`,
+  startAgain: 'Start again',
+  startAgainLabel: 'Start again from step 1',
+  tryCase: (label) => `Try ‘${label}’`,
 };
 /** French typography: a narrow no-break space (U+202F) before : ; ! ? and inside « ». */
 const FR: Chrome = {
@@ -173,6 +181,9 @@ const FR: Chrome = {
   no: wordsFor('fr').no,
   removed: 'supprimé',
   changes: (...items) => `Ce qui a changé\u202f: ${items.join('\u202f; ')}`,
+  startAgain: 'Recommencer',
+  startAgainLabel: 'Recommencer à l’étape 1',
+  tryCase: (label) => `Essayer «\u202f${label}\u202f»`,
 };
 export const CHROME: Readonly<Record<string, Chrome>> = { en: EN, fr: FR };
 

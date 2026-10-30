@@ -252,7 +252,7 @@ test('every catalog page, in English and French: no Replay, Stop or Fit stage bu
       // specs/player-tile.md T3: the maker's mark, in the footer, never on the stage; standalone, no way out.
       const foot = await page.evaluate(() => ({
         marks: [...document.querySelectorAll<HTMLAnchorElement>('a.mark')].map((a) => [a.parentElement!.matches('.player > footer.foot'), a.textContent, a.href, a.getAttribute('aria-label'), a.target, a.rel]),
-        last: [...document.querySelector('.player')!.children].filter((e) => !e.matches('[hidden], .ruler, .lede-ruler')).at(-1)?.className,
+        last: [...document.querySelector('.player')!.children].filter((e) => !e.matches('[hidden], .ruler, .lede-ruler, .changes-ruler')).at(-1)?.className,
         open: document.querySelectorAll('.foot a.open').length,
         onStage: document.querySelectorAll('.stage a, .stage .foot, .frame a').length,
       }));
@@ -453,6 +453,100 @@ test('what changed: token-bucket\'s burst step lists its three watched changes u
       assert.equal(await page.locator('.changes').count(), 0, `${scene}: no changes row`);
       assert.doesNotMatch((await page.locator('.transcript').textContent())!, /What changed/, `${scene}: no line in the transcript`);
     }
+  } finally {
+    await page.close();
+  }
+});
+// specs/player-guidance.md G2: after the last step, Start again, and for a scene with settings, its next case.
+const endOf = (page: Page) =>
+  page.evaluate(() => {
+    const next = document.querySelector<HTMLButtonElement>('.stepper .primary')!,
+      tries = [...document.querySelectorAll<HTMLButtonElement>('.stepper > .button:not(.icon):not(.primary)')];
+    return {
+      name: next.getAttribute('aria-label'),
+      text: next.querySelector('span')!.textContent,
+      disabled: next.disabled,
+      // The Try button follows Next straight away, in the row and in the Tab order.
+      tryCase: tries.filter((b) => !b.hidden).map((b) => [b.textContent, b.previousElementSibling === next]),
+      step: new URL(location.href).searchParams.get('step'),
+      request: new URL(location.href).searchParams.get('request'),
+    };
+  });
+test('the last step: Next becomes Start again, back to step 1; Try ‘Cache miss’ loads the miss case at step 1; leaving the end restores Next', options, async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/mr-cache.html?step=after`);
+    await page.waitForSelector('[data-ready=true]');
+    assert.deepEqual(await endOf(page), { name: 'Next step', text: 'Next', disabled: false, tryCase: [], step: 'after', request: 'hit' });
+    await page.getByRole('button', { name: 'Next step', exact: true }).click();
+    await page.waitForFunction(() => new URL(location.href).searchParams.get('step') === 'request');
+    assert.deepEqual(await endOf(page), {
+      name: 'Start again from step 1', text: 'Start again', disabled: false,
+      tryCase: [['Try ‘Cache miss’', true]], step: 'request', request: 'hit',
+    });
+    // ArrowRight at the end does nothing: no wrap.
+    await page.locator('#content').focus();
+    await page.keyboard.press('ArrowRight');
+    await page.waitForTimeout(200);
+    assert.equal((await endOf(page)).step, 'request');
+    // Start again goes to step 1 and pushes history, as a step click does.
+    const length = await page.evaluate(() => history.length);
+    await page.getByRole('button', { name: 'Start again from step 1', exact: true }).click();
+    await page.waitForFunction(() => new URL(location.href).searchParams.get('step') === 'before');
+    assert.deepEqual(await endOf(page), { name: 'Next step', text: 'Next', disabled: false, tryCase: [], step: 'before', request: 'hit' });
+    assert.equal(await page.evaluate(() => history.length), length + 1);
+    // Try: the next option of the first setting, at its first step; then it offers the one after, wrapping.
+    await page.goto(`${embed}/mr-cache.html?step=request`);
+    await page.waitForSelector('[data-ready=true]');
+    await page.getByRole('button', { name: 'Try ‘Cache miss’', exact: true }).click();
+    await page.waitForFunction(() => new URL(location.href).searchParams.get('request') === 'miss');
+    await page.waitForFunction(() => !document.getElementById('content')!.classList.contains('loading'));
+    assert.deepEqual(await endOf(page), { name: 'Next step', text: 'Next', disabled: false, tryCase: [], step: 'before', request: 'miss' });
+    assert.equal(await page.locator('input[name=request]:checked').getAttribute('value'), 'miss');
+    // Focus stays on Next when the Try button goes.
+    assert.equal(await page.evaluate(() => document.activeElement?.classList.contains('primary')), true);
+    await page.locator('.steps button[data-step=request]').click();
+    await page.waitForFunction(() => new URL(location.href).searchParams.get('step') === 'request');
+    assert.deepEqual((await endOf(page)).tryCase, [['Try ‘Cache hit’', true]]);
+    // Leaving the end, by Previous, restores Next and removes Try.
+    await page.getByRole('button', { name: 'Previous step', exact: true }).click();
+    await page.waitForFunction(() => new URL(location.href).searchParams.get('step') === 'after');
+    assert.deepEqual(await endOf(page), { name: 'Next step', text: 'Next', disabled: false, tryCase: [], step: 'after', request: 'miss' });
+    // A scene with one case (lantern; exgit has two): Start again, and no case button at all.
+    await page.goto(`${embed}/lantern.html`);
+    await page.waitForSelector('[data-ready=true]');
+    await page.locator('.step-bar button').last().click();
+    await page.waitForFunction(() => document.querySelector('.stepper .primary')?.getAttribute('aria-label') === 'Start again from step 1');
+    assert.equal(await page.locator('.stepper > .button:not(.icon):not(.primary)').count(), 0);
+    // French: Recommencer, and Essayer « 2 » for quotient-familial's first setting.
+    await page.goto(`${embed}/quotient-familial.html?step=revenus-2025`);
+    await page.waitForSelector('[data-ready=true]');
+    const fr = await endOf(page);
+    assert.deepEqual([fr.name, fr.text, fr.tryCase], ['Recommencer à l’étape 1', 'Recommencer', [['Essayer «\u202f2\u202f»', true]]]);
+  } finally {
+    await page.close();
+  }
+});
+test('the last step while it plays: Next still reads Next and rests the step; the face changes only at rest', options, async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'no-preference' });
+  try {
+    await page.addInitScript(() => {
+      (window as unknown as { __rests: string[] }).__rests = [];
+      document.addEventListener('rayner:step', (e) => (window as unknown as { __rests: string[] }).__rests.push((e as CustomEvent).detail.step));
+    });
+    await page.goto(`${embed}/mr-cache.html?step=after`);
+    await page.waitForSelector('[data-ready=true]');
+    await page.waitForTimeout(300);
+    await page.getByRole('button', { name: 'Next step', exact: true }).click();
+    // Playing the last step: busy, and Next is still Next, enabled.
+    await page.waitForFunction(() => document.querySelector('.stage')!.getAttribute('aria-busy') === 'true');
+    const playing = await endOf(page);
+    assert.deepEqual([playing.name, playing.disabled, playing.tryCase], ['Next step', false, []]);
+    await page.getByRole('button', { name: 'Next step', exact: true }).click();
+    await page.waitForFunction(() => (window as unknown as { __rests: string[] }).__rests.at(-1) === 'request');
+    assert.equal(await page.locator('.stage').getAttribute('aria-busy'), null);
+    const rested = await endOf(page);
+    assert.deepEqual([rested.name, rested.step, rested.tryCase], ['Start again from step 1', 'request', [['Try ‘Cache miss’', true]]]);
   } finally {
     await page.close();
   }
@@ -817,7 +911,7 @@ test('view tools share Next\'s row when wide and wrap below it when narrow', opt
       } else {
         assert.ok(tools.top >= next.bottom, `${where}: the tools wrap below Next ${JSON.stringify(v.boxes)}`);
         // Every control in the row, except the step bar's thin segments, is at least 44 px each way.
-        const small = await page.locator('.stepper > button, .stepper .tools > button:not([hidden])').evaluateAll((bs) =>
+        const small = await page.locator('.stepper > button:not([hidden]), .stepper .tools > button:not([hidden])').evaluateAll((bs) =>
           bs.map((b) => [b.getAttribute('aria-label'), b.getBoundingClientRect().width, b.getBoundingClientRect().height] as const).filter(([, w, h]) => w < 44 || h < 44),
         );
         assert.deepEqual(small, [], where);
@@ -1609,7 +1703,11 @@ function observe(ids: string[]) {
     picture: document.querySelector('.described > div')?.innerHTML,
     title: document.querySelector('h1')!.textContent,
     prevDisabled: button('Previous step')!.disabled,
-    nextDisabled: button('Next step')!.disabled,
+    // Next's face: at rest on the last step it is Start again (specs/player-guidance.md G2).
+    next: ((b) => ({ name: b.getAttribute('aria-label'), text: b.querySelector('span')!.textContent, disabled: b.disabled }))(
+      document.querySelector<HTMLButtonElement>('.stepper .primary')!,
+    ),
+    tryCase: [...document.querySelectorAll<HTMLButtonElement>('.stepper > .button:not(.icon):not(.primary)')].map((b) => (b.hidden ? null : b.textContent)),
     notice: document.querySelector('.notice')!.textContent,
     checked: Object.fromEntries(
       ids.map((id) => [id, document.querySelector<HTMLInputElement>(`input[name="${id}"]:checked`)?.value ?? null]),
@@ -1743,7 +1841,14 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   const parsed = await r.page.evaluate((html) => Object.assign(document.createElement('div'), { innerHTML: html }).innerHTML, spec.picture);
   eq('picture disclosure', seen.picture, parsed);
   eq('Previous disabled', seen.prevDisabled, i === 0);
-  eq('Next disabled', seen.nextDisabled, i === list.length - 1);
+  // Next is never disabled: on the last step it is Start again, and a scene with settings offers
+  // its first setting's next option beside it, at rest.
+  const last = i === list.length - 1;
+  eq('Next is Start again', seen.next, last
+    ? { name: 'Start again from step 1', text: 'Start again', disabled: false }
+    : { name: 'Next step', text: 'Next', disabled: false });
+  const first = settingsOfProject(m.project)[0];
+  eq('Try another case', seen.tryCase, first ? [last ? `Try ‘${nextOption(m).label}’` : null] : []);
   eq('notice', seen.notice, m.notice);
   eq('history length', seen.history, r.base + m.entries.length);
   eq('horizontal overflow', seen.overflow, false);
@@ -1831,6 +1936,33 @@ function goTo(m: PlayerModel, index: number) {
   m.settles++;
 }
 const always = () => true;
+/** The option after the current one of the scene's first setting, wrapping: what Try shows. */
+function nextOption(m: PlayerModel) {
+  const s = settingsOfProject(m.project)[0]!,
+    i = s.options.findIndex((o) => o.value === current(m).values[s.id]);
+  return s.options[(i + 1) % s.options.length]!;
+}
+const isLast = (m: PlayerModel) => selected(m) === steps(m).length - 1;
+/** At rest on the last step, Next reads Start again and goes back to step 1, pushing history as a step click does. */
+const StartAgain = command('StartAgain', isLast, async (m, r) => {
+  await button(r, 'Start again from step 1').click();
+  goTo(m, 0);
+});
+/** At rest on the last step of a scene with settings: the first setting's next option, the others kept, at step 1. */
+const TryCase = command(
+  'TryCase',
+  (m) => isLast(m) && settingsOfProject(m.project).length > 0,
+  async (m, r) => {
+    const s = settingsOfProject(m.project)[0]!,
+      option = nextOption(m);
+    await r.page.locator('.stepper > .button', { hasText: `Try ‘${option.label}’` }).click();
+    const { entry, notice } = resolveLoad(m.project, { ...current(m).values, [s.id]: option.value }, undefined);
+    if (!sameCase(m.project, entry.values, current(m).values)) m.k = 1;
+    push(m, entry);
+    m.notice = notice;
+    m.settles++;
+  },
+);
 const Next = command(
   'Next',
   (m) => selected(m) < steps(m).length - 1,
@@ -2063,6 +2195,8 @@ function commandArbs(p: Project): fc.Arbitrary<Cmd>[] {
   return [
     fc.constant(Next),
     fc.constant(Previous),
+    fc.constant(StartAgain),
+    fc.constant(TryCase),
     fc.nat({ max: 7 }).map(ClickStep),
     fc.nat({ max: 7 }).map(ClickSegment),
     fc.nat({ max: 7 }).map(TranscriptLink),
@@ -2517,7 +2651,8 @@ for (const name of ['oauth-pkce'] as const)
             await page.evaluate(
               async ({ burst, settings }) => {
                 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
-                const button = (n: string) => document.querySelector<HTMLButtonElement>(`button[aria-label="${n}"]`)!;
+                // At rest on the last step Next is Start again, named otherwise: no Next step to press, as when it was disabled.
+                const button = (n: string) => document.querySelector<HTMLButtonElement>(`button[aria-label="${n}"]`);
                 const key = (k: string) =>
                   document.getElementById('content')!.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
                 // Back must not leave the player's document: count Backs not yet committed.
@@ -2530,8 +2665,8 @@ for (const name of ['oauth-pkce'] as const)
                     const s = settings[a.setting];
                     const input = s && document.querySelector<HTMLInputElement>(`input[name="${s.id}"][value="${s.options[a.option % s.options.length]}"]`);
                     input?.click();
-                  } else if (a.kind === 'next') button('Next step').click();
-                  else if (a.kind === 'prev') button('Previous step').click();
+                  } else if (a.kind === 'next') button('Next step')?.click();
+                  else if (a.kind === 'prev') button('Previous step')!.click();
                   else if (a.kind === 'back') {
                     if (nav.currentEntry.index - queued > 0) {
                       queued++;
@@ -2673,7 +2808,8 @@ async function heightAct(page: Page, frame: Frame, a: HeightAction) {
   if (a.kind === 'back') return page.evaluate(() => scrollTo(0, 0));
   await frame.evaluate((a) => {
     if (a.kind === 'transcript') document.querySelector<HTMLElement>('.transcript > summary')!.click();
-    else if (a.kind === 'next') document.querySelector<HTMLButtonElement>('button[aria-label="Next step"]')!.click();
+    // On the last step Next is Start again, named otherwise; pressing nothing there is as before.
+    else if (a.kind === 'next') document.querySelector<HTMLButtonElement>('button[aria-label="Next step"]')?.click();
     else if (a.kind === 'prev') document.querySelector<HTMLButtonElement>('button[aria-label="Previous step"]')!.click();
     else if (a.kind === 'case') {
       const inputs = document.querySelectorAll<HTMLInputElement>('.case input');

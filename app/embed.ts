@@ -135,6 +135,35 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const prev = button(t.previous, 'previous'),
     next = button(t.nextLabel, 'next', { text: t.next, className: 'button primary' });
   next.append(next.querySelector('svg')!); // the arrow follows the word
+  // At rest on the last step Next is Start again, and a scene with settings offers its next case
+  // after it: the first setting's next option, keeping the others, from the first step.
+  const firstSetting = Source.settings?.[0],
+    tryCase = el('button', undefined, 'button try');
+  tryCase.type = 'button';
+  tryCase.hidden = true;
+  const nextOption = () => {
+    const options = firstSetting!.options,
+      i = options.findIndex((o) => o.value === values[firstSetting!.id]);
+    return options[(i + 1) % options.length]!;
+  };
+  let face = 'next';
+  /** Next's face: Next, or at the end Start again with Try beside it (labelled `tryLabel`). */
+  function endControls(end: boolean, tryLabel = '') {
+    if (face !== (end ? 'end' : 'next')) {
+      face = end ? 'end' : 'next';
+      next.setAttribute('aria-label', end ? t.startAgainLabel : t.nextLabel);
+      next.querySelector('span')!.textContent = end ? t.startAgain : t.next;
+      next.querySelector('svg')!.replaceWith(icon(end ? 'restart' : 'next'));
+    }
+    tryCase.hidden = !end || !firstSetting;
+    // On a narrow row Try takes the step bar's place beside Next, and the bar, narrower, joins the
+    // tools' row, so the end needs no more rows than any other step (embed.css, .end).
+    stepper.classList.toggle('end', !tryCase.hidden);
+    if (tryCase.textContent !== tryLabel) tryCase.textContent = tryLabel;
+  }
+  /** At rest on the last step: the end of the explanation, not of a step still playing. */
+  const atEnd = () => !playing && selected === trace.steps.length - 1;
+  const tryLabel = () => (firstSetting ? t.tryCase(nextOption().label) : '');
   const tools = el('div', undefined, 'tools');
   tools.setAttribute('role', 'group');
   tools.setAttribute('aria-label', t.viewTools);
@@ -154,7 +183,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   // a stepper's timeline, never a seek bar.
   const bar = el('ol', undefined, 'step-bar');
   bar.setAttribute('aria-label', t.stepBar);
-  stepper.append(prev, next, bar, tools);
+  stepper.append(prev, next, ...(firstSetting ? [tryCase] : []), bar, tools);
   const notice = el('p', undefined, 'notice');
   notice.setAttribute('role', 'status');
   // Keep navigation outside the picture so controls cannot cover its lettering.
@@ -394,7 +423,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     fillLede(ledeKicker, ledeTitle, ledeLine, selected, words);
     if (changes) fillChanges(changes, step);
     prev.disabled = selected === 0;
-    next.disabled = selected === trace.steps.length - 1;
+    endControls(atEnd(), atEnd() ? tryLabel() : '');
     // Done, current, to do, in the rail and on the step bar. Only the current segment is a Tab
     // stop, full at rest and empty as its step starts.
     for (const [i, b] of [...steps.querySelectorAll('button')].entries()) {
@@ -475,6 +504,16 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       changes.style.minHeight = `${tallestChanges}px`;
       changes.hidden = !tallestChanges;
     }
+    // The stepper row keeps the room its taller face needs, Next or the case's Start again and Try,
+    // so reaching the last step never wraps the row onto another line and moves what follows.
+    stepper.style.minHeight = '';
+    let tallestRow = 0;
+    for (const end of [false, true]) {
+      endControls(end, end ? tryLabel() : '');
+      tallestRow = Math.max(tallestRow, stepper.getBoundingClientRect().height);
+    }
+    endControls(atEnd(), atEnd() ? tryLabel() : '');
+    stepper.style.minHeight = `${tallestRow}px`;
     // The kicker is one line at every step; measured once, it keeps the lede's total when a step has no line.
     const kickerHeight = kicker.getBoundingClientRect().height;
     ledeRuler.replaceChildren();
@@ -798,7 +837,16 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     await show(selected, push);
   }
   prev.onclick = () => void show(selected - 1);
-  next.onclick = () => void advance();
+  // On the last step Next rests the step while it plays, and at rest starts again from step 1.
+  next.onclick = () => {
+    if (trace && selected === trace.steps.length - 1) void (playing ? animate() : show(0));
+    else void advance();
+  };
+  tryCase.onclick = () => {
+    // The button goes once the new case shows its first step; Next keeps the focus.
+    next.focus();
+    void load({ ...values, [firstSetting!.id]: nextOption().value }, undefined, true);
+  };
   // Inside the step bar, arrows move a step and Home and End go to the ends; focus follows the
   // current segment (a roving Tab stop). The root's arrows skip buttons, so the bar has its own.
   bar.addEventListener('keydown', (e) => {

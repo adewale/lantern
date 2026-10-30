@@ -96,7 +96,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .changes,.changes-ruler{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin:0;max-width:68ch;font-size:.875rem;line-height:1.4}
 .changes[hidden]{display:none}
 .change{padding:1px 8px;border:1px solid var(--line);border-radius:8px;font-variant-numeric:tabular-nums}
-.stepper{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px var(--inset);border-top:1px solid var(--line)}
+.stepper{display:flex;flex-wrap:wrap;align-items:center;align-content:flex-start;gap:8px;padding:10px var(--inset);border-top:1px solid var(--line)}
 /* Icon buttons draw their glyph inside a 40 px (44 px narrow) hit box: pull Previous and the tools out so the
    chevron's point and the last glyph sit on the card's inset, the line the title, the words and the rows share. */
 .stepper>.button.icon:first-child{margin-inline-start:-14px}
@@ -117,7 +117,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 /* View tools stand apart from step navigation, behind a rule; on a narrow row, on their own row. */
 .tools{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:2px;margin-inline:auto -12px;padding-inline-start:10px;border-inline-start:1px solid var(--line)}
 .tools .share{margin-inline-start:12px}
-@media(max-width:640px){.tools{flex-basis:100%;padding:0;border:0}.stepper .button,.step-bar button{min-width:44px;min-height:44px}.step-bar button{min-width:0}}
+@media(max-width:640px){.tools{flex-basis:100%;padding:0;border:0}.end .tools{flex-basis:auto}.end .step-bar{flex-basis:0;min-width:64px}.button.try{font-size:.9375rem}.stepper .button,.step-bar button{min-width:44px;min-height:44px}.step-bar button{min-width:0}}
 .described{margin:2px 0 0;max-width:68ch;font-size:.9375rem;color:var(--muted)}
 .described summary{padding:6px 0;cursor:pointer}
 .described ul,.transcript li ul{margin:4px 0;padding-left:1.25rem;overflow-wrap:anywhere}

@@ -418,12 +418,13 @@ test(
           notice: document.querySelector('.notice')?.textContent,
         }));
       };
+      // Each language's scene has one step, so the reader opens at the end: Next is Start again (specs/player-guidance.md G2).
       const fr = await read('fr');
       assert.deepEqual(
         { ...fr, picture: undefined },
         {
-          next: 'Suivant',
-          nextLabel: 'Étape suivante',
+          next: 'Recommencer',
+          nextLabel: 'Recommencer à l’étape 1',
           previous: 'Étape précédente',
           tools: 'Outils d’affichage',
           disclosure: 'Ce que montre l’image',
@@ -447,8 +448,8 @@ test(
       assert.deepEqual(
         { ...en, summary: undefined, picture: undefined, notice: undefined },
         {
-          next: 'Next',
-          nextLabel: 'Next step',
+          next: 'Start again',
+          nextLabel: 'Start again from step 1',
           previous: 'Previous step',
           tools: 'View tools',
           disclosure: 'What the picture shows',
