@@ -1,4 +1,4 @@
-import { Scene, Group, Text, Rectangle, Line, Circle, Animation, AnimationGroup, Succession, FadeIn, view, linear } from '../../../src/index.ts';
+import { Scene, Group, Text, Rectangle, Line, Animation, AnimationGroup, Succession, FadeIn, view, linear } from '../../../src/index.ts';
 import type { SceneState, View, Mobject, Vec, MatchKey } from '../../../src/index.ts';
 import { stage, settingsOf } from '../../../explain/index.ts';
 import { lerpColor } from '../../../src/color.ts';
@@ -19,11 +19,12 @@ const fRowY = (row: number) => -2.78 - (row - 1) * PITCH_Y;
 /** The empty rectangle above the d block, periods 1 to 3: where the words go. */
 const NOTE_X = colX(3) - CELL_W / 2, NOTE_RIGHT = colX(12) + CELL_W / 2;
 
-const PAPER = '#fcfcfb', INK = '#1d1d1f';
-// One hue per block (validated as a set for colour-vision deficiency); each block is
-// also named on the strip under the table, so colour never carries identity alone.
-const BLOCK: Record<Block, string> = { s: '#2a78d6', d: '#eda100', p: '#1baf7a', f: '#e87ba4' };
-const SOFT = lerpColor(INK, PAPER, 0.32);
+const PAPER = '#f7f2e8', INK = '#0f0f0f', RULE = '#cccccc';
+// Atlas's block colours (atlas-48p.pages.dev/about/design). Paper text reads at 4.6:1 or
+// better on each. s, d and f are all dark, so each block is also named on the strip under
+// the table and colour never carries identity alone.
+const BLOCK: Record<Block, string> = { s: '#133e7c', d: '#9e1c2c', p: '#856912', f: '#0f0f0f' };
+const SOFT = '#666666';
 const tint = (block: Block, k: number) => lerpColor(PAPER, BLOCK[block], k);
 
 const ELEMENTS = {
@@ -118,8 +119,8 @@ export default class PeriodicGroupsExplainer extends Scene {
       };
     });
 
-    // The accent is the player's own teal, so the step number on the stage matches the rail beside Next.
-    const s = stage(this, { palette: { paper: PAPER, ink: INK, accent: '#176166', muted: SOFT }, headingSize: 0.5 });
+    // The accent is the player's own warm red, so the step number on the stage matches the rail beside Next.
+    const s = stage(this, { palette: { paper: PAPER, ink: INK, accent: '#9e1c2c', muted: SOFT }, headingSize: 0.5 });
 
     // ---- the table, drawn from this.state --------------------------------------
     const drawTable = (state: SceneState) => {
@@ -140,17 +141,19 @@ export default class PeriodicGroupsExplainer extends Scene {
         if (onlyFamily && !memberZ.has(p.z)) continue;
         const [x, y] = cellAt(p.z);
         const filled = p.z <= lit, inCore = filled && p.z <= coreZ, chosen = p.z === z, lead = filled && !inCore;
-        const fill = filled ? tint(p.block, inCore ? 0.16 : 0.45) : blocks ? tint(p.block, 0.18) : PAPER;
-        const stroke = chosen ? INK : lead ? BLOCK[p.block] : lerpColor(PAPER, INK, 0.22);
-        picture.add(new Rectangle({ width: CELL_W, height: CELL_H, cornerRadius: 0.06, fill, fillOpacity: 1,
+        const solid = lead || blocks;
+        const fill = solid ? BLOCK[p.block] : filled ? tint(p.block, 0.22) : PAPER;
+        const stroke = chosen ? INK : solid ? BLOCK[p.block] : RULE;
+        const letter = solid ? PAPER : INK, number = solid ? PAPER : SOFT;
+        picture.add(new Rectangle({ width: CELL_W, height: CELL_H, cornerRadius: 0, fill, fillOpacity: 1,
           stroke: compact && !chosen ? SOFT : stroke,
           strokeWidth: compact ? chosen ? 0.12 : 0.045 : chosen ? 0.05 : lead ? 0.03 : 0.015 }).moveTo([x, y]));
         if (!compact) picture.add(
-          new Text(p.symbol, { fontSize: 0.3, color: INK, weight: chosen ? 'bold' : 'normal' }).moveTo([x, y - 0.11]),
-          new Text(String(p.z), { fontSize: 0.22, color: SOFT }).moveTo([x - CELL_W / 2 + 0.05, y + 0.175], [-1, 0]));
+          new Text(p.symbol, { fontSize: 0.3, color: letter, weight: chosen ? 'bold' : 'normal' }).moveTo([x, y - 0.11]),
+          new Text(String(p.z), { fontSize: 0.22, font: 'mono', color: number }).moveTo([x - CELL_W / 2 + 0.05, y + 0.175], [-1, 0]));
         // What the ending's caveat points at.
         if (spotlight.has(p.z)) {
-          const outline = new Rectangle({ width: CELL_W + 0.1, height: CELL_H + 0.1, cornerRadius: 0.09, fill: 'none', stroke: INK, strokeWidth: 0.06, dashArray: '0.12 0.08' }).moveTo([x, y]);
+          const outline = new Rectangle({ width: CELL_W + 0.1, height: CELL_H + 0.1, cornerRadius: 0, fill: 'none', stroke: INK, strokeWidth: 0.06, dashArray: '0.12 0.08' }).moveTo([x, y]);
           outline.key = `periodic-limit:${p.symbol}`;
           picture.add(outline);
         }
@@ -158,12 +161,12 @@ export default class PeriodicGroupsExplainer extends Scene {
       // The chosen column, outlined over its cells.
       const top = rowY(members[0]!.period) + CELL_H / 2 + 0.05, bottom = rowY(members.at(-1)!.period) - CELL_H / 2 - 0.05;
       if (band)
-        picture.add(new Rectangle({ width: PITCH_X + 0.04, height: top - bottom, cornerRadius: 0.1, fill: 'none', stroke: INK, strokeWidth: compact ? 0.14 : 0.04 })
+        picture.add(new Rectangle({ width: PITCH_X + 0.04, height: top - bottom, cornerRadius: 0, fill: 'none', stroke: INK, strokeWidth: compact ? 0.14 : 0.04 })
           .moveTo([colX(group), (top + bottom) / 2]));
       // Where helium's count alone would put it: over beryllium.
       if (state.ghost && !compact)
         picture.add(
-          new Rectangle({ width: CELL_W, height: CELL_H, cornerRadius: 0.06, fill: 'none', stroke: INK, strokeWidth: 0.03, dashArray: '0.1 0.07' }).moveTo([colX(2), rowY(1)]),
+          new Rectangle({ width: CELL_W, height: CELL_H, cornerRadius: 0, fill: 'none', stroke: INK, strokeWidth: 0.03, dashArray: '0.1 0.07' }).moveTo([colX(2), rowY(1)]),
           new Text('He?', { fontSize: 0.26, color: SOFT }).moveTo([colX(2), rowY(1) - 0.04]),
         );
       // The blocks, measured under the columns: 2 + 10 + 6, and the f block's 14.
@@ -203,16 +206,17 @@ export default class PeriodicGroupsExplainer extends Scene {
         const pitch = 1.95;
         members.forEach((m, i) => {
           const x = (i - (members.length - 1) / 2) * pitch;
-          const cell = new Group(new Rectangle({ width: 1.65, height: 1.65, cornerRadius: 0.08,
-            fill: m.z === z ? tint(m.block, 0.3) : PAPER, stroke: INK, strokeWidth: m.z === z ? 0.065 : 0.03 }).moveTo([x, 1.1]),
-            new Text(m.symbol, { fontSize: 0.72, color: INK, weight: m.z === z ? 'bold' : 'normal' }).moveTo([x, 1.5]),
-            new Text(String(m.z), { fontSize: 0.74, color: INK, weight: m.z === z ? 'bold' : 'normal' }).moveTo([x, 0.65]));
+          const hot = m.z === z, ink = hot ? PAPER : INK;
+          const cell = new Group(new Rectangle({ width: 1.65, height: 1.65, cornerRadius: 0,
+            fill: hot ? BLOCK[m.block] : PAPER, stroke: hot ? BLOCK[m.block] : INK, strokeWidth: 0.03 }).moveTo([x, 1.1]),
+            new Text(m.symbol, { fontSize: 0.72, color: ink, weight: 'bold' }).moveTo([x, 1.5]),
+            new Text(String(m.z), { fontSize: 0.6, font: 'mono', color: hot ? PAPER : BLOCK[m.block] }).moveTo([x, 0.65]));
           cell.key = `periodic-member:${m.symbol}`;
           cell.children[1]!.key = `${cell.key}:symbol`;
           cell.children[2]!.key = `${cell.key}:atomic-number`;
           picture.add(cell);
           if (i > 0) {
-            const jump = new Text(`+${jumps[i - 1]}`, { fontSize: 0.68, color: INK }).moveTo([x - pitch / 2, -0.45]);
+            const jump = new Text(`+${jumps[i - 1]}`, { fontSize: 0.62, font: 'mono', color: INK }).moveTo([x - pitch / 2, -0.45]);
             jump.key = `periodic-jump:${members[i - 1]!.symbol}:${m.symbol}`;
             picture.add(jump);
           }
@@ -252,7 +256,7 @@ export default class PeriodicGroupsExplainer extends Scene {
           }
         } else {
           say(shorthand(filling, z), [-3.4, 1.7], { size: 0.68, edge: [0, 0] });
-          const equation = new Text(`${z} - ${core} = ${here.count}`, {fontSize: 0.68, color: INK}).moveTo([4, 1.7]);
+          const equation = new Text(`${z} - ${core} = ${here.count}`, {fontSize: 0.6, font: 'mono', color: INK}).moveTo([4, 1.7]);
           equation.key = 'periodic-core-equation'; picture.add(equation);
           const cells = POSITIONS.filter(p => p.z > core && p.z <= z);
           for (const [row, title] of ['Element', 'Count', 'Group'].entries())
@@ -261,8 +265,8 @@ export default class PeriodicGroupsExplainer extends Scene {
             const x = cells.length === 1 ? 1 : -3.8 + i * 1.35;
             const cell = new Group(
               new Text(p.symbol, {fontSize: 0.68, color: INK, weight: p.z === z ? 'bold' : 'normal'}).moveTo([x, 0.6]),
-              new Text(Number(state.badges) > i ? String(i + 1) : '–', {fontSize: 0.68, color: INK}).moveTo([x, -0.32]),
-              new Text(String(p.group), {fontSize: 0.68, color: INK}).moveTo([x, -1.24]));
+              new Text(Number(state.badges) > i ? String(i + 1) : '–', {fontSize: 0.62, font: 'mono', color: BLOCK[p.block]}).moveTo([x, -0.32]),
+              new Text(String(p.group), {fontSize: 0.62, font: 'mono', color: INK, weight: 'bold'}).moveTo([x, -1.24]));
             cell.key = `periodic-count:${p.symbol}`;
             cell.children[0]!.key = `${cell.key}:symbol`;
             cell.children[1]!.key = `${cell.key}:count`;
@@ -306,7 +310,7 @@ export default class PeriodicGroupsExplainer extends Scene {
             x -= width(text) + gap;
           }
           const at: Vec = [edge + 0.34, y];
-          picture.add(new Circle({ radius: 0.18, fill: INK, fillOpacity: 1, stroke: 'none' }).moveTo(at));
+          picture.add(new Rectangle({ width: 0.36, height: 0.36, cornerRadius: 0, fill: BLOCK[POSITIONS[m.z - 1]!.block], fillOpacity: 1, stroke: 'none' }).moveTo(at));
           say(String(m.count), at, { size: 0.22, color: PAPER, edge: [0, 0], bold: true });
         }
       }

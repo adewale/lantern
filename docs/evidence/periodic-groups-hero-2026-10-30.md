@@ -63,4 +63,23 @@ Before: `b944907`, 390×844, reduced motion, fresh direct entry. After: the repa
 
 Regenerate with `rayner build scenes/explainers/periodic-groups --out out/periodic.html`, serve it with the generated response headers, and open `?element=na&step=column` or `?element=cl&step=count` at 390×844. `rayner review` saves every case and step at both standard widths.
 
+## Atlas design language
+
+The player, the gallery and this scene now follow [Atlas's design language](https://atlas-48p.pages.dev/about/design): paper `#f7f2e8` and black `#0f0f0f`, deep blue, warm red and mustard, square corners, and uppercase tracked labels. The tokens live in `app/embed.css`; the gallery reads the same tokens.
+
+- **Scene.** Lit cells and the blocks step use Atlas's block colours as solid fills with paper lettering: s deep blue, d warm red, p mustard, f black. Paper text on each reaches 4.67:1 (mustard) or better, so the 12.1 px atomic numbers keep 4.5:1. Neon's core, in the count step's context table, stays a pale tint. Atomic numbers, jumps, counts and the core equation use the monospace face. Family badges are block-coloured squares. Boundary outlines stay black because a warm red outline would vanish against the d block.
+- **Player.** The title and the case legend are uppercase and tracked, over a 4 px black rule. The case picker is a row of boxes whose borders collapse, so a wrapped row on a phone stays a clean grid. Next is black, the selected case deep blue, and the rail and stage step number warm red. Atlas has no dark theme. The dark tokens put the same hues on a warm black `#141210`, each at 4.5:1 or better.
+- **Height.** The new header was 7 px taller, which pushed the caption toward the fold. The gap under the header rule dropped from 16 px to 8 px and the column's chrome allowance from 321 px to 320 px. Measured at the count step, the caption's last line ends 14 px above the fold at 1280×800, 18 px below at 1366×768 and 66 px below at 1280×720, against 13, 19 and 67 before.
+- **Other explainers.** The chrome changes for all 38 pages; their stage palettes do not. mr-cache's caption ends 1 px higher than before.
+
+`rayner check` and `rayner review` pass all five cases. `npm test` passes (937 pass, 88 skipped). `npm run test:embeds` passes (90 pass, 4 skipped) after the theme test's expected backgrounds moved to the new paper and warm black. `npm run check`, `npm run demos:build` (38 explainers, 196 cases) and `npm run check:budgets` pass.
+
+| | Before | After |
+| --- | --- | --- |
+| Blocks step, 1280×800 | ![Pale tinted blocks, rounded cells, teal rail](periodic-groups/atlas-blocks-before.png) | ![Solid deep blue, warm red, mustard and black blocks with square cells](periodic-groups/atlas-blocks-after.png) |
+| Chlorine count, 1280×800 | ![Count rows in one colour](periodic-groups/atlas-chlorine-count-before.png) | ![Counts in each element's block colour, groups in bold monospace](periodic-groups/atlas-chlorine-count-after.png) |
+| Iron family, dark | ![Dark blue-grey chrome](periodic-groups/atlas-dark-iron-family-before.png) | ![Warm black chrome with paper-coloured Next](periodic-groups/atlas-dark-iron-family-after.png) |
+| Sodium opening, 390 px | ![Pill-shaped case picker](periodic-groups/atlas-phone-sodium-before.png) | ![Boxed case picker wrapping into a grid](periodic-groups/atlas-phone-sodium-after.png) |
+| mr-cache, 1280×800 | ![mr-cache in the old chrome](periodic-groups/atlas-mr-cache-before.png) | ![mr-cache in the Atlas chrome, its own stage palette unchanged](periodic-groups/atlas-mr-cache-after.png) |
+
 Nothing here was deployed. A future curated `site:export --only` selection must include the new required `periodic-groups` entry. The README's live preview should change only when that page is published.

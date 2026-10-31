@@ -249,9 +249,9 @@ test('?theme=dark, light and auto (following the reader\'s colour scheme) set th
         background: await page.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor),
       };
     };
-    assert.deepEqual(await background('dark'), { theme: 'dark', background: 'rgb(15, 22, 29)' });
-    assert.deepEqual(await background('light'), { theme: 'light', background: 'rgb(246, 247, 249)' });
-    assert.deepEqual(await background('auto'), { theme: 'auto', background: 'rgb(15, 22, 29)' });
+    assert.deepEqual(await background('dark'), { theme: 'dark', background: 'rgb(20, 18, 16)' });
+    assert.deepEqual(await background('light'), { theme: 'light', background: 'rgb(247, 242, 232)' });
+    assert.deepEqual(await background('auto'), { theme: 'auto', background: 'rgb(20, 18, 16)' });
   } finally {
     await context.close();
   }

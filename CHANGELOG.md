@@ -5,6 +5,7 @@
 - Open the gallery with a periodic-table explainer: follow sodium, chlorine, iron, copper or helium from atomic number to group, with configurations checked against NIST's tabulated ground states for elements 1–108.
 - Show one numbered mark per step beside Next, so readers see where they are and how many steps remain without scrolling to the step list.
 - Size standalone players for short windows while preserving readable count labels.
+- Restyle the player and gallery in the Atlas design language: paper and black, square corners, uppercase tracked labels, a black Next button and warm red step marks. The dark theme keeps those hues on a warm black. The periodic table uses Atlas's block colours as solid cells.
 - Add seven-step explanations of Python dictionary deletion markers, insert-only Bloom filters, Git merges, Monty Hall host rules, the birthday paradox, and melody with rhythm. Each uses a separately tested model and compares an expected result with a case that challenges it.
 - Add optional, user-triggered score audio with Play A/B, Pulse, Stop and a synchronized piano-roll playhead. Notes are synthesized locally; ordinary pages omit the audio module.
 

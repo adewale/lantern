@@ -1,36 +1,39 @@
-:root{color-scheme:light dark;--bg:#f6f7f9;--surface:#fff;--fg:#14202b;--muted:#536170;--line:#d9dfe6;--line-strong:#b7c2cd;--accent:#176166;--accent-fg:#fff;--ease-out:cubic-bezier(.23,1,.32,1);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-size-adjust:100%}
-:root[data-theme=dark]{--bg:#0f161d;--surface:#17212b;--fg:#e9eff5;--muted:#9fb0c0;--line:#2a3845;--line-strong:#41546a;--accent:#86d3c8;--accent-fg:#0f161d;color-scheme:dark}
+/* Atlas's design language (atlas-48p.pages.dev/about/design): paper and black, deep blue, warm red
+   and mustard, square corners, uppercase tracked labels. Atlas has no dark theme; the dark tokens
+   keep its hues on a warm black, each at 4.5:1 or better. */
+:root{color-scheme:light dark;--bg:#f7f2e8;--surface:#f7f2e8;--dim:#ece7db;--fg:#0f0f0f;--muted:#666;--line:#ccc;--line-strong:#0f0f0f;--accent:#9e1c2c;--accent-fg:#f7f2e8;--primary:#0f0f0f;--primary-fg:#f7f2e8;--select:#133e7c;--select-fg:#f7f2e8;--mono:"SF Mono","Cascadia Code","JetBrains Mono",ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-size-adjust:100%}
+:root[data-theme=dark]{--bg:#141210;--surface:#1e1b18;--dim:#2a2622;--fg:#f7f2e8;--muted:#b5ad9e;--line:#3a352f;--line-strong:#f7f2e8;--accent:#ea8591;--accent-fg:#141210;--primary:#f7f2e8;--primary-fg:#141210;--select:#7fa6e0;--select-fg:#141210;color-scheme:dark}
 :root[data-theme=light]{color-scheme:light}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f161d;--surface:#17212b;--fg:#e9eff5;--muted:#9fb0c0;--line:#2a3845;--line-strong:#41546a;--accent:#86d3c8;--accent-fg:#0f161d}}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#141210;--surface:#1e1b18;--dim:#2a2622;--fg:#f7f2e8;--muted:#b5ad9e;--line:#3a352f;--line-strong:#f7f2e8;--accent:#ea8591;--accent-fg:#141210;--primary:#f7f2e8;--primary-fg:#141210;--select:#7fa6e0;--select-fg:#141210}}
 *{box-sizing:border-box}
 ::selection{background:color-mix(in srgb,var(--accent) 30%,transparent)}
 body{margin:0;background:var(--bg);color:var(--fg);accent-color:var(--accent)}
 #content{max-width:1080px;margin:0 auto;padding:24px 16px 48px}
 /* In its own tab, keep the picture and the start of its caption on one laptop screen: the column
-   narrows with the window's height (the 321px is the chrome above the stage and a five-line
+   narrows with the window's height (the 320px is the chrome above the stage and a five-line
    caption). The 912px content floor includes 32px of padding: its 880px stage draws
    the periodic table's smallest 0.22-unit label at 12.1px. */
-:root[data-window=top] #content{max-width:clamp(912px,calc((100svh - 321px)*16/9 + 32px),1080px)}
+:root[data-window=top] #content{max-width:clamp(912px,calc((100svh - 320px)*16/9 + 32px),1080px)}
 #content:focus{outline:none}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 a{color:var(--accent);text-underline-offset:.2em}
-h1{font-size:1.5rem;line-height:1.25;font-weight:650;letter-spacing:-.015em;margin:0;text-wrap:balance}
+h1{font-size:.9375rem;line-height:1.4;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin:0;text-wrap:balance}
 h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 
 /* Header: the title, then the cases it can show. */
-.head{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 24px;margin-bottom:16px}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 24px;margin-bottom:8px;padding-bottom:8px;border-bottom:4px solid var(--fg)}
 .head h1{flex:1 1 20rem}
 .case{border:0;margin:0;padding:0;min-width:0;display:flex;flex-direction:column;gap:6px}
-.case legend{float:left;font-size:.875rem;color:var(--muted);padding:0}
+.case legend{float:left;font-size:.75rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding:0}
 .case legend+*{clear:left}
-.segments{display:inline-flex;flex-wrap:wrap;gap:2px;padding:3px;border-radius:12px;background:color-mix(in srgb,var(--line) 55%,transparent)}
-.segments label{position:relative;display:flex;align-items:center;min-height:36px;padding:0 12px;border-radius:9px;font-size:.9375rem;color:var(--muted);cursor:pointer;transition:background-color 150ms ease,color 150ms ease}
+.segments{display:inline-flex;flex-wrap:wrap;padding:1.5px 0 0 1.5px}
+.segments label{position:relative;display:flex;align-items:center;min-height:40px;padding:0 12px;margin:-1.5px 0 0 -1.5px;border:1.5px solid var(--fg);font-size:.8125rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--fg);cursor:pointer;transition:background-color 150ms ease,color 150ms ease}
 .segments input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
-.segments label:has(input:checked){background:var(--surface);color:var(--fg);font-weight:600;box-shadow:0 1px 2px rgb(0 0 0/.08),0 0 0 1px rgb(0 0 0/.04)}
-.segments label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:1px}
+.segments label:has(input:checked){background:var(--select);color:var(--select-fg)}
+.segments label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:1px;z-index:1}
 
 /* Player: discoverable step navigation, picture, then its words and a second Next. */
-.stage{position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);touch-action:pan-y}
+.stage{position:relative;aspect-ratio:16/9;overflow:hidden;background:var(--surface);box-shadow:0 0 0 1px var(--line);touch-action:pan-y}
 .stage svg{width:100%;height:100%;display:block}
 .stage svg.glide{transition:transform 220ms var(--ease-out)}
 .stage.zoomed{touch-action:none;cursor:grab}
@@ -49,10 +52,10 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .overview{flex:none;display:block;width:44px;height:44px;padding:6px;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .overview[hidden]{display:none}
 .overview:disabled{cursor:default}
-.overview .map{position:relative;display:block;width:32px;height:18px;border-radius:3px;background:color-mix(in srgb,var(--surface) 82%,transparent);box-shadow:0 0 0 1px var(--line-strong),0 1px 3px rgb(0 0 0/.15);overflow:hidden}
+.overview .map{position:relative;display:block;width:32px;height:18px;background:color-mix(in srgb,var(--surface) 82%,transparent);box-shadow:0 0 0 1px var(--line-strong),0 1px 3px rgb(0 0 0/.15);overflow:hidden}
 .overview .map span{position:absolute;display:block}
 .overview .part{background:color-mix(in srgb,var(--accent) 45%,transparent)}
-.overview .view{box-shadow:inset 0 0 0 1.5px var(--fg);border-radius:1px;transition:left 220ms var(--ease-out),top 220ms var(--ease-out)}
+.overview .view{box-shadow:inset 0 0 0 1.5px var(--fg);transition:left 220ms var(--ease-out),top 220ms var(--ease-out)}
 @keyframes leave{to{opacity:0}}
 .caption,.ruler{margin:16px 0 0;max-width:52ch;min-height:3.2em;font-size:1.125rem;line-height:1.6;text-wrap:pretty}
 .ruler,.lede-ruler{position:absolute;top:0;left:0;margin:0;min-height:0;visibility:hidden;pointer-events:none}
@@ -69,9 +72,9 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 /* The rail: one numbered mark per step, joined by a line that fills as the reader moves on. */
 .rail{display:flex;flex-wrap:wrap;align-items:center;row-gap:6px;list-style:none;margin:0 0 0 8px;padding:0}
 .rail li{display:flex;align-items:center}
-.rail li+li::before{content:"";width:12px;height:2px;background:var(--line-strong)}
+.rail li+li::before{content:"";width:12px;height:1px;background:var(--line-strong)}
 .rail li[data-at=past]+li::before,.rail li[data-at=now]::before{background:var(--accent)}
-.rail button{font:inherit;display:grid;place-items:center;width:28px;height:28px;padding:0;border-radius:50%;border:1.5px solid var(--line-strong);background:var(--surface);color:var(--muted);font-size:.75rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1;cursor:pointer;transition:background-color 150ms ease,border-color 150ms ease,color 150ms ease}
+.rail button{font:inherit;display:grid;place-items:center;width:28px;height:28px;padding:0;border:1.5px solid var(--line-strong);background:var(--surface);color:var(--muted);font-family:var(--mono);font-size:.75rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1;cursor:pointer;transition:background-color 150ms ease,border-color 150ms ease,color 150ms ease}
 .rail [data-at=past] button{border-color:var(--accent);color:var(--accent)}
 .rail [data-at=now] button{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 .controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:16px}
@@ -83,19 +86,19 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .notice:empty{display:none}
 
 /* Buttons: one shape; Next is the one primary action. */
-.button{font:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:40px;min-height:40px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;transition:transform 160ms var(--ease-out),background-color 150ms ease,border-color 150ms ease,color 150ms ease}
+.button{font:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:40px;min-height:40px;padding:0 10px;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;transition:transform 160ms var(--ease-out),background-color 150ms ease,border-color 150ms ease,color 150ms ease}
 .button:active:not(:disabled){transform:scale(.97)}
 .button:disabled{opacity:.4;cursor:default}
 .button[hidden]{display:none}
-.button.primary{padding:0 14px 0 18px;background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600}
+.button.primary{padding:0 14px 0 18px;background:var(--primary);border-color:var(--primary);color:var(--primary-fg);font-size:.8125rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase}
 .button.icon{padding:0;border-color:transparent;background:transparent;color:var(--muted)}
 .button svg{flex:none}
 @media(hover:hover) and (pointer:fine){
   .button:hover:not(:disabled){border-color:var(--line-strong)}
-  .button.icon:hover:not(:disabled){background:var(--surface);color:var(--fg);border-color:var(--line)}
-  .button.primary:hover:not(:disabled){background:color-mix(in srgb,var(--accent) 88%,var(--fg))}
-  .segments label:hover{color:var(--fg)}
-  .steps button:hover{color:var(--fg);background:var(--surface)}
+  .button.icon:hover:not(:disabled){background:var(--dim);color:var(--fg);border-color:var(--line)}
+  .button.primary:hover:not(:disabled){background:color-mix(in srgb,var(--primary) 82%,var(--bg))}
+  .segments label:not(:has(input:checked)):hover{background:var(--dim)}
+  .steps button:hover{color:var(--fg);background:var(--dim)}
   .rail [data-at=next] button:hover{border-color:var(--fg);color:var(--fg)}
 }
 @media(pointer:coarse){.button{min-width:44px;min-height:44px}.segments label{min-height:40px}}
@@ -103,8 +106,8 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 /* Steps: where the reader is, and where else they can go. */
 .steps{list-style:none;margin:24px 0 0;padding:16px 0 0;border-top:1px solid var(--line);display:grid;gap:2px;counter-reset:step}
 .steps li{counter-increment:step}
-.steps button{font:inherit;position:relative;display:grid;align-items:center;width:100%;min-height:44px;padding:8px 12px 8px 40px;border:0;border-radius:8px;background:none;color:var(--muted);text-align:left;text-wrap:pretty;cursor:pointer;transition:background-color 150ms ease,color 150ms ease}
-.steps button::before{content:counter(step);content:counter(step)/"";position:absolute;left:10px;top:50%;width:22px;height:22px;margin-top:-11px;border-radius:50%;border:1.5px solid currentColor;display:grid;place-items:center;font-size:.75rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1;opacity:.75}
+.steps button{font:inherit;position:relative;display:grid;align-items:center;width:100%;min-height:44px;padding:8px 12px 8px 40px;border:0;background:none;color:var(--muted);text-align:left;text-wrap:pretty;cursor:pointer;transition:background-color 150ms ease,color 150ms ease}
+.steps button::before{content:counter(step);content:counter(step)/"";position:absolute;left:10px;top:50%;width:22px;height:22px;margin-top:-11px;border:1.5px solid currentColor;display:grid;place-items:center;font-family:var(--mono);font-size:.75rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1;opacity:.75}
 .steps [aria-current=step]{color:var(--fg);font-weight:600}
 .steps button>span{grid-area:1/1}.steps button>.bold{font-weight:600;visibility:hidden}
 .steps [aria-current=step]::before{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);opacity:1}
@@ -125,7 +128,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 
 /* Enlarge: the player alone, sized to the screen. */
 .player:fullscreen{display:flex;flex-direction:column;justify-content:safe center;padding:16px;background:var(--bg);overflow:auto}
-.player:fullscreen .frame{width:min(100%,calc((100dvh - 180px)*16/9));margin:0 auto}.player:fullscreen .stage{border-radius:0}
+.player:fullscreen .frame{width:min(100%,calc((100dvh - 180px)*16/9));margin:0 auto}
 .player:fullscreen .step-transport,.player:fullscreen .lede,.player:fullscreen .caption,.player:fullscreen .described,.player:fullscreen .controls,.player:fullscreen .notice{width:min(100%,calc((100dvh - 180px)*16/9));margin-left:auto;margin-right:auto}
 
 @media(max-width:480px){.caption,.ruler{font-size:1.0625rem}.controls{gap:6px}.rail{margin-left:2px}.rail li+li::before{width:6px}.rail button{width:22px;height:22px;font-size:.6875rem}}
