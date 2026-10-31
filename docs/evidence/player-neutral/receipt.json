@@ -1,0 +1,237 @@
+{
+  "generator": "docs/evidence/player-neutral/capture.ts",
+  "browser": "154.0.8037.57",
+  "platform": "linux",
+  "node": "v24.19.0",
+  "viewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "reducedMotion": "reduce",
+  "fixture": "scenes/explainers/mr-cache/scene.ts",
+  "forcedColourActions": [
+    "open request=hit&step=diff",
+    "select request=miss",
+    "focus stage",
+    "capture after loading and transitions settle"
+  ],
+  "revisions": {
+    "before": {
+      "sha": "11ff5694757646185f238e22b4f7cb050c6a337b",
+      "fixtureSha256": "300b04a9914dc48c8395118c90dd819eb6c22c4e960a1e8de78b0c1a7e03dd39",
+      "cueFixtureSha256": "3d28371a89d515b94175edb679692c2a0fc1da54d39ea10c34affcc4d4c29af3"
+    },
+    "after": {
+      "sha": "4fe3186054430fead2de5d18153910ce9525a42b",
+      "fixtureSha256": "300b04a9914dc48c8395118c90dd819eb6c22c4e960a1e8de78b0c1a7e03dd39",
+      "cueFixtureSha256": "3d28371a89d515b94175edb679692c2a0fc1da54d39ea10c34affcc4d4c29af3"
+    }
+  },
+  "captures": [
+    {
+      "file": "before-normal-light.png",
+      "sha256": "b99b398d17eb2bdc15a8e1b5def9c2fa535e0056a8e6d8c3aad1ec4bc67b91bc",
+      "revision": "11ff5694757646185f238e22b4f7cb050c6a337b",
+      "theme": "light",
+      "forcedColors": "none",
+      "request": "hit"
+    },
+    {
+      "file": "before-forced-light.png",
+      "sha256": "bacd4c8d740ea74176f83d6b93ab1f06c6e13dce4cf2a2c083a200a37b515473",
+      "revision": "11ff5694757646185f238e22b4f7cb050c6a337b",
+      "theme": "light",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "before-forced-light-case.png",
+      "sha256": "ba5686c6f4776abdeb6f312a0a9dac3981459628ef384384157cbe0ddf90679c",
+      "revision": "11ff5694757646185f238e22b4f7cb050c6a337b",
+      "theme": "light",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "before-forced-light-bar.png",
+      "sha256": "5279415fc81a77da02db9b82d6cf8e8b03b0fa68544d7fcf7606d15c225b7461",
+      "revision": "11ff5694757646185f238e22b4f7cb050c6a337b",
+      "theme": "light",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "before-forced-light-steps.png",
+      "sha256": "42306330b1622220c171e43b1bc3b91e3085c611d1898245e6bd060ac3c77125",
+      "revision": "11ff5694757646185f238e22b4f7cb050c6a337b",
+      "theme": "light",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "before-cued-light.png",
+      "sha256": "e92ddd35f57bd40b613f1a6fc4ee1015978a774da3d8f18f9e49eeb3c0401bec",
+      "revision": "11ff5694757646185f238e22b4f7cb050c6a337b",
+      "theme": "light",
+      "forcedColors": "none",
+      "request": "mode=a"
+    },
+    {
+      "file": "before-normal-dark.png",
+      "sha256": "dc40142207a137119c3a6050352e075faae4c0b340ba1b3a44d8d0e4629ca26e",
+      "revision": "11ff5694757646185f238e22b4f7cb050c6a337b",
+      "theme": "dark",
+      "forcedColors": "none",
+      "request": "hit"
+    },
+    {
+      "file": "before-forced-dark.png",
+      "sha256": "c71c02bded59c5a708665b0384617f24fd7c67f2327283d5ef4c0f42da17ef10",
+      "revision": "11ff5694757646185f238e22b4f7cb050c6a337b",
+      "theme": "dark",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "before-forced-dark-case.png",
+      "sha256": "c501f3f9e0d88c01ca374564dc8f1b8b91a8e64b322b89a51b0e24fc102a43f6",
+      "revision": "11ff5694757646185f238e22b4f7cb050c6a337b",
+      "theme": "dark",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "before-forced-dark-bar.png",
+      "sha256": "384ca5bca437006c3f700a48fc546c61084e85cc875007bfbc8cf11580cc1441",
+      "revision": "11ff5694757646185f238e22b4f7cb050c6a337b",
+      "theme": "dark",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "before-forced-dark-steps.png",
+      "sha256": "6d5de16474e0687e2f99a6c9e8a81fbc39a496a9221ed281934ed7a90da99395",
+      "revision": "11ff5694757646185f238e22b4f7cb050c6a337b",
+      "theme": "dark",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "before-cued-dark.png",
+      "sha256": "18ba8463d3b218a8fba401d4d1be39bd1dc674a79f60115aa6602467eab8ada4",
+      "revision": "11ff5694757646185f238e22b4f7cb050c6a337b",
+      "theme": "dark",
+      "forcedColors": "none",
+      "request": "mode=a"
+    },
+    {
+      "file": "after-normal-light.png",
+      "sha256": "48be532d329670b84e54de31ea467704e97480f564c79c57d66818a43a725c79",
+      "revision": "4fe3186054430fead2de5d18153910ce9525a42b",
+      "theme": "light",
+      "forcedColors": "none",
+      "request": "hit"
+    },
+    {
+      "file": "after-forced-light.png",
+      "sha256": "e36577254cdd0da09916764ae33f948d096b04ba81bf5a97486fe8f9189e9f69",
+      "revision": "4fe3186054430fead2de5d18153910ce9525a42b",
+      "theme": "light",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "after-forced-light-case.png",
+      "sha256": "22e7d576c883686a772d89b96015e472e6e7b453a89d4f1e89b35c4a696d0228",
+      "revision": "4fe3186054430fead2de5d18153910ce9525a42b",
+      "theme": "light",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "after-forced-light-bar.png",
+      "sha256": "55b6b9b6a5c8f1d0cb868b52c03fd7334c62c24ca15a7a7cc35f43dba1c84a53",
+      "revision": "4fe3186054430fead2de5d18153910ce9525a42b",
+      "theme": "light",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "after-forced-light-steps.png",
+      "sha256": "086f55feff41aafc088dd11e8949ea09eff0c30325f0edb8f352e033ad998daf",
+      "revision": "4fe3186054430fead2de5d18153910ce9525a42b",
+      "theme": "light",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "after-cued-light.png",
+      "sha256": "3faf7dd665713bd34a1cee773c2cc574541447f5d50112c1690ca00fca815e14",
+      "revision": "4fe3186054430fead2de5d18153910ce9525a42b",
+      "theme": "light",
+      "forcedColors": "none",
+      "request": "mode=a"
+    },
+    {
+      "file": "after-normal-dark.png",
+      "sha256": "dad0ebd7f8116349efdc5184e20f5bc5480c7032edaacdc3a73cafab546b7d88",
+      "revision": "4fe3186054430fead2de5d18153910ce9525a42b",
+      "theme": "dark",
+      "forcedColors": "none",
+      "request": "hit"
+    },
+    {
+      "file": "after-forced-dark.png",
+      "sha256": "d8689d5cc553fe2645d12e9a34500a3917fccbabb236600ea5205f61d4c63059",
+      "revision": "4fe3186054430fead2de5d18153910ce9525a42b",
+      "theme": "dark",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "after-forced-dark-case.png",
+      "sha256": "54e58de32271d284fe036a44aed453ea53eb8c0e2c7b5734900c736013e9dbd6",
+      "revision": "4fe3186054430fead2de5d18153910ce9525a42b",
+      "theme": "dark",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "after-forced-dark-bar.png",
+      "sha256": "900afb38237684bbd91605840c415049576875fe20a83fb32bbe49ab20c7b3a9",
+      "revision": "4fe3186054430fead2de5d18153910ce9525a42b",
+      "theme": "dark",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "after-forced-dark-steps.png",
+      "sha256": "7ba2d84a0194d87a6c5e0ff9cc597bef0d6fed38ab5494d9f056ef8dd9176f59",
+      "revision": "4fe3186054430fead2de5d18153910ce9525a42b",
+      "theme": "dark",
+      "forcedColors": "active",
+      "request": "miss"
+    },
+    {
+      "file": "after-cued-dark.png",
+      "sha256": "02bbb83a3870f7da740de8323501b48c0f91e4cc286249dd1220da1c4cff7368",
+      "revision": "4fe3186054430fead2de5d18153910ce9525a42b",
+      "theme": "dark",
+      "forcedColors": "none",
+      "request": "mode=a"
+    }
+  ],
+  "normalContactSheet": {
+    "file": "normal-comparison.png",
+    "sha256": "1c2d7c9d7e51ffe52c91c8d9df5c5989290890423b8345dce3963d20f31daae1"
+  },
+  "forcedContactSheet": {
+    "file": "forced-comparison.png",
+    "sha256": "10dbf33954d5eec163a71dd97ef3c68829dd75adac6e09942323404079b06626"
+  },
+  "cuedContactSheet": {
+    "file": "cued-comparison.png",
+    "sha256": "229cf35d191d8e2cd254f283373c312ef55baeda4f44237d25538a8965da7a98"
+  },
+  "limitation": "Chromium on Linux at one desktop viewport. Forced colours are emulated; these images do not establish native Windows high-contrast or every phone layout."
+}
