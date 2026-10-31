@@ -14,7 +14,7 @@ The goal is a warranted one-tier improvement for every lesson. The three S-tier 
 
 ## Result of the visual reassessment
 
-All 38 default teaching paths were inspected at phone and desktop widths. The table records an editorial reassessment against the original review, not a measured improvement in learning. S+ extends the previous ceiling: the lesson now asks for a prediction, exposes the mechanism and keeps its countercase. The other tiers retain their original meaning: S is a strong standalone lesson, A is a clear explanation with useful evidence, and B is a useful focused introduction with room for a fuller demonstration.
+All 38 default teaching paths were inspected at phone and desktop widths. The table records an editorial reassessment against the original review, not a measured improvement in learning. S+ extends the previous ceiling: the lesson now asks for a prediction, exposes the mechanism and keeps its countercase. The other tiers retain their original meaning: S is a showcase lesson, A is a strong explanation, and B is useful but still has room for a fuller demonstration.
 
 The changes are specific to each subject. Thirty lessons now lead with short native drawings driven by their existing models. Original source walkthroughs and technical inventories remain in **Details and sources**. Next follows the explanation; direct links to reference steps still work. The strongest lessons keep their existing narrative and gain prediction, mapping or visual derivation.
 
@@ -59,22 +59,43 @@ The changes are specific to each subject. Thirty lessons now lead with short nat
 | Stage and card direction (`layout-direction`) | C → B | Start with the author’s placement task; demonstrate RTL fields, an LTR override and stable numeric order before the live cards. |
 | Periodic-table groups (`periodic-groups`) | B → A | Start with atomic number minus core and actual filling dots; retain the complete compact family and count comparisons. |
 
+## Phone evidence
+
+[All 38 revised openings](lesson-openings/overview.webp) show the range of teaching pictures. These phone comparisons use identical settings at 390×844. The named steps differ because the teaching paths were edited. The baseline is `37bbe4d`; the after views include the Atlas update.
+
+| Comparison | Settings | Phone capture |
+| --- | --- | --- |
+| Token balance → simultaneous requests | rate 2/s | [Before / after](lesson-openings/token-bucket.webp) |
+| Cache request → database-read outcome | cache hit | [Before / after](lesson-openings/mr-cache.webp) |
+| Certificate year axis → renewal timing | 45-day lifetime, fixed 30-day rule | [Before / after](lesson-openings/cert-renewal.webp) |
+| Calendar schema → occurrence identity | move the second meeting, organiser copy | [Before / after](lesson-openings/ical-recurrence.webp) |
+
 ## Reader behaviour and regression proof
 
 Authors can declare the subjects that must appear together with `s.reading(...)`. The opening planner measures their painted geometry and labels, adds a complete comparison when it is readable, and retains closer detail views. It rejects a declared subject with no painted content. It also handles wordless drawings. It does not lower the 12-pixel close-up target.
 
 `meta.detail: true` moves a step into Details and sources. The browser keeps direct URLs, case changes, keyboard navigation and a return to the explanation. A collection made entirely of detail steps retains a usable sequential path. When Next skips references, it goes directly to the next main picture; an ordinary-motion transition must not flash an unseen reference panel.
 
-The new tests check complete comparison openings, invisible declared subjects, per-view legibility reporting, generated step navigation, actual drawn values, common bar scales and true zeroes. Independent source/model fidelity owners remain. Music retains every pitch, start and duration. Monty Hall retains its host-rule odds and now draws the 98 opened doors. The ext4 default must compare different reserve percentages.
+The new tests check complete comparison openings, invisible declared subjects, per-view legibility reporting, generated step navigation, actual drawn values, common bar scales and true zeroes. The existing browser state machine now models main and reference navigation independently; source-step motion and layout assertions remain. Early Previous and ArrowLeft actions have a fixed regression example as well as generated coverage. Independent source/model fidelity owners remain. Music retains every pitch, start and duration. Monty Hall retains its host-rule odds and now draws the 98 opened doors. The ext4 default must compare different reserve percentages.
 
-An isolated-copy mutation experiment first passed its positive controls, then deliberately restored opening-only legibility accounting and reference-step transition flashes. Both regression checks failed. Production files were not mutated by that experiment.
+An isolated-copy mutation experiment first passed its positive controls, then deliberately restored opening-only legibility accounting and reference-step transition flashes. Both regression checks failed. Production files were not mutated by that experiment. A separate isolated-copy control replaced reference-aware navigation with a linear walk; both the generated navigation check and the served-reader check rejected it.
 
 ## Validation record
 
-Validation is being regenerated against PR #60’s Atlas update at `83d3b14`; earlier screenshots and receipts are not used to certify that combined version. Final counts and fingerprints will be recorded here after the checks finish.
+Validation includes PR #60’s Atlas update at `83d3b14` and the final early-navigation guard. The [collection record](lesson-review-2026-10-31.json) lists each page’s source, engine and artifact hashes, together with the reviewer hash. The final case results were checked against the independent built inventory: missing, duplicate, stale or failed cases reject the record.
+
+- All 38 full scene checks pass. The retained source steps remain in these checks.
+- All 196 cases pass served-paint review at 390×844 and 1180×980: 3,316 step/width observations, including reference steps and their tours, with no page errors.
+- The default teaching paths have 121 steps and 242 visual captures at phone and desktop widths. All 538 declared main openings fit the 320-pixel geometry check. That check covers declared comparisons; it is not a physical-device test of every UI interaction.
+- The full local test run reports 1,038 tests: 952 passed, 86 explicit optional skips, zero failures. Subsequent reader and benchmark changes pass their focused checks and real-browser owners. The interaction file passes all 25 tests; the remaining browser files pass 68 tests with two explicit skips. The benchmark tests additionally exercise both plain and reference disclosures, including corrupt observer data.
+- TypeScript and the installed-package browser gate pass. Earlier CI authoring and installed-package checks passed on Linux, Intel Mac and Apple Silicon Mac with Node 24.0 and current Node 24. Native Safari and WebKit passed before the final loading guard; the final CI run will verify the completed branch again.
+- Every page stays below the existing 1.5 MiB raw and 450 KiB gzip budgets. The largest raw page is about 943 KB.
+- [Startup measurements](lesson-startup-2026-10-31.json), taken after the other local checks finished, pass the existing eight-second median limit at 4× Chromium CPU slowdown: cache 3.07 s, token bucket 2.61 s, gamut 3.98 s. Each uses three fresh contexts at 390×844 on localhost. A preliminary run under parallel test load exceeded the limit for gamut; it was not used as a passing result.
+
+The benchmark now opens the reference disclosure through the UI before selecting its final step. It records all three clicks and includes the disclosure’s blocking work in jump latency. Pages without reference steps retain the original two-click path. The size and startup limits are unchanged.
 
 ## Limits
 
 The main path is deliberately shorter than the reference walkthrough. Detailed source comparisons can still require a phone tour. Some lessons, particularly the WCAG map, GNOME report and authoring examples, are focused introductions rather than complete courses. Existing domain-model boundaries still apply; captions now state them where they affect interpretation.
 
-This review does not establish physical-phone startup performance or learning outcomes. It does not claim a fresh Safari run, a reader study, or an audio listening assessment. Music geometry, timing and synthesis data are checked; the review did not audition the sound. No deployment or publication is included.
+This review does not establish physical-phone startup performance or learning outcomes. The local visual review uses Chromium; WebKit and native Safari have separate CI gates. It does not include a reader study or an audio listening assessment. Music geometry, timing and synthesis data are checked; the review did not audition the sound. No deployment or publication is included.

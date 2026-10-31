@@ -37,7 +37,7 @@ export function frames(trustKey: TrustKey, requestKey: RequestKey): ReaderFrame[
             return [`${i}: ${role}`, v.addr, v.verdict === 'answer' ? 'req.ip' : v.verdict];
           }),
           s,
-          { xs: [-6, -1.2, 5.4], y: 2.7, gap: 1.45 },
+          { xs: [-5.2, -0.7, 4.6], y: 2.7, gap: 1.45 },
         ),
     },
   ];

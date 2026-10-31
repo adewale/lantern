@@ -764,7 +764,10 @@ export async function mountEmbed(
     reserve();
     await show(selected, push);
   }
-  prev.onclick = earlyPrev.onclick = () => void show(adjacentStep(trace.steps, selected, -1));
+  const previous = () => {
+    if (trace) void show(adjacentStep(trace.steps, selected, -1));
+  };
+  prev.onclick = earlyPrev.onclick = previous;
   backToStory.onclick = () => void show(lastStory);
   next.onclick = earlyNext.onclick = () => void advance();
   replay.onclick = () => void animate();
@@ -815,7 +818,7 @@ export async function mountEmbed(
         : {
             ArrowRight: () => void advance(),
             // Like the Previous button, which is disabled on the first step.
-            ArrowLeft: () => void show(adjacentStep(trace.steps, selected, -1)),
+            ArrowLeft: previous,
           };
     if (onStage)
       Object.assign(keys, {

@@ -59,10 +59,10 @@ function loader(id: string, scene: string) {
 }
 
 test('step navigation is discoverable before the picture on short phones and desktops', options, async () => {
-  for (const viewport of [{width: 390, height: 568}, {width: 1280, height: 800}]) {
+  for (const viewport of [{width: 390, height: 568}, {width: 1280, height: 800}]) for (const [entry, following] of [['reader-request', 'reader-outcome'], ['before', 'diff']]) {
     const page = await browser.newPage({viewport, reducedMotion: 'reduce'});
     try {
-      await page.goto(embed + '/mr-cache.html?step=before&request=hit');
+      await page.goto(`${embed}/mr-cache.html?step=${entry}&request=hit`);
       await page.waitForSelector('[data-ready=true]');
       const bounds = await page.evaluate(() => {
         const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
@@ -81,9 +81,9 @@ test('step navigation is discoverable before the picture on short phones and des
       assert.ok(bounds.caption.bottom < bounds.after.top, 'the second Next follows the explanation');
       assert.ok(bounds.after.bottom <= bounds.description.top, 'secondary content cannot separate the caption from Next');
       if (viewport.width < 480) assert.ok(bounds.after.bottom <= bounds.views.top, 'Next step precedes the close-up tour');
-      assert.equal(await page.locator('.step-transport button[aria-label="Previous step"]').isDisabled(), true);
+      assert.equal(await page.locator('.step-transport button[aria-label="Previous step"]').isDisabled(), entry === 'reader-request');
       await page.locator('.step-transport button[aria-label="Next step"]').click();
-      assert.equal(new URL(page.url()).searchParams.get('step'), 'diff');
+      assert.equal(new URL(page.url()).searchParams.get('step'), following);
       assert.equal(await page.locator('.step-transport button[aria-label="Previous step"]').isEnabled(), true);
       assert.equal(await page.locator('.controls button[aria-label="Previous step"]').isEnabled(), true);
     } finally { await page.close(); }
@@ -318,9 +318,9 @@ test('Copy link gives the step\'s share page when site:export published one, els
     await context.close();
   }
 });
-test('stepping keeps the phone’s heading line, Next, steps list and transcript in place', options, async () => {
-  // Captions run from one line to four, and on a phone send-sync's first step opens on a
-  // close-up and shows Fit; neither may push the page down mid-explainer.
+test('stepping within the teaching or source path keeps the heading line, Next, steps list and transcript in place', options, async () => {
+  // Caption lengths and tour controls cannot shift a path while the reader steps.
+  // Opening the separate source disclosure deliberately changes the page's height.
   for (const [width, height] of [[1180, 800], [390, 844]] as const)
     for (const scene of ['exgit', 'mr-cache', 'send-sync']) {
       const page = await browser.newPage({ viewport: { width, height } });
@@ -335,12 +335,13 @@ test('stepping keeps the phone’s heading line, Next, steps list and transcript
         });
         await page.goto(`${embed}/${scene}.html`);
         await page.waitForSelector('[data-ready=true]');
-        const places = new Set<string>(), linePlaces = new Set<string>();
+        const paths = {story:{places:new Set<string>(),lines:new Set<string>()}, detail:{places:new Set<string>(),lines:new Set<string>()}};
         const n = await page.locator('.steps button').count();
         for (let i = 0; i < n; i++) {
           const before = await page.evaluate(() => (window as unknown as { __layoutSettles: number }).__layoutSettles);
           const step = await page.locator('.steps button').nth(i).getAttribute('data-step');
           assert.ok(step, 'the clicked step button identifies its target');
+          const path = await page.locator('.steps button').nth(i).evaluate(b => !!b.closest('.supporting-steps')) ? paths.detail : paths.story;
           await page.locator('.steps button').nth(i).evaluate((b: HTMLElement) => b.click());
           await page.waitForFunction(({ before, step, i }) => {
             const w = window as unknown as { __layoutSettles: number; __layoutStep: string };
@@ -349,15 +350,18 @@ test('stepping keeps the phone’s heading line, Next, steps list and transcript
           }, { before, step, i });
           await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
           if (width < 600 && await page.locator('.lede span').isVisible())
-            linePlaces.add(await page.locator('.lede span').evaluate((line) => (line.getBoundingClientRect().top + scrollY).toFixed(1)));
-          places.add(
+            path.lines.add(await page.locator('.lede span').evaluate((line) => (line.getBoundingClientRect().top + scrollY).toFixed(1)));
+          path.places.add(
             await page.evaluate(() =>
               ['.controls', '.steps', '.transcript'].map((s) => (document.querySelector(s)!.getBoundingClientRect().top + scrollY).toFixed(1)).join(' '),
             ),
           );
         }
-        assert.equal(places.size, 1, `${scene} at ${width} px: controls, steps and transcript tops per step ${[...places].join(' | ')}`);
-        if (width < 600) assert.equal(linePlaces.size, 1, `${scene}: the line below the phone title stays at one height`);
+        for(const [name,path] of Object.entries(paths)){
+          assert.ok(path.places.size, `${scene}: ${name} path was exercised`);
+          assert.equal(path.places.size, 1, `${scene}/${name} at ${width} px: controls, steps and transcript tops per step ${[...path.places].join(' | ')}`);
+          if(width<600)assert.equal(path.lines.size,1,`${scene}/${name}: the line below the phone title stays at one height`);
+        }
       } finally {
         await page.close();
       }
@@ -630,6 +634,7 @@ const commandOptions = (maxCommands: number) => ({
 });
 
 interface StepSpec {
+  detail: boolean;
   step: string;
   caption: string;
   title: string;
@@ -668,6 +673,7 @@ function stepsOf(p: Project, values: Settings): StepSpec[] {
   const v = p.variants.find((v) => sameCase(p, v.values, values));
   assert.ok(v, `no prebuilt case ${JSON.stringify(values)}`);
   return v.trace.steps.map((s) => ({
+    detail: s.meta.detail === true,
     step: s.step,
     caption: stepWords(s).caption,
     title: stepWords(s).title,
@@ -679,6 +685,21 @@ function stepsOf(p: Project, values: Settings): StepSpec[] {
 const current = (m: PlayerModel) => m.entries[m.index]!;
 const steps = (m: PlayerModel) => stepsOf(m.project, current(m).values);
 const selected = (m: PlayerModel) => steps(m).findIndex((s) => s.step === current(m).step);
+/** Independent reader contract: main controls skip notes; an opened note follows
+ * source order. An all-notes case keeps its complete sequence usable. */
+function teachingSteps(list: StepSpec[]) {
+  const main = list.map((s, i) => !s.detail ? i : -1).filter(i => i >= 0);
+  return main.length ? main : list.map((_, i) => i);
+}
+function neighbour(list: StepSpec[], i: number, by: -1 | 1) {
+  const main = teachingSteps(list);
+  if (!main.includes(i)) return Math.max(0, Math.min(list.length - 1, i + by));
+  return main[Math.max(0, Math.min(main.length - 1, main.indexOf(i) + by))]!;
+}
+function presentedSteps(list: StepSpec[]) {
+  const main = teachingSteps(list);
+  return [...main, ...list.map((_, i) => i).filter(i => !main.includes(i))].map(i => list[i]!);
+}
 /** Zoom goes from 1× (fit) up to 6× (docs/REFERENCE.md); a zoom by `factor` lands inside that range. */
 const ZOOM_MAX = 6;
 const kAfter = (k: number, factor: number) => Math.min(ZOOM_MAX, Math.max(1, k * factor));
@@ -853,18 +874,18 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
     step: entry.step,
     settings: Object.fromEntries(ids.map((id) => [id, entry.values[id]])),
   });
-  eq('step list', seen.list, list.map((s) => s.step));
+  eq('step list', seen.list, presentedSteps(list).map((s) => s.step));
   eq('aria-current', seen.current, [entry.step]);
   eq('caption', seen.caption, spec.caption);
   eq('stage label', seen.stageLabel, `${seen.title}: ${spec.title}${spec.line ? ` — ${spec.line}` : ''}`);
-  eq('lede', seen.lede, [`${i + 1}. ${spec.title}`, spec.line || null]);
+  eq('lede', seen.lede, [teachingSteps(list).includes(i) ? `${teachingSteps(list).indexOf(i) + 1}. ${spec.title}` : spec.title, spec.line || null]);
   eq('stage description', seen.summary, spec.summary);
   eq('computed stage description', await stageDescription(r.page), spec.summary.replace(/\s+/g, ' ').trim());
   // Compared as the browser serializes it, which writes &quot; in text as a plain quote.
   const parsed = await r.page.evaluate((html) => Object.assign(document.createElement('div'), { innerHTML: html }).innerHTML, spec.picture);
   eq('picture disclosure', seen.picture, parsed);
-  eq('Previous disabled', seen.prevDisabled, i === 0);
-  eq('Next disabled', seen.nextDisabled, i === list.length - 1);
+  eq('Previous disabled', seen.prevDisabled, neighbour(list, i, -1) === i);
+  eq('Next disabled', seen.nextDisabled, neighbour(list, i, 1) === i);
   eq('notice', seen.notice, m.notice);
   eq('history length', seen.history, r.base + m.entries.length);
   eq('horizontal overflow', seen.overflow, false);
@@ -952,18 +973,18 @@ function goTo(m: PlayerModel, index: number) {
 const always = () => true;
 const Next = command(
   'Next',
-  (m) => selected(m) < steps(m).length - 1,
+  (m) => neighbour(steps(m), selected(m), 1) !== selected(m),
   async (m, r) => {
     await button(r, 'Next step').click();
-    goTo(m, selected(m) + 1);
+    goTo(m, neighbour(steps(m), selected(m), 1));
   },
 );
 const Previous = command(
   'Previous',
-  (m) => selected(m) > 0,
+  (m) => neighbour(steps(m), selected(m), -1) !== selected(m),
   async (m, r) => {
     await button(r, 'Previous step').click();
-    goTo(m, selected(m) - 1);
+    goTo(m, neighbour(steps(m), selected(m), -1));
   },
 );
 const ClickStep = (i: number) =>
@@ -971,7 +992,10 @@ const ClickStep = (i: number) =>
     `ClickStep(${i})`,
     (m) => i < steps(m).length,
     async (m, r) => {
-      await r.page.locator('.steps button').nth(i).click();
+      const step = steps(m)[i]!.step;
+      const target = r.page.locator(`.steps button[data-step="${step}"]`);
+      if (steps(m)[i]!.detail && !await target.isVisible()) await r.page.locator('.supporting > summary').click();
+      await target.click();
       goTo(m, i);
     },
   );
@@ -1084,9 +1108,9 @@ const Key = (key: string, onStage = false) =>
     await r.page.keyboard.press(key);
     const i = selected(m),
       stepping = !(onStage && m.k > 1);
-    if (stepping && key === 'ArrowRight' && i < steps(m).length - 1) goTo(m, i + 1);
+    if (stepping && key === 'ArrowRight' && neighbour(steps(m), i, 1) !== i) goTo(m, neighbour(steps(m), i, 1));
     // ArrowLeft mirrors Previous, which is disabled on the first step.
-    if (stepping && key === 'ArrowLeft' && i > 0) goTo(m, i - 1);
+    if (stepping && key === 'ArrowLeft' && neighbour(steps(m), i, -1) !== i) goTo(m, neighbour(steps(m), i, -1));
     if (!onStage) return;
     if (key === '+' || key === '=') m.k = kAfter(m.k, 1.6);
     if (key === '-') m.k = kAfter(m.k, 1 / 1.6);
@@ -1266,14 +1290,14 @@ for (const [name, runs, maxCommands] of [['oauth-pkce', 10, 40]] as const)
   );
 
 test('phone tour metadata follows resizing while the current zoom and step stay put', options, async () => {
-  for (const width of [200, 632]) {
-    const {context, model, real} = await openPlayer('oauth-pkce', {values: [undefined], viewport: {width, height: 400}});
+  for (const width of [200, 632]) for (const step of ['reader-bind', 'secret']) {
+    const {context, model, real} = await openPlayer('oauth-pkce', {values: [undefined], step, viewport: {width, height: 400}});
     try {
       const commands = width === 632
         ? [Resize(200, 400), DoubleClick(0, 0), OverviewButton]
         : [Resize(632, 400), Replay, Resize(200, 400), OverviewButton];
       await fc.asyncModelRun(() => ({model, real}), commands);
-      assert.equal(current(model).step, 'secret');
+      assert.equal(current(model).step, step);
     } finally { await context.close(); }
   }
 });
@@ -1363,8 +1387,16 @@ test(
           for (let i = 0; i < list.length; i++) {
             const step = list[i]!.step;
             if (i > 0) {
-              await a.page.locator('.controls button[aria-label="Next step"]').click();
-              await d.page.locator('.controls button[aria-label="Next step"]').click();
+              for (const page of [a.page, d.page]) {
+                if (neighbour(stepsOf(p, v.values), i - 1, 1) === i)
+                  await page.locator('.controls button[aria-label="Next step"]').click();
+                else {
+                  // Enter the source path explicitly; its remaining Next
+                  // transitions retain the original full-step coverage.
+                  await page.locator('.supporting > summary').click();
+                  await page.locator(`.steps button[data-step="${step}"]`).click();
+                }
+              }
             }
             await quiet(a.page);
             await quiet(d.page);
@@ -1417,7 +1449,7 @@ test('phone: one press of Next view shows what PKCE\'s captions point at, emphas
   };
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, reducedMotion: 'no-preference' });
   try {
-    const { page, errors } = await counted(context, `${embed}/oauth-pkce.html`);
+    const { page, errors } = await counted(context, `${embed}/oauth-pkce.html?attacker=yes&step=secret`);
     await quiet(page);
     const { w, h } = await page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
     const count = page.locator('.view-controls>span'),
@@ -1467,7 +1499,7 @@ test(
   async () => {
     const all = ['oauth-pkce', 'exgit', 'mr-cache'].flatMap((name) =>
       projects.get(name)!.variants.flatMap((v) =>
-        v.trace.steps.slice(0, -1).map((_, i) => ({ name, values: v.values, i })),
+        stepsOf(projects.get(name)!, v.values).flatMap((_, i, list) => neighbour(list, i, 1) !== i ? [{name, values: v.values, i}] : []),
       ),
     );
     await fc.assert(
@@ -1482,8 +1514,8 @@ test(
             timeout: 30_000,
           });
           await quiet(a.page);
-          const b = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i + 1]!.step)}`);
-          assert.equal(new URL(a.page.url()).searchParams.get('step'), list[i + 1]!.step);
+          const b = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[neighbour(list, i, 1)]!.step)}`);
+          assert.equal(new URL(a.page.url()).searchParams.get('step'), list[neighbour(list, i, 1)]!.step);
           assert.equal(await stagePicture(a.page), await stagePicture(b.page), `${name} ${JSON.stringify(values)} ${list[i]!.step} → Next`);
           assert.deepEqual([...a.errors, ...b.errors], []);
         } finally {
@@ -1503,7 +1535,7 @@ test(
   async () => {
     const all = ['oauth-pkce', 'exgit'].flatMap((name) =>
       projects.get(name)!.variants.slice(0, 1).flatMap((v) =>
-        v.trace.steps.slice(0, -2).map((_, i) => ({ name, values: v.values, i })),
+        stepsOf(projects.get(name)!, v.values).flatMap((_, i, list) => {const first=neighbour(list,i,1), second=neighbour(list,first,1);return first!==i&&second!==first?[{name,values:v.values,i}]:[];}),
       ),
     );
     await fc.assert(
@@ -1517,13 +1549,13 @@ test(
           await a.page.locator('.controls button[aria-label="Next step"]').click();
           await a.page.waitForTimeout(after);
           await a.page.locator('.controls button[aria-label="Next step"]').click();
-          await a.page.waitForFunction((step) => (window as unknown as { __last: { step: string } | null }).__last?.step === step, list[i + 2]!.step, {
+          await a.page.waitForFunction((step) => (window as unknown as { __last: { step: string } | null }).__last?.step === step, list[neighbour(list, neighbour(list, i, 1), 1)]!.step, {
             timeout: 30_000,
           });
           await quiet(a.page);
-          const b = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i + 2]!.step)}`);
+          const b = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[neighbour(list, neighbour(list, i, 1), 1)]!.step)}`);
           const where = `${name} ${list[i]!.step} → Next, ${after} ms, Next`;
-          assert.equal(new URL(a.page.url()).searchParams.get('step'), list[i + 2]!.step, where);
+          assert.equal(new URL(a.page.url()).searchParams.get('step'), list[neighbour(list, neighbour(list, i, 1), 1)]!.step, where);
           assert.equal(await stagePicture(a.page), await stagePicture(b.page), where);
           assert.deepEqual([...a.errors, ...b.errors], []);
         } finally {
@@ -1546,7 +1578,9 @@ test(
     const name = 'oauth-pkce',
       p = projects.get(name)!,
       v = p.variants[0]!,
-      list = v.trace.steps;
+      lists = [v.trace.steps.filter(s => s.meta.detail !== true), v.trace.steps.filter(s => s.meta.detail === true)];
+    for (const list of lists) {
+    assert.ok(list.length >= 2);
     const context = await browser.newContext({ reducedMotion: 'no-preference' });
     try {
       await context.addInitScript(() => {
@@ -1579,13 +1613,14 @@ test(
       assert.ok(next.shown.length >= 1, 'Next showed a picture');
       assert.ok(next.shown[0]!.born !== null && next.shown[0]!.born < next.t, `Next's first picture was drawn after the tap: ${JSON.stringify(next)}`);
       for (const i of [0, 1]) {
-        const back = await shownDuring(() => page.locator('.steps button').nth(i).click());
+        const back = await shownDuring(() => page.locator(`.steps button[data-step="${list[i]!.step}"]`).click());
         assert.ok(back.shown.length >= 1, `step ${list[i]!.step} showed a picture`);
         assert.equal(back.shown.at(-1)!.born, null, `step ${list[i]!.step} was drawn again, not copied: ${JSON.stringify(back)}`);
       }
       assert.deepEqual(errors, []);
     } finally {
       await context.close();
+    }
     }
   },
 );
@@ -1671,7 +1706,7 @@ for (const name of ['oauth-pkce'] as const)
               },
               {
                 checked: seen.urlCase,
-                list: list.map((s) => s.step),
+                list: presentedSteps(list).map((s) => s.step),
                 current: [seen.urlStep],
                 caption: list[at]!.caption,
                 last: { step: seen.urlStep, settings: seen.urlCase },
@@ -1730,7 +1765,7 @@ test(
           await context.close();
         }
       }),
-      params(10),
+      {...params(10), examples: [[['Previous step', 'ArrowLeft', 'Next step'], 'reader-bind']]},
     );
   },
 );
@@ -1943,7 +1978,7 @@ test('PKCE mobile views expose the derivation and the unsent verifier without ad
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: variant.values.attacker === 'yes' ? 'no-preference' : 'reduce' });
     try {
       const page = await context.newPage();
-      await page.goto(`${embed}/oauth-pkce.html?attacker=${variant.values.attacker}`);
+      await page.goto(`${embed}/oauth-pkce.html?attacker=${variant.values.attacker}&step=secret`);
       await page.waitForSelector('[data-ready=true]');
       for (const step of ['secret', 'authorize']) {
         if (step === 'authorize') await page.locator('.controls').getByRole('button', { name: 'Next step', exact: true }).click();

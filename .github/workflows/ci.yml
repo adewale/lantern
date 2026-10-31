@@ -70,7 +70,7 @@ jobs:
       - run: npm ci
       - run: npx playwright-core install --with-deps --only-shell chromium
       - run: node tools/ci-tests.ts "$(command -v npm)" run demos:check
-      - run: npm run check:budgets
+      - run: node tools/ci-tests.ts "$(command -v npm)" run check:budgets
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: rayner-catalog-${{ github.sha }}

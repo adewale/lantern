@@ -1,6 +1,15 @@
 import type { Browser } from 'playwright-core';
 import { blocking, longestGap } from './bench-stats.ts';
-export type Sample = { ready: number; motion: number; rest: number; gap: number; jump: number; blocking: number; shift: number; trace: PageLog };
+export type Sample = {
+  ready: number;
+  motion: number;
+  rest: number;
+  gap: number;
+  jump: number;
+  blocking: number;
+  shift: number;
+  trace: PageLog;
+};
 const VIEWPORT = { width: 390, height: 844 };
 
 /** What the page records, from before its own script runs (timestamps are performance.now()). */
@@ -17,14 +26,16 @@ function record() {
   const r: PageLog = { ready: 0, clicks: [], steps: [], stage: [], frames: [], tasks: [], shifts: [] };
   (window as unknown as { __bench: PageLog }).__bench = r;
   const tasks = (entries: PerformanceEntry[]) => entries.forEach((e) => r.tasks.push([e.startTime, e.duration]));
-  const shifts = (entries: PerformanceEntry[]) => entries.forEach((e) => r.shifts.push([e.startTime, (e as PerformanceEntry & { value: number }).value]));
+  const shifts = (entries: PerformanceEntry[]) =>
+    entries.forEach((e) => r.shifts.push([e.startTime, (e as PerformanceEntry & { value: number }).value]));
   const taskObserver = new PerformanceObserver((l) => tasks(l.getEntries()));
   taskObserver.observe({ type: 'longtask', buffered: true });
   // Every shift counts, including those just after a click, which CLS itself would excuse.
   const shiftObserver = new PerformanceObserver((l) => shifts(l.getEntries()));
   shiftObserver.observe({ type: 'layout-shift', buffered: true });
   (window as unknown as { __benchFlush: () => void }).__benchFlush = () => {
-    tasks(taskObserver.takeRecords()); shifts(shiftObserver.takeRecords());
+    tasks(taskObserver.takeRecords());
+    shifts(shiftObserver.takeRecords());
   };
   // The event's own time: when the reader pressed, including any wait for the main thread.
   document.addEventListener('click', (e) => r.clicks.push(e.timeStamp), true);
@@ -32,7 +43,14 @@ function record() {
   // The stage's picture changing: a new picture put on it, or a drawn element inside it patched.
   // The stage element's own attributes (its label) change with the caption, not the picture.
   new MutationObserver((list) => {
-    if (r.ready && list.some((m) => (m.target as Element).closest?.('.stage') && (m.type === 'childList' || !(m.target as Element).classList.contains('stage'))))
+    if (
+      r.ready &&
+      list.some(
+        (m) =>
+          (m.target as Element).closest?.('.stage') &&
+          (m.type === 'childList' || !(m.target as Element).classList.contains('stage')),
+      )
+    )
       r.stage.push(performance.now());
     if (!r.ready && document.querySelector('[data-ready=true]')) r.ready = performance.now();
   }).observe(document, { subtree: true, childList: true, attributes: true });
@@ -43,7 +61,11 @@ function record() {
   requestAnimationFrame(tick);
 }
 
-export async function measure(browser: Browser, url: string, { cpu, readMs }: { cpu: number; readMs: number }): Promise<Sample> {
+export async function measure(
+  browser: Browser,
+  url: string,
+  { cpu, readMs }: { cpu: number; readMs: number },
+): Promise<Sample> {
   const context = await browser.newContext({ viewport: VIEWPORT });
   try {
     const page = await context.newPage();
@@ -52,27 +74,58 @@ export async function measure(browser: Browser, url: string, { cpu, readMs }: { 
     if (cpu > 1) await (await context.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: cpu });
     await page.addInitScript(record);
     const until = (step: string) =>
-      page.waitForFunction((s) => (window as unknown as { __bench: PageLog }).__bench.steps.some(([n]) => n === s), step, { polling: 100, timeout: 120_000 });
+      page.waitForFunction(
+        (s) => (window as unknown as { __bench: PageLog }).__bench.steps.some(([n]) => n === s),
+        step,
+        { polling: 100, timeout: 120_000 },
+      );
     await page.goto(url);
-    await page.waitForFunction(() => (window as unknown as { __bench: PageLog }).__bench.ready > 0, null, { polling: 100, timeout: 120_000 });
-    const names = await page.locator('.steps button').evaluateAll((bs) => bs.map((b) => (b as HTMLElement).dataset.step!));
-    if (names.length < 3 || new Set(names).size !== names.length || names.some((n) => !n)) throw new Error('bench needs at least three distinct named steps');
+    await page.waitForFunction(() => (window as unknown as { __bench: PageLog }).__bench.ready > 0, null, {
+      polling: 100,
+      timeout: 120_000,
+    });
+    const names = await page
+      .locator('.steps button')
+      .evaluateAll((bs) => bs.map((b) => (b as HTMLElement).dataset.step!));
+    if (names.length < 3 || new Set(names).size !== names.length || names.some((n) => !n))
+      throw new Error('bench needs at least three distinct named steps');
     await page.waitForTimeout(readMs);
     await page.locator('.controls .primary').click();
     await until(names[1]!);
     await page.waitForTimeout(readMs);
-    await page.locator('.steps button').last().click();
+    const jumpTarget = page.locator('.steps button').last();
+    const opensReferences = !(await jumpTarget.isVisible());
+    if (opensReferences) {
+      if (!(await jumpTarget.evaluate((b) => !!b.closest('details.supporting'))))
+        throw new Error(url + ': the final benchmark step is unreachable');
+      await page.locator('details.supporting > summary').click();
+    }
+    await jumpTarget.click();
     await until(names.at(-1)!);
     // Let observer delivery and two rendering opportunities finish before taking records.
     await page.evaluate(async () => {
-      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => resolve(), 0))));
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => resolve(), 0))),
+      );
       (window as unknown as { __benchFlush: () => void }).__benchFlush();
     });
     const r = await page.evaluate(() => (window as unknown as { __bench: PageLog }).__bench);
     if (errors.length) throw new Error(`${url}: ${errors.join('; ')}`);
-    const observations = [r.ready, ...r.clicks, ...r.stage, ...r.frames, ...r.steps.map(([, t]) => t), ...r.tasks.flat(), ...r.shifts.flat()];
+    const observations = [
+      r.ready,
+      ...r.clicks,
+      ...r.stage,
+      ...r.frames,
+      ...r.steps.map(([, t]) => t),
+      ...r.tasks.flat(),
+      ...r.shifts.flat(),
+    ];
     if (observations.some((v) => !Number.isFinite(v) || v < 0)) throw new Error(url + ': invalid trace observation');
-    if (r.clicks.length !== 2 || r.clicks[1]! < r.clicks[0]!) throw new Error(url + ': expected two ordered action clicks');
+    const expectedClicks = opensReferences ? 3 : 2;
+    if (r.clicks.length !== expectedClicks || r.clicks.some((t, i) => i > 0 && t < r.clicks[i - 1]!))
+      throw new Error(url + `: expected ${expectedClicks} ordered action clicks`);
+    // A reference jump includes opening its disclosure, rather than hiding that
+    // extra interaction or its blocking work from the reported latency.
     const [next, jump] = r.clicks as [number, number];
     const at = (step: string, after: number) => r.steps.find(([n, t]) => n === step && t >= after)![1];
     const rested = at(names[1]!, next),
@@ -88,7 +141,8 @@ export async function measure(browser: Browser, url: string, { cpu, readMs }: { 
       blocking: blocking(r.tasks, next, rested) + blocking(r.tasks, jump, jumped),
       shift: r.shifts.filter(([t]) => t >= r.ready).reduce((s, [, v]) => s + v, 0),
     };
-    for (const [key, value] of Object.entries(sample)) if (!Number.isFinite(value) || value < 0) throw new Error(url + ': invalid measured ' + key);
+    for (const [key, value] of Object.entries(sample))
+      if (!Number.isFinite(value) || value < 0) throw new Error(url + ': invalid measured ' + key);
     return { ...sample, trace: r };
   } finally {
     await context.close();
