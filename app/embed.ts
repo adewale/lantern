@@ -228,10 +228,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   overview.hidden = true;
   overview.append(map);
   frame.append(stage);
-  // Optional score audio (app/embed-audio.ts) puts its panel after the element it is given: the
-  // stepper row, so the step controls stay straight under the picture and the sound controls sit
-  // between them and the caption.
-  const sound=audio?.(stage,stepper);
+  // Optional score audio (app/embed-audio.ts) puts its panel straight under the picture it plays,
+  // so the score and its sound controls fit on a small phone together; the stepper row follows.
+  const sound=audio?.(stage,frame);
   // Keep view navigation separate from step navigation: its own row, under the stepper row.
   const views = el('div', undefined, 'view-controls'),
     viewCount = el('span'),
