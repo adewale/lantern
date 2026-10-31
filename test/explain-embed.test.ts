@@ -338,11 +338,27 @@ function cropTest(e: CropExpectation) {
     // Nothing of Rayner's drawn outside the tile.
     say('framed body and #content', [getComputedStyle(document.body).backgroundColor, getComputedStyle(document.getElementById('content')!).padding], ['rgba(0, 0, 0, 0)', '0px']);
   }
-  // 5. The boundary: every element under #content with a box is the tile or inside it, and inside its box.
+  // 5. The boundary: every element under #content with a box is the tile or inside it, and what it
+  // draws is inside the tile's box. What it draws is its box cut by every ancestor that clips its
+  // overflow: a diagram's paths may run past the stage's edges, but the stage (overflow: hidden) and
+  // its SVG viewport cut them there, so they are never drawn outside the tile.
   const t = tile.getBoundingClientRect();
+  const drawn = (el: Element) => {
+    const b = el.getBoundingClientRect();
+    let left = b.left, top = b.top, right = b.right, bottom = b.bottom;
+    // Ancestors inside the tile only: the tile clips too, and something it cuts off is a fault.
+    for (let a = el.parentElement; a && a !== tile; a = a.parentElement) {
+      const cs = getComputedStyle(a);
+      if (cs.overflowX === 'visible' && cs.overflowY === 'visible') continue;
+      const c = a.getBoundingClientRect();
+      left = Math.max(left, c.left); top = Math.max(top, c.top); right = Math.min(right, c.right); bottom = Math.min(bottom, c.bottom);
+    }
+    return { left, top, right, bottom, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
+  };
   for (const el of document.querySelectorAll<HTMLElement>('#content *')) {
-    const r = el.getBoundingClientRect();
-    // A closed disclosure's content keeps a layout box in Chromium but is not drawn (content-visibility).
+    const r = drawn(el);
+    // A closed disclosure's content keeps a layout box in Chromium but is not drawn (content-visibility);
+    // an element clipped away entirely draws nothing.
     if ((r.width === 0 && r.height === 0) || !el.checkVisibility()) continue;
     if (el !== tile && !tile.contains(el)) problems.push(`outside the tile: ${el.tagName.toLowerCase()}.${el.className}`);
     else if (r.left < t.left - 1 || r.top < t.top - 1 || r.right > t.right + 1 || r.bottom > t.bottom + 1)
