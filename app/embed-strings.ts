@@ -3,7 +3,8 @@
 // descriptions have their own vocabulary (explain/words.ts); a page in a language it lacks
 // shows them in English and marks them lang="en".
 import type { ExplainerClass, Settings } from '../explain/index.ts';
-import { describedIn, primaryLanguage } from '../explain/words.ts';
+import { describedIn, primaryLanguage, wordsFor } from '../explain/words.ts';
+import type { WatchedChange } from '../explain/trace.ts';
 
 /** What is wrong with a URL's settings, so each language can say it in its own words. */
 export type SettingsProblem =
@@ -27,23 +28,34 @@ export interface Chrome {
   next: string;
   zoomOut: string;
   zoomIn: string;
-  fit: string;
-  /** On a narrow stage: open each step on a close-up again, after Fit. */
+  /** On a narrow stage: open each step on a close-up again, after Whole picture. */
   closeUp: string;
   /** The corner map's name: the step's next close-up, i of n. */
   nextCloseUp: (i: number, n: number) => string;
   viewCount: (i: number, n: number) => string;
   nextView: string;
+  /** The one button that shows the author's whole frame (and keeps it on a narrow stage). */
   wholePicture: string;
   viewHelp: string;
-  replay: string;
-  stop: string;
   copy: string;
   enlarge: string;
   exitFullScreen: string;
+  /** Accessible name of the zoom, copy and enlarge buttons' group. */
+  viewTools: string;
   /** Accessible name of the list of steps. */
   stepList: string;
-  newTab: string;
+  /** The steps list's visible heading beside the card. */
+  steps: string;
+  /** The steps list's disclosure under the card, on a narrow page. */
+  allSteps: (n: number) => string;
+  /** Accessible name of the step bar. */
+  stepBar: string;
+  /** "Step 3 of 4", the step heading's kicker; with a title, a step bar segment's name. */
+  stepOf: (i: number, n: number, title?: string) => string;
+  /** The footer mark's accessible name; its visible text is the name "Rayner", never translated. */
+  madeWith: string;
+  /** The footer's way out of a frame: this page, at the reader's step and case, in a new tab. */
+  open: string;
   /** The loader's name for the frame when the host gives none. */
   frame: string;
   reducedMotion: string;
@@ -60,6 +72,23 @@ export interface Chrome {
   sources: string;
   /** Shown when the player cannot start, above the transcript. */
   failed: string;
+  /** The quiet label before a step's changes to the state its author watches (`meta.watch`). */
+  changed: string;
+  /** A boolean watched value; the same words as the descriptions' (explain/words.ts). */
+  yes: string;
+  no: string;
+  /** A watched value the step took away. */
+  removed: string;
+  /** The transcript's line of a step's changes: "What changed: Tokens: 5 → 0; Allowed: 0 → 5". */
+  changes: (...items: string[]) => string;
+  /** At rest on the last step, Next's visible word, and its accessible name. */
+  startAgain: string;
+  startAgainLabel: string;
+  /** At rest on the last step of a scene with settings: show the next option of its first setting. */
+  tryCase: (label: string) => string;
+  /** The footer's one quiet line on how to move: with a keyboard and pointer, or by touch. */
+  hintKeys: string;
+  hintTouch: string;
 }
 
 const EN: Chrome = {
@@ -73,20 +102,23 @@ const EN: Chrome = {
   next: 'Next',
   zoomOut: 'Zoom out',
   zoomIn: 'Zoom in',
-  fit: 'Fit stage',
   closeUp: 'Close-up of each step',
   nextCloseUp: (i, n) => `Next close-up of this step (${i} of ${n})`,
   viewCount: (i, n) => `View ${i} of ${n}`,
   nextView: 'Next view',
   wholePicture: 'Whole picture',
   viewHelp: 'Next view explores this picture. Next step continues the explanation.',
-  replay: 'Replay step',
-  stop: 'Stop animation',
   copy: 'Copy link',
   enlarge: 'Enlarge',
   exitFullScreen: 'Exit full screen',
+  viewTools: 'View tools',
   stepList: 'Steps in this explainer',
-  newTab: 'Open in a new tab',
+  steps: 'Steps',
+  allSteps: (n) => `All ${n} steps`,
+  stepBar: 'Step progress',
+  stepOf: (i, n, title) => `Step ${i} of ${n}${title ? `: ${title}` : ''}`,
+  madeWith: 'Made with Rayner',
+  open: 'Open the explainer',
   frame: 'Interactive explainer',
   reducedMotion: 'Reduced motion is on, so the finished step is shown.',
   copied: 'Link copied.',
@@ -98,6 +130,16 @@ const EN: Chrome = {
   transcript: 'Transcript',
   sources: 'Sources',
   failed: 'The interactive player could not start. The transcript is available below.',
+  changed: 'What changed',
+  yes: wordsFor('en').yes,
+  no: wordsFor('en').no,
+  removed: 'removed',
+  changes: (...items) => `What changed: ${items.join('; ')}`,
+  startAgain: 'Start again',
+  startAgainLabel: 'Start again from step 1',
+  tryCase: (label) => `Try ‘${label}’`,
+  hintKeys: '← → to step · click a segment to jump',
+  hintTouch: 'Tap a segment to jump; tap the current one to finish it',
 };
 /** French typography: a narrow no-break space (U+202F) before : ; ! ? and inside « ». */
 const FR: Chrome = {
@@ -111,20 +153,23 @@ const FR: Chrome = {
   next: 'Suivant',
   zoomOut: 'Zoom arrière',
   zoomIn: 'Zoom avant',
-  fit: 'Adapter à la page',
   closeUp: 'Gros plan sur chaque étape',
   nextCloseUp: (i, n) => `Gros plan suivant de cette étape (${i} sur ${n})`,
   viewCount: (i, n) => `Vue ${i} sur ${n}`,
   nextView: 'Vue suivante',
   wholePicture: 'Image entière',
   viewHelp: 'Vue suivante explore cette image. Étape suivante poursuit l’explication.',
-  replay: 'Rejouer l’étape',
-  stop: 'Arrêter l’animation',
   copy: 'Copier le lien',
   enlarge: 'Plein écran',
   exitFullScreen: 'Quitter le plein écran',
+  viewTools: 'Outils d’affichage',
   stepList: 'Étapes de cette explication',
-  newTab: 'Ouvrir dans un nouvel onglet',
+  steps: 'Étapes',
+  allSteps: (n) => `Les ${n} étapes`,
+  stepBar: 'Progression des étapes',
+  stepOf: (i, n, title) => `Étape ${i} sur ${n}${title ? ` : ${title}` : ''}`,
+  madeWith: 'Réalisé avec Rayner',
+  open: 'Ouvrir l’explication',
   frame: 'Explication interactive',
   reducedMotion: 'Les animations sont réduites : l’étape s’affiche terminée.',
   copied: 'Lien copié.',
@@ -142,6 +187,16 @@ const FR: Chrome = {
   transcript: 'Transcription',
   sources: 'Sources',
   failed: 'Le lecteur interactif n’a pas pu démarrer. La transcription se trouve plus bas.',
+  changed: 'Ce qui a changé',
+  yes: wordsFor('fr').yes,
+  no: wordsFor('fr').no,
+  removed: 'supprimé',
+  changes: (...items) => `Ce qui a changé\u202f: ${items.join('\u202f; ')}`,
+  startAgain: 'Recommencer',
+  startAgainLabel: 'Recommencer à l’étape 1',
+  tryCase: (label) => `Essayer «\u202f${label}\u202f»`,
+  hintKeys: '← → pour changer d’étape · cliquez un segment pour y aller',
+  hintTouch: 'Touchez un segment pour y aller\u202f; touchez celui en cours pour le terminer',
 };
 export const CHROME: Readonly<Record<string, Chrome>> = { en: EN, fr: FR };
 
@@ -184,3 +239,6 @@ export function caseNameIn(lang: string, Scene: ExplainerClass, values: Settings
     .map((s) => t.setting(s.label, s.options.find((o) => o.value === values[s.id])?.label ?? values[s.id]!))
     .join(' · ');
 }
+/** One watched change as a reader reads it: "Tokens: 5 → 0", "Tokens: 5" (it appeared), "Tokens: removed". */
+export const changeText = (t: Chrome, c: WatchedChange): string =>
+  t.setting(c.label, c.after === undefined ? t.removed : c.before === undefined ? c.after : `${c.before} → ${c.after}`);

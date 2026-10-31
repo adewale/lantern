@@ -68,6 +68,7 @@ export default class QuotientFamilialExplainer extends Scene {
     id: 'quotient-familial',
     title: 'Comment les parts changent-elles l’impôt d’un couple ?',
     lang: 'fr',
+    watch: { rni: 'Revenu net imposable', parts: 'Parts', quotient: 'Quotient', impot: 'Impôt' },
     sources: [
       OF + 'parameters/impot_revenu/bareme_ir_depuis_1945/bareme.yaml',
       OF + 'parameters/impot_revenu/calcul_impot_revenu/plaf_qf/plafond_avantages_procures_par_demi_part/general.yaml',

@@ -70,7 +70,7 @@ test('WebKit checks served paint for every case of the cache, rate, PKCE, reques
     await page.waitForSelector('[data-ready=true]');
     assert.equal(await page.getByRole('button', {name: 'Next view', exact: true}).isVisible(), false);
     assert.equal(await page.locator('.view-help').isVisible(), false);
-    await page.locator('.step-transport').getByRole('button', {name: 'Next step', exact: true}).tap();
+    await page.getByRole('button', {name: 'Next step', exact: true}).tap();
     await page.waitForFunction(() => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === 'exchange');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     assert.deepEqual(errors, []);
@@ -133,14 +133,14 @@ test('native macOS Safari runs the introduction, case changes, requested letteri
     await driver.command(`/session/${driver.session}/window/rect`, {width: 1180, height: 900});
     await driver.open('/mr-cache.html');
     assert.equal(await driver.execute('return document.querySelector("[aria-current=step]").dataset.step'), 'reader-request');
-    assert.equal(await driver.execute('return document.querySelector(".controls .primary").disabled'), false);
-    await driver.click('.controls .primary');
+    assert.equal(await driver.execute('return document.querySelector(".stepper .primary").disabled'), false);
+    await driver.click('.stepper .primary');
     await driver.wait('return window.__readyStep==="reader-outcome"');
     // The source walkthrough remains reachable and follows source order after
     // being opened directly, in addition to the new default teaching path.
     await driver.open('/mr-cache.html?step=before');
     assert.equal(await driver.execute('return document.querySelector("[aria-current=step]").dataset.step'), 'before');
-    await driver.click('.controls .primary');
+    await driver.click('.stepper .primary');
     await driver.wait('return window.__readyStep==="diff"');
     await driver.open('/mr-cache.html?request=hit&step=request');
     await driver.click('input[name=request][value=miss]');

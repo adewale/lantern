@@ -14,6 +14,9 @@ import { useProjectLettering } from './lib/explain-lettering.ts';
 import { galleryTile } from './lib/explain-gallery.ts';
 import { builtOutputHashes } from './lib/explain-built-files.ts';
 import type { ShareManifest } from './lib/explain-share.ts';
+import { measureEmbed, embedSizeProblems } from './lib/explain-embed-size.ts';
+import { serve } from './lib/explain-serve.ts';
+import { launch } from './lib/browser.ts';
 
 const directory = join(ROOT, 'out/explainers');
 await mkdir(directory, { recursive: true });
@@ -90,6 +93,23 @@ for (const item of EXPLAINERS) {
   );
 }
 await buildLoader(join(directory, 'loader.js'));
+// Known heights (tools/lib/explain-embed-size.ts): each page as the loader frames it, served from here.
+{
+  const server = await serve(directory, 0, 'index.html'),
+    browser = await launch();
+  try {
+    for (const item of EXPLAINERS) {
+      const size = await measureEmbed(browser, server.url, item.id + '.html'),
+        problems = embedSizeProblems(size);
+      if (problems.length) throw new Error(`${item.id}/embed.json: ${problems.join('; ')}`);
+      await writeFile(join(directory, item.id, 'embed.json'), JSON.stringify(size, null, 2) + '\n');
+    }
+  } finally {
+    await browser.close();
+    server.close();
+  }
+  console.log(`Embed heights at 390, 640 and 900 px: ${EXPLAINERS.length} explainers`);
+}
 const cases = evidence.reduce((n, s) => n + s.cases.length, 0),
   diagrams = evidence.reduce((n, s) => n + s.diagrams, 0),
   styles = new Set(evidence.flatMap((s) => s.styles)),
@@ -149,9 +169,13 @@ footer a{color:inherit}
 @media(prefers-reduced-motion:reduce){.tiles img{transition:none}}
 </style></head><body><main><h1>Rayner</h1><p class="intro">${htmlEscape(PRODUCT.summary)} ${htmlEscape(PRODUCT.description)}</p><p class="intro">${htmlEscape(PRODUCT.audience)} <a href="${PRODUCT.tutorial}">Write your first explainer</a>, use the <a href="${PRODUCT.reference}">authoring reference</a>, or follow the <a href="${PRODUCT.skill}">agent authoring skill</a>.</p><p class="start"><a href="${htmlEscape(entryUrl)}">${htmlEscape(PRODUCT.entry.label)}</a></p><ul class="tiles">${topics.map((t, i) => tile(t, i === 0)).join('')}</ul><h2>How these are made</h2><ul class="tiles">${toolchain.map((t) => tile(t)).join('')}</ul><ul class="more"><li><a href="embed-lab.html">Two embeds on one host page</a></li><li><a href="evidence.json">Build evidence</a></li></ul><footer>Built on <a href="https://github.com/ivarvong/lantern">Lantern</a> by Ivar Vong (MIT) and <a href="https://github.com/adewale/agentic-mermaid">Agentic Mermaid</a>.</footer></main></body></html>`;
 await writeFile(join(directory, 'index.html'), html);
+// Two embeds in a host's articles. The tile is the edge: the host draws no card around an embed, and
+// its own text above and below each one shows where the explainer begins and ends.
+const article = (id: string, src: string, title: string, before: string, after: string) =>
+  `<article><h2>${htmlEscape(title)}</h2><p>${htmlEscape(before)}</p><div id="${id}"></div><p>${htmlEscape(after)}</p><script src="loader.js" data-src="${htmlEscape(src)}" data-target="${id}" data-title="${htmlEscape(title)}"></script></article>`;
 await writeFile(
   join(directory, 'embed-lab.html'),
-  `<!doctype html><html lang="en" data-theme="light"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two embeds on one host page</title><style>${tokens}body{max-width:1200px;margin:0 auto;padding:32px 16px 64px;background:#eceff3;color:var(--fg)}h1{font-size:1.5rem;font-weight:650;letter-spacing:-.015em;margin:0 0 8px;text-wrap:balance}a{color:var(--accent);text-underline-offset:.2em}main{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;align-items:start}section{min-width:0;background:#fff;border-radius:12px;box-shadow:0 1px 2px rgb(0 0 0/.06),0 0 0 1px rgb(0 0 0/.06);overflow:hidden}@media(max-width:850px){main{grid-template-columns:1fr}}</style><h1>Two embeds, each sized to its own content</h1><a href="index.html">All explainers</a><main><section id="git"></section><section id="cache"></section></main><script src="loader.js" data-src="exgit.html" data-target="git" data-title="Git object ids"></script><script src="loader.js" data-src="mr-cache.html?request=miss" data-target="cache" data-title="Cache request"></script></html>`,
+  `<!doctype html><html lang="en" data-theme="light"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two embeds on one host page</title><style>${tokens}:root{color-scheme:light}body{max-width:1200px;margin:0 auto;padding:32px 16px 64px;background:#fbf8f3;color:#2b2520;font:17px/1.65 Georgia,"Times New Roman",serif}h1{font-size:1.5rem;font-weight:650;letter-spacing:-.015em;margin:0 0 8px;text-wrap:balance}h2{font-size:1.15rem;margin:0 0 8px}a{color:var(--accent);text-underline-offset:.2em}main{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:24px;align-items:start}article{min-width:0}article p{margin:16px 0;text-wrap:pretty}@media(max-width:850px){main{grid-template-columns:1fr}}</style><h1>Two embeds, each sized to its own content</h1><a href="index.html">All explainers</a><main>${article('git', 'exgit.html', 'Git object ids', 'Git names every object by a hash of its content. Step through how a commit gets its id below.', 'Change one byte and every id above it changes, which is what makes the history tamper-evident.')}${article('cache', 'mr-cache.html?request=miss', 'Cache request', 'We put a key-value cache in front of D1. Follow a request that misses it below.', 'The next request for the same user is a hit and never reaches D1.')}</main></html>`,
 );
 await writeFile(join(directory, 'output-hashes.json'), JSON.stringify(await builtOutputHashes(directory, EXPLAINERS.map(e => e.id)), null, 2) + '\n');
 console.log(`Gallery: ${join(directory, 'index.html')}\n${JSON.stringify(totals)}`);

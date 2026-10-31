@@ -40,12 +40,16 @@ try {
   await run(join(folder, 'node_modules/.bin/tsc'), ['-p', 'tsconfig.json'], { cwd: folder });
 
   await run(process.execPath, [cli, 'init', 'first'], { cwd: folder });
+  // The starter is the tutorial's LRU/MRU explainer. Its model test runs as the tutorial says,
+  // and it draws no diagram, so it checks without a browser.
+  await run(process.execPath, ['--test', 'first/model.test.ts'], { cwd: folder });
+  await run(process.execPath, [cli, 'check', 'first'], { cwd: folder });
   // Diagram capture and PNG tools ship in the default authoring install.
   assert.ok(existsSync(join(folder, 'node_modules/@resvg/resvg-js')));
   if (process.env.EXPLAIN_BROWSER) {
     await run(bin, ['snapshots', 'first', '--refresh'], { cwd: folder });
     const cache = JSON.parse(await readFile(join(folder, 'first/scene.snapshots/index.json'), 'utf8'));
-    assert.equal(Object.keys(cache.diagrams).length, 1);
+    assert.equal(Object.keys(cache.diagrams).length, 0);
     await run(bin, ['check', 'first'], { cwd: folder });
     await run(bin, ['build', 'first', '--out', 'public/first.html'], { cwd: folder });
     // The documented starter must actually serve with the normal authoring dependencies.
@@ -74,14 +78,14 @@ try {
       page.on('pageerror', (error) => errors.push(error.message));
       await page.goto(url);
       await page.waitForSelector('[data-ready=true]');
-      await page.locator('.step-transport').getByRole('button', { name: 'Next step', exact: true }).click();
-      await page.waitForFunction(() => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === 'request');
-      assert.match(await page.locator('.caption').innerText(), /without reading the database/);
-      await page.goto(url + '/my-explainer.html?request=miss&step=request');
+      await page.getByRole('button', { name: 'Next step', exact: true }).click();
+      await page.waitForFunction(() => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === 'evict');
+      assert.match(await page.locator('.caption').innerText(), /LRU evicts the item used longest ago, A/);
+      await page.goto(url + '/lru-mru.html?next=reuse&step=rest');
       await page.waitForSelector('[data-ready=true]');
-      assert.match(await page.locator('.caption').innerText(), /reads the database once/);
+      assert.match(await page.locator('.caption').innerText(), /all four repeats miss/);
       const source = join(folder, 'first/scene.ts');
-      await writeFile(source, (await readFile(source, 'utf8')).replace('reads the database once and then returns.', 'reads the database once, then replies.'));
+      await writeFile(source, (await readFile(source, 'utf8')).replace('so all four repeats miss.', 'so every repeat misses.'));
       // Wait for the watch rebuild before reload; this also covers macOS fs.watch.
       const deadline = Date.now() + 30_000;
       while (!log.includes('Rebuilt')) {
@@ -90,7 +94,7 @@ try {
       }
       await page.reload();
       await page.waitForSelector('[data-ready=true]');
-      assert.match(await page.locator('.caption').innerText(), /then replies/);
+      assert.match(await page.locator('.caption').innerText(), /every repeat misses/);
       assert.deepEqual(errors, []);
     } finally {
       try { await browser?.close(); }
@@ -289,20 +293,15 @@ try {
     { cwd: folder },
   );
   assert.equal(described.stdout.trim(), 'a:one b:one');
-  // The example in REFERENCE "Describe", verbatim: on the `rayner init` template and its captured
-  // diagram when capture is installed, else on the native scene with an empty snapshot index.
+  // The example in REFERENCE "Describe", verbatim, on the `rayner init` starter and its empty snapshot index.
   const describeSection = (await readFile(join(ROOT, 'docs/REFERENCE.md'), 'utf8')).split(/^## /m).find((s) => s.startsWith('Describe\n')),
     example = /^```ts\n([\s\S]*?)^```/m.exec(describeSection ?? '')?.[1];
   assert.ok(example, 'docs/REFERENCE.md "Describe" has a ts example');
   await run(process.execPath, [cli, 'init', 'my-explainer'], { cwd: folder });
-  if (!process.env.EXPLAIN_BROWSER) await writeFile(join(folder, 'my-explainer/scene.ts'), native);
   await run(process.execPath, [cli, 'snapshots', 'my-explainer'], { cwd: folder });
   await writeFile(join(folder, 'describe.ts'), example);
   const walked = (await run(process.execPath, ['describe.ts'], { cwd: folder })).stdout;
-  assert.match(
-    walked,
-    process.env.EXPLAIN_BROWSER ? /^Follow a request: Cache miss · request: .+\n  changed: .*\breads\b/m : /^Case: B · one: .+\n  changed: nothing$/m,
-  );
+  assert.match(walked, /^After A B C D, request: C D C D · rest: .+\n  changed: .*\bHits\b/m);
 
   console.log(
     'Package gate passed: tested archive install with diagram and PNG authoring, installed TypeScript consumer, executable JS bin, external native author, settings, checks, see, build, optional score audio, describeExplainer and its REFERENCE example, notices, lettering on request, one compiled engine' +

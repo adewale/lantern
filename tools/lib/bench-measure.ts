@@ -64,9 +64,9 @@ function record() {
 export async function measure(
   browser: Browser,
   url: string,
-  { cpu, readMs }: { cpu: number; readMs: number },
+  { cpu, readMs, viewport = VIEWPORT }: { cpu: number; readMs: number; viewport?: { width: number; height: number } },
 ): Promise<Sample> {
-  const context = await browser.newContext({ viewport: VIEWPORT });
+  const context = await browser.newContext({ viewport });
   try {
     const page = await context.newPage();
     const errors: string[] = [];
@@ -90,16 +90,36 @@ export async function measure(
     if (names.length < 3 || new Set(names).size !== names.length || names.some((n) => !n))
       throw new Error('bench needs at least three distinct named steps');
     await page.waitForTimeout(readMs);
-    await page.locator('.controls .primary').click();
+    await page.locator('.stepper .primary').click();
     await until(names[1]!);
     await page.waitForTimeout(readMs);
-    const jumpTarget = page.locator('.steps button').last();
-    const opensReferences = !(await jumpTarget.isVisible());
-    if (opensReferences) {
-      if (!(await jumpTarget.evaluate((b) => !!b.closest('details.supporting'))))
-        throw new Error(url + ': the final benchmark step is unreachable');
-      await page.locator('details.supporting > summary').click();
+    // Main steps have a segment the reader can use even when the rail is closed.
+    // A source step instead needs its disclosures opened through their real UI.
+    const lastName = names.at(-1)!;
+    const segments = page.locator('.step-bar button');
+    const segment = await segments.evaluateAll(
+      (buttons, name) => buttons.findIndex((b) => (b as HTMLElement).dataset.step === name),
+      lastName,
+    );
+    const jumpTarget = segment >= 0 ? segments.nth(segment) : page.locator('.steps button').last();
+    let disclosureClicks = 0;
+    const ancestors = await jumpTarget.locator('xpath=ancestor::details').all();
+    const ordered = await Promise.all(
+      ancestors.map(async (detail) => ({
+        detail,
+        depth: await detail.evaluate((node) => {
+          let depth = 0;
+          for (let p = node.parentElement; p; p = p.parentElement) depth++;
+          return depth;
+        }),
+      })),
+    );
+    for (const { detail } of ordered.sort((a, b) => a.depth - b.depth)) {
+      if (await detail.evaluate((node) => (node as HTMLDetailsElement).open)) continue;
+      await detail.locator(':scope > summary').click();
+      disclosureClicks++;
     }
+    if (!(await jumpTarget.isVisible())) throw new Error(url + ': the final benchmark step is unreachable');
     await jumpTarget.click();
     await until(names.at(-1)!);
     // Let observer delivery and two rendering opportunities finish before taking records.
@@ -121,7 +141,7 @@ export async function measure(
       ...r.shifts.flat(),
     ];
     if (observations.some((v) => !Number.isFinite(v) || v < 0)) throw new Error(url + ': invalid trace observation');
-    const expectedClicks = opensReferences ? 3 : 2;
+    const expectedClicks = 2 + disclosureClicks;
     if (r.clicks.length !== expectedClicks || r.clicks.some((t, i) => i > 0 && t < r.clicks[i - 1]!))
       throw new Error(url + `: expected ${expectedClicks} ordered action clicks`);
     // A reference jump includes opening its disclosure, rather than hiding that

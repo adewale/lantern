@@ -6,6 +6,7 @@ import type { ExplainerClass } from '../explain/index.ts';
 import { readSnapshots } from '../tools/lib/explain-project.ts';
 import RingBuffer from '../scenes/explainers/ring-buffer/scene.ts';
 import OauthPkce from '../scenes/explainers/oauth-pkce/scene.ts';
+import { PALETTES } from '../explain/palettes.ts';
 
 test('describeExplainer gives every case and step: the words, the state the trace recorded and what each step changed', async () => {
   const d = await describeExplainer(RingBuffer as ExplainerClass);
@@ -13,6 +14,8 @@ test('describeExplainer gives every case and step: the words, the state the trac
   assert.equal(d.id, 'ring-buffer');
   assert.deepEqual(d.cases.map((c) => c.values), variantsOf(RingBuffer as ExplainerClass));
   for (const c of d.cases) {
+    // The case's paper, as the stage drew it: ring-buffer draws on dusk (an added field; schema stays 1).
+    assert.equal(c.paper, PALETTES.dusk!.paper, `${JSON.stringify(c.values)}: paper`);
     const trace = await traceScene(withSettings(RingBuffer as ExplainerClass, c.values));
     assert.equal(c.duration, trace.duration);
     assert.deepEqual(c.steps.map((s) => s.step), trace.steps.map((s) => s.step));

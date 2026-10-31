@@ -8,7 +8,8 @@ import { wordsOf } from './words.ts';
 import { layoutDirection } from './layout-direction.ts';
 import type { LayoutDirection } from './layout-direction.ts';
 
-export type CardRow = readonly [label: string, value: unknown];
+/** A label and its value; with `columns`, one value per column or a single value that spans them. */
+export type CardRow = readonly [label: string, value: unknown, ...more: unknown[]];
 export interface CardOptions {
   /**
    * Centre of the card, or a region/box to centre it in. The box's width caps
@@ -20,6 +21,11 @@ export interface CardOptions {
   /** Fixed width; by default the card fits its widest row. */
   width?: number;
   title?: string;
+  /**
+   * Headings for side-by-side value columns. Each row then gives one value per
+   * column, or one value that spans them all.
+   */
+  columns?: readonly string[];
   fontSize?: number;
   /** Field arrangement only: RTL puts labels on the right and values on the left. */
   direction?: LayoutDirection;
@@ -40,6 +46,8 @@ function fitRow(label: Text, value: Text, room: number, edge: -1 | 1): void {
   fitValue(value, room - label.width(), edge);
 }
 const PAD = 0.28;
+/** Space between columns, in font sizes. */
+const COLUMN_GAP = 1.2;
 /** The raised, ruled panel cards and code sit on. */
 const panelRect = (colors: Palette, width: number, height: number) =>
   new Rectangle({ width, height, cornerRadius: 0.1, fill: raised(colors), stroke: rule(colors), strokeWidth: 0.016 });
@@ -84,8 +92,12 @@ function place(panel: Group, at: Vec | Box, height: number, align: 'center' | 't
 export class Card extends Group {
   readonly scene: Scene;
   readonly colors: Palette;
+  /** Each row's value; for a row with a value per column, its last column's. */
   readonly values = new Map<string, Text>();
+  /** Each row's values, one per column (or one that spans them). */
+  readonly cells = new Map<string, Text[]>();
   readonly labels = new Map<string, Text>();
+  readonly columns: readonly string[];
   readonly fontSize: number;
   readonly direction: LayoutDirection;
   panel: Rectangle;
@@ -99,7 +111,9 @@ export class Card extends Group {
   private repeated: Set<string>;
   private readonly title: string | undefined;
   /** Rows in order (labels may repeat), for the description. */
-  private rows: { label: string; value: Text; labelWidth: number }[] = [];
+  private rows: { label: string; cells: Text[]; labelWidth: number }[] = [];
+  /** Room for each column's values; empty without columns. */
+  private columnRoom: number[] = [];
 
   constructor(scene: Scene, colors: Palette, rows: readonly CardRow[], options: CardOptions = {}) {
     super();
@@ -114,24 +128,38 @@ export class Card extends Group {
     // A label may repeat (a card can list parts by kind), but then it names no single row.
     const names = rows.map(([l]) => l);
     this.repeated = new Set(names.filter((l, i) => names.indexOf(l) !== i));
+    this.columns = options.columns ?? [];
+    const n = this.columns.length;
+    if (options.columns && !n) throw new Error('A card with columns needs at least one column');
+    for (const [label, ...vs] of rows)
+      if (vs.length !== 1 && vs.length !== n)
+        throw new Error(n ? `Card row ${label} has ${vs.length} values for ${n} columns: give one per column, or one to span them` : `Card row ${label} has ${vs.length} values; pass columns to show more than one`);
+    const valueText = (v: unknown) => new Text(String(v), { fontSize: size * 1.04, font: 'mono', color: colors.ink, anchor: valueAnchor });
     const labels = rows.map(([l]) => new Text(l, { fontSize: size, color: soft(colors), anchor: labelAnchor }));
-    const values = rows.map(
-      ([, v]) => new Text(String(v), { fontSize: size * 1.04, font: 'mono', color: colors.ink, anchor: valueAnchor }),
-    );
+    const cells = rows.map(([, ...vs]) => vs.map(valueText));
+    const spans = (i: number) => cells[i]!.length === 1 && n !== 1;
+    const headings = this.columns.map((c) => new Text(c, { fontSize: size, color: colors.accent, weight: 'bold', anchor: valueAnchor }));
     const titleText = options.title
       ? new Text(options.title, { fontSize: size * 1.05, color: colors.accent, weight: 'bold', anchor: labelAnchor })
       : null;
+    const gap = size * COLUMN_GAP;
+    // A column is as wide as its heading or its widest value (at least a glyph), plus the gap before it.
+    const naturalColumns = this.columns.map((_, j) =>
+      Math.max(size, headings[j]!.width(), ...cells.filter((_, i) => !spans(i)).map((c) => c[j]!.width())) + gap);
+    const across = naturalColumns.reduce((a, b) => a + b, 0);
     const at = typeof options.at === 'string' ? regionBox(options.at) : (options.at ?? [0, 0]);
     const cap = at.length === 4 ? at[2] - at[0] : Infinity;
     const natural =
       Math.max(
         titleText ? titleText.width() : 0,
-        ...rows.map((_, i) => labels[i]!.width() + values[i]!.width() + size * 2.5),
+        // Headings need a row of their own, even with one column or only spanning values.
+        n ? across - gap + size * 2.5 : 0,
+        ...rows.map((_, i) => labels[i]!.width() + size * 2.5 + (n > 1 && !spans(i) ? across - gap : cells[i]![0]!.width())),
       ) +
       2 * PAD;
     const width = Math.min(options.width ?? Math.max(3.2, natural), cap);
     const pitch = size * ROW;
-    const height = (rows.length + (titleText ? 1.15 : 0)) * pitch + 2 * PAD - size * 0.55;
+    const height = (rows.length + (n ? 1 : 0) + (titleText ? 1.15 : 0)) * pitch + 2 * PAD - size * 0.55;
     this.panel = panelRect(colors, width, height);
     this.bar = tint(emphasis(colors), width - 0.12, pitch * 0.92).setOpacity(0);
     this.add(this.panel, this.bar);
@@ -150,6 +178,22 @@ export class Card extends Group {
     this.maxValue = width - 2 * PAD - size * 1.5;
     // Room for at least a glyph's width beside its label; less than that cannot hold a row.
     if (!(this.maxValue >= size)) throw new Error(`A card ${width.toFixed(2)} wide has no room for its rows`);
+    // Labels keep their natural width and columns get the rest of the row. When that is
+    // less than the columns' natural width, each column squeezes towards a glyph and its
+    // gap, taking room from the labels only down to a quarter of the row; a card that
+    // cannot give every column that much has no room for its rows.
+    const columnLabels = Math.max(0, ...rows.map((_, i) => (n > 1 && !spans(i) ? labels[i]!.width() : 0)));
+    const avail = Math.max(this.maxValue - columnLabels, Math.min(across - gap, this.maxValue * 0.75));
+    const least = size + gap, extra = naturalColumns.reduce((a, w) => a + w - least, 0);
+    if (n && avail < n * least - gap) throw new Error(`A card ${width.toFixed(2)} wide has no room for its rows`);
+    const k = extra > 0 ? Math.min(1, (avail - (n * least - gap)) / extra) : 1;
+    // Spare width goes to the columns, evenly, so later and longer values keep room.
+    const spare = Math.max(0, avail + gap - across) / (n || 1);
+    const columnWidth = naturalColumns.map((w) => least + (w - least) * k + spare);
+    this.columnRoom = columnWidth.map((w) => w - gap);
+    // Column j's values end where the columns after it begin.
+    const columnEdge = columnWidth.map((_, j) => edge * (width / 2 - PAD - columnWidth.slice(j + 1).reduce((a, b) => a + b, 0)));
+    const columnsAcross = columnWidth.reduce((a, b) => a + b, 0) - gap;
     const points = this.panel.subpaths[0]!;
     let right = 0, bottom = 0;
     for (let i = 2; i < points.length; i += 2) {
@@ -160,37 +204,68 @@ export class Card extends Group {
       right, bottom, width: points[right]! - points[0]!,
       across: points[bottom]! - points[0]!, down: points[bottom + 1]! - points[1]!,
     };
+    let headed = !n;
     rows.forEach(([label], i) => {
+      // The headings sit just above the first row with a value per column.
+      if (!headed && !spans(i)) {
+        headings.forEach((h, j) => {
+          h.moveTo([columnEdge[j]!, y], [edge, 0]);
+          fitValue(h, this.columnRoom[j]!, edge);
+          this.add(h);
+        });
+        headed = true;
+        y -= pitch;
+      }
       const l = labels[i]!.moveTo([left, y], [-edge, 0]);
-      const v = values[i]!.moveTo([this.valueEdge, y], [edge, 0]);
-      fitRow(l, v, this.maxValue, edge);
+      const row = cells[i]!;
+      if (row.length === 1 && (n <= 1 || spans(i))) {
+        row[0]!.moveTo([this.valueEdge, y], [edge, 0]);
+        fitRow(l, row[0]!, this.maxValue, edge);
+      } else {
+        const labelRoom = this.maxValue - columnsAcross;
+        if (l.width() > labelRoom) l.scale(Math.max(labelRoom, 0) / l.width(), { aboutEdge: [-edge, 0] });
+        row.forEach((c, j) => {
+          c.moveTo([columnEdge[j]!, y], [edge, 0]);
+          fitValue(c, this.columnRoom[j]!, edge);
+        });
+      }
       this.labels.set(label, l);
-      this.values.set(label, v);
-      this.rows.push({ label, value: v, labelWidth: l.width() });
-      this.add(l, v);
+      this.values.set(label, row.at(-1)!);
+      this.cells.set(label, row);
+      this.rows.push({ label, cells: row, labelWidth: l.width() });
+      this.add(l, ...row);
       y -= pitch;
     });
+    if (!headed) {
+      // Every row spans: the headings still name the columns, under the rows.
+      headings.forEach((h, j) => {
+        h.moveTo([columnEdge[j]!, y], [edge, 0]);
+        fitValue(h, this.columnRoom[j]!, edge);
+        this.add(h);
+      });
+    }
     place(this, at, height, options.align);
   }
 
   /** The rows as a reader sees them, the lit one with its word. */
   describe(): Seen {
     const w = wordsOf(this.scene);
-    const n = w.count(this.rows.length, w.labelledValue);
-    return {
-      what: this.title ? `${w.quote(this.title)}, ${n}` : n,
-      parts: this.rows.map((r) => ({
-        name: w.pair(r.label, r.value.text),
+    // A value in a column is named by its row and its column: "Hits (LRU): 0".
+    const parts = this.rows.flatMap((r) =>
+      r.cells.map((c, j) => ({
+        name: w.pair(r.cells.length > 1 ? `${r.label} (${this.columns[j]})` : r.label, c.text),
         ...(r.label === this.lit?.label ? { mark: this.lit.as } : {}),
       })),
-    };
+    );
+    const n = w.count(parts.length, w.labelledValue);
+    return { what: this.title ? `${w.quote(this.title)}, ${n}` : n, parts };
   }
 
-  private row(label: string): Text {
+  private row(label: string): { label: string; cells: Text[]; labelWidth: number } {
     if (this.repeated.has(label)) throw new Error(`Card row ${label} is not unique: set and mark need a label that names one row`);
-    const v = this.values.get(label);
-    if (!v) throw new Error(`No card row ${label}. Rows: ${[...this.values.keys()].join(', ')}`);
-    return v;
+    const r = this.rows.find((r) => r.label === label);
+    if (!r) throw new Error(`No card row ${label}. Rows: ${[...this.values.keys()].join(', ')}`);
+    return r;
   }
 
   /** Recover both spatial axes from the panel, independently of label advance. */
@@ -201,48 +276,67 @@ export class Card extends Group {
     return { ex, ey };
   }
 
-  /** Crossfade changed values in one play; unchanged rows do not move. */
+  /**
+   * Crossfade changed values in one play; unchanged values do not move. A row with
+   * a value per column takes an array of them.
+   */
   async set(changes: Readonly<Record<string, unknown>>, { runTime = 0.45 } = {}): Promise<void> {
     const anims = [];
-    // Check every label before drawing anything, so a bad call changes nothing.
-    for (const label of Object.keys(changes)) this.row(label);
-    for (const [label, value] of Object.entries(changes)) {
-      const old = this.row(label);
-      if (old.text === String(value)) continue;
-      const edge = this.direction === 'ltr' ? 1 : -1;
-      const row = this.rows.find((r) => r.label === label)!;
-      const l = this.labels.get(label)!;
-      // Recover the card's affine basis from its nondegenerate panel.
-      // A replacement therefore follows moved, scaled or rotated panels too.
-      const { ex, ey } = this.basis();
-      const next = new Text(String(value), {
-        fontSize: this.fontSize * 1.04,
-        font: 'mono',
-        color: this.colors.ink,
-        anchor: edge === 1 ? 'end' : 'start',
-      });
-      const unchangedBasis = Math.abs(ex[0]! - 1) < 1e-5 && Math.abs(ex[1]!) < 1e-5 && Math.abs(ey[0]!) < 1e-5 && Math.abs(ey[1]! - 1) < 1e-5;
-      // Keep the existing untransformed path (and its float32 rounding) intact.
-      if (unchangedBasis) {
-        next.moveTo(old.anchorPoint(), [edge, 0]);
-        fitValue(next, this.maxValue - l.width(), edge);
-      } else {
-        fitValue(next, this.maxValue - row.labelWidth, edge);
-        next.applyAffine(ex[0]!, ex[1]!, ey[0]!, ey[1]!, 0, 0, { aboutPoint: [0, 0] });
-        const a = old.anchorPoint(), b = next.anchorPoint();
-        next.shift([a[0] - b[0], a[1] - b[1]]);
+    // Check every label and shape before drawing anything, so a bad call changes nothing.
+    const wanted = Object.entries(changes).map(([label, value]) => {
+      const row = this.row(label);
+      if (row.cells.length === 1) return { row, values: [value] };
+      if (!Array.isArray(value) || value.length !== row.cells.length)
+        throw new Error(`Card row ${label} has ${row.cells.length} columns: set it to an array of ${row.cells.length} values`);
+      return { row, values: value as unknown[] };
+    });
+    for (const { row, values } of wanted)
+      for (const [j, value] of values.entries()) {
+        const old = row.cells[j]!;
+        if (old.text === String(value)) continue;
+        const columned = row.cells.length > 1;
+        const room = columned ? this.columnRoom[j]! : this.maxValue - row.labelWidth;
+        const next = this.replacement(old, value, room, columned ? room : this.maxValue - this.labels.get(row.label)!.width());
+        this.add(next);
+        row.cells[j] = next;
+        this.values.set(row.label, row.cells.at(-1)!);
+        anims.push(
+          new FadeOut(old, { shift: [0, 0.12], runTime }),
+          new FadeIn(next, { shift: [0, 0.12], runTime }),
+        );
       }
-      // A faded card stays faded: the new value arrives at the old one's opacity.
-      next.setOpacity(old.style.opacity);
-      this.add(next);
-      this.values.set(label, next);
-      row.value = next;
-      anims.push(
-        new FadeOut(old, { shift: [0, 0.12], runTime }),
-        new FadeIn(next, { shift: [0, 0.12], runTime }),
-      );
-    }
     if (anims.length) await this.scene.play(...anims);
+  }
+
+  /**
+   * A new value drawn where `old` is. `room` is its width in card units; `roomNow`
+   * the same measured on the card as it stands, for an untransformed card.
+   */
+  private replacement(old: Text, value: unknown, room: number, roomNow: number): Text {
+    const edge = this.direction === 'ltr' ? 1 : -1;
+    // Recover the card's affine basis from its nondegenerate panel.
+    // A replacement therefore follows moved, scaled or rotated panels too.
+    const { ex, ey } = this.basis();
+    const next = new Text(String(value), {
+      fontSize: this.fontSize * 1.04,
+      font: 'mono',
+      color: this.colors.ink,
+      anchor: edge === 1 ? 'end' : 'start',
+    });
+    const unchangedBasis = Math.abs(ex[0]! - 1) < 1e-5 && Math.abs(ex[1]!) < 1e-5 && Math.abs(ey[0]!) < 1e-5 && Math.abs(ey[1]! - 1) < 1e-5;
+    // Keep the existing untransformed path (and its float32 rounding) intact.
+    if (unchangedBasis) {
+      next.moveTo(old.anchorPoint(), [edge, 0]);
+      fitValue(next, roomNow, edge);
+    } else {
+      fitValue(next, room, edge);
+      next.applyAffine(ex[0]!, ex[1]!, ey[0]!, ey[1]!, 0, 0, { aboutPoint: [0, 0] });
+      const a = old.anchorPoint(), b = next.anchorPoint();
+      next.shift([a[0] - b[0], a[1] - b[1]]);
+    }
+    // A faded card stays faded: the new value arrives at the old one's opacity.
+    next.setOpacity(old.style.opacity);
+    return next;
   }
 
   /**
@@ -250,7 +344,8 @@ export class Card extends Group {
    * resting frame. `as` is the word the description gives it (default "marked", in the scene's language).
    */
   async mark(label: string | null, { as = wordsOf(this.scene).marked, runTime = 0.4 } = {}): Promise<void> {
-    const anchor = label == null ? null : this.row(label).anchorPoint();
+    // The row's last value sits on the value edge, where the bar is measured from.
+    const anchor = label == null ? null : this.row(label).cells.at(-1)!.anchorPoint();
     let target: Rectangle | null = null;
     if (label != null && anchor) {
       const { ex, ey } = this.basis();

@@ -104,6 +104,19 @@ const englishIn = (t: string) => [...new Set(wordsIn(t).filter((w) => ENGLISH.ha
 test('page words come from a table by primary language, English when there is none', () => {
   assert.equal(chromeFor('fr').transcript, 'Transcription');
   assert.equal(chromeFor('fr-BE').next, 'Suivant');
+  // The step heading's kicker, and with a title a step bar segment's name; the rail's disclosure.
+  assert.equal(chromeFor('en').stepOf(3, 4), 'Step 3 of 4');
+  assert.equal(chromeFor('en').stepOf(3, 4, 'Title'), 'Step 3 of 4: Title');
+  assert.equal(chromeFor('fr').stepOf(3, 4), 'Étape 3 sur 4');
+  assert.equal(chromeFor('fr').stepOf(3, 4, 'Titre'), `Étape 3 sur 4${NB}: Titre`);
+  assert.equal(chromeFor('en').allSteps(4), 'All 4 steps');
+  assert.equal(chromeFor('fr').allSteps(4), 'Les 4 étapes');
+  // The footer's mark and way out of a frame (specs/player-tile.md T7); "Rayner" is a name, never translated.
+  assert.equal(chromeFor('en').madeWith, 'Made with Rayner');
+  assert.equal(chromeFor('fr').madeWith, 'Réalisé avec Rayner');
+  assert.equal(chromeFor('en').open, 'Open the explainer');
+  assert.equal(chromeFor('fr').open, 'Ouvrir l’explication');
+  for (const words of Object.values(CHROME)) assert.equal(Object.hasOwn(words, 'newTab'), false);
   assert.equal(chromeFor('de'), CHROME.en);
   assert.equal(chromeFor(), CHROME.en);
   // A tag that names an Object property is a language with no table, not that property.
@@ -392,10 +405,10 @@ test(
         await page.goto(`${server.url}/${lang}.html${query}`);
         await page.waitForSelector('[data-ready=true]');
         return page.evaluate(() => ({
-          next: document.querySelector('.controls .primary span')?.textContent,
-          earlyNext: document.querySelector('.step-transport .primary span')?.textContent,
-          earlyPrevious: document.querySelector('.step-transport button')?.getAttribute('aria-label'),
-          previous: document.querySelector('.controls button')?.getAttribute('aria-label'),
+          next: document.querySelector('.stepper .primary span')?.textContent,
+          nextLabel: document.querySelector('.stepper .primary')?.getAttribute('aria-label'),
+          previous: document.querySelector('.stepper button')?.getAttribute('aria-label'),
+          tools: document.querySelector('.stepper .tools')?.getAttribute('aria-label'),
           disclosure: document.querySelector('.described > summary')?.textContent,
           summaryLang: document.getElementById('picture-summary')?.getAttribute('lang'),
           pictureLang: document.querySelector('.described > div')?.getAttribute('lang'),
@@ -405,14 +418,15 @@ test(
           notice: document.querySelector('.notice')?.textContent,
         }));
       };
+      // Each language's scene has one step, so the reader opens at the end: Next is Start again (specs/player-guidance.md G2).
       const fr = await read('fr');
       assert.deepEqual(
         { ...fr, picture: undefined },
         {
-          next: 'Suivant',
-          earlyNext: 'Étape suivante',
-          earlyPrevious: 'Étape précédente',
+          next: 'Recommencer',
+          nextLabel: 'Recommencer à l’étape 1',
           previous: 'Étape précédente',
+          tools: 'Outils d’affichage',
           disclosure: 'Ce que montre l’image',
           summaryLang: null,
           pictureLang: null,
@@ -434,10 +448,10 @@ test(
       assert.deepEqual(
         { ...en, summary: undefined, picture: undefined, notice: undefined },
         {
-          next: 'Next',
-          earlyNext: 'Next step',
-          earlyPrevious: 'Previous step',
+          next: 'Start again',
+          nextLabel: 'Start again from step 1',
           previous: 'Previous step',
+          tools: 'View tools',
           disclosure: 'What the picture shows',
           summaryLang: null,
           pictureLang: null,

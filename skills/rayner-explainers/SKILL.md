@@ -5,7 +5,7 @@ description: Author, check and publish Rayner explainers as reader-paced HTML em
 
 # Rayner explainers
 
-An explainer is one Rayner `Scene`. The CLI builds it into a step-through HTML page. It needs no server or MCP. Start with [Your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md) for a worked cache example. Read the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) before you host a page.
+An explainer is one Rayner `Scene`. The CLI builds it into a step-through HTML page. It needs no server or MCP. Start with [Your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md) for a worked example: LRU versus MRU cache replacement, with its model tested against published examples. Read the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) before you host a page.
 
 ## Editorial gate
 
@@ -25,7 +25,7 @@ Read the first step, a countercase and the ending as a newcomer would. Can the r
 
 Commands are `rayner <command>`, or `npm run rayner -- <command>` in a checkout; `rayner --help` prints the install lines for capture and PNG output.
 
-1. `rayner init <directory>` writes a working `scene.ts`. Keep one default-exported `Scene` subclass with static `meta` (id, title, sources, and `lang` if not English) and, if a second case teaches something, static `settings`.
+1. `rayner init <directory>` writes the tutorial's LRU/MRU explainer: `scene.ts`, its model `model.ts` and the model's test `model.test.ts`. Keep one default-exported `Scene` subclass with static `meta` (id, title, sources, and `lang` if not English) and, if a second case teaches something, static `settings`.
 2. Derive every value on screen from a small model of the system, kept apart from the drawing code, and test it; the checks cannot tell whether a caption is true. See [Test the model](#test-the-model).
 3. Give each idea a step with a stable name, a title the picture can prove, a short `line` telling the reader what to notice (not repeating the title), and a caption connecting the visible evidence to its consequence. The page shows all three; the line is drawn on the picture under the title.
 4. Before you hand-roll motion, read the [engine map](https://github.com/adewale/rayner/blob/main/docs/ENGINE.md): it already has a camera that zooms without moving a point, code that morphs along its own diff (`TransformDiff`), morphs matched by text or shape, emphasis that stays, charts of the model's numbers (`Axes`), pictures rebuilt from `scene.state` (`view`), addressable code spans, and `Restore`, `TransformFromCopy` and `Succession`. [The reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md#engine-features) names an explainer that uses each.
@@ -33,9 +33,18 @@ Commands are `rayner <command>`, or `npm run rayner -- <command>` in a checkout;
 6. Design each step's resting picture, what the step leaves on screen, because the reader looks at it while reading the caption. Leave the idea there with `walk(..., { trail: true })`, `mark`, `dim`, `note`, `card.set`, `card.mark` and `code.focus`; give marks an `as` word ("rejected") when they mean something. A token that walks and vanishes leaves nothing. Say a value where it is, with `s.dimension`, `s.pin` or `s.callout`, rather than in a card beside it; keep cards for a few values that belong together (`check` reports `cardsAtRest`).
 7. Make the drawing do explanatory work, not just move. `s.draw(m, { tool: 'pen' })` draws a mobject stroke by stroke with the tool on its tip; `s.focus(target)` moves the camera close while the heading stays put; `s.carry(m, region)` preserves a subject the next step builds on, instead of clearing and redrawing it. If the end picture already tells the whole truth, show it immediately; motion earns its place by revealing order, identity or cause.
 8. `rayner preview scene.ts --watch` and `rayner shots scene.ts --case id=value`: look at every step of every case. A passing build is not a visual review.
-9. `rayner check scene.ts`. Fix failures at their cause; `out/checks/<id>/report.json` draws each resting picture roughly in text. Its `legibility.labelsUnder12PxAt390` counts labels a phone reader sees under 12 px in the step's close-up; get it to 0 in every case (a heading at `stage(this, { headingSize: 0.54 })` reads at 12 px). Making text larger so it reads at 12 px fixes the problem; changing the check, its threshold, or hiding labels so they are not counted is weakening it.
+9. `rayner check scene.ts`. Fix failures at their cause; `out/checks/<id>/report.json` draws each resting picture roughly in text. Its `legibility.labelsUnder12PxAt390` counts labels a phone reader sees under 12 px in the step's close-up; get it to 0 in every case (a heading at `stage(this, { headingSize: 0.54 })` reads at 12 px). Making text larger so it reads at 12 px fixes the problem; changing the check, its threshold, or hiding labels so they are not counted is weakening it. Its `words.caption.outliers` names captions much longer than the case's others (see [Lessons from the player](#lessons-from-the-player)).
 10. `rayner describe scene.ts --out out/<id>.json` and read each step of each case: does the caption claim only what that step's `changed` and `picture` show? Does the first step deliver on the gallery title, and does the last earn its conclusion in alternate cases? Rewrite a caption that names a value, mark or path the step does not show, or change the step so it shows it. `rayner see scene.ts <step> --case id=value` prints one step.
 11. `rayner build scene.ts --out public/<id>.html`.
+
+## Lessons from the player
+
+The player was redesigned in two passes in October 2026: a [step bar](../../specs/player-redesign.md), then [one tile](../../specs/player-tile.md), and then taught to [guide the reader](../../specs/player-guidance.md). Four lessons from that work apply to every scene.
+
+- **Each resting picture passes the crop test.** Opened from a direct link with the caption hidden, the picture still says which step it is, what it is about and which values matter. The tile passes the same test as a whole, and the catalog tests enforce it there.
+- **Keep the three roles apart, and a case's steps even.** The title is what the picture proves. The line is a short "notice this", shorter than the caption and never a second one. The caption connects the evidence to its consequence. The player gives every step the room its case's longest title, line and caption need, so one long caption leaves every other step with empty space under its words. `check` reports this as `words` in `report.json`: `caption.outliers` names the steps that set the room, and `caption.slackLines` is the empty lines they leave a median step. Shorten an outlier, or split it into two steps.
+- **Name what a reader should track with `meta.watch`, and keep it to a few keys.** Map each `this.state` key a caption talks about to the label the caption uses (`watch: { tokens: 'Tokens left' }`); each step then says what it changed of them under its caption, in the transcript and in `describe`. Leave walk records, hashes and counters out: raw state is developer data. Prefer numbers, short strings and short lists, which read briefly; `check` reports a watched key it cannot format as `watch[].unformatted`.
+- **Lay out the picture by contrast, repetition, alignment and proximity.** Make the one thing a step changed the strongest mark on screen. Give a mark the same meaning in every step. Align regions and panels to shared edges. Put each label next to what it names. The tile's own chrome was tidied by these rules; the before and after table is in [the evidence](../../docs/evidence/player-tile/README.md).
 
 ## Start from an example
 
@@ -43,6 +52,7 @@ Each explainer in [`scenes/explainers/`](https://github.com/adewale/rayner/blob/
 
 | You are explaining | Start from | It shows |
 | --- | --- | --- |
+| Two algorithms or policies on the same input | `scenes/tutorial/lru-mru` (what `rayner init` writes) | One card with a column per policy, read from the model's trace; one case that favours each policy; captions tested against the model |
 | A code change and what it does to a system | `mr-cache` | `TransformDiff` on the code, the same edit replayed on the diagram with `ops`, a setting for hit or miss |
 | Authoring feature reference | `feature-tour` | Choose a feature case: the recipe step shows the author-written API, the result step runs it. See [scope and specialized APIs](../../docs/FEATURE-TOUR.md) |
 | A protocol or request flow | `oauth-pkce` | A sequence diagram revealed message by message (`build: 'frame'`, `reveal`); a setting that adds the attacker's step |

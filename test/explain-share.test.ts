@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { sharePage, publishedPage, checkCards, clip, shareable, pngSize, CARD, CARD_TAGS } from '../tools/lib/explain-share.ts';
+import { sharePage, publishedPage, checkCards, clip, shareable, pngSize, writeEmbedFiles, CARD, CARD_TAGS } from '../tools/lib/explain-share.ts';
 import type { ShareManifest } from '../tools/lib/explain-share.ts';
 import { cardPng } from '../tools/lib/explain-shots.ts';
 import { rasterize } from '../tools/lib/explain-raster.ts';
@@ -77,19 +77,23 @@ function png(width: number, height: number) {
   return b;
 }
 const page = '<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><title>T</title><style>a{}</style></head><body><script>1</script></body></html>\n';
-async function exported(edit: { page?: (html: string) => string; share?: (html: string) => string; picture?: Buffer | null } = {}) {
+async function exported(edit: { page?: (html: string) => string; share?: (html: string) => string; picture?: Buffer | null; oembed?: string | null } = {}) {
   await rm(dir, { recursive: true, force: true });
   await mkdir(join(dir, manifest.id), { recursive: true });
   const id = (html: string) => html;
   await writeFile(join(dir, manifest.id + '.html'), (edit.page ?? id)(publishedPage(page, manifest, origin, path)));
   await writeFile(join(dir, manifest.id, 'burst.html'), (edit.share ?? id)(sharePage(manifest, manifest.steps[0]!, origin, path)));
   if (edit.picture !== null) await writeFile(join(dir, manifest.id, 'burst.png'), edit.picture ?? png(CARD.width, CARD.height));
+  if (edit.oembed !== null) await writeFile(join(dir, manifest.id + '.oembed.json'), edit.oembed ?? JSON.stringify({ version: '1.0', type: 'rich', html: '<iframe src="x"></iframe>' }));
   return (await checkCards(folder, origin, path, [manifest.id])).problems;
 }
 
 test('an exported explainer page keeps its page and adds the cover step\'s preview tags, with its own URL and title', async () => {
   const html = publishedPage(page, manifest, origin, path);
-  assert.equal(html.replace(/<meta (?:property|name)="[^"]+" content="[^"]*">\n?/g, ''), page);
+  assert.equal(html.replace(/<meta (?:property|name)="[^"]+" content="[^"]*">\n?|<link rel="alternate" type="application\/json\+oembed" [^>]*>\n?/g, ''), page);
+  // oEmbed discovery (specs/player-tile.md T6), once, naming <id>.oembed.json beside the page.
+  assert.deepEqual([...html.matchAll(/<link rel="alternate" type="application\/json\+oembed" href="([^"]*)" title="([^"]*)">/g)].map((m) => [m[1], m[2]]),
+    [['https://example.org/projects/rayner/token-bucket.oembed.json', manifest.title]]);
   assert.equal(meta(html, 'og:url'), 'https://example.org/projects/rayner/token-bucket');
   assert.equal(meta(html, 'twitter:title'), manifest.title);
   assert.equal(meta(html, 'twitter:image'), 'https://example.org/projects/rayner/token-bucket/burst.png');
@@ -114,6 +118,10 @@ test('checkCards finds a missing tag on either page, a page with no share marker
       assert.ok(problems.every((p) => p.startsWith(where + ':')), problems.join('; '));
     }
   }
+  const undiscovered = (html: string) => html.replace(/<link rel="alternate" type="application\/json\+oembed" [^>]*>/, '');
+  assert.deepEqual(await exported({ page: undiscovered }), ['token-bucket.html: 0 oEmbed links, not one to https://example.org/projects/rayner/token-bucket.oembed.json']);
+  assert.deepEqual(await exported({ oembed: null }), ['token-bucket.html: token-bucket.oembed.json is missing']);
+  assert.deepEqual(await exported({ oembed: '{"version":"1.0","type":"video"}' }), ['token-bucket.html: token-bucket.oembed.json is not a rich oEmbed 1.0 response with one iframe']);
   const unmarked = (html: string) => html.replace(/<meta name="rayner:share" content="[^"]*">/, '');
   assert.deepEqual(await exported({ page: unmarked }), ['token-bucket.html: rayner:share is not https://example.org/projects/rayner/token-bucket/']);
   const http = (html: string) => html.replaceAll('content="https://example.org/', 'content="http://example.org/');
@@ -128,6 +136,40 @@ test('checkCards finds a missing tag on either page, a page with no share marker
     'token-bucket.html: https://example.org/projects/rayner/token-bucket/burst.png is 960 × 540, not the declared 1080 × 540',
     'token-bucket/burst.html: https://example.org/projects/rayner/token-bucket/burst.png is 960 × 540, not the declared 1080 × 540',
   ]);
+});
+
+// specs/player-tile.md T6: beside each exported page its known heights, and with an origin its oEmbed response.
+test('site:export writes <id>.embed.json beside each page, and <id>.oembed.json only with an origin: a fixed 640 px rich response whose html is one iframe', async () => {
+  const built = join(folder, 'built'), size = { schema: 1, aspect: '16/9', heights: { '390': 1100, '640': 1012, '900': 1180 } } as const;
+  await mkdir(join(built, manifest.id), { recursive: true });
+  await writeFile(join(built, manifest.id, 'embed.json'), JSON.stringify(size));
+  await writeFile(join(built, manifest.id + '.png'), png(960, 540));
+  for (const withOrigin of [false, true]) {
+    const target = join(folder, withOrigin ? 'with-origin' : 'without-origin');
+    await mkdir(target, { recursive: true });
+    await writeEmbedFiles(target, built, manifest, withOrigin ? origin : undefined, path);
+    assert.deepEqual(JSON.parse(await readFile(join(target, manifest.id + '.embed.json'), 'utf8')), size);
+    const response = await readFile(join(target, manifest.id + '.oembed.json'), 'utf8').then((t) => JSON.parse(t), () => undefined);
+    if (!withOrigin) {
+      assert.equal(response, undefined, 'no oEmbed response without an origin');
+      continue;
+    }
+    const { html, ...rest } = response;
+    assert.deepEqual(rest, {
+      version: '1.0', type: 'rich', provider_name: 'Rayner', provider_url: 'https://github.com/adewale/rayner', title: manifest.title,
+      thumbnail_url: 'https://example.org/projects/rayner/token-bucket.png', thumbnail_width: 960, thumbnail_height: 540,
+      width: 640, height: 1012, cache_age: 86400,
+    });
+    // The html parses to exactly one iframe with the snippet's attributes.
+    const tags = [...(html as string).matchAll(/<(\w+)([^>]*)>/g)];
+    assert.deepEqual(tags.map((t) => t[1]), ['iframe']);
+    assert.ok((html as string).endsWith('</iframe>'));
+    const attrs = Object.fromEntries([...tags[0]![2]!.matchAll(/ ([a-z]+)="([^"]*)"/g)].map((a) => [a[1], a[2]!.replaceAll('&amp;', '&')]));
+    assert.deepEqual(attrs, {
+      src: 'https://example.org/projects/rayner/token-bucket.html?theme=light', title: manifest.title, width: '640', height: '1012',
+      style: 'border:0;border-radius:12px;display:block;max-width:100%', allow: 'fullscreen', loading: 'lazy',
+    });
+  }
 });
 
 test('a preview picture is the 16:9 still on a 2:1 canvas of the stage\'s paper colour', async () => {

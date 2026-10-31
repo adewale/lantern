@@ -47,7 +47,7 @@ test(
           });
           w.noteObserver.observe(stage, { subtree: true, childList: true, attributes: true });
         });
-        await page.locator('.step-transport button[aria-label="Next step"]').click();
+        await page.locator('.stepper button[aria-label="Next step"]').click();
         await settled('omega');
         assert.equal(
           await page.evaluate(() => {
@@ -60,10 +60,16 @@ test(
         );
 
         assert.equal(
-          await page.locator('.step-transport button[aria-label="Next step"]').isDisabled(),
-          true,
-          'main ending does not silently enter notes',
+          await page.locator('.stepper .primary').getAttribute('aria-label'),
+          'Start again from step 1',
+          'the main ending offers a restart instead of silently entering notes',
         );
+        await page.locator('.stepper .primary').click();
+        await settled('alpha');
+        await page.locator('.stepper .primary').click();
+        await settled('omega');
+        const closedRail = page.locator('details.rail:not([open])>summary');
+        if (await closedRail.count()) await closedRail.click();
         await page.locator('details.supporting>summary').click();
         await page.locator('button[data-step="note"]').click();
         await settled('note');
@@ -76,7 +82,7 @@ test(
         await settled('omega');
         await page.goto(server.url + '/index.html?step=note');
         await settled('note');
-        await page.locator('.step-transport button[aria-label="Next step"]').click();
+        await page.locator('.stepper button[aria-label="Next step"]').click();
         await settled('omega');
         await page.goto(server.url + '/index.html?step=source');
         await settled('source');
@@ -94,7 +100,7 @@ test(
           'an all-note scene keeps a complete reachable path',
         );
         assert.equal(await page.locator('details.supporting').isVisible(), false);
-        await page.locator('.step-transport button[aria-label="Next step"]').click();
+        await page.locator('.stepper button[aria-label="Next step"]').click();
         await settled('note');
         assert.equal(
           await page.getByRole('button', { name: 'Back to the explanation', exact: true }).isVisible(),

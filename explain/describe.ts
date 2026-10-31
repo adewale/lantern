@@ -2,12 +2,14 @@
 // the state the scene recorded, what each step changed and its resting picture drawn as text.
 // One definition behind `rayner describe` and anything an agent imports; it runs the scene in
 // Node or a browser, with no Chromium, given the diagrams' pinned snapshots.
-import { renderAt, renderText, traceScene } from '../src/index.ts';
+import { renderAt, renderText } from '../src/index.ts';
+import { traceRun } from '../src/trace.ts';
 import type { Scene, SceneState, Sink } from '../src/index.ts';
 import { variantsOf, withSettings, caseName } from './settings.ts';
 import type { ExplainerClass, Setting, Settings } from './settings.ts';
-import { pictureSummary, restingTime, stepWords } from './trace.ts';
-import { isHeading } from './stage.ts';
+import { pictureSummary, restingTime, stepWords, watchedChanges } from './trace.ts';
+import type { WatchedChange } from './trace.ts';
+import { isHeading, paperOf } from './stage.ts';
 import { bindSnapshots } from './index.ts';
 import type { SnapshotStore, DiagramResolver } from '../integrations/agentic-mermaid/snapshot.ts';
 
@@ -26,6 +28,11 @@ export interface StepDescription {
   state: SceneState;
   /** Each state value the step changed, before and after; a side is left out when the value was not set. */
   changed: Record<string, { before?: unknown; after?: unknown }>;
+  /**
+   * What the step changed of the state the scene names for readers (`meta.watch`), formatted as the
+   * player shows it, at most four; present only when the scene declares `watch`.
+   */
+  watched?: WatchedChange[];
   /** The resting picture in words, as the page's description gives it; empty if the scene gives none. */
   picture: string;
   /** The resting picture drawn as text (heading left out), when `drawings` asks for this step. */
@@ -37,6 +44,8 @@ export interface CaseDescription {
   /** "Label: option · Label: option"; empty for a scene without settings. */
   name: string;
   duration: number;
+  /** The stage's paper colour when the case ends (its palette's `paper`); absent for a scene without a stage. */
+  paper?: string;
   steps: StepDescription[];
 }
 export interface ExplainerDescription {
@@ -84,7 +93,8 @@ export async function describeExplainer(Scene: ExplainerClass, options: Describe
 export async function describeCase(Scene: ExplainerClass, values: Settings, options: DescribeOptions = {}): Promise<CaseDescription> {
   const Source = options.snapshots ? bindSnapshots(Scene, options.snapshots) : Scene,
     Bound = withSettings(Source, values),
-    trace = await traceScene(Bound),
+    { trace, scene } = await traceRun(Bound),
+    paper = paperOf(scene),
     draw = options.drawings ?? true,
     steps: StepDescription[] = [];
   for (const s of trace.steps) {
@@ -105,12 +115,13 @@ export async function describeCase(Scene: ExplainerClass, values: Settings, opti
       ...(s.hold == null ? {} : { hold: s.hold }),
       state: after,
       changed,
+      ...(Scene.meta?.watch ? { watched: watchedChanges(s, Scene.meta.watch, Scene.meta.lang) } : {}),
       picture: pictureSummary(s.after),
     };
     if (draw === true || draw === s.step) d.drawing = await drawing(Bound, restingTime(s, trace.fps));
     steps.push(d);
   }
-  return { values, name: caseName(Scene, values), duration: trace.duration, steps };
+  return { values, name: caseName(Scene, values), duration: trace.duration, ...(paper ? { paper } : {}), steps };
 }
 
 /** The picture at `t` as text, without the heading that names the step, as `rayner check` draws it. */

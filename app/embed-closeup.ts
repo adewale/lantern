@@ -18,7 +18,7 @@
  * (`scene.frame`, which `d.focus()` moves). So a layout is recorded as the camera
  * shows it: in the 16 × 9 units of the camera's view, centred on the origin, with
  * label sizes multiplied by the camera's zoom. At home those are stage units. A
- * close-up's zoom then multiplies the camera's, and Fit is the author's frame.
+ * close-up's zoom then multiplies the camera's, and Whole picture is the author's frame.
  */
 import type { Box, Mobject, Scene, SceneClass, Sink } from '../src/index.ts';
 import { labelOf } from '../explain/diagrams.ts';
