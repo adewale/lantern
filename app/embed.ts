@@ -36,7 +36,8 @@ function setIcon(b: HTMLButtonElement, label: string, name: IconName) {
   b.querySelector('svg')!.replaceWith(icon(name));
 }
 
-export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snapshots: SnapshotStore): Promise<void> {
+export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snapshots: SnapshotStore,
+  audio?: (stage: HTMLElement, frame: HTMLElement) => {set(value: unknown): void; stop(): void}): Promise<void> {
   const params = new URLSearchParams(location.search);
   document.documentElement.dataset.theme = ['light', 'dark'].includes(params.get('theme') ?? '')
     ? params.get('theme')!
@@ -203,6 +204,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   overview.hidden = true;
   overview.append(map);
   frame.append(stage);
+  const sound=audio?.(stage,frame);
   // Keep view navigation separate from step navigation, after the story's Next.
   const views = el('div', undefined, 'view-controls'),
     viewCount = el('span'),
@@ -412,6 +414,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     return narrow() && follow ? tour[0]! : null;
   }
   function settle(step: Trace['steps'][number], target: Zoom | null) {
+    sound?.set(step.meta.audio);
     if (target) zoom.to(target);
     else zoom.apply();
     root.classList.remove('loading');
@@ -420,6 +423,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   }
   async function show(index: number, push = true) {
     if (!trace) return; // Controls exist before the first case has loaded.
+    sound?.stop();
     if (push) revealStage();
     const gen = ++generation;
     playing = false;
@@ -562,6 +566,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   }
   async function animate(force = false) {
     if (!trace) return;
+    sound?.stop();
     if (playing && !force) return show(selected, false);
     if (reduced()) {
       notice.textContent = t.reducedMotion;
@@ -596,6 +601,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
    * `step` may be a function, read when the case arrives.
    */
   async function load(request: Settings, step?: string | (() => string | undefined), push = false) {
+    sound?.stop();
     const token = ++loads;
     root.classList.add('loading');
     let next: Settings,

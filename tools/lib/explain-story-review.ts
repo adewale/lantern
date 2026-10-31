@@ -20,6 +20,60 @@ export interface StoryClaim {
 // These expectations are written from the captions, independently of the
 // close-up planner. Automatic helper-emphasis checks below cover every step.
 export const STORY_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = {
+  'python-dict': [
+    {step: 'question', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-entries'}, {key: 'dict-result'}]},
+    {step: 'hash', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-hashes'}]},
+    {step: 'collision', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-entries'}, {text: 'd[16]'}]},
+    {step: 'lookup', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-entries'}, {key: 'dict-result'}]},
+    {step: 'broken', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-entries'}, {key: 'dict-result'}]},
+    {step: 'marker', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-entries'}, {key: 'dict-result'}]},
+    {step: 'missing', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-result'}]},
+  ],
+  'bloom-filter': [
+    {step: 'question', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
+    {step: 'insert', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
+    {step: 'shared', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
+    {step: 'absent', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
+    {step: 'present', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
+    {step: 'false-positive', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
+    {step: 'pipeline', opening: true, targets: [{key: 'bloom-pipeline'}, {key: 'bloom-checks'}]},
+  ],
+  'git-branches': [
+    {step: 'start', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
+    {step: 'branch', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
+    {step: 'feature', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
+    {step: 'switch', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
+    {step: 'main', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
+    {step: 'merge', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
+    {step: 'countercase', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
+  ],
+  'monty-hall': [
+    {step: 'choice', opening: true, targets: [{key: 'monty-doors'}, {key: 'monty-rule'}, {key: 'monty-result'}]},
+    {step: 'host', opening: true, targets: [{key: 'monty-doors'}, {key: 'monty-rule'}, {key: 'monty-result'}]},
+    {step: 'reveal', opening: true, targets: [{key: 'monty-doors'}, {key: 'monty-rule'}, {key: 'monty-result'}]},
+    {step: 'worlds', opening: true, targets: [{key: 'monty-worlds'}]},
+    {step: 'odds', opening: true, targets: [{key: 'monty-stay'}, {key: 'monty-switch'}]},
+    {step: 'many', opening: true, targets: [{key: 'monty-stay'}, {key: 'monty-switch'}]},
+    {step: 'rules', opening: true, targets: [{key: 'monty-rules'}]},
+  ],
+  'birthday-paradox': [
+    {step: 'question', opening: true, targets: [{key: 'birthday-people'}]},
+    {step: 'pairs', opening: true, targets: [{key: 'birthday-growth'}]},
+    {step: 'count', opening: true, targets: [{key: 'birthday-n'}, {key: 'birthday-pairs'}]},
+    {step: 'avoid', opening: true, targets: [{key: 'birthday-factors'}]},
+    {step: 'chance', opening: true, targets: [{key: 'birthday-no'}, {key: 'birthday-yes'}]},
+    {step: 'sample', opening: true, targets: [{key: 'birthday-trials'}, {key: 'birthday-observed'}, {key: 'birthday-theory'}]},
+    {step: 'questions', opening: true, targets: [{key: 'birthday-questions'}]},
+  ],
+  'melody-rhythm': [
+    {step: 'listen', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
+    {step: 'pulse', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
+    {step: 'rhythm', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
+    {step: 'contour', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
+    {step: 'timing', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
+    {step: 'bar', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
+    {step: 'phrase', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
+  ],
   'oauth-pkce': [
     {
       step: 'attack',

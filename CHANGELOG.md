@@ -4,7 +4,10 @@
 
 - Open the gallery with a periodic-table explainer: follow sodium, chlorine, iron, copper or helium from atomic number to group, with configurations checked against NIST's tabulated ground states for elements 1–108.
 - Show one numbered mark per step beside Next, so readers see where they are and how many steps remain without scrolling to the step list.
-- Narrow a standalone page's column on short windows, down to 912px, so the picture and its caption fit on one laptop screen.
+- Size standalone players for short windows while preserving readable count labels.
+- Add seven-step explanations of Python dictionary deletion markers, insert-only Bloom filters, Git merges, Monty Hall host rules, the birthday paradox, and melody with rhythm. Each uses a separately tested model and compares an expected result with a case that challenges it.
+- Add optional, user-triggered score audio with Play A/B, Pulse, Stop and a synchronized piano-roll playhead. Notes are synthesized locally; ordinary pages omit the audio module.
+
 - Add opt-in natural-width diagram lettering. Capture measures the requested font before layout, so labels retain their proportions; existing diagrams keep their fitted widths.
 - Upgrade build-time Agentic Mermaid to 0.5.1 for its supported font-measurement hook and recapture the catalog with that renderer.
 - Add explicit LTR/RTL card fields and logical `start`/`end` stage regions. Text shaping, code, numbers and authored Mermaid flow keep their own order.

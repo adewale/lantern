@@ -1,6 +1,7 @@
 export { stage } from './stage.ts';
 export type { StageOptions, Stage, StageRegion, Describe } from './stage.ts';
 export type { LayoutDirection } from './layout-direction.ts';
+export type {AudioClip, ScoreNote, StepAudio} from './audio.ts';
 export { Diagram } from './diagrams.ts';
 export type { ShowOptions, NoteSide } from './diagrams.ts';
 export type { Card, CodeBlock, CardRow, CardOptions, CodeOptions } from './panels.ts';
