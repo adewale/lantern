@@ -229,6 +229,7 @@ export default class SeasonsExplainer extends Scene {
         fill: EARTH,
         stroke: 'none',
       }).moveTo(center);
+      ball.key = `${month.toLowerCase()}-globe`;
       const half: Vec[] = [];
       for (let i = 0; i <= 40; i++) {
         const th = -Math.PI / 2 + (Math.PI * i) / 40;
@@ -245,10 +246,12 @@ export default class SeasonsExplainer extends Scene {
         [center[0] + tip * v.a[0], center[1] + tip * v.a[1]],
         { stroke: AXIS, strokeWidth: 0.035 },
       );
+      axis.key = `${month.toLowerCase()}-axis`;
       const north = label('N', [center[0] + (tip + 0.18) * v.a[0], center[1] + (tip + 0.18) * v.a[1]], {
         size: 0.22,
         color: AXIS,
       });
+      north.key = `${month.toLowerCase()}-north`;
       const equator = new Line(v.at(-1, 0), v.at(1, 0), {
         stroke: s.palette.muted,
         strokeWidth: 0.02,
@@ -259,10 +262,12 @@ export default class SeasonsExplainer extends Scene {
         stroke: SUN,
         strokeWidth: 0.07,
       });
+      dayLine.key = `${month.toLowerCase()}-daylight-latitude`;
       const nightLine = new Line(ch.night[0], ch.night[1], {
         stroke: DIMLINE,
         strokeWidth: 0.05,
       });
+      nightLine.key = `${month.toLowerCase()}-night-latitude`;
       const p = v.noon(place.lat);
       const zen: Vec = [(p[0] - center[0]) / R, (p[1] - center[1]) / R];
       const tangent: Vec = [-zen[1], zen[0]];
@@ -271,9 +276,14 @@ export default class SeasonsExplainer extends Scene {
         [p[0] + 0.55 * tangent[0], p[1] + 0.55 * tangent[1]],
         { stroke: ink, strokeWidth: 0.025 },
       );
+      horizon.key = `${month.toLowerCase()}-horizon`;
       const dot = new Dot({ radius: 0.09, color: PLACE }).moveTo(p);
-      const drawing = new Group(ball, night, equator, nightLine, dayLine, axis, north, horizon, dot);
+      dot.key = `${month.toLowerCase()}-place`;
+      const latitude = new Group(nightLine, dayLine);
+      latitude.key = `${month.toLowerCase()}-latitude`;
+      const drawing = new Group(ball, night, equator, latitude, axis, north, horizon, dot);
       const ray = new Group();
+      ray.key = `${month.toLowerCase()}-noon-ray`;
       if (result.altitude > 0) {
         // The noon ray arrives parallel to the Sun direction; its angle to the
         // local horizon is the model's altitude (90° − |latitude − declination|).
@@ -330,8 +340,10 @@ export default class SeasonsExplainer extends Scene {
           ? `${month}’s noon Sun ray, ${degrees(result.altitude)} above ${place.name}’s horizon`
           : `${month}’s noon Sun ray, stopped by the globe: below ${place.name}’s horizon`;
       return {
+        month,
         view: v,
         drawing,
+        latitude,
         ray,
         dayLine,
         nightLine,
@@ -350,14 +362,22 @@ export default class SeasonsExplainer extends Scene {
      * place's circle to just under the globe. The angle already labels a noon Sun above the
      * horizon; one below it, which has no angle, is said here too.
      */
-    const daylightCallout = (S: ReturnType<typeof season>, r: { altitude: number; daylight: number }) => {
+    const daylightCallout = async (S: ReturnType<typeof season>, r: { altitude: number; daylight: number }) => {
       const [a, b] = S.daySpan;
       const mid: Vec = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-      const text =
-        r.altitude > 0
-          ? `${hours(r.daylight)} of daylight`
-          : `${hours(r.daylight)} of daylight; noon Sun ${degrees(r.altitude)}, below the horizon`;
-      return s.callout(mid, text, { side: 'below', gap: mid[1] - (CY - R - 0.3), color: SUN, size: 0.24 });
+      const callout = await s.callout(mid, `${hours(r.daylight)} of daylight`, {
+        side: 'below', gap: mid[1] - (CY - R - 0.3), color: SUN, size: 0.24,
+      });
+      callout.key = `${S.month.toLowerCase()}-daylight-callout`;
+      if (r.altitude <= 0) {
+        const value = callout.children.at(-1)!;
+        const below = label(`Noon Sun ${degrees(r.altitude)}, below the horizon`, [value.center()[0], value.center()[1] - 0.4], {
+          size: 0.24, color: SUN,
+        });
+        callout.add(below);
+        await this.play(new FadeIn(below, { runTime: 0.2 }));
+      }
+      return callout;
     };
 
     await this.step('june', {
@@ -401,6 +421,7 @@ export default class SeasonsExplainer extends Scene {
       caption: `Zoomed in on the red dot. The white line is ${place.name}’s horizon, and noon sunlight arrives parallel to the Sun’s direction. The angle between them is 90° minus the gap between the latitude, ${exactly(place.lat)}, and the latitude where the June Sun is overhead, ${exactly(TILT)}.`,
     });
     const notes = new Group();
+    notes.key = 'noon-notes';
     // The noon altitude as the reader can check it: operands as given, to the hundredth, and
     // their result, exact to the hundredth too, which the heading rounds to a tenth.
     const formula = `90° − |${exactly(place.lat)} − ${exactly(TILT)}| = ${exactly(june.altitude)}`;
@@ -467,6 +488,12 @@ export default class SeasonsExplainer extends Scene {
     await s.enter(D.drawing, { describe: D.drawn });
     await s.enter(D.ray, { describe: D.noon });
     const decSaid = await daylightCallout(D, december);
+    const monthsSaid = new Group(
+      label('June', [JUNE_C[0] + R, 2.65], { size: 0.24, color: ink, edge: [1, 0] }),
+      label('December', [DEC_C[0] + R, 2.65], { size: 0.24, color: ink, edge: [1, 0] }),
+    );
+    monthsSaid.key = 'solstice-months';
+    await s.enter(monthsSaid, { describe: 'June on the right; December on the left' });
     this.state.december = december;
 
     // ------------------------------------------------------------ latitude
@@ -480,6 +507,7 @@ export default class SeasonsExplainer extends Scene {
     await this.play(...[juneSaid, decSaid].map((c) => new FadeOut(c, { runTime: 0.3 })));
     const others = ORDER.filter((k) => k !== key);
     const extra = new Group();
+    extra.key = 'latitude-circles';
     for (const [center, side] of [
       [JUNE_C, -1],
       [DEC_C, 1],
@@ -512,6 +540,11 @@ export default class SeasonsExplainer extends Scene {
           );
         }
     }
+    await this.play(
+      J.latitude.animate.setStyle({ strokeWidth: 0.09 }),
+      D.latitude.animate.setStyle({ strokeWidth: 0.09 }),
+      { runTime: 0.3 },
+    );
     await s.enter(extra, {
       describe: 'The other places’ latitude circles on both views, yellow where lit',
     });
@@ -523,6 +556,8 @@ export default class SeasonsExplainer extends Scene {
     // Four places in two months: a table, one under each globe.
     const juneTable = await table('June', TILT, [1.7, -4.2, 7.3, -1.05]);
     const decTable = await table('December', -TILT, [-7.3, -4.2, -1.7, -1.05]);
+    juneTable.key = 'june-daylight-table';
+    decTable.key = 'december-daylight-table';
     await juneTable.mark(place.name);
     await decTable.mark(place.name);
 
@@ -591,6 +626,7 @@ export default class SeasonsExplainer extends Scene {
         (longest - shortest < 0.05 ? `flat at ${hours(longest)}` : `from ${hours(shortest)} to ${hours(longest)}`) +
         (polarDay ? `, flat at 24 h for ${polarDay} days and at 0 h for ${polarNight}` : ''),
     });
+    drawnCurve.key = 'daylight-curve';
     // Solstices and equinoxes: a guide, a name, and the model's day length there.
     const guides = new Group(),
       marks = new Group(),
@@ -688,6 +724,7 @@ export default class SeasonsExplainer extends Scene {
       axes.verticalLine(0.5, { stroke: SUN, strokeWidth: 0.025, dashArray: '0.1 0.08' }),
       new Dot({ radius: 0.09, color: SUN }).moveTo(jan),
     );
+    marker.children[1]!.key = 'january-point';
     await s.enter(marker, { describe: `15 January marked on the chart at ${hours(year[0]!)}` });
     // The same model at the mirrored latitude: the other hemisphere on the same days.
     const end = (lat: number) => axes.c2p(12, daylightAt(lat)(12));
@@ -700,6 +737,7 @@ export default class SeasonsExplainer extends Scene {
     const second = new Group(own);
     if (place.lat !== 0) {
       const other = axes.plot(daylightAt(-place.lat), { samples: 145, color: MIRROR, strokeWidth: 0.035 });
+      other.key = 'mirror-daylight-curve';
       second.add(
         other,
         new Dot({ radius: 0.09, color: MIRROR }).moveTo(axes.c2p(0.5, mirror[0]!)),
@@ -709,6 +747,7 @@ export default class SeasonsExplainer extends Scene {
           edge: [-1, 0],
         }),
       );
+      second.children[2]!.key = 'mirror-january-point';
       s.keep(own, ...second.children.slice(1), {
         describe: `The same model at latitude ${degrees(-place.lat)}, ${place.name}’s curve turned upside down: ${hours(mirror[0]!)} on 15 January`,
       });
@@ -720,6 +759,7 @@ export default class SeasonsExplainer extends Scene {
     }
     // Exaggerated eccentric orbit: Sun off-centre, Earth nearest at one end.
     const sketch = new Group();
+    sketch.key = 'distance-orbit';
     {
       const oc: Vec = [5.1, 1.35],
         orx = 1.9,
@@ -777,6 +817,13 @@ export default class SeasonsExplainer extends Scene {
             tag(0.5, year[0]!, `15 January: ${hours(year[0]!)}`, CURVE),
             tag(6.5, year[6]!, `15 July: ${hours(year[6]!)}`, CURVE),
           ];
+    janSaid[0]!.key = 'january-value';
+    janSaid[1]!.key = place.lat === 0 ? 'july-value' : 'mirror-january-value';
+    if (place.lat === 0) {
+      const julyPoint = new Dot({ radius: 0.09, color: CURVE }).moveTo(axes.c2p(6.5, year[6]!));
+      julyPoint.key = 'july-point';
+      janSaid.push(julyPoint);
+    }
     await s.enter(...janSaid, {
       describe:
         place.lat !== 0
