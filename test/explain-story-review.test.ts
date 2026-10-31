@@ -4,12 +4,13 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fc, params } from './lib/pbt.ts';
-import { covered, storyFrames, inspectStoryFrame, reviewStoryVariant } from '../tools/lib/explain-story-review.ts';
+import { covered, storyFrames, inspectStoryFrame, reviewStoryVariant, narrowOpeningPlan } from '../tools/lib/explain-story-review.ts';
 import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
 import { serve } from '../tools/lib/explain-serve.ts';
 import { launch } from '../tools/lib/browser.ts';
-import { Scene, Text, Line, Group, Rectangle, VMobject, renderElements, toSvgString } from '../src/index.ts';
+import { Scene, Text, Line, Group, Rectangle, VMobject, renderElements, toSvgString, traceScene } from '../src/index.ts';
+import { stage } from '../explain/index.ts';
 import { emphasises } from '../explain/look.ts';
 
 test('local review server rejects an occupied port so startup failure can be reported', async () => {
@@ -614,6 +615,130 @@ test(
       await browser.close();
       server!?.close();
       await rm(dir, { recursive: true, force: true });
+    }
+  },
+);
+
+test('narrow-opening plans keep a nonopening text claim separate from a same-named opening key', async () => {
+  class CollidingNames extends Scene {
+    override async construct() {
+      const s = stage(this); await this.step('comparison');
+      const context = new Text('Same', {fontSize: .7}).moveTo([-2, 0]);
+      const subject = new Text('Result', {fontSize: .7}).moveTo([2, 0]); subject.key = 'Same';
+      await s.enter(context, subject, {describe: 'Context and result'});
+    }
+  }
+  const variant = {Scene: CollidingNames, values: {}, trace: await traceScene(CollidingNames)};
+  const claims = [
+    {step: 'comparison', targets: [{text: 'Same'}]},
+    {step: 'comparison', opening: true, targets: [{key: 'Same'}]},
+  ];
+  assert.deepEqual(await narrowOpeningPlan(variant, claims),
+    [{step: 'comparison', reviewed: true, targets: ['Same'], labels: ['Result']}]);
+});
+
+test('story label metrics preserve the smallest native em dimension under rotations and nonuniform scaling', async () => {
+  await fc.assert(fc.asyncProperty(fc.integer({min: 1, max: 32}), fc.integer({min: 1, max: 32}),
+    fc.constantFrom(0, Math.PI / 2, -Math.PI / 4), async (x, y, angle) => {
+      class Turned extends Scene {
+        override async construct() {
+          const s = stage(this); await this.step('turned');
+          const text = new Text('1', {fontSize: .6}).stretch(x / 4, 0).stretch(y / 4, 1).rotate(angle);
+          text.key = 'turned'; await s.enter(text, {describe: 'A transformed number'});
+        }
+      }
+      const frame = (await storyFrames(Turned, [{step: 'turned', opening: true, targets: [{key: 'turned'}]}])).get('turned')!;
+      assert.equal(frame.labels.length, 1);
+      assert.ok(Math.abs(frame.labels[0]!.size - .6 * Math.min(x / 4, y / 4)) < 1e-6);
+    }), params(50, {examples: [[16, 1, 0], [16, 1, Math.PI / 2], [1, 16, -Math.PI / 4]]}));
+});
+
+test(
+  'main opening review catches 320px-only clipping and CSS-shrunk labels while preserving explicit dim subjects',
+  { skip: !process.env.EXPLAIN_BROWSER && 'set EXPLAIN_BROWSER=1 for minimum-width opening checks' },
+  async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'rayner-narrow-story-'));
+    const browser = await launch();
+    let server: Awaited<ReturnType<typeof serve>> | undefined;
+    try {
+      await writeFile(join(dir, 'scene.ts'), `import{Scene,Text,Group}from'rayner';import{stage,settingsOf}from'rayner/explain';
+export default class Narrow extends Scene{static meta={id:'narrow',title:'Width-sensitive comparison'};static settings=[{id:'spacing',label:'Spacing',default:'compact',options:[{value:'compact',label:'Compact'},{value:'wide',label:'Wide'},{value:'all-detail',label:'All detail fallback'}]}];async construct(){
+const s=stage(this);await this.step('comparison',{detail:settingsOf(this).spacing==='all-detail',caption:'Keep both values together.'});const x=settingsOf(this).spacing==='wide'?6.5:3;
+const left=new Text('Before 1',{fontSize:.6}).moveTo([-x,0]),right=new Text('After 2',{fontSize:.6}).moveTo([x,0]);left.key='left';right.key='right';const g=new Group(left,right);s.reading(g);await s.enter(g,{describe:'Before one, after two'});
+await this.step('reference',{detail:true,caption:'Reference implementation value.'});await s.clear();const r=new Text('Reference',{fontSize:.2});r.key='reference';await s.enter(r,{describe:'Reference value'});
+}}`);
+      const project = await collectProject(dir, {write: false});
+      await buildExplainer(project, join(dir, 'narrow.html'));
+      server = await serve(dir, 0, 'narrow.html');
+      const url = server.url + '/narrow.html', compact = project.variants[0]!, wide = project.variants[1]!;
+      assert.deepEqual(project.variants.map(v => v.values.spacing), ['compact', 'wide', 'all-detail']);
+      const claims = [
+        {step: 'comparison', opening: true, targets: [{key: 'left'}, {key: 'right'}]},
+        {step: 'reference', targets: [{key: 'reference'}]},
+      ];
+      const page = await browser.newPage();
+      const mixedPlan = await narrowOpeningPlan(compact, claims);
+      assert.deepEqual(mixedPlan.find(p => p.step === 'reference'), {step: 'reference', reviewed: false, reason: 'detail-step'});
+      const allDetail = project.variants[2]!;
+      assert.equal((await narrowOpeningPlan(allDetail, claims)).find(p => p.step === 'comparison')!.reviewed, true,
+        'all-detail fallback has a main reading path and cannot silently skip its opening claims');
+      const results = await reviewStoryVariant(page, url, compact, claims);
+      assert.equal(results.length, 4, 'the existing two-width/all-step matrix remains intact');
+      const fallback = await reviewStoryVariant(page, url, allDetail, claims);
+      assert.ok(fallback.find(r => r.step === 'comparison' && r.width === 390)!.openingAt320!.reviewed, 'actual all-detail reader opening is reviewed at 320px');
+      const opening = results.find(r => r.step === 'comparison' && r.width === 390)!.openingAt320!;
+      assert.ok(opening.reviewed);
+      assert.deepEqual(opening.targets, ['left', 'right']);
+      assert.ok(opening.minimumLabelPx! >= 12 - 1e-6);
+      assert.deepEqual(results.find(r => r.step === 'reference' && r.width === 390)!.openingAt320,
+        {reviewed: false, reason: 'detail-step'});
+
+      // Establish the wide fixture's positive control at the legacy phone width:
+      // the independently named paths really are complete and readable there.
+      await page.setViewportSize({width: 390, height: 844});
+      await page.goto(url + '?spacing=wide&step=comparison');
+      await page.waitForFunction(() => (window as unknown as {raynerReviewStep: string}).raynerReviewStep === 'comparison');
+      await page.locator('.leaving').waitFor({state: 'detached'});
+      const frame = (await storyFrames(wide.Scene, claims)).get('comparison')!, seen = await inspectStoryFrame(page, frame);
+      assert.equal(frame.targets.length, 2);
+      for (const target of frame.targets) for (const index of target.indices) {
+        const ink = seen.ink.find(ink => ink.index === index)!;
+        assert.ok(ink.visible && ink.complete && covered(ink.box, [seen.viewport]));
+      }
+      for (const label of frame.labels) assert.ok(label.size * Math.min(...label.indices.map(index => seen.ink.find(ink => ink.index === index)!.scale)) >= 12 - 1e-6);
+      await assert.rejects(reviewStoryVariant(page, url, wide, claims), /comparison at 320px: .*missing from the opening/);
+
+      const compactFrame = (await storyFrames(compact.Scene, claims)).get('comparison')!;
+      assert.deepEqual(compactFrame.labels.map(label => label.text), ['Before 1', 'After 2'], 'only existing heading classification excludes the chrome');
+      const index = compactFrame.targets.find(t => t.name === 'left')!.indices[0]!;
+      const dimmed = await browser.newPage();
+      await dimmed.addInitScript(index => document.addEventListener('rayner:step', () => {
+        if (innerWidth !== 320) return;
+        const svg = document.querySelector('.stage svg:not(.leaving)'); if (!svg) return;
+        const paths = [...svg.children].filter(e => e.tagName.toLowerCase() !== 'defs');
+        (paths[index] as SVGElement).style.opacity = '0.2';
+      }), index);
+      const dimmedResults = await reviewStoryVariant(dimmed, url, compact, claims);
+      assert.equal(dimmedResults.length, 4, 'explicit dimmed subjects still count and must reach the reading size');
+      await dimmed.close();
+      for (const [property, value, error] of [
+        ['transform', 'scale(0.5)', /Before 1 reads at .*below 12px/],
+        ['transform', 'scaleY(0.3)', /Before 1 reads at .*below 12px/],
+        ['transform', 'matrix(1,0,1,0.001,0,0)', /Before 1 reads at .*below 12px/],
+      ] as const) {
+        const poisoned = await browser.newPage();
+        await poisoned.addInitScript(({index, property, value}) => document.addEventListener('rayner:step', () => {
+          if (innerWidth !== 320) return;
+          const svg = document.querySelector('.stage svg:not(.leaving)');
+          if (!svg) return;
+          const paths = [...svg.children].filter(e => e.tagName.toLowerCase() !== 'defs');
+          (paths[index] as SVGElement).style.setProperty(property, value);
+        }), {index, property, value});
+        await assert.rejects(reviewStoryVariant(poisoned, url, compact, claims), error, `${property}: ${value}`);
+        await poisoned.close();
+      }
+    } finally {
+      await browser.close(); server?.close(); await rm(dir, {recursive: true, force: true});
     }
   },
 );

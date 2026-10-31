@@ -425,7 +425,7 @@ export default class PeriodicGroupsExplainer extends Scene {
           picture.add(equation);
           const cells = POSITIONS.filter((p) => p.z > core && p.z <= z);
           for (const [row, title] of ['Element', 'Count', 'Group'].entries())
-            say(title, [-7.0, 0.6 - row * 0.92], { size: 0.68 });
+            say(title, [-6.85, 0.6 - row * 0.92], { size: 0.68 });
           cells.forEach((p, i) => {
             const x = cells.length === 1 ? 1 : -3.8 + i * 1.35;
             const cell = new Group(

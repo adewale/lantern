@@ -2,7 +2,7 @@
 // establishes which of their actual painted paths the reader can see.
 import assert from 'node:assert/strict';
 import type { Page } from 'playwright-core';
-import { renderElements, VMobject } from '../../src/index.ts';
+import { renderElements, VMobject, Text } from '../../src/index.ts';
 import type { SceneClass, Mobject, ElementRecord } from '../../src/index.ts';
 import { emphasisOf } from '../../explain/look.ts';
 import { labelOf } from '../../explain/diagrams.ts';
@@ -10,6 +10,7 @@ import { isHeading } from '../../explain/stage.ts';
 import { stepWords } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
 import { join } from 'node:path';
+import type { NarrowOpeningReview, NarrowOpeningObligation } from './explain-review-plan.ts';
 
 export interface StoryClaim {
   step: string;
@@ -213,6 +214,7 @@ const DETAIL_AND_EXISTING_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>
     },
   ],
   'font-metrics': [
+    { step: 'advance', opening: true, targets: [{ text: 'Ink on paper' }, { text: '5.88 units' }] },
     {
       step: 'cuts',
       opening: true,
@@ -448,12 +450,28 @@ export interface StoryFrame {
   records: ElementRecord[];
   targets: Target[];
   camera: number[];
+  labels: { text: string; size: number; indices: number[] }[];
 }
 
 interface StoryPaint {
   id: number;
   signature: string;
   bounds: Rect | null;
+}
+// Use the transformed em basis, not its axis-aligned box or the geometric
+// mean area: either can credit a very short, wide glyph as full-size text.
+function nativeEmSize(text: Text): number {
+  const f = text.frameBox,
+    run = text.run,
+    height = run.ascent + run.descent;
+  const c = (f[4]! - f[0]!) / height,
+    d = (f[5]! - f[1]!) / height;
+  const a = run.width > 0 ? (f[6]! - f[0]!) / run.width : d;
+  const b = run.width > 0 ? (f[7]! - f[1]!) / run.width : -c;
+  const x = a * a + b * b,
+    y = c * c + d * d;
+  const largest = Math.sqrt((x + y + Math.hypot(x - y, 2 * (a * c + b * d))) / 2);
+  return largest ? (run.fontSize * Math.abs(a * d - b * c)) / largest : 0;
 }
 const paintBoundsCache = new WeakMap<ElementRecord, Rect | null>();
 /** Bounds of emitted integer path coordinates, not a Text's advance rectangle. */
@@ -734,7 +752,16 @@ export async function storyFrames(
             );
           }
         assert.ok(targets.length, `${step.name}: unchanged artwork needs a declared story subject`);
-        frames.set(step.name, { records, targets, camera: [...scene.frame.box()!] });
+        const labels = members.flatMap((m) => {
+          const label = labelOf(m);
+          if (!label?.text.trim() || isHeading(m)) return [];
+          const ids = new Set(m.family().map((child) => child.id));
+          const indices = records.flatMap((r, index) => (ids.has(r.id) && realInk(r) ? [index] : []));
+          return indices.length
+            ? [{ text: label.text, size: m instanceof Text ? nativeEmSize(m) : m.height() * label.emRatio, indices }]
+            : [];
+        });
+        frames.set(step.name, { records, targets, camera: [...scene.frame.box()!], labels });
       },
     },
     { skipUntil: Infinity },
@@ -880,10 +907,163 @@ export async function inspectStoryFrame(page: Page, frame: StoryFrame) {
           number,
         ],
         author,
+        // Record the browser's effective transform, including CSS transforms on
+        // an individual path. Authored font size alone cannot prove readability.
+        scale: (() => {
+          const m = e.getScreenCTM()!;
+          const x = m.a * m.a + m.b * m.b,
+            y = m.c * m.c + m.d * m.d;
+          const largest = Math.sqrt((x + y + Math.hypot(x - y, 2 * (m.a * m.c + m.b * m.d))) / 2);
+          return largest ? (Math.abs(m.a * m.d - m.b * m.c) / largest) * 1000 : 0;
+        })(),
       };
     });
     return { viewport, ink, stage: rect(stage), viewBox: svg.getAttribute('viewBox') };
   }, frame);
+}
+
+/** Build-time obligations come from authored main/detail metadata and the
+ * independent caption claims, before the served reader produces any receipt. */
+export async function narrowOpeningPlan(
+  variant: Pick<Project['variants'][number], 'Scene' | 'trace' | 'values'>,
+  claims: readonly StoryClaim[],
+  frames?: Map<string, StoryFrame>,
+): Promise<NarrowOpeningObligation[]> {
+  const applicable = claims.filter((c) =>
+    Object.entries(c.settings ?? {}).every(([key, value]) => variant.values[key] === value),
+  );
+  const source = frames ?? (await storyFrames(variant.Scene, applicable));
+  const hasMain = variant.trace.steps.some((step) => step.meta.detail !== true);
+  return variant.trace.steps.map((step) => {
+    if (step.meta.detail === true && hasMain) return { step: step.step, reviewed: false, reason: 'detail-step' };
+    const targets = [
+      ...new Set(
+        applicable
+          .filter((c) => c.step === step.step && c.opening)
+          .flatMap((c) => c.targets.map((t) => ('key' in t ? t.key : t.text))),
+      ),
+    ];
+    if (!targets.length) return { step: step.step, reviewed: false, reason: 'no-opening-claim' };
+    const frame = source.get(step.step)!;
+    const wanted = new Set(targets);
+    const indices = new Set(frame.targets.filter((t) => t.opening && wanted.has(t.name)).flatMap((t) => t.indices));
+    const labels = frame.labels
+      .filter((label) => label.indices.some((index) => indices.has(index)))
+      .map((label) => label.text);
+    return { step: step.step, reviewed: true, targets, labels };
+  });
+}
+
+type StoryView = Awaited<ReturnType<typeof inspectStoryFrame>>;
+function verifyStoryTargets(
+  frame: StoryFrame,
+  views: StoryView[],
+  step: string,
+  width: number,
+  targets = frame.targets,
+) {
+  const opening = views[0]!;
+  const verified = new Set<string>();
+  for (const target of targets) {
+    let seen = 0;
+    for (const index of target.indices) {
+      const bounded = target.camera || target.partial?.includes(index);
+      const original = opening.ink.find((p) => p.index === index)!;
+      // The obligation comes from the authored frame, never from a possibly
+      // damaged live clip. Each stop contributes only its actual shown ink.
+      const authoredClip = frame.records[index]!.clipBox;
+      const expectedClip: Rect = authoredClip
+        ? [authoredClip[0] * 1000, -authoredClip[3] * 1000, authoredClip[2] * 1000, -authoredClip[1] * 1000]
+        : (original.author as Rect);
+      const box: Rect = bounded
+        ? [
+            Math.max(original.box[0], expectedClip[0], original.author[0]),
+            Math.max(original.box[1], expectedClip[1], original.author[1]),
+            Math.min(original.box[2], expectedClip[2], original.author[2]),
+            Math.min(original.box[3], expectedClip[3], original.author[3]),
+          ]
+        : original.box;
+      if (bounded && (box[2] <= box[0] || box[3] <= box[1])) continue; // context outside an authored viewport is not newly shown ink
+      const eligible = (target.opening ? [opening] : views).filter((v) => {
+        const ink = v.ink.find((p) => p.index === index);
+        return ink?.visible && (bounded || ink.complete);
+      });
+      assert.ok(eligible.length, `${step}: ${target.name} has hidden or clipped ink`);
+      const ink = eligible[0]!.ink.find((p) => p.index === index)!;
+      assert.ok(ink.box[2] > ink.box[0] && ink.box[3] > ink.box[1], `${step}: ${target.name} has empty ink`);
+      const coverage = eligible.map((v) => {
+        if (!bounded) return v.viewport;
+        const shown = v.ink.find((p) => p.index === index)!.shown;
+        return [
+          Math.max(v.viewport[0], shown[0]),
+          Math.max(v.viewport[1], shown[1]),
+          Math.min(v.viewport[2], shown[2]),
+          Math.min(v.viewport[3], shown[3]),
+        ] as Rect;
+      });
+      assert.ok(
+        covered(box, coverage),
+        `${step} at ${width}px: ${target.name} is missing from ${target.opening ? 'the opening' : 'the close-up tour'}: ${JSON.stringify({ box, views: coverage })}`,
+      );
+      verified.add(target.name);
+      seen++;
+    }
+    if (target.required) assert.ok(seen, `${step}: ${target.name} is outside the authored picture`);
+  }
+  return verified;
+}
+
+async function reviewNarrowOpening(
+  page: Page,
+  url: string,
+  variant: Project['variants'][number],
+  step: string,
+  frame: StoryFrame,
+): Promise<NarrowOpeningReview> {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto(`${url}?${new URLSearchParams({ ...variant.values, step })}`);
+  await page.waitForSelector('[data-ready=true]');
+  await page.waitForFunction(
+    (name) =>
+      (window as unknown as { raynerReviewStep?: string }).raynerReviewStep === name &&
+      document.querySelector('[aria-current=step]')?.getAttribute('data-step') === name &&
+      !document.querySelector('#content.loading'),
+    step,
+  );
+  await page.locator('.leaving').waitFor({ state: 'detached' });
+  await page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
+  assert.equal(await page.evaluate(() => innerWidth), 320);
+  assert.equal(
+    await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),
+    false,
+    `${step} at 320px: page overflows`,
+  );
+  const opening = await inspectStoryFrame(page, frame),
+    targets = frame.targets.filter((target) => target.opening);
+  const verified = verifyStoryTargets(frame, [opening], step, 320, targets);
+  const indices = new Set(targets.flatMap((target) => target.indices));
+  const labels = frame.labels.filter((label) => label.indices.some((index) => indices.has(index)));
+  let minimumLabelPx: number | null = null;
+  for (const label of labels) {
+    const pixels =
+      label.size *
+      Math.min(
+        ...label.indices
+          .filter((index) => indices.has(index))
+          .map((index) => opening.ink.find((ink) => ink.index === index)!.scale),
+      );
+    assert.ok(pixels >= 12 - 1e-6, `${step} at 320px: ${label.text} reads at ${pixels}px, below 12px`);
+    minimumLabelPx = minimumLabelPx === null ? pixels : Math.min(minimumLabelPx, pixels);
+  }
+  assert.ok(verified.size, `${step} at 320px: no opening subject is painted`);
+  return {
+    reviewed: true,
+    width: 320,
+    height: 568,
+    targets: [...verified],
+    labels: labels.map((label) => label.text),
+    minimumLabelPx,
+  };
 }
 
 /** Visit every step at a real viewport width, with a fresh reader opening per width. */
@@ -909,6 +1089,17 @@ export async function reviewStoryVariant(
   const applicable = claims.filter((c) => Object.entries(c.settings ?? {}).every(([k, v]) => variant.values[k] === v));
   const frames = await storyFrames(variant.Scene, applicable),
     results = [];
+  const narrow = new Map<string, NarrowOpeningReview>();
+  const obligations = await narrowOpeningPlan(variant, applicable, frames);
+  for (const obligation of obligations) {
+    if (!obligation.reviewed) narrow.set(obligation.step, { reviewed: false, reason: obligation.reason });
+    else
+      narrow.set(
+        obligation.step,
+        await reviewNarrowOpening(page, url, variant, obligation.step, frames.get(obligation.step)!),
+      );
+  }
+  assert.equal(narrow.size, variant.trace.steps.length, 'every step has a narrow-opening review or explicit exclusion');
   assert.equal(frames.size, variant.trace.steps.length, 'every traced step has a resting frame');
   for (const viewport of [
     { width: 390, height: 844 },
@@ -970,55 +1161,15 @@ export async function reviewStoryVariant(
           views.push(view);
           assert.ok(n < frame.records.length, `${step.step}: close-up tour did not terminate`);
         }
-      const verified = new Set<string>();
-      for (const target of frame.targets) {
-        let seen = 0;
-        for (const index of target.indices) {
-          const bounded = target.camera || target.partial?.includes(index);
-          const original = opening.ink.find((p) => p.index === index)!;
-          // The obligation comes from the authored frame, never from a possibly
-          // damaged live clip. Each stop contributes only its actual shown ink.
-          const authoredClip = frame.records[index]!.clipBox;
-          const expectedClip: Rect = authoredClip
-            ? [authoredClip[0] * 1000, -authoredClip[3] * 1000, authoredClip[2] * 1000, -authoredClip[1] * 1000]
-            : (original.author as Rect);
-          const box: Rect = bounded
-            ? [
-                Math.max(original.box[0], expectedClip[0], original.author[0]),
-                Math.max(original.box[1], expectedClip[1], original.author[1]),
-                Math.min(original.box[2], expectedClip[2], original.author[2]),
-                Math.min(original.box[3], expectedClip[3], original.author[3]),
-              ]
-            : original.box;
-          if (bounded && (box[2] <= box[0] || box[3] <= box[1])) continue; // context outside an authored viewport is not newly shown ink
-          const eligible = (target.opening ? [opening] : views).filter((v) => {
-            const ink = v.ink.find((p) => p.index === index);
-            return ink?.visible && (bounded || ink.complete);
-          });
-          assert.ok(eligible.length, `${step.step}: ${target.name} has hidden or clipped ink`);
-          const ink = eligible[0]!.ink.find((p) => p.index === index)!;
-          assert.ok(ink.box[2] > ink.box[0] && ink.box[3] > ink.box[1], `${step.step}: ${target.name} has empty ink`);
-          const coverage = eligible.map((v) => {
-            if (!bounded) return v.viewport;
-            const shown = v.ink.find((p) => p.index === index)!.shown;
-            return [
-              Math.max(v.viewport[0], shown[0]),
-              Math.max(v.viewport[1], shown[1]),
-              Math.min(v.viewport[2], shown[2]),
-              Math.min(v.viewport[3], shown[3]),
-            ] as Rect;
-          });
-          assert.ok(
-            covered(box, coverage),
-            `${step.step} at ${viewport.width}px: ${target.name} is missing from ${target.opening ? 'the opening' : 'the close-up tour'}: ${JSON.stringify({ box, views: coverage })}`,
-          );
-          verified.add(target.name);
-          seen++;
-        }
-        if (target.required) assert.ok(seen, `${step.step}: ${target.name} is outside the authored picture`);
-      }
+      const verified = verifyStoryTargets(frame, views, step.step, viewport.width);
       assert.ok(verified.size, `${step.step}: no story subject is painted in a reader view`);
-      results.push({ step: step.step, width: viewport.width, views: views.length, targets: [...verified] });
+      results.push({
+        step: step.step,
+        width: viewport.width,
+        views: views.length,
+        targets: [...verified],
+        ...(viewport.width === 390 ? { openingAt320: narrow.get(step.step)! } : {}),
+      });
     }
   }
   assert.deepEqual(

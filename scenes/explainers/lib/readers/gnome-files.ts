@@ -1,6 +1,6 @@
 import { Group, Rectangle } from '../../../../src/index.ts';
 import { gaveUp, task, PARTICIPANTS, colourOf, RGB, MEANING } from '../gnome-files.ts';
-import type { Participant } from '../gnome-files.ts';
+import type { Participant, Colour } from '../gnome-files.ts';
 import { flow, label } from '../reader-drawing.ts';
 import type { ReaderFrame } from '../reader-drawing.ts';
 // Locations and observations: the report's task findings, pages 11, 21–22, 25–26, 34 and 40.
@@ -17,6 +17,15 @@ const observations: Record<number, string> = {
   4: 'None of those who gave up opened the Main Menu, where Undo was.',
   7: 'Those who gave up were unfamiliar with Open Item Location and had not checked the file context menu.',
   9: 'Over half the sample made six to nine attempts before completing this task or giving up.',
+};
+// Short labels for the report's categories. Keep its full wording in the recorded outcomes.
+const outcomeLines: Record<Colour, readonly [string, string]> = {
+  green: ['No', 'difficulty'],
+  yellow: ['Very little', 'difficulty'],
+  orange: ['Moderate', 'difficulty'],
+  red: ['Severe', 'difficulty'],
+  black: ['Could not', 'complete'],
+  gray: ['Outside', 'study scope'],
 };
 export function frames(p: Participant): ReaderFrame[] {
   const n = gaveUp(p)[0]!,
@@ -40,15 +49,21 @@ export function frames(p: Participant): ReaderFrame[] {
       title: 'Did everyone have the same difficulty?',
       line: `One task, all six participants: ${name}.`,
       caption:
-        'The six tiles retain participant identities and the report’s colour categories. They describe this task in this study; they cannot estimate a population failure rate or time taken. The numeric scores in the full journeys encode the ordered categories.',
-      values: { task: n, outcomes: PARTICIPANTS.map((q) => ({ participant: q, colour: colourOf(n, q) })) },
+        'Difficulty labels describe completed tasks. “Could not complete” records an unfinished task; “Outside study scope” records an excluded approach. These six observations cannot estimate population failure rates or completion times.',
+      values: {
+        task: n,
+        outcomes: PARTICIPANTS.map((q) => {
+          const colour = colourOf(n, q);
+          return { participant: q, colour, meaning: MEANING[colour] };
+        }),
+      },
       draw: (s) =>
         new Group(
           ...PARTICIPANTS.map((q, i) => {
             const color = colourOf(n, q),
               x = ((i % 3) - 1) * 4.8,
               y = 1.4 - Math.floor(i / 3) * 2.7;
-            return new Group(
+            const outcome = new Group(
               new Rectangle({
                 width: 4.1,
                 height: 1.2,
@@ -57,8 +72,10 @@ export function frames(p: Participant): ReaderFrame[] {
                 strokeWidth: 0.03,
               }).moveTo([x, y]),
               label(q, x, y, color === 'black' ? '#ffffff' : '#151515', 0.8),
-              label(color, x, y - 1, s.palette.ink, 0.7),
+              ...outcomeLines[color].map((line, row) => label(line, x, y - 1 - row * 0.72, s.palette.ink, 0.65)),
             );
+            outcome.key = `outcome:${q}`;
+            return outcome;
           }),
         ),
     },

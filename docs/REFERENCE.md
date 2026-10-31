@@ -364,6 +364,8 @@ These checks establish deterministic behaviour and readable pictures. They do no
 
 `rayner review scene.ts` runs `check`, builds a temporary page and visits every resting step of every settings case at 390 and 1180 px in Chromium. It checks actual painted subjects, caption text, complete close-up tours, page overflow, console errors and outside connections. It saves screenshots and `review.json` under `out/review/<id>/`; `--out <directory>` changes that destination. A failed run removes the previous success receipt.
 
+Main steps with independent opening claims additionally open fresh at 320×568. Their claimed subjects must be complete in that first view, with labels at least 12 CSS pixels high. The receipt records those checks and names excluded steps; detailed source tours still use the full two-width review.
+
 Helpers supply subjects automatically. For an important caption claim or a step with unchanged artwork, add `scene.review.json` beside `scene.ts`:
 
 ```json

@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Browser, Page, Frame } from 'playwright-core';
 import { launch } from '../tools/lib/browser.ts';
-import { collectProject } from '../tools/lib/explain-project.ts';
+import { collectProject, defaultVariant } from '../tools/lib/explain-project.ts';
 import type { Project } from '../tools/lib/explain-project.ts';
 import { buildExplainer, buildLoader } from '../tools/lib/explain-build.ts';
 import { serve } from '../tools/lib/explain-serve.ts';
@@ -63,6 +63,119 @@ after(async () => {
 function loader(id: string, scene: string) {
   return `<div id="${id}"></div><script src="${embed}/loader.js" data-src="${embed}/${scene}.html" data-target="${id}" data-title="${scene}"></script>`;
 }
+
+test('missing steps fall back to the explanation when reference notes precede its first step', options, async () => {
+  const source = join(folder, 'leading-note.ts');
+  await writeFile(
+    source,
+    `import{Scene,Text}from'rayner';import{stage,settingsOf}from'rayner/explain';
+export default class Leading extends Scene{
+static meta={id:'leading-note',title:'Start with the explanation'};
+static settings=[{id:'case',label:'Case',default:'one',options:[{value:'one',label:'One'},{value:'two',label:'Two'}]}];
+async construct(){const s=stage(this);for(const id of ['note','start',...(settingsOf(this).case==='one'?['extra']:[]),'ending']){
+await this.step(id,{title:id,caption:id,detail:id==='note'});await s.clear();await s.enter(new Text(id,{fontSize:1}));}}}`,
+  );
+  const project = await collectProject(source, { write: false });
+  await buildExplainer(project, join(folder, 'leading-note.html'));
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+  try {
+    const entry = `${embed}/leading-note.html`;
+    await page.goto(entry + '?step=missing');
+    await page.waitForSelector('[data-ready=true]');
+    assert.equal(new URL(page.url()).searchParams.get('step'), 'start');
+    assert.equal(await page.locator('details.supporting').getAttribute('open'), null);
+    assert.match((await page.locator('.notice').textContent()) ?? '', /no “missing” step/);
+    await page.goto(entry + '?case=one&step=extra');
+    await page.waitForSelector('[data-ready=true]');
+    await page.locator('fieldset.case input[value="two"]').check();
+    await page.waitForURL(/case=two&step=start/);
+    await page.goto(entry + '?step=note');
+    await page.waitForSelector('[data-ready=true]');
+    assert.equal(new URL(page.url()).searchParams.get('step'), 'note', 'valid reference permalinks remain valid');
+    await page.getByRole('button', { name: 'Back to the explanation', exact: true }).click();
+    await page.waitForURL(/step=start/);
+  } finally {
+    await page.close();
+  }
+});
+
+test('authored phone openings keep comparison ink readable without painting a clipped heading', options, async () => {
+  const { storyFrames, inspectStoryFrame, covered, STORY_CLAIMS } = await import(
+    '../tools/lib/explain-story-review.ts'
+  );
+  const page = await browser.newPage({ viewport: { width: 320, height: 568 }, reducedMotion: 'reduce' });
+  let openings = 0;
+  try {
+    for (const [id, names] of [
+      ['gtfs', ['reader-date', 'reader-stop']],
+      ['token-bucket', ['reader-refill']],
+      ['latest-search', ['reader-guard']],
+    ] as const) {
+      const project = await collectProject(`scenes/explainers/${id}`, { write: false });
+      const variant = defaultVariant(project);
+      await buildExplainer(project, join(folder, `${id}-heading.html`));
+      const claims = (STORY_CLAIMS[id] ?? []).filter((c) =>
+        Object.entries(c.settings ?? {}).every(([k, v]) => variant.values[k] === v),
+      );
+      const frames = await storyFrames(variant.Scene, [
+        ...claims,
+        ...names.map((step) => ({ step, targets: [{ key: '__heading' }, { key: '__chrome' }] })),
+      ]);
+      const layouts = await stepLayouts(variant.Scene);
+      for (const step of names) {
+        await page.goto(`${embed}/${id}-heading.html?${new URLSearchParams({ ...variant.values, step })}`);
+        await page.waitForSelector('[data-ready=true]');
+        await page.waitForFunction(() => !document.querySelector('svg.leaving'));
+        const frame = frames.get(step)!,
+          seen = await inspectStoryFrame(page, frame);
+        const headingIndices = new Set(
+          frame.targets.filter((t) => t.name === '__heading' || t.name === '__chrome').flatMap((t) => t.indices),
+        );
+        const headingInk = seen.ink.filter((p) => headingIndices.has(p.index));
+        assert.ok(headingInk.length > 1, 'the observation control contains native heading and chrome ink');
+        // Use the actual stage for admission; the paint checker expands its
+        // viewport by one pixel for coverage rounding, including off-screen ink.
+        const viewport = await page.locator('.stage svg:not(.leaving)').evaluate((node) => {
+          const svg = node as SVGSVGElement,
+            stage = svg.parentElement!.getBoundingClientRect(),
+            inverse = svg.getScreenCTM()!.inverse();
+          const a = new DOMPoint(stage.left, stage.top).matrixTransform(inverse),
+            b = new DOMPoint(stage.right, stage.bottom).matrixTransform(inverse);
+          return [a.x, a.y, b.x, b.y];
+        });
+        const overlaps = (b: number[]) =>
+          b[0]! < viewport[2]! && b[2]! > viewport[0]! && b[1]! < viewport[3]! && b[3]! > viewport[1]!;
+        assert.ok(
+          !headingInk.some((p) => overlaps(p.box)) ||
+            headingInk.every((p) => p.visible && p.complete && covered(p.box, [seen.viewport])),
+          `${id}/${step}: the opening must show all heading ink or leave it outside the picture`,
+        );
+        const subjects = frame.targets.filter((t) => t.opening);
+        assert.ok(subjects.length > 0);
+        for (const target of subjects)
+          for (const index of target.indices) {
+            const ink = seen.ink.find((p) => p.index === index)!;
+            assert.ok(
+              ink.visible && ink.complete && covered(ink.box, [seen.viewport]),
+              `${id}/${step}/${target.name}: comparison ink remains whole`,
+            );
+          }
+        const scale = await page.locator('.stage svg:not(.leaving)').evaluate((svg) => {
+          const matrix = (svg as SVGSVGElement).getScreenCTM()!;
+          return Math.hypot(matrix.a, matrix.b) * 1000;
+        });
+        const labels = layouts.get(step)!.reading!.labels;
+        assert.ok(labels.length > 0);
+        for (const label of labels)
+          assert.ok(label.size * scale >= 12 - 1e-5, `${id}/${step}: ${label.size * scale}px declared label`);
+        openings++;
+      }
+    }
+    assert.equal(openings, 4);
+  } finally {
+    await page.close();
+  }
+});
 
 // specs/player-redesign.md R2: the viewports the stepper row must fit at load, and the two pages it is checked on.
 const R2_VIEWPORTS = [[320, 568], [390, 568], [390, 844], [768, 1024], [1280, 800], [1440, 900]] as const;
