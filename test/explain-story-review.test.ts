@@ -174,7 +174,7 @@ test('redrawn paint preserves layer order and multiplicity without shifting unch
     { before: ['red', 'blue'], after: ['red', 'green', 'blue'], changed: ['layer-green-0'] },
     { before: ['red', 'blue'], after: ['red', 'blue'], changed: [] },
   ];
-  const check = async (sample: { before: string[]; after: string[]; changed: string[]; positions?: Record<string, [number, number]> }) => {
+  const check = async (sample: { before: string[]; after: string[]; changed: string[]; positions?: Record<string, [number, number]>; fillOpacity?: number }) => {
     class Layers extends Scene {
       override async construct() {
         const draw = (colors: string[], counter: number) => {
@@ -182,7 +182,9 @@ test('redrawn paint preserves layer order and multiplicity without shifting unch
           return new Group(...colors.map(color => {
             const occurrence = occurrences.get(color) ?? 0;
             occurrences.set(color, occurrence + 1);
-            const layer = new Rectangle({ width: 2, height: 2, fill: color, stroke: 'none' })
+            // Retain visible contributions through the longest generated stack;
+            // nearly opaque lower copies can disappear below 8-bit resolution.
+            const layer = new Rectangle({ width: 2, height: 2, fill: color, fillOpacity: sample.fillOpacity ?? 1, stroke: 'none' })
               .moveTo(sample.positions?.[color] ?? [0, 0]).setOpacity(0.95);
             layer.key = `layer-${color}-${occurrence}`;
             return layer;
@@ -226,8 +228,15 @@ test('redrawn paint preserves layer order and multiplicity without shifting unch
           changed.add(key); changed.add(other);
         }
       }
+      for (const [oldIndex, removed] of oldKeys.entries()) {
+        const removedColor = before[oldIndex]!;
+        const a = positions[color as keyof typeof positions], b = positions[removedColor as keyof typeof positions];
+        if (!newKeys.includes(removed) && oldKeys.includes(key) &&
+            oldKeys.indexOf(key) < oldIndex && Math.abs(a[0] - b[0]) < 2 && Math.abs(a[1] - b[1]) < 2)
+          changed.add(key);
+      }
     }
-    await check({ before, after, changed: [...changed], positions });
+    await check({ before, after, changed: [...changed], positions, fillOpacity: 0.5 });
   }), params(100));
 });
 
@@ -253,6 +262,169 @@ test('persistent layer ids preserve overlapping order changes but do not disting
     assert.deepEqual(frames.get('after')!.targets.map(t => t.name).sort(), samePaintOrder ? ['changed: Step 2'] :
       ['changed: Step 2', 'changed: layer-0', 'changed: layer-1']);
   }
+});
+
+const unchangedLayerKinds = ['hollow', 'covered', 'added', 'removed'] as const;
+function unchangedLayerScene(kind: typeof unchangedLayerKinds[number], size = 4, inset = 0.5) {
+  return class UnchangedLayers extends Scene {
+    override async construct() {
+      const countChange = kind === 'added' || kind === 'removed';
+      const outer = new Rectangle({ width: size, height: size, fill: kind === 'hollow' ? 'none' : 'red',
+        stroke: kind === 'hollow' ? 'red' : 'none', strokeWidth: 0.1 }).setOpacity(countChange ? 0.95 : 1);
+      outer.key = 'outer';
+      const inner = new Rectangle({ width: countChange ? size : inset, height: countChange ? size : inset,
+        fill: countChange ? 'red' : 'blue', stroke: 'none' }).setOpacity(countChange ? 0.95 : 1);
+      inner.key = 'inner';
+      const cover = new Rectangle({ width: size + 1, height: size + 1, fill: 'white', stroke: 'none' });
+      await this.step('before');
+      this.add(outer, ...(kind === 'added' ? [] : [inner]), ...(kind === 'hollow' ? [] : [cover]));
+      await this.step('after');
+      if (kind === 'removed') { this.remove(inner); return; }
+      if (kind === 'added') { this.remove(cover); this.add(inner, cover); return; }
+      this.remove(outer, inner, cover);
+      this.add(inner, outer, ...(kind === 'covered' ? [cover] : []));
+    }
+  };
+}
+
+test('intersecting bounds and covered order/count changes cannot supply evidence for unchanged artwork', async () => {
+  for (const kind of unchangedLayerKinds)
+    await assert.rejects(storyFrames(unchangedLayerScene(kind)), /after: unchanged artwork needs a declared story subject/);
+  await fc.assert(fc.asyncProperty(fc.integer({ min: 2, max: 6 }), fc.integer({ min: 1, max: 8 }),
+    async (size, numerator) => {
+      // The inset stays strictly inside the outline's unpainted interior.
+      // Its order cannot affect the picture, regardless of intersecting boxes.
+      const inset = (size - 0.2) * numerator / 10;
+      await assert.rejects(storyFrames(unchangedLayerScene('hollow', size, inset)),
+        /after: unchanged artwork needs a declared story subject/);
+    }), params(30));
+});
+
+test('removing the final cover counts newly revealed artwork, but not a still-covered or disjoint subject', async () => {
+  const scene = (mode: 'revealed' | 'covered' | 'disjoint') => class extends Scene {
+    override async construct() {
+      const blue = new Rectangle({ width: 2, height: 2, fill: 'blue', stroke: 'none' });
+      blue.key = 'blue';
+      const cover = new Rectangle({ width: 3, height: 3, fill: 'red', stroke: 'none' });
+      if (mode === 'disjoint') cover.shift([5, 0]);
+      await this.step('before');
+      this.add(blue, cover);
+      if (mode === 'covered') this.add(new Rectangle({ width: 4, height: 4, fill: 'white', stroke: 'none' }));
+      await this.step('after');
+      this.remove(cover);
+    }
+  };
+  const targets = (await storyFrames(scene('revealed'))).get('after')!.targets.map(t => t.name);
+  assert.deepEqual(targets, ['changed: blue']);
+  for (const mode of ['covered', 'disjoint'] as const)
+    await assert.rejects(storyFrames(scene(mode)), /after: unchanged artwork needs a declared story subject/);
+});
+
+test('removing a duplicate layer also checks the differently shaped artwork it reveals', async () => {
+  await fc.assert(fc.asyncProperty(fc.integer({ min: -3, max: 3 }), fc.integer({ min: -2, max: 2 }),
+    async (x, y) => {
+      class Revealed extends Scene {
+        override async construct() {
+          const lower = new Rectangle({ width: 2, height: 2, fill: 'red', stroke: 'none' }).setOpacity(0.95);
+          lower.key = 'lower';
+          const blue = new Rectangle({ width: 1.5, height: 1.5, fill: 'blue', stroke: 'none' })
+            .moveTo([x, y]).setOpacity(0.95);
+          blue.key = 'blue';
+          const upper = new Rectangle({ width: 2, height: 2, fill: 'red', stroke: 'none' }).setOpacity(0.95);
+          await this.step('before'); this.add(lower, blue, upper);
+          await this.step('after'); this.remove(upper);
+        }
+      }
+      const targets = (await storyFrames(Revealed)).get('after')!.targets.map(t => t.name).sort();
+      const overlaps = Math.abs(x) < 1.75 && Math.abs(y) < 1.75;
+      assert.deepEqual(targets, overlaps ? ['changed: blue', 'changed: lower'] : ['changed: lower']);
+    }), params(50, { examples: [[0, 0], [3, 2]] }));
+});
+
+test('native SVG pixels confirm hollow and covered order/count changes leave the picture unchanged',
+  { skip: !process.env.EXPLAIN_BROWSER && 'set EXPLAIN_BROWSER=1 for native unchanged-paint checks' }, async () => {
+  const browser = await launch();
+  try {
+    const page = await browser.newPage();
+    let checked = 0;
+    for (const kind of unchangedLayerKinds) {
+      const pictures: string[] = [];
+      await new (unchangedLayerScene(kind))({ async frame() {}, async stepEnd(scene) {
+        pictures.push(toSvgString(scene));
+      } }, { skipUntil: Infinity }).run();
+      assert.equal(pictures.length, 2);
+      const changedPixels = await page.evaluate(async pictures => {
+        const pixels: Uint8ClampedArray[] = [];
+        for (const svg of pictures) {
+          const image = new Image(); image.src = 'data:image/svg+xml,' + encodeURIComponent(svg); await image.decode();
+          const canvas = document.createElement('canvas'); canvas.width = 1280; canvas.height = 720;
+          const context = canvas.getContext('2d')!; context.drawImage(image, 0, 0);
+          pixels.push(context.getImageData(0, 0, 1280, 720).data);
+        }
+        let changed = 0;
+        for (let p = 0; p < pixels[0]!.length; p += 4)
+          if ([0, 1, 2, 3].some(c => pixels[0]![p + c] !== pixels[1]![p + c])) changed++;
+        return changed;
+      }, pictures);
+      assert.equal(changedPixels, 0, kind);
+      checked++;
+    }
+    assert.equal(checked, 4);
+  } finally { await browser.close(); }
+});
+
+test('served review rejects hiding the blue artwork revealed by removing a duplicate red layer at either width',
+  { skip: !process.env.EXPLAIN_BROWSER && 'set EXPLAIN_BROWSER=1 for served revelation checks' }, async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'rayner-story-reveal-'));
+  const browser = await launch();
+  let server: Awaited<ReturnType<typeof serve>> | undefined;
+  try {
+    await writeFile(join(dir, 'scene.ts'), `import{Scene,Rectangle}from'rayner';export default class Reveal extends Scene{
+      static meta={id:'reveal',title:'Removing the top red reveals blue'};
+      async construct(){
+        const lower=new Rectangle({width:2,height:2,fill:'red',stroke:'none'}).setOpacity(.95);lower.key='lower';
+        const blue=new Rectangle({width:1.5,height:1.5,fill:'blue',stroke:'none'}).setOpacity(.95);blue.key='blue';
+        const upper=new Rectangle({width:2,height:2,fill:'red',stroke:'none'}).setOpacity(.95);
+        await this.step('before',{caption:'The top red covers blue.'});this.add(lower,blue,upper);
+        await this.step('after',{caption:'Removing the top red reveals blue.'});this.remove(upper);
+      }} `);
+    const project = await collectProject(dir, { write: false });
+    assert.equal(project.variants.length, 1);
+    await buildExplainer(project, join(dir, 'scene.html'));
+    server = await serve(dir, 0, 'scene.html');
+    const baseline = await browser.newPage();
+    try {
+      const rows = await reviewStoryVariant(baseline, server.url + '/scene.html', project.variants[0]!);
+      assert.equal(rows.length, 4, 'two steps at both widths');
+      assert.deepEqual(rows.filter(r => r.step === 'after').map(r => r.targets.sort()),
+        [['changed: blue', 'changed: lower'], ['changed: blue', 'changed: lower']]);
+    } finally { await baseline.close(); }
+    let rejected = 0;
+    for (const width of [390, 1180]) {
+      const page = await browser.newPage();
+      try {
+        await page.addInitScript(width => {
+          document.addEventListener('rayner:step', event => {
+            if (innerWidth !== width || (event as CustomEvent).detail.step !== 'after') return;
+            const blue = [...document.querySelectorAll('.stage svg:not(.leaving) path')]
+              .find(path => path.getAttribute('fill') === 'blue') as SVGGraphicsElement;
+            const paint = getComputedStyle(blue), box = blue.getBBox();
+            (window as unknown as { visibleBeforePoison: boolean }).visibleBeforePoison =
+              Number(paint.opacity) >= 0.95 && paint.fill === 'rgb(0, 0, 255)' && box.width > 0 && box.height > 0;
+            blue.style.opacity = '0';
+          });
+        }, width);
+        await assert.rejects(reviewStoryVariant(page, server.url + '/scene.html', project.variants[0]!),
+          /after: changed: blue has hidden or clipped ink/);
+        assert.equal(await page.evaluate(() =>
+          (window as unknown as { visibleBeforePoison: boolean }).visibleBeforePoison), true, `${width}: visible blue before poison`);
+        assert.equal(await page.locator('.stage svg:not(.leaving) path[fill="blue"]').evaluate(e => getComputedStyle(e).opacity),
+          '0', `${width}: CSSOM poison applies under the served CSP`);
+        rejected++;
+      } finally { await page.close(); }
+    }
+    assert.equal(rejected, 2, 'each width independently rejects the missing revelation');
+  } finally { await browser.close(); server?.close(); await rm(dir, { recursive: true, force: true }); }
 });
 
 const strokeOrderCases = [

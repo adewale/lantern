@@ -9,6 +9,7 @@ import type { Subshell } from '../scenes/explainers/lib/periodic-groups.ts';
 import { loadFonts, Rectangle, Text } from '../src/index.ts';
 import type { View, Mobject } from '../src/index.ts';
 import { withSettings } from '../explain/index.ts';
+import { pictureHtml, pictureSummary } from '../explain/trace.ts';
 import { collectProject } from '../tools/lib/explain-project.ts';
 import { assertViewFollowsState } from './lib/view-fidelity.ts';
 import { check } from './lib/fidelity/periodic-groups.ts';
@@ -142,6 +143,91 @@ test('the table and note text follow the recorded state at every resting step', 
     assert.equal(await assertViewFollowsState(Scene, (scene) => (scene as PeriodicGroupsExplainer).table as View | null), 7, `${element}: table`);
     assert.equal(await assertViewFollowsState(Scene, (scene) => (scene as PeriodicGroupsExplainer).notes as View | null), 7, `${element}: notes`);
   }
+});
+
+test('reader descriptions match core shading and complete block fills in every detailed source phase', async () => {
+  await loadFonts();
+  // Independent table/configuration facts and authored colours, not model or renderer answers.
+  const cases: Array<{
+    element: string; symbol: string; z: number; core: number; group: number;
+    fill: Record<string, number>; count: Record<string, number>; family: Record<string, number>;
+  }> = [
+    { element: 'na', symbol: 'Na', z: 11, core: 10, group: 1,
+      fill: { '#133e7c': 5, '#856912': 6, '#f7f2e8': 107 },
+      count: { '#c5cad0': 4, '#ded4b9': 6, '#133e7c': 1, '#f7f2e8': 107 },
+      family: { '#133e7c': 7 } },
+    { element: 'cl', symbol: 'Cl', z: 17, core: 10, group: 17,
+      fill: { '#133e7c': 6, '#856912': 11, '#f7f2e8': 101 },
+      count: { '#c5cad0': 4, '#ded4b9': 6, '#133e7c': 2, '#856912': 5, '#f7f2e8': 101 },
+      family: { '#856912': 6 } },
+    { element: 'fe', symbol: 'Fe', z: 26, core: 18, group: 8,
+      fill: { '#133e7c': 8, '#856912': 12, '#9e1c2c': 6, '#f7f2e8': 92 },
+      count: { '#c5cad0': 6, '#ded4b9': 12, '#133e7c': 2, '#9e1c2c': 6, '#f7f2e8': 92 },
+      family: { '#9e1c2c': 4 } },
+    { element: 'cu', symbol: 'Cu', z: 29, core: 18, group: 11,
+      fill: { '#133e7c': 8, '#856912': 12, '#9e1c2c': 9, '#f7f2e8': 89 },
+      count: { '#c5cad0': 6, '#ded4b9': 12, '#133e7c': 2, '#9e1c2c': 9, '#f7f2e8': 89 },
+      family: { '#9e1c2c': 4 } },
+    { element: 'he', symbol: 'He', z: 2, core: 0, group: 18,
+      fill: { '#133e7c': 2, '#f7f2e8': 116 },
+      count: { '#133e7c': 2, '#f7f2e8': 116 },
+      family: { '#133e7c': 1, '#856912': 6 } },
+  ];
+  const allBlocks = { '#133e7c': 14, '#856912': 36, '#9e1c2c': 40, '#0f0f0f': 28 };
+  const phases = ['column', 'fill', 'count', 'blocks', 'family', 'names', 'limit'];
+  let checked = 0;
+  for (const expected of cases) {
+    const Source = withSettings(PeriodicGroupsExplainer, { element: expected.element });
+    const visited: string[] = [];
+    await new Source({
+      async frame() {},
+      async stepEnd(scene, step) {
+        if (!phases.includes(step.name)) return;
+        const label = `${expected.element}/${step.name}`;
+        const blocks = ['blocks', 'family', 'names', 'limit'].includes(step.name);
+        assert.equal(scene.state.note, step.name, label);
+        assert.equal(scene.state.element, expected.symbol, label);
+        assert.equal(scene.state.z, expected.z, label);
+        assert.equal(scene.state.group, expected.group, label);
+        assert.equal(scene.state.lit, step.name === 'column' ? undefined : expected.z, label);
+        assert.equal(scene.state.core, ['column', 'fill'].includes(step.name) ? undefined : expected.core, label);
+        assert.equal(Boolean(scene.state.blocks), blocks, label);
+        const colours = step.name === 'column' ? { '#f7f2e8': 118 }
+          : step.name === 'fill' ? expected.fill : step.name === 'count' ? expected.count
+            : step.name === 'family' ? expected.family : allBlocks;
+        const cells = (scene as PeriodicGroupsExplainer).table!.current.family()
+          .filter((m): m is Rectangle => m instanceof Rectangle && m.style.fill !== 'none');
+        assert.equal(cells.length, Object.values(colours).reduce((sum, n) => sum + n, 0), `${label}: complete cell inventory`);
+        const fills: Record<string, number> = {};
+        for (const cell of cells) {
+          assert.equal(cell.style.fillOpacity, 1, `${label}: solid cell fill`);
+          assert.ok(cell.style.opacity >= 0.95, `${label}: visible cell`);
+          fills[cell.style.fill] = (fills[cell.style.fill] ?? 0) + 1;
+        }
+        assert.deepEqual(fills, colours, `${label}: actual table fill counts`);
+        const state = scene.describe();
+        for (const description of [pictureSummary(state), pictureHtml(state)]) {
+          assert.ok(description.length > 0, `${label}: reader description exists`);
+          if (blocks && step.name !== 'family') {
+            assert.ok(description.includes('All 118 element cells are filled in by block colour.'), label);
+            assert.ok(!description.includes('Cells 1 to'), `${label}: no partial-fill claim`);
+          } else if (['fill', 'count'].includes(step.name)) {
+            assert.ok(description.includes(`Cells 1 to ${expected.z} are filled in by subshell colour`), label);
+            assert.ok(!description.includes('All 118 element cells'), `${label}: no complete-block claim`);
+          } else {
+            assert.ok(!description.includes('Cells 1 to') && !description.includes('All 118 element cells'), label);
+          }
+          assert.equal(description.includes('paler as the core'), step.name === 'count' && expected.core > 0,
+            `${label}: core shading is described only while it is painted`);
+          if (step.name === 'count' && expected.core > 0)
+            assert.ok(description.includes(`cells 1 to ${expected.core} paler as the core`), label);
+        }
+        visited.push(step.name); checked++;
+      },
+    }, { skipUntil: Infinity }).run();
+    assert.deepEqual(visited, phases, `${expected.element}: complete phase inventory`);
+  }
+  assert.equal(checked, 35);
 });
 
 test('each boundary spotlight visibly encloses its named element cell', async () => {

@@ -187,8 +187,8 @@ export default class PeriodicGroupsExplainer extends Scene {
       };
     });
 
-    // The accent is the player's own warm red, so the step number on the stage matches the rail beside Next.
-    const s = stage(this, { palette: { paper: PAPER, ink: INK, accent: '#9e1c2c', muted: SOFT }, headingSize: 0.6 });
+    // Atlas stays inside the picture; the step number uses the shared player's teal.
+    const s = stage(this, { palette: { paper: PAPER, ink: INK, accent: '#176166', muted: SOFT }, headingSize: 0.6 });
 
     // ---- the table, drawn from this.state --------------------------------------
     const drawTable = (state: SceneState) => {
@@ -561,10 +561,10 @@ export default class PeriodicGroupsExplainer extends Scene {
         said.push(
           `Group ${group}, top to bottom: ${members.map((m) => `${nameOf(m.symbol)} (${m.symbol}, ${m.z})`).join(', ')}. Atomic-number gaps: ${jumps.join(', ')}.`,
         );
-      if (st.lit && note !== 'family')
-        said.push(
-          `Cells 1 to ${st.lit} are filled in by subshell colour${coreZ(st) ? `, cells 1 to ${coreZ(st)} paler as the core` : ''}.`,
-        );
+      if (note !== 'family') {
+        if (st.blocks) said.push('All 118 element cells are filled in by block colour.');
+        else if (st.lit) said.push(`Cells 1 to ${st.lit} are filled in by subshell colour${coreZ(st) ? `, cells 1 to ${coreZ(st)} paler as the core` : ''}.`);
+      }
       if (note === 'fill') said.push(`Note: ${String(st.filling)}.`);
       if (note === 'count') {
         const k = Number(st.badges);
