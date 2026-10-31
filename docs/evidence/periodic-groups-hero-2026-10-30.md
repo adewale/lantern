@@ -29,8 +29,8 @@ The periodic-table picture uses [Atlas's design language](https://atlas-48p.page
 - **Palette.** Paper `#f7f2e8`, black `#0f0f0f` and Grey Mid `#666` for secondary text. Block colours: s deep blue `#133e7c`, d warm red `#9e1c2c`, p mustard `#856912`, f black.
 - **Cells.** Lit cells and the blocks step are solid block colour with paper lettering. Paper text on each reaches 4.67:1 (mustard) or better. Neon's core, in the count step's context table, stays a pale tint. Cells are square.
 - **Numbers.** Atomic numbers, jumps, counts and the core equation use the monospace face. In the count rows each count takes its element's block colour. Family badges are block-coloured squares.
-- **What stays as it was.** Boundary outlines stay black: a warm red outline would vanish against the d block. The step number drawn on the stage keeps the player's teal, so it matches the step bar.
-- **One side effect from `main`.** `main`'s player tints its card 10% toward each explainer's paper, so this card takes a faint warm tint. On it, text, secondary text and the accent read at 16.3, 6.3 and 7.1:1 in the light theme and 10.6, 5.5 and 7.1:1 in the dark, above the 7, 4.5 and 3:1 that `test/embed-tint.test.ts` asks of the built-in palettes.
+- **Outlines and badge.** Boundary outlines stay black: a warm red outline would vanish against the d block. The stage badge uses teal inside the picture. Shared player controls use the neutral light or dark theme by default.
+- **Historical player tint.** The captures below predate [the neutral-player change](https://github.com/adewale/rayner/commit/fed1f3260237d0e76dfa61f21b2ba72f8ad66953). Their card carried a 10% tint from the scene's paper. Current pages use neutral chrome; authors may opt into contrast-checked paper and accent cues with `meta.player`.
 
 | | Before | After |
 | --- | --- | --- |
@@ -38,7 +38,7 @@ The periodic-table picture uses [Atlas's design language](https://atlas-48p.page
 | Chlorine count, 1280×800 | ![Count rows in one colour](periodic-groups/atlas-chlorine-count-before.png) | ![Counts in each element's block colour, groups in bold monospace](periodic-groups/atlas-chlorine-count-after.png) |
 | Sodium opening, 390×844 | ![Sodium highlighted in pale blue](periodic-groups/atlas-phone-sodium-before.png) | ![Sodium as a solid deep blue cell; the player around it identical](periodic-groups/atlas-phone-sodium-after.png) |
 
-These historical PR #60 captures compare the scene's palette in the same player from `main`. Their image files are pinned at [9c9e2a4](https://github.com/adewale/rayner/tree/9c9e2a4d33e2585524a9b17df9dc9e96cda5bfb8/docs/evidence/periodic-groups); the before palette comes from [bf24af0](https://github.com/adewale/rayner/commit/bf24af0444633b54f41249a6b06b12b07df87f62). They precede the shorter teaching path. Current opening captures and their source fingerprints are recorded in the [reader audit](pr69-adversarial-audit-2026-10-31.md).
+These historical PR #60 captures compare the scene's palette in the same player from `main`. Their image files are pinned at [9c9e2a4](https://github.com/adewale/rayner/tree/9c9e2a4d33e2585524a9b17df9dc9e96cda5bfb8/docs/evidence/periodic-groups); the before palette comes from [bf24af0](https://github.com/adewale/rayner/commit/bf24af0444633b54f41249a6b06b12b07df87f62). They precede the shorter teaching path. Later opening captures and their pinned pre-neutral source fingerprints are recorded in the [reader audit](pr69-adversarial-audit-2026-10-31.md).
 
 An earlier version of this PR restyled the shared player in Atlas's design language and added an 880 px standalone reading floor to every player. Both were removed: the player is shared by every explainer, and Atlas belongs to this explainer's picture only. Two defects the audit found came from that player styling and left with it: uppercase CSS that turned authored `-m` switches into `-M`, and a selected case that forced colours erased.
 

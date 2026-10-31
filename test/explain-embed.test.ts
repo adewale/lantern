@@ -1526,7 +1526,7 @@ test('framed, the page draws only the tile: a transparent body, no padding, and 
       framed: document.documentElement.hasAttribute('data-framed'),
       body: getComputedStyle(document.body).backgroundColor,
       padding: getComputedStyle(document.getElementById('content')!).padding,
-    })), { framed: false, body: 'rgb(246, 247, 249)', padding: '24px 16px 48px' });
+    })), { framed: false, body: 'rgb(247, 247, 247)', padding: '24px 16px 48px' });
   } finally { await page.close(); }
 });
 test('the loader passes theme=light or theme=dark from the host page\'s computed colour scheme when the theme is auto, and the given theme otherwise', options, async () => {
@@ -1558,13 +1558,11 @@ static settings=[{id:'look',label:'Look',default:'cream',options:[{value:'cream'
 async construct(){const s=stage(this,{style:settingsOf(this).look==='night'?'nord':'hand-drawn'});
 await this.step('one',{caption:'A label.'});await s.enter(new Text('paper',{fontSize:0.4}),{describe:'paper'});
 await this.step('two',{caption:'Another.'});await s.enter(new Text('again',{fontSize:0.4}).moveTo([0,-1]),{describe:'again'});}}`;
-test('the tile takes the case\'s paper as --paper: the palette\'s paper, changing with a case of another style, and in the page before its script runs', options, async () => {
-  const { PALETTES } = await import('../explain/palettes.ts');
+test('the neutral tile stays independent of the case palette, including before its script runs', options, async () => {
   const dir = join(folder, 'two-papers');
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, 'scene.ts'), TWO_PAPERS);
   await buildExplainer(await collectProject(dir, { write: false }), join(folder, 'two-papers.html'));
-  const cream = PALETTES['hand-drawn']!.paper, night = PALETTES.nord!.paper;
   const paper = (page: Page) => page.evaluate(() => ({
     player: getComputedStyle(document.querySelector('.player')!).getPropertyValue('--paper').trim(),
     tile: getComputedStyle(document.querySelector('.tile')!).backgroundColor,
@@ -1574,22 +1572,23 @@ test('the tile takes the case\'s paper as --paper: the palette\'s paper, changin
     await page.goto(`${embed}/two-papers.html`);
     await page.waitForSelector('[data-ready=true]');
     const first = await paper(page);
-    assert.equal(first.player, cream);
+    assert.equal(first.player, '');
+    assert.ok(['rgb(255, 255, 255)', 'color(srgb 1 1 1)'].includes(first.tile), first.tile);
     await page.locator('.case input[value=night]').check();
-    await page.waitForFunction((night) => getComputedStyle(document.querySelector('.player')!).getPropertyValue('--paper').trim() === night, night);
-    await page.waitForTimeout(300); // the tint's 200 ms transition
+    await page.waitForFunction(() => !document.querySelector('#content.loading'));
+    await page.waitForTimeout(300); // observe the settled chrome, beyond its background transition
     const second = await paper(page);
-    assert.notEqual(second.tile, first.tile, 'the tint follows the paper');
+    assert.deepEqual(second, first, 'the neutral tile does not follow the paper');
     // A catalog page, too: mr-cache draws on hand-drawn's paper.
     await page.goto(`${embed}/mr-cache.html`);
     await page.waitForSelector('[data-ready=true]');
-    assert.equal((await paper(page)).player, cream);
+    assert.deepEqual(await paper(page), first);
   } finally { await page.close(); }
-  // Before (here: without) the script, the shell's card already has the default case's paper.
+  // Without the script, the shell also uses neutral chrome.
   const context = await browser.newContext({ javaScriptEnabled: false });
   try {
     const shell = await context.newPage();
-    for (const [id, want] of [['two-papers', cream], ['exgit', PALETTES['catppuccin-mocha']!.paper]] as const) {
+    for (const [id, want] of [['two-papers', ''], ['exgit', '']] as const) {
       await shell.goto(`${embed}/${id}.html`);
       assert.equal((await paper(shell)).player, want, id);
     }
@@ -1625,9 +1624,9 @@ test('?theme=dark, light and auto (following the reader\'s colour scheme) set th
         background: await page.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor),
       };
     };
-    assert.deepEqual(await background('dark'), { theme: 'dark', background: 'rgb(15, 22, 29)' });
-    assert.deepEqual(await background('light'), { theme: 'light', background: 'rgb(246, 247, 249)' });
-    assert.deepEqual(await background('auto'), { theme: 'auto', background: 'rgb(15, 22, 29)' });
+    assert.deepEqual(await background('dark'), { theme: 'dark', background: 'rgb(20, 20, 20)' });
+    assert.deepEqual(await background('light'), { theme: 'light', background: 'rgb(247, 247, 247)' });
+    assert.deepEqual(await background('auto'), { theme: 'auto', background: 'rgb(20, 20, 20)' });
   } finally {
     await context.close();
   }

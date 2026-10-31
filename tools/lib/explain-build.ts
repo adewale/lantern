@@ -13,6 +13,7 @@ import type { Project } from './explain-project.ts';
 import { pageFaces, letteringReport, useProjectLettering } from './explain-lettering.ts';
 import { letteringLicences, pageSnapshot } from './lettering.ts';
 import { RTL_SCRIPTS } from '../../src/lettering-outlines.ts';
+import { playerCss } from '../../app/embed-style.ts';
 import {stepAudio} from '../../explain/audio.ts';
 
 /**
@@ -22,12 +23,6 @@ import {stepAudio} from '../../explain/audio.ts';
  * the player's controls stay as they are. Every other page's style is as it was.
  */
 const RTL_CSS = '\nh1,.caption,.ruler,.lede,.lede *,.changes span,.transcript h2,.transcript a,.transcript p,.steps button span,.steps .line{unicode-bidi:plaintext;text-align:start}\n';
-/**
- * The default case's paper on the tile (specs/player-tile.md T5), so the first paint is already tinted
- * toward it. It goes in the page's hashed stylesheet: the strict CSP blocks style attributes. The
- * player sets the case's paper on the tile itself from then on.
- */
-const paperCss = (paper: string | undefined) => (paper && /^#[0-9a-f]{3,8}$/i.test(paper) ? `.tile{--paper:${paper}}\n` : '');
 const rightToLeftPage = (project: Project) =>
   !!project.outlineLettering?.request.scripts?.some((script) => RTL_SCRIPTS.includes(script));
 
@@ -104,7 +99,7 @@ export async function buildExplainer(
   const framedJs = "if(parent!==window)document.documentElement.dataset.framed=''";
   const js = scriptEscape(bundled.outputFiles[0]!.text),
     css = (await readFile(join(ROOT, 'app/embed.css'), 'utf8')) + (rightToLeftPage(project) ? RTL_CSS : '') +
-      (withAudio ? '\n'+await readFile(join(ROOT,'app/embed-audio.css'),'utf8') : '') + paperCss(v.paper);
+      (withAudio ? '\n'+await readFile(join(ROOT,'app/embed-audio.css'),'utf8') : '') + playerCss(project.Scene.meta?.player, v.palette);
   // Every case, every step: a link to it, its caption, what it changed of the state the author
   // watches (meta.watch) and what its resting picture shows.
   // The player shows the current case's section; without JavaScript every case shows.

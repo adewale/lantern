@@ -5,7 +5,8 @@ import { StopScene } from '../src/index.ts';
 import { bindSnapshots, withSettings, resolveSettings } from '../explain/index.ts';
 import type { ExplainerClass, Settings, SnapshotStore } from '../explain/index.ts';
 import { restingTime, pictureHtml, pictureSummary, stepWords, watchedChanges } from '../explain/trace.ts';
-import { paperOf } from '../explain/stage.ts';
+import { playerProperties } from './embed-style.ts';
+import { paletteOf } from '../explain/stage.ts';
 import { connectHost, reportHeight } from './embed-protocol.ts';
 import { icon } from './embed-icons.ts';
 import type { IconName } from './embed-icons.ts';
@@ -69,7 +70,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     playing = false,
     // On a narrow stage, whether each step opens on its close-up; Whole picture turns it off, Close-up on.
     follow = true;
-  type Entry = { Scene: ExplainerClass; trace: Trace; paper?: string; layouts?: Promise<Map<string, StepLayout>>; resting: Map<string, Node[]> };
+  type Entry = { Scene: ExplainerClass; trace: Trace; palette?: ReturnType<typeof paletteOf>; layouts?: Promise<Map<string, StepLayout>>; resting: Map<string, Node[]> };
   const cache = new Map<string, Entry>();
   /** The case on show, with its layouts once a close-up has needed them. */
   let current: Entry | undefined;
@@ -888,7 +889,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     if (!entry) {
       const Scene = withSettings(Bound, next),
         { trace, scene } = await traceRun(Scene);
-      entry = { Scene, trace, paper: paperOf(scene), resting: new Map() };
+      entry = { Scene, trace, palette: paletteOf(scene), resting: new Map() };
       cache.set(key, entry);
     }
     if (token !== loads) return;
@@ -900,9 +901,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     current = entry;
     Active = entry.Scene;
     trace = entry.trace;
-    // The tile's chrome takes a tint from the case's paper (embed.css, --tile); a scene without a
-    // stage has none, and the chrome stays on the page's surface.
-    layout.style.setProperty('--paper', entry.paper ?? 'initial');
+    // Apply this case's validated cues, clearing any cue inherited from the previous case.
+    for (const [property, value] of Object.entries(playerProperties(Source.meta?.player, entry.palette)))
+      document.documentElement.style.setProperty(property, value);
     if (changed) {
       zoom.reset();
       lastStory = firstMain();

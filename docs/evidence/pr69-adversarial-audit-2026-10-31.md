@@ -2,7 +2,11 @@
 
 Independent agents reviewed phone layout, reader behavior, test obligations, source claims and integration evidence. The starting revision was `210e347ba62de85a581dadbbc5a8de630baebd70`. Follow-up passes challenged the repairs and their tests. The user chose to consolidate the pending work into #69 targeting main.
 
-The combined code includes main at `11ff5694757646185f238e22b4f7cb050c6a337b`, PR #60 through `e256d98f3975012c24a08d9325b9132e77ca6bcd` and the lesson improvements. Integration preserves the shipped player: one stepper row, responsive progress rail, measured header and caption sizing, watch and host APIs, endpoint controls, optional audio and card sizing. Atlas stays inside the periodic-table picture. Teaching/source navigation retains raw step identities and direct source links. The final production revision is `cf9e63bd9cdd7900148e4a931cdc406b903e5bdf`. PR #60 was merged separately into main at `e84bed57bb5c044ef887dd43b33895b3ae5e828f` during final validation; its exact final head was already integrated here. This audit does not merge #69 or deploy anything.
+The combined code includes main at `11ff5694757646185f238e22b4f7cb050c6a337b`, PR #60 through `e256d98f3975012c24a08d9325b9132e77ca6bcd` and the lesson improvements. Integration preserves the shipped player: one stepper row, responsive progress rail, measured header and caption sizing, watch and host APIs, endpoint controls, optional audio and card sizing. Atlas stays inside the periodic-table picture. Teaching/source navigation retains raw step identities and direct source links. The pre-neutral validation profile uses production revision `cf9e63bd9cdd7900148e4a931cdc406b903e5bdf`. PR #60 was merged separately into main at `e84bed57bb5c044ef887dd43b33895b3ae5e828f` during final validation; its exact final head was already integrated here. This audit does not merge #69 or deploy anything.
+
+## Evidence profile
+
+The measurements and captures below belong to the pre-neutral player profile, build `e0050ddba90223b250be979bdc07cce6fab1b60eaeee0fd8367603b0c5f5a9f5`. The integrated code now also includes main’s [neutral chrome and forced-colour markers](https://github.com/adewale/rayner/commit/fed1f3260237d0e76dfa61f21b2ba72f8ad66953). That runtime change requires fresh artifact and browser validation. The saved `e005` records remain evidence for their pinned revisions; they do not validate the new profile.
 
 ## Findings and repairs
 
@@ -37,13 +41,13 @@ The 550-opening diagnostic used saved HTML and source at `dce67be6369301f7cf31f4
 
 A second diagnostic visited all 1,387 legacy 390px rows in the remaining 31 scenes: 1,365 passed and 22 failed. The failures covered seasons (8), token bucket (1), state machine (2), traffic policy (6), trust proxy (3) and pen marks (2). The first seven scenes had already passed the formal two-width run on the same source and build; their 542 rows are separate evidence. Aborted replay rows are excluded. Admission checks alone had not exposed these tour and semantic-target gaps.
 
-An independent browser pass checks 98 main-step/width rows across 11 scenes at 320 and 390 pixels. It checks every body label against native SVG geometry, heading completeness and horizontal overflow. All five periodic elements are included. Separate rotated compressed-text witnesses measure the actual transformed em, independently of the planner’s size calculation. The capture receipts bind HTML artifacts and build inputs; source and engine hashes alone do not cover reader-app changes. After source repairs, the four changed token rows were rerendered. The other 94 rows and three squash witnesses retain their measured provenance and match the final source/build and complete HTML fingerprints.
+An independent browser pass checks 98 main-step/width rows across 11 scenes at 320 and 390 pixels. It checks every body label against native SVG geometry, heading completeness and horizontal overflow. All five periodic elements are included. Separate rotated compressed-text witnesses measure the actual transformed em, independently of the planner’s size calculation. The capture receipts bind HTML artifacts and build inputs; source and engine hashes alone do not cover reader-app changes. After source repairs, the four changed token rows were rerendered. The other 94 rows and three squash witnesses retain their measured provenance and match the `cf9e63b`/`e005` source/build and complete HTML fingerprints.
 
 Isolated mutation controls restore the old readers, font metrics, opacity cutoff, fallback and exclusion behavior. They reject the defects without modifying production bytes. One second-pass control also found a defect in the initial repair: `Text.textSize()` deliberately returns a geometric mean when stretched, so it could not supply the new readability metric. That public API remains unchanged.
 
 ## Matched-input captures
 
-The five original comparisons use the audited PR revision `210e347ba62de85a581dadbbc5a8de630baebd70` as their baseline. Their after captures were rendered at `049a554e40167d1813a377a1cb6a8f43555cd8e4`; the token-refill capture was refreshed at `cf9e63bd9cdd7900148e4a931cdc406b903e5bdf`. Every retained artifact matches the final canonical bytes. The receipt records the render revisions and final validation revision separately. These are unscaled, lossless stage captures at the same settings and named step, with reduced motion. Each pair puts the baseline on the left.
+The five original comparisons use the audited PR revision `210e347ba62de85a581dadbbc5a8de630baebd70` as their baseline. Their after captures were rendered at `049a554e40167d1813a377a1cb6a8f43555cd8e4`; the token-refill capture was refreshed at `cf9e63bd9cdd7900148e4a931cdc406b903e5bdf`. Every retained artifact matches the saved `e005` canonical bytes. The receipt records the render revisions and final validation revision separately. These are unscaled, lossless stage captures at the same settings and named step, with reduced motion. Each pair puts the baseline on the left.
 
 ![Before and after: the GTFS service-date question is cropped in the baseline and complete after the repair](pr69-adversarial/comparison-gtfs-reader-date-320.webp)
 
@@ -55,7 +59,7 @@ At 390×844, `gnome-files`, participant `P1`, step `reader-sample`: inspect the 
 
 The [capture receipt](pr69-adversarial/captures.json) records settings, model state, artifact/build fingerprints, image hashes, all 98 native geometry results and three compressed-text witnesses. It also identifies the [GTFS stop](pr69-adversarial/comparison-gtfs-reader-stop-320.webp), [token refill](pr69-adversarial/comparison-token-bucket-reader-refill-320.webp) and [search guard](pr69-adversarial/comparison-latest-search-reader-guard-320.webp) pairs. A heading entirely outside a close-up remains available in the HTML caption; the repair does not require every close-up to include the scene header.
 
-Three additional pairs use saved failing HTML at `dce67be6369301f7cf31f4f267cacb6a10a7dd86`, before the last layout repairs. Their after captures use `049a554e40167d1813a377a1cb6a8f43555cd8e4`, with unchanged source and artifact fingerprints verified against the final collection. Each uses 320×568, reduced motion and unchanged model state:
+Three additional pairs use saved failing HTML at `dce67be6369301f7cf31f4f267cacb6a10a7dd86`, before the last layout repairs. Their after captures use `049a554e40167d1813a377a1cb6a8f43555cd8e4`, with unchanged source and artifact fingerprints verified against the `cf9e63b`/`e005` collection. Each uses 320×568, reduced motion and unchanged model state:
 
 | Comparison | Input | What to inspect |
 | --- | --- | --- |
@@ -67,8 +71,8 @@ The checks reproduce incomplete baseline subjects and complete repaired subjects
 
 To reproduce, run `npm ci` and `npm run rayner -- preview scenes/explainers/gtfs` at either revision. Open `?date=2007-06-04&stop=airport&step=reader-date` at 320×568 with reduced motion. The independent served regression owner is `authored phone openings keep comparison ink readable without painting a clipped heading` in `test/explain-embed.test.ts`.
 
-## Final validation
+## Validation status
 
-Final integrated results are recorded here after the canonical runs finish.
+The final PR validation must name the integrated runtime revision and its build hash. Historical `e005` receipts cannot establish a pass for the neutral-player artifacts. Fresh integrated results will be recorded after their canonical runs finish.
 
 These checks establish the tested geometry, values and navigation behavior. They do not establish learning outcomes, arbitrary caption truth, physical-phone performance or local Safari support. Native Safari and WebKit have their existing Mac CI owners. No deployment or publication is part of this audit.

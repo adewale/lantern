@@ -58,9 +58,12 @@ export function isHeading(m: Mobject): boolean {
 }
 /**
  * The colour of the stage's paper (`__paper`, its palette's `paper`) as `scene` has it, or undefined
- * for a scene drawn without a stage. The player tints its chrome toward it (app/embed.css, --paper).
+ * for a scene drawn without a stage. Player palette cues are opt-in through `meta.player`.
  */
 export const paperOf = (scene: Scene): string | undefined => scene.mobjects.find((m) => m.key === '__paper')?.style.fill;
+const stagePalettes = new WeakMap<Scene, () => Palette>();
+/** The stage's final palette, including a palette adopted from a diagram. */
+export const paletteOf = (scene: Scene): Palette | undefined => stagePalettes.get(scene)?.();
 const isOptions = (v: unknown): v is object => !!v && !(v instanceof Mobject);
 const HEADING_Y = 3.8;
 /** With a line under it, the heading moves up to make room. */
@@ -91,6 +94,7 @@ export function stage(scene: Scene, options: StageOptions = {}) {
   // Without a style or palette, the stage adopts the first diagram's palette.
   const adopt = !options.palette && !options.style;
   let colors = options.palette ?? palette(options.style ?? 'nord');
+  stagePalettes.set(scene, () => ({ ...colors }));
   const mode = options.heading ?? 'step';
   const paper = new Rectangle({ width: 16, height: 9, fill: colors.paper, stroke: 'none' });
   paper.key = '__paper';
