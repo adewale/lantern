@@ -1,0 +1,128 @@
+{
+  "revision": "83d3b14b3ab890a34568bd2ecde3033189af72f7",
+  "sourceDiff": "",
+  "renderer": "buildExplainer + served response headers + Playwright Chromium",
+  "browser": "151.0.7922.34",
+  "reducedMotion": "reduce",
+  "images": [
+    {
+      "id": "mr-cache",
+      "query": "?step=after&request=hit",
+      "name": "forced-colors",
+      "width": 1280,
+      "height": 800,
+      "forcedColors": "active",
+      "file": "before-pr-forced-colors.png",
+      "sha256": "ac5ee167d5e6e63327d8a7585074c7236f5926d4a382ae4a37e8aef743bd6949",
+      "observed": {
+        "title": "Four added lines and one rewritten put a KV cache in front of D1",
+        "titleCase": "uppercase",
+        "cases": [
+          {
+            "text": "Cache hit",
+            "checked": true,
+            "transform": "uppercase",
+            "color": "rgb(0, 0, 0)",
+            "background": "rgb(255, 255, 255)",
+            "weight": "700"
+          },
+          {
+            "text": "Cache miss",
+            "checked": false,
+            "transform": "uppercase",
+            "color": "rgb(0, 0, 0)",
+            "background": "rgba(255, 255, 255, 0)",
+            "weight": "700"
+          }
+        ],
+        "next": {
+          "x": 248,
+          "y": 108,
+          "width": 150.5625,
+          "height": 40,
+          "top": 108,
+          "right": 398.5625,
+          "bottom": 148,
+          "left": 248
+        },
+        "scrollWidth": 1280
+      },
+      "errors": []
+    },
+    {
+      "id": "ext4-space",
+      "query": "",
+      "name": "command-casing",
+      "width": 1280,
+      "height": 800,
+      "file": "before-pr-command-casing.png",
+      "sha256": "abfc4a277a633d8ae278ae9188f9db86f4441e72f2ba6a883ebc93d60894bc0b",
+      "observed": {
+        "title": "A new 1 TiB ext4 filesystem lets users write 93% of it; the 5% root reserve is nearly three times all its metadata",
+        "titleCase": "uppercase",
+        "cases": [
+          {
+            "text": "1 GiB",
+            "checked": false,
+            "transform": "uppercase",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "700"
+          },
+          {
+            "text": "1 TiB",
+            "checked": true,
+            "transform": "uppercase",
+            "color": "rgb(247, 242, 232)",
+            "background": "rgb(19, 62, 124)",
+            "weight": "700"
+          },
+          {
+            "text": "20 TiB",
+            "checked": false,
+            "transform": "uppercase",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "700"
+          },
+          {
+            "text": "-m 5 (default)",
+            "checked": true,
+            "transform": "uppercase",
+            "color": "rgb(247, 242, 232)",
+            "background": "rgb(19, 62, 124)",
+            "weight": "700"
+          },
+          {
+            "text": "-m 1",
+            "checked": false,
+            "transform": "uppercase",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "700"
+          },
+          {
+            "text": "-m 0",
+            "checked": false,
+            "transform": "uppercase",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "700"
+          }
+        ],
+        "next": {
+          "x": 248,
+          "y": 128,
+          "width": 150.5625,
+          "height": 40,
+          "top": 128,
+          "right": 398.5625,
+          "bottom": 168,
+          "left": 248
+        },
+        "scrollWidth": 1280
+      },
+      "errors": []
+    }
+  ]
+}

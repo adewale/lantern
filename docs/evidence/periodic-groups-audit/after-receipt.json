@@ -1,0 +1,372 @@
+{
+  "revision": "2a904f50c7e1a4dd7ff0b61f09f6a9859d18864f",
+  "sourceDiff": "",
+  "renderer": "buildExplainer + served response headers + Playwright Chromium",
+  "browser": "151.0.7922.34",
+  "reducedMotion": "reduce",
+  "images": [
+    {
+      "id": "mr-cache",
+      "query": "?step=after&request=hit",
+      "name": "player",
+      "width": 1280,
+      "height": 800,
+      "file": "after-player.png",
+      "sha256": "d204b25f1efd77df450875ab4fda8fdf5007be86f3331941fc4fb4a7de87613f",
+      "observed": {
+        "title": "Four added lines and one rewritten put a KV cache in front of D1",
+        "titleCase": "none",
+        "cases": [
+          {
+            "text": "Cache hit",
+            "checked": true,
+            "transform": "none",
+            "color": "rgb(247, 242, 232)",
+            "background": "rgb(19, 62, 124)",
+            "weight": "700"
+          },
+          {
+            "text": "Cache miss",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          }
+        ],
+        "next": {
+          "x": 86,
+          "y": 645.9375,
+          "width": 96.203125,
+          "height": 40,
+          "top": 645.9375,
+          "right": 182.203125,
+          "bottom": 685.9375,
+          "left": 86
+        },
+        "scrollWidth": 1280
+      },
+      "errors": []
+    },
+    {
+      "id": "mr-cache",
+      "query": "?step=after&request=hit",
+      "name": "forced-colors",
+      "width": 1280,
+      "height": 800,
+      "forcedColors": "active",
+      "file": "after-forced-colors.png",
+      "sha256": "a369d86331827c1beee7ee1e6e0794a551d19ef1fb69d3ff31f82e4c5e69d184",
+      "observed": {
+        "title": "Four added lines and one rewritten put a KV cache in front of D1",
+        "titleCase": "none",
+        "cases": [
+          {
+            "text": "Cache hit",
+            "checked": true,
+            "transform": "none",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(5, 0, 73, 0.8)",
+            "weight": "700"
+          },
+          {
+            "text": "Cache miss",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(0, 0, 0)",
+            "background": "rgba(255, 255, 255, 0)",
+            "weight": "600"
+          }
+        ],
+        "next": {
+          "x": 86,
+          "y": 645.9375,
+          "width": 96.203125,
+          "height": 40,
+          "top": 645.9375,
+          "right": 182.203125,
+          "bottom": 685.9375,
+          "left": 86
+        },
+        "scrollWidth": 1280
+      },
+      "errors": []
+    },
+    {
+      "id": "ext4-space",
+      "query": "",
+      "name": "command-casing",
+      "width": 1280,
+      "height": 800,
+      "file": "after-command-casing.png",
+      "sha256": "0394dcbf2837252d22c3055962657e00da9395ffd8aaa9b911aa8bddbb0af700",
+      "observed": {
+        "title": "A new 1 TiB ext4 filesystem lets users write 93% of it; the 5% root reserve is nearly three times all its metadata",
+        "titleCase": "none",
+        "cases": [
+          {
+            "text": "1 GiB",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          },
+          {
+            "text": "1 TiB",
+            "checked": true,
+            "transform": "none",
+            "color": "rgb(247, 242, 232)",
+            "background": "rgb(19, 62, 124)",
+            "weight": "700"
+          },
+          {
+            "text": "20 TiB",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          },
+          {
+            "text": "-m 5 (default)",
+            "checked": true,
+            "transform": "none",
+            "color": "rgb(247, 242, 232)",
+            "background": "rgb(19, 62, 124)",
+            "weight": "700"
+          },
+          {
+            "text": "-m 1",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          },
+          {
+            "text": "-m 0",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          }
+        ],
+        "next": {
+          "x": 86,
+          "y": 651.921875,
+          "width": 96.203125,
+          "height": 40,
+          "top": 651.921875,
+          "right": 182.203125,
+          "bottom": 691.921875,
+          "left": 86
+        },
+        "scrollWidth": 1280
+      },
+      "errors": []
+    },
+    {
+      "id": "periodic-groups",
+      "query": "?element=na&step=blocks",
+      "name": "blocks",
+      "width": 1280,
+      "height": 800,
+      "file": "after-blocks.png",
+      "sha256": "d9db26313e4f176411774f42a1c0dda71579bc2b0d9e66459cbdc7cb48559861",
+      "observed": {
+        "title": "What puts an element in its group?",
+        "titleCase": "none",
+        "cases": [
+          {
+            "text": "Sodium",
+            "checked": true,
+            "transform": "none",
+            "color": "rgb(247, 242, 232)",
+            "background": "rgb(19, 62, 124)",
+            "weight": "700"
+          },
+          {
+            "text": "Chlorine",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          },
+          {
+            "text": "Iron",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          },
+          {
+            "text": "Copper",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          },
+          {
+            "text": "Helium",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          }
+        ],
+        "next": {
+          "x": 86,
+          "y": 645.9375,
+          "width": 96.203125,
+          "height": 40,
+          "top": 645.9375,
+          "right": 182.203125,
+          "bottom": 685.9375,
+          "left": 86
+        },
+        "scrollWidth": 1280
+      },
+      "errors": []
+    },
+    {
+      "id": "periodic-groups",
+      "query": "?element=cl&step=count",
+      "name": "phone-count",
+      "width": 390,
+      "height": 844,
+      "file": "after-phone-count.png",
+      "sha256": "a3cd98f47f7af24a518d88373992a7d9728d5b4f292e37d5875e3b2e1da6328a",
+      "observed": {
+        "title": "What puts an element in its group?",
+        "titleCase": "none",
+        "cases": [
+          {
+            "text": "Sodium",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          },
+          {
+            "text": "Chlorine",
+            "checked": true,
+            "transform": "none",
+            "color": "rgb(247, 242, 232)",
+            "background": "rgb(19, 62, 124)",
+            "weight": "700"
+          },
+          {
+            "text": "Iron",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          },
+          {
+            "text": "Copper",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          },
+          {
+            "text": "Helium",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(15, 15, 15)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          }
+        ],
+        "next": {
+          "x": 66,
+          "y": 410.453125,
+          "width": 96.203125,
+          "height": 44,
+          "top": 410.453125,
+          "right": 162.203125,
+          "bottom": 454.453125,
+          "left": 66
+        },
+        "scrollWidth": 390
+      },
+      "errors": []
+    },
+    {
+      "id": "periodic-groups",
+      "query": "?element=fe&step=family&theme=dark",
+      "name": "dark-family",
+      "width": 1280,
+      "height": 800,
+      "file": "after-dark-family.png",
+      "sha256": "4acd60a754fa628cdded7ef0bc5bf1b6bbbd3ebc169d5a8e4e53c87be363347b",
+      "observed": {
+        "title": "What puts an element in its group?",
+        "titleCase": "none",
+        "cases": [
+          {
+            "text": "Sodium",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(247, 242, 232)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          },
+          {
+            "text": "Chlorine",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(247, 242, 232)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          },
+          {
+            "text": "Iron",
+            "checked": true,
+            "transform": "none",
+            "color": "rgb(20, 18, 16)",
+            "background": "rgb(127, 166, 224)",
+            "weight": "700"
+          },
+          {
+            "text": "Copper",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(247, 242, 232)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          },
+          {
+            "text": "Helium",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(247, 242, 232)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "600"
+          }
+        ],
+        "next": {
+          "x": 86,
+          "y": 645.9375,
+          "width": 96.203125,
+          "height": 40,
+          "top": 645.9375,
+          "right": 182.203125,
+          "bottom": 685.9375,
+          "left": 86
+        },
+        "scrollWidth": 1280
+      },
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "revision": "11ff5694757646185f238e22b4f7cb050c6a337b",
+  "sourceDiff": "",
+  "renderer": "buildExplainer + served response headers + Playwright Chromium",
+  "browser": "151.0.7922.34",
+  "reducedMotion": "reduce",
+  "images": [
+    {
+      "id": "mr-cache",
+      "query": "?step=after&request=hit",
+      "name": "player",
+      "width": 1280,
+      "height": 800,
+      "file": "before-main-player.png",
+      "sha256": "46915376e51434a257fd0fd0b23c27cfb6266f84f85f82901dff028508fbb3b7",
+      "observed": {
+        "title": "Four added lines and one rewritten put a KV cache in front of D1",
+        "titleCase": "none",
+        "cases": [
+          {
+            "text": "Cache hit",
+            "checked": true,
+            "transform": "none",
+            "color": "rgb(20, 32, 43)",
+            "background": "rgb(255, 255, 255)",
+            "weight": "600"
+          },
+          {
+            "text": "Cache miss",
+            "checked": false,
+            "transform": "none",
+            "color": "rgb(83, 97, 112)",
+            "background": "rgba(0, 0, 0, 0)",
+            "weight": "400"
+          }
+        ],
+        "next": {
+          "x": 86,
+          "y": 644.9375,
+          "width": 95.34375,
+          "height": 40,
+          "top": 644.9375,
+          "right": 181.34375,
+          "bottom": 684.9375,
+          "left": 86
+        },
+        "scrollWidth": 1280
+      },
+      "errors": []
+    }
+  ]
+}
