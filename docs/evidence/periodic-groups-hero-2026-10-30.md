@@ -25,7 +25,7 @@ Tests compare all 108 captured configurations and all 118 positions. During the 
 ## Repairs after the adversarial audit
 
 - **Phone comparison:** the old sodium opening had eight close-ups at 390 px, including unrelated f-block context. Chlorine's count opened on Na/Mg while Al's 3/13 and Cl's 7/17 were elsewhere. Both now show their complete comparisons together.
-- **Desktop size:** the 912 px content floor includes 32 px padding, leaving an 880 px stage. The old 0.2-unit count labels rendered at 11 CSS px. The compact count figures use larger text, and the smallest detailed-table labels are 0.22 units, or 12.1 px at that stage width. The layout leaves more room for captions; it does not guarantee that every caption fits every laptop window.
+- **Desktop size:** on short laptop stages the old 0.2-unit count labels rendered at 11 CSS px. The compact count figures use larger text, and the smallest detailed-table labels are 0.22 units. `test/explain-periodic-reader.test.ts` measures the count labels at ten short laptop sizes and requires at least 12 CSS px; it passes with the player on `main`.
 - **Paint order:** an unordered set treated reordered layers and changed copy counts as unchanged. The reviewer now matches paint occurrences and preserves copy counts and layer order where painted bounds overlap. Bounds include miter joins and square caps. Equivalent redraws and changes in ordering between disjoint shapes remain unchanged; an unrelated insertion does not make all following context a new subject.
 - **Spotlight proof:** text reconciliation could miss a missing dashed outline. All eight boundary spotlights now have semantic keys, independent geometry/paint assertions, and explicit stroke claims.
 - **CI ownership:** collection review previously ignored companion `scene.review.json` files. It now combines them with built-in expectations. Claims and their loader enter the review fingerprint; added, edited or removed expectations invalidate earlier shards. A final fingerprint check rejects changes during a review.
@@ -51,7 +51,7 @@ The complete catalog and the latest hosted CI results are recorded on the PR. We
 
 ## Visual evidence
 
-Before: `b944907`, 390×844, reduced motion, fresh direct entry. After: the repaired source, identical case, step and viewport. Images include the visible caption as well as its picture.
+Before: `b944907`, 390×844, reduced motion, fresh direct entry. After: the repaired source at `fe1a016`, identical case, step and viewport, in the player that preceded `main`'s redesign and before the Atlas palette. Images include the visible caption as well as its picture.
 
 | Sodium, `column`, before | After |
 | --- | --- |
@@ -63,23 +63,22 @@ Before: `b944907`, 390×844, reduced motion, fresh direct entry. After: the repa
 
 Regenerate with `rayner build scenes/explainers/periodic-groups --out out/periodic.html`, serve it with the generated response headers, and open `?element=na&step=column` or `?element=cl&step=count` at 390×844. `rayner review` saves every case and step at both standard widths.
 
-## Atlas design language
+## Atlas design language, inside the picture only
 
-The player, the gallery and this scene now follow [Atlas's design language](https://atlas-48p.pages.dev/about/design): paper `#f7f2e8` and black `#0f0f0f`, deep blue, warm red and mustard, square corners, and uppercase tracked labels. The tokens live in `app/embed.css`; the gallery reads the same tokens.
+The scene draws its picture in [Atlas's design language](https://atlas-48p.pages.dev/about/design). The player is not restyled: `app/embed.css`, `app/embed.ts` and the gallery are exactly as on `main`, and every other explainer is unchanged.
 
-- **Scene.** Lit cells and the blocks step use Atlas's block colours as solid fills with paper lettering: s deep blue, d warm red, p mustard, f black. Paper text on each reaches 4.67:1 (mustard) or better, so the 12.1 px atomic numbers keep 4.5:1. Neon's core, in the count step's context table, stays a pale tint. Atomic numbers, jumps, counts and the core equation use the monospace face. Family badges are block-coloured squares. Boundary outlines stay black because a warm red outline would vanish against the d block.
-- **Player.** The title and the case legend are uppercase and tracked, over a 4 px black rule. The case picker is a row of boxes whose borders collapse, so a wrapped row on a phone stays a clean grid. Next is black, the selected case deep blue, and the rail and stage step number warm red. Atlas has no dark theme. The dark tokens put the same hues on a warm black `#141210`, each at 4.5:1 or better.
-- **Height.** The new header was 7 px taller, which pushed the caption toward the fold. The gap under the header rule dropped from 16 px to 8 px and the column's chrome allowance from 321 px to 320 px. Measured at the count step, the caption's last line ends 14 px above the fold at 1280×800, 18 px below at 1366×768 and 66 px below at 1280×720, against 13, 19 and 67 before.
-- **Other explainers.** The chrome changes for all 38 pages; their stage palettes do not. mr-cache's caption ends 1 px higher than before.
-
-`rayner check` and `rayner review` pass all five cases. `npm test` passes (937 pass, 88 skipped). `npm run test:embeds` passes (90 pass, 4 skipped) after the theme test's expected backgrounds moved to the new paper and warm black. `npm run check`, `npm run demos:build` (38 explainers, 196 cases) and `npm run check:budgets` pass.
+- **Palette.** Paper `#f7f2e8`, black `#0f0f0f` and Grey Mid `#666` for secondary text. Block colours: s deep blue `#133e7c`, d warm red `#9e1c2c`, p mustard `#856912`, f black.
+- **Cells.** Lit cells and the blocks step are solid block colour with paper lettering. Paper text on each reaches 4.67:1 (mustard) or better, so the small atomic numbers keep 4.5:1. Neon's core, in the count step's context table, stays a pale tint. Cells are square.
+- **Numbers.** Atomic numbers, jumps, counts and the core equation use the monospace face. In the count rows each count takes its element's block colour. Family badges are block-coloured squares.
+- **What stays as it was.** Boundary outlines stay black: a warm red outline would vanish against the d block. The step number drawn on the stage keeps the player's teal, so it matches the step bar.
+- **One side effect from `main`.** `main`'s player tints its card 10% toward each explainer's paper. With the Atlas paper, this card's background takes a faint warm tint. Every explainer gets the same treatment from its own paper; nothing Atlas-specific reaches the player. On that tint, text, secondary text and the accent read at 16.3, 6.3 and 7.1:1 in the light theme and 10.6, 5.5 and 7.1:1 in the dark, above the 7, 4.5 and 3:1 that `test/embed-tint.test.ts` asks of the built-in palettes.
 
 | | Before | After |
 | --- | --- | --- |
-| Blocks step, 1280×800 | ![Pale tinted blocks, rounded cells, teal rail](periodic-groups/atlas-blocks-before.png) | ![Solid deep blue, warm red, mustard and black blocks with square cells](periodic-groups/atlas-blocks-after.png) |
+| Blocks step, 1280×800 | ![Pale tinted blocks with rounded cells in the main player](periodic-groups/atlas-blocks-before.png) | ![Solid deep blue, warm red, mustard and black blocks with square cells, same player](periodic-groups/atlas-blocks-after.png) |
 | Chlorine count, 1280×800 | ![Count rows in one colour](periodic-groups/atlas-chlorine-count-before.png) | ![Counts in each element's block colour, groups in bold monospace](periodic-groups/atlas-chlorine-count-after.png) |
-| Iron family, dark | ![Dark blue-grey chrome](periodic-groups/atlas-dark-iron-family-before.png) | ![Warm black chrome with paper-coloured Next](periodic-groups/atlas-dark-iron-family-after.png) |
-| Sodium opening, 390 px | ![Pill-shaped case picker](periodic-groups/atlas-phone-sodium-before.png) | ![Boxed case picker wrapping into a grid](periodic-groups/atlas-phone-sodium-after.png) |
-| mr-cache, 1280×800 | ![mr-cache in the old chrome](periodic-groups/atlas-mr-cache-before.png) | ![mr-cache in the Atlas chrome, its own stage palette unchanged](periodic-groups/atlas-mr-cache-after.png) |
+| Sodium opening, 390×844 | ![Sodium highlighted in pale blue](periodic-groups/atlas-phone-sodium-before.png) | ![Sodium as a solid deep blue cell, atomic numbers in blue monospace; the player around it identical](periodic-groups/atlas-phone-sodium-after.png) |
+
+Both columns use the player on `main`; only the scene differs (`bf24af0`'s palette before, Atlas after).
 
 Nothing here was deployed. A future curated `site:export --only` selection must include the new required `periodic-groups` entry. The README's live preview should change only when that page is published.

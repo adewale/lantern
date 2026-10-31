@@ -119,8 +119,9 @@ export default class PeriodicGroupsExplainer extends Scene {
       };
     });
 
-    // The accent is the player's own warm red, so the step number on the stage matches the rail beside Next.
-    const s = stage(this, { palette: { paper: PAPER, ink: INK, accent: '#9e1c2c', muted: SOFT }, headingSize: 0.5 });
+    // The accent is the player's own teal, so the step number on the stage matches the player's step bar.
+    // Atlas's palette stays inside the picture; the player is not restyled.
+    const s = stage(this, { palette: { paper: PAPER, ink: INK, accent: '#176166', muted: SOFT }, headingSize: 0.5 });
 
     // ---- the table, drawn from this.state --------------------------------------
     const drawTable = (state: SceneState) => {
