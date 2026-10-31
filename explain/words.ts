@@ -86,6 +86,9 @@ export interface Words {
   axis: Noun;
   /** One value of a radar curve and the spoke it sits on: "0.248 at red". */
   valueAt: (value: string, axis: string) => string;
+  /** A true or false state value, as a step's "what changed" says it (explain/trace.ts, watchedValue). */
+  yes: string;
+  no: string;
 }
 
 const one = (noun: Noun) => (typeof noun === 'string' ? noun : noun[0]);
@@ -138,6 +141,8 @@ const EN: Words = {
   dimmed: (name) => `${name} (dimmed)`,
   beside: (text, part) => `“${text}” beside ${part}`,
   newInStep: 'new in this step',
+  yes: 'yes',
+  no: 'no',
   restAsBefore: 'the rest as in the previous step',
   span: (from, to) => `from ${from} to ${to}`,
   by: (axis) => `by ${axis}`,
@@ -227,6 +232,8 @@ const FR: Partial<Words> = {
   dimmed: (name) => `${name} (en retrait)`,
   beside: (text, part) => `«${NB}${text}${NB}» à côté ${de(part)}`,
   newInStep: 'nouveau à cette étape',
+  yes: 'oui',
+  no: 'non',
   restAsBefore: 'le reste comme à l’étape précédente',
   span: (from, to) => `${de(from)} ${a(to)}`,
   by: (axis) => `selon ${axis}`,

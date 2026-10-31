@@ -54,8 +54,14 @@ export const explainer = (id: string): Promise<SceneClass> => {
     loaded.set(id, collectProject(join(ROOT, 'scenes/explainers', id), { write: false }).then((p) => defaultVariant(p).Scene));
   return loaded.get(id)!;
 };
-export const explainers = (): Promise<[string, SceneClass][]> =>
-  Promise.all(EXPLAINERS.map(async ({ id }): Promise<[string, SceneClass]> => [id, await explainer(id)]));
+// One at a time, so the order of collection, and anything a project leaves behind, is the same on
+// every run. (Concurrent collection is safe too: the first lettering lease waits for runs that
+// began before lettering was installed; test/lettering-race.test.ts.)
+export const explainers = async (): Promise<[string, SceneClass][]> => {
+  const all: [string, SceneClass][] = [];
+  for (const { id } of EXPLAINERS) all.push([id, await explainer(id)]);
+  return all;
+};
 
 /**
  * The box around what `pick` finds in a step's resting picture, in the camera's view units

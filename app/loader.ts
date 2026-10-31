@@ -1,43 +1,70 @@
-import { exactHttpOrigin, resizeHeight } from './embed-protocol.ts';
+import { exactHttpOrigin, gotoMessage, resizeHeight, stepDetail } from './embed-protocol.ts';
+import type { StepDetail } from './embed-protocol.ts';
 import { chromeFor } from './embed-strings.ts';
 
 /**
- * Optional host-side convenience. Never required by the artifact itself. Its own words (the
- * link beside the frame) are in `lang`, the host page's language unless given.
+ * Optional host-side convenience. Never required by the artifact itself. It adds the iframe and
+ * nothing else: the page's own footer carries the way out of the frame. `lang` is kept for
+ * compatibility; the script tag's `data-lang` (else the host page's language) chooses the language
+ * of the frame's default name.
+ *
+ * Each step the page settles on reaches the host as a `rayner:step` event on the iframe (it bubbles)
+ * and through `onStep`; the returned dispose function's `goTo` asks the page for a step, a case or
+ * both, and does nothing once disposed.
  */
 export function mountExplainer(
   target: HTMLElement,
   src: string,
-  options: { title: string; height?: number; theme?: 'light' | 'dark' | 'auto'; lang?: string },
-): () => void {
-  const t = chromeFor(hostLang(options.lang));
+  options: { title: string; height?: number; theme?: 'light' | 'dark' | 'auto'; lang?: string; onStep?: (detail: StepDetail) => void },
+): (() => void) & { goTo(step?: string, settings?: Record<string, string>): void } {
   const url = new URL(src, document.baseURI);
   const origin = exactHttpOrigin(url.origin);
   if (!origin) throw new Error('Auto-sizing requires an HTTP(S) artifact URL');
   url.searchParams.set('parentOrigin', location.origin);
-  if (options.theme) url.searchParams.set('theme', options.theme);
+  // The frame is transparent; Chromium paints an opaque canvas under a cross-origin frame whose
+  // colour scheme differs from its host's, so 'auto' means the host page's scheme, not the device's.
+  url.searchParams.set('theme', options.theme && options.theme !== 'auto' ? options.theme : hostScheme());
   const frame = document.createElement('iframe');
   frame.title = options.title;
   frame.loading = 'lazy';
   frame.allow = 'fullscreen';
   frame.src = url.href;
   frame.style.cssText = `width:100%;height:${options.height ?? 640}px;border:0;display:block`;
+  // Both messages under one rule: from this iframe's window, at the artifact's origin.
   const receive = (event: MessageEvent) => {
     const height = resizeHeight(event, origin, frame.contentWindow);
     if (height != null) frame.style.height = `${height}px`;
+    const detail = stepDetail(event, origin, frame.contentWindow);
+    if (detail) {
+      frame.dispatchEvent(new CustomEvent('rayner:step', { bubbles: true, detail }));
+      options.onStep?.(detail);
+    }
   };
   window.addEventListener('message', receive);
-  const link = document.createElement('a');
-  link.href = src;
-  link.textContent = t.newTab;
-  link.target = '_blank';
-  link.rel = 'noopener';
-  target.append(frame, link);
-  return () => {
+  target.append(frame);
+  let disposed = false;
+  const dispose = () => {
+    disposed = true;
     window.removeEventListener('message', receive);
     frame.remove();
-    link.remove();
   };
+  return Object.assign(dispose, {
+    /** Show `step` (by name) and `settings` (by id, over the case on show); a message to the page, which validates both. */
+    goTo(step?: string, settings?: Record<string, string>) {
+      if (!disposed) frame.contentWindow?.postMessage(gotoMessage(step, settings), origin);
+    },
+  });
+}
+
+/**
+ * The host page's used colour scheme: dark when its computed color-scheme allows only dark, or
+ * allows dark and the device prefers it; light otherwise, including `normal`.
+ */
+function hostScheme(): 'light' | 'dark' {
+  const scheme = getComputedStyle(document.documentElement).colorScheme;
+  const dark = /\bdark\b/.test(scheme),
+    light = /\blight\b/.test(scheme);
+  return dark && (!light || matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
 }
 
 /** The language the loader's words are in: the one given, else the host page's. */

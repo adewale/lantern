@@ -115,6 +115,8 @@ export default class TokenBucketExplainer extends Scene {
     id: 'token-bucket',
     title: 'A token bucket refills when a request arrives',
     sources: ['https://github.com/ivarvong/lantern/blob/2c7bad5/scenes/token-bucket.ts'],
+    // The readout's own words, which the captions use too.
+    watch: { tokens: 'Tokens left', allowed: 'Accepted', rejected: 'Rejected' },
   };
   static settings = [
     {

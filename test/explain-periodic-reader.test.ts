@@ -86,7 +86,7 @@ test('count-step labels stay at least 12 CSS pixels in actual short laptop stage
       minimum=Math.min(...labels.map(m=>m.textSize()));
     }},{skipUntil:Infinity}).run();
     assert.ok(Number.isFinite(minimum));
-    for(const viewport of [{width:1280,height:720},{width:1280,height:800}]){
+    for(const viewport of [1100,1212,1280].flatMap(width=>[720,800].map(height=>({width,height})))){
       const page=await browser.newPage({viewport,reducedMotion:'reduce'});
       try{
         await page.goto(`${server.url}/periodic.html?element=${variant.values.element}&step=count`);
@@ -95,10 +95,12 @@ test('count-step labels stay at least 12 CSS pixels in actual short laptop stage
         const scale=await page.locator('.stage svg:not(.leaving)').evaluate(svg=>{
           const matrix=(svg as SVGSVGElement).getScreenCTM()!;return Math.hypot(matrix.a,matrix.b)*1000;
         });
-        assert.ok(minimum*scale>=12-1e-6,`${variant.values.element}/${viewport.height}: smallest count-step label is ${minimum*scale}px`);
+        assert.ok(minimum*scale>=12-1e-6,`${variant.values.element}/${viewport.width}×${viewport.height}: smallest count-step label is ${minimum*scale}px`);
+        assert.equal(await page.locator('.rail').evaluate(rail=>rail.tagName),viewport.width>=1212?'ASIDE':'DETAILS',
+          'the steps stay below the card until a full-width stage and side rail fit together');
         stages++;
       }finally{await page.close();}
     }
   }
-  assert.equal(stages,10);
+  assert.equal(stages,30);
 });

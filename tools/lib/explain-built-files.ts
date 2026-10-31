@@ -11,7 +11,7 @@ async function outputNames(dir: string, ids: readonly string[]): Promise<string[
   const paths = [...rootFiles];
   for (const id of ids) {
     if (!/^[a-z0-9-]+$/.test(id)) throw new Error(`Invalid explainer id: ${id}`);
-    paths.push(`${id}.html`, `${id}.html.headers.json`, `${id}.png`, `${id}/inputs.json`, `${id}/describe.json`, `${id}/steps.json`);
+    paths.push(`${id}.html`, `${id}.html.headers.json`, `${id}.png`, `${id}/inputs.json`, `${id}/describe.json`, `${id}/steps.json`, `${id}/embed.json`);
     const share = JSON.parse(await readFile(join(dir, id, 'steps.json'), 'utf8')) as { steps: { step: string }[] };
     if (!Array.isArray(share.steps)) throw new Error(`Invalid ${id}/steps.json`);
     for (const { step } of share.steps) {

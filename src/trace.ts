@@ -62,8 +62,13 @@ const round = (x: number): number => Math.round(x * 1000) / 1000;
 
 /** Run a scene and return its trace: { fps, duration, frames, steps }. */
 export async function traceScene(SceneClass: SceneClass, opts: SceneOptions = {}): Promise<Trace> {
+  return (await traceRun(SceneClass, opts)).trace;
+}
+
+/** traceScene, with the scene as the run left it, for a caller that reads its final state too. */
+export async function traceRun(SceneClass: SceneClass, opts: SceneOptions = {}): Promise<{ trace: Trace; scene: Scene }> {
   const sink = new TraceSink();
   const scene = new SceneClass(sink, { skipUntil: Infinity, ...opts });
   await scene.run();
-  return { fps: scene.fps, duration: round(scene.time), frames: scene.frameCount, steps: sink.steps() };
+  return { trace: { fps: scene.fps, duration: round(scene.time), frames: scene.frameCount, steps: sink.steps() }, scene };
 }
