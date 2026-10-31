@@ -39,8 +39,9 @@ before(async () => {
   browser = await launch();
   await new Promise<void>((r) => hostServer.listen(0, '127.0.0.1', r));
   host = `http://127.0.0.1:${(hostServer.address() as { port: number }).port}`;
-  // quotient-familial is the one scene in French (meta.lang 'fr'), with ten steps.
-  for (const name of ['mr-cache', 'oauth-pkce', 'exgit', 'lantern', 'send-sync', 'quotient-familial', 'feature-tour']) {
+  // quotient-familial is the one scene in French (meta.lang 'fr'), with ten steps; token-bucket,
+  // mr-cache and quotient-familial watch state for readers (meta.watch).
+  for (const name of ['mr-cache', 'oauth-pkce', 'exgit', 'lantern', 'send-sync', 'quotient-familial', 'feature-tour', 'token-bucket']) {
     const project = await collectProject(`scenes/explainers/${name}`, { write: false });
     projects.set(name, project);
     await buildExplainer(project, join(folder, name + '.html'));
@@ -278,11 +279,16 @@ test('every catalog page, in English and French: no Replay, Stop or Fit stage bu
       // specs/player-tile.md T3: the maker's mark, in the footer, never on the stage; standalone, no way out.
       const foot = await page.evaluate(() => ({
         marks: [...document.querySelectorAll<HTMLAnchorElement>('a.mark')].map((a) => [a.parentElement!.matches('.player > footer.foot'), a.textContent, a.href, a.getAttribute('aria-label'), a.target, a.rel]),
-        last: [...document.querySelector('.player')!.children].filter((e) => !e.matches('[hidden], .ruler, .lede-ruler')).at(-1)?.className,
+        last: [...document.querySelector('.player')!.children].filter((e) => !e.matches('[hidden], .ruler, .lede-ruler, .changes-ruler')).at(-1)?.className,
         open: document.querySelectorAll('.foot a.open').length,
         onStage: document.querySelectorAll('.stage a, .stage .foot, .frame a').length,
+        // specs/player-guidance.md G3: one quiet line on how to move, straight after the mark.
+        hint: [...document.querySelectorAll<HTMLElement>('.foot .hint')].map((h) => [h.textContent, h.previousElementSibling?.classList.contains('mark'), h.checkVisibility()]),
       }));
-      assert.deepEqual(foot, { marks: [[true, 'Rayner', PRODUCT.home, t.madeWith, '_blank', 'noopener']], last: 'foot', open: 0, onStage: 0 }, id);
+      // A stage under 600 px wide (a tall header in the reader's fonts can make one) on a step with
+      // more than one view says how Next view differs from Next instead of the keys.
+      const touring = await page.locator('.view-controls').evaluate((v) => !(v as HTMLElement).hidden && (v as HTMLElement).style.visibility !== 'hidden');
+      assert.deepEqual(foot, { marks: [[true, 'Rayner', PRODUCT.home, t.madeWith, '_blank', 'noopener']], last: 'foot', open: 0, onStage: 0, hint: [[touring ? t.viewHelp : t.hintKeys, true, true]] }, id);
       if (project.Scene.settings?.length) assert.ok(await page.locator('.player .case input').count() > 0, `${id}: the case picker is in the card`);
     }
     assert.ok(languages.size === 2, `both languages visited: ${[...languages]}`);
@@ -448,6 +454,262 @@ test('the step heading shows on every width with the total', options, async () =
         assert.match(lede.kicker!, new RegExp(` ${total}$`), `${where}: the kicker names the total`);
       } finally { await page.close(); }
     }
+  }
+});
+// specs/player-guidance.md G1: under the caption, what the step changed of the state the author watches.
+const changesOf = (page: Page) =>
+  page.evaluate(() => {
+    const row = document.querySelector<HTMLElement>('.words > .changes');
+    return row && {
+      hidden: row.hidden,
+      label: row.firstElementChild && !row.firstElementChild.classList.contains('change') ? row.firstElementChild.textContent : null,
+      changes: [...row.querySelectorAll('.change')].map((c) => c.textContent),
+      live: row.closest('[aria-live]') !== null,
+      height: row.getBoundingClientRect().height,
+    };
+  });
+test('what changed: token-bucket\'s burst step lists its three watched changes under the caption; a scene without watch has no row', options, async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/token-bucket.html?step=burst`);
+    await page.waitForSelector('[data-ready=true]');
+    const burst = await changesOf(page);
+    assert.deepEqual({ ...burst, height: undefined }, {
+      hidden: false,
+      label: 'What changed',
+      changes: ['Tokens left: 5 → 0', 'Accepted: 0 → 5', 'Rejected: R6'],
+      // Plain text, read with the words: the caption already announces the step.
+      live: false,
+      height: undefined,
+    });
+    // It follows the caption, inside the words.
+    assert.equal(await page.locator('.caption + .changes').count(), 1);
+    // The comparison step changes nothing watched: no items, but the row keeps its room.
+    await page.locator('.steps button[data-step=trace]').click();
+    await page.waitForFunction(() => document.querySelector('.steps [aria-current=step]')?.getAttribute('data-step') === 'trace');
+    const trace = await changesOf(page);
+    assert.deepEqual([trace!.hidden, trace!.label, trace!.changes], [false, null, []]);
+    assert.equal(trace!.height, burst!.height, 'the row keeps the room of its tallest step');
+    // French: the label and the values in French.
+    await page.goto(`${embed}/quotient-familial.html?step=parts`);
+    await page.waitForSelector('[data-ready=true]');
+    assert.deepEqual((await changesOf(page))!.changes, ['Parts\u202f: 2,5']);
+    assert.equal((await changesOf(page))!.label, 'Ce qui a changé');
+    for (const scene of ['exgit', 'send-sync']) {
+      await page.goto(`${embed}/${scene}.html`);
+      await page.waitForSelector('[data-ready=true]');
+      assert.equal(await page.locator('.changes').count(), 0, `${scene}: no changes row`);
+      assert.doesNotMatch((await page.locator('.transcript').textContent())!, /What changed/, `${scene}: no line in the transcript`);
+    }
+  } finally {
+    await page.close();
+  }
+});
+// specs/player-guidance.md G3: the controls teach their keys, and the footer how to move.
+test('every keyed control names its key in its tooltip and aria-keyshortcuts, in English and French; names are unchanged', options, async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    for (const [name, lang] of [['mr-cache', 'en'], ['quotient-familial', 'fr']] as const) {
+      const t = chromeFor(lang);
+      await page.goto(`${embed}/${name}.html`);
+      await page.waitForSelector('[data-ready=true]');
+      const keys = await page.evaluate(
+        (names) => names.map((n) => {
+          const b = document.querySelector<HTMLButtonElement>(`.stepper button[aria-label="${n}"]`);
+          return b && [b.title, b.getAttribute('aria-keyshortcuts')];
+        }),
+        [t.previous, t.nextLabel, t.zoomIn, t.zoomOut, t.wholePicture],
+      );
+      assert.deepEqual(keys, [
+        [`${t.previous} (←)`, 'ArrowLeft'],
+        [`${t.nextLabel} (→)`, 'ArrowRight'],
+        [`${t.zoomIn} (+)`, '+'],
+        [`${t.zoomOut} (−)`, '-'],
+        [`${t.wholePicture} (0)`, '0'],
+      ], name);
+      // At the end ArrowRight does not start again, so Start again names no key.
+      await page.locator('.step-bar button').last().click();
+      await page.waitForFunction((label) => document.querySelector('.stepper .primary')?.getAttribute('aria-label') === label, t.startAgainLabel);
+      assert.deepEqual(await page.locator('.stepper .primary').evaluate((b) => [(b as HTMLButtonElement).title, b.getAttribute('aria-keyshortcuts')]), [t.startAgainLabel, null]);
+      await page.getByRole('button', { name: t.previous, exact: true }).click();
+      await page.waitForFunction((label) => document.querySelector('.stepper .primary')?.getAttribute('aria-label') === label, t.nextLabel);
+      assert.deepEqual(await page.locator('.stepper .primary').evaluate((b) => [(b as HTMLButtonElement).title, b.getAttribute('aria-keyshortcuts')]), [`${t.nextLabel} (→)`, 'ArrowRight']);
+    }
+  } finally {
+    await page.close();
+  }
+});
+test('the footer hint: keys on a fine pointer, taps on a touch screen, wrapping on a narrow card without pushing the mark or the way out off the row', options, async () => {
+  const fine = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  const touch = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, reducedMotion: 'reduce' });
+  try {
+    for (const [name, lang] of [['mr-cache', 'en'], ['quotient-familial', 'fr']] as const) {
+      const t = chromeFor(lang);
+      await fine.goto(`${embed}/${name}.html`);
+      await fine.waitForSelector('[data-ready=true]');
+      assert.equal(await fine.locator('.foot .hint').textContent(), t.hintKeys, name);
+      const page = await touch.newPage();
+      await page.goto(`${embed}/${name}.html`);
+      await page.waitForSelector('[data-ready=true]');
+      assert.equal(await page.evaluate(() => matchMedia('(pointer: coarse)').matches), true);
+      // On a narrow stage, a step with more than one view says how Next view differs from Next.
+      const touring = await page.locator('.view-controls').evaluate((v) => !(v as HTMLElement).hidden && (v as HTMLElement).style.visibility !== 'hidden');
+      assert.equal(await page.locator('.foot .hint').textContent(), touring ? t.viewHelp : t.hintTouch, name);
+      await page.close();
+    }
+    // Both on known steps: mr-cache's last step has one view on a phone, its third has three.
+    const phone = await touch.newPage();
+    try {
+      const t = chromeFor('en');
+      await phone.goto(`${embed}/mr-cache.html?request=hit&step=request`);
+      await phone.waitForSelector('[data-ready=true]');
+      assert.equal(await phone.locator('.foot .hint').textContent(), t.hintTouch, 'a step with one view');
+      await phone.goto(`${embed}/mr-cache.html?request=hit&step=after`);
+      await phone.waitForSelector('[data-ready=true]');
+      assert.equal(await phone.locator('.foot .hint').textContent(), t.viewHelp, 'a step with three views');
+      assert.equal(await phone.getByRole('button', { name: 'Next view', exact: true }).getAttribute('aria-describedby'),
+        await phone.locator('.foot .hint').getAttribute('id'), 'Next view is described by the hint');
+    } finally { await phone.close(); }
+    // Framed at 390 px, with the way out: the hint wraps between them, inside the footer's row.
+    hostBody = `<!doctype html><style>body{margin:0}</style><iframe title="t" src="${embed}/quotient-familial.html" style="width:390px;height:900px;border:0"></iframe>`;
+    const host390 = await browser.newPage({ viewport: { width: 390, height: 900 }, reducedMotion: 'reduce' });
+    try {
+      await host390.goto(host);
+      const frame = await readyFrame(host390, 'quotient-familial');
+      const row = await frame.evaluate(() => {
+        const box = (s: string) => document.querySelector(s)!.getBoundingClientRect();
+        const foot = box('.foot'), mark = box('.foot .mark'), hint = box('.foot .hint'), open = box('.foot .open');
+        return { inside: [mark, hint, open].every((b) => b.left >= foot.left && b.right <= foot.right && b.top >= foot.top && b.bottom <= foot.bottom), order: mark.right <= hint.left && hint.right <= open.left, lines: Math.round(hint.height / 18) };
+      });
+      assert.deepEqual({ ...row, lines: undefined }, { inside: true, order: true, lines: undefined }, JSON.stringify(row));
+      assert.ok(row.lines >= 2, `the hint wraps: ${JSON.stringify(row)}`);
+    } finally { await host390.close(); }
+    // At 360 px and under the keys-or-taps hint may go; the mark and the way out stay. The words
+    // on Next view stay, on a step that has more than one view.
+    await fine.setViewportSize({ width: 340, height: 700 });
+    await fine.goto(`${embed}/mr-cache.html?request=hit&step=request`);
+    await fine.waitForSelector('[data-ready=true]');
+    assert.equal(await fine.locator('.foot .hint').isVisible(), false);
+    await fine.goto(`${embed}/mr-cache.html?request=hit&step=after`);
+    await fine.waitForSelector('[data-ready=true]');
+    assert.equal(await fine.locator('.foot .hint').isVisible(), true);
+    assert.equal(await fine.locator('.foot .hint').textContent(), chromeFor('en').viewHelp);
+  } finally {
+    await fine.close();
+    await touch.close();
+  }
+});
+// specs/player-guidance.md G7: the changes row, the hint and the thumbnails follow the page's direction.
+test('right to left: the changes row reads from the right and the footer hint sits between the mark and the way out', options, async () => {
+  hostBody = `<!doctype html><style>body{margin:0}</style><iframe title="t" src="${embed}/mr-cache.html?request=hit&step=before" style="width:1280px;height:900px;border:0"></iframe>`;
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(host);
+    const frame = await readyFrame(page, 'mr-cache');
+    const seen = await frame.evaluate(() => {
+      document.documentElement.setAttribute('dir', 'rtl');
+      const box = (e: Element) => e.getBoundingClientRect();
+      const label = box(document.querySelector('.changes > span')!), change = box(document.querySelector('.changes .change')!);
+      const mark = box(document.querySelector('.foot .mark')!), hint = box(document.querySelector('.foot .hint')!), open = box(document.querySelector('.foot .open')!);
+      return { changes: label.left > change.right, hint: mark.left >= hint.right && hint.left >= open.right };
+    });
+    assert.deepEqual(seen, { changes: true, hint: true });
+  } finally {
+    await page.close();
+  }
+});
+// specs/player-guidance.md G2: after the last step, Start again, and for a scene with settings, its next case.
+const endOf = (page: Page) =>
+  page.evaluate(() => {
+    const next = document.querySelector<HTMLButtonElement>('.stepper .primary')!,
+      tries = [...document.querySelectorAll<HTMLButtonElement>('.stepper > .button:not(.icon):not(.primary)')];
+    return {
+      name: next.getAttribute('aria-label'),
+      text: next.querySelector('span')!.textContent,
+      disabled: next.disabled,
+      // The Try button follows Next straight away, in the row and in the Tab order.
+      tryCase: tries.filter((b) => !b.hidden).map((b) => [b.textContent, b.previousElementSibling === next]),
+      step: new URL(location.href).searchParams.get('step'),
+      request: new URL(location.href).searchParams.get('request'),
+    };
+  });
+test('the last step: Next becomes Start again, back to step 1; Try ‘Cache miss’ loads the miss case at step 1; leaving the end restores Next', options, async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/mr-cache.html?step=after`);
+    await page.waitForSelector('[data-ready=true]');
+    assert.deepEqual(await endOf(page), { name: 'Next step', text: 'Next', disabled: false, tryCase: [], step: 'after', request: 'hit' });
+    await page.getByRole('button', { name: 'Next step', exact: true }).click();
+    await page.waitForFunction(() => new URL(location.href).searchParams.get('step') === 'request');
+    assert.deepEqual(await endOf(page), {
+      name: 'Start again from step 1', text: 'Start again', disabled: false,
+      tryCase: [['Try ‘Cache miss’', true]], step: 'request', request: 'hit',
+    });
+    // ArrowRight at the end does nothing: no wrap.
+    await page.locator('#content').focus();
+    await page.keyboard.press('ArrowRight');
+    await page.waitForTimeout(200);
+    assert.equal((await endOf(page)).step, 'request');
+    // Start again goes to step 1 and pushes history, as a step click does.
+    const length = await page.evaluate(() => history.length);
+    await page.getByRole('button', { name: 'Start again from step 1', exact: true }).click();
+    await page.waitForFunction(() => new URL(location.href).searchParams.get('step') === 'before');
+    assert.deepEqual(await endOf(page), { name: 'Next step', text: 'Next', disabled: false, tryCase: [], step: 'before', request: 'hit' });
+    assert.equal(await page.evaluate(() => history.length), length + 1);
+    // Try: the next option of the first setting, at its first step; then it offers the one after, wrapping.
+    await page.goto(`${embed}/mr-cache.html?step=request`);
+    await page.waitForSelector('[data-ready=true]');
+    await page.getByRole('button', { name: 'Try ‘Cache miss’', exact: true }).click();
+    await page.waitForFunction(() => new URL(location.href).searchParams.get('request') === 'miss');
+    await page.waitForFunction(() => !document.getElementById('content')!.classList.contains('loading'));
+    assert.deepEqual(await endOf(page), { name: 'Next step', text: 'Next', disabled: false, tryCase: [], step: 'before', request: 'miss' });
+    assert.equal(await page.locator('input[name=request]:checked').getAttribute('value'), 'miss');
+    // Focus stays on Next when the Try button goes.
+    assert.equal(await page.evaluate(() => document.activeElement?.classList.contains('primary')), true);
+    await page.locator('.steps button[data-step=request]').click();
+    await page.waitForFunction(() => new URL(location.href).searchParams.get('step') === 'request');
+    assert.deepEqual((await endOf(page)).tryCase, [['Try ‘Cache hit’', true]]);
+    // Leaving the end, by Previous, restores Next and removes Try.
+    await page.getByRole('button', { name: 'Previous step', exact: true }).click();
+    await page.waitForFunction(() => new URL(location.href).searchParams.get('step') === 'after');
+    assert.deepEqual(await endOf(page), { name: 'Next step', text: 'Next', disabled: false, tryCase: [], step: 'after', request: 'miss' });
+    // A scene with one case (lantern; exgit has two): Start again, and no case button at all.
+    await page.goto(`${embed}/lantern.html`);
+    await page.waitForSelector('[data-ready=true]');
+    await page.locator('.step-bar button').last().click();
+    await page.waitForFunction(() => document.querySelector('.stepper .primary')?.getAttribute('aria-label') === 'Start again from step 1');
+    assert.equal(await page.locator('.stepper > .button:not(.icon):not(.primary)').count(), 0);
+    // French: Recommencer, and Essayer « 2 » for quotient-familial's first setting.
+    await page.goto(`${embed}/quotient-familial.html?step=revenus-2025`);
+    await page.waitForSelector('[data-ready=true]');
+    const fr = await endOf(page);
+    assert.deepEqual([fr.name, fr.text, fr.tryCase], ['Recommencer à l’étape 1', 'Recommencer', [['Essayer «\u202f2\u202f»', true]]]);
+  } finally {
+    await page.close();
+  }
+});
+test('the last step while it plays: Next still reads Next and rests the step; the face changes only at rest', options, async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'no-preference' });
+  try {
+    await page.addInitScript(() => {
+      (window as unknown as { __rests: string[] }).__rests = [];
+      document.addEventListener('rayner:step', (e) => (window as unknown as { __rests: string[] }).__rests.push((e as CustomEvent).detail.step));
+    });
+    await page.goto(`${embed}/mr-cache.html?step=after`);
+    await page.waitForSelector('[data-ready=true]');
+    await page.waitForTimeout(300);
+    await page.getByRole('button', { name: 'Next step', exact: true }).click();
+    // Playing the last step: busy, and Next is still Next, enabled.
+    await page.waitForFunction(() => document.querySelector('.stage')!.getAttribute('aria-busy') === 'true');
+    const playing = await endOf(page);
+    assert.deepEqual([playing.name, playing.disabled, playing.tryCase], ['Next step', false, []]);
+    await page.getByRole('button', { name: 'Next step', exact: true }).click();
+    await page.waitForFunction(() => (window as unknown as { __rests: string[] }).__rests.at(-1) === 'request');
+    assert.equal(await page.locator('.stage').getAttribute('aria-busy'), null);
+    const rested = await endOf(page);
+    assert.deepEqual([rested.name, rested.step, rested.tryCase], ['Start again from step 1', 'request', [['Try ‘Cache miss’', true]]]);
+  } finally {
+    await page.close();
   }
 });
 // specs/player-redesign.md R3: the step bar. One segment per step, the current one filling as it plays.
@@ -810,7 +1072,7 @@ test('view tools share Next\'s row when wide and wrap below it when narrow', opt
       } else {
         assert.ok(tools.top >= next.bottom, `${where}: the tools wrap below Next ${JSON.stringify(v.boxes)}`);
         // Every control in the row, except the step bar's thin segments, is at least 44 px each way.
-        const small = await page.locator('.stepper > button, .stepper .tools > button:not([hidden])').evaluateAll((bs) =>
+        const small = await page.locator('.stepper > button:not([hidden]), .stepper .tools > button:not([hidden])').evaluateAll((bs) =>
           bs.map((b) => [b.getAttribute('aria-label'), b.getBoundingClientRect().width, b.getBoundingClientRect().height] as const).filter(([, w, h]) => w < 44 || h < 44),
         );
         assert.deepEqual(small, [], where);
@@ -960,7 +1222,111 @@ test('the loader appends only the iframe, and dispose() removes the iframe and i
     assert.deepEqual(await page.evaluate(() => ({ children: [...document.getElementById('t')!.children].map((e) => e.tagName), links: document.querySelectorAll('a').length, listeners: (window as unknown as { __listeners: number }).__listeners })), { children: ['IFRAME'], links: 0, listeners: 1 });
     await page.evaluate(() => (window as unknown as { __dispose: () => void }).__dispose());
     assert.deepEqual(await page.evaluate(() => ({ children: document.getElementById('t')!.childNodes.length, links: document.querySelectorAll('a, iframe').length, listeners: (window as unknown as { __listeners: number }).__listeners })), { children: 0, links: 0, listeners: 0 });
+    // specs/player-guidance.md G4: goTo after dispose does nothing, and does not throw.
+    assert.equal(await page.evaluate(() => (window as unknown as { __dispose: { goTo(step?: string): unknown } }).__dispose.goTo('request')), undefined);
   } finally { await page.close(); }
+});
+// specs/player-guidance.md G4: the host page hears each settled step and can drive the player.
+type Heard = { step: string; index: number; total: number; settings: Record<string, string> };
+const heard = (page: Page) => page.evaluate(() => (window as unknown as { heard: { a: Heard[]; b: Heard[]; onStep: Heard[] } }).heard);
+const stepOfFrame = (frame: Frame) => frame.evaluate(() => Object.fromEntries(new URL(location.href).searchParams));
+test('two embeds: goTo on A moves only A, replacing its history entry; A\'s rayner:step reaches the host once per settled step with its index and total; B is unaffected', options, async () => {
+  hostBody = `<!doctype html><style>body{margin:0;max-width:700px}</style><div id="a"></div><div id="b"></div><button id="go">Show a miss</button>
+<script src="${embed}/loader.js"></script><script>
+window.heard = { a: [], b: [], onStep: [] };
+const a = RaynerEmbed.mountExplainer(document.getElementById('a'), ${JSON.stringify(embed + '/mr-cache.html')}, { title: 'A', onStep: (d) => heard.onStep.push(d) });
+const b = RaynerEmbed.mountExplainer(document.getElementById('b'), ${JSON.stringify(embed + '/exgit.html')}, { title: 'B' });
+// The event bubbles from each iframe.
+document.getElementById('a').addEventListener('rayner:step', (e) => heard.a.push(e.detail));
+document.getElementById('b').addEventListener('rayner:step', (e) => heard.b.push(e.detail));
+document.getElementById('go').onclick = () => a.goTo('request', { request: 'miss' });
+</script><iframe id="sibling" srcdoc="<p>A sibling at the host's origin</p>"></iframe>`;
+  const page = await browser.newPage({ reducedMotion: 'reduce' });
+  try {
+    await page.goto(host);
+    const a = await readyFrame(page, 'mr-cache'),
+      b = await readyFrame(page, 'exgit');
+    await page.waitForFunction(() => { const h = (window as unknown as { heard: { a: unknown[]; b: unknown[] } }).heard; return h.a.length >= 1 && h.b.length >= 1; });
+    const exgit = stepsOf(projects.get('exgit')!, resolveSettings(projects.get('exgit')!.Scene));
+    const first = await heard(page);
+    assert.deepEqual(first.a, [{ step: 'before', index: 0, total: 4, settings: { request: 'hit' } }]);
+    assert.deepEqual(first.onStep, first.a, 'onStep hears what the event carries');
+    assert.deepEqual(first.b, [{ step: exgit[0]!.step, index: 0, total: exgit.length, settings: { change: 'add' } }]);
+    const before = await a.evaluate(() => history.length),
+      bWas = await stepOfFrame(b);
+    await page.locator('#go').click();
+    await page.waitForFunction(() => (window as unknown as { heard: { a: unknown[] } }).heard.a.length >= 2);
+    await a.waitForSelector('[data-ready=true]');
+    await page.waitForTimeout(500);
+    const after = await heard(page);
+    assert.deepEqual(after.a, [...first.a, { step: 'request', index: 3, total: 4, settings: { request: 'miss' } }], 'once per settled step');
+    assert.deepEqual(after.onStep, after.a);
+    assert.deepEqual(after.b, first.b, 'B heard nothing more');
+    const moved = await stepOfFrame(a);
+    assert.deepEqual([moved.step, moved.request], ['request', 'miss']);
+    assert.equal(await a.locator('input[name=request]:checked').getAttribute('value'), 'miss');
+    assert.equal(await a.evaluate(() => history.length), before, 'host-driven navigation replaces the history entry');
+    assert.deepEqual(await stepOfFrame(b), bWas, 'B did not move');
+    // From a window that is not the parent, at the parent's own origin: nothing.
+    const sibling = page.frames().find((f) => f.url() === 'about:srcdoc')!;
+    await sibling.evaluate(() => parent.document.querySelector<HTMLIFrameElement>('#a iframe')!.contentWindow!.postMessage({ type: 'rayner:goto', version: 1, step: 'before' }, '*'));
+    await page.waitForTimeout(500);
+    assert.equal((await stepOfFrame(a)).step, 'request', 'a sibling window cannot drive the player');
+    assert.equal((await heard(page)).a.length, 2);
+  } finally {
+    await page.close();
+  }
+});
+test('a rayner:goto from another origin does nothing; a raw iframe without parentOrigin neither posts nor accepts messages', options, async () => {
+  const goto = { type: 'rayner:goto', version: 1, step: 'request', settings: { request: 'miss' } };
+  // The frame is told its parent is at `host`; the page that frames it is at another origin.
+  const elsewhere = host.replace('127.0.0.1', 'localhost');
+  hostBody = `<!doctype html><script>window.posts = []; addEventListener('message', (e) => posts.push(e.data));</script><iframe title="t" src="${embed}/mr-cache.html?parentOrigin=${encodeURIComponent(host)}" style="width:700px;height:900px;border:0"></iframe>`;
+  for (const [origin, moves] of [[elsewhere, false], [host, true]] as const) {
+    const page = await browser.newPage({ reducedMotion: 'reduce' });
+    try {
+      await page.goto(origin);
+      const frame = await readyFrame(page, 'mr-cache');
+      await page.evaluate(({ goto, embed }) => frames[0]!.postMessage(goto, embed), { goto, embed });
+      if (moves) await frame.waitForFunction(() => new URL(location.href).searchParams.get('step') === 'request');
+      else await page.waitForTimeout(600);
+      assert.equal((await stepOfFrame(frame)).step, moves ? 'request' : 'before', `the parent at ${origin}`);
+      // The page posts its steps only to the parentOrigin it was given.
+      const steps = (await page.evaluate(() => (window as unknown as { posts: { type?: string }[] }).posts)).filter((m) => m?.type === 'rayner:step');
+      assert.equal(steps.length, moves ? 2 : 0, `step reports heard at ${origin}`);
+    } finally {
+      await page.close();
+    }
+  }
+  // A raw iframe, no parentOrigin: no message out on load or on Next, none taken in.
+  hostBody = `<!doctype html><script>window.posts = []; addEventListener('message', (e) => posts.push(e.data));</script><iframe title="t" src="${embed}/mr-cache.html" style="width:700px;height:900px;border:0"></iframe>`;
+  const page = await browser.newPage({ reducedMotion: 'reduce' });
+  try {
+    await page.goto(host);
+    const frame = await readyFrame(page, 'mr-cache');
+    await frame.locator('.stepper .primary').click();
+    await frame.waitForFunction(() => new URL(location.href).searchParams.get('step') === 'diff');
+    await page.evaluate(({ goto, embed }) => frames[0]!.postMessage(goto, embed), { goto, embed });
+    await page.waitForTimeout(600);
+    assert.equal((await stepOfFrame(frame)).step, 'diff', 'a raw iframe takes no goto');
+    assert.deepEqual(await page.evaluate(() => (window as unknown as { posts: unknown[] }).posts), [], 'a raw iframe posts nothing');
+  } finally {
+    await page.close();
+  }
+});
+test('the script-tag loader dispatches rayner:step on its iframe, and the event bubbles to the host document', options, async () => {
+  hostBody = `<!doctype html><script>window.tagSteps = []; document.addEventListener('rayner:step', (e) => tagSteps.push([e.target.tagName, e.target.parentElement.id, e.detail.step, e.detail.index, e.detail.total]));</script>${loader('a', 'mr-cache')}`;
+  const page = await browser.newPage({ reducedMotion: 'reduce' });
+  try {
+    await page.goto(host);
+    const frame = await readyFrame(page, 'mr-cache');
+    await page.waitForFunction(() => (window as unknown as { tagSteps: unknown[] }).tagSteps.length >= 1);
+    await frame.locator('.stepper .primary').click();
+    await page.waitForFunction(() => (window as unknown as { tagSteps: unknown[] }).tagSteps.length >= 2);
+    assert.deepEqual(await page.evaluate(() => (window as unknown as { tagSteps: unknown[] }).tagSteps), [['IFRAME', 'a', 'before', 0, 4], ['IFRAME', 'a', 'diff', 1, 4]]);
+  } finally {
+    await page.close();
+  }
 });
 /** The colour of one screen pixel of `page`, read back from a screenshot (the host cannot read a cross-origin frame's pixels). */
 async function pixelAt(page: Page, x: number, y: number): Promise<number[]> {
@@ -1185,7 +1551,7 @@ test('the transcript does not move between steps', options, async () => {
   // first step opens on a close-up and shows Whole picture; none may move the step heading's
   // line, the stepper row, the steps list or the transcript as the reader steps.
   for (const [width, height] of [[1180, 800], [390, 844]] as const)
-    for (const scene of ['exgit', 'mr-cache', 'send-sync']) {
+    for (const scene of ['exgit', 'mr-cache', 'send-sync', 'token-bucket']) {
       const page = await browser.newPage({ viewport: { width, height } });
       try {
         await page.addInitScript(() => {
@@ -1602,7 +1968,11 @@ function observe(ids: string[]) {
     picture: document.querySelector('.described > div')?.innerHTML,
     title: document.querySelector('h1')!.textContent,
     prevDisabled: button('Previous step')!.disabled,
-    nextDisabled: button('Next step')!.disabled,
+    // Next's face: at rest on the last step it is Start again (specs/player-guidance.md G2).
+    next: ((b) => ({ name: b.getAttribute('aria-label'), text: b.querySelector('span')!.textContent, disabled: b.disabled }))(
+      document.querySelector<HTMLButtonElement>('.stepper .primary')!,
+    ),
+    tryCase: [...document.querySelectorAll<HTMLButtonElement>('.stepper > .button:not(.icon):not(.primary)')].map((b) => (b.hidden ? null : b.textContent)),
     notice: document.querySelector('.notice')!.textContent,
     checked: Object.fromEntries(
       ids.map((id) => [id, document.querySelector<HTMLInputElement>(`input[name="${id}"]:checked`)?.value ?? null]),
@@ -1736,7 +2106,14 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   const parsed = await r.page.evaluate((html) => Object.assign(document.createElement('div'), { innerHTML: html }).innerHTML, spec.picture);
   eq('picture disclosure', seen.picture, parsed);
   eq('Previous disabled', seen.prevDisabled, i === 0);
-  eq('Next disabled', seen.nextDisabled, i === list.length - 1);
+  // Next is never disabled: on the last step it is Start again, and a scene with settings offers
+  // its first setting's next option beside it, at rest.
+  const last = i === list.length - 1;
+  eq('Next is Start again', seen.next, last
+    ? { name: 'Start again from step 1', text: 'Start again', disabled: false }
+    : { name: 'Next step', text: 'Next', disabled: false });
+  const first = settingsOfProject(m.project)[0];
+  eq('Try another case', seen.tryCase, first ? [last ? `Try ‘${nextOption(m).label}’` : null] : []);
   eq('notice', seen.notice, m.notice);
   eq('history length', seen.history, r.base + m.entries.length);
   eq('horizontal overflow', seen.overflow, false);
@@ -1795,9 +2172,17 @@ const command = (
   toString: () => name,
 });
 /** The stage's size now, and whether it is narrow enough for close-ups. */
+/** The stage's size once it holds: after a resize the header and the heading settle within a frame or two. */
 async function stageSize(r: PlayerReal) {
-  const { w, h } = await r.page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
-  return { w, h, narrow: w > 0 && w < NARROW_PX };
+  const read = () => r.page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
+  let last = await read();
+  for (let i = 0; i < 30; i++) {
+    await r.page.evaluate(() => new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done()))));
+    const now = await read();
+    if (now.w === last.w && now.h === last.h) break;
+    last = now;
+  }
+  return { w: last.w, h: last.h, narrow: last.w > 0 && last.w < NARROW_PX };
 }
 const layoutCache = new Map<string, Promise<Map<string, StepLayout>>>();
 /** A case's step layouts, worked out in Node as the page works them out. */
@@ -1824,6 +2209,33 @@ function goTo(m: PlayerModel, index: number) {
   m.settles++;
 }
 const always = () => true;
+/** The option after the current one of the scene's first setting, wrapping: what Try shows. */
+function nextOption(m: PlayerModel) {
+  const s = settingsOfProject(m.project)[0]!,
+    i = s.options.findIndex((o) => o.value === current(m).values[s.id]);
+  return s.options[(i + 1) % s.options.length]!;
+}
+const isLast = (m: PlayerModel) => selected(m) === steps(m).length - 1;
+/** At rest on the last step, Next reads Start again and goes back to step 1, pushing history as a step click does. */
+const StartAgain = command('StartAgain', isLast, async (m, r) => {
+  await button(r, 'Start again from step 1').click();
+  goTo(m, 0);
+});
+/** At rest on the last step of a scene with settings: the first setting's next option, the others kept, at step 1. */
+const TryCase = command(
+  'TryCase',
+  (m) => isLast(m) && settingsOfProject(m.project).length > 0,
+  async (m, r) => {
+    const s = settingsOfProject(m.project)[0]!,
+      option = nextOption(m);
+    await r.page.locator('.stepper > .button', { hasText: `Try ‘${option.label}’` }).click();
+    const { entry, notice } = resolveLoad(m.project, { ...current(m).values, [s.id]: option.value }, undefined);
+    if (!sameCase(m.project, entry.values, current(m).values)) m.k = 1;
+    push(m, entry);
+    m.notice = notice;
+    m.settles++;
+  },
+);
 const Next = command(
   'Next',
   (m) => selected(m) < steps(m).length - 1,
@@ -2056,6 +2468,8 @@ function commandArbs(p: Project): fc.Arbitrary<Cmd>[] {
   return [
     fc.constant(Next),
     fc.constant(Previous),
+    fc.constant(StartAgain),
+    fc.constant(TryCase),
     fc.nat({ max: 7 }).map(ClickStep),
     fc.nat({ max: 7 }).map(ClickSegment),
     fc.nat({ max: 7 }).map(TranscriptLink),
@@ -2510,7 +2924,8 @@ for (const name of ['oauth-pkce'] as const)
             await page.evaluate(
               async ({ burst, settings }) => {
                 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
-                const button = (n: string) => document.querySelector<HTMLButtonElement>(`button[aria-label="${n}"]`)!;
+                // At rest on the last step Next is Start again, named otherwise: no Next step to press, as when it was disabled.
+                const button = (n: string) => document.querySelector<HTMLButtonElement>(`button[aria-label="${n}"]`);
                 const key = (k: string) =>
                   document.getElementById('content')!.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
                 // Back must not leave the player's document: count Backs not yet committed.
@@ -2523,8 +2938,8 @@ for (const name of ['oauth-pkce'] as const)
                     const s = settings[a.setting];
                     const input = s && document.querySelector<HTMLInputElement>(`input[name="${s.id}"][value="${s.options[a.option % s.options.length]}"]`);
                     input?.click();
-                  } else if (a.kind === 'next') button('Next step').click();
-                  else if (a.kind === 'prev') button('Previous step').click();
+                  } else if (a.kind === 'next') button('Next step')?.click();
+                  else if (a.kind === 'prev') button('Previous step')!.click();
                   else if (a.kind === 'back') {
                     if (nav.currentEntry.index - queued > 0) {
                       queued++;
@@ -2666,7 +3081,8 @@ async function heightAct(page: Page, frame: Frame, a: HeightAction) {
   if (a.kind === 'back') return page.evaluate(() => scrollTo(0, 0));
   await frame.evaluate((a) => {
     if (a.kind === 'transcript') document.querySelector<HTMLElement>('.transcript > summary')!.click();
-    else if (a.kind === 'next') document.querySelector<HTMLButtonElement>('button[aria-label="Next step"]')!.click();
+    // On the last step Next is Start again, named otherwise; pressing nothing there is as before.
+    else if (a.kind === 'next') document.querySelector<HTMLButtonElement>('button[aria-label="Next step"]')?.click();
     else if (a.kind === 'prev') document.querySelector<HTMLButtonElement>('button[aria-label="Previous step"]')!.click();
     else if (a.kind === 'case') {
       const inputs = document.querySelectorAll<HTMLInputElement>('.case input');
@@ -2679,7 +3095,8 @@ async function heightsSettle(page: Page, frame: Frame) {
   let last: { posted: unknown; content: number; iframe: string } | undefined;
   for (const until = Date.now() + 5000; Date.now() < until; await page.waitForTimeout(50)) {
     const { posted, content } = await frame.evaluate(() => ({
-      posted: (window as unknown as { __posts: Post[] }).__posts.at(-1)?.msg.height,
+      // The resize messages; the frame also reports each settled step (specs/player-guidance.md G4).
+      posted: (window as unknown as { __posts: Post[] }).__posts.filter((p) => p.msg.type === 'rayner:resize').at(-1)?.msg.height,
       content: Math.ceil(document.getElementById('content')!.getBoundingClientRect().height),
     }));
     const iframe = await page.locator('iframe').evaluate((f) => (f as HTMLIFrameElement).style.height);
@@ -2689,10 +3106,10 @@ async function heightsSettle(page: Page, frame: Frame) {
   return last!;
 }
 test(
-  'reportHeight: after any mix of transcript, case, step, viewport and scroll changes, the last posted height equals the content root\'s height, and every message is a new height the host accepts',
+  'reportHeight: after any mix of transcript, case, step, viewport and scroll changes, the last posted height equals the content root\'s height, every resize message is a new height the host accepts, and every other message is a step report it accepts',
   options,
   async () => {
-    const { resizeHeight } = await import('../app/embed-protocol.ts');
+    const { resizeHeight, stepDetail } = await import('../app/embed-protocol.ts');
     await fc.assert(
       fc.asyncProperty(heightActions, async (actions) => {
         hostBody = `<!doctype html><style>body{margin:0}</style>${loader('a', 'oauth-pkce')}<div style="height:4000px"></div>`;
@@ -2717,8 +3134,12 @@ test(
           await heightAct(page, frame, { kind: 'back' });
           const h = await heightsSettle(page, frame);
           assert.deepEqual(h, { posted: h.content, content: h.content, iframe: h.content + 'px' }, 'back in view');
-          const posts = await postsOf(frame),
+          const all = await postsOf(frame),
+            posts = all.filter((p) => p.msg.type === 'rayner:resize'),
             source = {} as MessageEventSource;
+          // Every other message is a step report the loader accepts, to the same origin.
+          for (const p of all.filter((p) => p.msg.type !== 'rayner:resize'))
+            assert.ok(p.origin === host && stepDetail({ origin: host, source, data: p.msg }, host, source), JSON.stringify(p));
           for (const [i, p] of posts.entries()) {
             assert.equal(resizeHeight({ origin: host, source, data: p.msg }, host, source), p.msg.height, JSON.stringify(p));
             if (i) assert.notEqual(p.msg.height, posts[i - 1]!.msg.height, `posts ${i - 1} and ${i} repeat a height`);

@@ -54,9 +54,9 @@ export const explainer = (id: string): Promise<SceneClass> => {
     loaded.set(id, collectProject(join(ROOT, 'scenes/explainers', id), { write: false }).then((p) => defaultVariant(p).Scene));
   return loaded.get(id)!;
 };
-// One at a time. Outline lettering installs its run lease when the first lettered project is
-// collected; a scene another collection started before that keeps building, and its text would
-// take the lettered project's outlines ("Lettering snapshot has no run for …").
+// One at a time, so the order of collection, and anything a project leaves behind, is the same on
+// every run. (Concurrent collection is safe too: the first lettering lease waits for runs that
+// began before lettering was installed; test/lettering-race.test.ts.)
 export const explainers = async (): Promise<[string, SceneClass][]> => {
   const all: [string, SceneClass][] = [];
   for (const { id } of EXPLAINERS) all.push([id, await explainer(id)]);
