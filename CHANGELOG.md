@@ -3,6 +3,8 @@
 ## Unreleased
 
 - Put the player in one card: the picture, one stepper row and the step's words. The row keeps Previous and Next at its start, adds a step bar with one segment per step that fills as the current step plays, and sets the view tools apart behind a rule. The card fits the window's height, so Next is on screen when the page opens. Every width shows "Step 3 of 4" with the step's title and line. The steps list is a rail beside the card on wide pages and a closed disclosure under it on narrow ones. Replay, Stop and the duplicate Next are gone (Previous then Next plays a step again), and Fit stage is named Whole picture.
+- Add seven-step explanations of Python dictionary deletion markers, insert-only Bloom filters, Git merges, Monty Hall host rules, the birthday paradox, and melody with rhythm. Each uses a separately tested model and compares an expected result with a case that challenges it.
+- Add optional, user-triggered score audio with Play A/B, Pulse, Stop and a synchronized piano-roll playhead. Notes are synthesized locally; ordinary pages omit the audio module.
 - Add opt-in natural-width diagram lettering. Capture measures the requested font before layout, so labels retain their proportions; existing diagrams keep their fitted widths.
 - Upgrade build-time Agentic Mermaid to 0.5.1 for its supported font-measurement hook and recapture the catalog with that renderer.
 - Add explicit LTR/RTL card fields and logical `start`/`end` stage regions. Text shaping, code, numbers and authored Mermaid flow keep their own order.

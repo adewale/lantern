@@ -20,7 +20,7 @@ this.state.reads = reads;   // program state, recorded at each step boundary
 ```
 
 - `meta.id` names the output files, `meta.title` is the page title, and `meta.sources` are listed under the transcript.
-- `meta.lang` (BCP 47, default `en`) is the language of the page and the transcripts. The player's own words (`app/embed-strings.ts`) and the generated picture descriptions (`explain/words.ts`, whose `families` name each diagram family and its parts) exist in English and French. On a page in any other language both are English, and the descriptions are marked `lang="en"`; `Picture.lang` in the trace records a description's language when it is not English.
+- `meta.lang` (BCP 47, default `en`) is the language of the page and the transcripts. The main player's own words (`app/embed-strings.ts`) and the generated picture descriptions (`explain/words.ts`, whose `families` name each diagram family and its parts) exist in English and French. On a page in any other language both are English, and the descriptions are marked `lang="en"`; `Picture.lang` in the trace records a description's language when it is not English.
 - Step names are URL identifiers. They must be unique and non-empty in every case.
 - `this.state` is recorded before and after each step. Compute values with a model, show its result, and test that each step's state equals the model's (`assertStepState` in `test/lib/explainer-state.ts`).
 - `line` is one short line under the heading: what to see, in about ten words or fewer. The stage draws it in the soft colour and fails every command on a line wider than the heading (14.6 units at 0.3). It is part of the picture and the page transcript.
@@ -233,6 +233,30 @@ These are the engine's own features, imported from `rayner` and used beside the 
 
 Patterns these scenes write by hand, candidates for `explain/` once two explainers use one and its shape settles: a `Succession` member that writes `scene.state` when its turn comes, so the syncs after it show that operation; card and code-focus changes returned as animations rather than played, so they can join a `Succession`; a `Card` whose values are a view; a `stateView` in the stage's palette; a camera box that keeps the heading out; reading recorded evidence for counts on screen; lines between a matching transform's pairs; a code panel that leaves its `Code` loose for `TransformDiff`, which replaces it.
 
+### Optional score audio
+
+A step may supply `audio: {clips}`. Each clip has an `id`, an accessible `label`, `bpm`, `beats` and `notes`. A note has a MIDI `midi` number, an onset `at` and a `duration`, both in beats. Exported types are `ScoreNote`, `AudioClip` and `StepAudio` from `rayner/explain`.
+
+```ts
+await this.step('listen', {
+  title: 'The same pitch on two beats',
+  caption: 'Both notes play middle C. The second starts one beat later.',
+  audio: {clips: [{
+    id: 'a', label: 'Two middle Cs', bpm: 96, beats: 2,
+    notes: [{midi: 60, at: 0, duration: 0.8}, {midi: 60, at: 1, duration: 0.8}],
+    plot: [-6, -2, 6, 2],
+  }]},
+});
+```
+
+`plot` is optional: `[left, bottom, right, top]` in scene coordinates. When present, a playhead travels from left to right over the clip’s full beat count. Draw notes from the same score data: horizontal position follows onset and width follows duration. The [melody and rhythm scene](../scenes/explainers/melody-rhythm/scene.ts) does this for two piano rolls.
+
+The audio controls sit immediately below the picture, are in English and are marked `lang="en"`. Play brings the score and controls into view together when the screen can hold them. Each button’s accessible name includes its visible Play label and the clip’s description.
+
+The reader synthesizes triangle-wave notes locally with Web Audio. Simultaneous notes share the monophonic gain to leave headroom for Pulse. Sound starts only after Play. Stop, a step or case change, Replay, and hiding or leaving the page cancel playback. Pulse adds a beat reference; changing it stops the current clip. Pages without audio omit this module and its styles. Captions and scores remain available without audio support; sound never advances the explanation.
+
+Builds reject malformed clips: use one to four distinct lowercase ids, nonempty labels, 40–240 BPM, at most 64 beats and at most 256 notes per clip. MIDI pitches are integers from 0 to 127; every note must start at or after zero, have positive duration and end within the clip. Plot coordinates must be finite with positive width and height.
+
 ## Settings
 
 ```ts
@@ -388,7 +412,7 @@ An unknown setting or value resets every setting to its default, and a notice na
 
 ### Controls and accessibility
 
-The player is one card: the stage, one stepper row straight under it, then the step's words. **Next** plays the step and stops on its resting picture; pressed while a step plays, it carries that run on to the next step without replaying the scene from its start. Previous then Next plays a step again. The stepper row holds Previous and Next at its start, then the step bar, then the view tools behind a rule: zoom out, zoom in, **Whole picture** (only while zoomed), copy link, and enlarge (full screen, when the iframe allows it); in a window at most 640 px wide the tools take a row of their own. The step bar has one equal segment per step of the case: done steps in the accent colour, the current one taller and filling as its step plays, later ones quiet. It counts steps, not time, and is not a seek bar. Pressing a segment shows its step; pressing the current segment while its step plays rests the picture at once, and at rest does nothing. Under the row, on every width, the step's heading reads "Step 3 of 4", the step's title and its line, then the caption, so a long caption never moves Next; the card is capped by the window's height so that Next is on screen when the page opens. While a step plays the stage is marked `aria-busy`. Cases are a segmented choice under the title. The steps list, each step's title and line, numbered as the stage's heading numbers them, is a rail beside the card on a page at least 1100 px wide and a closed **All n steps** disclosure under the card otherwise; the current step is marked by colour and a filled number, not by weight. The stage's accessible name is the explainer's title, the step's title and its line; the page transcript gives each step's title, line and caption.
+The player is one card: the stage, one stepper row straight under it, then the step's words. Optional score audio controls sit between the stepper row and the step's words. **Next** plays the step and stops on its resting picture; pressed while a step plays, it carries that run on to the next step without replaying the scene from its start. Previous then Next plays a step again. The stepper row holds Previous and Next at its start, then the step bar, then the view tools behind a rule: zoom out, zoom in, **Whole picture** (only while zoomed), copy link, and enlarge (full screen, when the iframe allows it); in a window at most 640 px wide the tools take a row of their own. The step bar has one equal segment per step of the case: done steps in the accent colour, the current one taller and filling as its step plays, later ones quiet. It counts steps, not time, and is not a seek bar. Pressing a segment shows its step; pressing the current segment while its step plays rests the picture at once, and at rest does nothing. Under the row, on every width, the step's heading reads "Step 3 of 4", the step's title and its line, then the caption, so a long caption never moves Next; the card is capped by the window's height so that Next is on screen when the page opens. While a step plays the stage is marked `aria-busy`. Cases are a segmented choice under the title. The steps list, each step's title and line, numbered as the stage's heading numbers them, is a rail beside the card on a page at least 1100 px wide and a closed **All n steps** disclosure under the card otherwise; the current step is marked by colour and a filled number, not by weight. The stage's accessible name is the explainer's title, the step's title and its line; the page transcript gives each step's title, line and caption.
 
 The stage's accessible description is a one-sentence summary of the picture. "What the picture shows", under the caption, opens the full description: each diagram, card, code panel and described drawing, with what is marked, dimmed or changed in this step.
 
