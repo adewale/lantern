@@ -1,6 +1,6 @@
 # Periodic-table gallery entry
 
-This lesson helps chemistry teachers explain to secondary-school students why atomic-number gaps vary within a periodic-table group. Readers choose sodium, chlorine, iron, copper or helium. A short introduction compares electron counts; seven optional source steps show configurations, family members and the limits of the rule. The lesson opens the gallery.
+This lesson helps chemistry teachers explain to secondary-school students why atomic-number gaps vary within a periodic-table group. Readers choose sodium, chlorine, iron, copper or helium. An introduction compares electron counts; family and count views connect those counts to columns. Five optional steps show configurations, family members and the limits of the rule. The lesson opens the gallery.
 
 ## Model and source boundary
 
@@ -20,7 +20,7 @@ An independent parser expanded every captured raw shorthand row, including neste
 | Copper | Predicted `4s² 3d⁹` and listed `3d¹⁰ 4s¹` both count 11 | “Coinage metal” is a looser name than group 11. |
 | Helium | Count 2 suggests a position over Be; the table puts He over Ne in group 18 | Group placement uses the full shell, not this count alone. |
 
-The `column` and `count` source steps put their complete comparisons above a small unlabelled 118-cell table. The detailed table returns when later steps use it. Independent tests check 108 configurations, all 118 positions, 28 family members, 23 jumps, 16 count/group rows, three core equations, copper's two configurations, helium's placements and eight boundary outlines.
+The `column` and `count` steps put their complete comparisons above a small unlabelled 118-cell table. The detailed table returns when later steps use it. Independent tests check 108 configurations, all 118 positions, 28 family members, 23 jumps, 16 count/group rows, three core equations, copper's two configurations, helium's placements and eight boundary outlines.
 
 ## Atlas inside the periodic-table picture
 
@@ -38,7 +38,7 @@ The periodic-table picture uses [Atlas's design language](https://atlas-48p.page
 | Chlorine count, 1280×800 | ![Count rows in one colour](periodic-groups/atlas-chlorine-count-before.png) | ![Counts in each element's block colour, groups in bold monospace](periodic-groups/atlas-chlorine-count-after.png) |
 | Sodium opening, 390×844 | ![Sodium highlighted in pale blue](periodic-groups/atlas-phone-sodium-before.png) | ![Sodium as a solid deep blue cell; the player around it identical](periodic-groups/atlas-phone-sodium-after.png) |
 
-These historical PR #60 captures compare the scene's palette in the same player from `main` (`bf24af0`'s palette before, Atlas after). They precede the shorter teaching path. Current opening captures and their source fingerprints are recorded in the [reader audit](pr69-adversarial-audit-2026-10-31.md).
+These historical PR #60 captures compare the scene's palette in the same player from `main`. Their image files are pinned at [9c9e2a4](https://github.com/adewale/rayner/tree/9c9e2a4d33e2585524a9b17df9dc9e96cda5bfb8/docs/evidence/periodic-groups); the before palette comes from [bf24af0](https://github.com/adewale/rayner/commit/bf24af0444633b54f41249a6b06b12b07df87f62). They precede the shorter teaching path. Current opening captures and their source fingerprints are recorded in the [reader audit](pr69-adversarial-audit-2026-10-31.md).
 
 An earlier version of this PR restyled the shared player in Atlas's design language and added an 880 px standalone reading floor to every player. Both were removed: the player is shared by every explainer, and Atlas belongs to this explainer's picture only. Two defects the audit found came from that player styling and left with it: uppercase CSS that turned authored `-m` switches into `-M`, and a selected case that forced colours erased.
 
@@ -48,7 +48,7 @@ The shared player sizes the stage using the window's height. Small context label
 
 The follow-up audit found five defects. Two were in the Atlas player styling, removed as described above. The other three are fixed here: overlapping bounds let an unchanged reorder count as new artwork; removing a duplicate layer missed newly revealed paint; and later descriptions claimed pale core cells while all 118 cells were solid block colours.
 
-The description regression checks all 35 detailed source phases against independent expected cell fills, opacity, recorded state, text summary and HTML description. Earlier PR #60 deliberate-defect controls rejected the original wording, missing complete-block paint and missing valid core wording.
+The description regression checks all 35 periodic-table phases against independent expected cell fills, opacity, recorded state, text summary and HTML description. Earlier PR #60 deliberate-defect controls rejected the original wording, missing complete-block paint and missing valid core wording.
 
 Review regressions compare native paint and use effective CSSOM poison controls for a newly revealed layer. The checker must reject an unchanged picture without a named subject and detect hidden paint that became visible after a duplicate was removed. These controls are separate from equivalent-redraw and disjoint-order acceptance tests.
 
@@ -56,7 +56,7 @@ Collection review combines built-in and companion claims. Claims and their loade
 
 ## Evidence and verification
 
-The before/after captures above use the player on `main`. Older images in `periodic-groups/` (`phone-*`, `sodium-steps.png`, `countercases-count-step.png`) document earlier layouts in the player that preceded `main`'s redesign; `phone-*-before.png` come from `b944907`.
+The before/after captures above use the player on `main`. Older images in `periodic-groups/` (`phone-*`, `sodium-steps.png`, `countercases-count-step.png`) document earlier layouts in the player that preceded `main`'s redesign; `phone-*-before.png` come from [b944907](https://github.com/adewale/rayner/commit/b94490764f4c55768d92209650f3fc044dba3b09).
 
 The PR records the commands and exact counts from the final verification run. Local Chromium checks do not establish physical iPhone behaviour, native Safari, speaker output or reader comprehension. Nothing here deploys the gallery. A future curated `site:export --only` selection must include the new `periodic-groups` entry.
 

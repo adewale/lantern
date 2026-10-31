@@ -145,7 +145,7 @@ test('the table and note text follow the recorded state at every resting step', 
   }
 });
 
-test('reader descriptions match core shading and complete block fills in every detailed source phase', async () => {
+test('reader descriptions match core shading and complete block fills in every periodic-table phase', async () => {
   await loadFonts();
   // Independent table/configuration facts and authored colours, not model or renderer answers.
   const cases: Array<{
