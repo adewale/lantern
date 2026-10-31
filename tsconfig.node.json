@@ -1,5 +1,5 @@
 {
-  // Node code: tools/ and test/, run as .ts by Node 24 (type stripping). Checked only.
+  // Node code: tools/, test/ and tests beside scenes, run as .ts by Node 24 (type stripping). Checked only.
   // lib.dom too: tools drive Chromium and type what runs in the page.
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
@@ -9,6 +9,6 @@
     "resolveJsonModule": true,
     "tsBuildInfoFile": "node_modules/.cache/tsc/node.tsbuildinfo"
   },
-  "include": ["tools/**/*.ts", "test/**/*.ts"],
+  "include": ["tools/**/*.ts", "test/**/*.ts", "scenes/**/*.test.ts"],
   "exclude": ["test/consumer"]
 }

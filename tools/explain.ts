@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { realpathSync, existsSync, readFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -7,6 +7,7 @@ import { parseArgs } from 'node:util';
 import { serve } from './lib/explain-serve.ts';
 import { collectProject, defaultVariant, sceneSlug, ROOT } from './lib/explain-project.ts';
 import { buildExplainer, buildLoader } from './lib/explain-build.ts';
+import { STARTER, STARTER_FILES, packageImports } from './lib/explain-init.ts';
 
 // Authoring packages, grouped for installation error messages.
 const CAPTURE = ['agentic-mermaid', 'playwright-core', 'svgpath'],
@@ -19,7 +20,7 @@ const HELP = `Rayner ${pkg.version} (Node 24+)
 Usage: rayner <command> <scene.ts | directory> [options]
 
 Commands:
-  init <directory>    Write a scene with one setting
+  init <directory>    Write the tutorial's LRU/MRU explainer: scene, model, test
   preview <scene>     Build and serve on localhost
   snapshots <scene>   Run every case, capture/verify diagrams and replay morph edits
   check <scene>       Every case: seek, motion, skipped trace, bare runtime, step
@@ -83,38 +84,9 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     const dir = resolve(input);
     await mkdir(dirname(dir), { recursive: true });
     await mkdir(dir, { recursive: false });
-    const template = `import { Scene } from 'rayner';
-import { stage, settingsOf } from 'rayner/explain';
-
-const FLOW = 'graph LR\\nRequest[Request] --> Cache[Cache]\\nCache -->|hit| Reply[Reply]\\nCache -->|miss| Store[Database]\\nStore --> Reply';
-const PATH = {
-  hit: [['Request', 'Cache'], ['Cache', 'Reply']],
-  miss: [['Request', 'Cache'], ['Cache', 'Store'], ['Store', 'Reply']],
-} as const;
-
-export default class MyExplainer extends Scene {
-  static meta = { id: 'my-explainer', title: 'Why a cache changes the request path' };
-  static settings = [{ id: 'request', label: 'Follow a request', default: 'hit', options: [{ value: 'hit', label: 'Cache hit' }, { value: 'miss', label: 'Cache miss' }] }];
-  override async construct() {
-    // The heading follows each step title; the style sets the palette and every diagram's look.
-    const s = stage(this, { style: 'nord' });
-    const which = settingsOf(this).request as 'hit' | 'miss';
-
-    await this.step('architecture', { title: 'A cache in front of storage', line: 'The cache sits between the request and the database.', caption: 'A request checks the cache first and reads the database only on a miss.' });
-    const d = await s.show({ source: FLOW }, { box: 'top' });
-
-    await this.step('request', { title: which === 'hit' ? 'A cache hit' : 'A cache miss', line: which === 'hit' ? 'The reply comes from the cache: no database read.' : 'The cache misses, so the database is read once.', caption: which === 'hit' ? 'The value is already cached, so the request returns without reading the database.' : 'The value is absent, so the request reads the database once and then returns.' });
-    // Ask the program, then show its answer: here the path and the read count.
-    const reads = which === 'hit' ? 0 : 1;
-    await d.dim([...new Set(PATH[which].flat())]);
-    await d.walk(PATH[which], { trail: true });
-    await s.card([['Database reads', reads]], { at: 'bottom' });
-    this.state.reads = reads;
-  }
-}
-`;
-    await writeFile(join(dir, 'scene.ts'), template);
-    console.log(`Created ${join(dir, 'scene.ts')}`);
+    for (const file of STARTER_FILES)
+      await writeFile(join(dir, file), packageImports(await readFile(join(STARTER, file), 'utf8')));
+    console.log(`Created ${join(dir, 'scene.ts')}, with its model in model.ts and the model's test in model.test.ts`);
     return;
   }
   if (!['preview', 'snapshots', 'check', 'review', 'build', 'shots', 'describe', 'see'].includes(command!))

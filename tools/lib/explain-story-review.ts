@@ -10,6 +10,7 @@ import { isHeading } from '../../explain/stage.ts';
 import { stepWords } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
 import { join } from 'node:path';
+import { rasterize } from './explain-raster.ts';
 
 export interface StoryClaim {
   step: string;
@@ -159,7 +160,7 @@ export interface StoryFrame {
   camera: number[];
 }
 
-interface StoryPaint { id: number; signature: string; bounds: Rect | null }
+interface StoryPaint { id: number; signature: string; bounds: Rect | null; record: ElementRecord }
 const paintBoundsCache = new WeakMap<ElementRecord, Rect | null>();
 /** Bounds of emitted integer path coordinates, not a Text's advance rectangle. */
 function paintBounds(record: ElementRecord): Rect | null {
@@ -190,9 +191,58 @@ function paintBounds(record: ElementRecord): Rect | null {
   return result;
 }
 
-/** Redraws can replace ids without changing ink. Match occurrences, preserve
- * counts, and treat reversed layers as changed only where their ink can overlap. */
-function changedPaint(previous: readonly StoryPaint[], current: readonly StoryPaint[]): Set<number> {
+const intersect = (a: Rect, b: Rect): Rect =>
+  [Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.min(a[2], b[2]), Math.min(a[3], b[3])];
+const nonempty = (r: Rect) => r[2] > r[0] && r[3] > r[1];
+
+/** Bounds identify possible changes, not ink: holes, caps and later opaque
+ * layers can make a permutation invisible. Probe only the affected patch with
+ * the same native renderer used for PNG output, at at most 1280 × 720 pixels.
+ * Changes below that spatial/8-bit resolution supply no automatic evidence;
+ * authors must name an explicit subject if no other artwork establishes one. */
+async function changedComposite(
+  current: readonly StoryPaint[], reference: readonly StoryPaint[], candidates: Set<number>, camera: Rect,
+): Promise<Set<number>> {
+  const boxes = [...candidates].flatMap(i => current[i]!.bounds ? [current[i]!.bounds!] : []);
+  if (!boxes.length) return new Set();
+  const bounds = intersect([Math.min(...boxes.map(b => b[0])), Math.min(...boxes.map(b => b[1])),
+    Math.max(...boxes.map(b => b[2])), Math.max(...boxes.map(b => b[3]))], camera);
+  if (!nonempty(bounds)) return new Set();
+  const scale = Math.min(1280 / (camera[2] - camera[0]), 720 / (camera[3] - camera[1]));
+  const width = Math.max(1, Math.ceil((bounds[2] - bounds[0]) * scale));
+  const height = Math.max(1, Math.ceil((bounds[3] - bounds[1]) * scale));
+  const escape = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const svg = (paints: readonly StoryPaint[]) => {
+    const paths: string[] = [], clips = new Map<string, string>();
+    for (const { record: r, bounds: b } of paints) {
+      if (!b || !nonempty(intersect(b, bounds))) continue;
+      if (r.clipBox) {
+        const id = r.attrs['clip-path']!.slice(5, -1), [x0, y0, x1, y1] = r.clipBox;
+        clips.set(id, `<clipPath id="${escape(id)}" clipPathUnits="userSpaceOnUse"><rect x="${Math.round(x0 * 1000)}" y="${Math.round(-y1 * 1000)}" width="${Math.round((x1 - x0) * 1000)}" height="${Math.round((y1 - y0) * 1000)}"/></clipPath>`);
+      }
+      paths.push(`<path${Object.entries(r.attrs).map(([k, v]) => ` ${k}="${escape(v)}"`).join('')}${r.transform ? ` transform="${escape(r.transform)}"` : ''}/>`);
+    }
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${bounds[0]} ${bounds[1]} ${bounds[2] - bounds[0]} ${bounds[3] - bounds[1]}"><defs>${[...clips.values()].join('')}</defs>${paths.join('')}</svg>`;
+  };
+  const [actual, restored] = await Promise.all([rasterize(svg(current)), rasterize(svg(reference))]);
+  const a = actual.pixels, b = restored.pixels, differences: number[] = [];
+  for (let p = 0; p < a.length; p += 4)
+    if (a[p] !== b[p] || a[p + 1] !== b[p + 1] || a[p + 2] !== b[p + 2] || a[p + 3] !== b[p + 3]) differences.push(p);
+  const changed = new Set<number>(), occurrences = new Map<string, number[]>();
+  for (const index of differences.length ? candidates : []) {
+    const signature = current[index]!.signature, indices = occurrences.get(signature) ?? [];
+    indices.push(index); occurrences.set(signature, indices);
+  }
+  for (const indices of occurrences.values()) {
+    const mask = (await rasterize(svg([current[indices[0]!]!]))).pixels;
+    if (differences.some(p => mask[p + 3]! > 0)) for (const index of indices) changed.add(index);
+  }
+  return changed;
+}
+
+/** Redraws can replace ids without changing ink. Match occurrences before
+ * using native paint to establish order/count changes and revealed subjects. */
+async function changedPaint(previous: readonly StoryPaint[], current: readonly StoryPaint[], camera: Rect): Promise<Set<number>> {
   const positions = new Map<string, number[]>(), counts = new Map<string, number>();
   previous.forEach((paint, index) => {
     const indices = positions.get(paint.signature) ?? [];
@@ -224,9 +274,13 @@ function changedPaint(previous: readonly StoryPaint[], current: readonly StoryPa
     const nth = occurrence.get(paint.signature) ?? 0;
     matched[index] = indices[nth]!; occurrence.set(paint.signature, nth + 1);
   });
-  const changed = new Set<number>();
+  const changed = new Set<number>(), candidates = new Set<number>(), countChanges = new Set<string>();
   current.forEach((paint, index) => {
-    if (matched[index]! < 0 || positions.get(paint.signature)?.length !== counts.get(paint.signature)) changed.add(index);
+    const oldCount = positions.get(paint.signature)?.length ?? 0;
+    if (!oldCount) changed.add(index);
+    else if (oldCount !== counts.get(paint.signature)) {
+      candidates.add(index); countChanges.add(paint.signature);
+    }
   });
   const reordered = new Set<number>();
   let highest = -1;
@@ -252,9 +306,30 @@ function changedPaint(previous: readonly StoryPaint[], current: readonly StoryPa
       if (a.bounds[1] >= b.bounds[3] || b.bounds[1] >= a.bounds[3]) continue;
       if ((a.index - b.index) * (matched[a.index]! - matched[b.index]!) < 0 &&
           current[a.index]!.signature !== current[b.index]!.signature) {
-        changed.add(a.index); changed.add(b.index);
+        candidates.add(a.index); candidates.add(b.index);
       }
     }
+  }
+  if (candidates.size) {
+    // Restore only the synthetic changes. Current new/edited artwork stays the
+    // same on both sides, so an incidental new label cannot prove a reordering.
+    const reference = current.flatMap((paint, i) => matched[i]! >= 0 || !countChanges.has(paint.signature)
+      ? [{ paint, previousIndex: matched[i]! }] : []);
+    const ordered = reference.filter(p => p.previousIndex >= 0).sort((a, b) => a.previousIndex - b.previousIndex);
+    let cursor = 0;
+    for (let i = 0; i < reference.length; i++) if (reference[i]!.previousIndex >= 0) reference[i] = ordered[cursor++]!;
+    for (const [previousIndex, paint] of previous.entries()) {
+      if (used.has(previousIndex) || !countChanges.has(paint.signature)) continue;
+      const before = reference.findIndex(p => p.previousIndex > previousIndex);
+      reference.splice(before < 0 ? reference.length : before, 0, { paint, previousIndex });
+      // Removing a layer changes the visible contribution of the artwork below
+      // it too. Binding only an identical surviving copy misses that revelation.
+      current.forEach((other, i) => {
+        if (matched[i]! >= 0 && matched[i]! < previousIndex && paint.bounds && other.bounds &&
+            nonempty(intersect(paint.bounds, other.bounds))) candidates.add(i);
+      });
+    }
+    for (const i of await changedComposite(current, reference.map(p => p.paint), candidates, camera)) changed.add(i);
   }
   return changed;
 }
@@ -377,13 +452,15 @@ export async function storyFrames(
             add(`emphasis: ${m.key ?? what}`, [m], false, false, false, true);
           }
         previous = now;
-        const paint = records.map(r => ({ id: r.id, signature: JSON.stringify([r.attrs, r.transform]),
+        const paint = records.map(r => ({ id: r.id, signature: JSON.stringify([r.attrs, r.transform]), record: r,
           bounds: realInk(r) ? paintBounds(r) : null }));
-        const changed = changedPaint(previousPaint, paint);
         const added = new Set<Mobject>();
         // Declared intent takes priority over unrelated context that a rebuild
         // happens to replace or move. With no primary subject, inspect new art.
         const hasPrimary = targets.length > 0 || claims.some((c) => c.step === step.name);
+        const [x0, y0, x1, y1] = scene.frame.box()!;
+        const changed = hasPrimary ? new Set<number>() : await changedPaint(previousPaint, paint,
+          [x0 * 1000, -y1 * 1000, x1 * 1000, -y0 * 1000]);
         for (const [index, r] of (hasPrimary ? [] : records).entries()) {
           if (!changed.has(index) || Number(r.attrs.opacity ?? 1) < 0.95) continue;
           const m = byId.get(r.id);

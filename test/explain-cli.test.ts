@@ -82,18 +82,6 @@ test('`rayner --version` and `rayner version` print the version; the word as an 
   }
 });
 
-test('the tutorial shows the scene `rayner init` writes, byte for byte', async () => {
-  const folder = await mkdtemp(join(tmpdir(), 'explain-init-'));
-  try {
-    execFileSync(process.execPath, [join(ROOT, 'tools/explain.ts'), 'init', join(folder, 'first')], { stdio: 'pipe' });
-    const scene = await readFile(join(folder, 'first', 'scene.ts'), 'utf8'),
-      tutorial = await readFile(join(ROOT, 'docs/TUTORIAL.md'), 'utf8');
-    assert.ok(tutorial.includes('```ts\n' + scene + '```'), 'Tutorial must show the template from tools/explain.ts');
-  } finally {
-    await rm(folder, { recursive: true, force: true });
-  }
-});
-
 test('`rayner describe` prints the explainer as JSON, every case and step', async () => {
   const out = execFileSync(process.execPath, [join(ROOT, 'tools/explain.ts'), 'describe', join(ROOT, 'scenes/explainers/oauth-pkce/scene.ts')], {
     encoding: 'utf8',

@@ -12,7 +12,7 @@ Rayner turns a TypeScript model into a step-through explanation. Readers can cha
 
 ## Write your first scene
 
-Requires Node 24 or later and Chromium. Authoring targets Ubuntu and macOS; Windows is not yet supported. In an empty directory, install the published package and start its two-case cache scene:
+Requires Node 24 or later and Chromium. Authoring targets Ubuntu and macOS; Windows is not yet supported. In an empty directory, install the published package and start the tutorial's two-case explainer of LRU and MRU cache replacement:
 
 ```sh
 mkdir my-rayner && cd my-rayner
@@ -24,7 +24,7 @@ npx rayner init my-explainer
 npx rayner preview my-explainer/scene.ts --watch
 ```
 
-Open the localhost URL printed by `preview`. Switch between **Cache hit** and **Cache miss**, edit `my-explainer/scene.ts`, then reload to see the rebuilt page. If Chromium is already installed, set `CHROMIUM_EXECUTABLE_PATH` instead of downloading it.
+Open the localhost URL printed by `preview`. Switch between **A B C D again** and **C D C D**, edit `my-explainer/scene.ts`, then reload to see the rebuilt page. `init` also writes the scene's model, `model.ts`, and a test of it against published examples, `model.test.ts`. If Chromium is already installed, set `CHROMIUM_EXECUTABLE_PATH` instead of downloading it.
 
 When your explanation is ready, check every case and review the served page before building the file to publish:
 
@@ -33,7 +33,7 @@ npx rayner review my-explainer/scene.ts
 npx rayner build my-explainer/scene.ts --out public/my-explainer.html
 ```
 
-`review` checks cases and opens each resting step at phone and desktop widths, saving screenshots and a receipt. `build` writes HTML, its receipt, a response-header recipe and an optional iframe loader; it does **not** repeat validation. Check the model against its sources and read the pictures yourself: automated checks cannot establish that an explanation is true. [The tutorial](docs/TUTORIAL.md) walks through this cache scene; [publishing](docs/PUBLISHING.md) covers hosting and embedding it.
+`review` checks cases and opens each resting step at phone and desktop widths, saving screenshots and a receipt. `build` writes HTML, its receipt, a response-header recipe and an optional iframe loader; it does **not** repeat validation. Check the model against its sources and read the pictures yourself: automated checks cannot establish that an explanation is true. [The tutorial](docs/TUTORIAL.md) plans, writes and checks a complete explainer; [publishing](docs/PUBLISHING.md) covers hosting and embedding it.
 
 ## Look up an authoring feature
 

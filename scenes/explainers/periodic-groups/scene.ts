@@ -349,7 +349,10 @@ export default class PeriodicGroupsExplainer extends Scene {
           ? `A readable comparison above a small, unlabelled ${POSITIONS.length}-cell periodic table with group ${group} outlined.`
           : `Periodic table of 118 elements with group ${group} outlined and ${name} (${z}) in bold.`);
       if (note === 'column') said.push(`Group ${group}, top to bottom: ${members.map((m) => `${nameOf(m.symbol)} (${m.symbol}, ${m.z})`).join(', ')}. Atomic-number gaps: ${jumps.join(', ')}.`);
-      if (st.lit && note !== 'family') said.push(`Cells 1 to ${st.lit} are filled in by subshell colour${coreZ(st) ? `, cells 1 to ${coreZ(st)} paler as the core` : ''}.`);
+      if (note !== 'family') {
+        if (st.blocks) said.push('All 118 element cells are filled in by block colour.');
+        else if (st.lit) said.push(`Cells 1 to ${st.lit} are filled in by subshell colour${coreZ(st) ? `, cells 1 to ${coreZ(st)} paler as the core` : ''}.`);
+      }
       if (note === 'fill') said.push(`Note: ${String(st.filling)}.`);
       if (note === 'count') {
         const k = Number(st.badges);

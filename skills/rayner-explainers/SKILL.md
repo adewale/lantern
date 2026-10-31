@@ -5,7 +5,7 @@ description: Author, check and publish Rayner explainers as reader-paced HTML em
 
 # Rayner explainers
 
-An explainer is one Rayner `Scene`. The CLI builds it into a step-through HTML page. It needs no server or MCP. Start with [Your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md) for a worked cache example. Read the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) before you host a page.
+An explainer is one Rayner `Scene`. The CLI builds it into a step-through HTML page. It needs no server or MCP. Start with [Your first explainer](https://github.com/adewale/rayner/blob/main/docs/TUTORIAL.md) for a worked example: LRU versus MRU cache replacement, with its model tested against published examples. Read the [reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md) for the helper API and the checks, and [publishing](https://github.com/adewale/rayner/blob/main/docs/PUBLISHING.md) before you host a page.
 
 ## Editorial gate
 
@@ -25,7 +25,7 @@ Read the first step, a countercase and the ending as a newcomer would. Can the r
 
 Commands are `rayner <command>`, or `npm run rayner -- <command>` in a checkout; `rayner --help` prints the install lines for capture and PNG output.
 
-1. `rayner init <directory>` writes a working `scene.ts`. Keep one default-exported `Scene` subclass with static `meta` (id, title, sources, and `lang` if not English) and, if a second case teaches something, static `settings`.
+1. `rayner init <directory>` writes the tutorial's LRU/MRU explainer: `scene.ts`, its model `model.ts` and the model's test `model.test.ts`. Keep one default-exported `Scene` subclass with static `meta` (id, title, sources, and `lang` if not English) and, if a second case teaches something, static `settings`.
 2. Derive every value on screen from a small model of the system, kept apart from the drawing code, and test it; the checks cannot tell whether a caption is true. See [Test the model](#test-the-model).
 3. Give each idea a step with a stable name, a title the picture can prove, a short `line` telling the reader what to notice (not repeating the title), and a caption connecting the visible evidence to its consequence. The page shows all three; the line is drawn on the picture under the title.
 4. Before you hand-roll motion, read the [engine map](https://github.com/adewale/rayner/blob/main/docs/ENGINE.md): it already has a camera that zooms without moving a point, code that morphs along its own diff (`TransformDiff`), morphs matched by text or shape, emphasis that stays, charts of the model's numbers (`Axes`), pictures rebuilt from `scene.state` (`view`), addressable code spans, and `Restore`, `TransformFromCopy` and `Succession`. [The reference](https://github.com/adewale/rayner/blob/main/docs/REFERENCE.md#engine-features) names an explainer that uses each.
@@ -52,6 +52,7 @@ Each explainer in [`scenes/explainers/`](https://github.com/adewale/rayner/blob/
 
 | You are explaining | Start from | It shows |
 | --- | --- | --- |
+| Two algorithms or policies on the same input | `scenes/tutorial/lru-mru` (what `rayner init` writes) | One card with a column per policy, read from the model's trace; one case that favours each policy; captions tested against the model |
 | A code change and what it does to a system | `mr-cache` | `TransformDiff` on the code, the same edit replayed on the diagram with `ops`, a setting for hit or miss |
 | Authoring feature reference | `feature-tour` | Choose a feature case: the recipe step shows the author-written API, the result step runs it. See [scope and specialized APIs](../../docs/FEATURE-TOUR.md) |
 | A protocol or request flow | `oauth-pkce` | A sequence diagram revealed message by message (`build: 'frame'`, `reveal`); a setting that adds the attacker's step |
