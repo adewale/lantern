@@ -202,9 +202,17 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   // takes the measured header rather than a guess: a title that wraps to two lines makes the stage
   // smaller, not the step heading fall off the screen. Written in the next frame, outside
   // ResizeObserver delivery, as reserve() is.
-  new ResizeObserver(() =>
-    requestAnimationFrame(() => root.style.setProperty('--head-h', `${Math.ceil(head.getBoundingClientRect().height)}px`)),
-  ).observe(head);
+  // The header's height and the card's width depend on each other: a smaller cap narrows the card,
+  // which can wrap the title again. Measure until the height holds (at most four passes), so the
+  // stage has its final size before anything is drawn on it.
+  const measureHead = () => {
+    for (let pass = 0; pass < 4; pass++) {
+      const height = `${Math.ceil(head.getBoundingClientRect().height)}px`;
+      if (root.style.getPropertyValue('--head-h') === height) return;
+      root.style.setProperty('--head-h', height);
+    }
+  };
+  new ResizeObserver(() => requestAnimationFrame(measureHead)).observe(head);
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', t.stepList);
@@ -250,6 +258,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     void show(trace.steps.findIndex((s) => s.step === step));
   });
   root.replaceChildren(layout);
+  // Measured now, before the first step is shown, so the stage has its final size when the first
+  // close-up is worked out; the observer above follows later changes.
+  measureHead();
 
   // A map beside the picture while a narrow stage is zoomed:
   // where the view is, and where the step changed. Pressing it moves to the step's next
