@@ -5,10 +5,10 @@ import { launch } from '../tools/lib/browser.ts';
 import { measure } from '../tools/lib/bench-measure.ts';
 
 for (const corrupt of [false, true]) test(corrupt ? 'benchmark refuses corrupt observer data' : 'benchmark observes real click blocking, stage writes and resting events', { skip: !process.env.EXPLAIN_BROWSER }, async () => {
-  const html = '<!doctype html><div class="stage"><span>one</span></div><div class="controls"><button class="primary">Next</button></div><div class="steps"><button data-step="one">one</button><button data-step="two">two</button><button data-step="three">three</button></div><script>' +
+  const html = '<!doctype html><div class="stage"><span>one</span></div><div class="stepper"><button class="primary">Next</button><ol class="step-bar"><button></button><button></button><button></button></ol></div><div class="steps"><button data-step="one">one</button><button data-step="two">two</button><button data-step="three">three</button></div><script>' +
     'const finish=n=>requestAnimationFrame(()=>setTimeout(()=>document.dispatchEvent(new CustomEvent("rayner:step",{detail:{step:n}})),0));' +
     'document.querySelector(".primary").onclick=()=>{const start=performance.now();while(performance.now()-start<120){}document.querySelector(".stage span").textContent="two";finish("two")};' +
-    'document.querySelector(".steps button:last-child").onclick=()=>{document.querySelector(".stage span").textContent="three";' + (corrupt ? 'window.__bench.shifts.push([NaN,1]);' : '') + 'finish("three")};' +
+    'document.querySelector(".step-bar button:last-child").onclick=()=>{document.querySelector(".stage span").textContent="three";' + (corrupt ? 'window.__bench.shifts.push([NaN,1]);' : '') + 'finish("three")};' +
     'requestAnimationFrame(()=>requestAnimationFrame(()=>document.documentElement.dataset.ready="true"));' +
     '</script>';
   const server = createServer((_, res) => { res.setHeader('Content-Type', 'text/html'); res.end(html); });

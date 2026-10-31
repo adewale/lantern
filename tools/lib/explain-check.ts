@@ -20,7 +20,8 @@ import {
 import { Card } from '../../explain/panels.ts';
 import { ROOT, engineAlias, sceneSlug } from './explain-project.ts';
 import { caseName } from '../../explain/index.ts';
-import { restingFrame, undescribed } from '../../explain/trace.ts';
+import { restingFrame, undescribed, stepWords } from '../../explain/trace.ts';
+import { wordsReport } from './explain-words.ts';
 import { labelOf } from '../../explain/diagrams.ts';
 import { closeUps, stageScale, stepLayouts, toView, viewBox, viewZoom } from '../../app/embed-closeup.ts';
 import type { Box, Mobject } from '../../src/index.ts';
@@ -415,6 +416,8 @@ export async function checkProject(project: Project, out: string): Promise<Recor
       legibility: legibilityReport([...labels.values(), ...staticLabels.values()]),
       // Cards in each step's resting picture: values said in a panel rather than on the drawing.
       cardsAtRest,
+      // Each step's words on a phone, estimated, and the steps whose length sets the room for the rest.
+      words: wordsReport(v.trace.steps.map((s) => ({ step: s.step, ...stepWords(s) }))),
       // Each step's resting frame as text, so an author can read it without a browser.
       restingFrames: Object.fromEntries(v.trace.steps.map((step) => [step.step, restingText.get(restingFrame(step)) ?? ''])),
     });

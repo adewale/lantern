@@ -78,7 +78,7 @@ try {
       page.on('pageerror', (error) => errors.push(error.message));
       await page.goto(url);
       await page.waitForSelector('[data-ready=true]');
-      await page.locator('.step-transport').getByRole('button', { name: 'Next step', exact: true }).click();
+      await page.getByRole('button', { name: 'Next step', exact: true }).click();
       await page.waitForFunction(() => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === 'evict');
       assert.match(await page.locator('.caption').innerText(), /LRU evicts the item used longest ago, A/);
       await page.goto(url + '/lru-mru.html?next=reuse&step=rest');

@@ -2,6 +2,9 @@
 // step of the default case, at <path>/<id>/<step>, whose link preview is that step. The exported
 // player carries SHARE_META, whose content is <origin><path>/<id>/, so Copy link can give that URL.
 
+/** Where the footer's mark of the maker goes: the project's home (also `PRODUCT.home`). */
+export const HOME = 'https://github.com/adewale/rayner';
+
 /** The meta tag `site:export --origin` adds to a page whose steps have share pages. */
 export const SHARE_META = 'rayner:share';
 

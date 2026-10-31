@@ -104,7 +104,7 @@ test('audio is opt-in, offline, gesture-triggered and follows the score at both 
       await page.waitForFunction(()=>(window as any).scoreProbe.tones.length===24);
       const pulses=await page.evaluate(()=>(window as any).scoreProbe.tones.slice(16));
       assert.equal(pulses.length,8);assert.notEqual(pulses[0].frequency,pulses[1].frequency,'bar downbeats have a distinct pulse');
-      await page.locator('.step-transport button[aria-label="Next step"]').click();await ready(page,'pulse');
+      await page.locator('.stepper button[aria-label="Next step"]').click();await ready(page,'pulse');
       assert.equal(await page.locator('.score-playhead').count(),0);assert.equal(await page.locator('.score-audio').getAttribute('data-playing'),'false');
       assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
     } finally {await page.close();}
@@ -122,11 +122,11 @@ test('navigation cancels a pending audio resume, and flattened pitches really pl
     await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
     assert.equal(await page.evaluate(()=>(window as any).scoreProbe.tones.length),0,'Stop cancels a pending resume');
     await page.getByRole('button',{name:'Play A: even beats',exact:true}).click();
-    await page.locator('.step-transport button[aria-label="Next step"]').click();await ready(page,'pulse');
+    await page.locator('.stepper button[aria-label="Next step"]').click();await ready(page,'pulse');
     await page.evaluate(()=>{const p=(window as any).scoreProbe;p.release();p.late=false;});
     await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
     assert.equal(await page.evaluate(()=>(window as any).scoreProbe.tones.length),0,'late resume cannot start an obsolete score');
-    await page.locator('.step-transport button[aria-label="Next step"]').click();await ready(page,'rhythm');
+    await page.locator('.stepper button[aria-label="Next step"]').click();await ready(page,'rhythm');
     await page.getByRole('checkbox',{name:'Pulse'}).uncheck();
     await page.getByRole('button',{name:'Play B: shifted timing',exact:true}).click();
     await page.waitForFunction(()=>(window as any).scoreProbe.tones.length===8);
@@ -148,7 +148,7 @@ test('without Web Audio the full score and step controls remain usable',options,
       await control.goto(server.url+'/melody-rhythm.html');await ready(control);
       assert.equal(await page.locator('.stage svg:not(.leaving)').innerHTML(),await control.locator('.stage svg:not(.leaving)').innerHTML(),'unavailable audio preserves the complete score');
     } finally {await control.close();}
-    await page.locator('.step-transport button[aria-label="Next step"]').click();await ready(page,'pulse');
+    await page.locator('.stepper button[aria-label="Next step"]').click();await ready(page,'pulse');
   } finally {await page.close();}
 });
 
