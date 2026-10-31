@@ -12,8 +12,8 @@ export function frames(which: string): ReaderFrame[] {
       ...snap.data.map(
         (v, i) =>
           new Group(
-            tile(v ?? 'empty', (i - 2) * 2.8, 0.6, 2.25, 1.25, s, { size: 0.7, key: `slot:${i}` }),
-            label(`slot ${i}`, (i - 2) * 2.8, 1.85, s.soft, 0.6),
+            tile(v ?? 'empty', (i - 2) * 2.6, 0.6, 2.25, 1.25, s, { size: 0.7, key: `slot:${i}` }),
+            label(`slot ${i}`, (i - 2) * 2.6, 1.85, s.soft, 0.6),
           ),
       ),
     );
