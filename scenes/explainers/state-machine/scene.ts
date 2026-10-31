@@ -1,3 +1,5 @@
+import { readerFirst } from '../lib/reader-drawing.ts';
+import { frames as readerFrames } from '../lib/readers/state-machine.ts';
 import {
   Scene,
   Text,
@@ -60,7 +62,7 @@ const sameRow: MatchKey = (p) => {
 export default class StateMachineExplainer extends Scene {
   static meta = {
     id: 'state-machine',
-    title: 'One transition table drives both session histories',
+    title: 'Which events can change this session?',
     sources: ['https://github.com/ivarvong/lantern/blob/2c7bad5/scenes/state-machine.ts'],
   };
   static settings = [
@@ -79,12 +81,15 @@ export default class StateMachineExplainer extends Scene {
   override async construct() {
     const which = settingsOf(this).events,
       s = stage(this, { style: 'dracula' });
+    await readerFirst(this, s, readerFrames(which!));
     await this.step('machine', {
+      detail: true,
       title: 'Four reducer rows, one per arrow',
       line: 'The session starts idle; a pair with no row throws.',
       caption:
         'A session starts idle, and the ring shows where it is. Each arrow is one row of the table named next, and reduceSession throws for any state and event pair without a row.',
     });
+    await s.clear();
     const d = await s.show({ source: SOURCE }, { box: DIAGRAM });
     const code = await s.code(REDUCER, { at: CODE, fontSize: 0.195 });
     let state = 'idle';
@@ -104,8 +109,7 @@ export default class StateMachineExplainer extends Scene {
           { at: CARD, fontSize: 0.28, width: 4.8 },
         );
         const lit = litRow(st);
-        if (lit)
-          card.bar.moveTo([card.panel.center()[0], card.values.get(lit)!.anchorPoint()[1]]).setOpacity(1);
+        if (lit) card.bar.moveTo([card.panel.center()[0], card.values.get(lit)!.anchorPoint()[1]]).setOpacity(1);
         return card;
       },
       { place: false },
@@ -142,6 +146,7 @@ export default class StateMachineExplainer extends Scene {
     for (const event of events) {
       const next = reduceSession(state, event);
       await this.step(event.toLowerCase(), {
+        detail: true,
         title: `${event}: ${state} → ${next}`,
         line: `Row ${state}:${event} returns ${next}, and the ring moves there.`,
         caption: `${event} arrives while the session is ${state}. The reducer finds the boxed row ${state}:${event} and returns ${next}, where the ring now sits.`,
@@ -157,7 +162,12 @@ export default class StateMachineExplainer extends Scene {
       if (!lit) await code.focus(null);
       // The event arrives: last event's row is put back and the card shows the event.
       const arrive: Animation[] = [sync(), ...putBack()];
-      const box = boxLine(row, line, NOW, `'${state}:${event}': '${next}', the row the reducer reads, in the ring's colour`);
+      const box = boxLine(
+        row,
+        line,
+        NOW,
+        `'${state}:${event}': '${next}', the row the reducer reads, in the ring's colour`,
+      );
       lit = { line: code.code.lines[line]!, box };
       // Then the row lights, and the machine leaves its state.
       await this.play(
@@ -178,6 +188,7 @@ export default class StateMachineExplainer extends Scene {
       await this.play(ring, sync());
     }
     await this.step('terminal', {
+      detail: true,
       title: 'Closed has no row, so OPENED throws',
       line: `reduceSession throws InvalidTransition; the ring stays on ${state}.`,
       caption:

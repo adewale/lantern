@@ -2,7 +2,7 @@
   "version": 2,
   "importer": "11d0423eb190709f",
   "renderer": "agentic-mermaid@0.5.1",
-  "sourceHash": "1654ac7ea24060c0c126407269f4c401fd833f2f9531cf41d311e56f6a714f89",
+  "sourceHash": "ffd0020c8cdb2d8798ba0f57e5f00b2ee6108073060bc454ee8e367019b62d3b",
   "diagrams": {
     "[\"---\\nconfig:\\n  flowchart:\\n    rankSpacing: 24\\n    nodeSpacing: 16\\n---\\ngraph LR\\nRNI[\\\"Revenu net<br/>imposable\\\"] --> QUOT[\\\"÷ parts\\\"]\\nQUOT --> BAR[\\\"Barème\\\"]\\nBAR --> FOIS[\\\"× parts\\\"]\\nFOIS --> PLAF[\\\"Plafonnement\\\"]\\nRNI --> REF[\\\"Sans enfants<br/>2 parts\\\"]\\nREF --> PLAF\\nPLAF --> DEC[\\\"Décote\\\"]\\nDEC --> IMP[\\\"Impôt\\\"]\",\"pen-and-ink\"]": "2f9cbac4cc4d5aaf.json",
     "[\"---\\nconfig:\\n  xyChart:\\n    width: 540\\n    height: 250\\n---\\nxychart-beta\\n x-axis [\\\"0 enfant\\\", \\\"1 enfant\\\", \\\"2 enfants\\\", \\\"3 enfants\\\"]\\n y-axis \\\"Avantage (barres), plafond (ligne), €\\\" 0 --> 10000\\n bar [0.00, 1970.67, 2603.01, 3867.68]\\n line [0.00, 1791.00, 3582.00, 7164.00]\",\"pen-and-ink\"]": "5add3a8c53e8a1ad.json",

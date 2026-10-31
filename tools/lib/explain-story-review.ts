@@ -19,60 +19,120 @@ export interface StoryClaim {
 }
 // These expectations are written from the captions, independently of the
 // close-up planner. Automatic helper-emphasis checks below cover every step.
-export const STORY_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = {
+const DETAIL_AND_EXISTING_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = {
   'python-dict': [
-    {step: 'question', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-entries'}, {key: 'dict-result'}]},
-    {step: 'hash', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-hashes'}]},
-    {step: 'collision', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-entries'}, {text: 'd[16]'}]},
-    {step: 'lookup', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-entries'}, {key: 'dict-result'}]},
-    {step: 'broken', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-entries'}, {key: 'dict-result'}]},
-    {step: 'marker', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-entries'}, {key: 'dict-result'}]},
-    {step: 'missing', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-result'}]},
+    {
+      step: 'question',
+      opening: true,
+      targets: [{ key: 'dict-index' }, { key: 'dict-entries' }, { key: 'dict-result' }],
+    },
+    { step: 'hash', opening: true, targets: [{ key: 'dict-index' }, { key: 'dict-hashes' }] },
+    { step: 'collision', opening: true, targets: [{ key: 'dict-index' }, { key: 'dict-entries' }, { text: 'd[16]' }] },
+    {
+      step: 'lookup',
+      opening: true,
+      targets: [{ key: 'dict-index' }, { key: 'dict-entries' }, { key: 'dict-result' }],
+    },
+    {
+      step: 'broken',
+      opening: true,
+      targets: [{ key: 'dict-index' }, { key: 'dict-entries' }, { key: 'dict-result' }],
+    },
+    {
+      step: 'marker',
+      opening: true,
+      targets: [{ key: 'dict-index' }, { key: 'dict-entries' }, { key: 'dict-result' }],
+    },
+    { step: 'missing', opening: true, targets: [{ key: 'dict-index' }, { key: 'dict-result' }] },
   ],
   'bloom-filter': [
-    {step: 'question', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
-    {step: 'insert', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
-    {step: 'shared', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
-    {step: 'absent', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
-    {step: 'present', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
-    {step: 'false-positive', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
-    {step: 'pipeline', opening: true, targets: [{key: 'bloom-pipeline'}, {key: 'bloom-checks'}]},
+    {
+      step: 'question',
+      opening: true,
+      targets: [{ key: 'bloom-bits' }, { key: 'bloom-query' }, { key: 'bloom-answer' }],
+    },
+    {
+      step: 'insert',
+      opening: true,
+      targets: [{ key: 'bloom-bits' }, { key: 'bloom-query' }, { key: 'bloom-answer' }],
+    },
+    {
+      step: 'shared',
+      opening: true,
+      targets: [{ key: 'bloom-bits' }, { key: 'bloom-query' }, { key: 'bloom-answer' }],
+    },
+    {
+      step: 'absent',
+      opening: true,
+      targets: [{ key: 'bloom-bits' }, { key: 'bloom-query' }, { key: 'bloom-answer' }],
+    },
+    {
+      step: 'present',
+      opening: true,
+      targets: [{ key: 'bloom-bits' }, { key: 'bloom-query' }, { key: 'bloom-answer' }],
+    },
+    {
+      step: 'false-positive',
+      opening: true,
+      targets: [{ key: 'bloom-bits' }, { key: 'bloom-query' }, { key: 'bloom-answer' }],
+    },
+    { step: 'pipeline', opening: true, targets: [{ key: 'bloom-pipeline' }, { key: 'bloom-checks' }] },
   ],
   'git-branches': [
-    {step: 'start', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
-    {step: 'branch', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
-    {step: 'feature', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
-    {step: 'switch', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
-    {step: 'main', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
-    {step: 'merge', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
-    {step: 'countercase', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
+    { step: 'start', opening: true, targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }] },
+    { step: 'branch', opening: true, targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }] },
+    { step: 'feature', opening: true, targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }] },
+    { step: 'switch', opening: true, targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }] },
+    { step: 'main', opening: true, targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }] },
+    { step: 'merge', opening: true, targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }] },
+    {
+      step: 'countercase',
+      opening: true,
+      targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }],
+    },
   ],
   'monty-hall': [
-    {step: 'choice', opening: true, targets: [{key: 'monty-doors'}, {key: 'monty-rule'}, {key: 'monty-result'}]},
-    {step: 'host', opening: true, targets: [{key: 'monty-doors'}, {key: 'monty-rule'}, {key: 'monty-result'}]},
-    {step: 'reveal', opening: true, targets: [{key: 'monty-doors'}, {key: 'monty-rule'}, {key: 'monty-result'}]},
-    {step: 'worlds', opening: true, targets: [{key: 'monty-worlds'}]},
-    {step: 'odds', opening: true, targets: [{key: 'monty-stay'}, {key: 'monty-switch'}]},
-    {step: 'many', opening: true, targets: [{key: 'monty-stay'}, {key: 'monty-switch'}]},
-    {step: 'rules', opening: true, targets: [{key: 'monty-rules'}]},
+    {
+      step: 'choice',
+      opening: true,
+      targets: [{ key: 'monty-doors' }, { key: 'monty-rule' }, { key: 'monty-result' }],
+    },
+    { step: 'host', opening: true, targets: [{ key: 'monty-doors' }, { key: 'monty-rule' }, { key: 'monty-result' }] },
+    {
+      step: 'reveal',
+      opening: true,
+      targets: [{ key: 'monty-doors' }, { key: 'monty-rule' }, { key: 'monty-result' }],
+    },
+    { step: 'worlds', opening: true, targets: [{ key: 'monty-worlds' }] },
+    { step: 'odds', opening: true, targets: [{ key: 'monty-stay' }, { key: 'monty-switch' }] },
+    {
+      step: 'many',
+      opening: true,
+      targets: [{ key: 'monty-removed' }, { key: 'monty-stay' }, { key: 'monty-switch' }],
+    },
+    { step: 'rules', opening: true, targets: [{ key: 'monty-rules' }] },
   ],
   'birthday-paradox': [
-    {step: 'question', opening: true, targets: [{key: 'birthday-people'}]},
-    {step: 'pairs', opening: true, targets: [{key: 'birthday-growth'}]},
-    {step: 'count', opening: true, targets: [{key: 'birthday-n'}, {key: 'birthday-pairs'}]},
-    {step: 'avoid', opening: true, targets: [{key: 'birthday-factors'}]},
-    {step: 'chance', opening: true, targets: [{key: 'birthday-no'}, {key: 'birthday-yes'}]},
-    {step: 'sample', opening: true, targets: [{key: 'birthday-trials'}, {key: 'birthday-observed'}, {key: 'birthday-theory'}]},
-    {step: 'questions', opening: true, targets: [{key: 'birthday-questions'}]},
+    { step: 'question', opening: true, targets: [{ key: 'birthday-people' }] },
+    { step: 'pairs', opening: true, targets: [{ key: 'birthday-growth' }] },
+    { step: 'count', opening: true, targets: [{ key: 'birthday-n' }, { key: 'birthday-pairs' }] },
+    { step: 'avoid', opening: true, targets: [{ key: 'birthday-factors' }] },
+    { step: 'chance', opening: true, targets: [{ key: 'birthday-no' }, { key: 'birthday-yes' }] },
+    {
+      step: 'sample',
+      opening: true,
+      targets: [{ key: 'birthday-trials' }, { key: 'birthday-observed' }, { key: 'birthday-theory' }],
+    },
+    { step: 'questions', opening: true, targets: [{ key: 'birthday-questions' }] },
   ],
   'melody-rhythm': [
-    {step: 'listen', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
-    {step: 'pulse', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
-    {step: 'rhythm', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
-    {step: 'contour', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
-    {step: 'timing', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
-    {step: 'bar', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
-    {step: 'phrase', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
+    { step: 'listen', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] },
+    { step: 'pulse', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] },
+    { step: 'rhythm', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] },
+    { step: 'contour', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] },
+    { step: 'timing', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] },
+    { step: 'bar', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] },
+    { step: 'phrase', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] },
   ],
   'oauth-pkce': [
     {
@@ -113,30 +173,71 @@ export const STORY_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = {
     {
       step: 'local-path',
       settings: { policy: 'local' },
-      targets: [{ key: 'service:k1' }, { key: 'service:a' }, { key: 'edge:k1->a#0', paint: 'stroke' }, { text: 'from 198.51.100.79' }],
+      targets: [
+        { key: 'service:k1' },
+        { key: 'service:a' },
+        { key: 'edge:k1->a#0', paint: 'stroke' },
+        { text: 'from 198.51.100.79' },
+      ],
     },
   ],
   'mr-cache': [
-    {step: 'after', targets: [{text: 'hit'}, {text: 'miss'}]},
-    {step: 'request', opening: true, targets: [{text: 'hit'}, {text: 'miss'}, {text: '0 D1 reads'}, {text: '1 D1 read'}, {text: '300 s'}]},
+    { step: 'after', targets: [{ text: 'hit' }, { text: 'miss' }] },
+    {
+      step: 'request',
+      opening: true,
+      targets: [{ text: 'hit' }, { text: 'miss' }, { text: '0 D1 reads' }, { text: '1 D1 read' }, { text: '300 s' }],
+    },
   ],
   'token-bucket': [
     { step: 'balance', targets: [{ text: 'bucket' }, { text: 'Tokens left' }] },
-    { step: 'trace', opening: true, targets: [
-      {text: '1 / s'}, {text: '2 / s'}, {text: '4 / s'},
-      {key: 'result:1:R6:429', paint: 'stroke'}, {key: 'result:1:R7:429', paint: 'stroke'}, {key: 'result:1:R9:429', paint: 'stroke'},
-      {key: 'result:2:R6:429', paint: 'stroke'}, {key: 'result:2:R9:429', paint: 'stroke'}, {key: 'result:4:R6:429', paint: 'stroke'},
-    ] },
+    {
+      step: 'trace',
+      opening: true,
+      targets: [
+        { text: '1 / s' },
+        { text: '2 / s' },
+        { text: '4 / s' },
+        { key: 'result:1:R6:429', paint: 'stroke' },
+        { key: 'result:1:R7:429', paint: 'stroke' },
+        { key: 'result:1:R9:429', paint: 'stroke' },
+        { key: 'result:2:R6:429', paint: 'stroke' },
+        { key: 'result:2:R9:429', paint: 'stroke' },
+        { key: 'result:4:R6:429', paint: 'stroke' },
+      ],
+    },
   ],
-  'font-metrics': [{step: 'cuts', opening: true, targets: [
-    {text: 'Regular'}, {text: 'Bold'}, {text: 'Italic'}, {text: 'Ink on paper'},
-    {text: '4.41'}, {text: '4.85'}, {text: '4.24'},
-  ]}, {step: 'diagram', opening: true, targets: [
-    {text: 'Ink'}, {text: 'Paper'}, {key: 'edge:A->B#0', paint: 'stroke'},
-  ]}],
+  'font-metrics': [
+    {
+      step: 'cuts',
+      opening: true,
+      targets: [
+        { text: 'Regular' },
+        { text: 'Bold' },
+        { text: 'Italic' },
+        { text: 'Ink on paper' },
+        { text: '4.41' },
+        { text: '4.85' },
+        { text: '4.24' },
+      ],
+    },
+    {
+      step: 'diagram',
+      opening: true,
+      targets: [{ text: 'Ink' }, { text: 'Paper' }, { key: 'edge:A->B#0', paint: 'stroke' }],
+    },
+  ],
   'layout-direction': [
-    {step: 'columns', opening: true, targets: [{text: 'RTL at start'}, {text: 'LTR at end'}, {text: 'Field'}, {text: '123'}]},
-    {step: 'updates', opening: true, targets: [{text: 'RTL at start'}, {text: 'LTR at end'}, {text: 'Field'}, {text: '456'}]},
+    {
+      step: 'columns',
+      opening: true,
+      targets: [{ text: 'RTL at start' }, { text: 'LTR at end' }, { text: 'Field' }, { text: '123' }],
+    },
+    {
+      step: 'updates',
+      opening: true,
+      targets: [{ text: 'RTL at start' }, { text: 'LTR at end' }, { text: 'Field' }, { text: '456' }],
+    },
   ],
   'wcag-map': ['AA', 'AAA'].map((level) => ({
     step: 'focus-visible',
@@ -145,6 +246,191 @@ export const STORY_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = {
     targets: [{ key: 'c2_4_7' }],
   })),
 };
+
+// The native introductions must retain their complete comparison in the opening.
+// This inventory is authored independently of reading() and the close-up planner.
+const MAIN_COMPARISONS: Readonly<Record<string, readonly string[]>> = {
+  'token-bucket': ['reader-burst', 'reader-refill'],
+  'ring-buffer': ['reader-capacity', 'reader-reuse'],
+  'state-machine': ['reader-path', 'reader-reject'],
+  'just-bash': ['reader-pipeline', 'reader-values'],
+  'cert-renewal': ['reader-due', 'reader-retries'],
+  'ical-recurrence': ['reader-series', 'reader-copies'],
+  gtfs: ['reader-date', 'reader-stop'],
+  'tailwind-gamut': ['reader-edge', 'reader-display'],
+  fork: ['reader-build', 'reader-cost'],
+  'gnome-files': ['reader-task', 'reader-sample'],
+  'wcag-map': ['reader-focus', 'reader-levels'],
+  'layout-direction': ['reader-place', 'reader-fields'],
+  seasons: ['reader-tilt', 'reader-solstices', 'reader-year'],
+  'trust-proxy': ['reader-path', 'reader-answer'],
+  'traffic-policy': ['reader-nodes', 'reader-shares'],
+  'ext4-space': ['reader-allocation', 'reader-reserve'],
+  'send-sync': ['reader-threads', 'reader-wrappers'],
+  'quotient-familial': ['reader-quotient', 'reader-cap'],
+  glyph: ['reader-width', 'reader-shape'],
+  'pen-and-pencil': ['reader-separate', 'reader-labels'],
+  exgit: ['reader-objects', 'reader-change'],
+  'mr-cache': ['reader-request', 'reader-outcome'],
+  '2password': ['reader-boundary', 'reader-auth'],
+  'agentic-mermaid': ['reader-branches', 'reader-repair'],
+  lantern: ['reader-object', 'reader-outputs'],
+  isdigit: ['reader-predict', 'reader-result'],
+  'latest-search': ['reader-order', 'reader-guard'],
+  'oauth-pkce': ['reader-bind', 'reader-redeem'],
+  'pg-page': ['reader-row', 'reader-page'],
+  'periodic-groups': ['reader-electrons', 'reader-filling'],
+};
+// These labels name the comparison’s roles independently of its drawing group.
+// Hiding a role cannot be excused by the group’s remaining border or background.
+const COMPARISON_WORDS: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>> = {
+  'token-bucket': {
+    'reader-burst': ['R1: 200', 'R6: 429'],
+    'reader-refill': ['Before the wait', 'On arrival: add elapsed × rate'],
+  },
+  'ring-buffer': { 'reader-capacity': ['head = tail = 0', 'Occupied: 5 / 5'], 'reader-reuse': ['slot 0', 'slot 4'] },
+  'state-machine': {
+    'reader-path': ['idle', 'connecting', 'CONNECT'],
+    'reader-reject': ['InvalidTransition', 'State stays closed'],
+  },
+  'just-bash': {
+    'reader-pipeline': ['echo hello', 'tr → HELLO', 'shout.txt'],
+    'reader-values': ['original', 'returned', 'missing', 'HELLO'],
+  },
+  'cert-renewal': {
+    'reader-due': ['Fixed: 30 days before', 'Default: lifetime fraction'],
+    'reader-retries': ['Time before renewal is due', 'Time left to retry'],
+  },
+  'ical-recurrence': {
+    'reader-series': ['Mon 2 Nov', 'Mon 9 Nov', 'Mon 7 Dec'],
+    'reader-copies': ['Alice', 'Bob'],
+  },
+  gtfs: {
+    'reader-date': ['Route', 'Trip', 'Service', 'date', 'FULLW'],
+    'reader-stop': ['Fixed times', 'Headway patterns'],
+  },
+  'tailwind-gamut': {
+    'reader-edge': ['100% = sRGB edge'],
+    'reader-display': ['Written chroma', 'Mapped sRGB preview'],
+  },
+  fork: {
+    'reader-build': ['Author', 'scene', 'Build', 'diagrams', 'Portable', 'page'],
+    'reader-cost': ['Policy A', 'Policy B', 'case 1', 'case 6'],
+  },
+  'gnome-files': { 'reader-sample': ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'] },
+  'wcag-map': {
+    'reader-focus': ['No visible focus', 'Visible focus on Pay', 'Cancel', 'Pay'],
+    'reader-levels': ['A', 'AA', 'AAA', 'A + AA', 'A + AA + AAA'],
+  },
+  'layout-direction': {
+    'reader-place': ['Start', 'End'],
+    'reader-fields': ['RTL columns', 'LTR override', '123', 'Field'],
+  },
+  seasons: {
+    'reader-tilt': ['Sun', 'June', 'December'],
+    'reader-solstices': ['June daylight', 'December daylight'],
+    'reader-year': ['Jan', 'Dec', 'Hours of daylight'],
+  },
+  'trust-proxy': { 'reader-path': ['Express'], 'reader-answer': ['Order', 'Address', 'Decision', 'req.ip'] },
+  'traffic-policy': { 'reader-nodes': ['Node 1', 'Node 2', 'Node 3'], 'reader-shares': ['Pod', 'Cluster', 'Local'] },
+  'ext4-space': { 'reader-reserve': ['Users at 5% reserve'] },
+  'send-sync': { 'reader-threads': ['Thread A', 'Thread B'], 'reader-wrappers': ['Type', 'Send', 'Sync'] },
+  'quotient-familial': {
+    'reader-quotient': ['Revenu', '÷ parts', 'Barème', '× parts'],
+    'reader-cap': ['Calcul brut', 'Après plafond', 'Après décote'],
+  },
+  glyph: { 'reader-width': ['Inter', 'JetBrains Mono'], 'reader-shape': ['a', 'Same character'] },
+  'pen-and-pencil': {
+    'reader-separate': ['Fixed route + simulated stroke'],
+    'reader-labels': ['Midnight', 'Reserved for the label'],
+  },
+  exgit: { 'reader-objects': ['commit', 'tree', 'blob'], 'reader-change': ['parent'] },
+  'mr-cache': { 'reader-request': ['Request', 'Database', 'Response'] },
+  '2password': {
+    'reader-boundary': ['Agent', 'op CLI', 'Application'],
+    'reader-auth': ['Agent', 'op CLI', 'Application', 'Service token', 'Resolved key'],
+  },
+  'agentic-mermaid': {
+    'reader-branches': ['Cached?', 'Reply', 'Database'],
+    'reader-repair': ['Cached?', 'Reply', 'Database', 'yes', 'no'],
+  },
+  lantern: { 'reader-object': ['0 s', '0.5 s', '1 s'], 'reader-outputs': ['Scene', 'Fixed clock', 'Sink'] },
+  isdigit: { 'reader-result': ['Guard', 'Passes?', 'Then int'] },
+  'latest-search': {
+    'reader-order': ['A then B', 'Latest intent: B'],
+    'reader-guard': ['After', 'No guard', 'Guard on'],
+  },
+  'oauth-pkce': {
+    'reader-bind': ['Client', 'Auth server', 'Code', 'issued'],
+    'reader-redeem': ['Caller', 'S256 matches?', 'Result', 'Client', 'token'],
+  },
+  'pg-page': {
+    'reader-row': ['Grey: header  ·  Pale: padding  ·  Orange: data'],
+    'reader-page': ['Type', 'Rows/page', '10,000 rows'],
+  },
+};
+export const STORY_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = Object.fromEntries(
+  [...new Set([...Object.keys(DETAIL_AND_EXISTING_CLAIMS), ...Object.keys(MAIN_COMPARISONS)])].map((id) => [
+    id,
+    [
+      ...(DETAIL_AND_EXISTING_CLAIMS[id] ?? []),
+      ...(MAIN_COMPARISONS[id] ?? []).map((step) => ({
+        step,
+        opening: true,
+        targets: [{ key: 'reader-picture' }, ...(COMPARISON_WORDS[id]?.[step] ?? []).map((text) => ({ text }))],
+      })),
+      ...(id === 'font-metrics'
+        ? [
+            {
+              step: 'layout',
+              opening: true,
+              targets: [{ key: 'font-layout' }],
+            },
+          ]
+        : []),
+      ...(id === 'python-dict'
+        ? [{ step: 'predict', opening: true, targets: [{ key: 'dict-index' }, { key: 'dict-result' }] }]
+        : []),
+      ...(id === 'bloom-filter'
+        ? [
+            { step: 'hashes', opening: true, targets: [{ key: 'bloom-hash-mapping' }] },
+            { step: 'predict', opening: true, targets: [{ key: 'bloom-bits' }, { key: 'bloom-answer' }] },
+          ]
+        : []),
+      ...(id === 'git-branches'
+        ? [
+            {
+              step: 'predict',
+              opening: true,
+              targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }],
+            },
+          ]
+        : []),
+      ...(id === 'monty-hall'
+        ? [{ step: 'predict', opening: true, targets: [{ key: 'monty-doors' }, { key: 'monty-result' }] }]
+        : []),
+      ...(id === 'melody-rhythm'
+        ? [{ step: 'predict', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] }]
+        : []),
+      ...(id === 'birthday-paradox'
+        ? [
+            {
+              step: 'occupied',
+              opening: true,
+              targets: [{ key: 'birthday-days' }],
+              settings: { question: 'any' },
+            },
+            {
+              step: 'occupied',
+              opening: true,
+              targets: [{ key: 'birthday-days' }],
+              settings: { question: 'one' },
+            },
+          ]
+        : []),
+    ],
+  ]),
+);
 interface Target {
   name: string;
   indices: number[];
@@ -159,31 +445,46 @@ export interface StoryFrame {
   camera: number[];
 }
 
-interface StoryPaint { id: number; signature: string; bounds: Rect | null }
+interface StoryPaint {
+  id: number;
+  signature: string;
+  bounds: Rect | null;
+}
 const paintBoundsCache = new WeakMap<ElementRecord, Rect | null>();
 /** Bounds of emitted integer path coordinates, not a Text's advance rectangle. */
 function paintBounds(record: ElementRecord): Rect | null {
   if (paintBoundsCache.has(record)) return paintBoundsCache.get(record)!;
   const coords = record.attrs.d?.match(/-?\d+/g)?.map(Number) ?? [];
-  let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+  let left = Infinity,
+    top = Infinity,
+    right = -Infinity,
+    bottom = -Infinity;
   for (let i = 0; i + 1 < coords.length; i += 2) {
-    left = Math.min(left, coords[i]!); right = Math.max(right, coords[i]!);
-    top = Math.min(top, coords[i + 1]!); bottom = Math.max(bottom, coords[i + 1]!);
+    left = Math.min(left, coords[i]!);
+    right = Math.max(right, coords[i]!);
+    top = Math.min(top, coords[i + 1]!);
+    bottom = Math.max(bottom, coords[i + 1]!);
   }
-  const half = record.attrs.stroke !== 'none' && Number(record.attrs['stroke-opacity'] ?? 1) > 0
-    ? Number(record.attrs['stroke-width'] ?? 0) / 2 : 0;
+  const half =
+    record.attrs.stroke !== 'none' && Number(record.attrs['stroke-opacity'] ?? 1) > 0
+      ? Number(record.attrs['stroke-width'] ?? 0) / 2
+      : 0;
   // An acute miter can reach half-width times the SVG miter limit; a
   // diagonal square cap can reach sqrt(2) times half-width on either axis.
   const limit = Number(record.attrs['stroke-miterlimit'] ?? 4);
-  const miter = record.attrs['stroke-linejoin'] === 'miter'
-    ? (Number.isFinite(limit) && limit >= 1 ? limit : 4) : 1;
+  const miter = record.attrs['stroke-linejoin'] === 'miter' ? (Number.isFinite(limit) && limit >= 1 ? limit : 4) : 1;
   const extent = half * Math.max(miter, record.attrs['stroke-linecap'] === 'square' ? Math.SQRT2 : 1);
-  const tx = record.tx ?? 0, ty = record.ty ?? 0;
+  const tx = record.tx ?? 0,
+    ty = record.ty ?? 0;
   let bounds: Rect = [left + tx - extent, top + ty - extent, right + tx + extent, bottom + ty + extent];
   if (record.clipBox) {
     const [x0, y0, x1, y1] = record.clipBox;
-    bounds = [Math.max(bounds[0], x0 * 1000), Math.max(bounds[1], -y1 * 1000),
-      Math.min(bounds[2], x1 * 1000), Math.min(bounds[3], -y0 * 1000)];
+    bounds = [
+      Math.max(bounds[0], x0 * 1000),
+      Math.max(bounds[1], -y1 * 1000),
+      Math.min(bounds[2], x1 * 1000),
+      Math.min(bounds[3], -y0 * 1000),
+    ];
   }
   const result = bounds[2] > bounds[0] && bounds[3] > bounds[1] ? bounds : null;
   paintBoundsCache.set(record, result);
@@ -193,18 +494,21 @@ function paintBounds(record: ElementRecord): Rect | null {
 /** Redraws can replace ids without changing ink. Match occurrences, preserve
  * counts, and treat reversed layers as changed only where their ink can overlap. */
 function changedPaint(previous: readonly StoryPaint[], current: readonly StoryPaint[]): Set<number> {
-  const positions = new Map<string, number[]>(), counts = new Map<string, number>();
+  const positions = new Map<string, number[]>(),
+    counts = new Map<string, number>();
   previous.forEach((paint, index) => {
     const indices = positions.get(paint.signature) ?? [];
-    indices.push(index); positions.set(paint.signature, indices);
+    indices.push(index);
+    positions.set(paint.signature, indices);
   });
-  current.forEach(paint => counts.set(paint.signature, (counts.get(paint.signature) ?? 0) + 1));
+  current.forEach((paint) => counts.set(paint.signature, (counts.get(paint.signature) ?? 0) + 1));
   const byId = new Map(previous.map((paint, index) => [paint.id, index]));
   const used = new Set<number>();
-  const matched = current.map(paint => {
+  const matched = current.map((paint) => {
     const index = byId.get(paint.id);
     if (index === undefined || used.has(index) || previous[index]!.signature !== paint.signature) return -1;
-    used.add(index); return index;
+    used.add(index);
+    return index;
   });
   const cursors = new Map<string, number>();
   current.forEach((paint, index) => {
@@ -212,7 +516,10 @@ function changedPaint(previous: readonly StoryPaint[], current: readonly StoryPa
     const indices = positions.get(paint.signature) ?? [];
     let cursor = cursors.get(paint.signature) ?? 0;
     while (cursor < indices.length && used.has(indices[cursor]!)) cursor++;
-    if (cursor < indices.length) { matched[index] = indices[cursor]!; used.add(indices[cursor]!); }
+    if (cursor < indices.length) {
+      matched[index] = indices[cursor]!;
+      used.add(indices[cursor]!);
+    }
     cursors.set(paint.signature, cursor + 1);
   });
   // Equal-looking copies are interchangeable when their count is unchanged.
@@ -222,11 +529,13 @@ function changedPaint(previous: readonly StoryPaint[], current: readonly StoryPa
     const indices = positions.get(paint.signature);
     if (!indices || indices.length !== counts.get(paint.signature)) return;
     const nth = occurrence.get(paint.signature) ?? 0;
-    matched[index] = indices[nth]!; occurrence.set(paint.signature, nth + 1);
+    matched[index] = indices[nth]!;
+    occurrence.set(paint.signature, nth + 1);
   });
   const changed = new Set<number>();
   current.forEach((paint, index) => {
-    if (matched[index]! < 0 || positions.get(paint.signature)?.length !== counts.get(paint.signature)) changed.add(index);
+    if (matched[index]! < 0 || positions.get(paint.signature)?.length !== counts.get(paint.signature))
+      changed.add(index);
   });
   const reordered = new Set<number>();
   let highest = -1;
@@ -243,16 +552,20 @@ function changedPaint(previous: readonly StoryPaint[], current: readonly StoryPa
   }
   // Only inversion participants need spatial checks. Sort these by the left
   // edge so unrelated columns do not incur an all-records pairwise scan.
-  const spatial = current.flatMap((paint, index) => paint.bounds && reordered.has(index)
-    ? [{ index, bounds: paint.bounds }] : []).sort((a, b) => a.bounds[0] - b.bounds[0]);
+  const spatial = current
+    .flatMap((paint, index) => (paint.bounds && reordered.has(index) ? [{ index, bounds: paint.bounds }] : []))
+    .sort((a, b) => a.bounds[0] - b.bounds[0]);
   for (let i = 0; i < spatial.length; i++) {
     const a = spatial[i]!;
     for (let j = i + 1; j < spatial.length && spatial[j]!.bounds[0] < a.bounds[2]; j++) {
       const b = spatial[j]!;
       if (a.bounds[1] >= b.bounds[3] || b.bounds[1] >= a.bounds[3]) continue;
-      if ((a.index - b.index) * (matched[a.index]! - matched[b.index]!) < 0 &&
-          current[a.index]!.signature !== current[b.index]!.signature) {
-        changed.add(a.index); changed.add(b.index);
+      if (
+        (a.index - b.index) * (matched[a.index]! - matched[b.index]!) < 0 &&
+        current[a.index]!.signature !== current[b.index]!.signature
+      ) {
+        changed.add(a.index);
+        changed.add(b.index);
       }
     }
   }
@@ -377,8 +690,11 @@ export async function storyFrames(
             add(`emphasis: ${m.key ?? what}`, [m], false, false, false, true);
           }
         previous = now;
-        const paint = records.map(r => ({ id: r.id, signature: JSON.stringify([r.attrs, r.transform]),
-          bounds: realInk(r) ? paintBounds(r) : null }));
+        const paint = records.map((r) => ({
+          id: r.id,
+          signature: JSON.stringify([r.attrs, r.transform]),
+          bounds: realInk(r) ? paintBounds(r) : null,
+        }));
         const changed = changedPaint(previousPaint, paint);
         const added = new Set<Mobject>();
         // Declared intent takes priority over unrelated context that a rebuild

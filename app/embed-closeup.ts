@@ -22,7 +22,7 @@
  */
 import type { Box, Mobject, Scene, SceneClass, Sink } from '../src/index.ts';
 import { labelOf } from '../explain/diagrams.ts';
-import { emphasisOf } from '../explain/look.ts';
+import { emphasisOf, readingOf } from '../explain/look.ts';
 import { isHeading } from '../explain/stage.ts';
 import { IDENTITY, ZOOM_MAX, clampZoom } from './embed-zoom.ts';
 import type { Zoom } from './embed-zoom.ts';
@@ -42,6 +42,8 @@ export interface LayoutLabel {
 }
 /** What a step's resting picture holds, for framing it; boxes and sizes in the camera's view units. */
 export interface StepLayout {
+  /** Authored comparison, independent of incidental changed code or notes. */
+  reading?: { box: Box; labels: LayoutLabel[] };
   /**
    * Where the picture changed during the step, in the units of the camera's view, as
    * separate parts in reading order (rows top to bottom, each left to right); empty
@@ -157,8 +159,18 @@ function leavesOf(scene: Scene, fresh: ReadonlySet<Mobject> = new Set()): Leaf[]
       const seen = b && painted(m) && (m.style.drawFraction ?? 1) > 0.05 ? intersect(b, c) : null;
       if (seen) {
         const s = m.style;
-        const key = [s.fill, s.fillOpacity, s.stroke, s.strokeOpacity, s.strokeWidth, s.drawFraction ?? 1, hashPoints(m)].join('|');
-        const form = [s.fill, s.fillOpacity, s.stroke, s.strokeOpacity, s.drawFraction ?? 1, hashShape(m, b!)].join('|');
+        const key = [
+          s.fill,
+          s.fillOpacity,
+          s.stroke,
+          s.strokeOpacity,
+          s.strokeWidth,
+          s.drawFraction ?? 1,
+          hashPoints(m),
+        ].join('|');
+        const form = [s.fill, s.fillOpacity, s.stroke, s.strokeOpacity, s.drawFraction ?? 1, hashShape(m, b!)].join(
+          '|',
+        );
         out.push({ key, opacity: o, box: seen, top, text, stress, m, form });
       }
     }
@@ -200,7 +212,7 @@ function headingBottom(scene: Scene): number | undefined {
 }
 
 /** Every readable label in the camera's view, in its units: a label's size grows with the camera's zoom. */
-function labelsOf(scene: Scene): LayoutLabel[] {
+function labelsOf(scene: Scene, only?: ReadonlySet<Mobject>): LayoutLabel[] {
   const out: LayoutLabel[] = [];
   const view = viewOf(scene),
     zoom = viewZoom(view);
@@ -211,6 +223,7 @@ function labelsOf(scene: Scene): LayoutLabel[] {
     if (!c) return;
     const label = labelOf(m);
     if (label?.text.trim() && (m.style.drawFraction ?? 1) >= 0.95) {
+      if (only && !only.has(m)) return;
       const b = m.box(),
         seen = b && intersect(b, c);
       if (seen) out.push({ box: toView(seen, view), size: m.height() * label.emRatio * zoom });
@@ -241,7 +254,8 @@ export function changed(leaves: readonly Leaf[], before: readonly Leaf[]): Chang
     dimmed = new Set<Mobject>();
   for (const l of leaves) {
     const prior = was.get(l.key);
-    if (prior == null || l.opacity > prior + 0.1) out.push({ box: l.box, text: l.text, ...(prior == null && forms.get(l.m) === l.form ? { moved: true } : {}) });
+    if (prior == null || l.opacity > prior + 0.1)
+      out.push({ box: l.box, text: l.text, ...(prior == null && forms.get(l.m) === l.form ? { moved: true } : {}) });
     else if (l.opacity < prior - 0.1) dimmed.add(l.top);
   }
   if (out.length) return out;
@@ -263,7 +277,11 @@ export interface Change {
  * about); with no changed lettering, it opens on the first part.
  */
 export function partsOf(changes: readonly Change[]): { parts: Box[]; lead: number } {
-  let parts = changes.map((c) => ({ box: [...c.box] as Box, text: +(c.text && !c.moved), moved: +(c.text && !!c.moved) }));
+  let parts = changes.map((c) => ({
+    box: [...c.box] as Box,
+    text: +(c.text && !c.moved),
+    moved: +(c.text && !!c.moved),
+  }));
   for (let merged = true; merged; ) {
     merged = false;
     const next: typeof parts = [];
@@ -272,7 +290,11 @@ export function partsOf(changes: readonly Change[]): { parts: Box[]; lead: numbe
       const near = next.findIndex(({ box: n }) => overlaps([n[0] - GAP, n[1] - GAP, n[2] + GAP, n[3] + GAP], b));
       if (near < 0) next.push(p);
       else {
-        next[near] = { box: union(next[near]!.box, b), text: next[near]!.text + p.text, moved: next[near]!.moved + p.moved };
+        next[near] = {
+          box: union(next[near]!.box, b),
+          text: next[near]!.text + p.text,
+          moved: next[near]!.moved + p.moved,
+        };
         merged = true;
       }
     }
@@ -311,7 +333,23 @@ export async function stepLayouts(Scene: SceneClass): Promise<Map<string, StepLa
       const changes = changed(leaves, before).map((c) => ({ ...c, box: toView(c.box, view) }));
       const stress = emphasised(leaves).map((b) => toView(b, view)),
         top = headingBottom(scene);
-      layouts.set(step.name, { ...partsOf(changes), labels: labelsOf(scene), ...(stress.length ? { stress } : {}), ...(top == null ? {} : { top }) });
+      const subjects = new Set(readingOf(scene).flatMap((m) => m.family()));
+      const subjectLeaves = leaves.filter((l) => subjects.has(l.m));
+      for (const subject of readingOf(scene)) {
+        const family = new Set(subject.family());
+        if (!subjectLeaves.some((l) => family.has(l.m)))
+          throw new Error(`reading(): ${step.name} names a subject with no painted ink`);
+      }
+      const box = subjectLeaves.reduce<Box | null>((b, l) => union(b, l.box), null);
+      const labels = labelsOf(scene);
+      const subjectLabels = labelsOf(scene, subjects);
+      layouts.set(step.name, {
+        ...partsOf(changes),
+        labels,
+        ...(box ? { reading: { box: toView(box, view), labels: subjectLabels } } : {}),
+        ...(stress.length ? { stress } : {}),
+        ...(top == null ? {} : { top }),
+      });
       before = leaves;
     },
   };
@@ -372,14 +410,18 @@ export function tourRegions(parts: readonly Box[], vw: number, vh: number, bound
   };
   // A view centred on a part near an edge would reach past the bounds: slide it back in.
   // A view that fits only to a rounding (zoomed exactly to fit under the heading) still slides.
-  const inside = (lo: number, size: number, min: number, max: number) => (size <= max - min + 1e-9 ? Math.min(Math.max(lo, min), max - size) : lo);
+  const inside = (lo: number, size: number, min: number, max: number) =>
+    size <= max - min + 1e-9 ? Math.min(Math.max(lo, min), max - size) : lo;
   for (const g of groups)
     for (const bottom of starts(g[1], g[3], vh).reverse())
       for (const left of starts(g[0], g[2], vw)) {
         // A view as tall as the frame (a tall stage) can still be panned into the letterbox
         // under the drawing: lift it until it shows the frame's top, heading and all.
         const x = inside(left, vw, bounds[0], bounds[2]),
-          y = vh >= FRAME[3] - FRAME[1] - 1e-9 ? Math.max(bottom, FRAME[3] - vh) : inside(bottom, vh, bounds[1], bounds[3]);
+          y =
+            vh >= FRAME[3] - FRAME[1] - 1e-9
+              ? Math.max(bottom, FRAME[3] - vh)
+              : inside(bottom, vh, bounds[1], bounds[3]);
         views.push([x, y, x + vw, y + vh]);
       }
   return views;
@@ -408,9 +450,9 @@ export function stressStarts(layout: StepLayout): [number, number][] {
  * since a caption most often speaks of what its step marked, and last the rest of its
  * changes; each group in reading order from the opening one, wrapping round. On a stage at
  * least NARROW_PX wide, or with nothing to read, there is one: the whole picture. Otherwise
- * every close-up has one scale, the least that draws every label near the step's
- * changes at READ_PX (up to `max`), so a label read in one close-up, or found by
- * panning, reads the same in any other. When every such label already reads at
+ * detail close-ups use the least scale that draws every label near the step's
+ * changes at READ_PX (up to `max`). An authored comparison can open at its own
+ * readable scale when its complete subjects fit; smaller details retain their stops. When every such label already reads at
  * READ_PX, there is one: the whole picture. Any label under it is enlarged, however
  * little it needs: a label at 11 px is still under the floor `rayner check` measures.
  * Close-ups keep below the heading the stage draws (`layout.top`), zooming a little further
@@ -418,7 +460,8 @@ export function stressStarts(layout: StepLayout): [number, number][] {
  */
 export function closeUps(layout: StepLayout | undefined, w: number, h: number, max = ZOOM_MAX): Zoom[] {
   const whole = [clampZoom(IDENTITY, w, h, max)];
-  if (!layout?.parts.length || !(w > 0) || !(h > 0) || w >= NARROW_PX) return whole;
+  if (!layout || (!layout.parts.length && !layout.reading) || !(w > 0) || !(h > 0) || w >= NARROW_PX) return whole;
+  if (!layout.parts.length && layout.reading) layout = { ...layout, parts: [layout.reading.box], lead: 0 };
   const read = labelsToRead(layout);
   if (!read.length) return whole;
   const { s, ox, oy } = stageScale(w, h);
@@ -443,7 +486,8 @@ export function closeUps(layout: StepLayout | undefined, w: number, h: number, m
     const zoom = zoomOn(r);
     return { zoom, box: viewBox(zoom, w, h) };
   });
-  const inside = (x: number, y: number, r: Box) => x >= r[0] - 1e-6 && x <= r[2] + 1e-6 && y >= r[1] - 1e-6 && y <= r[3] + 1e-6;
+  const inside = (x: number, y: number, r: Box) =>
+    x >= r[0] - 1e-6 && x <= r[2] + 1e-6 && y >= r[1] - 1e-6 && y <= r[3] + 1e-6;
   // Open on the lead part: the first close-up that holds all of it when it fits a view, else,
   // of the close-ups that hold its top-left corner (where reading it starts), the one that
   // shows most of it: a close-up framing another part can reach the corner too.
@@ -457,7 +501,8 @@ export function closeUps(layout: StepLayout | undefined, w: number, h: number, m
       const i = intersect(r, lead);
       return i ? (i[2] - i[0]) * (i[3] - i[1]) : 0;
     };
-    for (const [i, v] of views.entries()) if (holds(v.box) && (open < 0 || shown(v.box) > shown(views[open]!.box) + 1e-9)) open = i;
+    for (const [i, v] of views.entries())
+      if (holds(v.box) && (open < 0 || shown(v.box) > shown(views[open]!.box) + 1e-9)) open = i;
     open = Math.max(0, open);
   }
   // A grid covers every point but can split a label across all its seams, even when
@@ -465,8 +510,15 @@ export function closeUps(layout: StepLayout | undefined, w: number, h: number, m
   // for each readable label that otherwise has no complete view.
   const extra: typeof views = [];
   for (const { box } of read) {
-    if (box[2] - box[0] > vw || box[3] - box[1] > vh ||
-        box[0] < bounds[0] || box[1] < bounds[1] || box[2] > bounds[2] || box[3] > bounds[3]) continue;
+    if (
+      box[2] - box[0] > vw ||
+      box[3] - box[1] > vh ||
+      box[0] < bounds[0] ||
+      box[1] < bounds[1] ||
+      box[2] > bounds[2] ||
+      box[3] > bounds[3]
+    )
+      continue;
     const complete = (r: Box) => inside(box[0], box[1], r) && inside(box[2], box[3], r);
     if ([...views, ...extra].some((v) => complete(v.box))) continue;
     for (const region of tourRegions([box], vw, vh, bounds)) {
@@ -480,10 +532,25 @@ export function closeUps(layout: StepLayout | undefined, w: number, h: number, m
     rest: Zoom[] = [];
   for (const v of [...views.slice(open + 1), ...views.slice(0, open), ...extra])
     (starts.some(([x, y]) => inside(x, y, v.box)) ? first : rest).push(v.zoom);
+  const opening: Zoom[] = [];
+  if (layout.reading) {
+    const box = intersect(padded(layout.reading.box), FRAME) ?? layout.reading.box,
+      size = layout.reading.labels.length ? Math.min(...layout.reading.labels.map((l) => l.size)) : Infinity,
+      k = Math.max(1, READ_PX / (size * s)),
+      fit = Math.min(w / ((box[2] - box[0]) * s), h / ((box[3] - box[1]) * s));
+    if (k <= max && k <= fit + 1e-9) {
+      const x = ox + ((box[0] + box[2]) / 2 + 8) * s,
+        y = oy + (4.5 - (box[1] + box[3]) / 2) * s;
+      const zoom = clampZoom({ k, x: w / 2 - k * x, y: h / 2 - k * y }, w, h, max),
+        shown = viewBox(zoom, w, h);
+      if (inside(box[0], box[1], shown) && inside(box[2], box[3], shown)) opening.push(zoom);
+    }
+  }
   const zooms: Zoom[] = [];
-  for (const z of [views[open]!.zoom, ...first, ...rest])
-    // Clamping can land two views in one place; the tour visits it once.
-    if (!zooms.some((o) => Math.abs(o.x - z.x) < 1e-6 && Math.abs(o.y - z.y) < 1e-6)) zooms.push(z);
+  // Clamping can land two views in one place; the tour visits it once.
+  for (const z of [...opening, views[open]!.zoom, ...first, ...rest])
+    if (!zooms.some((o) => Math.abs(o.k - z.k) < 1e-6 && Math.abs(o.x - z.x) < 1e-6 && Math.abs(o.y - z.y) < 1e-6))
+      zooms.push(z);
   return zooms;
 }
 /** Where a step opens on a `w`×`h` stage: the first of its close-ups. */

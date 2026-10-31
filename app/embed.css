@@ -111,6 +111,10 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .steps [aria-current=step]{color:var(--fg);font-weight:600}
 .steps button>span{grid-area:1/1}.steps button>.bold{font-weight:600;visibility:hidden}
 .steps [aria-current=step]::before{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);opacity:1}
+.supporting{margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
+.supporting>summary{cursor:pointer;min-height:44px;display:list-item;padding:10px 0;color:var(--muted)}
+.supporting .steps{margin:0;padding-top:4px;border:0}
+.supporting[hidden]{display:none}
 
 /* Transcript: the whole explanation as text. */
 .transcript{margin-top:24px;padding-top:8px;border-top:1px solid var(--line);line-height:1.6}
