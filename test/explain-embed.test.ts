@@ -426,8 +426,11 @@ test('every case of every catalog explainer has one step bar segment per teachin
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
   try {
     const page = await context.newPage();
+    const inventory = await catalog();
+    const expectedCases = [...inventory.values()].reduce((sum, project) => sum + project.variants.length, 0);
+    assert.ok(expectedCases >= 100, `the catalog retains its expected case inventory (${expectedCases})`);
     let cases = 0;
-    for (const [id, project] of await catalog())
+    for (const [id, project] of inventory)
       for (const v of project.variants) {
         const q = new URLSearchParams(v.values as Record<string, string>);
         await page.goto(`${embed}/catalog/${id}.html?${q}`);
@@ -436,7 +439,7 @@ test('every case of every catalog explainer has one step bar segment per teachin
         assert.deepEqual(seen, teachingSpecs(project, v.values).map((s) => s.step), `${id} ?${q}`);
         cases++;
       }
-    assert.ok(cases >= 100, `every case visited (${cases})`);
+    assert.equal(cases, expectedCases, 'every case visited exactly once');
   } finally {
     await context.close();
   }
@@ -1021,6 +1024,8 @@ test('the rail is a pane beside the card when wide and a closed details row insi
       await page.waitForFunction(() => new URL(location.href).searchParams.get('step') === 'before');
       assert.equal(await page.locator('.step-bar').isVisible(), false, `${where}: source details do not impersonate the main path`);
       assert.equal(await page.locator('.supporting-steps [aria-current=step]').getAttribute('data-step'), 'before');
+      const touring = await page.locator('.view-controls').evaluate((v) => !(v as HTMLElement).hidden && (v as HTMLElement).style.visibility !== 'hidden');
+      assert.equal(await page.locator('.foot .hint').textContent(), touring ? chromeFor('en').viewHelp : chromeFor('en').backToStory, `${where}: guidance names an available control`);
     } finally { await page.close(); }
   }
   // Across the width the rail moves between the two, keeping the one list.

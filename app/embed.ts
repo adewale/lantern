@@ -261,7 +261,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const hint = el('span', undefined, 'hint'),
     coarse = matchMedia('(pointer: coarse)'),
     sayHint = () => {
-      const text = touring ? t.viewHelp : coarse.matches ? t.hintTouch : t.hintKeys;
+      const text = touring ? t.viewHelp : trace && isDetail(selected) ? t.backToStory : coarse.matches ? t.hintTouch : t.hintKeys;
       if (hint.textContent !== text) hint.textContent = text;
       hint.classList.toggle('view-help', touring);
     };
@@ -505,6 +505,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     prev.disabled = adjacentStep(trace.steps, selected, -1) === selected;
     backToStory.hidden = !isDetail(selected);
     bar.hidden = isDetail(selected);
+    sayHint();
     if (isDetail(selected)) {
       detailDisclosure.open = true;
       if (!wide.matches) railUnder.open = true;
