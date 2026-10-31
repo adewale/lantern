@@ -9,7 +9,7 @@ import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
 import { serve } from '../tools/lib/explain-serve.ts';
 import { launch } from '../tools/lib/browser.ts';
-import { Scene, Text, Line, Group, Rectangle } from '../src/index.ts';
+import { Scene, Text, Line, Group, Rectangle, VMobject, renderElements, toSvgString } from '../src/index.ts';
 import { emphasises } from '../explain/look.ts';
 
 test('local review server rejects an occupied port so startup failure can be reported', async () => {
@@ -173,7 +173,7 @@ test('redrawn paint preserves layer order and multiplicity without shifting unch
     { before: ['red', 'blue'], after: ['red', 'green', 'blue'], changed: ['layer-green-0'] },
     { before: ['red', 'blue'], after: ['red', 'blue'], changed: [] },
   ];
-  const check = async (sample: { before: string[]; after: string[]; changed: string[] }) => {
+  const check = async (sample: { before: string[]; after: string[]; changed: string[]; positions?: Record<string, [number, number]> }) => {
     class Layers extends Scene {
       override async construct() {
         const draw = (colors: string[], counter: number) => {
@@ -181,7 +181,8 @@ test('redrawn paint preserves layer order and multiplicity without shifting unch
           return new Group(...colors.map(color => {
             const occurrence = occurrences.get(color) ?? 0;
             occurrences.set(color, occurrence + 1);
-            const layer = new Rectangle({ width: 6, height: 4, fill: color, stroke: 'none' }).setOpacity(0.95);
+            const layer = new Rectangle({ width: 2, height: 2, fill: color, stroke: 'none' })
+              .moveTo(sample.positions?.[color] ?? [0, 0]).setOpacity(0.95);
             layer.key = `layer-${color}-${occurrence}`;
             return layer;
           }), new Text(`Step ${counter}`).moveTo([0, -3]));
@@ -202,23 +203,155 @@ test('redrawn paint preserves layer order and multiplicity without shifting unch
     assert.ok(targets.includes('changed: Step 2'), 'the incidental counter remains checked separately');
   };
   for (const sample of cases) await check(sample);
+  await check({ before: ['red', 'blue'], after: ['blue', 'red'], changed: [],
+    positions: { red: [-3, 0], blue: [3, 0] } });
   const stack = fc.array(fc.constantFrom('red', 'blue', 'green'), { maxLength: 8 });
-  await fc.assert(fc.asyncProperty(stack, stack, async (before, after) => {
+  const point = fc.tuple(fc.integer({ min: -3, max: 3 }), fc.integer({ min: -1, max: 1 }));
+  const locations = fc.record({ red: point, blue: point, green: point });
+  await fc.assert(fc.asyncProperty(stack, stack, locations, async (before, after, positions) => {
     // The oracle gives each repeated color an occurrence name, then compares
-    // every pair's order. It does not use the review's queue/prefix/suffix scan.
+    // every pair's order and known two-unit rectangle intersection. It does
+    // not use the review's matching, parsed path bounds or spatial scan.
     const keys = (colors: string[]) => colors.map((color, index) =>
       `layer-${color}-${colors.slice(0, index).filter(c => c === color).length}`);
     const oldKeys = keys(before), newKeys = keys(after), changed = new Set<string>();
     for (const [index, key] of newKeys.entries()) {
       const color = after[index]!;
       if (before.filter(c => c === color).length !== after.filter(c => c === color).length) changed.add(key);
-      for (const other of newKeys.slice(index + 1))
-        if (oldKeys.includes(key) && oldKeys.includes(other) && oldKeys.indexOf(key) > oldKeys.indexOf(other)) {
+      for (let j = index + 1; j < newKeys.length; j++) {
+        const other = newKeys[j]!, a = positions[color as keyof typeof positions], b = positions[after[j] as keyof typeof positions];
+        if (oldKeys.includes(key) && oldKeys.includes(other) && oldKeys.indexOf(key) > oldKeys.indexOf(other) &&
+            Math.abs(a[0] - b[0]) < 2 && Math.abs(a[1] - b[1]) < 2) {
           changed.add(key); changed.add(other);
         }
+      }
     }
-    await check({ before, after, changed: [...changed] });
+    await check({ before, after, changed: [...changed], positions });
   }), params(100));
+});
+
+test('persistent layer ids preserve overlapping order changes but do not distinguish identical copies', async () => {
+  for (const colors of [['red', 'blue'], ['red', 'red'], ['red', 'blue', 'red']]) {
+    class Layers extends Scene {
+      override async construct() {
+        const layers = colors.map((color, index) => {
+          const layer = new Rectangle({ width: 2, height: 2, fill: color, stroke: 'none' }).setOpacity(0.95);
+          layer.key = `layer-${index}`;
+          return layer;
+        });
+        await this.step('before');
+        const first = new Text('Step 1').moveTo([0, -3]);
+        this.add(...layers, first);
+        await this.step('after');
+        this.remove(...layers, first);
+        this.add(...layers.slice().reverse(), new Text('Step 2').moveTo([0, -3]));
+      }
+    }
+    const frames = await storyFrames(Layers);
+    const samePaintOrder = colors.join() === colors.slice().reverse().join();
+    assert.deepEqual(frames.get('after')!.targets.map(t => t.name).sort(), samePaintOrder ? ['changed: Step 2'] :
+      ['changed: Step 2', 'changed: layer-0', 'changed: layer-1']);
+  }
+});
+
+const strokeOrderCases = [
+  { kind: 'miter', pixel: [688, 360], changed: true },
+  { kind: 'default-miter', pixel: [656, 360], changed: true },
+  { kind: 'square', pixel: [692, 360], changed: true },
+  { kind: 'round', pixel: [692, 360], changed: false },
+] as const;
+function strokeOrderScene(kind: typeof strokeOrderCases[number]['kind']) {
+  return class StrokeLayers extends Scene {
+    override async construct() {
+      const capped = kind === 'square' || kind === 'round';
+      const stroke = capped
+        ? new VMobject({ stroke: 'red', strokeWidth: 1, fill: 'none', lineCap: kind })
+          .startNewPath([-1, -1]).addLineTo([0, 0])
+        : new VMobject({ stroke: 'red', strokeWidth: 0.2, fill: 'none', lineJoin: 'miter',
+          ...(kind === 'miter' ? { miterLimit: 20 } : {}) })
+          .startNewPath([-1, kind === 'miter' ? 0.1 : 0.4]).addLineTo([0, 0])
+          .addLineTo([-1, kind === 'miter' ? -0.1 : -0.4]);
+      stroke.setOpacity(0.95); stroke.key = 'stroke';
+      const size = capped ? 0.05 : kind === 'miter' ? 0.3 : 0.1;
+      const patch = new Rectangle({ width: size, height: size, fill: 'blue', stroke: 'none' })
+        .moveTo([capped ? 0.65 : kind === 'miter' ? 0.6 : 0.2, 0]).setOpacity(0.95);
+      patch.key = 'patch';
+      await this.step('before');
+      const first = new Text('Step 1').moveTo([0, -3]);
+      this.add(stroke, patch, first);
+      await this.step('after');
+      this.remove(stroke, patch, first);
+      this.add(patch, stroke, new Text('Step 2').moveTo([0, -3]));
+    }
+  };
+}
+
+test('paint-order evidence includes acute miter joins and diagonal square caps', async () => {
+  for (const sample of strokeOrderCases) {
+    const frames = await storyFrames(strokeOrderScene(sample.kind));
+    assert.deepEqual(frames.get('after')!.targets.map(t => t.name).sort(), sample.changed ?
+      ['changed: Step 2', 'changed: patch', 'changed: stroke'] : ['changed: Step 2'], sample.kind);
+  }
+});
+
+test('native SVG pixels confirm the stroke-order changes selected by the review',
+  { skip: !process.env.EXPLAIN_BROWSER && 'set EXPLAIN_BROWSER=1 for native stroke paint checks' }, async () => {
+  const browser = await launch();
+  try {
+    const page = await browser.newPage();
+    let checked = 0;
+    for (const sample of strokeOrderCases) {
+      const images = new Map<string, string>();
+      const Source = strokeOrderScene(sample.kind);
+      await new Source({ async frame() {}, async stepEnd(scene, step) {
+        images.set(step.name, toSvgString(scene));
+      } }, { skipUntil: Infinity }).run();
+      assert.equal(images.size, 2);
+      const pixels: number[][] = [];
+      for (const step of ['before', 'after']) pixels.push(await page.evaluate(async ({ svg, x, y }) => {
+        const image = new Image(); image.src = 'data:image/svg+xml,' + encodeURIComponent(svg);
+        await image.decode();
+        const canvas = document.createElement('canvas'); canvas.width = 1280; canvas.height = 720;
+        const context = canvas.getContext('2d')!; context.drawImage(image, 0, 0);
+        return [...context.getImageData(x, y, 1, 1).data];
+      }, { svg: images.get(step)!, x: sample.pixel[0], y: sample.pixel[1] }));
+      assert.ok(pixels[0]![2]! > 200 && pixels[0]![0]! < 50, `${sample.kind}: blue initially covers the stroke`);
+      assert.ok(sample.changed ? pixels[1]![0]! > 200 && pixels[1]![2]! < 50 :
+        pixels[1]![2]! > 200 && pixels[1]![0]! < 50, `${sample.kind}: native paint establishes whether order matters`);
+      const frame = (await storyFrames(Source)).get('after')!;
+      assert.equal(frame.targets.some(target => target.name === 'changed: stroke'), sample.changed);
+      checked++;
+    }
+    assert.equal(checked, 4);
+  } finally { await browser.close(); }
+});
+
+test('token-bucket refill does not turn untouched waiting R10 into a story obligation', async () => {
+  const project = await collectProject('scenes/explainers/token-bucket', { write: false });
+  assert.equal(project.variants.length, 3);
+  let checked = 0;
+  for (const variant of project.variants) {
+    const frame = (await storyFrames(variant.Scene)).get('refill')!;
+    await new variant.Scene({
+      async frame() {},
+      async stepEnd(scene, step) {
+        if (step.name !== 'refill') return;
+        const labels = scene.familyMembers().filter(m => m instanceof Text && m.text === 'R10');
+        assert.equal(labels.length, 1, 'the final waiting request has one label');
+        const chip = labels[0]!.parent!.children[0]!;
+        assert.ok(chip instanceof Rectangle);
+        const records = renderElements(scene, { relative: false });
+        const index = records.findIndex(r => r.id === chip.id);
+        assert.ok(index >= 0);
+        assert.equal(records[index]!.attrs['stroke-dasharray'], '80 60', 'R10 is still waiting');
+        assert.deepEqual(frame.records[index]!.attrs, records[index]!.attrs, 'bind the same actual rectangle in the reviewed frame');
+        assert.equal(frame.targets.some(target => target.indices.includes(index)), false,
+          `rate ${variant.values.rate}: redrawing answered R7-R9 must not make unchanged R10 a subject`);
+        checked++;
+      },
+    }, { skipUntil: Infinity }).run();
+  }
+  assert.equal(checked, 3);
 });
 
 test('fresh helper emphasis must be on stage and painted replacement routes count instead of invisible carriers', async () => {
