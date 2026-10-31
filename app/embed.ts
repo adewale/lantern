@@ -245,10 +245,18 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   mark.setAttribute('aria-label', t.madeWith);
   mark.append(icon('mark'), 'Rayner');
   // One quiet, permanent line on how to move, between the mark and the way out: keys on a fine
-  // pointer, taps on a coarse one. Nothing is stored, so it never needs dismissing.
+  // pointer, taps on a coarse one. Nothing is stored, so it never needs dismissing. On a step with
+  // more than one view on a narrow stage it says how Next view differs from Next instead
+  // (drawOverview sets `touring`), and Next view names it as its description.
+  let touring = false;
   const hint = el('span', undefined, 'hint'),
     coarse = matchMedia('(pointer: coarse)'),
-    sayHint = () => (hint.textContent = coarse.matches ? t.hintTouch : t.hintKeys);
+    sayHint = () => {
+      const text = touring ? t.viewHelp : coarse.matches ? t.hintTouch : t.hintKeys;
+      if (hint.textContent !== text) hint.textContent = text;
+      hint.classList.toggle('view-help', touring);
+    };
+  hint.id = 'view-help';
   sayHint();
   coarse.addEventListener('change', sayHint);
   foot.append(mark, hint);
@@ -329,14 +337,15 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   // Keep view navigation separate from step navigation: its own row, under the stepper row.
   const views = el('div', undefined, 'view-controls'),
     viewCount = el('span'),
-    nextView = el('button', t.nextView, 'button'),
-    viewHelp = el('p', t.viewHelp, 'view-help');
+    nextView = el('button', t.nextView, 'button');
   nextView.type = 'button';
-  viewHelp.id = 'view-help';
-  nextView.setAttribute('aria-describedby', viewHelp.id);
+  // How Next view differs from Next is said in the footer's hint (below), on the steps that have
+  // more than one view: the footer is the card's last row, so its words can change from step to
+  // step without moving anything, and the view row needs only its one line of controls.
+  nextView.setAttribute('aria-describedby', 'view-help');
   viewCount.setAttribute('aria-live', 'polite');
   views.hidden = true;
-  views.append(viewCount, nextView, overview, viewHelp);
+  views.append(viewCount, nextView, overview);
   stepper.after(views);
   const narrow = () => stage.clientWidth > 0 && stage.clientWidth < NARROW_PX;
   const revealStage = () => {
@@ -372,6 +381,10 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     // transcript still. A single-view step exposes no toolbar or instructions.
     views.hidden = !narrow() || !caseHasTour;
     views.style.visibility = multiple ? '' : 'hidden';
+    if (touring !== (narrow() && caseHasTour && multiple)) {
+      touring = !touring;
+      sayHint();
+    }
     nextView.disabled = tour.length < 2;
     const count = on || !multiple ? t.viewCount(stop + 1, Math.max(1, tour.length)) : t.wholePicture;
     if (viewCount.textContent !== count) viewCount.textContent = count;

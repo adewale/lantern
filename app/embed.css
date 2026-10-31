@@ -71,8 +71,6 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .view-controls .button{min-height:44px}
 .view-controls[hidden]{display:none}
 .view-controls>span{margin-inline-end:auto}
-.view-help{flex-basis:100%;margin:0;font-size:.875rem;line-height:1.5;color:var(--muted)}
-.view-help[hidden]{display:none}
 .overview{flex:none;display:block;width:44px;height:44px;padding:6px;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .overview[hidden]{display:none}
 .overview:disabled{cursor:default}
@@ -175,7 +173,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 .foot svg{width:16px;height:16px}
 .foot .open{margin-inline-start:auto}
 .foot .hint{flex:0 1 auto;min-width:0;padding-block:8px;line-height:1.4}
-@media(max-width:360px){.foot .hint{display:none}}
+@media(max-width:360px){.foot .hint:not(.view-help){display:none}}
 .foot .open svg{width:14px;height:14px}
 
 /* The first view, before the player starts. */
