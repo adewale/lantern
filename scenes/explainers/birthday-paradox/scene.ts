@@ -47,7 +47,7 @@ export default class BirthdayParadox extends Scene {
           return tile(day, ((i % cols) - (cols - 1) / 2) * dx, 2.25 - Math.floor(i / cols) * 0.95, dx - 0.15, 0.7, s, {
             active: match,
             bad: m.question === 'one' && i === 0,
-            size: 0.6,
+            size: 0.65,
             key: `person-${i}`,
           });
         }),
@@ -55,13 +55,13 @@ export default class BirthdayParadox extends Scene {
       g.key = 'birthday-people';
       return new Group(
         g,
-        label(`${m.people} people; each number is a calendar day.`, 0, 2.3 - rows * 0.95, s.soft, 0.6),
+        label(`${m.people} people; each number is a calendar day.`, 0, 2.3 - rows * 0.95, s.soft, 0.65),
         label(
           m.question === 'one' ? 'Red: the one marked birthday.' : 'Blue outlines mark repeated dates.',
           0,
-          -3.85,
+          -3.35,
           s.palette.ink,
-          0.6,
+          0.65,
         ),
       );
     };
