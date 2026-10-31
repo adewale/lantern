@@ -9,7 +9,7 @@ import { collectProject, ROOT } from '../tools/lib/explain-project.ts';
 import { buildExplainer } from '../tools/lib/explain-build.ts';
 import { serve } from '../tools/lib/explain-serve.ts';
 import { launch } from '../tools/lib/browser.ts';
-import { Scene, Text, Line, Group, Rectangle } from '../src/index.ts';
+import { Scene, Text, Line, Group, Rectangle, VMobject, renderElements, toSvgString } from '../src/index.ts';
 import { emphasises } from '../explain/look.ts';
 
 test('local review server rejects an occupied port so startup failure can be reported', async () => {
@@ -147,9 +147,363 @@ test('a caption explaining unchanged artwork must declare its subject', async ()
     }
   }
   await assert.rejects(storyFrames(Unchanged), /unchanged artwork needs a declared story subject/);
+  // A view redraws its picture as new objects each sync: the same paint under new ids is still
+  // unchanged artwork, not a change the reader is meant to look for.
+  class Redrawn extends Scene {
+    override async construct() {
+      await this.step('draw');
+      const first = new Text('word');
+      this.add(first);
+      await this.step('explain');
+      this.remove(first);
+      this.add(new Text('word'));
+    }
+  }
+  await assert.rejects(storyFrames(Redrawn), /explain: unchanged artwork needs a declared story subject/);
   const frames = await storyFrames(Unchanged, [{ step: 'explain', targets: [{ key: 'word' }] }]);
   assert.equal(frames.size, 2);
   assert.ok(frames.get('explain')!.targets.some((t) => t.name === 'word'));
+});
+
+test('redrawn paint preserves layer order and multiplicity without shifting unchanged context', async () => {
+  const cases = [
+    { before: ['red', 'blue'], after: ['blue', 'red'], changed: ['layer-blue-0', 'layer-red-0'] },
+    { before: ['red'], after: ['red', 'red'], changed: ['layer-red-0', 'layer-red-1'] },
+    { before: ['red', 'red'], after: ['red'], changed: ['layer-red-0'] },
+    { before: ['red', 'blue'], after: ['red', 'green', 'blue'], changed: ['layer-green-0'] },
+    { before: ['red', 'blue'], after: ['red', 'blue'], changed: [] },
+  ];
+  const check = async (sample: { before: string[]; after: string[]; changed: string[]; positions?: Record<string, [number, number]>; fillOpacity?: number }) => {
+    class Layers extends Scene {
+      override async construct() {
+        const draw = (colors: string[], counter: number) => {
+          const occurrences = new Map<string, number>();
+          return new Group(...colors.map(color => {
+            const occurrence = occurrences.get(color) ?? 0;
+            occurrences.set(color, occurrence + 1);
+            // Retain visible contributions through the longest generated stack;
+            // nearly opaque lower copies can disappear below 8-bit resolution.
+            const layer = new Rectangle({ width: 2, height: 2, fill: color, fillOpacity: sample.fillOpacity ?? 1, stroke: 'none' })
+              .moveTo(sample.positions?.[color] ?? [0, 0]).setOpacity(0.95);
+            layer.key = `layer-${color}-${occurrence}`;
+            return layer;
+          }), new Text(`Step ${counter}`).moveTo([0, -3]));
+        };
+        await this.step('before');
+        const first = draw(sample.before, 1);
+        this.add(first);
+        await this.step('after');
+        this.remove(first);
+        this.add(draw(sample.after, 2));
+      }
+    }
+    const frames = await storyFrames(Layers);
+    assert.equal(frames.size, 2);
+    const targets = frames.get('after')!.targets.map(t => t.name);
+    assert.deepEqual(targets.filter(name => name.startsWith('changed: layer-')).sort(),
+      sample.changed.map(name => `changed: ${name}`).sort(), JSON.stringify(sample));
+    assert.ok(targets.includes('changed: Step 2'), 'the incidental counter remains checked separately');
+  };
+  for (const sample of cases) await check(sample);
+  await check({ before: ['red', 'blue'], after: ['blue', 'red'], changed: [],
+    positions: { red: [-3, 0], blue: [3, 0] } });
+  const stack = fc.array(fc.constantFrom('red', 'blue', 'green'), { maxLength: 8 });
+  const point = fc.tuple(fc.integer({ min: -3, max: 3 }), fc.integer({ min: -1, max: 1 }));
+  const locations = fc.record({ red: point, blue: point, green: point });
+  await fc.assert(fc.asyncProperty(stack, stack, locations, async (before, after, positions) => {
+    // The oracle gives each repeated color an occurrence name, then compares
+    // every pair's order and known two-unit rectangle intersection. It does
+    // not use the review's matching, parsed path bounds or spatial scan.
+    const keys = (colors: string[]) => colors.map((color, index) =>
+      `layer-${color}-${colors.slice(0, index).filter(c => c === color).length}`);
+    const oldKeys = keys(before), newKeys = keys(after), changed = new Set<string>();
+    for (const [index, key] of newKeys.entries()) {
+      const color = after[index]!;
+      if (before.filter(c => c === color).length !== after.filter(c => c === color).length) changed.add(key);
+      for (let j = index + 1; j < newKeys.length; j++) {
+        const other = newKeys[j]!, a = positions[color as keyof typeof positions], b = positions[after[j] as keyof typeof positions];
+        if (oldKeys.includes(key) && oldKeys.includes(other) && oldKeys.indexOf(key) > oldKeys.indexOf(other) &&
+            Math.abs(a[0] - b[0]) < 2 && Math.abs(a[1] - b[1]) < 2) {
+          changed.add(key); changed.add(other);
+        }
+      }
+      for (const [oldIndex, removed] of oldKeys.entries()) {
+        const removedColor = before[oldIndex]!;
+        const a = positions[color as keyof typeof positions], b = positions[removedColor as keyof typeof positions];
+        if (!newKeys.includes(removed) && after.includes(removedColor) && oldKeys.includes(key) &&
+            oldKeys.indexOf(key) < oldIndex && Math.abs(a[0] - b[0]) < 2 && Math.abs(a[1] - b[1]) < 2)
+          changed.add(key);
+      }
+    }
+    await check({ before, after, changed: [...changed], positions, fillOpacity: 0.5 });
+  }), params(100));
+});
+
+test('persistent layer ids preserve overlapping order changes but do not distinguish identical copies', async () => {
+  for (const colors of [['red', 'blue'], ['red', 'red'], ['red', 'blue', 'red']]) {
+    class Layers extends Scene {
+      override async construct() {
+        const layers = colors.map((color, index) => {
+          const layer = new Rectangle({ width: 2, height: 2, fill: color, stroke: 'none' }).setOpacity(0.95);
+          layer.key = `layer-${index}`;
+          return layer;
+        });
+        await this.step('before');
+        const first = new Text('Step 1').moveTo([0, -3]);
+        this.add(...layers, first);
+        await this.step('after');
+        this.remove(...layers, first);
+        this.add(...layers.slice().reverse(), new Text('Step 2').moveTo([0, -3]));
+      }
+    }
+    const frames = await storyFrames(Layers);
+    const samePaintOrder = colors.join() === colors.slice().reverse().join();
+    assert.deepEqual(frames.get('after')!.targets.map(t => t.name).sort(), samePaintOrder ? ['changed: Step 2'] :
+      ['changed: Step 2', 'changed: layer-0', 'changed: layer-1']);
+  }
+});
+
+const unchangedLayerKinds = ['hollow', 'covered', 'added', 'removed'] as const;
+function unchangedLayerScene(kind: typeof unchangedLayerKinds[number], size = 4, inset = 0.5) {
+  return class UnchangedLayers extends Scene {
+    override async construct() {
+      const countChange = kind === 'added' || kind === 'removed';
+      const outer = new Rectangle({ width: size, height: size, fill: kind === 'hollow' ? 'none' : 'red',
+        stroke: kind === 'hollow' ? 'red' : 'none', strokeWidth: 0.1 }).setOpacity(countChange ? 0.95 : 1);
+      outer.key = 'outer';
+      const inner = new Rectangle({ width: countChange ? size : inset, height: countChange ? size : inset,
+        fill: countChange ? 'red' : 'blue', stroke: 'none' }).setOpacity(countChange ? 0.95 : 1);
+      inner.key = 'inner';
+      const cover = new Rectangle({ width: size + 1, height: size + 1, fill: 'white', stroke: 'none' });
+      await this.step('before');
+      this.add(outer, ...(kind === 'added' ? [] : [inner]), ...(kind === 'hollow' ? [] : [cover]));
+      await this.step('after');
+      if (kind === 'removed') { this.remove(inner); return; }
+      if (kind === 'added') { this.remove(cover); this.add(inner, cover); return; }
+      this.remove(outer, inner, cover);
+      this.add(inner, outer, ...(kind === 'covered' ? [cover] : []));
+    }
+  };
+}
+
+test('intersecting bounds and covered order/count changes cannot supply evidence for unchanged artwork', async () => {
+  for (const kind of unchangedLayerKinds)
+    await assert.rejects(storyFrames(unchangedLayerScene(kind)), /after: unchanged artwork needs a declared story subject/);
+  await fc.assert(fc.asyncProperty(fc.integer({ min: 2, max: 6 }), fc.integer({ min: 1, max: 8 }),
+    async (size, numerator) => {
+      // The inset stays strictly inside the outline's unpainted interior.
+      // Its order cannot affect the picture, regardless of intersecting boxes.
+      const inset = (size - 0.2) * numerator / 10;
+      await assert.rejects(storyFrames(unchangedLayerScene('hollow', size, inset)),
+        /after: unchanged artwork needs a declared story subject/);
+    }), params(30));
+});
+
+test('removing a duplicate layer also checks the differently shaped artwork it reveals', async () => {
+  await fc.assert(fc.asyncProperty(fc.integer({ min: -3, max: 3 }), fc.integer({ min: -2, max: 2 }),
+    async (x, y) => {
+      class Revealed extends Scene {
+        override async construct() {
+          const lower = new Rectangle({ width: 2, height: 2, fill: 'red', stroke: 'none' }).setOpacity(0.95);
+          lower.key = 'lower';
+          const blue = new Rectangle({ width: 1.5, height: 1.5, fill: 'blue', stroke: 'none' })
+            .moveTo([x, y]).setOpacity(0.95);
+          blue.key = 'blue';
+          const upper = new Rectangle({ width: 2, height: 2, fill: 'red', stroke: 'none' }).setOpacity(0.95);
+          await this.step('before'); this.add(lower, blue, upper);
+          await this.step('after'); this.remove(upper);
+        }
+      }
+      const targets = (await storyFrames(Revealed)).get('after')!.targets.map(t => t.name).sort();
+      const overlaps = Math.abs(x) < 1.75 && Math.abs(y) < 1.75;
+      assert.deepEqual(targets, overlaps ? ['changed: blue', 'changed: lower'] : ['changed: lower']);
+    }), params(50, { examples: [[0, 0], [3, 2]] }));
+});
+
+test('native SVG pixels confirm hollow and covered order/count changes leave the picture unchanged',
+  { skip: !process.env.EXPLAIN_BROWSER && 'set EXPLAIN_BROWSER=1 for native unchanged-paint checks' }, async () => {
+  const browser = await launch();
+  try {
+    const page = await browser.newPage();
+    let checked = 0;
+    for (const kind of unchangedLayerKinds) {
+      const pictures: string[] = [];
+      await new (unchangedLayerScene(kind))({ async frame() {}, async stepEnd(scene) {
+        pictures.push(toSvgString(scene));
+      } }, { skipUntil: Infinity }).run();
+      assert.equal(pictures.length, 2);
+      const changedPixels = await page.evaluate(async pictures => {
+        const pixels: Uint8ClampedArray[] = [];
+        for (const svg of pictures) {
+          const image = new Image(); image.src = 'data:image/svg+xml,' + encodeURIComponent(svg); await image.decode();
+          const canvas = document.createElement('canvas'); canvas.width = 1280; canvas.height = 720;
+          const context = canvas.getContext('2d')!; context.drawImage(image, 0, 0);
+          pixels.push(context.getImageData(0, 0, 1280, 720).data);
+        }
+        let changed = 0;
+        for (let p = 0; p < pixels[0]!.length; p += 4)
+          if ([0, 1, 2, 3].some(c => pixels[0]![p + c] !== pixels[1]![p + c])) changed++;
+        return changed;
+      }, pictures);
+      assert.equal(changedPixels, 0, kind);
+      checked++;
+    }
+    assert.equal(checked, 4);
+  } finally { await browser.close(); }
+});
+
+test('served review rejects hiding the blue artwork revealed by removing a duplicate red layer at either width',
+  { skip: !process.env.EXPLAIN_BROWSER && 'set EXPLAIN_BROWSER=1 for served revelation checks' }, async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'rayner-story-reveal-'));
+  const browser = await launch();
+  let server: Awaited<ReturnType<typeof serve>> | undefined;
+  try {
+    await writeFile(join(dir, 'scene.ts'), `import{Scene,Rectangle}from'rayner';export default class Reveal extends Scene{
+      static meta={id:'reveal',title:'Removing the top red reveals blue'};
+      async construct(){
+        const lower=new Rectangle({width:2,height:2,fill:'red',stroke:'none'}).setOpacity(.95);lower.key='lower';
+        const blue=new Rectangle({width:1.5,height:1.5,fill:'blue',stroke:'none'}).setOpacity(.95);blue.key='blue';
+        const upper=new Rectangle({width:2,height:2,fill:'red',stroke:'none'}).setOpacity(.95);
+        await this.step('before',{caption:'The top red covers blue.'});this.add(lower,blue,upper);
+        await this.step('after',{caption:'Removing the top red reveals blue.'});this.remove(upper);
+      }} `);
+    const project = await collectProject(dir, { write: false });
+    assert.equal(project.variants.length, 1);
+    await buildExplainer(project, join(dir, 'scene.html'));
+    server = await serve(dir, 0, 'scene.html');
+    const baseline = await browser.newPage();
+    try {
+      const rows = await reviewStoryVariant(baseline, server.url + '/scene.html', project.variants[0]!);
+      assert.equal(rows.length, 4, 'two steps at both widths');
+      assert.deepEqual(rows.filter(r => r.step === 'after').map(r => r.targets.sort()),
+        [['changed: blue', 'changed: lower'], ['changed: blue', 'changed: lower']]);
+    } finally { await baseline.close(); }
+    let rejected = 0;
+    for (const width of [390, 1180]) {
+      const page = await browser.newPage();
+      try {
+        await page.addInitScript(width => {
+          document.addEventListener('rayner:step', event => {
+            if (innerWidth !== width || (event as CustomEvent).detail.step !== 'after') return;
+            const blue = [...document.querySelectorAll('.stage svg:not(.leaving) path')]
+              .find(path => path.getAttribute('fill') === 'blue') as SVGGraphicsElement;
+            const paint = getComputedStyle(blue), box = blue.getBBox();
+            (window as unknown as { visibleBeforePoison: boolean }).visibleBeforePoison =
+              Number(paint.opacity) >= 0.95 && paint.fill === 'rgb(0, 0, 255)' && box.width > 0 && box.height > 0;
+            blue.style.opacity = '0';
+          });
+        }, width);
+        await assert.rejects(reviewStoryVariant(page, server.url + '/scene.html', project.variants[0]!),
+          /after: changed: blue has hidden or clipped ink/);
+        assert.equal(await page.evaluate(() =>
+          (window as unknown as { visibleBeforePoison: boolean }).visibleBeforePoison), true, `${width}: visible blue before poison`);
+        assert.equal(await page.locator('.stage svg:not(.leaving) path[fill="blue"]').evaluate(e => getComputedStyle(e).opacity),
+          '0', `${width}: CSSOM poison applies under the served CSP`);
+        rejected++;
+      } finally { await page.close(); }
+    }
+    assert.equal(rejected, 2, 'each width independently rejects the missing revelation');
+  } finally { await browser.close(); server?.close(); await rm(dir, { recursive: true, force: true }); }
+});
+
+const strokeOrderCases = [
+  { kind: 'miter', pixel: [688, 360], changed: true },
+  { kind: 'default-miter', pixel: [656, 360], changed: true },
+  { kind: 'square', pixel: [692, 360], changed: true },
+  { kind: 'round', pixel: [692, 360], changed: false },
+] as const;
+function strokeOrderScene(kind: typeof strokeOrderCases[number]['kind']) {
+  return class StrokeLayers extends Scene {
+    override async construct() {
+      const capped = kind === 'square' || kind === 'round';
+      const stroke = capped
+        ? new VMobject({ stroke: 'red', strokeWidth: 1, fill: 'none', lineCap: kind })
+          .startNewPath([-1, -1]).addLineTo([0, 0])
+        : new VMobject({ stroke: 'red', strokeWidth: 0.2, fill: 'none', lineJoin: 'miter',
+          ...(kind === 'miter' ? { miterLimit: 20 } : {}) })
+          .startNewPath([-1, kind === 'miter' ? 0.1 : 0.4]).addLineTo([0, 0])
+          .addLineTo([-1, kind === 'miter' ? -0.1 : -0.4]);
+      stroke.setOpacity(0.95); stroke.key = 'stroke';
+      const size = capped ? 0.05 : kind === 'miter' ? 0.3 : 0.1;
+      const patch = new Rectangle({ width: size, height: size, fill: 'blue', stroke: 'none' })
+        .moveTo([capped ? 0.65 : kind === 'miter' ? 0.6 : 0.2, 0]).setOpacity(0.95);
+      patch.key = 'patch';
+      await this.step('before');
+      const first = new Text('Step 1').moveTo([0, -3]);
+      this.add(stroke, patch, first);
+      await this.step('after');
+      this.remove(stroke, patch, first);
+      this.add(patch, stroke, new Text('Step 2').moveTo([0, -3]));
+    }
+  };
+}
+
+test('paint-order evidence includes acute miter joins and diagonal square caps', async () => {
+  for (const sample of strokeOrderCases) {
+    const frames = await storyFrames(strokeOrderScene(sample.kind));
+    assert.deepEqual(frames.get('after')!.targets.map(t => t.name).sort(), sample.changed ?
+      ['changed: Step 2', 'changed: patch', 'changed: stroke'] : ['changed: Step 2'], sample.kind);
+  }
+});
+
+test('native SVG pixels confirm the stroke-order changes selected by the review',
+  { skip: !process.env.EXPLAIN_BROWSER && 'set EXPLAIN_BROWSER=1 for native stroke paint checks' }, async () => {
+  const browser = await launch();
+  try {
+    const page = await browser.newPage();
+    let checked = 0;
+    for (const sample of strokeOrderCases) {
+      const images = new Map<string, string>();
+      const Source = strokeOrderScene(sample.kind);
+      await new Source({ async frame() {}, async stepEnd(scene, step) {
+        images.set(step.name, toSvgString(scene));
+      } }, { skipUntil: Infinity }).run();
+      assert.equal(images.size, 2);
+      const pixels: number[][] = [];
+      for (const step of ['before', 'after']) pixels.push(await page.evaluate(async ({ svg, x, y }) => {
+        const image = new Image(); image.src = 'data:image/svg+xml,' + encodeURIComponent(svg);
+        await image.decode();
+        const canvas = document.createElement('canvas'); canvas.width = 1280; canvas.height = 720;
+        const context = canvas.getContext('2d')!; context.drawImage(image, 0, 0);
+        return [...context.getImageData(x, y, 1, 1).data];
+      }, { svg: images.get(step)!, x: sample.pixel[0], y: sample.pixel[1] }));
+      assert.ok(pixels[0]![2]! > 200 && pixels[0]![0]! < 50, `${sample.kind}: blue initially covers the stroke`);
+      assert.ok(sample.changed ? pixels[1]![0]! > 200 && pixels[1]![2]! < 50 :
+        pixels[1]![2]! > 200 && pixels[1]![0]! < 50, `${sample.kind}: native paint establishes whether order matters`);
+      const frame = (await storyFrames(Source)).get('after')!;
+      assert.equal(frame.targets.some(target => target.name === 'changed: stroke'), sample.changed);
+      checked++;
+    }
+    assert.equal(checked, 4);
+  } finally { await browser.close(); }
+});
+
+test('token-bucket refill does not turn untouched waiting R10 into a story obligation', async () => {
+  const project = await collectProject('scenes/explainers/token-bucket', { write: false });
+  assert.equal(project.variants.length, 3);
+  let checked = 0;
+  for (const variant of project.variants) {
+    const frame = (await storyFrames(variant.Scene)).get('refill')!;
+    await new variant.Scene({
+      async frame() {},
+      async stepEnd(scene, step) {
+        if (step.name !== 'refill') return;
+        const labels = scene.familyMembers().filter(m => m instanceof Text && m.text === 'R10');
+        assert.equal(labels.length, 1, 'the final waiting request has one label');
+        const chip = labels[0]!.parent!.children[0]!;
+        assert.ok(chip instanceof Rectangle);
+        const records = renderElements(scene, { relative: false });
+        const index = records.findIndex(r => r.id === chip.id);
+        assert.ok(index >= 0);
+        assert.equal(records[index]!.attrs['stroke-dasharray'], '80 60', 'R10 is still waiting');
+        assert.deepEqual(frame.records[index]!.attrs, records[index]!.attrs, 'bind the same actual rectangle in the reviewed frame');
+        assert.equal(frame.targets.some(target => target.indices.includes(index)), false,
+          `rate ${variant.values.rate}: redrawing answered R7-R9 must not make unchanged R10 a subject`);
+        checked++;
+      },
+    }, { skipUntil: Infinity }).run();
+  }
+  assert.equal(checked, 3);
 });
 
 test('fresh helper emphasis must be on stage and painted replacement routes count instead of invisible carriers', async () => {
@@ -415,3 +769,68 @@ test(
     }
   },
 );
+
+
+test('served review rejects hidden reordered and duplicated layers despite a changed incidental label',
+  { skip: !process.env.EXPLAIN_BROWSER && 'set EXPLAIN_BROWSER=1 for served layer-order checks' }, async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'rayner-story-layers-'));
+  const browser = await launch();
+  let server: Awaited<ReturnType<typeof serve>> | undefined;
+  try {
+    await writeFile(join(dir, 'scene.ts'), `import{Scene,Group,Rectangle,Text}from'rayner';import{settingsOf}from'rayner/explain';
+      export default class Layers extends Scene{
+        static meta={id:'layers',title:'Which layers are painted?'};
+        static settings=[{id:'mode',label:'Layer change',default:'reordered',options:['reordered','added','removed'].map(value=>({value,label:value}))}];
+        async construct(){
+          const mode=settingsOf(this).mode;
+          const draw=(colors,counter)=>new Group(...colors.map((fill,i)=>{const r=new Rectangle({width:6,height:4,fill,stroke:'none'}).setOpacity(.95);r.key='layer-'+i;return r;}),new Text('Step '+counter,{fontSize:.6}).moveTo([0,-3]));
+          await this.step('before',{caption:'The initial layer stack is shown.'});
+          const first=draw(mode==='removed'?['#ff0000','#ff0000']:mode==='added'?['#ff0000']:['#ff0000','#0000ff'],1);this.add(first);
+          await this.step('after',{caption:mode==='reordered'?'Red now covers blue.':mode==='added'?'Two translucent red layers are painted.':'One red layer remains.'});
+          this.remove(first);this.add(draw(mode==='reordered'?['#0000ff','#ff0000']:mode==='added'?['#ff0000','#ff0000']:['#ff0000'],2));
+        }
+      }`);
+    const project = await collectProject(dir, { write: false });
+    assert.equal(project.variants.length, 3);
+    await buildExplainer(project, join(dir, 'layers.html'));
+    server = await serve(dir, 0, 'layers.html');
+    let baselineRows = 0, rejected = 0;
+    for (const variant of project.variants) {
+      const page = await browser.newPage();
+      try {
+        baselineRows += (await reviewStoryVariant(page, server.url + '/layers.html', variant)).length;
+      } finally { await page.close(); }
+      const poisoned = await browser.newPage();
+      try {
+        const index = variant.values.mode === 'removed' ? 0 : 1;
+        await poisoned.addInitScript(index => {
+          document.addEventListener('rayner:step', event => {
+            if ((event as CustomEvent).detail.step !== 'after') return;
+            const svg = document.querySelector('.stage svg:not(.leaving)')!;
+            const path = [...svg.children].filter(e => e.tagName.toLowerCase() !== 'defs')[index] as SVGGraphicsElement;
+            const paint = getComputedStyle(path);
+            (window as unknown as { visibleBeforePoison: boolean }).visibleBeforePoison =
+              Number(paint.opacity) >= 0.95 && paint.fill !== 'none' && path.getBBox().width > 0;
+            // CSSOM applies under the artifact CSP; changing the style attribute
+            // instead could be blocked and make a poison control meaningless.
+            path.style.opacity = '0';
+          });
+        }, index);
+        await assert.rejects(reviewStoryVariant(poisoned, server.url + '/layers.html', variant),
+          /after: changed: layer-.* has hidden or clipped ink/, variant.values.mode);
+        assert.equal(await poisoned.evaluate(() =>
+          (window as unknown as { visibleBeforePoison: boolean }).visibleBeforePoison), true,
+        'each defect starts from actually painted ink');
+        assert.equal(await poisoned.locator('.stage svg:not(.leaving)').evaluate((svg, index) => {
+          const path = [...svg.children].filter(e => e.tagName.toLowerCase() !== 'defs')[index]!;
+          return getComputedStyle(path).opacity;
+        }, index), '0', 'the intended CSS poison actually applies');
+        rejected++;
+      } finally { await poisoned.close(); }
+    }
+    assert.equal(baselineRows, 12, 'three cases, two steps, two widths');
+    assert.equal(rejected, 3, 'every changed-layer defect is rejected');
+  } finally {
+    await browser.close(); server?.close(); await rm(dir, { recursive: true, force: true });
+  }
+});

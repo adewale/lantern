@@ -1,0 +1,249 @@
+{
+  "version": 1,
+  "claims": [
+    {
+      "step": "column",
+      "opening": true,
+      "targets": [
+        {
+          "key": "periodic-family-comparison"
+        }
+      ]
+    },
+    {
+      "step": "count",
+      "settings": {
+        "element": "na"
+      },
+      "opening": true,
+      "targets": [
+        {
+          "text": "1 counted = group 1"
+        },
+        {
+          "text": "[Ne] 3s¹"
+        },
+        {
+          "key": "periodic-count-comparison"
+        }
+      ]
+    },
+    {
+      "step": "count",
+      "settings": {
+        "element": "cl"
+      },
+      "targets": [
+        {
+          "text": "7 counted ≠ group 17"
+        },
+        {
+          "text": "Al"
+        },
+        {
+          "text": "Cl"
+        },
+        {
+          "key": "periodic-count-comparison"
+        }
+      ],
+      "opening": true
+    },
+    {
+      "step": "count",
+      "settings": {
+        "element": "fe"
+      },
+      "targets": [
+        {
+          "text": "8 counted = group 8"
+        },
+        {
+          "text": "[Ar] 4s² 3d⁶"
+        },
+        {
+          "key": "periodic-count-comparison"
+        }
+      ],
+      "opening": true
+    },
+    {
+      "step": "count",
+      "settings": {
+        "element": "cu"
+      },
+      "targets": [
+        {
+          "text": "[Ar] 4s² 3d⁹"
+        },
+        {
+          "text": "[Ar] 3d¹⁰ 4s¹"
+        },
+        {
+          "text": "11 counted either way = group 11"
+        },
+        {
+          "key": "periodic-count-comparison"
+        }
+      ],
+      "opening": true
+    },
+    {
+      "step": "count",
+      "settings": {
+        "element": "he"
+      },
+      "targets": [
+        {
+          "text": "He?"
+        },
+        {
+          "text": "2 counted ≠ group 18"
+        },
+        {
+          "key": "periodic-count-comparison"
+        }
+      ],
+      "opening": true
+    },
+    {
+      "step": "blocks",
+      "targets": [
+        {
+          "text": "d: 10 columns"
+        },
+        {
+          "text": "p: 6 columns"
+        },
+        {
+          "text": "2 + 10 + 6 = 18 numbered columns"
+        }
+      ]
+    },
+    {
+      "step": "family",
+      "settings": {
+        "element": "fe"
+      },
+      "targets": [
+        {
+          "text": "4d⁷ 5s¹"
+        },
+        {
+          "text": "3d⁶ 4s²"
+        },
+        {
+          "text": "Ru"
+        }
+      ]
+    },
+    {
+      "step": "limit",
+      "settings": {
+        "element": "na"
+      },
+      "targets": [
+        {
+          "text": "Hydrogen: 1s¹, the same ending,"
+        },
+        {
+          "text": "H"
+        },
+        {
+          "key": "periodic-limit:H",
+          "paint": "stroke"
+        }
+      ]
+    },
+    {
+      "step": "limit",
+      "settings": {
+        "element": "cl"
+      },
+      "targets": [
+        {
+          "text": "Tennessine (117) is beyond this model’s"
+        },
+        {
+          "text": "Ts"
+        },
+        {
+          "key": "periodic-limit:Ts",
+          "paint": "stroke"
+        }
+      ]
+    },
+    {
+      "step": "limit",
+      "settings": {
+        "element": "fe"
+      },
+      "targets": [
+        {
+          "text": "“Iron group” can also mean"
+        },
+        {
+          "text": "Co"
+        },
+        {
+          "text": "Ni"
+        },
+        {
+          "key": "periodic-limit:Fe",
+          "paint": "stroke"
+        },
+        {
+          "key": "periodic-limit:Co",
+          "paint": "stroke"
+        },
+        {
+          "key": "periodic-limit:Ni",
+          "paint": "stroke"
+        }
+      ]
+    },
+    {
+      "step": "limit",
+      "settings": {
+        "element": "cu"
+      },
+      "targets": [
+        {
+          "text": "Roentgenium (111) is in group 11;"
+        },
+        {
+          "text": "Rg"
+        },
+        {
+          "key": "periodic-limit:Rg",
+          "paint": "stroke"
+        }
+      ]
+    },
+    {
+      "step": "limit",
+      "settings": {
+        "element": "he"
+      },
+      "targets": [
+        {
+          "text": "By its count of 2, helium would sit"
+        },
+        {
+          "text": "He?"
+        },
+        {
+          "text": "Be"
+        },
+        {
+          "key": "periodic-limit:He",
+          "paint": "stroke"
+        },
+        {
+          "key": "periodic-limit:Be",
+          "paint": "stroke"
+        }
+      ]
+    }
+  ]
+}

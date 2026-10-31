@@ -1,0 +1,548 @@
+{
+ "source": "NIST Atomic Spectra Database (version 5.12), Ionization Energies Data: ground shells of the neutral atoms it lists, H I to Hs I",
+ "query": "https://physics.nist.gov/cgi-bin/ASD/ie.pl?spectra=H-Og+i&units=1&format=2&order=0&at_num_out=on&el_name_out=on&seq_out=on&shells_out=on&conf_out=on",
+ "retrieved": "2026-10-30",
+ "note": "NIST lists elements 1 to 108 and nothing heavier. 'shells' is NIST's text; 'configuration' expands its noble-gas, [Cd] and [Hg] shorthand in shell order, with every count written out. The table does not say which configurations are measured and which are computed.",
+ "elements": {
+  "1": {
+   "symbol": "H",
+   "shells": "1s",
+   "configuration": "1s1"
+  },
+  "2": {
+   "symbol": "He",
+   "shells": "1s2",
+   "configuration": "1s2"
+  },
+  "3": {
+   "symbol": "Li",
+   "shells": "1s2.2s",
+   "configuration": "1s2 2s1"
+  },
+  "4": {
+   "symbol": "Be",
+   "shells": "1s2.2s2",
+   "configuration": "1s2 2s2"
+  },
+  "5": {
+   "symbol": "B",
+   "shells": "1s2.2s2.2p",
+   "configuration": "1s2 2s2 2p1"
+  },
+  "6": {
+   "symbol": "C",
+   "shells": "1s2.2s2.2p2",
+   "configuration": "1s2 2s2 2p2"
+  },
+  "7": {
+   "symbol": "N",
+   "shells": "1s2.2s2.2p3",
+   "configuration": "1s2 2s2 2p3"
+  },
+  "8": {
+   "symbol": "O",
+   "shells": "1s2.2s2.2p4",
+   "configuration": "1s2 2s2 2p4"
+  },
+  "9": {
+   "symbol": "F",
+   "shells": "1s2.2s2.2p5",
+   "configuration": "1s2 2s2 2p5"
+  },
+  "10": {
+   "symbol": "Ne",
+   "shells": "1s2.2s2.2p6",
+   "configuration": "1s2 2s2 2p6"
+  },
+  "11": {
+   "symbol": "Na",
+   "shells": "[Ne].3s",
+   "configuration": "1s2 2s2 2p6 3s1"
+  },
+  "12": {
+   "symbol": "Mg",
+   "shells": "[Ne].3s2",
+   "configuration": "1s2 2s2 2p6 3s2"
+  },
+  "13": {
+   "symbol": "Al",
+   "shells": "[Ne].3s2.3p",
+   "configuration": "1s2 2s2 2p6 3s2 3p1"
+  },
+  "14": {
+   "symbol": "Si",
+   "shells": "[Ne].3s2.3p2",
+   "configuration": "1s2 2s2 2p6 3s2 3p2"
+  },
+  "15": {
+   "symbol": "P",
+   "shells": "[Ne].3s2.3p3",
+   "configuration": "1s2 2s2 2p6 3s2 3p3"
+  },
+  "16": {
+   "symbol": "S",
+   "shells": "[Ne].3s2.3p4",
+   "configuration": "1s2 2s2 2p6 3s2 3p4"
+  },
+  "17": {
+   "symbol": "Cl",
+   "shells": "[Ne].3s2.3p5",
+   "configuration": "1s2 2s2 2p6 3s2 3p5"
+  },
+  "18": {
+   "symbol": "Ar",
+   "shells": "[Ne].3s2.3p6",
+   "configuration": "1s2 2s2 2p6 3s2 3p6"
+  },
+  "19": {
+   "symbol": "K",
+   "shells": "[Ar].4s",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 4s1"
+  },
+  "20": {
+   "symbol": "Ca",
+   "shells": "[Ar].4s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 4s2"
+  },
+  "21": {
+   "symbol": "Sc",
+   "shells": "[Ar].3d.4s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d1 4s2"
+  },
+  "22": {
+   "symbol": "Ti",
+   "shells": "[Ar].3d2.4s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d2 4s2"
+  },
+  "23": {
+   "symbol": "V",
+   "shells": "[Ar].3d3.4s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d3 4s2"
+  },
+  "24": {
+   "symbol": "Cr",
+   "shells": "[Ar].3d5.4s",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d5 4s1"
+  },
+  "25": {
+   "symbol": "Mn",
+   "shells": "[Ar].3d5.4s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d5 4s2"
+  },
+  "26": {
+   "symbol": "Fe",
+   "shells": "[Ar].3d6.4s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d6 4s2"
+  },
+  "27": {
+   "symbol": "Co",
+   "shells": "[Ar].3d7.4s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d7 4s2"
+  },
+  "28": {
+   "symbol": "Ni",
+   "shells": "[Ar].3d8.4s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d8 4s2"
+  },
+  "29": {
+   "symbol": "Cu",
+   "shells": "[Ar].3d10.4s",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s1"
+  },
+  "30": {
+   "symbol": "Zn",
+   "shells": "[Ar].3d10.4s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2"
+  },
+  "31": {
+   "symbol": "Ga",
+   "shells": "[Ar].3d10.4s2.4p",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p1"
+  },
+  "32": {
+   "symbol": "Ge",
+   "shells": "[Ar].3d10.4s2.4p2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p2"
+  },
+  "33": {
+   "symbol": "As",
+   "shells": "[Ar].3d10.4s2.4p3",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p3"
+  },
+  "34": {
+   "symbol": "Se",
+   "shells": "[Ar].3d10.4s2.4p4",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p4"
+  },
+  "35": {
+   "symbol": "Br",
+   "shells": "[Ar].3d10.4s2.4p5",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p5"
+  },
+  "36": {
+   "symbol": "Kr",
+   "shells": "[Ar].3d10.4s2.4p6",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6"
+  },
+  "37": {
+   "symbol": "Rb",
+   "shells": "[Kr].5s",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 5s1"
+  },
+  "38": {
+   "symbol": "Sr",
+   "shells": "[Kr].5s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 5s2"
+  },
+  "39": {
+   "symbol": "Y",
+   "shells": "[Kr].4d.5s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d1 5s2"
+  },
+  "40": {
+   "symbol": "Zr",
+   "shells": "[Kr].4d2.5s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d2 5s2"
+  },
+  "41": {
+   "symbol": "Nb",
+   "shells": "[Kr].4d4.5s",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d4 5s1"
+  },
+  "42": {
+   "symbol": "Mo",
+   "shells": "[Kr].4d5.5s",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d5 5s1"
+  },
+  "43": {
+   "symbol": "Tc",
+   "shells": "[Kr].4d5.5s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d5 5s2"
+  },
+  "44": {
+   "symbol": "Ru",
+   "shells": "[Kr].4d7.5s",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d7 5s1"
+  },
+  "45": {
+   "symbol": "Rh",
+   "shells": "[Kr].4d8.5s",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d8 5s1"
+  },
+  "46": {
+   "symbol": "Pd",
+   "shells": "[Kr].4d10",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10"
+  },
+  "47": {
+   "symbol": "Ag",
+   "shells": "[Kr].4d10.5s",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s1"
+  },
+  "48": {
+   "symbol": "Cd",
+   "shells": "[Kr].4d10.5s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2"
+  },
+  "49": {
+   "symbol": "In",
+   "shells": "[Cd].5p",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p1"
+  },
+  "50": {
+   "symbol": "Sn",
+   "shells": "[Cd].5p2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p2"
+  },
+  "51": {
+   "symbol": "Sb",
+   "shells": "[Cd].5p3",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p3"
+  },
+  "52": {
+   "symbol": "Te",
+   "shells": "[Cd].5p4",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p4"
+  },
+  "53": {
+   "symbol": "I",
+   "shells": "[Cd].5p5",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p5"
+  },
+  "54": {
+   "symbol": "Xe",
+   "shells": "[Cd].5p6",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6"
+  },
+  "55": {
+   "symbol": "Cs",
+   "shells": "[Xe].6s",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 6s1"
+  },
+  "56": {
+   "symbol": "Ba",
+   "shells": "[Xe].6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 6s2"
+  },
+  "57": {
+   "symbol": "La",
+   "shells": "[Xe].5d.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 5d1 6s2"
+  },
+  "58": {
+   "symbol": "Ce",
+   "shells": "[Xe].4f.5d.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f1 5s2 5p6 5d1 6s2"
+  },
+  "59": {
+   "symbol": "Pr",
+   "shells": "[Xe].4f3.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f3 5s2 5p6 6s2"
+  },
+  "60": {
+   "symbol": "Nd",
+   "shells": "[Xe].4f4.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f4 5s2 5p6 6s2"
+  },
+  "61": {
+   "symbol": "Pm",
+   "shells": "[Xe].4f5.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f5 5s2 5p6 6s2"
+  },
+  "62": {
+   "symbol": "Sm",
+   "shells": "[Xe].4f6.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f6 5s2 5p6 6s2"
+  },
+  "63": {
+   "symbol": "Eu",
+   "shells": "[Xe].4f7.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f7 5s2 5p6 6s2"
+  },
+  "64": {
+   "symbol": "Gd",
+   "shells": "[Xe].4f7.5d.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f7 5s2 5p6 5d1 6s2"
+  },
+  "65": {
+   "symbol": "Tb",
+   "shells": "[Xe].4f9.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f9 5s2 5p6 6s2"
+  },
+  "66": {
+   "symbol": "Dy",
+   "shells": "[Xe].4f10.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f10 5s2 5p6 6s2"
+  },
+  "67": {
+   "symbol": "Ho",
+   "shells": "[Xe].4f11.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f11 5s2 5p6 6s2"
+  },
+  "68": {
+   "symbol": "Er",
+   "shells": "[Xe].4f12.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f12 5s2 5p6 6s2"
+  },
+  "69": {
+   "symbol": "Tm",
+   "shells": "[Xe].4f13.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f13 5s2 5p6 6s2"
+  },
+  "70": {
+   "symbol": "Yb",
+   "shells": "[Xe].4f14.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 6s2"
+  },
+  "71": {
+   "symbol": "Lu",
+   "shells": "[Xe].4f14.5d.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d1 6s2"
+  },
+  "72": {
+   "symbol": "Hf",
+   "shells": "[Xe].4f14.5d2.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d2 6s2"
+  },
+  "73": {
+   "symbol": "Ta",
+   "shells": "[Xe].4f14.5d3.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d3 6s2"
+  },
+  "74": {
+   "symbol": "W",
+   "shells": "[Xe].4f14.5d4.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d4 6s2"
+  },
+  "75": {
+   "symbol": "Re",
+   "shells": "[Xe].4f14.5d5.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d5 6s2"
+  },
+  "76": {
+   "symbol": "Os",
+   "shells": "[Xe].4f14.5d6.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d6 6s2"
+  },
+  "77": {
+   "symbol": "Ir",
+   "shells": "[Xe].4f14.5d7.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d7 6s2"
+  },
+  "78": {
+   "symbol": "Pt",
+   "shells": "[Xe].4f14.5d9.6s",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d9 6s1"
+  },
+  "79": {
+   "symbol": "Au",
+   "shells": "[Xe].4f14.5d10.6s",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s1"
+  },
+  "80": {
+   "symbol": "Hg",
+   "shells": "[Xe].4f14.5d10.6s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2"
+  },
+  "81": {
+   "symbol": "Tl",
+   "shells": "[Hg].6p",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p1"
+  },
+  "82": {
+   "symbol": "Pb",
+   "shells": "[Hg].6p2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p2"
+  },
+  "83": {
+   "symbol": "Bi",
+   "shells": "[Hg].6p3",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p3"
+  },
+  "84": {
+   "symbol": "Po",
+   "shells": "[Hg].6p4",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p4"
+  },
+  "85": {
+   "symbol": "At",
+   "shells": "[Hg].6p5",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p5"
+  },
+  "86": {
+   "symbol": "Rn",
+   "shells": "[Hg].6p6",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6"
+  },
+  "87": {
+   "symbol": "Fr",
+   "shells": "[Rn].7s",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 7s1"
+  },
+  "88": {
+   "symbol": "Ra",
+   "shells": "[Rn].7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 7s2"
+  },
+  "89": {
+   "symbol": "Ac",
+   "shells": "[Rn].6d.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 6d1 7s2"
+  },
+  "90": {
+   "symbol": "Th",
+   "shells": "[Rn].6d2.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 6d2 7s2"
+  },
+  "91": {
+   "symbol": "Pa",
+   "shells": "[Rn].5f2.6d.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f2 6s2 6p6 6d1 7s2"
+  },
+  "92": {
+   "symbol": "U",
+   "shells": "[Rn].5f3.6d.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f3 6s2 6p6 6d1 7s2"
+  },
+  "93": {
+   "symbol": "Np",
+   "shells": "[Rn].5f4.6d.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f4 6s2 6p6 6d1 7s2"
+  },
+  "94": {
+   "symbol": "Pu",
+   "shells": "[Rn].5f6.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f6 6s2 6p6 7s2"
+  },
+  "95": {
+   "symbol": "Am",
+   "shells": "[Rn].5f7.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f7 6s2 6p6 7s2"
+  },
+  "96": {
+   "symbol": "Cm",
+   "shells": "[Rn].5f7.6d.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f7 6s2 6p6 6d1 7s2"
+  },
+  "97": {
+   "symbol": "Bk",
+   "shells": "[Rn].5f9.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f9 6s2 6p6 7s2"
+  },
+  "98": {
+   "symbol": "Cf",
+   "shells": "[Rn].5f10.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f10 6s2 6p6 7s2"
+  },
+  "99": {
+   "symbol": "Es",
+   "shells": "[Rn].5f11.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f11 6s2 6p6 7s2"
+  },
+  "100": {
+   "symbol": "Fm",
+   "shells": "[Rn].5f12.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f12 6s2 6p6 7s2"
+  },
+  "101": {
+   "symbol": "Md",
+   "shells": "[Rn].5f13.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f13 6s2 6p6 7s2"
+  },
+  "102": {
+   "symbol": "No",
+   "shells": "[Rn].5f14.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f14 6s2 6p6 7s2"
+  },
+  "103": {
+   "symbol": "Lr",
+   "shells": "[Rn].5f14.7s2.7p",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f14 6s2 6p6 7s2 7p1"
+  },
+  "104": {
+   "symbol": "Rf",
+   "shells": "[Rn].5f14.6d2.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f14 6s2 6p6 6d2 7s2"
+  },
+  "105": {
+   "symbol": "Db",
+   "shells": "[Rn].5f14.6d3.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f14 6s2 6p6 6d3 7s2"
+  },
+  "106": {
+   "symbol": "Sg",
+   "shells": "[Rn].5f14.6d4.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f14 6s2 6p6 6d4 7s2"
+  },
+  "107": {
+   "symbol": "Bh",
+   "shells": "[Rn].5f14.6d5.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f14 6s2 6p6 6d5 7s2"
+  },
+  "108": {
+   "symbol": "Hs",
+   "shells": "[Rn].5f14.6d6.7s2",
+   "configuration": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 5f14 6s2 6p6 6d6 7s2"
+  }
+ }
+}

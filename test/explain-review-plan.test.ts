@@ -1,7 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { copyFile, mkdir, mkdtemp, readFile, rm, unlink, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fc, params } from './lib/pbt.ts';
-import { reviewScope, mergeStoryReviews } from '../tools/lib/explain-review-plan.ts';
+import { reviewScope, mergeStoryReviews, reviewCodeHash } from '../tools/lib/explain-review-plan.ts';
 import type { PlannedCase, ReviewReceipt } from '../tools/lib/explain-review-plan.ts';
 
 test('story shard arguments accept complete integer scopes and reject malformed selections', () => {
@@ -122,4 +125,52 @@ test('a passing story result requires all matching shards with complete nonempty
     defect(parts);
     assert.throws(() => mergeStoryReviews(parts, expected, 'catalog', 'code'), {code:'ERR_ASSERTION'}, name);
   }
+});
+
+test('story receipts expire when authored companion claims or their loader change', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'rayner-review-fingerprint-'));
+  try {
+    for (const file of [
+      'tools/explain-review.ts', 'tools/explain-review-merge.ts',
+      'tools/lib/explain-story-review.ts', 'tools/lib/explain-review-scene.ts',
+      'tools/lib/explain-review-plan.ts', 'tools/lib/explain-serve.ts',
+    ]) {
+      await mkdir(dirname(join(root, file)), {recursive: true});
+      await copyFile(new URL('../' + file, import.meta.url), join(root, file));
+    }
+    const withoutClaims = await reviewCodeHash(root);
+    const claimsFile = join(root, 'scenes/explainers/example/scene.review.json');
+    const original = JSON.stringify({version: 1, claims: [{step: 'first', targets: [{text: 'Visible subject'}]}]});
+    await mkdir(dirname(claimsFile), {recursive: true});
+    await writeFile(claimsFile, original);
+    const current = await reviewCodeHash(root);
+    assert.notEqual(current, withoutClaims, 'adding companion expectations must invalidate previous review');
+    const expected = Array.from({length: 3}, (_, i) => ({scene: `scene-${i}`, settings: {}, steps: ['first', 'final']}));
+    const old = receipts(expected, 3);
+    for (const part of old) part.reviewCodeHash = current;
+    const merge = async () => mergeStoryReviews(old, expected, 'catalog', await reviewCodeHash(root));
+    assert.equal((await merge()).cases, 3, 'unchanged claims and implementation retain valid receipts');
+    await writeFile(claimsFile, original.replace('Visible subject', 'A newly required subject'));
+    await assert.rejects(merge(), /stale review implementation/, 'an edited expectation cannot reuse an old passing receipt');
+    await writeFile(claimsFile, original);
+    assert.equal(await reviewCodeHash(root), current);
+    const added = join(root, 'scenes/explainers/second/scene.review.json');
+    await mkdir(dirname(added), {recursive: true});
+    await writeFile(added, original);
+    await assert.rejects(merge(), /stale review implementation/, 'identical bytes at a new companion path also add expectations');
+    await unlink(added);
+    assert.equal(await reviewCodeHash(root), current);
+    await unlink(claimsFile);
+    await assert.rejects(merge(), /stale review implementation/, 'deleted expectations cannot reuse old receipts');
+    await writeFile(claimsFile, original);
+    await mkdir(join(root, 'docs'));
+    await writeFile(join(root, 'docs/notes.md'), 'Unrelated documentation changes.');
+    assert.equal(await reviewCodeHash(root), current, 'unrelated prose does not invalidate paint review');
+    const loader = join(root, 'tools/lib/explain-review-scene.ts');
+    const loaderBytes = await readFile(loader);
+    await writeFile(loader, Buffer.concat([loaderBytes, Buffer.from('\n// changed claim loading\n')]));
+    await assert.rejects(merge(), /stale review implementation/, 'the claim loader remains part of the fingerprint');
+    await writeFile(loader, loaderBytes);
+    assert.equal((await merge()).cases, 3);
+  } finally { await rm(root, {recursive: true, force: true}); }
 });

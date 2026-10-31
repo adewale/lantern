@@ -10,6 +10,7 @@ import { isHeading } from '../../explain/stage.ts';
 import { stepWords } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
 import { join } from 'node:path';
+import { rasterize } from './explain-raster.ts';
 
 export interface StoryClaim {
   step: string;
@@ -159,13 +160,189 @@ export interface StoryFrame {
   camera: number[];
 }
 
+interface StoryPaint { id: number; signature: string; bounds: Rect | null; record: ElementRecord }
+const paintBoundsCache = new WeakMap<ElementRecord, Rect | null>();
+/** Bounds of emitted integer path coordinates, not a Text's advance rectangle. */
+function paintBounds(record: ElementRecord): Rect | null {
+  if (paintBoundsCache.has(record)) return paintBoundsCache.get(record)!;
+  const coords = record.attrs.d?.match(/-?\d+/g)?.map(Number) ?? [];
+  let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+  for (let i = 0; i + 1 < coords.length; i += 2) {
+    left = Math.min(left, coords[i]!); right = Math.max(right, coords[i]!);
+    top = Math.min(top, coords[i + 1]!); bottom = Math.max(bottom, coords[i + 1]!);
+  }
+  const half = record.attrs.stroke !== 'none' && Number(record.attrs['stroke-opacity'] ?? 1) > 0
+    ? Number(record.attrs['stroke-width'] ?? 0) / 2 : 0;
+  // An acute miter can reach half-width times the SVG miter limit; a
+  // diagonal square cap can reach sqrt(2) times half-width on either axis.
+  const limit = Number(record.attrs['stroke-miterlimit'] ?? 4);
+  const miter = record.attrs['stroke-linejoin'] === 'miter'
+    ? (Number.isFinite(limit) && limit >= 1 ? limit : 4) : 1;
+  const extent = half * Math.max(miter, record.attrs['stroke-linecap'] === 'square' ? Math.SQRT2 : 1);
+  const tx = record.tx ?? 0, ty = record.ty ?? 0;
+  let bounds: Rect = [left + tx - extent, top + ty - extent, right + tx + extent, bottom + ty + extent];
+  if (record.clipBox) {
+    const [x0, y0, x1, y1] = record.clipBox;
+    bounds = [Math.max(bounds[0], x0 * 1000), Math.max(bounds[1], -y1 * 1000),
+      Math.min(bounds[2], x1 * 1000), Math.min(bounds[3], -y0 * 1000)];
+  }
+  const result = bounds[2] > bounds[0] && bounds[3] > bounds[1] ? bounds : null;
+  paintBoundsCache.set(record, result);
+  return result;
+}
+
+const intersect = (a: Rect, b: Rect): Rect =>
+  [Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.min(a[2], b[2]), Math.min(a[3], b[3])];
+const nonempty = (r: Rect) => r[2] > r[0] && r[3] > r[1];
+
+/** Bounds identify possible changes, not ink: holes, caps and later opaque
+ * layers can make a permutation invisible. Probe only the affected patch with
+ * the same native renderer used for PNG output, at at most 1280 × 720 pixels.
+ * Changes below that spatial/8-bit resolution supply no automatic evidence;
+ * authors must name an explicit subject if no other artwork establishes one. */
+async function changedComposite(
+  current: readonly StoryPaint[], reference: readonly StoryPaint[], candidates: Set<number>, camera: Rect,
+): Promise<Set<number>> {
+  const boxes = [...candidates].flatMap(i => current[i]!.bounds ? [current[i]!.bounds!] : []);
+  if (!boxes.length) return new Set();
+  const bounds = intersect([Math.min(...boxes.map(b => b[0])), Math.min(...boxes.map(b => b[1])),
+    Math.max(...boxes.map(b => b[2])), Math.max(...boxes.map(b => b[3]))], camera);
+  if (!nonempty(bounds)) return new Set();
+  const scale = Math.min(1280 / (camera[2] - camera[0]), 720 / (camera[3] - camera[1]));
+  const width = Math.max(1, Math.ceil((bounds[2] - bounds[0]) * scale));
+  const height = Math.max(1, Math.ceil((bounds[3] - bounds[1]) * scale));
+  const escape = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const svg = (paints: readonly StoryPaint[]) => {
+    const paths: string[] = [], clips = new Map<string, string>();
+    for (const { record: r, bounds: b } of paints) {
+      if (!b || !nonempty(intersect(b, bounds))) continue;
+      if (r.clipBox) {
+        const id = r.attrs['clip-path']!.slice(5, -1), [x0, y0, x1, y1] = r.clipBox;
+        clips.set(id, `<clipPath id="${escape(id)}" clipPathUnits="userSpaceOnUse"><rect x="${Math.round(x0 * 1000)}" y="${Math.round(-y1 * 1000)}" width="${Math.round((x1 - x0) * 1000)}" height="${Math.round((y1 - y0) * 1000)}"/></clipPath>`);
+      }
+      paths.push(`<path${Object.entries(r.attrs).map(([k, v]) => ` ${k}="${escape(v)}"`).join('')}${r.transform ? ` transform="${escape(r.transform)}"` : ''}/>`);
+    }
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${bounds[0]} ${bounds[1]} ${bounds[2] - bounds[0]} ${bounds[3] - bounds[1]}"><defs>${[...clips.values()].join('')}</defs>${paths.join('')}</svg>`;
+  };
+  const [actual, restored] = await Promise.all([rasterize(svg(current)), rasterize(svg(reference))]);
+  const a = actual.pixels, b = restored.pixels, differences: number[] = [];
+  for (let p = 0; p < a.length; p += 4)
+    if (a[p] !== b[p] || a[p + 1] !== b[p + 1] || a[p + 2] !== b[p + 2] || a[p + 3] !== b[p + 3]) differences.push(p);
+  const changed = new Set<number>(), occurrences = new Map<string, number[]>();
+  for (const index of differences.length ? candidates : []) {
+    const signature = current[index]!.signature, indices = occurrences.get(signature) ?? [];
+    indices.push(index); occurrences.set(signature, indices);
+  }
+  for (const indices of occurrences.values()) {
+    const mask = (await rasterize(svg([current[indices[0]!]!]))).pixels;
+    if (differences.some(p => mask[p + 3]! > 0)) for (const index of indices) changed.add(index);
+  }
+  return changed;
+}
+
+/** Redraws can replace ids without changing ink. Match occurrences before
+ * using native paint to establish order/count changes and revealed subjects. */
+async function changedPaint(previous: readonly StoryPaint[], current: readonly StoryPaint[], camera: Rect): Promise<Set<number>> {
+  const positions = new Map<string, number[]>(), counts = new Map<string, number>();
+  previous.forEach((paint, index) => {
+    const indices = positions.get(paint.signature) ?? [];
+    indices.push(index); positions.set(paint.signature, indices);
+  });
+  current.forEach(paint => counts.set(paint.signature, (counts.get(paint.signature) ?? 0) + 1));
+  const byId = new Map(previous.map((paint, index) => [paint.id, index]));
+  const used = new Set<number>();
+  const matched = current.map(paint => {
+    const index = byId.get(paint.id);
+    if (index === undefined || used.has(index) || previous[index]!.signature !== paint.signature) return -1;
+    used.add(index); return index;
+  });
+  const cursors = new Map<string, number>();
+  current.forEach((paint, index) => {
+    if (matched[index]! >= 0) return;
+    const indices = positions.get(paint.signature) ?? [];
+    let cursor = cursors.get(paint.signature) ?? 0;
+    while (cursor < indices.length && used.has(indices[cursor]!)) cursor++;
+    if (cursor < indices.length) { matched[index] = indices[cursor]!; used.add(indices[cursor]!); }
+    cursors.set(paint.signature, cursor + 1);
+  });
+  // Equal-looking copies are interchangeable when their count is unchanged.
+  // Exchanging their ids must not invent order changes around another layer.
+  const occurrence = new Map<string, number>();
+  current.forEach((paint, index) => {
+    const indices = positions.get(paint.signature);
+    if (!indices || indices.length !== counts.get(paint.signature)) return;
+    const nth = occurrence.get(paint.signature) ?? 0;
+    matched[index] = indices[nth]!; occurrence.set(paint.signature, nth + 1);
+  });
+  const changed = new Set<number>(), candidates = new Set<number>(), countChanges = new Set<string>();
+  current.forEach((paint, index) => {
+    const oldCount = positions.get(paint.signature)?.length ?? 0;
+    if (!oldCount) changed.add(index);
+    else if (oldCount !== counts.get(paint.signature)) {
+      candidates.add(index); countChanges.add(paint.signature);
+    }
+  });
+  const reordered = new Set<number>();
+  let highest = -1;
+  matched.forEach((previousIndex, index) => {
+    if (previousIndex >= 0 && previousIndex < highest) reordered.add(index);
+    highest = Math.max(highest, previousIndex);
+  });
+  let lowest = Infinity;
+  for (let index = matched.length - 1; index >= 0; index--) {
+    const previousIndex = matched[index]!;
+    if (previousIndex < 0) continue;
+    if (previousIndex > lowest) reordered.add(index);
+    lowest = Math.min(lowest, previousIndex);
+  }
+  // Only inversion participants need spatial checks. Sort these by the left
+  // edge so unrelated columns do not incur an all-records pairwise scan.
+  const spatial = current.flatMap((paint, index) => paint.bounds && reordered.has(index)
+    ? [{ index, bounds: paint.bounds }] : []).sort((a, b) => a.bounds[0] - b.bounds[0]);
+  for (let i = 0; i < spatial.length; i++) {
+    const a = spatial[i]!;
+    for (let j = i + 1; j < spatial.length && spatial[j]!.bounds[0] < a.bounds[2]; j++) {
+      const b = spatial[j]!;
+      if (a.bounds[1] >= b.bounds[3] || b.bounds[1] >= a.bounds[3]) continue;
+      if ((a.index - b.index) * (matched[a.index]! - matched[b.index]!) < 0 &&
+          current[a.index]!.signature !== current[b.index]!.signature) {
+        candidates.add(a.index); candidates.add(b.index);
+      }
+    }
+  }
+  if (candidates.size) {
+    // Restore only the synthetic changes. Current new/edited artwork stays the
+    // same on both sides, so an incidental new label cannot prove a reordering.
+    const reference = current.flatMap((paint, i) => matched[i]! >= 0 || !countChanges.has(paint.signature)
+      ? [{ paint, previousIndex: matched[i]! }] : []);
+    const ordered = reference.filter(p => p.previousIndex >= 0).sort((a, b) => a.previousIndex - b.previousIndex);
+    let cursor = 0;
+    for (let i = 0; i < reference.length; i++) if (reference[i]!.previousIndex >= 0) reference[i] = ordered[cursor++]!;
+    for (const [previousIndex, paint] of previous.entries()) {
+      if (used.has(previousIndex) || !countChanges.has(paint.signature)) continue;
+      const before = reference.findIndex(p => p.previousIndex > previousIndex);
+      reference.splice(before < 0 ? reference.length : before, 0, { paint, previousIndex });
+      // Removing a layer changes the visible contribution of the artwork below
+      // it too. Binding only an identical surviving copy misses that revelation.
+      current.forEach((other, i) => {
+        if (matched[i]! >= 0 && matched[i]! < previousIndex && paint.bounds && other.bounds &&
+            nonempty(intersect(paint.bounds, other.bounds))) candidates.add(i);
+      });
+    }
+    for (const i of await changedComposite(current, reference.map(p => p.paint), candidates, camera)) changed.add(i);
+  }
+  return changed;
+}
+
 export async function storyFrames(
   Source: SceneClass,
   claims: readonly StoryClaim[] = [],
 ): Promise<Map<string, StoryFrame>> {
   const frames = new Map<string, StoryFrame>();
   let previous = new Map<Mobject, string>();
-  let previousPaint = new Map<number, string>();
+  // Keep ordered occurrences: redraws may change ids without changing the picture,
+  // but a reordered layer or another copy can change what the reader sees.
+  let previousPaint: StoryPaint[] = [];
   await new Source(
     {
       async frame() {},
@@ -275,13 +452,17 @@ export async function storyFrames(
             add(`emphasis: ${m.key ?? what}`, [m], false, false, false, true);
           }
         previous = now;
-        const paint = new Map(records.map((r) => [r.id, JSON.stringify([r.attrs, r.transform])]));
+        const paint = records.map(r => ({ id: r.id, signature: JSON.stringify([r.attrs, r.transform]), record: r,
+          bounds: realInk(r) ? paintBounds(r) : null }));
         const added = new Set<Mobject>();
         // Declared intent takes priority over unrelated context that a rebuild
         // happens to replace or move. With no primary subject, inspect new art.
         const hasPrimary = targets.length > 0 || claims.some((c) => c.step === step.name);
-        for (const r of hasPrimary ? [] : records) {
-          if (previousPaint.get(r.id) === paint.get(r.id) || Number(r.attrs.opacity ?? 1) < 0.95) continue;
+        const [x0, y0, x1, y1] = scene.frame.box()!;
+        const changed = hasPrimary ? new Set<number>() : await changedPaint(previousPaint, paint,
+          [x0 * 1000, -y1 * 1000, x1 * 1000, -y0 * 1000]);
+        for (const [index, r] of (hasPrimary ? [] : records).entries()) {
+          if (!changed.has(index) || Number(r.attrs.opacity ?? 1) < 0.95) continue;
           const m = byId.get(r.id);
           if (!m) continue;
           let fixed = false,
