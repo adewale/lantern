@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join, relative, sep } from 'node:path';
+import { buildInputs } from './build-inputs.ts';
 
 export interface ReviewScope {
   part: number;
@@ -146,7 +147,12 @@ export async function reviewCodeHash(root: string) {
         .digest('hex'),
     })),
   );
-  return createHash('sha256').update(JSON.stringify(inputs)).digest('hex');
+  // The caption inventory does not change for player-only edits. Bind the same
+  // complete runtime/build inputs as the artifacts so old shards cannot vouch
+  // for changed CSS, player helpers or page generation.
+  return createHash('sha256')
+    .update(JSON.stringify({ inputs, buildHash: (await buildInputs(root)).hash }))
+    .digest('hex');
 }
 export function validateReviewedCases(actual: ReviewedCase[], expected: PlannedCase[]) {
   assert.deepEqual(

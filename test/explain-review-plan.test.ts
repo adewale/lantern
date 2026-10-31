@@ -161,10 +161,18 @@ test('a passing story result requires all matching shards with complete nonempty
   }
 });
 
-test('story receipts expire when authored companion claims or review dependencies change', async () => {
+test('story receipts expire when caption claims, served runtime or review dependencies change', async () => {
   const root = await mkdtemp(join(tmpdir(), 'rayner-review-fingerprint-'));
   try {
+    for (const directory of ['src', 'explain', 'integrations', 'app', 'tools', 'vendor'])
+      await mkdir(join(root, directory), {recursive: true});
+    const runtimeFiles = [
+      'app/embed-style.ts', 'app/embed.css', 'app/embed.ts',
+      'explain/stage.ts', 'explain/settings.ts',
+      'tools/lib/explain-build.ts', 'tools/lib/explain-project.ts',
+    ];
     for (const file of [
+      'package.json', 'LICENSE', ...runtimeFiles,
       'tools/explain-review.ts', 'tools/explain-review-merge.ts',
       'tools/lib/explain-story-review.ts', 'tools/lib/explain-raster.ts', 'tools/lib/explain-review-scene.ts',
       'tools/lib/explain-review-plan.ts', 'tools/lib/explain-serve.ts',
@@ -200,6 +208,18 @@ test('story receipts expire when authored companion claims or review dependencie
     await mkdir(join(root, 'docs'));
     await writeFile(join(root, 'docs/notes.md'), 'Unrelated documentation changes.');
     assert.equal(await reviewCodeHash(root), current, 'unrelated prose does not invalidate paint review');
+    for (const file of runtimeFiles) {
+      const path = join(root, file), bytes = await readFile(path);
+      await writeFile(path, Buffer.concat([bytes, Buffer.from('\n/* changed served artifact */\n')]));
+      await assert.rejects(merge(), /stale review implementation/, `${file} cannot reuse prior served receipts`);
+      await writeFile(path, bytes);
+      assert.equal(await reviewCodeHash(root), current, `${file}: restoring the inputs restores the fingerprint`);
+    }
+    const newHelper = join(root, 'app/new-player-helper.ts');
+    await writeFile(newHelper, 'export const changedPlayer = true;\n');
+    await assert.rejects(merge(), /stale review implementation/, 'new player helpers join the fingerprint automatically');
+    await unlink(newHelper);
+    assert.equal(await reviewCodeHash(root), current);
     const loader = join(root, 'tools/lib/explain-review-scene.ts');
     const loaderBytes = await readFile(loader);
     await writeFile(loader, Buffer.concat([loaderBytes, Buffer.from('\n// changed claim loading\n')]));
