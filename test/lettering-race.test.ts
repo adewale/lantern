@@ -3,12 +3,15 @@ import assert from 'node:assert/strict';
 import { Scene, NullSink, Text } from '../src/index.ts';
 import { bindLettering } from '../src/lettering-outlines.ts';
 import type { LetteringProvider } from '../src/lettering-outlines.ts';
+// The tools install outline lettering when they load, before any scene runs.
+import '../tools/lib/explain-project.ts';
 
-// Outline lettering swaps the shared font shapers while a lettered scene holds its lease. A run
-// that began before lettering was installed is not leased; if it is still building text when the
-// first lease begins, its text must not be shaped by the lettered scene's provider. (Seen in CI as
-// "Lettering snapshot has no run for …" when a test collected every catalog project at once.)
-test('a run that began before lettering was installed never shapes text with a lettered scene\'s provider', async () => {
+// Outline lettering swaps the shared font shapers while a lettered scene holds its lease. In the
+// tools, which load lettering before any scene runs, a plain scene's run is leased too, so a
+// lettered scene bound and run while it is still building text waits for it, and its text is never
+// shaped by the lettered scene's provider. (Seen in CI as "Lettering snapshot has no run for …"
+// when a test collected every catalog project at once.)
+test('in the tools, a plain run started before a lettered scene is bound never shapes text with its provider', async () => {
   const shapedByProvider: string[] = [];
   const provider: LetteringProvider = {
     shape(_font, text, size, fallback) {
@@ -45,7 +48,7 @@ test('a run that began before lettering was installed never shapes text with a l
 
   const plain = new Plain(new NullSink(), { skipUntil: Infinity }).run();
   await running;
-  // Installing lettering now: Plain's run began before, so it is not leased.
+  // Binding a lettered scene while Plain is mid-run.
   const Bound = bindLettering(Lettered, provider);
   const lettered = new Bound(new NullSink(), { skipUntil: Infinity }).run();
   // Let the lettered run reach its lease before Plain builds its second Text.

@@ -198,22 +198,7 @@ export class Scene {
   /** Subclasses define the animation here. */
   async construct(): Promise<void> {}
 
-  /**
-   * Runs in progress. Lettering on request (src/lettering-outlines.ts) swaps the shared font
-   * shapers while a lettered scene holds its lease; its first lease waits for the runs that began
-   * before it was installed, which are not leased, so their text is never shaped by its provider.
-   */
-  static readonly running = new Set<Promise<unknown>>();
-
-  run(): Promise<this> {
-    const done = this.runSteps();
-    Scene.running.add(done);
-    const settle = () => void Scene.running.delete(done);
-    done.then(settle, settle);
-    return done;
-  }
-
-  private async runSteps(): Promise<this> {
+  async run(): Promise<this> {
     try {
       await loadFonts();
       await this.toSink(() => this.sink.frame(this, 0));

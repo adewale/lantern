@@ -266,8 +266,6 @@ let currentFonts: Awaited<ReturnType<typeof loadFonts>> | undefined;
 let loadedFonts: Awaited<ReturnType<typeof loadFonts>> | undefined;
 let normalShapers: Awaited<ReturnType<typeof loadFonts>> | undefined;
 let leasing = false;
-/** Runs that began before lettering was installed, so not leased: the first lease waits for them. */
-let unleased: Promise<unknown>[] = [];
 const activeTasks = new Set<Promise<unknown>>();
 const textProviders = new WeakMap<Text, LetteringProvider>();
 /** The cut each Text built under a provider was shaped in, for spans queried later. */
@@ -480,12 +478,6 @@ function installSpanAdapter(): void {
   };
 }
 async function lease<T>(p: LetteringProvider | undefined, work: () => Promise<T>): Promise<T> {
-  // A run that began before installation shapes text with the shared shapers this lease swaps.
-  if (unleased.length) {
-    const before = unleased;
-    unleased = [];
-    await Promise.allSettled(before);
-  }
   const fonts = await loadFonts();
   await p?.prepare?.();
   const saved = { ...fonts };
@@ -520,7 +512,6 @@ export function withSceneLettering<T>(Source: object, work: () => Promise<T>): P
 export function bindLettering(Source: SceneClass, provider: LetteringProvider | LetteringSnapshot): SceneClass {
   if (!installed) {
     installed = true;
-    unleased = [...Scene.running];
     const original = Scene.prototype.run;
     Scene.prototype.run = function () {
       const p = providerOf(this.constructor);
