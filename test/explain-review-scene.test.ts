@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { collectProject } from '../tools/lib/explain-project.ts';
 import { reviewClaims, reviewScene } from '../tools/lib/explain-review-scene.ts';
+import { storyFrames } from '../tools/lib/explain-story-review.ts';
 
 const source = `import{Scene,Text,FadeIn}from'rayner';import{stage}from'rayner/explain';export default class Example extends Scene{static meta={id:'outside-author',title:'Outside author'};static settings=[{id:'case',label:'Case',default:'a',options:[{value:'a',label:'A'},{value:'b',label:'B'}]}];async construct(){const s=stage(this,{heading:false});await this.step('one',{caption:'A visible answer.'});await this.play(new FadeIn(new Text('Answer',{color:s.palette.ink})));}}`;
 test('author-side claims reject unknown cases, steps, malformed targets and missing explicit files', async () => {
@@ -41,5 +42,21 @@ test('an outside author reviews every served case and width; a false caption cla
     await writeFile(claims, JSON.stringify({ version: 1, claims: [{ step: 'one', targets: [{ text: 'Missing answer' }] }] }));
     await assert.rejects(reviewScene(project, output), /story target Missing answer is missing/);
     await assert.rejects(readFile(join(output, 'review.json')), { code: 'ENOENT' });
+  } finally { await rm(folder, { recursive: true, force: true }); }
+});
+
+test('catalog subjects and companion claims both bind to actual scene ink', async () => {
+  const folder = await mkdtemp(join(tmpdir(), 'rayner-catalog-claims-'));
+  try {
+    const file = join(folder, 'scene.ts'), claims = join(folder, 'scene.review.json');
+    await writeFile(file, source);
+    const project = await collectProject(file, { write: false });
+    const visible = { step: 'one', targets: [{ text: 'Answer' }] };
+    const missing = { step: 'one', targets: [{ text: 'Missing subject' }] };
+    await writeFile(claims, JSON.stringify({ version: 1, claims: [missing] }));
+    await assert.rejects(storyFrames(project.variants[0]!.Scene, await reviewClaims(project, undefined, [visible])), /story target Missing subject is missing/);
+    await writeFile(claims, JSON.stringify({ version: 1, claims: [visible] }));
+    await assert.rejects(storyFrames(project.variants[0]!.Scene, await reviewClaims(project, undefined, [missing])), /story target Missing subject is missing/);
+    await storyFrames(project.variants[0]!.Scene, await reviewClaims(project, undefined, [visible]));
   } finally { await rm(folder, { recursive: true, force: true }); }
 });

@@ -18,6 +18,7 @@ import {
   validateReviewedCases,
 } from './lib/explain-review-plan.ts';
 import { reviewStoryVariant, STORY_CLAIMS } from './lib/explain-story-review.ts';
+import { reviewClaims } from './lib/explain-review-scene.ts';
 
 let server: Awaited<ReturnType<typeof serve>> | undefined;
 let browser: Browser | undefined, page: Page | undefined;
@@ -61,6 +62,7 @@ try {
   const cases = [];
   for (const entry of EXPLAINERS) {
     const project = await collectProject(join(ROOT, 'scenes/explainers', entry.id), { write: false });
+    const claims = await reviewClaims(project, undefined, STORY_CLAIMS[entry.id]);
     assert.deepEqual(
       JSON.parse(await readFile(join(ROOT, 'out/explainers', entry.id, 'inputs.json'), 'utf8')),
       await sceneInputs(project),
@@ -76,7 +78,7 @@ try {
         page,
         `${base}/explainers/${entry.id}.html`,
         variant,
-        STORY_CLAIMS[entry.id],
+        claims,
         directory,
       );
       cases.push({ scene: entry.id, settings: variant.values, steps });
@@ -117,6 +119,7 @@ try {
   }
   assert.deepEqual(errors, []);
   assert.deepEqual(connections, []);
+  assert.equal(await reviewCodeHash(ROOT), codeHash, 'review implementation or caption claims changed during review');
   await mkdir(join(ROOT, 'out/validation'), { recursive: true });
   await writeFile(
     receipt,

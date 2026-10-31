@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Open the gallery with a periodic-table explainer: follow sodium, chlorine, iron, copper or helium from atomic number to group, with configurations checked against NIST's tabulated ground states for elements 1–108. The table is drawn in the Atlas design language's block colours.
 - Shrink the phone view row to its one line of controls: the sentence on how Next view differs from Next moves to the footer's hint, on steps with more than one view. Install outline lettering when the build tools load, before any scene runs, so every run is leased and concurrent collection never shapes text with another scene's outlines.
 - Guide the reader through the player. A scene may name the state readers follow in `meta.watch`; each step then shows what it changed of it under the caption, in the transcript, in `describeExplainer` (`watched`) and in the `check` report (`watch`), and collection refuses an unknown key. At rest on the last step Next becomes Start again, and a scene with settings offers its first setting's next case. Keyed controls name their key in their tooltip and `aria-keyshortcuts`, and the footer carries one quiet hint on how to move. Framed pages post `rayner:step` to the host and accept `rayner:goto` from it under the resize message's rules; the loader dispatches `rayner:step` on the iframe, calls `onStep` and returns `goTo` on its dispose function.
 
