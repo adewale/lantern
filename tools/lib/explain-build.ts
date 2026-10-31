@@ -13,6 +13,7 @@ import type { Project } from './explain-project.ts';
 import { pageFaces, letteringReport, useProjectLettering } from './explain-lettering.ts';
 import { letteringLicences, pageSnapshot } from './lettering.ts';
 import { RTL_SCRIPTS } from '../../src/lettering-outlines.ts';
+import {stepAudio} from '../../explain/audio.ts';
 
 /**
  * A page whose lettering asks for a right-to-left script sets the direction of
@@ -42,6 +43,10 @@ export async function buildExplainer(
     lang = project.Scene.meta?.lang ?? 'en',
     t = chromeFor(lang);
   await useProjectLettering(project);
+  let withAudio=false;
+  // Validate every step, including clips after the first sound-bearing step.
+  for(const variant of project.variants) for(const step of variant.trace.steps)
+    if(stepAudio(step.meta.audio)) withAudio=true;
   const sink = new SnapshotSink();
   await renderAt(v.Scene, restingTime(first, v.trace.fps), sink);
   // A page that asked for lettering puts its faces in place before the player shapes anything.
@@ -54,14 +59,15 @@ export async function buildExplainer(
   const zipped = compressed.length + 512 < rawSnapshots.length;
   const payload = zipped ? `await inflateSnapshots(${JSON.stringify(compressed)})` : rawSnapshots;
   const snapshotImport = zipped ? `import{inflateSnapshots}from ${JSON.stringify(join(ROOT, 'app/embed-snapshots.ts'))};` : '';
-  const mount = `mountEmbed(root,Source,${payload})`,
+  const soundImport=withAudio ? `import{mountAudio}from ${JSON.stringify(join(ROOT,'app/embed-audio.ts'))};` : '';
+  const mount = `mountEmbed(root,Source,${payload}${withAudio?',mountAudio':''})`,
     lettered = project.lettering
       ? `import{useLettering}from ${JSON.stringify(join(ROOT, 'src/lettering.ts'))};`
       : '';
   const author = project.outlineLettering
     ? `import Original from 'virtual:author';import{bindLettering}from ${JSON.stringify(join(ROOT, 'src/lettering-outlines.ts'))};const Source=bindLettering(Original,${JSON.stringify(await pageSnapshot(project.outlineLettering))});`
     : `import Source from 'virtual:author';`;
-  const entry = `${author}import{mountEmbed}from ${JSON.stringify(join(ROOT, 'app/embed.ts'))};${lettered}${snapshotImport}const root=document.getElementById('content');(async()=>{${lettered ? `await useLettering(${JSON.stringify(pageFaces(project.lettering))});` : ''}await ${mount};root.dataset.ready='true'})().catch(error=>{console.error(error);const p=document.createElement('p');p.setAttribute('role','alert');p.textContent=${JSON.stringify(t.failed)};root.append(p)});`;
+  const entry = `${author}import{mountEmbed}from ${JSON.stringify(join(ROOT, 'app/embed.ts'))};${soundImport}${lettered}${snapshotImport}const root=document.getElementById('content');(async()=>{${lettered ? `await useLettering(${JSON.stringify(pageFaces(project.lettering))});` : ''}await ${mount};root.dataset.ready='true'})().catch(error=>{console.error(error);const p=document.createElement('p');p.setAttribute('role','alert');p.textContent=${JSON.stringify(t.failed)};root.append(p)});`;
   const bundled = await build({
     stdin: { contents: entry, resolveDir: ROOT, sourcefile: 'explainer-entry.ts', loader: 'ts' },
     bundle: true,
@@ -97,7 +103,8 @@ export async function buildExplainer(
   // laid out, so a frame never shows the padded page first; the CSP pins it by its own hash.
   const framedJs = "if(parent!==window)document.documentElement.dataset.framed=''";
   const js = scriptEscape(bundled.outputFiles[0]!.text),
-    css = (await readFile(join(ROOT, 'app/embed.css'), 'utf8')) + (rightToLeftPage(project) ? RTL_CSS : '') + paperCss(v.paper);
+    css = (await readFile(join(ROOT, 'app/embed.css'), 'utf8')) + (rightToLeftPage(project) ? RTL_CSS : '') +
+      (withAudio ? '\n'+await readFile(join(ROOT,'app/embed-audio.css'),'utf8') : '') + paperCss(v.paper);
   // Every case, every step: a link to it, its caption, what it changed of the state the author
   // watches (meta.watch) and what its resting picture shows.
   // The player shows the current case's section; without JavaScript every case shows.

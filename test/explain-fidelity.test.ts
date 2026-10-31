@@ -1,3 +1,4 @@
+import {check as learning} from './lib/fidelity/learning.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EXPLAINERS } from '../scenes/explainers/catalog.ts';
@@ -55,6 +56,10 @@ for (const entry of EXPLAINERS)
           `Trace invents link ${walk.from}->${walk.to}`,
         );
       switch (entry.id) {
+        case 'python-dict': case 'bloom-filter': case 'git-branches':
+        case 'monty-hall': case 'birthday-paradox': case 'melody-rhythm':
+          learning(entry.id, values, trace);
+          break;
         case 'seasons': {
           const lat = ({ tromso: 69.65, london: 51.5, quito: 0, sydney: -33.87 } as Record<string, number>)[
             values.place!

@@ -12,7 +12,7 @@ import {buildExplainer, buildLoader} from '../tools/lib/explain-build.ts';
 import {serve} from '../tools/lib/explain-serve.ts';
 import {reviewStoryVariant, STORY_CLAIMS} from '../tools/lib/explain-story-review.ts';
 
-const names = ['mr-cache', 'token-bucket', 'oauth-pkce', 'font-metrics'];
+const names = ['mr-cache', 'token-bucket', 'oauth-pkce', 'font-metrics', 'melody-rhythm'];
 const projects = new Map<string, Project>();
 let folder: string, server: Awaited<ReturnType<typeof serve>> | undefined;
 const enabled = process.env.EXPLAIN_WEBKIT || process.env.EXPLAIN_SAFARI;
@@ -33,7 +33,7 @@ after(async () => {
   if (folder) await rm(folder, {recursive: true, force: true});
 });
 
-test('WebKit checks served paint for every case of the cache, rate, PKCE and requested-font journeys', {skip: !process.env.EXPLAIN_WEBKIT && 'set EXPLAIN_WEBKIT=1; install Playwright WebKit'}, async () => {
+test('WebKit checks served paint for every case of the cache, rate, PKCE, requested-font and music journeys', {skip: !process.env.EXPLAIN_WEBKIT && 'set EXPLAIN_WEBKIT=1; install Playwright WebKit'}, async () => {
   const browser = await webkit.launch();
   try {
     const context = await browser.newContext({hasTouch: true, isMobile: true, reducedMotion: 'reduce'});
@@ -46,7 +46,21 @@ test('WebKit checks served paint for every case of the cache, rate, PKCE and req
       reviews.push({id: name, settings: variant.values, steps: await reviewStoryVariant(page, `${server!.url}/${name}.html`, variant, STORY_CLAIMS[name])});
       cases++;
     }
-    assert.equal(cases, 8, 'exact case inventory: 2 cache, 3 rates, 2 PKCE, 1 face');
+    assert.equal(cases, 12, 'exact case inventory: 2 cache, 3 rates, 2 PKCE, 1 face, 4 music');
+    await page.setViewportSize({width: 390, height: 667});
+    await page.goto(server!.url + '/melody-rhythm.html');
+    await page.waitForSelector('[data-ready=true]');
+    assert.equal(await page.locator('.score-playhead').count(), 0);
+    await page.getByRole('button', {name: 'Play A: even beats', exact: true}).tap();
+    await page.waitForSelector('.score-playhead', {state: 'attached'});
+    const playhead=await page.locator('.score-playhead').evaluate(node=>({height:(node as SVGGraphicsElement).getBBox().height,stroke:getComputedStyle(node).stroke,width:parseFloat(getComputedStyle(node).strokeWidth)}));
+    assert.ok(playhead.height>0&&playhead.stroke!=='none'&&playhead.width>0);
+    assert.equal(await page.evaluate(() => ['.stage', '.score-audio'].every(selector => {
+      const bounds = document.querySelector(selector)!.getBoundingClientRect();
+      return bounds.top >= -1 && bounds.bottom <= innerHeight + 1;
+    })), true, 'WebKit keeps the complete score and sound controls on screen during playback');
+    await page.getByRole('button', {name: 'Stop', exact: true}).tap();
+    assert.equal(await page.locator('.score-playhead').count(), 0);
     await page.setViewportSize({width: 320, height: 844});
     await page.goto(server!.url + '/oauth-pkce.html?attacker=yes&step=attack');
     await page.waitForSelector('[data-ready=true]');
@@ -127,6 +141,14 @@ test('native macOS Safari runs the introduction, case changes, requested letteri
     assert.match(await driver.execute<string>('return document.querySelector(".described").textContent'), /EB Garamond/);
     await driver.open('/token-bucket.html?step=trace&rate=4');
     assert.match(await driver.execute<string>('return document.querySelector(".described").textContent'), /4 \/ s: R6 get 429/);
+    await driver.open('/melody-rhythm.html');
+    assert.equal(await driver.execute('return document.querySelectorAll(".score-playhead").length'), 0);
+    await driver.click('.score-audio button[aria-label="Play A: even beats"]');
+    await driver.wait('return !!document.querySelector(".score-playhead")');
+    assert.equal(await driver.execute('return [".stage", ".score-audio"].every(selector => {const r=document.querySelector(selector).getBoundingClientRect();return r.top>=-1 && r.bottom<=innerHeight+1;})'), true,
+      'Safari keeps the complete score and sound controls on screen during playback');
+    await driver.click('.score-audio button:not([aria-label])');
+    assert.equal(await driver.execute('return document.querySelectorAll(".score-playhead").length'), 0);
     await driver.command(`/session/${driver.session}/url`, {url: server!.url + '/host.html'});
     await driver.wait('return !!document.querySelector("iframe")');
     const frame = await driver.command(`/session/${driver.session}/element`, {using: 'css selector', value: 'iframe'});
@@ -134,7 +156,7 @@ test('native macOS Safari runs the introduction, case changes, requested letteri
     await driver.wait('return !!document.querySelector("[data-ready=true]")');
     assert.equal(await driver.execute('return window.parent!==window'), true);
     await mkdir('out/validation', {recursive: true});
-    await writeFile('out/validation/native-safari.json', JSON.stringify({sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim(), capabilities: created.capabilities, journeys: ['introduction', 'next', 'case-change', 'requested-face', 'rate-comparison', 'iframe'], platform: process.platform}, null, 2) + '\n');
+    await writeFile('out/validation/native-safari.json', JSON.stringify({sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim(), capabilities: created.capabilities, journeys: ['introduction', 'next', 'case-change', 'requested-face', 'rate-comparison', 'music-play-stop', 'iframe'], platform: process.platform}, null, 2) + '\n');
   } finally {
     if (driver.session) await fetch(`${driver.endpoint}/session/${driver.session}`, {method: 'DELETE'}).catch(() => {});
     processDriver.kill();
