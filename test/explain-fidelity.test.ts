@@ -39,6 +39,7 @@ import { check as gnomeFiles } from './lib/fidelity/gnome-files.ts';
 import { check as wcagMap } from './lib/fidelity/wcag-map.ts';
 import { check as penAndPencil } from './lib/fidelity/pen-and-pencil.ts';
 import { check as periodicGroups } from './lib/fidelity/periodic-groups.ts';
+import { check as statecharts } from './lib/fidelity/statecharts.ts';
 
 for (const entry of EXPLAINERS)
   test(`${entry.id}: every authored case exposes the program's answers at step boundaries`, async () => {
@@ -57,6 +58,9 @@ for (const entry of EXPLAINERS)
           `Trace invents link ${walk.from}->${walk.to}`,
         );
       switch (entry.id) {
+        case 'statecharts':
+          statecharts(values, trace, project.store);
+          break;
         case 'python-dict': case 'bloom-filter': case 'git-branches':
         case 'monty-hall': case 'birthday-paradox': case 'melody-rhythm':
           learning(entry.id, values, trace);

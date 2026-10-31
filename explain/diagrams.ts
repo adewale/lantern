@@ -197,7 +197,17 @@ const journeyName: Namer = ({ w, snapshot, info, words }) => {
   const tasks = snapshot.parts.filter((p) => p.role === 'task' && Number.isFinite(journeyScore(p)));
   return tasks.length ? extremes(w, w.curve, tasks.map(journeyScore), tasks.map((t) => textOf(t))) : undefined;
 };
-const NAMERS: Readonly<Record<string, Namer>> = { er: erName, journey: journeyName };
+/** A state diagram's start or end dot (Mermaid's `[*]`), which capture marks by `channels.status`. */
+const pseudostate = (info: SnapshotPart | undefined) => {
+  const status = (info?.channels as { status?: unknown } | undefined)?.status;
+  return status === 'start' || status === 'end' ? status : undefined;
+};
+/** State words: a start or end dot is called what it is, so its arrow reads "start → paused". */
+const stateName: Namer = ({ w, info }) => {
+  const dot = pseudostate(info);
+  return dot && w[dot];
+};
+const NAMERS: Readonly<Record<string, Namer>> = { er: erName, journey: journeyName, state: stateName };
 /** A journey's actors, as its task lines name them (`Task: 3: Alice, Bob`), in order of first mention. */
 function journeyActors(source: string): string[] {
   const out: string[] = [];
@@ -673,7 +683,8 @@ export class Diagram {
     const [english] = familyNames(wordsFor('en'), this.snapshot.family);
     const parts: SeenPart[] = [];
     const blank: string[] = [];
-    const journey = this.snapshot.family === 'journey';
+    const journey = this.snapshot.family === 'journey',
+      state = this.snapshot.family === 'state';
     let things = 0,
       links = 0;
     const step = this.scene.steps.at(-1)?.name;
@@ -698,7 +709,13 @@ export class Diagram {
         if (!isScaffold(info)) blank.push(`${english} part ${id}`);
         continue;
       }
-      if (info.from && info.to) links++;
+      // A state diagram's start and end dots, and the arrows to and from them, are not states or transitions.
+      const dots = state && [info, ...[info.from, info.to].map((e) => (e ? this.find(e)?.info : undefined))].some(pseudostate);
+      if (dots) {
+        // Said, not counted.
+      } else if (info.from && info.to) links++;
+      // A composite state is drawn as a group around its states, and is a state too.
+      else if (state && info.role === 'group') things++;
       // A line through the things (a journey's experience curve) is not one of them.
       else if ((!isScaffold(info) || info.role === 'actor') && info.role !== 'series') things++;
       // A part in focus is said to be, unless a mark says more.
