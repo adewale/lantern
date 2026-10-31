@@ -566,6 +566,31 @@ const columnCase = fc
 const columned = (c: Of<typeof columnCase>) =>
   new Card(scene(), c.colors, c.rows, { columns: c.columns, direction: c.direction, ...(c.width != null ? { width: c.width } : {}) });
 
+test('uncapped columned cards keep headings at their authored size with single-value rows', () => {
+  fc.assert(
+    fc.property(
+      palette,
+      fc.uniqueArray(fc.string({ unit: 'grapheme', minLength: 1, maxLength: 24 }), { minLength: 1, maxLength: 6 }),
+      fc.constantFrom('ltr' as const, 'rtl' as const),
+      fc.double({ min: 0.08, max: 0.5, noNaN: true }),
+      (colors, columns, direction, fontSize) => {
+        // One column also has one value per row; neither shape may discard its heading's width.
+        const k = new Card(scene(), colors, [['Requests', 'A B C']], { columns, direction, fontSize });
+        const data = new Set([...k.labels.values(), ...[...k.cells.values()].flat()]);
+        const headings = k.children.filter((m): m is Text => m instanceof Text && !data.has(m));
+        assert.deepEqual(headings.map((h) => h.text), columns);
+        const panel = k.panel.box()!;
+        for (const h of headings) {
+          assert.ok(Math.abs(h.textSize() - fontSize) < EPS, `heading ${h.text} shrank despite having no width cap`);
+          const b = h.box();
+          if (b) assert.ok(inside(b, panel), `heading ${h.text} is outside its card`);
+        }
+      },
+    ),
+    params(),
+  );
+});
+
 test('a columned card keeps every heading, label and value inside it, each column on its own edge', () => {
   fc.assert(
     fc.property(columnCase, (c) => {

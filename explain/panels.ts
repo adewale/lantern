@@ -152,6 +152,8 @@ export class Card extends Group {
     const natural =
       Math.max(
         titleText ? titleText.width() : 0,
+        // Headings need a row of their own, even with one column or only spanning values.
+        n ? across - gap + size * 2.5 : 0,
         ...rows.map((_, i) => labels[i]!.width() + size * 2.5 + (n > 1 && !spans(i) ? across - gap : cells[i]![0]!.width())),
       ) +
       2 * PAD;

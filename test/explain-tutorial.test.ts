@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { STARTER_FILES, packageImports } from '../tools/lib/explain-init.ts';
 import { collectProject } from '../tools/lib/explain-project.ts';
+import type { Picture } from '../explain/trace.ts';
 import { assertStepState } from './lib/explainer-state.ts';
 import { run } from '../scenes/tutorial/lru-mru/model.ts';
 // The tutorial's own model tests: Wikipedia's worked LRU and MRU examples.
@@ -44,16 +45,28 @@ test('each case shows the counts, evictions and cache contents the model gives',
   for (const { values, trace } of project.variants) {
     assert.deepEqual(trace.steps.map((s) => s.step), ['full', 'evict', 'rest', 'verdict']);
     const requests = SEQ[values.next as keyof typeof SEQ];
-    for (const [step, n] of [['full', 3], ['evict', 4], ['rest', 8]] as const) {
+    for (const [step, n] of [['full', 3], ['evict', 4], ['rest', 8], ['verdict', 8]] as const) {
       // One card, one column per policy: [LRU, MRU] in each row.
       const both = (cell: (r: ReturnType<typeof run>) => string) => (['lru', 'mru'] as const).map((p) => cell(run(p, 3, requests).slice(0, n)));
       const hits = (done: ReturnType<typeof run>) => done.filter((r) => r.hit).map((r) => r.key);
-      assertStepState(trace, step, {
+      const expected = {
         Requests: requests.slice(0, n).join(' '),
         'Newest first': both((done) => done.at(-1)!.cache.join(' ')),
         Evicted: both((done) => done.flatMap((r) => r.evicted ?? []).join(' ') || 'none'),
         Hits: both((done) => (hits(done).length ? `${hits(done).length}: ${hits(done).join(' ')}` : '0')),
-      });
+      };
+      assertStepState(trace, step, expected);
+      // Read the card's own description, independently of the scene's copied model state.
+      const picture = trace.steps.find((s) => s.step === step)!.after?.picture as Picture | undefined;
+      assert.ok(picture, `${values.next}.${step} has a resting picture`);
+      assert.equal(picture.entries.length, 1, 'one comparison card');
+      const entry = picture.entries[0]!;
+      const shown = [...entry.items, ...Object.values(entry.marked ?? {}).flat()];
+      const wanted = Object.entries({ ...expected, Slots: 3 }).flatMap(([label, value]) =>
+        Array.isArray(value) ? value.map((cell, j) => `${label} (${['LRU', 'MRU'][j]}): ${cell}`) : [`${label}: ${value}`],
+      );
+      // Emphasis groups change the reading order, but every row/column binding must agree.
+      assert.deepEqual(shown.sort(), wanted.sort(), `${values.next}.${step} card disagrees with the model`);
     }
   }
 });
