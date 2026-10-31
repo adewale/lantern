@@ -65,7 +65,7 @@ Scenes are ordinary TypeScript classes. Reader settings are finite choices, with
 - Builds enforce 1.5 MiB raw HTML and 450 KiB gzip page budgets. Diagram snapshots expand through the browser's native `DecompressionStream` API; the transcript remains readable without JavaScript. Split a scene or reduce its cases when it exceeds a budget.
 - The example models are small and cited. They have not had subject-expert review.
 
-[Engine guides](docs/ENGINE.md) · [Agent authoring skill](skills/rayner-explainers/SKILL.md) · [Changelog](CHANGELOG.md)
+[FAQ](FAQ.md) · [Engine guides](docs/ENGINE.md) · [Agent authoring skill](skills/rayner-explainers/SKILL.md) · [Changelog](CHANGELOG.md)
 
 ## License and attribution
 

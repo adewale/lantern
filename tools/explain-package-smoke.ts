@@ -33,7 +33,7 @@ try {
   assert.equal((await run(bin, ['--version'], { cwd: folder })).stdout.trim(), version);
   const installed = join(folder, 'node_modules/rayner');
   assert.equal(JSON.parse(await readFile(join(installed, 'package.json'), 'utf8')).version, version);
-  for (const file of ['tools/lettering.py', 'tools/lettering-requirements.txt', 'tools/lettering-outline-fonts.sh', 'tools/lib/lettering.ts', 'vendor/glyph-math.js', 'vendor/licenses/LatinModernMath-GUST.txt', 'vendor/licenses/glyph-MIT.txt', 'LICENSE'])
+  for (const file of ['app/embed-audio.ts', 'app/embed-audio.css', 'explain/audio.ts', 'tools/lettering.py', 'tools/lettering-requirements.txt', 'tools/lettering-outline-fonts.sh', 'tools/lib/lettering.ts', 'vendor/glyph-math.js', 'vendor/licenses/LatinModernMath-GUST.txt', 'vendor/licenses/glyph-MIT.txt', 'LICENSE'])
     assert.ok(existsSync(join(installed, file)), `archive is missing ${file}`);
   await copyFile(join(ROOT, 'test/consumer/consumer.ts'), join(folder, 'consumer.ts'));
   await copyFile(join(ROOT, 'test/consumer/tsconfig.json'), join(folder, 'tsconfig.json'));
@@ -134,6 +134,27 @@ try {
       const changed = JSON.parse(await readFile(join(folder, 'review-after-command-edit/review.json'), 'utf8'));
       assert.notEqual(changed.buildHash, reviewed.buildHash, 'installed JS is part of the artifact identity');
     } finally { await writeFile(cli, originalCli); }
+  }
+  // The optional score module and its CSS must resolve from the installed archive.
+  await writeFile(join(folder, 'played.ts'), `import{Scene,Text,FadeIn}from'rayner';import type{AudioClip}from'rayner/explain';const clip:AudioClip={id:'a',label:'Play middle C',bpm:96,beats:4,notes:[{midi:60,at:0,duration:1}],plot:[-6,-2,6,2]};export default class Played extends Scene{static meta={id:'played',title:'A locally played note'};async construct(){await this.step('listen',{title:'Middle C',caption:'Press Play to hear middle C.',audio:{clips:[clip]}});await this.play(new FadeIn(new Text('C')));}}`);
+  await run(bin, ['build', 'played.ts', '--out', 'public/played.html'], {cwd: folder});
+  assert.match(await readFile(join(folder, 'public/played.html'), 'utf8'), /score-audio/);
+  assert.ok(!html.includes('score-audio'), 'the installed opt-out page omits sound code');
+  if (process.env.EXPLAIN_BROWSER) {
+    const soundServer=await (await import('./lib/explain-serve.ts')).serve(join(folder,'public'),0,'played.html');
+    const soundBrowser=await (await import('./lib/browser.ts')).launch();
+    try {
+      const page=await soundBrowser.newPage(),errors:string[]=[];
+      page.on('pageerror',error=>errors.push(error.message));
+      await page.goto(soundServer.url+'/played.html');await page.waitForSelector('[data-ready=true]');
+      assert.equal(await page.locator('.score-playhead').count(),0);
+      await page.getByRole('button',{name:'Play A: Play middle C',exact:true}).click();
+      await page.waitForSelector('.score-playhead',{state:'attached'});
+      const ink=await page.locator('.score-playhead').evaluate(node=>{const style=getComputedStyle(node);return {stroke:style.stroke,width:parseFloat(style.strokeWidth),opacity:parseFloat(style.opacity),height:(node as SVGGraphicsElement).getBBox().height};});
+      assert.ok(ink.stroke!=='none'&&ink.width>0&&ink.opacity>0&&ink.height>0,'the installed playhead has painted stroke');
+      await page.getByRole('button',{name:'Stop',exact:true}).click();
+      assert.equal(await page.locator('.score-playhead').count(),0);assert.deepEqual(errors,[]);
+    } finally {await soundBrowser.close();soundServer.close();}
   }
   // Lettering on request from the installed package: the fixture scene with its pinned cuts,
   // so the build reads vendor/lettering/ and src/lettering.js from the archive and needs no fonttools.
@@ -270,7 +291,7 @@ try {
   assert.match(walked, /^After A B C D, request: C D C D · rest: .+\n  changed: .*\bHits\b/m);
 
   console.log(
-    'Package gate passed: tested archive install with diagram and PNG authoring, installed TypeScript consumer, executable JS bin, external native author, settings, checks, see, build, describeExplainer and its REFERENCE example, notices, lettering on request, one compiled engine' +
+    'Package gate passed: tested archive install with diagram and PNG authoring, installed TypeScript consumer, executable JS bin, external native author, settings, checks, see, build, optional score audio, describeExplainer and its REFERENCE example, notices, lettering on request, one compiled engine' +
       (process.env.EXPLAIN_LETTERING === '1' ? ', installed Arabic and maths capture' : '') +
       (process.env.EXPLAIN_BROWSER ? ', installed diagram capture' : '') +
       '.',

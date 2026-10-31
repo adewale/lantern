@@ -10,6 +10,11 @@ import { Code, TransformDiff, diffLines, parseUnifiedDiff, renderElements } from
 import type { Hunk, TransformDiffOpts, Evidence, StepRecord, ColorSpan, CodeSpan, RenderOptions, Step } from 'rayner';
 import { Frame, StateReadout, View, ViewSync, stateView, viewMismatch, Axes, NumberLine, Brace, Circumscribe, SurroundingRectangle, Succession, TransformFromCopy, Restore, DOWN } from 'rayner';
 import type { FrameFitOpts, SyncOpts, AxesOpts, NumberLineOpts, PlotOpts, BraceOpts, CircumscribeOpts } from 'rayner';
+import type {AudioClip, ScoreNote, StepAudio} from 'rayner/explain';
+const middleC: ScoreNote = {midi: 60, at: 0, duration: 1};
+const scoreClip: AudioClip = {id: 'a', label: 'Middle C', bpm: 96, beats: 4, notes: [middleC]};
+const stepScore: StepAudio = {clips: [scoreClip]};
+void stepScore;
 import type { LetteringRequest } from 'rayner/lettering';
 
 // Both public entrypoints accept the complete request, including outline lettering.
