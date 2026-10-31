@@ -197,6 +197,13 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   // A frame the loader sizes to its content has no viewport height to fit: the card takes
   // the page's width, and the host page scrolls (embed.css, --player-reserve).
   if (window.parent !== window && params.has('parentOrigin')) root.style.setProperty('--player-reserve', '0px');
+  // The header's height depends on how the title wraps in the reader's fonts, so the stage's cap
+  // takes the measured header rather than a guess: a title that wraps to two lines makes the stage
+  // smaller, not the step heading fall off the screen. Written in the next frame, outside
+  // ResizeObserver delivery, as reserve() is.
+  new ResizeObserver(() =>
+    requestAnimationFrame(() => root.style.setProperty('--head-h', `${Math.ceil(head.getBoundingClientRect().height)}px`)),
+  ).observe(head);
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', t.stepList);
