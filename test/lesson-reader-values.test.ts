@@ -167,14 +167,46 @@ test('the occupied-date picture contains 365 days and the independently expected
   assert.equal(checked, 6);
 });
 
-test('the complete annual daylight picture labels its fixed zero, twelve and twenty-four-hour scale at every latitude',async()=>{
-  const p=await collectProject('scenes/explainers/seasons',{write:false});assert.equal(p.variants.length,4);let checked=0;
-  for(const v of p.variants)await new v.Scene({async frame(){},async stepEnd(scene,step){
-    if(step.name!=='reader-year')return;
-    const root=scene.familyMembers().find(m=>m.key==='reader-picture');assert.ok(root);
-    const words=root.family().filter((m):m is Text=>m instanceof Text).map(m=>m.text);
-    for(const tick of ['0','12','24'])assert.ok(words.includes(tick),`${v.values.place}: ${tick} hours must be labelled`);
-    checked++;
-  }},{skipUntil:Infinity}).run();
-  assert.equal(checked,4);
+test('the complete annual daylight picture labels its fixed zero, twelve and twenty-four-hour scale at every latitude', async () => {
+  const p = await collectProject('scenes/explainers/seasons', { write: false });
+  assert.equal(p.variants.length, 4);
+  let checked = 0;
+  for (const v of p.variants)
+    await new v.Scene(
+      {
+        async frame() {},
+        async stepEnd(scene, step) {
+          if (step.name !== 'reader-year') return;
+          const root = scene.familyMembers().find((m) => m.key === 'reader-picture');
+          assert.ok(root);
+          const words = root
+            .family()
+            .filter((m): m is Text => m instanceof Text)
+            .map((m) => m.text);
+          for (const tick of ['0', '12', '24'])
+            assert.ok(words.includes(tick), `${v.values.place}: ${tick} hours must be labelled`);
+          checked++;
+        },
+      },
+      { skipUntil: Infinity },
+    ).run();
+  assert.equal(checked, 4);
+});
+
+test('the default ext4 reserve comparison actually changes reserve and preserves the metadata allocation', async () => {
+  const { frames } = await import('../scenes/explainers/lib/readers/ext4-space.ts');
+  const [allocation, comparison] = frames('1t', 5);
+  assert.ok(allocation && comparison);
+  const s = stage(new Scene(new NullSink()));
+  const picture = comparison.draw(s);
+  const words = picture
+    .family()
+    .filter((m): m is Text => m instanceof Text)
+    .map((m) => m.text);
+  assert.ok(words.includes('Users at 5% reserve'));
+  assert.ok(words.includes('Users at 1% reserve'));
+  const fills = picture.family().filter((m): m is Rectangle => m instanceof Rectangle && m.style.stroke === 'none');
+  assert.equal(fills.length, 2);
+  assert.ok(fills[1]!.width() > fills[0]!.width(), 'lower reserve must visibly increase writable space');
+  assert.equal(comparison.values.metadata, 4495258, 'metadata matches the existing 1 TiB mkfs reference vector');
 });

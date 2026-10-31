@@ -55,7 +55,11 @@ export function frames(size: Size, reserve: number): ReaderFrame[] {
           s,
           [
             { label: 'Users at 5% reserve', value: old.users, display: percent(old.users, total) },
-            { label: `Users at ${comparisonReserve}% reserve`, value: comparison.users, display: percent(comparison.users, total) },
+            {
+              label: `Users at ${comparisonReserve}% reserve`,
+              value: comparison.users,
+              display: percent(comparison.users, total),
+            },
           ],
           total,
         ),

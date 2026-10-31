@@ -33,7 +33,7 @@ export function frames(trustKey: TrustKey, requestKey: RequestKey): ReaderFrame[
           ['Order', 'Address', 'Decision'],
           read.map((v, i) => {
             const hop = [r.sender, ...r.via].find((h) => h.addr === v.addr);
-            const role = hop?.id === 'balancer' ? 'LB' : hop?.id === 'edge' ? 'CDN' : hop?.id ?? 'forged';
+            const role = hop?.id === 'balancer' ? 'LB' : hop?.id === 'edge' ? 'CDN' : (hop?.id ?? 'forged');
             return [`${i}: ${role}`, v.addr, v.verdict === 'answer' ? 'req.ip' : v.verdict];
           }),
           s,
