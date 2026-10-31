@@ -7,3 +7,5 @@
 .score-audio p{font-size:.9rem;line-height:1.4;min-height:1.4em;margin:8px 0 0;color:var(--muted)}
 .score-audio output{font-variant-numeric:tabular-nums;font-size:.9rem}
 .score-playhead{pointer-events:none}
+/* In the tile, the panel sits on the card's inset, like every other row. Only pages with audio carry this. */
+.player>.score-audio{margin:12px var(--inset,16px) 0}

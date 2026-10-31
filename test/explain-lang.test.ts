@@ -111,6 +111,12 @@ test('page words come from a table by primary language, English when there is no
   assert.equal(chromeFor('fr').stepOf(3, 4, 'Titre'), `Étape 3 sur 4${NB}: Titre`);
   assert.equal(chromeFor('en').allSteps(4), 'All 4 steps');
   assert.equal(chromeFor('fr').allSteps(4), 'Les 4 étapes');
+  // The footer's mark and way out of a frame (specs/player-tile.md T7); "Rayner" is a name, never translated.
+  assert.equal(chromeFor('en').madeWith, 'Made with Rayner');
+  assert.equal(chromeFor('fr').madeWith, 'Réalisé avec Rayner');
+  assert.equal(chromeFor('en').open, 'Open the explainer');
+  assert.equal(chromeFor('fr').open, 'Ouvrir l’explication');
+  for (const words of Object.values(CHROME)) assert.equal(Object.hasOwn(words, 'newTab'), false);
   assert.equal(chromeFor('de'), CHROME.en);
   assert.equal(chromeFor(), CHROME.en);
   // A tag that names an Object property is a language with no table, not that property.

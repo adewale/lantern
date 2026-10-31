@@ -7,10 +7,12 @@
 // step, <id>/<step>.html, whose link preview is that step, and the same Open Graph and Twitter card
 // tags in each explainer page, for its cover step (tools/lib/explain-share.ts); then checks them.
 // Each explainer's describeExplainer JSON, as demos:build wrote it, is copied to <id>.json, with an
-// llms.txt at the site root (tools/lib/explain-site-describe.ts). Fails, before writing anything, if
+// llms.txt at the site root (tools/lib/explain-site-describe.ts). Each page's known framed heights go
+// beside it as <id>.embed.json; with --origin, also an oEmbed response, <id>.oembed.json, named by a
+// discovery link in the page. Fails, before writing anything, if
 // demos:build has not run since a scene, its folder or the engine changed.
 import { copyFile, mkdir, readFile, writeFile, access, mkdtemp, rename, rm, readdir } from 'node:fs/promises';
-import { sharePage, publishedPage, checkCards } from './lib/explain-share.ts';
+import { sharePage, publishedPage, checkCards, writeEmbedFiles } from './lib/explain-share.ts';
 import type { ShareManifest } from './lib/explain-share.ts';
 import { join, resolve, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -71,6 +73,7 @@ try {
     if (origin) await writeFile(join(target, id + '.html'), publishedPage(await readFile(page, 'utf8'), share, origin, path));
     else await copyFile(page, join(target, id + '.html'));
     await copyFile(join(built, id + '.png'), join(target, id + '.png'));
+    await writeEmbedFiles(target, built, share, origin, path);
     await mkdir(join(target, id), { recursive: true });
     for (const s of share.steps) {
       await copyFile(join(built, id, s.step + '.png'), join(target, id, s.step + '.png'));

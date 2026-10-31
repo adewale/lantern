@@ -143,6 +143,16 @@ test('Next is on screen at load', options, async () => {
         assert.ok(v.scrollWidth <= v.width, `${where}: no horizontal scroll (${v.scrollWidth} > ${v.width})`);
       } finally { await page.close(); }
     }
+  // specs/player-tile.md T1: with the header inside the card, the French ten-step page too.
+  for (const [width, height] of [[1280, 800], [1440, 900]] as const) {
+    const page = await browser.newPage({ viewport: { width, height } });
+    try {
+      await page.goto(embed + '/quotient-familial.html');
+      await page.waitForSelector('[data-ready=true]');
+      const v = await boxesOf(page, { next: '.stepper .primary', lede: '.lede' });
+      assert.ok(insideViewport(v.boxes.next, v) && insideViewport(v.boxes.lede, v), `quotient-familial at ${width}×${height}: ${JSON.stringify(v.boxes)}`);
+    } finally { await page.close(); }
+  }
 });
 
 test('feature-tour case navigation starts with its recipe, including transcript links, while direct result permalinks still work', options, async () => {
@@ -183,11 +193,15 @@ test('fullscreen keeps the stepper row reachable when the player overflows', opt
       const player = document.querySelector<HTMLElement>('.player')!;
       const row = document.querySelector('.stepper')!.getBoundingClientRect(),
         stage = document.querySelector('.stage')!.getBoundingClientRect();
-      return {top: row.top, bottom: row.bottom, stage: stage.height, viewport: innerHeight, overflow: player.scrollHeight > player.clientHeight};
+      const head = document.querySelector('.head')!.getBoundingClientRect(),
+        lede = document.querySelector('.lede')!.getBoundingClientRect();
+      return {top: row.top, bottom: row.bottom, stage: stage.height, viewport: innerHeight, overflow: player.scrollHeight > player.clientHeight, head: [head.top, head.bottom], lede: [lede.top, lede.bottom]};
     });
     assert.equal(bounds.overflow, true, 'the test exercises a scrollable fullscreen player');
     assert.ok(bounds.stage <= bounds.viewport - 180 + 1, 'the stage keeps within the screen less 180 px');
     assert.ok(bounds.top >= 0 && bounds.bottom <= bounds.viewport, 'Next is reachable at scroll position zero');
+    // specs/player-tile.md T2: the card alone, its header and the step's heading on screen too.
+    assert.ok(bounds.head[0]! >= 0 && bounds.lede[1]! <= bounds.viewport, `the header and the step heading are on screen ${JSON.stringify(bounds)}`);
     await page.getByRole('button', {name: 'Next step', exact: true}).click();
     assert.equal(new URL(page.url()).searchParams.get('step'), 'diff');
   } finally { await page.close(); }
@@ -228,12 +242,15 @@ const catalog = () =>
     }
     return built;
   })());
-test('no Replay, Stop or Fit stage button; one Whole picture button on every catalog page', options, async () => {
+test('every catalog page, in English and French: no Replay, Stop or Fit stage button, one Whole picture button, one h1, in the card\'s header above the stage with the case picker, and one footer mark linking home with no way out of a frame it is not in', options, async () => {
+  const { PRODUCT } = await import('../scenes/explainers/catalog.ts');
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
   try {
     const page = await context.newPage();
+    const languages = new Set<string>();
     for (const [id, project] of await catalog()) {
       const t = chromeFor(project.Scene.meta?.lang);
+      languages.add(project.Scene.meta?.lang ?? 'en');
       // The removed controls' names, in English and in French.
       const gone = ['Replay step', 'Stop animation', 'Fit stage', 'Rejouer l’étape', 'Arrêter l’animation', 'Adapter à la page'];
       await page.goto(`${embed}/catalog/${id}.html`);
@@ -243,10 +260,152 @@ test('no Replay, Stop or Fit stage button; one Whole picture button on every cat
         return Object.fromEntries(names.map((n) => [n, count(n)]));
       }, [...gone, t.wholePicture, t.nextLabel, t.previous]);
       assert.deepEqual(seen, { ...Object.fromEntries(gone.map((n) => [n, 0])), [t.wholePicture]: 1, [t.nextLabel]: 1, [t.previous]: 1 }, id);
+      // specs/player-tile.md T1: the title and the cases are the card's header, the stage is mounted under it.
+      const tile = await page.evaluate(() => {
+        const h1s = document.querySelectorAll('h1'),
+          player = document.querySelector('.player')!,
+          head = document.querySelector('.head')!;
+        return {
+          h1s: h1s.length,
+          inCard: h1s[0]?.closest('.player') === player,
+          inHead: h1s[0]?.parentElement === head,
+          headFirst: player.firstElementChild === head,
+          frameNext: head.nextElementSibling?.className,
+          cases: document.querySelectorAll('.case input').length === document.querySelectorAll('.player .head .case input').length,
+        };
+      });
+      assert.deepEqual(tile, { h1s: 1, inCard: true, inHead: true, headFirst: true, frameNext: 'frame', cases: true }, id);
+      // specs/player-tile.md T3: the maker's mark, in the footer, never on the stage; standalone, no way out.
+      const foot = await page.evaluate(() => ({
+        marks: [...document.querySelectorAll<HTMLAnchorElement>('a.mark')].map((a) => [a.parentElement!.matches('.player > footer.foot'), a.textContent, a.href, a.getAttribute('aria-label'), a.target, a.rel]),
+        last: [...document.querySelector('.player')!.children].filter((e) => !e.matches('[hidden], .ruler, .lede-ruler')).at(-1)?.className,
+        open: document.querySelectorAll('.foot a.open').length,
+        onStage: document.querySelectorAll('.stage a, .stage .foot, .frame a').length,
+      }));
+      assert.deepEqual(foot, { marks: [[true, 'Rayner', PRODUCT.home, t.madeWith, '_blank', 'noopener']], last: 'foot', open: 0, onStage: 0 }, id);
+      if (project.Scene.settings?.length) assert.ok(await page.locator('.player .case input').count() > 0, `${id}: the case picker is in the card`);
+    }
+    assert.ok(languages.size === 2, `both languages visited: ${[...languages]}`);
+  } finally {
+    await context.close();
+  }
+});
+// specs/player-tile.md T12, the crop test: cut the tile out of any context and it still says what it
+// is, what it is about, who made it and where to go, and nothing of the page lies outside it. DOM only.
+interface CropExpectation {
+  player: string;
+  next: string;
+  title: string;
+  kicker: string;
+  segments: number;
+  cases: number;
+  madeWith: string;
+  home: string;
+  /** For a framed page: the way out's path and query, without parentOrigin. */
+  open: { path: string; query: Record<string, string> } | null;
+}
+function cropTest(e: CropExpectation) {
+  const tile = document.querySelector<HTMLElement>('#content .tile');
+  if (!tile) return ['no .tile in #content'];
+  const problems: string[] = [];
+  const all = (s: string) => [...tile.querySelectorAll<HTMLElement>(s)];
+  const say = (what: string, got: unknown, want: unknown) => {
+    if (JSON.stringify(got) !== JSON.stringify(want)) problems.push(`${what}: ${JSON.stringify(got)}, wanted ${JSON.stringify(want)}`);
+  };
+  // 1. What it is.
+  say('section.player and its name', all('section.player').map((p) => p.getAttribute('aria-label')), [e.player]);
+  say('.stepper holding Next and the step bar', all('.stepper').map((s) => [s.querySelectorAll(`button[aria-label="${e.next}"]`).length, s.querySelectorAll('ol.step-bar > li > button').length]), [[1, e.segments]]);
+  // 2. What it is about.
+  say('h1', all('h1').map((h) => h.textContent), [e.title]);
+  say('.lede .kicker', all('.lede .kicker').map((k) => k.textContent), [e.kicker]);
+  say('.case fieldsets', all('fieldset.case').length, e.cases);
+  // 3. Who made it.
+  say('.foot a.mark', all('.foot a.mark').map((a) => [a.textContent, (a as HTMLAnchorElement).href, a.getAttribute('aria-label')]), [['Rayner', e.home, e.madeWith]]);
+  // 4. Where to go.
+  say('transcript and steps disclosures in the tile', [document.querySelectorAll('details.transcript').length, all('details.transcript').length, document.querySelectorAll('.rail').length, all('.rail').length], [1, 1, 1, 1]);
+  const open = all('.foot a.open') as HTMLAnchorElement[];
+  if (!e.open) say('.foot a.open (standalone)', open.length, 0);
+  else {
+    say('.foot a.open (framed)', open.length, 1);
+    if (open[0]) {
+      const u = new URL(open[0].href);
+      const sorted = (q: [string, string][]) => Object.fromEntries(q.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+      say('the way out', { path: u.origin + u.pathname, query: sorted([...u.searchParams].filter(([k]) => k !== 'theme')), parentOrigin: u.searchParams.has('parentOrigin') }, { path: e.open.path, query: sorted(Object.entries(e.open.query)), parentOrigin: false });
+    }
+    // Nothing of Rayner's drawn outside the tile.
+    say('framed body and #content', [getComputedStyle(document.body).backgroundColor, getComputedStyle(document.getElementById('content')!).padding], ['rgba(0, 0, 0, 0)', '0px']);
+  }
+  // 5. The boundary: every element under #content with a box is the tile or inside it, and what it
+  // draws is inside the tile's box. What it draws is its box cut by every ancestor that clips its
+  // overflow: a diagram's paths may run past the stage's edges, but the stage (overflow: hidden) and
+  // its SVG viewport cut them there, so they are never drawn outside the tile.
+  const t = tile.getBoundingClientRect();
+  const drawn = (el: Element) => {
+    const b = el.getBoundingClientRect();
+    let left = b.left, top = b.top, right = b.right, bottom = b.bottom;
+    // Ancestors inside the tile only: the tile clips too, and something it cuts off is a fault.
+    for (let a = el.parentElement; a && a !== tile; a = a.parentElement) {
+      const cs = getComputedStyle(a);
+      if (cs.overflowX === 'visible' && cs.overflowY === 'visible') continue;
+      const c = a.getBoundingClientRect();
+      left = Math.max(left, c.left); top = Math.max(top, c.top); right = Math.min(right, c.right); bottom = Math.min(bottom, c.bottom);
+    }
+    return { left, top, right, bottom, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
+  };
+  for (const el of document.querySelectorAll<HTMLElement>('#content *')) {
+    const r = drawn(el);
+    // A closed disclosure's content keeps a layout box in Chromium but is not drawn (content-visibility);
+    // an element clipped away entirely draws nothing.
+    if ((r.width === 0 && r.height === 0) || !el.checkVisibility()) continue;
+    if (el !== tile && !tile.contains(el)) problems.push(`outside the tile: ${el.tagName.toLowerCase()}.${el.className}`);
+    else if (r.left < t.left - 1 || r.top < t.top - 1 || r.right > t.right + 1 || r.bottom > t.bottom + 1)
+      problems.push(`past the tile's edge: ${el.tagName.toLowerCase()}.${el.className} ${JSON.stringify([r.left, r.top, r.right, r.bottom])} vs ${JSON.stringify([t.left, t.top, t.right, t.bottom])}`);
+  }
+  return problems;
+}
+test('the tile stands alone: on every catalog page, standalone, in a raw iframe and in the loader, the tile says what it is, what it is about, who made it and where to go, and nothing lies outside it', options, async () => {
+  const { PRODUCT } = await import('../scenes/explainers/catalog.ts');
+  const context = await browser.newContext({ viewport: { width: 900, height: 800 }, reducedMotion: 'reduce' });
+  let pages = 0;
+  try {
+    const page = await context.newPage();
+    for (const [id, project] of await catalog()) {
+      const t = chromeFor(project.Scene.meta?.lang),
+        values = resolveSettings(project.Scene),
+        first = project.variants.find((v) => sameCase(project, v.values, values))!.trace.steps;
+      const expect: CropExpectation = {
+        player: t.player,
+        next: t.nextLabel,
+        title: project.Scene.meta?.title ?? id,
+        kicker: t.stepOf(1, first.length),
+        segments: first.length,
+        cases: project.Scene.settings?.length ?? 0,
+        madeWith: t.madeWith,
+        home: PRODUCT.home,
+        open: null,
+      };
+      const src = `${embed}/catalog/${id}.html`;
+      await page.goto(src);
+      await page.waitForSelector('#content[data-ready=true]');
+      assert.deepEqual(await page.evaluate(cropTest, expect), [], `${id}, standalone`);
+      const framed = { ...expect, open: { path: src, query: { ...values, step: first[0]!.step } } };
+      for (const [how, body] of [
+        ['a raw iframe', `<!doctype html><style>body{margin:0}</style><iframe title="t" src="${src}" style="width:900px;height:800px;border:0"></iframe>`],
+        ['the loader', `<!doctype html><style>body{margin:0}</style><div id="a"></div><script src="${embed}/loader.js" data-src="${src}" data-target="a" data-title="t"></script>`],
+      ] as const) {
+        hostBody = body;
+        await page.goto(host);
+        await page.waitForFunction(() => !!document.querySelector('iframe'));
+        const frame = (await (await page.locator('iframe').elementHandle())!.contentFrame())!;
+        await frame.waitForSelector('#content[data-ready=true]');
+        assert.deepEqual(await frame.evaluate(cropTest, framed), [], `${id}, in ${how}`);
+      }
+      pages++;
     }
   } finally {
     await context.close();
   }
+  assert.equal(pages, (await catalog()).size);
 });
 test('every case of every catalog explainer has one step bar segment per step', options, async () => {
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
@@ -507,7 +666,7 @@ test('no horizontal overflow', options, async () => {
     }
 });
 // specs/player-redesign.md R5, R6, R10: the rail beside the card, the tools beside Next, both following the page's direction.
-test('the rail is beside the card when wide and under a closed details when narrow', options, async () => {
+test('the rail is a pane beside the card when wide and a closed details row inside the card, under the words, when narrow', options, async () => {
   const p = projects.get('mr-cache')!,
     list = stepsOf(p, resolveSettings(p.Scene, { request: 'hit' }));
   assert.ok(list.every((s) => s.line), "mr-cache's four steps each have a line");
@@ -522,7 +681,8 @@ test('the rail is beside the card when wide and under a closed details when narr
         heading: rail.querySelector('h2')?.textContent ?? null,
         summary: rail.querySelector('summary')?.textContent ?? null,
         open: (rail as HTMLDetailsElement).open ?? null,
-        holdsList: !!rail.querySelector(':scope > ol.steps'),
+        holdsList: !!rail.querySelector(':scope > ol.steps, :scope > .rail-body > ol.steps'),
+        afterWords: rail.parentElement === document.querySelector('.player') && rail.previousElementSibling?.matches('.words, .notice') === true,
         box: { left: r.left, right: r.right, top: r.top },
         card: { left: c.left, right: c.right, top: c.top, bottom: c.bottom },
       };
@@ -569,7 +729,8 @@ test('the rail is beside the card when wide and under a closed details when narr
       const seen = await rail(page);
       const where = `at ${width}×${height}`;
       assert.deepEqual([seen.tag, seen.rails, seen.summary, seen.open, seen.holdsList], ['DETAILS', 1, 'All 4 steps', false, true], where);
-      assert.ok(seen.box.top >= seen.card.bottom, `${where}: the rail is under the card ${JSON.stringify(seen)}`);
+      // specs/player-tile.md T2: a row of the card, under the words.
+      assert.ok(seen.afterWords && seen.box.top < seen.card.bottom, `${where}: the rail is a row in the card, under the words ${JSON.stringify(seen)}`);
       assert.equal(await page.locator('.steps button').count(), list.length, `${where}: the list is in the page`);
       await page.locator('details.rail > summary').click();
       await page.locator('.steps button').nth(2).click();
@@ -590,6 +751,47 @@ test('the rail is beside the card when wide and under a closed details when narr
     await page.waitForFunction(() => document.querySelector('.rail')?.tagName === 'ASIDE');
     assert.equal(await page.locator('.steps [aria-current=step]').getAttribute('data-step'), list[2]!.step);
   } finally { await page.close(); }
+});
+
+// specs/player-tile.md T2: one tile holds everything the page shows.
+test('one tile: the border is on .layout.tile alone, the rail pane runs its height, and the steps and transcript rows are in the card', options, async () => {
+  for (const [width, height] of [[1280, 800], [1440, 900], [390, 844], [768, 1024]] as const) {
+    const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
+    try {
+      await page.goto(`${embed}/mr-cache.html?request=hit`);
+      await page.waitForSelector('[data-ready=true]');
+      const seen = await page.evaluate(() => {
+        const tile = document.querySelector<HTMLElement>('.layout')!,
+          player = document.querySelector<HTMLElement>('.player')!,
+          rail = document.querySelector<HTMLElement>('aside.rail'),
+          shadowed = [...document.querySelectorAll<HTMLElement>('#content *')].filter((e) => getComputedStyle(e).boxShadow !== 'none' && !e.closest('.segments, .stage, .overview, .button'));
+        return {
+          tileClass: tile.className,
+          tileShadow: getComputedStyle(tile).boxShadow !== 'none',
+          tileRadius: getComputedStyle(tile).borderTopLeftRadius,
+          playerShadow: getComputedStyle(player).boxShadow,
+          shadowed: shadowed.map((e) => e.className),
+          outside: [...document.getElementById('content')!.children].map((e) => e.className),
+          tileHeight: tile.getBoundingClientRect().height,
+          railHeight: rail?.getBoundingClientRect().height ?? null,
+          railRule: rail ? getComputedStyle(rail).borderInlineStartWidth : null,
+          rows: [...player.children].filter((e) => e.matches('.words, details.rail, details.transcript')).map((e) => e.className),
+        };
+      });
+      const where = `at ${width}×${height}`;
+      assert.deepEqual([seen.tileClass, seen.tileShadow, seen.tileRadius, seen.playerShadow], ['layout tile', true, '12px', 'none'], where);
+      assert.deepEqual(seen.shadowed, ['layout tile'], `${where}: one element carries the tile's edge`);
+      assert.deepEqual(seen.outside, ['layout tile'], `${where}: #content holds the tile and nothing else`);
+      if (width >= 1100) {
+        assert.equal(seen.railHeight, seen.tileHeight, `${where}: the rail's rule runs the tile's height`);
+        assert.equal(seen.railRule, '1px', where);
+        assert.deepEqual(seen.rows, ['words', 'transcript'], where);
+      } else {
+        assert.equal(seen.railHeight, null, where);
+        assert.deepEqual(seen.rows, ['words', 'rail', 'transcript'], `${where}: the steps row, then the transcript row, under the words`);
+      }
+    } finally { await page.close(); }
+  }
 });
 
 test('view tools share Next\'s row when wide and wrap below it when narrow', options, async () => {
@@ -617,7 +819,7 @@ test('view tools share Next\'s row when wide and wrap below it when narrow', opt
   }
 });
 
-test('right to left: the step bar fills from the right and the rail sits on the left', options, async () => {
+test('right to left: the step bar fills from the right, the rail sits on the left, and the footer\'s mark is on the right with the way out on the left', options, async () => {
   // No catalog page sets dir="rtl" (a right-to-left lettered page keeps its controls as they are),
   // so this sets it on mr-cache to check the logical properties the stepper row and rail use.
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
@@ -640,6 +842,20 @@ test('right to left: the step bar fills from the right and the rail sits on the 
     assert.ok(seen.rail <= seen.card, `the rail is on the card's left: ${JSON.stringify(seen)}`);
     assert.ok(seen.prev > seen.next, `Previous is right of Next: ${JSON.stringify(seen)}`);
   } finally { await page.close(); }
+  // specs/player-tile.md T9: in a frame, the footer's mark is at the inline start (the right) and the way out at the end (the left).
+  hostBody = `<!doctype html><style>body{margin:0}</style><iframe title="t" src="${embed}/mr-cache.html?request=hit" style="width:1280px;height:800px;border:0"></iframe>`;
+  const host2 = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await host2.goto(host);
+    const frame = await readyFrame(host2, 'mr-cache');
+    const seen = await frame.evaluate(() => {
+      document.documentElement.setAttribute('dir', 'rtl');
+      const box = (s: string) => document.querySelector(s)!.getBoundingClientRect();
+      return { foot: [box('.foot').left, box('.foot').right], mark: [box('.foot .mark').left, box('.foot .mark').right], open: [box('.foot .open').left, box('.foot .open').right], rail: box('.rail').right, card: box('.player').left };
+    });
+    assert.ok(seen.mark[1]! > seen.open[1]! && seen.foot[1]! - seen.mark[1]! < 24 && seen.open[0]! - seen.foot[0]! < 24, `the mark at the right, the way out at the left: ${JSON.stringify(seen)}`);
+    assert.ok(seen.rail <= seen.card, `the rail on the left: ${JSON.stringify(seen)}`);
+  } finally { await host2.close(); }
 });
 async function readyFrame(page: Page, scene: string): Promise<Frame> {
   await page.waitForFunction(() => document.querySelectorAll('iframe').length > 0);
@@ -690,6 +906,9 @@ test(
         b = await readyFrame(page, 'oauth-pkce');
       const ah = await assertHeight(page, 'a', a),
         bh = await assertHeight(page, 'b', b);
+      // specs/player-tile.md T3: the loader adds the iframe and nothing else; the way out is the page's footer.
+      assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#a > *, #b > *')].map((e) => e.tagName)), ['IFRAME', 'IFRAME']);
+      assert.equal(await page.locator('a').count(), 0, 'no link outside the frames');
       await a.locator('.transcript > summary').click();
       const grown = await assertHeight(page, 'a', a);
       assert.ok(grown > ah);
@@ -720,6 +939,164 @@ test(
     }
   },
 );
+// specs/player-tile.md T3: the loader mounts an iframe and nothing else, and dispose() takes it away with its listener.
+test('the loader appends only the iframe, and dispose() removes the iframe and its message listener', options, async () => {
+  hostBody = `<!doctype html><div id="t"></div><script src="${embed}/loader.js"></script>`;
+  const page = await browser.newPage();
+  try {
+    await page.goto(host);
+    await page.evaluate(() => {
+      const w = window as unknown as { __listeners: number };
+      w.__listeners = 0;
+      const add = window.addEventListener.bind(window), remove = window.removeEventListener.bind(window);
+      window.addEventListener = ((type: string, ...rest: [EventListenerOrEventListenerObject, unknown?]) => { if (type === 'message') w.__listeners++; return add(type, ...(rest as [EventListenerOrEventListenerObject])); }) as typeof window.addEventListener;
+      window.removeEventListener = ((type: string, ...rest: [EventListenerOrEventListenerObject, unknown?]) => { if (type === 'message') w.__listeners--; return remove(type, ...(rest as [EventListenerOrEventListenerObject])); }) as typeof window.removeEventListener;
+    });
+    await page.evaluate((src) => {
+      const w = window as unknown as { __dispose: () => void; RaynerEmbed: { mountExplainer: (t: HTMLElement, s: string, o: object) => () => void } };
+      w.__dispose = w.RaynerEmbed.mountExplainer(document.getElementById('t')!, src, { title: 'Cache' });
+    }, `${embed}/mr-cache.html`);
+    await readyFrame(page, 'mr-cache');
+    assert.deepEqual(await page.evaluate(() => ({ children: [...document.getElementById('t')!.children].map((e) => e.tagName), links: document.querySelectorAll('a').length, listeners: (window as unknown as { __listeners: number }).__listeners })), { children: ['IFRAME'], links: 0, listeners: 1 });
+    await page.evaluate(() => (window as unknown as { __dispose: () => void }).__dispose());
+    assert.deepEqual(await page.evaluate(() => ({ children: document.getElementById('t')!.childNodes.length, links: document.querySelectorAll('a, iframe').length, listeners: (window as unknown as { __listeners: number }).__listeners })), { children: 0, links: 0, listeners: 0 });
+  } finally { await page.close(); }
+});
+/** The colour of one screen pixel of `page`, read back from a screenshot (the host cannot read a cross-origin frame's pixels). */
+async function pixelAt(page: Page, x: number, y: number): Promise<number[]> {
+  const png = await page.screenshot({ clip: { x, y, width: 1, height: 1 } });
+  const reader = await browser.newPage();
+  try {
+    return await reader.evaluate(async (b64) => {
+      const img = new Image();
+      img.src = 'data:image/png;base64,' + b64;
+      await img.decode();
+      const c = document.createElement('canvas');
+      c.width = c.height = 1;
+      const g = c.getContext('2d')!;
+      g.drawImage(img, 0, 0);
+      return [...g.getImageData(0, 0, 1, 1).data].slice(0, 3);
+    }, png.toString('base64'));
+  } finally { await reader.close(); }
+}
+// specs/player-tile.md T4: in a frame the page is the tile alone, on the host's background.
+test('framed, the page draws only the tile: a transparent body, no padding, and the host\'s background at the tile\'s corner in light and dark device schemes', options, async () => {
+  for (const colorScheme of ['light', 'dark'] as const) {
+    hostBody = `<!doctype html><style>body{margin:0;padding:20px;background:rgb(251,248,243)}</style>${loader('a', 'mr-cache')}`;
+    const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, colorScheme, reducedMotion: 'reduce' });
+    try {
+      const page = await context.newPage();
+      await page.goto(host);
+      const frame = await readyFrame(page, 'mr-cache');
+      await assertHeight(page, 'a', frame);
+      const inside = await frame.evaluate(() => ({
+        framed: document.documentElement.hasAttribute('data-framed'),
+        theme: document.documentElement.dataset.theme,
+        body: getComputedStyle(document.body).backgroundColor,
+        padding: getComputedStyle(document.getElementById('content')!).padding,
+        tile: (() => { const r = document.querySelector('.tile')!.getBoundingClientRect(); return [r.left, r.top, innerWidth - r.right]; })(),
+      }));
+      assert.deepEqual(inside, { framed: true, theme: 'light', body: 'rgba(0, 0, 0, 0)', padding: '0px', tile: [1, 1, 1] }, colorScheme);
+      const box = (await page.locator('#a iframe').boundingBox())!;
+      assert.deepEqual(await pixelAt(page, box.x + 2, box.y + 2), [251, 248, 243], `${colorScheme} device: the host's background at the tile's corner`);
+      // And inside the corner's curve, the tile's own surface.
+      assert.notDeepEqual(await pixelAt(page, box.x + 16, box.y + 16), [251, 248, 243], colorScheme);
+    } finally { await context.close(); }
+  }
+  // Standalone, as before: the page's background and padding.
+  const page = await browser.newPage({ reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/mr-cache.html`);
+    await page.waitForSelector('[data-ready=true]');
+    assert.deepEqual(await page.evaluate(() => ({
+      framed: document.documentElement.hasAttribute('data-framed'),
+      body: getComputedStyle(document.body).backgroundColor,
+      padding: getComputedStyle(document.getElementById('content')!).padding,
+    })), { framed: false, body: 'rgb(246, 247, 249)', padding: '24px 16px 48px' });
+  } finally { await page.close(); }
+});
+test('the loader passes theme=light or theme=dark from the host page\'s computed colour scheme when the theme is auto, and the given theme otherwise', options, async () => {
+  const cases = [
+    { scheme: 'light', host: '', theme: '', want: 'light' },
+    { scheme: 'dark', host: '', theme: '', want: 'light' },
+    { scheme: 'dark', host: 'light dark', theme: '', want: 'dark' },
+    { scheme: 'light', host: 'light dark', theme: '', want: 'light' },
+    { scheme: 'light', host: 'dark', theme: '', want: 'dark' },
+    { scheme: 'dark', host: 'light', theme: 'auto', want: 'light' },
+    { scheme: 'light', host: '', theme: 'dark', want: 'dark' },
+    { scheme: 'dark', host: 'dark', theme: 'light', want: 'light' },
+  ] as const;
+  for (const c of cases) {
+    hostBody = `<!doctype html>${c.host ? `<style>:root{color-scheme:${c.host}}</style>` : ''}<div id="a"></div><script src="${embed}/loader.js" data-src="${embed}/mr-cache.html" data-target="a" data-title="t"${c.theme ? ` data-theme="${c.theme}"` : ''}></script>`;
+    const context = await browser.newContext({ colorScheme: c.scheme });
+    try {
+      const page = await context.newPage();
+      await page.goto(host);
+      const src = new URL(await page.locator('#a iframe').getAttribute('src') ?? '');
+      assert.equal(src.searchParams.get('theme'), c.want, JSON.stringify(c));
+    } finally { await context.close(); }
+  }
+});
+// specs/player-tile.md T5: no catalog explainer changes style between cases, so this scene does.
+const TWO_PAPERS = `import{Scene,Text}from'rayner';import{stage,settingsOf}from'rayner/explain';
+export default class TwoPapers extends Scene{static meta={id:'two-papers',title:'Two papers'};
+static settings=[{id:'look',label:'Look',default:'cream',options:[{value:'cream',label:'Cream'},{value:'night',label:'Night'}]}];
+async construct(){const s=stage(this,{style:settingsOf(this).look==='night'?'nord':'hand-drawn'});
+await this.step('one',{caption:'A label.'});await s.enter(new Text('paper',{fontSize:0.4}),{describe:'paper'});
+await this.step('two',{caption:'Another.'});await s.enter(new Text('again',{fontSize:0.4}).moveTo([0,-1]),{describe:'again'});}}`;
+test('the tile takes the case\'s paper as --paper: the palette\'s paper, changing with a case of another style, and in the page before its script runs', options, async () => {
+  const { PALETTES } = await import('../explain/palettes.ts');
+  const dir = join(folder, 'two-papers');
+  await mkdir(dir, { recursive: true });
+  await writeFile(join(dir, 'scene.ts'), TWO_PAPERS);
+  await buildExplainer(await collectProject(dir, { write: false }), join(folder, 'two-papers.html'));
+  const cream = PALETTES['hand-drawn']!.paper, night = PALETTES.nord!.paper;
+  const paper = (page: Page) => page.evaluate(() => ({
+    player: getComputedStyle(document.querySelector('.player')!).getPropertyValue('--paper').trim(),
+    tile: getComputedStyle(document.querySelector('.tile')!).backgroundColor,
+  }));
+  const page = await browser.newPage({ reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/two-papers.html`);
+    await page.waitForSelector('[data-ready=true]');
+    const first = await paper(page);
+    assert.equal(first.player, cream);
+    await page.locator('.case input[value=night]').check();
+    await page.waitForFunction((night) => getComputedStyle(document.querySelector('.player')!).getPropertyValue('--paper').trim() === night, night);
+    await page.waitForTimeout(300); // the tint's 200 ms transition
+    const second = await paper(page);
+    assert.notEqual(second.tile, first.tile, 'the tint follows the paper');
+    // A catalog page, too: mr-cache draws on hand-drawn's paper.
+    await page.goto(`${embed}/mr-cache.html`);
+    await page.waitForSelector('[data-ready=true]');
+    assert.equal((await paper(page)).player, cream);
+  } finally { await page.close(); }
+  // Before (here: without) the script, the shell's card already has the default case's paper.
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  try {
+    const shell = await context.newPage();
+    for (const [id, want] of [['two-papers', cream], ['exgit', PALETTES['catppuccin-mocha']!.paper]] as const) {
+      await shell.goto(`${embed}/${id}.html`);
+      assert.equal((await paper(shell)).player, want, id);
+    }
+  } finally { await context.close(); }
+});
+// specs/player-tile.md T6: the published height at 640 px is the height the loader gives the frame there.
+test('known heights: mr-cache measures three heights above the floor, and the loader at 640 px settles the frame at heights["640"] within 2 px', options, async () => {
+  const { measureEmbed, embedSizeProblems } = await import('../tools/lib/explain-embed-size.ts');
+  const size = await measureEmbed(browser, embed, 'mr-cache.html');
+  assert.deepEqual(embedSizeProblems(size), [], JSON.stringify(size));
+  assert.ok(size.heights['390'] > size.heights['640'], `a phone's page is taller: ${JSON.stringify(size)}`);
+  // A different host on another origin, as a reader's would be.
+  hostBody = `<!doctype html><style>body{margin:0}</style>${loader('a', 'mr-cache')}<p>After the embed.</p>`;
+  const page = await browser.newPage({ viewport: { width: 640, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(host);
+    const frame = await readyFrame(page, 'mr-cache');
+    const settled = await assertHeight(page, 'a', frame);
+    assert.ok(Math.abs(settled - size.heights['640']) <= 2, `settled at ${settled}, published ${size.heights['640']}`);
+  } finally { await page.close(); }
+});
 // The rest of URL cases, step fallback, history, copy link and reduced motion is the player
 // model's (below), including the fixed fallback scenario.
 test('?theme=dark, light and auto (following the reader\'s colour scheme) set the page colours', options, async () => {
@@ -1194,6 +1571,8 @@ function resolveLoad(p: Project, request: Record<string, string>, step: string |
   return { entry: { values, step: list[found]!.step }, notice: notices.join(' ') };
 }
 
+/** The parts of the card the reader model checks, in order (specs/player-tile.md T2). */
+const CARD_ORDER = 'head frame stepper words transcript foot';
 /** Everything the reader can see or the host can read, in one snapshot. */
 function observe(ids: string[]) {
   const q = new URL(location.href).searchParams;
@@ -1244,6 +1623,9 @@ function observe(ids: string[]) {
     overviewHidden: document.querySelector<HTMLButtonElement>('.overview')!.hidden,
     transcriptOpen: (document.querySelector('details.transcript') as HTMLDetailsElement).open,
     transcriptLinks: [...document.querySelectorAll<HTMLAnchorElement>('.transcript section:not([hidden]) a')].map((a) => a.href),
+    // specs/player-tile.md T2: the card's parts, in the card's order, and nothing of the page outside the tile.
+    card: [...document.querySelector('.player')!.children].flatMap((e) => ['head', 'frame', 'stepper', 'words', 'transcript', 'foot'].filter((c) => e.classList.contains(c))),
+    outside: [...document.getElementById('content')!.children].map((e) => e.className),
   };
 }
 /** The stage's accessible description as Chromium computes it for assistive technology. */
@@ -1359,6 +1741,8 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   eq('history length', seen.history, r.base + m.entries.length);
   eq('horizontal overflow', seen.overflow, false);
   eq('transcript open', seen.transcriptOpen, m.transcript);
+  eq('card order', seen.card.join(' '), CARD_ORDER);
+  eq('only the tile in the page', seen.outside.join(' '), 'layout tile');
   eq(
     'transcript links',
     seen.transcriptLinks.map((h) => {
@@ -1634,6 +2018,11 @@ const ToggleTranscript = command('ToggleTranscript', always, async (m, r) => {
   await r.page.locator('.transcript > summary').click();
   m.transcript = !m.transcript;
 });
+/** On a narrow page, open or close the steps row in the card; a wide page has no such row, and nothing happens. */
+const ToggleSteps = command('ToggleSteps', always, async (_m, r) => {
+  const row = r.page.locator('details.rail > summary');
+  if (await row.count()) await row.click();
+});
 const Resize = (width: number, height: number) =>
   command(`Resize(${width}, ${height})`, always, async (m, r) => {
     await r.page.setViewportSize({ width, height });
@@ -1684,6 +2073,7 @@ function commandArbs(p: Project): fc.Arbitrary<Cmd>[] {
     fc.integer({ min: -5000, max: 5000 }).map(CtrlWheel),
     fc.tuple(fc.integer({ min: -400, max: 400 }), fc.integer({ min: -400, max: 400 })).map(([x, y]) => Drag(x, y)),
     fc.constant(ToggleTranscript),
+    fc.constant(ToggleSteps),
     viewportArb.map((v) => Resize(v.width, v.height)),
     fc.constant(CloseUpButton),
     fc.constant(OverviewButton),
@@ -2379,7 +2769,7 @@ const parentOriginArb = (hostOrigin: string) =>
     fc.constant({ value: undefined, exact: false }),
   );
 test(
-  'framed with any parentOrigin: messages go to exactly that origin when it is an exact HTTP(S) origin and nowhere otherwise; the player\'s own "Open in a new tab" link shows only when no parentOrigin is set',
+  'framed with any parentOrigin: messages go to exactly that origin when it is an exact HTTP(S) origin and nowhere otherwise; the footer\'s "Open the explainer" link shows with or without parentOrigin and opens this step and case without it',
   options,
   async () => {
     await fc.assert(
@@ -2396,8 +2786,22 @@ test(
           await page.waitForTimeout(100);
           const posts = await postsOf(frame);
           assert.deepEqual([...new Set(posts.map((p) => p.origin))], exact ? [value] : [], `parentOrigin ${JSON.stringify(value)}`);
-          // The loader, which sets parentOrigin, puts its own link beside the frame.
-          assert.equal(await frame.locator('a.standalone').count(), value === undefined ? 1 : 0, `parentOrigin ${JSON.stringify(value)}`);
+          // specs/player-tile.md T3: in any frame the footer's way out opens this page at the reader's step
+          // and case, in a new tab, without parentOrigin.
+          const out = await frame.evaluate(() => ({
+            links: [...document.querySelectorAll<HTMLAnchorElement>('.player > .foot a.open')].map((a) => ({ href: a.href, target: a.target, text: a.textContent })),
+            page: location.origin + location.pathname,
+            step: document.querySelector<HTMLElement>('.steps [aria-current=step]')?.dataset.step,
+            attacker: document.querySelector<HTMLInputElement>('input[name=attacker]:checked')?.value,
+          }));
+          assert.equal(out.links.length, 1, `parentOrigin ${JSON.stringify(value)}`);
+          const href = new URL(out.links[0]!.href);
+          assert.deepEqual(
+            { path: href.origin + href.pathname, step: href.searchParams.get('step'), attacker: href.searchParams.get('attacker'), parentOrigin: href.searchParams.has('parentOrigin'), target: out.links[0]!.target, text: out.links[0]!.text },
+            { path: out.page, step: out.step, attacker: out.attacker, parentOrigin: false, target: '_blank', text: 'Open the explainer' },
+            `parentOrigin ${JSON.stringify(value)}`,
+          );
+          assert.ok(out.step && out.attacker, `the player shows a step and a case: ${JSON.stringify(out)}`);
         } finally {
           await context.close();
         }

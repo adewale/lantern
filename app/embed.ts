@@ -1,9 +1,11 @@
-import { renderAt, traceScene, SeekSink } from '../src/index.ts';
+import { renderAt, SeekSink } from '../src/index.ts';
+import { traceRun } from '../src/trace.ts';
 import type { Trace } from '../src/index.ts';
 import { StopScene } from '../src/index.ts';
 import { bindSnapshots, withSettings, resolveSettings } from '../explain/index.ts';
 import type { ExplainerClass, Settings, SnapshotStore } from '../explain/index.ts';
 import { restingTime, pictureHtml, pictureSummary, stepWords } from '../explain/trace.ts';
+import { paperOf } from '../explain/stage.ts';
 import { reportHeight } from './embed-protocol.ts';
 import { icon } from './embed-icons.ts';
 import type { IconName } from './embed-icons.ts';
@@ -12,7 +14,7 @@ import type { Zoom } from './embed-zoom.ts';
 import { NARROW_PX, closeUps, stageScale, stepLayouts } from './embed-closeup.ts';
 import type { StepLayout } from './embed-closeup.ts';
 import { chromeFor, descriptionsLang, settingsProblem } from './embed-strings.ts';
-import { SHARE_META, shareable } from './embed-share.ts';
+import { HOME, SHARE_META, shareable } from './embed-share.ts';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, className?: string): HTMLElementTagNameMap[K] => {
   const node = document.createElement(tag);
@@ -39,6 +41,10 @@ function setIcon(b: HTMLButtonElement, label: string, name: IconName) {
 export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snapshots: SnapshotStore,
   audio?: (stage: HTMLElement, frame: HTMLElement) => {set(value: unknown): void; stop(): void}): Promise<void> {
   const params = new URLSearchParams(location.search);
+  // In a frame the page draws nothing but the tile: no padding, no background (embed.css). The
+  // built page's first script says so before the body is laid out; this keeps it so for a page
+  // mounted some other way.
+  if (window.parent !== window) document.documentElement.dataset.framed = '';
   document.documentElement.dataset.theme = ['light', 'dark'].includes(params.get('theme') ?? '')
     ? params.get('theme')!
     : 'auto';
@@ -57,13 +63,13 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     playing = false,
     // On a narrow stage, whether each step opens on its close-up; Whole picture turns it off, Close-up on.
     follow = true;
-  type Entry = { Scene: ExplainerClass; trace: Trace; layouts?: Promise<Map<string, StepLayout>>; resting: Map<string, Node[]> };
+  type Entry = { Scene: ExplainerClass; trace: Trace; paper?: string; layouts?: Promise<Map<string, StepLayout>>; resting: Map<string, Node[]> };
   const cache = new Map<string, Entry>();
   /** The case on show, with its layouts once a close-up has needed them. */
   let current: Entry | undefined;
 
-  // Title, then the cases it can show: the choice sits next to what it changes.
-  // The built page's heading is the title, so the live page says what the static one did.
+  // The card's header: the title, then the cases it can show, so the choice sits next to what
+  // it changes. The built page's heading is the title, so the live page says what the static one did.
   const title = el('h1', root.querySelector('h1')?.textContent ?? Source.meta?.title ?? '');
   const head = el('header', undefined, 'head');
   head.append(title);
@@ -138,7 +144,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const zoomOut = button(t.zoomOut, 'zoomOut'),
     zoomIn = button(t.zoomIn, 'zoomIn'),
     wholePicture = button(t.wholePicture, 'fit'),
-    copy = button(t.copy, 'link'),
+    copy = button(t.copy, 'link', { className: 'button icon share' }),
     enlarge = button(t.enlarge, 'enlarge');
   enlarge.setAttribute('aria-pressed', 'false');
   // On a narrow stage, Whole picture shows the whole picture from then on; Close-up brings
@@ -167,42 +173,86 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     ledeRuler = el('p', undefined, 'lede-ruler');
   ruler.setAttribute('aria-hidden', 'true');
   ledeRuler.setAttribute('aria-hidden', 'true');
-  // One card: the picture, the stepper row, then the words.
-  player.append(frame, stepper, words, notice, summary, ruler, ledeRuler);
+  // The page's transcript holds every case; the player shows the current one, and its links move
+  // the player. It is a closed row of the card, under the words (and the steps, on a narrow page).
+  const transcript = root.querySelector<HTMLDetailsElement>('.transcript')!;
+  transcript.open = false;
+  // The card's footer: who made it, at the start, and inside a frame (the loader's or any other)
+  // a way out to this page, at the end. A footer inside a section is no landmark of its own.
+  const foot = el('footer', undefined, 'foot'),
+    mark = el('a', undefined, 'mark');
+  mark.href = HOME;
+  mark.target = '_blank';
+  mark.rel = 'noopener';
+  mark.setAttribute('aria-label', t.madeWith);
+  mark.append(icon('mark'), 'Rayner');
+  foot.append(mark);
+  const wayOut = el('a', t.open, 'open');
+  wayOut.target = '_blank';
+  wayOut.rel = 'noopener';
+  wayOut.append(icon('open'));
+  if (window.parent !== window) foot.append(wayOut);
+  // One card: its header (the title and the cases), the picture mounted under it, the stepper
+  // row, the words, the rows that open under them, then the footer.
+  player.append(head, frame, stepper, words, notice, transcript, foot, summary, ruler, ledeRuler);
   // A frame the loader sizes to its content has no viewport height to fit: the card takes
   // the page's width, and the host page scrolls (embed.css, --player-reserve).
   if (window.parent !== window && params.has('parentOrigin')) root.style.setProperty('--player-reserve', '0px');
+  // The header's height depends on how the title wraps in the reader's fonts, so the stage's cap
+  // takes the measured header rather than a guess: a title that wraps to two lines makes the stage
+  // smaller, not the step heading fall off the screen. Written in the next frame, outside
+  // ResizeObserver delivery, as reserve() is.
+  // The header's height and the card's width depend on each other: a smaller cap narrows the card,
+  // which can wrap the title again. Measure until the height holds (at most four passes), so the
+  // stage has its final size before anything is drawn on it.
+  const measureHead = () => {
+    for (let pass = 0; pass < 4; pass++) {
+      const height = `${Math.ceil(head.getBoundingClientRect().height)}px`;
+      if (root.style.getPropertyValue('--head-h') === height) return;
+      root.style.setProperty('--head-h', height);
+    }
+  };
+  new ResizeObserver(() => requestAnimationFrame(measureHead)).observe(head);
+  // A window resize changes the card's width first; measuring in the resize event, before layout is
+  // observed, lets the stage change size once rather than twice.
+  addEventListener('resize', measureHead);
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', t.stepList);
-  // The steps list is a rail: beside the card on a wide page, under its heading; under the
-  // card on a narrow one, in a closed disclosure, where the step bar already says where the
-  // reader is. One list, moved between the two, so it is in the page at every width.
+  // The steps list is a rail: on a wide page a pane of the tile beside the card, under its
+  // heading; on a narrow one a closed disclosure row in the card, under the words, where the step
+  // bar already says where the reader is. One list, moved between the two, so it is in the page
+  // at every width. The pane stretches to the tile's height; its body, not the pane, stays in view.
   const railBeside = el('aside', undefined, 'rail'),
+    railBody = el('div', undefined, 'rail-body'),
     railHeading = el('h2', t.steps),
     railUnder = el('details', undefined, 'rail'),
     railSummary = el('summary');
   railHeading.id = 'rail-heading';
   railBeside.setAttribute('aria-labelledby', railHeading.id);
-  railBeside.append(railHeading);
+  railBody.append(railHeading);
+  railBeside.append(railBody);
   railUnder.append(railSummary);
-  const layout = el('div', undefined, 'layout');
+  // The tile: everything the page shows, on one surface inside one edge.
+  const layout = el('div', undefined, 'layout tile');
   layout.append(player);
   // The width embed.css puts the rail beside the card at.
   const wide = matchMedia('(min-width: 1100px)');
   const placeRail = () => {
-    const [home, away] = wide.matches ? [railBeside, railUnder] : [railUnder, railBeside];
-    if (steps.parentElement !== home) home.append(steps);
-    away.remove();
-    // Appended after the card, never by moving the card, which would end full screen.
-    if (home.parentElement !== layout) layout.append(home);
+    if (wide.matches) {
+      if (steps.parentElement !== railBody) railBody.append(steps);
+      railUnder.remove();
+      // Appended after the card, never by moving the card, which would end full screen.
+      if (railBeside.parentElement !== layout) layout.append(railBeside);
+    } else {
+      if (steps.parentElement !== railUnder) railUnder.append(steps);
+      railBeside.remove();
+      if (railUnder.nextElementSibling !== transcript) transcript.before(railUnder);
+    }
     keepInRail();
   };
   placeRail();
   wide.addEventListener('change', placeRail);
-  // The page's transcript holds every case; the player shows the current one, and its links move the player.
-  const transcript = root.querySelector<HTMLDetailsElement>('.transcript')!;
-  transcript.open = false;
   transcript.addEventListener('click', (e) => {
     const a = (e.target as Element).closest<HTMLAnchorElement>('section a'),
       step = a && new URLSearchParams(a.search).get('step');
@@ -210,13 +260,10 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     e.preventDefault();
     void show(trace.steps.findIndex((s) => s.step === step));
   });
-  // Inside a frame, a way out to the full page; a standalone page needs none, and the
-  // loader (which sets parentOrigin) already puts this link beside the frame.
-  const standalone = el('a', t.newTab, 'standalone');
-  standalone.target = '_blank';
-  standalone.rel = 'noopener';
-  const framed = window.parent !== window && !params.has('parentOrigin');
-  root.replaceChildren(head, layout, transcript, ...(framed ? [standalone] : []));
+  root.replaceChildren(layout);
+  // Measured now, before the first step is shown, so the stage has its final size when the first
+  // close-up is worked out; the observer above follows later changes.
+  measureHead();
 
   // A map beside the picture while a narrow stage is zoomed:
   // where the view is, and where the step changed. Pressing it moves to the step's next
@@ -298,6 +345,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     map.replaceChildren(...parts, view);
   }
   overview.onclick = nextView.onclick = () => {
+    // The stage may have changed size since the close-ups were last worked out (the header settles
+    // a frame after a resize), so work them out for the stage as it is now.
+    refreshTour();
     if (tour.length < 2) return;
     revealStage();
     if (zoom.k <= 1) { closer.click(); return; }
@@ -352,7 +402,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     (push && url.href !== location.href ? history.pushState : history.replaceState).call(history, null, '', url);
     const out = new URL(url);
     out.searchParams.delete('parentOrigin');
-    standalone.href = out.href;
+    wayOut.href = out.href;
   }
   function chrome() {
     const step = trace.steps[selected]!,
@@ -387,12 +437,12 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   /** Beside the card, scroll the rail, never the page, so the current step is in view in it. */
   function keepInRail() {
     const item = steps.querySelector<HTMLElement>('[aria-current=step]');
-    if (!item || !railBeside.isConnected || railBeside.scrollHeight <= railBeside.clientHeight) return;
-    // The sticky rail is the item's offset parent, so these are in its scrolled content.
+    if (!item || !railBeside.isConnected || railBody.scrollHeight <= railBody.clientHeight) return;
+    // The sticky rail body is the item's offset parent, so these are in its scrolled content.
     const top = item.offsetTop,
       bottom = top + item.offsetHeight;
-    if (top < railBeside.scrollTop) railBeside.scrollTop = top;
-    else if (bottom > railBeside.scrollTop + railBeside.clientHeight) railBeside.scrollTop = bottom - railBeside.clientHeight;
+    if (top < railBody.scrollTop) railBody.scrollTop = top;
+    else if (bottom > railBody.scrollTop + railBody.clientHeight) railBody.scrollTop = bottom - railBody.clientHeight;
   }
   let shownCase = '',
     reservedFor = '';
@@ -432,8 +482,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     const kickerHeight = kicker.getBoundingClientRect().height;
     ledeRuler.replaceChildren();
     caption.style.minHeight = `${tallest}px`;
-    // Reserve each row separately: a two-line title must not move the line below it.
-    ledeTitle.style.minHeight = `${tallestTitle}px`;
+    // The line keeps its own room, so its top never moves; the title does not, so it stays with the
+    // line under it. The lede sits at the bottom of its room (embed.css), so the slack a short title
+    // leaves falls above the kicker, between the controls and the words, not inside the heading.
     ledeLine.style.minHeight = `${tallestLine}px`;
     lede.style.minHeight = `${kickerHeight + tallestTitle + tallestLine}px`;
   }
@@ -687,8 +738,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     const key = JSON.stringify(next);
     let entry = cache.get(key);
     if (!entry) {
-      const Scene = withSettings(Bound, next);
-      entry = { Scene, trace: await traceScene(Scene), resting: new Map() };
+      const Scene = withSettings(Bound, next),
+        { trace, scene } = await traceRun(Scene);
+      entry = { Scene, trace, paper: paperOf(scene), resting: new Map() };
       cache.set(key, entry);
     }
     if (token !== loads) return;
@@ -700,6 +752,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     current = entry;
     Active = entry.Scene;
     trace = entry.trace;
+    // The tile's chrome takes a tint from the case's paper (embed.css, --tile); a scene without a
+    // stage has none, and the chrome stays on the page's surface.
+    layout.style.setProperty('--paper', entry.paper ?? 'initial');
     if (changed) zoom.reset();
     selected = name ? trace.steps.findIndex((s) => s.step === name) : 0;
     // A previous case's fallback must not describe the restored case; both of this one's show.
