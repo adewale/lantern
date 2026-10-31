@@ -287,6 +287,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     }
   };
   new ResizeObserver(() => requestAnimationFrame(measureHead)).observe(head);
+  // A window resize changes the card's width first; measuring in the resize event, before layout is
+  // observed, lets the stage change size once rather than twice.
+  addEventListener('resize', measureHead);
 
   const steps = el('ol', undefined, 'steps');
   steps.setAttribute('aria-label', t.stepList);
@@ -421,6 +424,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     map.replaceChildren(...parts, view);
   }
   overview.onclick = nextView.onclick = () => {
+    // The stage may have changed size since the close-ups were last worked out (the header settles
+    // a frame after a resize), so work them out for the stage as it is now.
+    refreshTour();
     if (tour.length < 2) return;
     revealStage();
     if (zoom.k <= 1) { closer.click(); return; }
