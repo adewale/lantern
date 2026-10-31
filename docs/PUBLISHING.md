@@ -33,7 +33,7 @@ How to put a built page on a website. The contracts (URL parameters, the resize,
    ```html
    <iframe src="/explainers/cache.html?step=request&request=miss&theme=light"
            title="Why a cache changes the request path"
-           style="width:100%;height:640px;border:0;border-radius:12px;display:block"
+           style="width:100%;height:640px;border:0;display:block"
            allow="fullscreen"
            loading="lazy"></iframe>
    ```
@@ -82,7 +82,7 @@ How to put a built page on a website. The contracts (URL parameters, the resize,
    - `curl -sI https://your.site/explainers/cache.html` shows the CSP and `Cache-Control` from the recipe.
    - The page opens at the step and case in its URL, Next plays, and the transcript opens.
    - With two embeds on one page, opening one transcript resizes only that iframe.
-   - Inside a frame, your page's background shows at the tile's corners, and the tile's footer has "Open the explainer".
+   - Inside a frame, your page's background shows in the tile's 1 px exterior inset, and the tile's footer has "Open the explainer".
    - With `--origin`, `<id>.oembed.json` is served as JSON and the page's head links to it.
    - Record the `artifactHash` from the receipt beside the URL you published. For the collection, compare the served bytes with `deployment.json`; valid CSP hashes alone do not prove that the latest reviewed page was deployed.
 

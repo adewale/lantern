@@ -1,5 +1,7 @@
 # Player redesign: the stepper shows where the reader is
 
+Implementation update: the Atlas integration keeps this structure, with square tiles and iframe wrappers, a 4 px header rule and a 1212 px sidebar breakpoint. The original geometry below records the earlier design; see [the current evidence](../docs/evidence/periodic-groups-audit/README.md).
+
 Status: requirements, ready to implement. Mock: [`specs/player-redesign.mock.html`](player-redesign.mock.html) (open it in a browser; the tags R1 to R7 in it refer to the sections below). The reasoning behind the design is in §2; the decisions in §3 are settled and are not to be reopened during implementation.
 
 This document is written for an implementing agent. It assumes you have read `app/embed.ts`, `app/embed.css`, `app/embed-strings.ts`, `app/embed-closeup.ts`, `docs/REFERENCE.md` §Player (the paragraphs that begin "**Next** plays the step" and "The stage takes focus"), `docs/TESTING.md`, and the section "Reader settings" of `specs/rayner.md`. The sentence that governs everything here is from that spec: *the author decides the order of ideas and the reader decides the pace.* The player stops after every step. This redesign does not change that.

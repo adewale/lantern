@@ -1,5 +1,7 @@
 # Player tile: the explainer reads as one object
 
+Implementation update: the Atlas integration keeps this structure, with square tiles and iframe wrappers, a 4 px header rule and a 1212 px sidebar breakpoint. The original geometry below records the earlier design; see [the current evidence](../docs/evidence/periodic-groups-audit/README.md).
+
 Status: requirements, ready to implement. Mock: [`specs/player-tile.mock.html`](player-tile.mock.html) (open it in a browser; the tags T1 to T6 in it refer to the sections below). Builds on [`specs/player-redesign.md`](player-redesign.md), which is implemented on `feature/player-step-bar` (PR #59). The decisions in §3 are settled and are not to be reopened during implementation; where this document leaves a choice to you, it says so.
 
 This document is written for an implementing agent. It assumes you have read `specs/player-redesign.md` §1 (the player's parts and the functions in `app/embed.ts`), `app/embed.ts`, `app/embed.css`, `app/embed-strings.ts`, `app/embed-icons.ts`, `app/loader.ts`, `app/embed-protocol.ts`, `app/embed-share.ts`, `tools/lib/explain-build.ts`, `tools/explain-demos.ts`, `tools/explain-site.ts`, `tools/lib/explain-share.ts`, `tools/lib/explain-site-describe.ts`, `explain/palettes.ts`, `explain/look.ts`, `explain/stage.ts` (the `paper` rectangle and `colors`), `docs/PUBLISHING.md`, `docs/REFERENCE.md` §Player and §Embedding, and `docs/TESTING.md`.
