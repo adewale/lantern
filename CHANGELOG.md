@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep authored comparison labels readable when they are unchanged, dimmed, rotated or compressed, and frame headings completely or leave them outside a close-up. Check independently claimed teaching openings at 320 pixels and reject incomplete review receipts.
+- Explain GNOME study outcomes with semantic labels and keep the traffic-share caption within its pictured evidence. Invalid step links return to the explanation's first step.
 - Give the catalog’s longer lessons a short main reading path with complete phone comparisons. Retain implementation walkthroughs under Details and sources, with direct links and full verification.
 - Let authors name a comparison with `s.reading(before, after)`. Keep its subjects together when they fit at a readable scale, while retaining close-ups for smaller details.
 - Add prediction steps to the dictionary, Bloom-filter, Git, Monty Hall and music lessons. Draw birthday comparisons and occupied dates, and show how a wrong font measurement changes placement.

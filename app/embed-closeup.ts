@@ -21,6 +21,7 @@
  * close-up's zoom then multiplies the camera's, and Fit is the author's frame.
  */
 import type { Box, Mobject, Scene, SceneClass, Sink } from '../src/index.ts';
+import { Text } from '../src/index.ts';
 import { labelOf } from '../explain/diagrams.ts';
 import { emphasisOf, readingOf } from '../explain/look.ts';
 import { isHeading } from '../explain/stage.ts';
@@ -44,6 +45,8 @@ export interface LayoutLabel {
 export interface StepLayout {
   /** Authored comparison, independent of incidental changed code or notes. */
   reading?: { box: Box; labels: LayoutLabel[] };
+  /** Complete visible stage chrome, so an opening never shows half a heading. */
+  heading?: Box;
   /**
    * Where the picture changed during the step, in the units of the camera's view, as
    * separate parts in reading order (rows top to bottom, each left to right); empty
@@ -194,31 +197,46 @@ function emphasised(leaves: readonly Leaf[]): Box[] {
  * when nothing of it is drawn. The heading is pinned to the screen, so it lands in the same
  * place whatever the camera does.
  */
-function headingBottom(scene: Scene): number | undefined {
+function headingBox(scene: Scene): Box | undefined {
   const view = viewOf(scene);
-  let bottom: number | undefined;
+  let bounds: Box | null = null;
   const walk = (m: Mobject, opacity: number) => {
     const o = opacity * (m.style.opacity ?? 1);
     if (o < 0.05) return;
     // A label's own box, which can reach below its glyphs, or a painted leaf's.
     if (labelOf(m) || (!m.children.length && painted(m))) {
       const b = m.box();
-      if (b) bottom = Math.min(bottom ?? Infinity, toView(b, view)[1]);
+      if (b) bounds = union(bounds, toView(b, view));
     }
     for (const child of m.children) walk(child, o);
   };
   for (const top of scene.mobjects) if (isHeading(top)) walk(top, 1);
-  return bottom;
+  return bounds ?? undefined;
 }
 
 /** Every readable label in the camera's view, in its units: a label's size grows with the camera's zoom. */
+function nativeLabelSize(text: Text): number {
+  const f = text.frameBox,
+    height = text.run.ascent + text.run.descent;
+  const ey = [(f[4]! - f[0]!) / height, (f[5]! - f[1]!) / height];
+  const ex =
+    text.run.width > 0 ? [(f[6]! - f[0]!) / text.run.width, (f[7]! - f[1]!) / text.run.width] : [ey[1]!, -ey[0]!];
+  const xx = ex[0]! ** 2 + ex[1]! ** 2,
+    yy = ey[0]! ** 2 + ey[1]! ** 2,
+    xy = ex[0]! * ey[0]! + ex[1]! * ey[1]!;
+  const largest = Math.sqrt((xx + yy + Math.hypot(xx - yy, 2 * xy)) / 2);
+  // The smallest affine scale preserves rotations without crediting a wide or
+  // sheared glyph for a compressed dimension. textSize() intentionally reports
+  // the geometric mean, which is not a safe readability floor after stretching.
+  return largest > 0 ? (text.run.fontSize * Math.abs(ex[0]! * ey[1]! - ex[1]! * ey[0]!)) / largest : 0;
+}
 function labelsOf(scene: Scene, only?: ReadonlySet<Mobject>): LayoutLabel[] {
   const out: LayoutLabel[] = [];
   const view = viewOf(scene),
     zoom = viewZoom(view);
   const walk = (m: Mobject, opacity: number, clip: Box) => {
     const o = opacity * (m.style.opacity ?? 1);
-    if (o < 0.25) return;
+    if (o < (only ? 0.05 : 0.25)) return;
     const c = m.clipBox ? intersect(clip, m.clipBox) : clip;
     if (!c) return;
     const label = labelOf(m);
@@ -226,7 +244,11 @@ function labelsOf(scene: Scene, only?: ReadonlySet<Mobject>): LayoutLabel[] {
       if (only && !only.has(m)) return;
       const b = m.box(),
         seen = b && intersect(b, c);
-      if (seen) out.push({ box: toView(seen, view), size: m.height() * label.emRatio * zoom });
+      if (seen)
+        out.push({
+          box: toView(seen, view),
+          size: (m instanceof Text ? nativeLabelSize(m) : m.height() * label.emRatio) * zoom,
+        });
       return; // a label's own parts are not labels
     }
     for (const child of m.children) walk(child, o, c);
@@ -332,7 +354,8 @@ export async function stepLayouts(Scene: SceneClass): Promise<Map<string, StepLa
       // Changes are found in the world (a camera move alone changes no leaf), then framed as the camera shows them.
       const changes = changed(leaves, before).map((c) => ({ ...c, box: toView(c.box, view) }));
       const stress = emphasised(leaves).map((b) => toView(b, view)),
-        top = headingBottom(scene);
+        heading = headingBox(scene),
+        top = heading?.[1];
       const subjects = new Set(readingOf(scene).flatMap((m) => m.family()));
       const subjectLeaves = leaves.filter((l) => subjects.has(l.m));
       for (const subject of readingOf(scene)) {
@@ -346,6 +369,7 @@ export async function stepLayouts(Scene: SceneClass): Promise<Map<string, StepLa
       layouts.set(step.name, {
         ...partsOf(changes),
         labels,
+        ...(heading ? { heading } : {}),
         ...(box ? { reading: { box: toView(box, view), labels: subjectLabels } } : {}),
         ...(stress.length ? { stress } : {}),
         ...(top == null ? {} : { top }),
@@ -462,7 +486,9 @@ export function closeUps(layout: StepLayout | undefined, w: number, h: number, m
   const whole = [clampZoom(IDENTITY, w, h, max)];
   if (!layout || (!layout.parts.length && !layout.reading) || !(w > 0) || !(h > 0) || w >= NARROW_PX) return whole;
   if (!layout.parts.length && layout.reading) layout = { ...layout, parts: [layout.reading.box], lead: 0 };
-  const read = labelsToRead(layout);
+  // Declared subjects can stay unchanged while another part of the picture changes.
+  // Their smaller labels still determine whether the opening needs enlargement.
+  const read = [...labelsToRead(layout), ...(layout.reading?.labels ?? [])];
   if (!read.length) return whole;
   const { s, ox, oy } = stageScale(w, h);
   const smallest = Math.min(...read.map((l) => l.size));
@@ -536,14 +562,41 @@ export function closeUps(layout: StepLayout | undefined, w: number, h: number, m
   if (layout.reading) {
     const box = intersect(padded(layout.reading.box), FRAME) ?? layout.reading.box,
       size = layout.reading.labels.length ? Math.min(...layout.reading.labels.map((l) => l.size)) : Infinity,
-      k = Math.max(1, READ_PX / (size * s)),
-      fit = Math.min(w / ((box[2] - box[0]) * s), h / ((box[3] - box[1]) * s));
-    if (k <= max && k <= fit + 1e-9) {
-      const x = ox + ((box[0] + box[2]) / 2 + 8) * s,
-        y = oy + (4.5 - (box[1] + box[3]) / 2) * s;
-      const zoom = clampZoom({ k, x: w / 2 - k * x, y: h / 2 - k * y }, w, h, max),
+      minimum = Math.max(1, READ_PX / (size * s)),
+      heading =
+        layout.heading ?? (layout.top == null ? undefined : ([FRAME[0], layout.top, FRAME[2], FRAME[3]] as Box));
+    const contains = (outer: Box, inner: Box) => inside(inner[0], inner[1], outer) && inside(inner[2], inner[3], outer);
+    const completeChrome = (shown: Box) =>
+      !heading || shown[3] <= heading[1] + 1e-6 || shown[1] >= heading[3] - 1e-6 || contains(shown, heading);
+    const tryOpening = (focus: Box, scale: number, top?: number) => {
+      if (opening.length || scale > max) return;
+      const fit = Math.min(w / ((focus[2] - focus[0]) * s), h / ((focus[3] - focus[1]) * s));
+      if (scale > fit + 1e-9) return;
+      const x = ox + ((focus[0] + focus[2]) / 2 + 8) * s,
+        y = oy + (4.5 - (focus[1] + focus[3]) / 2) * s;
+      const zoom = clampZoom(
+          { k: scale, x: w / 2 - scale * x, y: top == null ? h / 2 - scale * y : -scale * (oy + (4.5 - top) * s) },
+          w,
+          h,
+          max,
+        ),
         shown = viewBox(zoom, w, h);
-      if (inside(box[0], box[1], shown) && inside(box[2], box[3], shown)) opening.push(zoom);
+      if (contains(shown, box) && completeChrome(shown)) opening.push(zoom);
+    };
+    tryOpening(box, minimum);
+    if (heading) {
+      const ceiling = Math.min(FRAME[3], heading[1]),
+        scale = Math.max(minimum, h / ((ceiling - FRAME[1]) * s)),
+        height = h / (scale * s),
+        low = Math.max(box[3], FRAME[1] + height),
+        high = Math.min(ceiling, box[1] + height);
+      if (low <= high + 1e-9) {
+        const top = Math.max(low, Math.min(high, (box[1] + box[3] + height) / 2));
+        tryOpening(box, scale, top);
+      }
+      // A wide comparison may not fit below the heading. Keep the complete
+      // heading with it instead, at the subject's readable scale.
+      tryOpening(union(box, padded(heading, 0.04)), minimum);
     }
   }
   const zooms: Zoom[] = [];

@@ -1,5 +1,5 @@
 import { Group, Circle } from '../../../../src/index.ts';
-import { PLACEMENTS, nodeShares, shares, secondHop, percent, podsOf, value, seenSource } from '../traffic-policy.ts';
+import { PLACEMENTS, nodeShares, shares, percent, podsOf, value } from '../traffic-policy.ts';
 import type { PlacementKey, Policy } from '../traffic-policy.ts';
 import { label, tile, table } from '../reader-drawing.ts';
 import type { ReaderFrame } from '../reader-drawing.ts';
@@ -38,7 +38,8 @@ export function frames(key: PlacementKey, policy: Policy): ReaderFrame[] {
       id: 'reader-shares',
       title: 'Compare the share per pod',
       line: 'Same placement and outside traffic; only the policy changes.',
-      caption: `Cluster spreads requests over all endpoints. Local divides each node’s share among its own pods, so fewer pods on a node can mean a larger share per pod. N1 means node 1. With ${policy}, ${percent(secondHop(counts, policy))} of requests take a second node hop; a pod on node 1 sees source ${seenSource(policy, 0)}.`,
+      caption:
+        'Cluster spreads requests over all endpoints. Local divides each node’s share among its own pods, so fewer pods on a node can mean a larger share per pod. N1 means node 1. Each row keeps the pod’s placement fixed while comparing the two policies.',
       values: { cluster, local },
       draw: (s) =>
         table(

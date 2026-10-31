@@ -721,7 +721,7 @@ export async function mountEmbed(
     // A previous case's fallback must not describe the restored case; both of this one's show.
     const notices = fallback ? [fallback] : [];
     if (selected < 0) {
-      selected = 0;
+      selected = storyIndices(trace.steps)[0] ?? 0;
       notices.push(t.noStep(name!));
     }
     notice.textContent = notices.join(' ');

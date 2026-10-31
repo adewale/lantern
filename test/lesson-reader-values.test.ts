@@ -216,3 +216,103 @@ test('the default ext4 reserve comparison actually changes reserve and preserves
   assert.ok(fills[1]!.width() > fills[0]!.width(), 'lower reserve must visibly increase writable space');
   assert.equal(comparison.values.metadata, 4495258, 'metadata matches the existing 1 TiB mkfs reference vector');
 });
+
+test('traffic comparisons draw each source pod share without attributing the ingress source IP to its destination', async () => {
+  const { frames } = await import('../scenes/explainers/lib/readers/traffic-policy.ts');
+  const expected = {
+    '3-1-0': [
+      ['a / N1', '25%', '16.7%'],
+      ['b / N1', '25%', '16.7%'],
+      ['c / N1', '25%', '16.7%'],
+      ['d / N2', '25%', '50%'],
+    ],
+    '2-2-0': [
+      ['a / N1', '25%', '25%'],
+      ['b / N1', '25%', '25%'],
+      ['c / N2', '25%', '25%'],
+      ['d / N2', '25%', '25%'],
+    ],
+    '1-1-1': [
+      ['a / N1', '33.3%', '33.3%'],
+      ['b / N2', '33.3%', '33.3%'],
+      ['c / N3', '33.3%', '33.3%'],
+    ],
+  } as const;
+  let checked = 0;
+  for (const placement of ['3-1-0', '2-2-0', '1-1-1'] as const)
+    for (const policy of ['cluster', 'local'] as const) {
+      const [nodes, comparison] = frames(placement, policy);
+      assert.ok(nodes && comparison);
+      assert.equal(nodes.values.key, placement);
+      assert.equal(nodes.values.policy, policy);
+      const words = comparison
+        .draw(stage(new Scene(new NullSink())))
+        .family()
+        .filter((m): m is Text => m instanceof Text)
+        .map((m) => m.text);
+      assert.deepEqual(words, ['Pod', 'Cluster', 'Local', ...expected[placement].flat()]);
+      // The picture compares per-pod traffic, not a packet's ingress/SNAT path. Those paths
+      // remain in the independently checked second-hop and source-IP source walkthroughs.
+      assert.doesNotMatch(comparison.caption, /\b(?:source|hop)\b|\b\d{1,3}(?:\.\d{1,3}){3}\b/i);
+      checked++;
+    }
+  assert.equal(checked, 6);
+});
+
+test('GNOME sample labels explain every participant outcome and retain the report categories in every case', async () => {
+  const { frames } = await import('../scenes/explainers/lib/readers/gnome-files.ts');
+  // Report page 7, in participant order P1..P6; the selected participant's first
+  // abandoned task is fixed by the session ordering, not the report's chapter order.
+  const tasks = { P1: 4, P2: 1, P3: 3, P4: 3, P5: 3, P6: 1 } as const;
+  const categories = { 1: 'OBGYOB', 3: 'GGBBBX', 4: 'BYBYGB' } as const;
+  const key = {
+    G: { colour: 'green', meaning: 'completed without any difficulty', lines: ['No', 'difficulty'], rgb: '#72f072' },
+    Y: {
+      colour: 'yellow',
+      meaning: 'completed with very little difficulty',
+      lines: ['Very little', 'difficulty'],
+      rgb: '#f2f369',
+    },
+    O: {
+      colour: 'orange',
+      meaning: 'completed with moderate difficulty',
+      lines: ['Moderate', 'difficulty'],
+      rgb: '#f7b34e',
+    },
+    B: { colour: 'black', meaning: 'unable to complete the task', lines: ['Could not', 'complete'], rgb: '#2b2b2b' },
+    X: {
+      colour: 'gray',
+      meaning: 'approach outside the scope of the study',
+      lines: ['Outside', 'study scope'],
+      rgb: '#b7b7b7',
+    },
+  } as const;
+  let participants = 0;
+  for (const selected of ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'] as const) {
+    const sample = frames(selected)[1]!;
+    assert.equal(sample.values.task, tasks[selected]);
+    const picture = sample.draw(stage(new Scene(new NullSink())));
+    assert.equal(picture.children.length, 6);
+    const outcomes = sample.values.outcomes as { participant: string; colour: string; meaning: string }[];
+    assert.equal(outcomes.length, 6);
+    for (let i = 0; i < 6; i++) {
+      const participant = `P${i + 1}`;
+      const expected = key[categories[tasks[selected]][i] as keyof typeof key];
+      const result = picture.children.find((m) => m.key === `outcome:${participant}`);
+      assert.ok(result, `${selected}: ${participant} has a result`);
+      const texts = result.children.filter((m): m is Text => m instanceof Text);
+      assert.deepEqual(
+        texts.map((t) => t.text),
+        [participant, ...expected.lines],
+      );
+      assert.deepEqual(outcomes[i], { participant, colour: expected.colour, meaning: expected.meaning });
+      const swatches = result.children.filter((m): m is Rectangle => m instanceof Rectangle);
+      assert.equal(swatches.length, 1);
+      assert.equal(swatches[0]!.style.fill, expected.rgb);
+      // Labels describe the category rather than requiring a colour-name lookup.
+      assert.ok(texts.slice(1).every((t) => t.text !== expected.colour));
+      participants++;
+    }
+  }
+  assert.equal(participants, 36);
+});
