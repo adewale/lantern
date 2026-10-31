@@ -161,12 +161,12 @@ test('a passing story result requires all matching shards with complete nonempty
   }
 });
 
-test('story receipts expire when authored companion claims or their loader change', async () => {
+test('story receipts expire when authored companion claims or review dependencies change', async () => {
   const root = await mkdtemp(join(tmpdir(), 'rayner-review-fingerprint-'));
   try {
     for (const file of [
       'tools/explain-review.ts', 'tools/explain-review-merge.ts',
-      'tools/lib/explain-story-review.ts', 'tools/lib/explain-review-scene.ts',
+      'tools/lib/explain-story-review.ts', 'tools/lib/explain-raster.ts', 'tools/lib/explain-review-scene.ts',
       'tools/lib/explain-review-plan.ts', 'tools/lib/explain-serve.ts',
     ]) {
       await mkdir(dirname(join(root, file)), {recursive: true});
@@ -205,6 +205,11 @@ test('story receipts expire when authored companion claims or their loader chang
     await writeFile(loader, Buffer.concat([loaderBytes, Buffer.from('\n// changed claim loading\n')]));
     await assert.rejects(merge(), /stale review implementation/, 'the claim loader remains part of the fingerprint');
     await writeFile(loader, loaderBytes);
+    const raster = join(root, 'tools/lib/explain-raster.ts');
+    const rasterBytes = await readFile(raster);
+    await writeFile(raster, Buffer.concat([rasterBytes, Buffer.from('\n// changed native rasterization\n')]));
+    await assert.rejects(merge(), /stale review implementation/, 'native composite evidence depends on the rasterizer');
+    await writeFile(raster, rasterBytes);
     assert.equal((await merge()).cases, 3);
   } finally { await rm(root, {recursive: true, force: true}); }
 });

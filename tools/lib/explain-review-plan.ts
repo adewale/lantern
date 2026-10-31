@@ -121,6 +121,7 @@ export async function reviewCodeHash(root: string) {
     'tools/explain-review.ts',
     'tools/explain-review-merge.ts',
     'tools/lib/explain-story-review.ts',
+    'tools/lib/explain-raster.ts',
     'tools/lib/explain-review-scene.ts',
     'tools/lib/explain-review-plan.ts',
     'tools/lib/explain-serve.ts',
