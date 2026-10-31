@@ -1378,7 +1378,7 @@ test('framed, the page draws only the tile: a transparent body, no padding, and 
       framed: document.documentElement.hasAttribute('data-framed'),
       body: getComputedStyle(document.body).backgroundColor,
       padding: getComputedStyle(document.getElementById('content')!).padding,
-    })), { framed: false, body: 'rgb(246, 247, 249)', padding: '24px 16px 48px' });
+    })), { framed: false, body: 'rgb(247, 247, 247)', padding: '24px 16px 48px' });
   } finally { await page.close(); }
 });
 test('the loader passes theme=light or theme=dark from the host page\'s computed colour scheme when the theme is auto, and the given theme otherwise', options, async () => {
