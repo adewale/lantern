@@ -14,6 +14,9 @@ import { useProjectLettering } from './lib/explain-lettering.ts';
 import { galleryTile } from './lib/explain-gallery.ts';
 import { builtOutputHashes } from './lib/explain-built-files.ts';
 import type { ShareManifest } from './lib/explain-share.ts';
+import { measureEmbed, embedSizeProblems } from './lib/explain-embed-size.ts';
+import { serve } from './lib/explain-serve.ts';
+import { launch } from './lib/browser.ts';
 
 const directory = join(ROOT, 'out/explainers');
 await mkdir(directory, { recursive: true });
@@ -90,6 +93,23 @@ for (const item of EXPLAINERS) {
   );
 }
 await buildLoader(join(directory, 'loader.js'));
+// Known heights (tools/lib/explain-embed-size.ts): each page as the loader frames it, served from here.
+{
+  const server = await serve(directory, 0, 'index.html'),
+    browser = await launch();
+  try {
+    for (const item of EXPLAINERS) {
+      const size = await measureEmbed(browser, server.url, item.id + '.html'),
+        problems = embedSizeProblems(size);
+      if (problems.length) throw new Error(`${item.id}/embed.json: ${problems.join('; ')}`);
+      await writeFile(join(directory, item.id, 'embed.json'), JSON.stringify(size, null, 2) + '\n');
+    }
+  } finally {
+    await browser.close();
+    server.close();
+  }
+  console.log(`Embed heights at 390, 640 and 900 px: ${EXPLAINERS.length} explainers`);
+}
 const cases = evidence.reduce((n, s) => n + s.cases.length, 0),
   diagrams = evidence.reduce((n, s) => n + s.diagrams, 0),
   styles = new Set(evidence.flatMap((s) => s.styles)),
@@ -130,14 +150,13 @@ ${tokens}
 @media(prefers-color-scheme:dark){:root{--outline:rgb(255 255 255/.1)}}
 body{margin:0;background:var(--bg);color:var(--fg)}
 main{max-width:1180px;margin:0 auto;padding:40px 16px 64px}
-.intro{max-width:68ch;line-height:1.6;margin:0 0 16px}.intro a{color:var(--accent);text-underline-offset:.2em}h1{font-size:clamp(1.75rem,4vw,2.5rem);line-height:1.15;letter-spacing:.16em;text-transform:uppercase;font-weight:700;margin:0 0 32px;padding-bottom:12px;border-bottom:4px solid var(--fg);text-wrap:balance}
-.start a{color:var(--select);font-size:.8125rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;text-underline-offset:.35em}
+.intro{max-width:68ch;line-height:1.6;margin:0 0 16px}.intro a{color:var(--accent);text-underline-offset:.2em}h1{font-size:clamp(1.75rem,4vw,2.5rem);line-height:1.15;letter-spacing:-.02em;font-weight:650;margin:0 0 32px;text-wrap:balance}
 h2{font-size:1.125rem;font-weight:650;margin:64px 0 16px;padding-top:24px;border-top:1px solid var(--line)}
 ul.tiles{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:32px 24px}
 ul.tiles .lead{grid-column:1/-1}
 @media(min-width:760px){ul.tiles .lead{grid-column:span 2;grid-row:span 2}}
-.tiles a{display:block;color:inherit;text-decoration:none}
-.tiles img{display:block;width:100%;height:auto;aspect-ratio:16/9;outline:1px solid var(--outline);outline-offset:-1px;transition:transform 200ms cubic-bezier(.23,1,.32,1)}
+.tiles a{display:block;color:inherit;text-decoration:none;border-radius:12px}
+.tiles img{display:block;width:100%;height:auto;aspect-ratio:16/9;border-radius:10px;outline:1px solid var(--outline);outline-offset:-1px;transition:transform 200ms cubic-bezier(.23,1,.32,1)}
 .tiles span{display:block;margin-top:12px;font-weight:600;line-height:1.35;text-wrap:balance}
 .tiles .lead span{font-size:1.25rem}
 .tiles a:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
@@ -147,11 +166,15 @@ ul.tiles .lead{grid-column:1/-1}
 footer{margin-top:64px;font-size:.875rem;color:var(--muted)}
 footer a{color:inherit}
 @media(prefers-reduced-motion:reduce){.tiles img{transition:none}}
-</style></head><body><main><h1>Rayner</h1><p class="intro">${htmlEscape(PRODUCT.summary)} ${htmlEscape(PRODUCT.description)}</p><p class="intro">${htmlEscape(PRODUCT.audience)} <a href="${PRODUCT.tutorial}">Write your first explainer</a>, use the <a href="${PRODUCT.reference}">authoring reference</a>, or follow the <a href="${PRODUCT.skill}">agent authoring skill</a>.</p><p class="start"><a href="${htmlEscape(entryUrl)}">${htmlEscape(PRODUCT.entry.label)}</a></p><ul class="tiles">${topics.map((t, i) => tile(t, i === 0)).join('')}</ul><h2>How these are made</h2><ul class="tiles">${toolchain.map((t) => tile(t)).join('')}</ul><ul class="more"><li><a href="embed-lab.html">Two embeds on one host page</a></li><li><a href="evidence.json">Build evidence</a></li></ul><footer>Built on <a href="https://github.com/ivarvong/lantern">Lantern</a> by Ivar Vong (MIT) and <a href="https://github.com/adewale/agentic-mermaid">Agentic Mermaid</a>.</footer></main></body></html>`;
+</style></head><body><main><h1>Rayner</h1><p class="intro">${htmlEscape(PRODUCT.summary)} ${htmlEscape(PRODUCT.description)}</p><p class="intro">${htmlEscape(PRODUCT.audience)} <a href="${PRODUCT.tutorial}">Write your first explainer</a>, use the <a href="${PRODUCT.reference}">authoring reference</a>, or follow the <a href="${PRODUCT.skill}">agent authoring skill</a>.</p><p><a href="${htmlEscape(entryUrl)}">${htmlEscape(PRODUCT.entry.label)}</a></p><ul class="tiles">${topics.map((t, i) => tile(t, i === 0)).join('')}</ul><h2>How these are made</h2><ul class="tiles">${toolchain.map((t) => tile(t)).join('')}</ul><ul class="more"><li><a href="embed-lab.html">Two embeds on one host page</a></li><li><a href="evidence.json">Build evidence</a></li></ul><footer>Built on <a href="https://github.com/ivarvong/lantern">Lantern</a> by Ivar Vong (MIT) and <a href="https://github.com/adewale/agentic-mermaid">Agentic Mermaid</a>.</footer></main></body></html>`;
 await writeFile(join(directory, 'index.html'), html);
+// Two embeds in a host's articles. The tile is the edge: the host draws no card around an embed, and
+// its own text above and below each one shows where the explainer begins and ends.
+const article = (id: string, src: string, title: string, before: string, after: string) =>
+  `<article><h2>${htmlEscape(title)}</h2><p>${htmlEscape(before)}</p><div id="${id}"></div><p>${htmlEscape(after)}</p><script src="loader.js" data-src="${htmlEscape(src)}" data-target="${id}" data-title="${htmlEscape(title)}"></script></article>`;
 await writeFile(
   join(directory, 'embed-lab.html'),
-  `<!doctype html><html lang="en" data-theme="light"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two embeds on one host page</title><style>${tokens}body{max-width:1200px;margin:0 auto;padding:32px 16px 64px;background:#eceff3;color:var(--fg)}h1{font-size:1.5rem;font-weight:650;letter-spacing:-.015em;margin:0 0 8px;text-wrap:balance}a{color:var(--accent);text-underline-offset:.2em}main{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;align-items:start}section{min-width:0;background:#fff;border-radius:12px;box-shadow:0 1px 2px rgb(0 0 0/.06),0 0 0 1px rgb(0 0 0/.06);overflow:hidden}@media(max-width:850px){main{grid-template-columns:1fr}}</style><h1>Two embeds, each sized to its own content</h1><a href="index.html">All explainers</a><main><section id="git"></section><section id="cache"></section></main><script src="loader.js" data-src="exgit.html" data-target="git" data-title="Git object ids"></script><script src="loader.js" data-src="mr-cache.html?request=miss" data-target="cache" data-title="Cache request"></script></html>`,
+  `<!doctype html><html lang="en" data-theme="light"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two embeds on one host page</title><style>${tokens}:root{color-scheme:light}body{max-width:1200px;margin:0 auto;padding:32px 16px 64px;background:#fbf8f3;color:#2b2520;font:17px/1.65 Georgia,"Times New Roman",serif}h1{font-size:1.5rem;font-weight:650;letter-spacing:-.015em;margin:0 0 8px;text-wrap:balance}h2{font-size:1.15rem;margin:0 0 8px}a{color:var(--accent);text-underline-offset:.2em}main{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:24px;align-items:start}article{min-width:0}article p{margin:16px 0;text-wrap:pretty}@media(max-width:850px){main{grid-template-columns:1fr}}</style><h1>Two embeds, each sized to its own content</h1><a href="index.html">All explainers</a><main>${article('git', 'exgit.html', 'Git object ids', 'Git names every object by a hash of its content. Step through how a commit gets its id below.', 'Change one byte and every id above it changes, which is what makes the history tamper-evident.')}${article('cache', 'mr-cache.html?request=miss', 'Cache request', 'We put a key-value cache in front of D1. Follow a request that misses it below.', 'The next request for the same user is a hit and never reaches D1.')}</main></html>`,
 );
 await writeFile(join(directory, 'output-hashes.json'), JSON.stringify(await builtOutputHashes(directory, EXPLAINERS.map(e => e.id)), null, 2) + '\n');
 console.log(`Gallery: ${join(directory, 'index.html')}\n${JSON.stringify(totals)}`);
