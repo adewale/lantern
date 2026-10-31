@@ -1,5 +1,7 @@
 # Explainer copy and layout
 
+Historical evidence: this records an earlier PR revision. The [adversarial audit](pr69-adversarial-audit-2026-10-31.md) records the integrated code, defects found after this pass and current validation.
+
 This pass edits the actual teaching paths in all 38 explainers in PR #69. The comparison is with `6bce495`, the preceding revision of that PR. It applies [anti-slop-writing](https://github.com/adewale/anti-slop-writing/tree/main/skills/anti-slop-writing) and Robin Williams’s contrast, repetition, alignment and proximity principles.
 
 Seventy-seven default-path captions changed, covering all 38 explainers. Captions name the mechanism and the selected case’s consequence. Prediction steps ask about the picture without telling readers to advance. Repeated navigation advice and statements about what “this picture” teaches have been cut. The captions retain conditions that change the answer: cache freshness, the Monty Hall host rule, independent uniform birthdays, single-character parsing, calendar exceptions and the scope of each model. The French tax example remains in French.

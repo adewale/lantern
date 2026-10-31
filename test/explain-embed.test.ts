@@ -682,13 +682,16 @@ test('the footer hint: keys on a fine pointer, taps on a touch screen, wrapping 
       assert.equal(await page.locator('.foot .hint').textContent(), touring ? t.viewHelp : t.hintTouch, name);
       await page.close();
     }
-    // Both on known steps: mr-cache's last step has one view on a phone, its third has three.
+    // Source notes name the return control when the story's segments are hidden;
+    // a source note with several views still explains its available Next view control.
     const phone = await touch.newPage();
     try {
       const t = chromeFor('en');
       await phone.goto(`${embed}/mr-cache.html?request=hit&step=request`);
       await phone.waitForSelector('[data-ready=true]');
-      assert.equal(await phone.locator('.foot .hint').textContent(), t.hintTouch, 'a step with one view');
+      assert.equal(await phone.locator('.foot .hint').textContent(), t.backToStory, 'a source note with one view');
+      assert.equal(await phone.locator('.step-bar').isVisible(), false, 'source notes hide the teaching-path segments');
+      assert.equal(await phone.getByRole('button', { name: t.backToStory, exact: true }).isVisible(), true, 'the named return control is available');
       await phone.goto(`${embed}/mr-cache.html?request=hit&step=after`);
       await phone.waitForSelector('[data-ready=true]');
       assert.equal(await phone.locator('.foot .hint').textContent(), t.viewHelp, 'a step with three views');
@@ -1620,9 +1623,9 @@ test('?theme=dark, light and auto (following the reader\'s colour scheme) set th
         background: await page.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor),
       };
     };
-    assert.deepEqual(await background('dark'), { theme: 'dark', background: 'rgb(20, 18, 16)' });
-    assert.deepEqual(await background('light'), { theme: 'light', background: 'rgb(247, 242, 232)' });
-    assert.deepEqual(await background('auto'), { theme: 'auto', background: 'rgb(20, 18, 16)' });
+    assert.deepEqual(await background('dark'), { theme: 'dark', background: 'rgb(15, 22, 29)' });
+    assert.deepEqual(await background('light'), { theme: 'light', background: 'rgb(246, 247, 249)' });
+    assert.deepEqual(await background('auto'), { theme: 'auto', background: 'rgb(15, 22, 29)' });
   } finally {
     await context.close();
   }
@@ -2029,8 +2032,8 @@ interface PlayerModel {
   settles: number;
   /** On a narrow stage, each step opens on its close-up (docs/REFERENCE.md); Whole picture turns this off, Close-up on. */
   follow: boolean;
-  /** The scale of the step's close-ups, worked out when it settled on a narrow stage; the overview goes to them. */
-  tourK: number | null;
+  /** The selected close-up ordinal; comparison openings and later details may use different scales. */
+  tourStop: number;
 }
 interface PlayerReal {
   page: Page;
@@ -2154,6 +2157,7 @@ function observe(ids: string[]) {
     wholeHidden: ((b) => b.hidden || getComputedStyle(b).visibility === 'hidden')(button('Whole picture')!),
     closeUpHidden: button('Close-up of each step')!.hidden,
     overviewHidden: document.querySelector<HTMLButtonElement>('.overview')!.hidden,
+    viewCount: document.querySelector('.view-controls > span')!.textContent,
     transcriptOpen: (document.querySelector('details.transcript') as HTMLDetailsElement).open,
     transcriptLinks: [...document.querySelectorAll<HTMLAnchorElement>('.transcript section:not([hidden]) a')].map((a) => a.href),
     // specs/player-tile.md T2: the card's parts, in the card's order, and nothing of the page outside the tile.
@@ -2298,8 +2302,10 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   eq('Whole picture hidden', seen.wholeHidden, m.k <= 1);
   const narrow = seen.stageW > 0 && seen.stageW < NARROW_PX;
   eq('Close-up hidden', seen.closeUpHidden, !(narrow && !m.follow));
-  const multipleViews = narrow && (await tourOf(m, seen.stageW, seen.stageH)).length > 1;
+  const tour = await tourOf(m, seen.stageW, seen.stageH),
+    multipleViews = narrow && tour.length > 1;
   eq('overview hidden', seen.overviewHidden, !(multipleViews && m.k > 1));
+  eq('view count', seen.viewCount, multipleViews && m.k <= 1 ? 'Whole picture' : `View ${m.tourStop + 1} of ${tour.length}`);
   // The zoom is painted as a viewBox over the author's frame (data-camera); at k = 1 it is that frame.
   const t = zoomOf(seen.painted && { ...seen.painted, w: seen.stageW, h: seen.stageH });
   if (m.k === 1) eq('viewBox at k=1 (the author frame)', seen.painted?.view, seen.painted?.camera);
@@ -2362,8 +2368,8 @@ async function tourOf(m: PlayerModel, w: number, h: number) {
 /** A step settled: on a narrow stage with close-ups on, the zoom is the step's close-up; otherwise it keeps its place. */
 async function reframe(m: PlayerModel, r: PlayerReal) {
   const { w, h, narrow } = await stageSize(r);
-  m.tourK = narrow ? (await tourOf(m, w, h))[0]!.k : null;
-  if (narrow && m.follow) m.k = m.tourK!;
+  m.tourStop = 0;
+  if (narrow && m.follow) m.k = (await tourOf(m, w, h))[0]!.k;
 }
 const button = (r: PlayerReal, name: string) => r.page.locator(`.stepper button[aria-label="${name}"]`);
 /** Show a step of this case: a history entry when the step changes, a fresh resting picture always. */
@@ -2514,14 +2520,17 @@ const CloseUpButton = command('CloseUpButton', (m) => !m.follow, async (m, r) =>
   if (!narrow) return; // hidden, so there is nothing to press
   await button(r, 'Close-up of each step').click();
   m.follow = true;
-  m.k = m.tourK = (await tourOf(m, w, h))[0]!.k;
+  m.tourStop = 0;
+  m.k = (await tourOf(m, w, h))[0]!.k;
 });
-/** The overview: shown on a narrow zoomed stage; it moves to the step's next close-up, at the close-ups' scale. */
+/** The overview: shown on a narrow zoomed stage; it moves to the next close-up at that view's scale. */
 const OverviewButton = command('OverviewButton', always, async (m, r) => {
   const overview = r.page.locator('.overview');
   if (!(await overview.isVisible()) || (await overview.isDisabled())) return;
+  const {w, h} = await stageSize(r), tour = await tourOf(m, w, h);
   await overview.click();
-  m.k = m.tourK!;
+  m.tourStop = (Math.min(m.tourStop, tour.length - 1) + 1) % tour.length;
+  m.k = tour[m.tourStop]!.k;
 });
 const CopyLink: Cmd = {
   check: always,
@@ -2607,7 +2616,7 @@ const Resize = (width: number, height: number) =>
   command(`Resize(${width}, ${height})`, always, async (m, r) => {
     await r.page.setViewportSize({ width, height });
     const size = await stageSize(r);
-    m.tourK = size.narrow ? (await tourOf(m, size.w, size.h))[0]!.k : null;
+    m.tourStop = Math.min(m.tourStop, (await tourOf(m, size.w, size.h)).length - 1);
   });
 
 // Narrower than 200 CSS px a single unbreakable word (a step title) is wider than the column.
@@ -2702,7 +2711,7 @@ async function openPlayer(name: string, initial: { values: (string | undefined)[
     await page.waitForSelector('[data-ready=true]');
     const base = (await page.evaluate(() => history.length)) - 1;
     const parsed = (await page.evaluate(() => (window as unknown as { __attaches: number }).__attaches)) - 1;
-    const model: PlayerModel = { project: p, entries: [entry], index: 0, notice, k: 1, transcript: false, settles: 1, follow: true, tourK: null };
+    const model: PlayerModel = { project: p, entries: [entry], index: 0, notice, k: 1, transcript: false, settles: 1, follow: true, tourStop: 0 };
     const real: PlayerReal = { page, errors, base, parsed };
     await reframe(model, real);
     await verify(model, real, `opening ${page.url()}`);
@@ -2720,6 +2729,19 @@ test('Left at the first story step leaves its picture, URL and settle count unch
     await fc.asyncModelRun(() => ({model, real}), [Key('ArrowLeft'), Key('ArrowLeft')]);
     assert.equal(model.settles, 1);
     assert.equal(model.entries.length, 1);
+  } finally {
+    await context.close();
+  }
+});
+test('Next view uses each detail view’s scale after a comparison opening', options, async () => {
+  const {context, model, real} = await openPlayer('oauth-pkce', {
+    values: ['yes'], viewport: {width: 308, height: 400},
+  });
+  try {
+    await fc.asyncModelRun(() => ({model, real}), [Next]);
+    const {w, h} = await stageSize(real), tour = await tourOf(model, w, h);
+    assert.ok(tour.length > 1 && tour[0]!.k !== tour[1]!.k, 'the fixture changes scale between the opening and first detail view');
+    await fc.asyncModelRun(() => ({model, real}), [OverviewButton]);
   } finally {
     await context.close();
   }
@@ -2853,8 +2875,12 @@ test(
                 else {
                   // Enter the source path explicitly; its remaining Next
                   // transitions retain the original full-step coverage.
-                  await page.locator('.supporting > summary').click();
-                  await page.locator(`.steps button[data-step="${step}"]`).click();
+                  const target = page.locator(`.steps button[data-step="${step}"]`);
+                  const rail = page.locator('details.rail:not([open]) > summary');
+                  if (await rail.count()) await rail.click();
+                  if (!await target.isVisible())
+                    await page.locator('.supporting:not([open]) > summary').click();
+                  await target.click();
                 }
               }
             }

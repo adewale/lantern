@@ -1,5 +1,7 @@
 # Explainer improvements
 
+Historical evidence: this records an earlier PR revision. The [adversarial audit](pr69-adversarial-audit-2026-10-31.md) records the integrated code, defects found after this pass and current validation.
+
 This records the teaching-path revision through `6bce495`. The later [copy and layout pass](editorial-crap-2026-10-31.md) contains updated screenshots and validation fingerprints.
 
 Baseline: the 31 October review of 37 main-branch explainers at `37bbe4d`, plus the periodic-table candidate at `bf24af0`. This branch stacks on PR #60 so it retains its paint-order, claim-freshness and periodic-table repairs.
