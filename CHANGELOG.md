@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Keep authored comparison labels readable when they are unchanged, dimmed, rotated or compressed, and frame headings completely or leave them outside a close-up. Check independently claimed teaching openings at 320 pixels and reject incomplete review receipts.
+- Expire story-review receipts when player CSS, runtime helpers or build inputs change. Check retained detail tours against independently named facts and make the token-cap, proxy and seasonal labels reachable at readable size.
 - Explain GNOME study outcomes with semantic labels and keep the traffic-share caption within its pictured evidence. Invalid step links return to the explanation's first step.
 - Require visible paint changes for reordered or repeated drawing layers, including artwork revealed by removing a cover. Match periodic-table descriptions to the block fills actually shown.
 - Give the catalog’s longer lessons a short main reading path with complete phone comparisons. Retain implementation walkthroughs under Details and sources, with direct links and full verification.

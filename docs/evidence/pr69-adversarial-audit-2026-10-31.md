@@ -6,7 +6,7 @@ The combined code includes main at `11ff5694757646185f238e22b4f7cb050c6a337b`, P
 
 ## Evidence profile
 
-The measurements and captures below belong to the pre-neutral player profile, build `e0050ddba90223b250be979bdc07cce6fab1b60eaeee0fd8367603b0c5f5a9f5`. The integrated code now also includes main’s [neutral chrome and forced-colour markers](https://github.com/adewale/rayner/commit/fed1f3260237d0e76dfa61f21b2ba72f8ad66953). That runtime change requires fresh artifact and browser validation. The saved `e005` records remain evidence for their pinned revisions; they do not validate the new profile.
+The measurements and captures below belong to the pre-neutral player profile, build `e0050ddba90223b250be979bdc07cce6fab1b60eaeee0fd8367603b0c5f5a9f5`. The integrated code now also includes main’s [neutral chrome and forced-colour markers](https://github.com/adewale/rayner/commit/fed1f3260237d0e76dfa61f21b2ba72f8ad66953). The integrated production revision is `842049fa1f304703b66556dada2a528735f814da`, with build hash `0ace9426354bb6c415789557c8976b93abff4865f6c638b2a1a2cb4d17612ed6`. The saved `e005` records remain evidence for their pinned revisions; the neutral-player integration has separate checks below.
 
 ## Findings and repairs
 
@@ -26,6 +26,7 @@ The measurements and captures below belong to the pre-neutral player profile, bu
 | Later periodic-table descriptions claimed partial filling and a pale core while the table painted all 118 cells by block. | The descriptions follow the painted phase. Independent expected fills, opacity, state, text and HTML descriptions cover all 35 periodic-table phases across the five elements. |
 | Overlapping bounds and layer counts could establish changed artwork without any changed visible ink. | The reviewer compares native composites. Hollow paths, disjoint paint and fully covered duplicate removals cannot establish a change. Visible artwork revealed by removal does count. An adversarial counterexample caught removal of a cover's final occurrence; both that omission and its matching oracle omission were repaired, with explicit positive and negative controls. |
 | The new composite check introduced a dependency missing from the review fingerprint. | The rasterizer joins the existing reviewer-file inventory. A mutation of its implementation rejects prior receipts. |
+| Player-only changes could reuse an old merged review when the caption inventory stayed the same. | The review fingerprint now includes the complete shared build-input hash. Mutating player CSS, the new style helper, stage/settings code or page generation rejects the old receipt; adding a helper also invalidates it. Documentation-only changes retain the receipt. An isolated old-behavior control fails on the style-helper mutation. |
 | The browser model assumed one zoom scale for every view. | It now tracks the selected view independently and predicts that view's scale and count. The original failing 308×400 sequence is a fixed regression. The full original seed and a second ten-case seed pass; the old oracle rejects the fixed example. |
 | Clearing old callouts promoted whole unchanged context panels into automatic evidence. | Independent source contracts name the actual seasonal witnesses, token-cap facts, terminal rows/error, traffic shares and addresses, trusted nodes, and all 53 pen strokes. Literal values and native geometry are checked independently; missing-address and incorrect-subject controls reject incomplete evidence. |
 | The stronger source contracts exposed real detail-tour gaps. | Reading intent makes the cap line and trusted nodes reachable. Seasons gains month labels, a wrapped polar-night readout, a July sample dot and stronger selected-latitude strokes, while retaining both seasonal references, curves and tables. Every required label keeps the 12px target. These detail tours can have several stops; the short main paths remain separate. |
@@ -71,8 +72,22 @@ The checks reproduce incomplete baseline subjects and complete repaired subjects
 
 To reproduce, run `npm ci` and `npm run rayner -- preview scenes/explainers/gtfs` at either revision. Open `?date=2007-06-04&stop=airport&step=reader-date` at 320×568 with reduced motion. The independent served regression owner is `authored phone openings keep comparison ink readable without painting a clipped heading` in `test/explain-embed.test.ts`.
 
-## Validation status
+## Validation
 
-The final PR validation must name the integrated runtime revision and its build hash. Historical `e005` receipts cannot establish a pass for the neutral-player artifacts. Fresh integrated results will be recorded after their canonical runs finish.
+The [pre-neutral audit record](pr69-adversarial-review-2026-10-31.json) preserves the completed `cf9e63b`/`e005` source review:
+
+- 38 scenes, 196 cases, 3,316 step/width states and all 550 required 320px openings pass. The six changed scenes were rebuilt and checked; the other 32 retained exact input and output fingerprints before the fresh full served review.
+- The standard suite passes 1,000 tests with 136 explicit optional skips. The original full browser run passes 143 tests with two skips; six affected source owners pass after the final source repairs. These are separate runs, identified by revision.
+- The Node 24.0 owners, installed-package browser check and four startup cohorts pass at their recorded revisions. Their results are historical after the neutral-player change.
+
+The later integration preserves the normal player geometry while adding neutral colours and forced-colour markers. Eleven distinct focused browser tests pass for styles, first paint, case resets, source navigation and seasonal source tours. The final production revision also passes type checking and all five receipt-plan tests, including rejection of player-only stale receipts. The old-fingerprint mutation fails as expected.
+
+The [main integration record](pr69-main-integration-2026-10-31.json) pins the later runs. At `438468f`, the standard invocation reported 988 passes, 13 failures and 137 skips. All 13 failures came from the language file's shared capture hook because that command omitted the Chromium path. With Chromium configured, the file passes all 13 active tests; its browser-only skip was already counted. The combined coverage is 1,001 passes and 137 explicit skips across 1,138 tests, with no unresolved failures. This is a full invocation plus a corrected owner, not an uninterrupted all-green run.
+
+The installed-package browser gate passes at `438468f`, including archive installation, typed consumption, compiled CLI/engine and installed diagram capture. Its first attempt used an unwritable npm cache; the sequential replay uses the configured Chromium and `/tmp` cache. The final `842049f` change affects the review fingerprint and its five-test owner, which pass independently along with the final type check.
+
+A [fresh matched GTFS capture](pr69-main73-gtfs/reader-date-320.webp) renders the combined runtime at `842049f`, against the same `210e347` baseline. Its [receipt](pr69-main73-gtfs/receipt.json) checks complete question/body geometry, 12 body labels at the 12px floor, unchanged model state and exact source-image pixels. The SVG subtitle is smaller; its text also appears in visible, accessible HTML at 15px. This check does not claim a 12px minimum for SVG headings.
+
+Required CI must rebuild the final catalog and complete the story, package and compatibility checks at the pushed revision. This report does not reuse the `e005` matrix as a current-runtime pass.
 
 These checks establish the tested geometry, values and navigation behavior. They do not establish learning outcomes, arbitrary caption truth, physical-phone performance or local Safari support. Native Safari and WebKit have their existing Mac CI owners. No deployment or publication is part of this audit.
