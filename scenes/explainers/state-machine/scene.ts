@@ -92,6 +92,10 @@ export default class StateMachineExplainer extends Scene {
     await s.clear();
     const d = await s.show({ source: SOURCE }, { box: DIAGRAM });
     const code = await s.code(REDUCER, { at: CODE, fontSize: 0.195 });
+    ['idle:CONNECT', 'connecting:OPENED', 'connecting:ERROR', 'open:CLOSE'].forEach((row, i) => {
+      code.code.lines[i + 1]!.key = `reducer:${row}`;
+    });
+    code.code.lines[THROW]!.key = 'reducer:throw';
     let state = 'idle';
     this.state.session = state;
     // The card shows the state, not a copy of it: each sync rebuilds it from scene.state.
@@ -108,6 +112,8 @@ export default class StateMachineExplainer extends Scene {
           ],
           { at: CARD, fontSize: 0.28, width: 4.8 },
         );
+        for (const field of ['State', 'Event', 'Returns'])
+          card.values.get(field)!.key = `session:${field.toLowerCase()}`;
         const lit = litRow(st);
         if (lit) card.bar.moveTo([card.panel.center()[0], card.values.get(lit)!.anchorPoint()[1]]).setOpacity(1);
         return card;
@@ -126,6 +132,7 @@ export default class StateMachineExplainer extends Scene {
     // The ring stays on the state the session is in; each new ring is kept with the same words.
     const ringWords = () => `A ring around ${state}, the state the session is in`;
     let ring = new Circumscribe(d.get(state), RING);
+    ring.outline.key = `session:ring:${state}`;
     s.keep(ring.outline, { describe: ringWords });
     await this.play(ring);
     await code.focus([1, 4]);
@@ -184,6 +191,7 @@ export default class StateMachineExplainer extends Scene {
       this.state.returns = next;
       // The ring goes where the reducer's answer says the session now is.
       ring = new Circumscribe(d.get(state), RING);
+      ring.outline.key = `session:ring:${state}`;
       s.keep(ring.outline, { describe: ringWords });
       await this.play(ring, sync());
     }
@@ -199,15 +207,18 @@ export default class StateMachineExplainer extends Scene {
     this.state.event = 'OPENED';
     this.state.returns = invalid.error ?? invalid.state;
     const thrown = code.code.span(THROW, code.code.token(THROW, 'if').from, REDUCER[THROW]!.length);
+    const throwBox = boxLine(thrown, THROW, REJECT, `the throw, in red, since no row matches ${state}:OPENED`);
+    throwBox.key = 'reducer:throw-box';
     await this.play(
       new Succession([
         new AnimationGroup([sync(), ...putBack()]),
         recolor(thrown, REJECT),
-        new Create(boxLine(thrown, THROW, REJECT, `the throw, in red, since no row matches ${state}:OPENED`), {
+        new Create(throwBox, {
           runTime: 0.5,
         }),
       ]),
     );
     this.state.terminal = true;
+    s.reading(...code.code.lines.slice(1, 5), code.code.lines[THROW]!, d.get('closed'), ring.outline, readout.current);
   }
 }

@@ -19,7 +19,7 @@ import {
   Circle,
   Cross,
 } from '../../../src/index.ts';
-import type { Animation, SceneState, SyncOpts, View } from '../../../src/index.ts';
+import type { Animation, Mobject, SceneState, SyncOpts, View } from '../../../src/index.ts';
 import { stage, settingsOf } from '../../../explain/index.ts';
 import { TokenBucket } from '../lib/models.ts';
 
@@ -202,12 +202,15 @@ export default class TokenBucketExplainer extends Scene {
         weight: 'bold',
         color: result == null ? soft : ink,
       }).moveTo([0, -0.14]);
-      return new Group(box, label, answer).moveTo([chipX(i), CHIP_Y]);
+      const request = new Group(box, label, answer).moveTo([chipX(i), CHIP_Y]);
+      request.key = `request:${name(i)}`;
+      return request;
     };
     const chips = TIMES.map((_, i) => chip(i, null));
     const times = TIMES.map((t, i) =>
       new Text('t = ' + t, { fontSize: 0.2, color: soft }).moveTo([chipX(i), CHIP_Y + 0.72]),
     );
+    times.forEach((time, i) => { time.key = `arrival:${name(i)}`; });
 
     // ---- the chart: tokens over time. Its y axis has the gauge's scale, so the
     // bucket's level always stands where the chart's line ends.
@@ -282,8 +285,8 @@ export default class TokenBucketExplainer extends Scene {
     this.state = record([]);
     const readout = view(
       this,
-      (state) =>
-        new StateReadout(
+      (state) => {
+        const rows = new StateReadout(
           [
             ['Tokens left', formatState(state.tokens)],
             ['Last refill (s)', formatState(state.lastRefill)],
@@ -295,7 +298,11 @@ export default class TokenBucketExplainer extends Scene {
             gap: 0.42,
             at: [4.9, -2.78],
           },
-        ),
+        );
+        rows.children[0]!.key = 'balance:label';
+        rows.values['Tokens left']!.key = 'balance:value';
+        return rows;
+      },
     );
     this.readout = readout;
     const readoutTitle = new Text('Bucket balance', { fontSize: 0.2, color: soft }).moveTo([3.3, -2.4], [-1, 0]);
@@ -314,6 +321,7 @@ export default class TokenBucketExplainer extends Scene {
       title: `bucket.allow(now), rate = ${rate}`,
       fontSize: 0.25,
     });
+    code.code.lines[1]!.key = 'balance:cap';
     await this.play(new FadeIn(readout), new FadeIn(readoutTitle));
     await code.focus(REFILL, { as: 'refill' });
 
@@ -365,6 +373,7 @@ export default class TokenBucketExplainer extends Scene {
       });
       // Ask the program, one request at a time; each call's members show its answer.
       const members: Animation[] = [];
+      const evidence: Mobject[] = [];
       for (let i = from; i < to; i++) {
         const now = TIMES[i]!,
           prev = calls.at(-1) ?? START;
@@ -374,7 +383,10 @@ export default class TokenBucketExplainer extends Scene {
         const after = record(calls);
         // Refill: the bar on the min(…) lines while the line climbs to what the call found.
         const rise = line(climb(prev, call, rate), s.palette.accent);
-        if (rise) s.keep(rise, { describe: chartSays });
+        if (rise) {
+          rise.key = `balance:refill:${name(i)}`;
+          s.keep(rise, { describe: chartSays });
+        }
         members.push(
           new AnimationGroup([new Transform(code.bar, barAt(REFILL)), ...(rise ? [new Create(rise)] : [])], {
             runTime: 0.3,
@@ -391,6 +403,9 @@ export default class TokenBucketExplainer extends Scene {
             )
           : null;
         const dot = axes.dot(now, call.found, { radius: 0.085, color: ok ? s.good : s.bad });
+        dot.key = `balance:found:${name(i)}`;
+        if (drop) drop.key = `balance:spend:${name(i)}`;
+        evidence.push(...(rise ? [rise] : []), dot, ...(drop ? [drop] : []));
         const tag = ok
           ? null
           : new Text(name(i), { fontSize: 0.2, color: s.bad }).moveTo(
@@ -423,6 +438,9 @@ export default class TokenBucketExplainer extends Scene {
       // The bar already stands where the last call left it; this names those lines for the description.
       const last = calls.at(-1)!;
       await code.focus(last.ok ? SPEND : REFUSE, { as: last.ok ? 'spend' : 'refuse', runTime: 0.2 });
+      if (index === 2)
+        s.reading(code.code.lines[1]!, chips[8]!, chips[9]!, times[8]!, times[9]!,
+          readout.current.children[0]!, readout.current.values['Tokens left']!, ...evidence);
     }
 
     // --------------------------------------------------------------- trace

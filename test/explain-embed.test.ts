@@ -21,6 +21,7 @@ import { labelOf } from '../explain/diagrams.ts';
 import { labelsSaying, restingBox, wordsOutsideCards } from './lib/scenes.ts';
 import type { Box } from '../src/index.ts';
 import { chromeFor } from '../app/embed-strings.ts';
+import { Text } from '../src/index.ts';
 
 const enabled = !!process.env.EXPLAIN_BROWSER,
   options = { skip: enabled ? false : 'set EXPLAIN_BROWSER=1 for real cross-origin browser checks' };
@@ -31,6 +32,7 @@ const hostServer = createServer((_, res) => {
   res.setHeader('content-type', 'text/html');
   res.end(hostBody);
 });
+
 let embedServer: { url: string; close(): void } | undefined;
 const projects = new Map<string, Project>();
 before(async () => {
@@ -3565,4 +3567,104 @@ test('the PKCE attack opens with the stolen-code, guessed-verifier and rejection
       assert.equal(await page.locator('[aria-current=step]').first().getAttribute('data-step'), 'attack');
     } finally { await page.close(); }
   }
+});
+
+test('source tours show the token-cap calculation and terminal rejection in every case', options, async () => {
+  const {reviewClaims} = await import('../tools/lib/explain-review-scene.ts');
+  const {storyFrames,reviewStoryVariant,inspectStoryFrame,covered,STORY_CLAIMS} = await import('../tools/lib/explain-story-review.ts');
+  const roles = {
+    'token-bucket': ['request:R9','arrival:R9','request:R10','arrival:R10','balance:refill:R10',
+      'balance:found:R10','balance:spend:R10','balance:cap','balance:label','balance:value'],
+    'state-machine': ['reducer:idle:CONNECT','reducer:connecting:OPENED','reducer:connecting:ERROR',
+      'reducer:open:CLOSE','reducer:throw','reducer:throw-box','closed','session:ring:closed',
+      'State','session:state','Event','session:event','Returns','session:returns'],
+  };
+  const page = await browser.newPage();
+  let cases=0,stepWidths=0,labelChecks=0;
+  try {
+    for(const id of ['token-bucket','state-machine'] as const){
+      const project = projects.get(id) ?? await collectProject(`scenes/explainers/${id}`,{write:false});
+      assert.deepEqual(project.variants.map(v=>v.values),id==='token-bucket'?
+        [{rate:'1'},{rate:'2'},{rate:'4'}]:[{events:'success'},{events:'failure'}]);
+      if(!projects.has(id))await buildExplainer(project,join(folder,`${id}.html`));
+      const sourceStep = id==='token-bucket'?'later':'terminal';
+      const companion = await reviewClaims(project);
+      assert.deepEqual(companion.filter(c=>c.step===sourceStep).flatMap(c=>c.targets.map(t=>'key' in t?t.key:t.text)),roles[id]);
+      const claims = await reviewClaims(project,undefined,STORY_CLAIMS[id]);
+      for(const variant of project.variants){
+        let nativeChecked=false;
+        await new variant.Scene({async frame(){},async stepEnd(scene,step){
+          if(step.name!==sourceStep)return;
+          const members=scene.familyMembers();
+          const keyed=(key:string)=>{
+            const found=members.filter(m=>m.key===key);
+            assert.equal(found.length,1,`unique native role ${key}`);return found[0]!;
+          };
+          const text=(key:string,value:string)=>{
+            const m=keyed(key);assert.ok(m instanceof Text);assert.equal(m.text,value);
+          };
+          if(id==='token-bucket'){
+            const rate=variant.values.rate!, found={1:1,2:2,4:5}[rate as '1'|'2'|'4']!,
+              after={1:0,2:1,4:4}[rate as '1'|'2'|'4']!;
+            text('balance:cap','  tokens = min(5,');text('balance:label','Tokens left');
+            text('balance:value',String(after));text('arrival:R9','t = 1');text('arrival:R10','t = 2');
+            assert.deepEqual(keyed('request:R10').family().filter((m):m is Text=>m instanceof Text).map(m=>m.text),['R10','200']);
+            const dot=keyed('balance:found:R10').center(),drop=keyed('balance:spend:R10').box()!;
+            assert.ok(Math.abs(dot[0]+0.56)<1e-6&&Math.abs(dot[1]-(-3.87+found*4.44/5))<1e-6);
+            assert.ok(Math.abs(drop[1]-(-3.87+after*4.44/5))<1e-6&&Math.abs(drop[3]-dot[1])<1e-6);
+            assert.equal(scene.state.tokens,after);
+          }else{
+            for(const [key,value] of [
+              ['idle:CONNECT',"  'idle:CONNECT':      'connecting',"],
+              ['connecting:OPENED',"  'connecting:OPENED': 'open',"],
+              ['connecting:ERROR',"  'connecting:ERROR':  'closed',"],
+              ['open:CLOSE',"  'open:CLOSE':        'closed',"],
+              ['throw','  if (!result) throw new InvalidTransition();'],
+            ])text(`reducer:${key}`,value!);
+            text('session:state','closed');text('session:event','OPENED');text('session:returns','InvalidTransition');
+            const ring=keyed('session:ring:closed').box()!,closed=keyed('closed').box()!;
+            assert.ok(ring[0]<=closed[0]&&ring[1]<=closed[1]&&ring[2]>=closed[2]&&ring[3]>=closed[3]);
+            assert.equal(scene.state.session,'closed');assert.equal(scene.state.terminal,true);
+          }
+          nativeChecked=true;
+        }},{skipUntil:Infinity}).run();
+        assert.equal(nativeChecked,true);
+        // Keep the production reviewer: every main and source step, both
+        // widths, all reachable tour stops, plus the independent 320px openings.
+        const rows=await reviewStoryVariant(page,`${embed}/${id}.html`,variant,claims);
+        assert.deepEqual(rows.map(r=>[r.step,r.width]),[390,1180].flatMap(width=>variant.trace.steps.map(s=>[s.step,width])));
+        for(const row of rows.filter(r=>r.step===sourceStep))assert.ok(roles[id].every(role=>row.targets.includes(role)));
+        stepWidths+=rows.length;
+        const frame=(await storyFrames(variant.Scene,claims)).get(sourceStep)!;
+        const indices=new Set(frame.targets.filter(t=>roles[id].includes(t.name)).flatMap(t=>t.indices));
+        const labels=frame.labels.filter(label=>label.indices.some(index=>indices.has(index)));
+        assert.equal(labels.length,id==='token-bucket'?9:12,'exact caption-label inventory');
+        const readable=new Set<number>();
+        await page.setViewportSize({width:390,height:844});
+        await page.goto(`${embed}/${id}.html?${new URLSearchParams({...variant.values,step:sourceStep})}`);
+        await page.waitForFunction(step=>(window as unknown as {raynerReviewStep?:string}).raynerReviewStep===step&&
+          !document.querySelector('#content.loading')&&!document.querySelector('svg.leaving'),sourceStep);
+        const visited=new Set<string>();
+        for(let n=0;n<=frame.records.length;n++){
+          const seen=await inspectStoryFrame(page,frame);
+          assert.ok(seen.viewBox,'the served native SVG has a viewBox');
+          if(visited.has(seen.viewBox))break;visited.add(seen.viewBox);
+          for(const [i,label] of labels.entries()){
+            const ink=label.indices.map(index=>seen.ink.find(p=>p.index===index)!);
+            if(ink.every(p=>p.visible&&p.complete&&covered(p.box,[seen.viewport]))){
+              const pixels=label.size*Math.min(...ink.map(p=>p.scale));
+              assert.ok(pixels>=12-1e-6,`${id}/${JSON.stringify(variant.values)}: ${label.text} reads at ${pixels}px`);
+              readable.add(i);
+            }
+          }
+          const next=page.locator('.view-controls > button').first();
+          if(!await next.isVisible()||!await next.isEnabled())break;
+          await next.click();await page.evaluate(()=>new Promise<void>(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>r()))));
+        }
+        assert.equal(readable.size,labels.length,'every named source label has a complete readable tour stop');
+        labelChecks+=readable.size;cases++;
+      }
+    }
+  }finally{await page.close();}
+  assert.equal(cases,5);assert.equal(stepWidths,68);assert.equal(labelChecks,51);
 });
