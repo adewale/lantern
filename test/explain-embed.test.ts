@@ -1425,7 +1425,7 @@ test('the neutral tile stays independent of the case palette, including before i
     await page.waitForSelector('[data-ready=true]');
     const first = await paper(page);
     assert.equal(first.player, '');
-    assert.equal(first.tile, 'rgb(255, 255, 255)');
+    assert.ok(['rgb(255, 255, 255)', 'color(srgb 1 1 1)'].includes(first.tile), first.tile);
     await page.locator('.case input[value=night]').check();
     await page.waitForFunction(() => !document.querySelector('#content.loading'));
     await page.waitForTimeout(300); // observe the settled chrome, beyond its background transition
