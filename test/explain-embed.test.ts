@@ -533,9 +533,24 @@ test('the footer hint: keys on a fine pointer, taps on a touch screen, wrapping 
       await page.goto(`${embed}/${name}.html`);
       await page.waitForSelector('[data-ready=true]');
       assert.equal(await page.evaluate(() => matchMedia('(pointer: coarse)').matches), true);
-      assert.equal(await page.locator('.foot .hint').textContent(), t.hintTouch, name);
+      // On a narrow stage, a step with more than one view says how Next view differs from Next.
+      const touring = await page.locator('.view-controls').evaluate((v) => !(v as HTMLElement).hidden && (v as HTMLElement).style.visibility !== 'hidden');
+      assert.equal(await page.locator('.foot .hint').textContent(), touring ? t.viewHelp : t.hintTouch, name);
       await page.close();
     }
+    // Both on known steps: mr-cache's last step has one view on a phone, its third has three.
+    const phone = await touch.newPage();
+    try {
+      const t = chromeFor('en');
+      await phone.goto(`${embed}/mr-cache.html?request=hit&step=request`);
+      await phone.waitForSelector('[data-ready=true]');
+      assert.equal(await phone.locator('.foot .hint').textContent(), t.hintTouch, 'a step with one view');
+      await phone.goto(`${embed}/mr-cache.html?request=hit&step=after`);
+      await phone.waitForSelector('[data-ready=true]');
+      assert.equal(await phone.locator('.foot .hint').textContent(), t.viewHelp, 'a step with three views');
+      assert.equal(await phone.getByRole('button', { name: 'Next view', exact: true }).getAttribute('aria-describedby'),
+        await phone.locator('.foot .hint').getAttribute('id'), 'Next view is described by the hint');
+    } finally { await phone.close(); }
     // Framed at 390 px, with the way out: the hint wraps between them, inside the footer's row.
     hostBody = `<!doctype html><style>body{margin:0}</style><iframe title="t" src="${embed}/quotient-familial.html" style="width:390px;height:900px;border:0"></iframe>`;
     const host390 = await browser.newPage({ viewport: { width: 390, height: 900 }, reducedMotion: 'reduce' });
@@ -550,9 +565,16 @@ test('the footer hint: keys on a fine pointer, taps on a touch screen, wrapping 
       assert.deepEqual({ ...row, lines: undefined }, { inside: true, order: true, lines: undefined }, JSON.stringify(row));
       assert.ok(row.lines >= 2, `the hint wraps: ${JSON.stringify(row)}`);
     } finally { await host390.close(); }
-    // At 360 px and under it may go; the mark and the way out stay.
+    // At 360 px and under the keys-or-taps hint may go; the mark and the way out stay. The words
+    // on Next view stay, on a step that has more than one view.
     await fine.setViewportSize({ width: 340, height: 700 });
+    await fine.goto(`${embed}/mr-cache.html?request=hit&step=request`);
+    await fine.waitForSelector('[data-ready=true]');
     assert.equal(await fine.locator('.foot .hint').isVisible(), false);
+    await fine.goto(`${embed}/mr-cache.html?request=hit&step=after`);
+    await fine.waitForSelector('[data-ready=true]');
+    assert.equal(await fine.locator('.foot .hint').isVisible(), true);
+    assert.equal(await fine.locator('.foot .hint').textContent(), chromeFor('en').viewHelp);
   } finally {
     await fine.close();
     await touch.close();
