@@ -58,10 +58,11 @@ export async function measure(browser: Browser, url: string, { cpu, readMs }: { 
     const names = await page.locator('.steps button').evaluateAll((bs) => bs.map((b) => (b as HTMLElement).dataset.step!));
     if (names.length < 3 || new Set(names).size !== names.length || names.some((n) => !n)) throw new Error('bench needs at least three distinct named steps');
     await page.waitForTimeout(readMs);
-    await page.locator('.controls .primary').click();
+    await page.locator('.stepper .primary').click();
     await until(names[1]!);
     await page.waitForTimeout(readMs);
-    await page.locator('.steps button').last().click();
+    // The step bar's last segment: on a 390 px page the steps list is inside a closed disclosure.
+    await page.locator('.step-bar button').last().click();
     await until(names.at(-1)!);
     // Let observer delivery and two rendering opportunities finish before taking records.
     await page.evaluate(async () => {

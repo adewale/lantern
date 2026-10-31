@@ -20,6 +20,7 @@ import type { StepLayout } from '../app/embed-closeup.ts';
 import { labelOf } from '../explain/diagrams.ts';
 import { labelsSaying, restingBox, wordsOutsideCards } from './lib/scenes.ts';
 import type { Box } from '../src/index.ts';
+import { chromeFor } from '../app/embed-strings.ts';
 
 const enabled = !!process.env.EXPLAIN_BROWSER,
   options = { skip: enabled ? false : 'set EXPLAIN_BROWSER=1 for real cross-origin browser checks' };
@@ -38,7 +39,8 @@ before(async () => {
   browser = await launch();
   await new Promise<void>((r) => hostServer.listen(0, '127.0.0.1', r));
   host = `http://127.0.0.1:${(hostServer.address() as { port: number }).port}`;
-  for (const name of ['mr-cache', 'oauth-pkce', 'exgit', 'lantern', 'send-sync', 'feature-tour']) {
+  // quotient-familial is the one scene in French (meta.lang 'fr'), with ten steps.
+  for (const name of ['mr-cache', 'oauth-pkce', 'exgit', 'lantern', 'send-sync', 'quotient-familial', 'feature-tour']) {
     const project = await collectProject(`scenes/explainers/${name}`, { write: false });
     projects.set(name, project);
     await buildExplainer(project, join(folder, name + '.html'));
@@ -58,36 +60,89 @@ function loader(id: string, scene: string) {
   return `<div id="${id}"></div><script src="${embed}/loader.js" data-src="${embed}/${scene}.html" data-target="${id}" data-title="${scene}"></script>`;
 }
 
-test('step navigation is discoverable before the picture on short phones and desktops', options, async () => {
-  for (const viewport of [{width: 390, height: 568}, {width: 1280, height: 800}]) {
-    const page = await browser.newPage({viewport, reducedMotion: 'reduce'});
+// specs/player-redesign.md R2: the viewports the stepper row must fit at load, and the two pages it is checked on.
+const R2_VIEWPORTS = [[320, 568], [390, 568], [390, 844], [768, 1024], [1280, 800], [1440, 900]] as const;
+const R2_PAGES = ['/mr-cache.html?step=before&request=hit', '/oauth-pkce.html?attacker=yes'];
+type Rect = { top: number; bottom: number; left: number; right: number };
+/** Boxes of the named elements (the first match of each), with the viewport they were read in. */
+const boxesOf = <K extends string>(page: Page, selectors: Record<K, string>) =>
+  page.evaluate((selectors: Record<string, string>) => {
+    const rect = (s: string): Rect | null => {
+      const r = document.querySelector(s)?.getBoundingClientRect();
+      return r ? { top: r.top, bottom: r.bottom, left: r.left, right: r.right } : null;
+    };
+    return {
+      boxes: Object.fromEntries(Object.entries(selectors).map(([k, s]) => [k, rect(s)])),
+      scrollY,
+      width: innerWidth,
+      height: innerHeight,
+      scrollWidth: document.documentElement.scrollWidth,
+    };
+  }, selectors as Record<string, string>) as Promise<{ boxes: Record<K, Rect>; scrollY: number; width: number; height: number; scrollWidth: number }>;
+const insideViewport = (b: Rect, v: { width: number; height: number }) => b.top >= 0 && b.bottom <= v.height && b.left >= 0 && b.right <= v.width;
+
+test('one stepper row: exactly one Next step and one Previous step button', options, async () => {
+  for (const [name, project] of projects) {
+    const t = chromeFor(project.Scene.meta?.lang);
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+    try {
+      await page.goto(`${embed}/${name}.html`);
+      await page.waitForSelector('[data-ready=true]');
+      const seen = await page.evaluate((t) => ({
+        next: document.querySelectorAll(`button[aria-label="${t.nextLabel}"]`).length,
+        previous: document.querySelectorAll(`button[aria-label="${t.previous}"]`).length,
+        // The card: the picture, the stepper row, the words, in that order.
+        order: [...document.querySelector('.player')!.children].filter((e) => e.matches('.frame, .stepper, .words')).map((e) => e.className),
+        stage: !!document.querySelector('.player > .frame > .stage'),
+        group: [document.querySelector('.stepper')?.getAttribute('role'), document.querySelector('.stepper')?.getAttribute('aria-label')],
+        first: [...document.querySelectorAll('.stepper > button')].slice(0, 2).map((b) => b.getAttribute('aria-label')),
+        nextText: document.querySelector('.stepper .primary')?.textContent,
+      }), { nextLabel: t.nextLabel, previous: t.previous });
+      assert.deepEqual(seen, {
+        next: 1,
+        previous: 1,
+        order: ['frame', 'stepper', 'words'],
+        stage: true,
+        group: ['group', t.controls],
+        first: [t.previous, t.nextLabel],
+        nextText: t.next,
+      }, name);
+    } finally { await page.close(); }
+  }
+  // The one pair works, on a short phone and a desktop.
+  for (const viewport of [{ width: 390, height: 568 }, { width: 1280, height: 800 }]) {
+    const page = await browser.newPage({ viewport, reducedMotion: 'reduce' });
     try {
       await page.goto(embed + '/mr-cache.html?step=before&request=hit');
       await page.waitForSelector('[data-ready=true]');
-      const bounds = await page.evaluate(() => {
-        const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
-        return {
-          early: box('.step-transport button[aria-label="Next step"]'),
-          stage: box('.stage'),
-          caption: box('.caption'),
-          after: box('.controls button[aria-label="Next step"]'),
-          description: box('.described'),
-          views: box('.view-controls'),
-          height: innerHeight,
-        };
-      });
-      assert.ok(bounds.early.top >= 0 && bounds.early.bottom <= bounds.height, `early Next is visible at ${viewport.width}×${viewport.height}`);
-      assert.ok(bounds.early.bottom <= bounds.stage.top, 'step navigation is outside and before the picture');
-      assert.ok(bounds.caption.bottom < bounds.after.top, 'the second Next follows the explanation');
-      assert.ok(bounds.after.bottom <= bounds.description.top, 'secondary content cannot separate the caption from Next');
-      if (viewport.width < 480) assert.ok(bounds.after.bottom <= bounds.views.top, 'Next step precedes the close-up tour');
-      assert.equal(await page.locator('.step-transport button[aria-label="Previous step"]').isDisabled(), true);
-      await page.locator('.step-transport button[aria-label="Next step"]').click();
+      assert.equal(await page.getByRole('button', { name: 'Previous step', exact: true }).isDisabled(), true);
+      await page.getByRole('button', { name: 'Next step', exact: true }).click();
       assert.equal(new URL(page.url()).searchParams.get('step'), 'diff');
-      assert.equal(await page.locator('.step-transport button[aria-label="Previous step"]').isEnabled(), true);
-      assert.equal(await page.locator('.controls button[aria-label="Previous step"]').isEnabled(), true);
+      assert.equal(await page.getByRole('button', { name: 'Previous step', exact: true }).isEnabled(), true);
     } finally { await page.close(); }
   }
+});
+
+test('Next is on screen at load', options, async () => {
+  for (const [width, height] of R2_VIEWPORTS)
+    for (const url of R2_PAGES) {
+      const page = await browser.newPage({ viewport: { width, height } });
+      try {
+        await page.goto(embed + url);
+        await page.waitForSelector('[data-ready=true]');
+        const v = await boxesOf(page, { next: 'button[aria-label="Next step"]', stage: '.stage', stepper: '.stepper', caption: '.caption', lede: '.lede' });
+        const where = `${url} at ${width}×${height}`;
+        assert.equal(v.scrollY, 0, `${where}: opened at the top`);
+        assert.ok(insideViewport(v.boxes.next, v), `${where}: Next ${JSON.stringify(v.boxes.next)}`);
+        if (width >= 1280) assert.ok(insideViewport(v.boxes.lede, v), `${where}: the step heading ${JSON.stringify(v.boxes.lede)}`);
+        if (width === 390 && height === 844) {
+          assert.ok(insideViewport(v.boxes.stage, v), `${where}: the stage ${JSON.stringify(v.boxes.stage)}`);
+          assert.ok(insideViewport(v.boxes.stepper, v), `${where}: the stepper row ${JSON.stringify(v.boxes.stepper)}`);
+          assert.ok(v.boxes.caption.top + 24 <= v.height, `${where}: the caption's first line ${JSON.stringify(v.boxes.caption)}`);
+        }
+        assert.ok(v.scrollWidth <= v.width, `${where}: no horizontal scroll (${v.scrollWidth} > ${v.width})`);
+      } finally { await page.close(); }
+    }
 });
 
 test('feature-tour case navigation starts with its recipe, including transcript links, while direct result permalinks still work', options, async () => {
@@ -102,7 +157,7 @@ test('feature-tour case navigation starts with its recipe, including transcript 
     await page.locator('fieldset.case input[value="state"]').check();
     await page.waitForURL(/feature=state&step=recipe/);
     assert.equal(await page.locator('.steps button[aria-current="step"]').getAttribute('data-step'), 'recipe');
-    await page.locator('.step-transport button[aria-label="Next step"]').click();
+    await page.locator('.stepper button[aria-label="Next step"]').click();
     await page.waitForURL(/feature=state&step=result/);
     await page.goBack();
     await page.waitForURL(/feature=state&step=recipe/);
@@ -117,7 +172,7 @@ test('feature-tour case navigation starts with its recipe, including transcript 
   } finally { await page.close(); }
 });
 
-test('fullscreen leaves the early step control reachable when the player overflows', options, async () => {
+test('fullscreen keeps the stepper row reachable when the player overflows', options, async () => {
   const page = await browser.newPage({viewport: {width: 1280, height: 800}, reducedMotion: 'reduce'});
   try {
     await page.goto(embed + '/mr-cache.html?step=before&request=hit');
@@ -126,34 +181,464 @@ test('fullscreen leaves the early step control reachable when the player overflo
     await page.waitForFunction(() => !!document.fullscreenElement);
     const bounds = await page.evaluate(() => {
       const player = document.querySelector<HTMLElement>('.player')!;
-      const early = document.querySelector('.step-transport')!.getBoundingClientRect();
-      return {top: early.top, bottom: early.bottom, viewport: innerHeight, overflow: player.scrollHeight > player.clientHeight};
+      const row = document.querySelector('.stepper')!.getBoundingClientRect(),
+        stage = document.querySelector('.stage')!.getBoundingClientRect();
+      return {top: row.top, bottom: row.bottom, stage: stage.height, viewport: innerHeight, overflow: player.scrollHeight > player.clientHeight};
     });
     assert.equal(bounds.overflow, true, 'the test exercises a scrollable fullscreen player');
-    assert.ok(bounds.top >= 0 && bounds.bottom <= bounds.viewport, 'early Next is reachable at scroll position zero');
-    await page.locator('.step-transport button[aria-label="Next step"]').click();
+    assert.ok(bounds.stage <= bounds.viewport - 180 + 1, 'the stage keeps within the screen less 180 px');
+    assert.ok(bounds.top >= 0 && bounds.bottom <= bounds.viewport, 'Next is reachable at scroll position zero');
+    await page.getByRole('button', {name: 'Next step', exact: true}).click();
     assert.equal(new URL(page.url()).searchParams.get('step'), 'diff');
   } finally { await page.close(); }
 });
 
-test('phone captions stay beside the picture and a single view never advertises Next view', options, async () => {
+test('phone: the stepper row follows the picture, the words follow it, and a single view never advertises Next view', options, async () => {
   const page = await browser.newPage({viewport: {width: 390, height: 844}, reducedMotion: 'reduce'});
   try {
     await page.goto(embed + '/oauth-pkce.html?attacker=yes&step=attack');
     await page.waitForSelector('[data-ready=true]');
     await page.locator('.leaving').waitFor({state: 'detached'});
-    const bounds = await page.evaluate(() => {
-      const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
-      return {stage: box('.stage').bottom, lede: box('.lede').top, caption: box('.caption').bottom, controls: box('.controls').top};
-    });
-    assert.ok(bounds.lede >= bounds.stage && bounds.lede - bounds.stage <= 24, 'the step title follows the picture');
-    assert.ok(bounds.caption < bounds.controls, 'step controls follow the caption');
+    const {boxes: b} = await boxesOf(page, {stage: '.stage', stepper: '.stepper', lede: '.lede', caption: '.caption'});
+    assert.ok(b.stepper.top >= b.stage.bottom - 1 && b.stepper.top - b.stage.bottom <= 2, 'the stepper row is straight under the picture');
+    assert.ok(b.lede.top >= b.stepper.bottom, 'the step heading follows the stepper row');
+    assert.ok(b.caption.top >= b.lede.bottom, 'the caption follows the step heading');
     assert.equal(await page.locator('.view-controls').isVisible(), false, 'a single view needs no tour toolbar');
     assert.equal(await page.getByRole('button', {name: 'Next view', exact: true}).isVisible(), false);
     assert.equal(await page.locator('.view-help').isVisible(), false);
-    assert.equal(await page.getByRole('button', {name: 'Fit stage', exact: true}).isEnabled(), true);
+    assert.equal(await page.getByRole('button', {name: 'Whole picture', exact: true}).isEnabled(), true);
+    await page.evaluate(() => scrollTo(0, document.body.scrollHeight));
     await page.getByRole('button', {name: 'Zoom in', exact: true}).click();
-    assert.ok(await page.locator('.stage').evaluate(stage => {const box = stage.getBoundingClientRect(); return box.top >= 0 && box.bottom <= innerHeight;}), 'using controls below a long caption brings the changed picture into view');
+    assert.ok(await page.locator('.stage').evaluate(stage => {const box = stage.getBoundingClientRect(); return box.top >= 0 && box.bottom <= innerHeight;}), 'using a view tool brings the changed picture into view');
+  } finally { await page.close(); }
+});
+// Every catalog page, built from its scene as demos:check builds it: the player's controls are
+// the same everywhere, in each page's language.
+/** Every catalog explainer, built once from its scene into catalog/ as demos:check builds it. */
+let catalogBuild: Promise<Map<string, Project>> | undefined;
+const catalog = () =>
+  (catalogBuild ??= (async () => {
+    const { EXPLAINERS } = await import('../scenes/explainers/catalog.ts');
+    await mkdir(join(folder, 'catalog'), { recursive: true });
+    const built = new Map<string, Project>();
+    for (const { id } of EXPLAINERS) {
+      const project = await collectProject(`scenes/explainers/${id}`, { write: false });
+      await buildExplainer(project, join(folder, 'catalog', id + '.html'));
+      built.set(id, project);
+    }
+    return built;
+  })());
+test('no Replay, Stop or Fit stage button; one Whole picture button on every catalog page', options, async () => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    const page = await context.newPage();
+    for (const [id, project] of await catalog()) {
+      const t = chromeFor(project.Scene.meta?.lang);
+      // The removed controls' names, in English and in French.
+      const gone = ['Replay step', 'Stop animation', 'Fit stage', 'Rejouer l’étape', 'Arrêter l’animation', 'Adapter à la page'];
+      await page.goto(`${embed}/catalog/${id}.html`);
+      await page.waitForSelector('[data-ready=true]');
+      const seen = await page.evaluate((names) => {
+        const count = (name: string) => document.querySelectorAll(`button[aria-label="${name}"]`).length;
+        return Object.fromEntries(names.map((n) => [n, count(n)]));
+      }, [...gone, t.wholePicture, t.nextLabel, t.previous]);
+      assert.deepEqual(seen, { ...Object.fromEntries(gone.map((n) => [n, 0])), [t.wholePicture]: 1, [t.nextLabel]: 1, [t.previous]: 1 }, id);
+    }
+  } finally {
+    await context.close();
+  }
+});
+test('every case of every catalog explainer has one step bar segment per step', options, async () => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    const page = await context.newPage();
+    let cases = 0;
+    for (const [id, project] of await catalog())
+      for (const v of project.variants) {
+        const q = new URLSearchParams(v.values as Record<string, string>);
+        await page.goto(`${embed}/catalog/${id}.html?${q}`);
+        await page.waitForSelector('[data-ready=true]');
+        const seen = await page.locator('.step-bar button').evaluateAll((bs) => bs.map((b) => b.getAttribute('data-step')));
+        assert.deepEqual(seen, v.trace.steps.map((s) => s.step), `${id} ?${q}`);
+        cases++;
+      }
+    assert.ok(cases >= 100, `every case visited (${cases})`);
+  } finally {
+    await context.close();
+  }
+});
+test('the step heading shows on every width with the total', options, async () => {
+  for (const [name, total, kicker] of [['mr-cache', 4, 'Step 1 of 4'], ['quotient-familial', 10, 'Étape 1 sur 10']] as const) {
+    const project = projects.get(name)!,
+      first = stepWords(project.variants.find((v) => sameCase(project, v.values, resolveSettings(project.Scene)))!.trace.steps[0]!);
+    for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
+      const page = await browser.newPage({ viewport, reducedMotion: 'reduce' });
+      try {
+        await page.goto(`${embed}/${name}.html`);
+        await page.waitForSelector('[data-ready=true]');
+        const lede = await page.locator('.lede').evaluate((p) => ({
+          visible: (p as HTMLElement).offsetParent !== null,
+          kicker: p.querySelector('.kicker')?.textContent,
+          title: p.querySelector('strong')?.textContent,
+          line: (p.querySelector('.line') as HTMLElement | null)?.hidden ? null : p.querySelector('.line')?.textContent,
+          // The caption announces the step; the heading is not a second live region.
+          live: p.closest('[aria-live]') !== null,
+        }));
+        const where = `${name} at ${viewport.width}`;
+        assert.deepEqual(lede, { visible: true, kicker, title: first.title, line: first.line || null, live: false }, where);
+        assert.match(lede.kicker!, new RegExp(` ${total}$`), `${where}: the kicker names the total`);
+      } finally { await page.close(); }
+    }
+  }
+});
+// specs/player-redesign.md R3: the step bar. One segment per step, the current one filling as it plays.
+/** The step bar as the reader's tools see it: each segment's step, state, Tab stop, name and fill. */
+const stepBarOf = (page: Page) =>
+  page.locator('.step-bar button').evaluateAll((bs) =>
+    bs.map((b) => ({
+      step: b.getAttribute('data-step'),
+      state: b.getAttribute('data-state'),
+      current: b.getAttribute('aria-current') === 'step',
+      tab: (b as HTMLElement).tabIndex,
+      label: b.getAttribute('aria-label'),
+      title: b.getAttribute('title'),
+      progress: getComputedStyle(b).getPropertyValue('--progress').trim(),
+    })),
+  );
+test('the step bar has one segment per step of the current case and rebuilds on a case change', options, async () => {
+  for (const [name, setting, from, to] of [['mr-cache', 'request', 'hit', 'miss'], ['oauth-pkce', 'attacker', 'no', 'yes']] as const) {
+    const p = projects.get(name)!;
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+    try {
+      await page.goto(`${embed}/${name}.html?${setting}=${from}`);
+      await page.waitForSelector('[data-ready=true]');
+      const expected = (value: string) => {
+        const list = stepsOf(p, resolveSettings(p.Scene, { [setting]: value }));
+        return list.map((s, i) => ({ step: s.step, label: `Step ${i + 1} of ${list.length}: ${s.title}`, title: s.title }));
+      };
+      const seen = async () => (await stepBarOf(page)).map(({ step, label, title }) => ({ step, label, title }));
+      assert.deepEqual(await seen(), expected(from), `${name} ${setting}=${from}`);
+      assert.equal(await page.locator('.step-bar').getAttribute('aria-label'), 'Step progress');
+      await page.locator(`input[name="${setting}"][value="${to}"]`).locator('xpath=..').click();
+      await page.waitForURL(new RegExp(`${setting}=${to}`));
+      await page.waitForFunction((n) => document.querySelectorAll('.step-bar button').length === n, expected(to).length);
+      assert.deepEqual(await seen(), expected(to), `${name} ${setting}=${to}`);
+    } finally { await page.close(); }
+  }
+  // oauth-pkce's attacker adds a step: the two counts differ, so the bar was rebuilt, not kept.
+  const pkce = projects.get('oauth-pkce')!;
+  assert.notEqual(stepsOf(pkce, resolveSettings(pkce.Scene, { attacker: 'no' })).length, stepsOf(pkce, resolveSettings(pkce.Scene, { attacker: 'yes' })).length);
+});
+
+test('a segment jumps to its step', options, async () => {
+  const p = projects.get('mr-cache')!,
+    list = stepsOf(p, resolveSettings(p.Scene, { request: 'hit' }));
+  assert.equal(new Set(list.map((s) => s.caption)).size, list.length, 'mr-cache has distinct captions');
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/mr-cache.html?request=hit`);
+    await page.waitForSelector('[data-ready=true]');
+    for (const i of [3, 0, 2, 1]) {
+      await page.locator('.step-bar button').nth(i).click();
+      await page.waitForFunction((step) => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === step, list[i]!.step);
+      assert.equal(await page.locator('.caption').innerText(), list[i]!.caption, `segment ${i + 1}`);
+      assert.equal(await page.locator('.steps [aria-current=step]').getAttribute('data-step'), list[i]!.step, 'the rail agrees');
+      assert.equal(new URL(page.url()).searchParams.get('step'), list[i]!.step);
+    }
+  } finally { await page.close(); }
+});
+
+test('segment states follow the selected step', options, async () => {
+  const p = projects.get('mr-cache')!,
+    list = stepsOf(p, resolveSettings(p.Scene, { request: 'hit' }));
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    const { page } = await counted(context, `${embed}/mr-cache.html?request=hit`);
+    for (const k of [0, 2, 3, 1]) {
+      const n = await page.evaluate(() => (window as unknown as { __settles: number }).__settles);
+      if (k > 0) await page.locator('.steps button').nth(k).click();
+      if (k > 0) await page.waitForFunction((n) => (window as unknown as { __settles: number }).__settles > n, n);
+      const bar = await stepBarOf(page);
+      assert.deepEqual(
+        bar.map(({ step, state, current, tab }) => ({ step, state, current, tab })),
+        list.map((s, i) => ({ step: s.step, state: i < k ? 'done' : i === k ? 'current' : 'todo', current: i === k, tab: i === k ? 0 : -1 })),
+        `at step ${k + 1}`,
+      );
+      assert.equal(bar[k]!.progress, '1', 'the current segment is full at rest');
+    }
+  } finally { await context.close(); }
+});
+
+test('the current segment fills while a step plays and is full when it rests', options, async () => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'no-preference' });
+  try {
+    await context.addInitScript(() => {
+      const w = window as unknown as { __fills: Array<string | 'settled'> };
+      w.__fills = [];
+      document.addEventListener('rayner:step', () => w.__fills.push('settled'));
+      new MutationObserver((records) => {
+        for (const r of records) {
+          const b = r.target as HTMLElement;
+          if (b.matches?.('.step-bar button[data-step="diff"]')) w.__fills.push(getComputedStyle(b).getPropertyValue('--progress').trim());
+        }
+      }).observe(document, { subtree: true, attributes: true, attributeFilter: ['style'] });
+    });
+    const { page, errors } = await counted(context, `${embed}/mr-cache.html?step=before&request=hit`);
+    await quiet(page);
+    const fills = () => page.evaluate(() => (window as unknown as { __fills: Array<string | 'settled'> }).__fills);
+    const before = (await fills()).length;
+    await page.getByRole('button', { name: 'Next step', exact: true }).click();
+    await page.waitForFunction(() => (window as unknown as { __last: { step: string } | null }).__last?.step === 'diff', undefined, { timeout: 30_000 });
+    await quiet(page);
+    const seen = (await fills()).slice(before),
+      settled = seen.indexOf('settled');
+    assert.ok(settled > 0, `the step settled after fills: ${JSON.stringify(seen)}`);
+    const playing = seen.slice(0, settled).map(Number);
+    assert.ok(playing.some((v) => v > 0 && v < 1), `a fill strictly between 0 and 1 before the step rested: ${JSON.stringify(seen)}`);
+    assert.ok(playing.every((v, i) => i === 0 || v >= playing[i - 1]!), `the fill only grows while the step plays: ${JSON.stringify(playing)}`);
+    assert.equal((await stepBarOf(page))[1]!.progress, '1', 'full once the step rests');
+    assert.deepEqual(errors, []);
+  } finally { await context.close(); }
+});
+
+test('reduced motion fills the segment at once', options, async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/mr-cache.html?step=before&request=hit`);
+    await page.waitForSelector('[data-ready=true]');
+    // Read in the same task as the press: nothing has had a frame to animate.
+    const now = await page.evaluate(() => {
+      document.querySelector<HTMLButtonElement>('button[aria-label="Next step"]')!.click();
+      const current = document.querySelector<HTMLElement>('.step-bar [aria-current=step]')!;
+      return { step: current.dataset.step, progress: getComputedStyle(current).getPropertyValue('--progress').trim(), transition: getComputedStyle(current.querySelector('.fill')!).transitionDuration };
+    });
+    assert.deepEqual(now, { step: 'diff', progress: '1', transition: '0s' });
+  } finally { await page.close(); }
+});
+
+test('arrow keys inside the step bar move the step and the focus', options, async () => {
+  const p = projects.get('mr-cache')!,
+    list = stepsOf(p, resolveSettings(p.Scene, { request: 'hit' }));
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/mr-cache.html?step=before&request=hit`);
+    await page.waitForSelector('[data-ready=true]');
+    const focused = () =>
+      page.evaluate(() => {
+        const a = document.activeElement as HTMLElement | null;
+        return { step: a?.closest('.step-bar') ? a.dataset.step : null, current: document.querySelector('.step-bar [aria-current=step]') === a, url: new URL(location.href).searchParams.get('step') };
+      });
+    await page.locator('.step-bar [aria-current=step]').focus();
+    for (const [key, i] of [['ArrowRight', 1], ['ArrowRight', 2], ['ArrowLeft', 1], ['End', 3], ['Home', 0], ['ArrowLeft', 0]] as const) {
+      await page.keyboard.press(key);
+      await page.waitForFunction((step) => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === step, list[i]!.step);
+      assert.deepEqual(await focused(), { step: list[i]!.step, current: true, url: list[i]!.step }, `${key} → step ${i + 1}`);
+    }
+    // One Tab stop in the bar: the current segment.
+    assert.equal(await page.locator('.step-bar button[tabindex="0"]').count(), 1);
+  } finally { await page.close(); }
+});
+
+test('pressing the current segment while a step plays rests the picture', options, async () => {
+  const p = projects.get('mr-cache')!,
+    step = p.variants.find((v) => v.values.request === 'hit')!.trace.steps[1]!,
+    motion = (step.hold ?? step.t1!) - step.t0;
+  assert.equal(step.step, 'diff');
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'no-preference' });
+  try {
+    const { page, errors } = await counted(context, `${embed}/mr-cache.html?step=before&request=hit`);
+    await quiet(page);
+    await page.getByRole('button', { name: 'Next step', exact: true }).click();
+    // Early in the step's motion, press its segment.
+    const pressed = await page.evaluate(
+      () =>
+        new Promise<{ progress: number; settles: number; at: number }>((resolve, reject) => {
+          const w = window as unknown as { __settles: number };
+          const end = performance.now() + 10_000;
+          const look = () => {
+            const b = document.querySelector<HTMLButtonElement>('.step-bar [aria-current=step]')!,
+              progress = Number(getComputedStyle(b).getPropertyValue('--progress'));
+            if (b.dataset.step === 'diff' && progress > 0 && progress < 0.5) {
+              const settles = w.__settles;
+              b.click();
+              resolve({ progress, settles, at: performance.now() });
+            } else if (performance.now() > end) reject(new Error(`never saw the fill mid-step: ${progress}`));
+            else requestAnimationFrame(look);
+          };
+          look();
+        }),
+    );
+    const rested = await page.evaluate(
+      ({ settles }) =>
+        new Promise<number>((resolve) => {
+          const w = window as unknown as { __settles: number };
+          const look = () => (w.__settles > settles ? resolve(performance.now()) : requestAnimationFrame(look));
+          look();
+        }),
+      pressed,
+    );
+    const remaining = (1 - pressed.progress) * motion * 1000;
+    assert.ok(rested - pressed.at < remaining, `rested ${Math.round(rested - pressed.at)} ms after the press, before the ${Math.round(remaining)} ms of motion left`);
+    assert.equal(await page.evaluate(() => (window as unknown as { __last: { step: string } }).__last.step), 'diff');
+    assert.equal((await stepBarOf(page))[1]!.progress, '1', 'full once rested');
+    await quiet(page);
+    // Pressing the current segment at rest does nothing.
+    const settles = await page.evaluate(() => (window as unknown as { __settles: number }).__settles);
+    await page.locator('.step-bar [aria-current=step]').click();
+    await page.waitForTimeout(300);
+    assert.equal(await page.evaluate(() => (window as unknown as { __settles: number }).__settles), settles, 'a press at rest changes nothing');
+    const link = await counted(context, `${embed}/mr-cache.html?step=diff&request=hit`);
+    assert.equal(await stagePicture(page), await stagePicture(link.page), 'the rested picture is the link\'s picture');
+    assert.deepEqual([...errors, ...link.errors], []);
+  } finally { await context.close(); }
+});
+
+test('no horizontal overflow', options, async () => {
+  for (const width of [320, 390, 768, 1280])
+    for (const name of ['mr-cache', 'quotient-familial']) {
+      const page = await browser.newPage({ viewport: { width, height: 844 }, reducedMotion: 'reduce' });
+      try {
+        await page.goto(`${embed}/${name}.html`);
+        await page.waitForSelector('[data-ready=true]');
+        const seen = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, width: innerWidth, segments: document.querySelectorAll('.step-bar button').length }));
+        assert.ok(seen.scroll <= seen.width, `${name} at ${width}: ${JSON.stringify(seen)}`);
+        if (name === 'quotient-familial') assert.equal(seen.segments, 10, 'the ten-step page');
+      } finally { await page.close(); }
+    }
+});
+// specs/player-redesign.md R5, R6, R10: the rail beside the card, the tools beside Next, both following the page's direction.
+test('the rail is beside the card when wide and under a closed details when narrow', options, async () => {
+  const p = projects.get('mr-cache')!,
+    list = stepsOf(p, resolveSettings(p.Scene, { request: 'hit' }));
+  assert.ok(list.every((s) => s.line), "mr-cache's four steps each have a line");
+  const rail = (page: Page) =>
+    page.evaluate(() => {
+      const rail = document.querySelector<HTMLElement>('.rail')!,
+        r = rail.getBoundingClientRect(),
+        c = document.querySelector('.player')!.getBoundingClientRect();
+      return {
+        tag: rail.tagName,
+        rails: document.querySelectorAll('.rail').length,
+        heading: rail.querySelector('h2')?.textContent ?? null,
+        summary: rail.querySelector('summary')?.textContent ?? null,
+        open: (rail as HTMLDetailsElement).open ?? null,
+        holdsList: !!rail.querySelector(':scope > ol.steps'),
+        box: { left: r.left, right: r.right, top: r.top },
+        card: { left: c.left, right: c.right, top: c.top, bottom: c.bottom },
+      };
+    });
+  for (const [width, height] of [[1280, 800], [1440, 900]] as const) {
+    const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
+    try {
+      await page.goto(`${embed}/mr-cache.html?request=hit`);
+      await page.waitForSelector('[data-ready=true]');
+      const seen = await rail(page);
+      const where = `at ${width}×${height}`;
+      assert.deepEqual([seen.tag, seen.rails, seen.heading, seen.holdsList], ['ASIDE', 1, 'Steps', true], where);
+      assert.ok(seen.box.left >= seen.card.right, `${where}: the rail is beside the card ${JSON.stringify(seen)}`);
+      assert.ok(Math.abs(seen.box.top - seen.card.top) <= 2, `${where}: the rail's top is the card's ${JSON.stringify(seen)}`);
+      // Every item shows its title and its line; none is bold, current or not.
+      const items = await page.locator('.steps button').evaluateAll((bs) =>
+        bs.map((b) => ({
+          title: b.querySelector('.title')?.textContent,
+          line: b.querySelector('.line')?.textContent,
+          shown: (b.querySelector('.line') as HTMLElement | null)?.offsetParent != null,
+          weight: getComputedStyle(b.querySelector('.title')!).fontWeight,
+        })),
+      );
+      assert.deepEqual(items, list.map((s) => ({ title: s.title, line: s.line, shown: true, weight: '400' })), where);
+      // Changing step moves neither the page nor the card.
+      const place = () => page.evaluate(() => [scrollY, document.querySelector('.player')!.getBoundingClientRect().top, document.querySelector('.rail')!.getBoundingClientRect().top]);
+      const before = await place();
+      for (const i of [3, 1, 2]) {
+        await page.locator('.steps button').nth(i).click();
+        await page.waitForFunction((step) => document.querySelector('.steps [aria-current=step]')?.getAttribute('data-step') === step, list[i]!.step);
+        assert.deepEqual(await place(), before, `${where}: step ${i + 1} kept the page and the card in place`);
+        assert.equal(await page.locator('.steps [aria-current=step]').getAttribute('data-state'), 'current');
+      }
+      await page.getByRole('button', { name: 'Next step', exact: true }).click();
+      await page.waitForFunction((step) => document.querySelector('.steps [aria-current=step]')?.getAttribute('data-step') === step, list[3]!.step);
+      assert.deepEqual(await place(), before, `${where}: Next kept the page and the card in place`);
+    } finally { await page.close(); }
+  }
+  for (const [width, height] of [[390, 844], [768, 1024]] as const) {
+    const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
+    try {
+      await page.goto(`${embed}/mr-cache.html?request=hit`);
+      await page.waitForSelector('[data-ready=true]');
+      const seen = await rail(page);
+      const where = `at ${width}×${height}`;
+      assert.deepEqual([seen.tag, seen.rails, seen.summary, seen.open, seen.holdsList], ['DETAILS', 1, 'All 4 steps', false, true], where);
+      assert.ok(seen.box.top >= seen.card.bottom, `${where}: the rail is under the card ${JSON.stringify(seen)}`);
+      assert.equal(await page.locator('.steps button').count(), list.length, `${where}: the list is in the page`);
+      await page.locator('details.rail > summary').click();
+      await page.locator('.steps button').nth(2).click();
+      await page.waitForFunction((step) => document.querySelector('[aria-current=step]')?.getAttribute('data-step') === step, list[2]!.step);
+      assert.equal(await page.locator('.caption').innerText(), list[2]!.caption, where);
+    } finally { await page.close(); }
+  }
+  // Across the width the rail moves between the two, keeping the one list.
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/mr-cache.html?request=hit&step=${list[2]!.step}`);
+    await page.waitForSelector('[data-ready=true]');
+    const list0 = await page.locator('.steps').elementHandle();
+    await page.setViewportSize({ width: 600, height: 800 });
+    await page.waitForFunction(() => document.querySelector('.rail')?.tagName === 'DETAILS');
+    assert.equal(await page.evaluate((ol) => ol!.isConnected && ol!.parentElement!.tagName, list0), 'DETAILS');
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.waitForFunction(() => document.querySelector('.rail')?.tagName === 'ASIDE');
+    assert.equal(await page.locator('.steps [aria-current=step]').getAttribute('data-step'), list[2]!.step);
+  } finally { await page.close(); }
+});
+
+test('view tools share Next\'s row when wide and wrap below it when narrow', options, async () => {
+  for (const [width, height] of [[1280, 800], [390, 844]] as const) {
+    const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
+    try {
+      await page.goto(`${embed}/mr-cache.html?step=after&request=hit`);
+      await page.waitForSelector('[data-ready=true]');
+      const v = await boxesOf(page, { next: 'button[aria-label="Next step"]', tools: '.stepper .tools' });
+      const { next, tools } = v.boxes, where = `at ${width}×${height}`;
+      assert.equal(await page.locator('.stepper .tools').getAttribute('role'), 'group');
+      assert.equal(await page.locator('.stepper .tools').getAttribute('aria-label'), 'View tools');
+      if (width >= 1280) {
+        assert.ok(tools.top < next.bottom && tools.bottom > next.top, `${where}: the tools share Next's row ${JSON.stringify(v.boxes)}`);
+        assert.ok(tools.left >= next.right, `${where}: the tools follow Next ${JSON.stringify(v.boxes)}`);
+      } else {
+        assert.ok(tools.top >= next.bottom, `${where}: the tools wrap below Next ${JSON.stringify(v.boxes)}`);
+        // Every control in the row, except the step bar's thin segments, is at least 44 px each way.
+        const small = await page.locator('.stepper > button, .stepper .tools > button:not([hidden])').evaluateAll((bs) =>
+          bs.map((b) => [b.getAttribute('aria-label'), b.getBoundingClientRect().width, b.getBoundingClientRect().height] as const).filter(([, w, h]) => w < 44 || h < 44),
+        );
+        assert.deepEqual(small, [], where);
+      }
+    } finally { await page.close(); }
+  }
+});
+
+test('right to left: the step bar fills from the right and the rail sits on the left', options, async () => {
+  // No catalog page sets dir="rtl" (a right-to-left lettered page keeps its controls as they are),
+  // so this sets it on mr-cache to check the logical properties the stepper row and rail use.
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${embed}/mr-cache.html?request=hit&step=diff`);
+    await page.waitForSelector('[data-ready=true]');
+    const seen = await page.evaluate(() => {
+      document.documentElement.setAttribute('dir', 'rtl');
+      const b = document.querySelector<HTMLElement>('.step-bar [aria-current=step]')!;
+      b.style.setProperty('--progress', '0.5');
+      const box = b.getBoundingClientRect(),
+        fill = b.querySelector('.fill')!.getBoundingClientRect(),
+        rail = document.querySelector('.rail')!.getBoundingClientRect(),
+        card = document.querySelector('.player')!.getBoundingClientRect(),
+        prev = document.querySelector('button[aria-label="Previous step"]')!.getBoundingClientRect(),
+        next = document.querySelector('button[aria-label="Next step"]')!.getBoundingClientRect();
+      return { box: [box.left, box.right], fill: [fill.left, fill.right], rail: rail.right, card: card.left, prev: prev.left, next: next.right };
+    });
+    assert.ok(Math.abs(seen.fill[1]! - seen.box[1]!) <= 1 && seen.fill[0]! > seen.box[0]! + 1, `the fill grows from the right: ${JSON.stringify(seen)}`);
+    assert.ok(seen.rail <= seen.card, `the rail is on the card's left: ${JSON.stringify(seen)}`);
+    assert.ok(seen.prev > seen.next, `Previous is right of Next: ${JSON.stringify(seen)}`);
   } finally { await page.close(); }
 });
 async function readyFrame(page: Page, scene: string): Promise<Frame> {
@@ -308,7 +793,7 @@ test('Copy link gives the step\'s share page when site:export published one, els
     assert.equal(await copied(), 'https://example.org/projects/rayner/mr-cache/diff');
     await open(`${embed}/site/odd-steps.html?step=one`);
     assert.equal(await copied(), 'https://example.org/projects/rayner/odd-steps/one');
-    await page.locator('.controls button[aria-label="Next step"]').click();
+    await page.locator('.stepper button[aria-label="Next step"]').click();
     await page.waitForURL(/step=two/);
     assert.equal(await copied(), `${embed}/site/odd-steps.html?step=two+words`);
     // Built without site:export: no share pages, so the player URL, as before.
@@ -318,9 +803,10 @@ test('Copy link gives the step\'s share page when site:export published one, els
     await context.close();
   }
 });
-test('stepping keeps the phone’s heading line, Next, steps list and transcript in place', options, async () => {
-  // Captions run from one line to four, and on a phone send-sync's first step opens on a
-  // close-up and shows Fit; neither may push the page down mid-explainer.
+test('the transcript does not move between steps', options, async () => {
+  // Captions run from one line to four, titles from one line to two, and on a phone send-sync's
+  // first step opens on a close-up and shows Whole picture; none may move the step heading's
+  // line, the stepper row, the steps list or the transcript as the reader steps.
   for (const [width, height] of [[1180, 800], [390, 844]] as const)
     for (const scene of ['exgit', 'mr-cache', 'send-sync']) {
       const page = await browser.newPage({ viewport: { width, height } });
@@ -348,16 +834,16 @@ test('stepping keeps the phone’s heading line, Next, steps list and transcript
               document.querySelectorAll('.steps button')[i]?.getAttribute('aria-current') === 'step';
           }, { before, step, i });
           await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
-          if (width < 600 && await page.locator('.lede span').isVisible())
-            linePlaces.add(await page.locator('.lede span').evaluate((line) => (line.getBoundingClientRect().top + scrollY).toFixed(1)));
+          if (await page.locator('.lede .line').isVisible())
+            linePlaces.add(await page.locator('.lede .line').evaluate((line) => (line.getBoundingClientRect().top + scrollY).toFixed(1)));
           places.add(
             await page.evaluate(() =>
-              ['.controls', '.steps', '.transcript'].map((s) => (document.querySelector(s)!.getBoundingClientRect().top + scrollY).toFixed(1)).join(' '),
+              ['.stepper', '.rail', '.transcript'].map((s) => (document.querySelector(s)!.getBoundingClientRect().top + scrollY).toFixed(1)).join(' '),
             ),
           );
         }
-        assert.equal(places.size, 1, `${scene} at ${width} px: controls, steps and transcript tops per step ${[...places].join(' | ')}`);
-        if (width < 600) assert.equal(linePlaces.size, 1, `${scene}: the line below the phone title stays at one height`);
+        assert.equal(places.size, 1, `${scene} at ${width} px: stepper row, rail and transcript tops per step ${[...places].join(' | ')}`);
+        assert.ok(linePlaces.size <= 1, `${scene} at ${width} px: the line below the step title stays at one height`);
       } finally {
         await page.close();
       }
@@ -434,19 +920,19 @@ test(
         const want = tour[i % tour.length]!;
         await until(async () => near(zoomOf(await paintedView(page)), want), `close-up ${i}`);
       }
-      // Fit shows the whole picture, and keeps it for the next steps; Close-up brings the close-ups back.
-      await page.getByRole('button', { name: 'Fit stage' }).click();
-      await until(async () => zoomOf(await paintedView(page)) === null, 'Fit');
+      // Whole picture shows the author's frame, and keeps it for the next steps; Close-up brings the close-ups back.
+      await page.getByRole('button', { name: 'Whole picture' }).click();
+      await until(async () => zoomOf(await paintedView(page)) === null, 'Whole picture');
       assert.equal(await page.getByRole('button', { name: 'Close-up of each step' }).isVisible(), true);
       assert.equal(await page.locator('.overview').isHidden(), true, 'no overview of the whole picture');
       // Zoom: a phone reader can still enlarge the vector stage and pan it, without page overflow.
       // It narrows the viewBox over the author's camera, the way the camera itself zooms, so the
-      // element keeps its size (no layout shift) and Fit is the author's frame.
+      // element keeps its size (no layout shift) and Whole picture is the author's frame.
       const rect = (v: string) => v.split(' ').map(Number);
       const view = async () => rect((await paintedView(page)).view);
       const width = () => page.locator('.stage svg').evaluate((svg) => svg.getBoundingClientRect().width);
       const [fit, fitWidth] = [await view(), await width()];
-      assert.deepEqual(fit, rect((await paintedView(page)).camera), 'Fit shows the author\'s frame');
+      assert.deepEqual(fit, rect((await paintedView(page)).camera), 'Whole picture shows the author\'s frame');
       await page.getByRole('button', { name: 'Zoom in' }).click();
       await page.getByRole('button', { name: 'Zoom in' }).click();
       // Button zoom glides for 220 ms; wait for it to settle at 2.56×.
@@ -467,23 +953,23 @@ test(
         await click();
         await page.waitForFunction(() => !document.querySelector('.stage svg[data-old]'));
       };
-      await replaced(() => page.locator('.controls').getByRole('button', { name: 'Previous step' }).click());
+      await replaced(() => page.locator('.stepper').getByRole('button', { name: 'Previous step' }).click());
       await quiet(page);
       assert.ok(Math.abs(zoomed / (await view())[2]! - 1) < 1e-6, 'zoom kept across steps');
-      await replaced(() => page.locator('.controls').getByRole('button', { name: 'Next step' }).click());
+      await replaced(() => page.locator('.stepper').getByRole('button', { name: 'Next step' }).click());
       assert.ok(Math.abs(zoomed / (await view())[2]! - 1) < 1e-6, 'zoom kept while the step plays');
       await quiet(page);
       assert.ok(Math.abs(zoomed / (await view())[2]! - 1) < 1e-6, 'zoom kept through an animated step');
-      await page.getByRole('button', { name: 'Fit stage' }).click();
-      await until(async () => zoomOf(await paintedView(page)) === null, 'Fit');
-      assert.deepEqual(await view(), fit, 'Fit is the author frame');
-      assert.equal(await page.getByRole('button', { name: 'Fit stage' }).isHidden(), true, 'Fit appears only when zoomed');
+      await page.getByRole('button', { name: 'Whole picture' }).click();
+      await until(async () => zoomOf(await paintedView(page)) === null, 'Whole picture');
+      assert.deepEqual(await view(), fit, 'Whole picture is the author frame');
+      assert.equal(await page.getByRole('button', { name: 'Whole picture' }).isHidden(), true, 'Whole picture appears only when zoomed');
       await page.getByRole('button', { name: 'Close-up of each step' }).click();
       await until(async () => zoomOf(await paintedView(page)) !== null, 'Close-up');
       assert.ok(near(await painted(), tour[0]!), 'Close-up returns to the step\'s first close-up');
       assert.equal(await page.getByRole('button', { name: 'Close-up of each step' }).isHidden(), true);
-      await page.getByRole('button', { name: 'Fit stage' }).click();
-      await until(async () => zoomOf(await paintedView(page)) === null, 'Fit');
+      await page.getByRole('button', { name: 'Whole picture' }).click();
+      await until(async () => zoomOf(await paintedView(page)) === null, 'Whole picture');
       await page.locator('.transcript > summary').click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
       await page.locator('#content').focus();
@@ -510,10 +996,10 @@ test(
   },
 );
 // The author's camera (lantern's 'points' step focuses the camera on Mobject) and the reader's
-// zoom compose: Fit is the author's frame, a zoom narrows it, and the camera's glide home in the
+// zoom compose: Whole picture is the author's frame, a zoom narrows it, and the camera's glide home in the
 // next step plays under a held zoom.
 test(
-  "reader zoom composes with the author's camera: Fit is the author frame, and a camera glide plays under a held zoom",
+  "reader zoom composes with the author's camera: Whole picture is the author frame, and a camera glide plays under a held zoom",
   options,
   async () => {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'no-preference' });
@@ -528,19 +1014,21 @@ test(
       const home = '-8000 -4500 16000 9000';
       const author = await paintedView(page);
       assert.notEqual(author.camera, home, 'the step frames part of the stage');
-      assert.equal(author.view, author.camera, 'Fit shows the author frame');
+      assert.equal(author.view, author.camera, 'Whole picture shows the author frame');
       await page.locator('.stage').focus();
       await page.keyboard.press('+');
       await page.keyboard.press('+');
       const zoomed = await paintedView(page);
       assert.equal(zoomed.camera, author.camera, 'the author frame is unchanged under a reader zoom');
-      assert.ok(Math.abs(rect(zoomed.camera)[2]! / rect(zoomed.view)[2]! - 2.56) < 1e-3, 'two zoom steps narrow the author frame 2.56 times');
+      // Read as a scale over the stage (zoomOf), not a ratio of widths: a stage whose rounded height
+      // makes it a hair less wide than 16:9 is fitted by height, and its view is a little wider.
+      assert.ok(Math.abs(zoomOf(zoomed)!.k - 2.56) < 1e-3, `two zoom steps narrow the author frame 2.56 times: ${JSON.stringify(zoomed)}`);
       const [cx, cy, cw, ch] = rect(zoomed.camera) as [number, number, number, number],
         [vx, vy, vw, vh] = rect(zoomed.view) as [number, number, number, number];
       assert.ok(vx >= cx - 1e-3 && vy >= cy - 1e-3 && vx + vw <= cx + cw + 1e-3 && vy + vh <= cy + ch + 1e-3, 'the view stays inside the author frame');
       // Next plays 'clock', whose s.clear() glides the camera home: every frame keeps the reader's 2.56×.
       const seen: Painted[] = [];
-      await page.locator('.controls').getByRole('button', { name: 'Next step' }).click();
+      await page.locator('.stepper').getByRole('button', { name: 'Next step' }).click();
       const end = Date.now() + 3000;
       while (Date.now() < end) {
         const p = await paintedView(page).catch(() => null);
@@ -550,13 +1038,13 @@ test(
       const gliding = seen.filter((p) => p.camera !== author.camera && p.camera !== home);
       assert.ok(gliding.length > 0, `the camera glide was seen under the zoom: ${seen.map((p) => p.camera).join(' | ')}`);
       for (const p of seen)
-        assert.ok(Math.abs(rect(p.camera)[2]! / rect(p.view)[2]! - 2.56) < 1e-3, `zoom held through the glide: ${p.camera} -> ${p.view}`);
+        assert.ok(Math.abs(zoomOf(p)!.k - 2.56) < 1e-3, `zoom held through the glide: ${p.camera} -> ${p.view}`);
       await quiet(page);
       assert.equal((await paintedView(page)).camera, home, 'the camera is home after clear()');
       await page.locator('.stage').focus();
       await page.keyboard.press('0');
       const fit = await paintedView(page);
-      assert.equal(fit.view, fit.camera, 'Fit returns to the author frame');
+      assert.equal(fit.view, fit.camera, 'Whole picture returns to the author frame');
       // On a phone the step's close-up is a reader zoom over that author frame, worked out in its units.
       const phone = await context.browser()!.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
       try {
@@ -616,7 +1104,7 @@ test(
 // replay with FC_SEED=<seed> FC_PATH=<path> FC_REPLAY_PATH=<replayPath>.
 //
 // Reduced motion: the model runs under prefers-reduced-motion: reduce, where
-// Next and Replay show the finished step at once. With motion on, Next plays an
+// Next shows the finished step at once. With motion on, Next plays an
 // animation in wall-clock time for an unpredictable number of frames, so the
 // model's per-command assertions would race it; the motion-on path has its own
 // property further down (Next ends on the step's resting picture), which waits
@@ -649,7 +1137,7 @@ interface PlayerModel {
   k: number;
   transcript: boolean;
   settles: number;
-  /** On a narrow stage, each step opens on its close-up (docs/REFERENCE.md); Fit turns this off, Close-up on. */
+  /** On a narrow stage, each step opens on its close-up (docs/REFERENCE.md); Whole picture turns this off, Close-up on. */
   follow: boolean;
   /** The scale of the step's close-ups, worked out when it settled on a narrow stage; the overview goes to them. */
   tourK: number | null;
@@ -726,6 +1214,7 @@ function observe(ids: string[]) {
     urlCase: Object.fromEntries(ids.map((id) => [id, q.get(id)])),
     current: [...document.querySelectorAll<HTMLElement>('.steps [aria-current=step]')].map((b) => b.dataset.step),
     list: [...document.querySelectorAll<HTMLElement>('.steps button')].map((b) => b.dataset.step),
+    bar: [...document.querySelectorAll<HTMLElement>('.step-bar button')].map((b) => [b.dataset.step, b.dataset.state, b.getAttribute('aria-current')]),
     caption: document.querySelector('.caption')!.textContent,
     lede: [...document.querySelectorAll('.lede > *')].map((e) => ((e as HTMLElement).hidden ? null : e.textContent)),
     stageLabel: stage.getAttribute('aria-label'),
@@ -749,8 +1238,8 @@ function observe(ids: string[]) {
     stageH: stage.clientHeight,
     zoomOutDisabled: button('Zoom out')!.disabled,
     zoomInDisabled: button('Zoom in')!.disabled,
-    // Unseen, whether removed or holding its place (Fit keeps its place so the controls do not wrap).
-    fitHidden: ((b) => b.hidden || getComputedStyle(b).visibility === 'hidden')(button('Fit stage')!),
+    // Unseen, whether removed or holding its place (Whole picture keeps its place so the controls do not wrap).
+    wholeHidden: ((b) => b.hidden || getComputedStyle(b).visibility === 'hidden')(button('Whole picture')!),
     closeUpHidden: button('Close-up of each step')!.hidden,
     overviewHidden: document.querySelector<HTMLButtonElement>('.overview')!.hidden,
     transcriptOpen: (document.querySelector('details.transcript') as HTMLDetailsElement).open,
@@ -789,7 +1278,7 @@ const paintedView = (page: Page | Frame): Promise<Painted> =>
     w: svg.parentElement!.clientWidth,
     h: svg.parentElement!.clientHeight,
   }));
-/** The reader's zoom painted over the author's frame; null when the stage shows the author's frame (Fit). */
+/** The reader's zoom painted over the author's frame; null when the stage shows the author's frame (Whole picture). */
 function zoomOf(p: Painted | null) {
   if (!p || p.view === p.camera) return null;
   // Read the world interval under the stage independently of the painter.
@@ -854,10 +1343,11 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
     settings: Object.fromEntries(ids.map((id) => [id, entry.values[id]])),
   });
   eq('step list', seen.list, list.map((s) => s.step));
+  eq('step bar', seen.bar, list.map((s, j) => [s.step, j < i ? 'done' : j === i ? 'current' : 'todo', j === i ? 'step' : 'false']));
   eq('aria-current', seen.current, [entry.step]);
   eq('caption', seen.caption, spec.caption);
   eq('stage label', seen.stageLabel, `${seen.title}: ${spec.title}${spec.line ? ` — ${spec.line}` : ''}`);
-  eq('lede', seen.lede, [`${i + 1}. ${spec.title}`, spec.line || null]);
+  eq('lede', seen.lede, [`Step ${i + 1} of ${list.length}`, spec.title, spec.line || null]);
   eq('stage description', seen.summary, spec.summary);
   eq('computed stage description', await stageDescription(r.page), spec.summary.replace(/\s+/g, ' ').trim());
   // Compared as the browser serializes it, which writes &quot; in text as a plain quote.
@@ -880,7 +1370,7 @@ async function verify(m: PlayerModel, r: PlayerReal, what: string) {
   // Zoom: the scale the model predicts, painted so the drawing covers the stage.
   eq('Zoom out disabled', seen.zoomOutDisabled, m.k <= 1);
   eq('Zoom in disabled', seen.zoomInDisabled, m.k >= ZOOM_MAX);
-  eq('Fit hidden', seen.fitHidden, m.k <= 1);
+  eq('Whole picture hidden', seen.wholeHidden, m.k <= 1);
   const narrow = seen.stageW > 0 && seen.stageW < NARROW_PX;
   eq('Close-up hidden', seen.closeUpHidden, !(narrow && !m.follow));
   const multipleViews = narrow && (await tourOf(m, seen.stageW, seen.stageH)).length > 1;
@@ -942,7 +1432,7 @@ async function reframe(m: PlayerModel, r: PlayerReal) {
   m.tourK = narrow ? (await tourOf(m, w, h))[0]!.k : null;
   if (narrow && m.follow) m.k = m.tourK!;
 }
-const button = (r: PlayerReal, name: string) => r.page.locator(`.controls button[aria-label="${name}"]`);
+const button = (r: PlayerReal, name: string) => r.page.locator(`.stepper button[aria-label="${name}"]`);
 /** Show a step of this case: a history entry when the step changes, a fresh resting picture always. */
 function goTo(m: PlayerModel, index: number) {
   const step = steps(m)[index]!.step;
@@ -971,8 +1461,21 @@ const ClickStep = (i: number) =>
     `ClickStep(${i})`,
     (m) => i < steps(m).length,
     async (m, r) => {
+      // On a narrow page the rail is a closed disclosure under the card: the reader opens it first.
+      const closed = r.page.locator('details.rail:not([open]) > summary');
+      if (await closed.count()) await closed.click();
       await r.page.locator('.steps button').nth(i).click();
       goTo(m, i);
+    },
+  );
+/** A step bar segment: another step jumps there; the current step's, at rest, does nothing. */
+const ClickSegment = (i: number) =>
+  command(
+    `ClickSegment(${i})`,
+    (m) => i < steps(m).length,
+    async (m, r) => {
+      await r.page.locator('.step-bar button').nth(i).click();
+      if (i !== selected(m)) goTo(m, i);
     },
   );
 const TranscriptLink = (i: number) =>
@@ -1029,19 +1532,19 @@ const Forward = command(
     traverse(m, 1);
   },
 );
-const ZoomButton = (which: 'Zoom in' | 'Zoom out' | 'Fit stage') =>
+const ZoomButton = (which: 'Zoom in' | 'Zoom out' | 'Whole picture') =>
   command(
     `ZoomButton(${which})`,
     (m) => (which === 'Zoom in' ? m.k < ZOOM_MAX : m.k > 1),
     async (m, r) => {
       const { narrow } = await stageSize(r);
       await button(r, which).click();
-      m.k = which === 'Fit stage' ? 1 : kAfter(m.k, which === 'Zoom in' ? 1.6 : 1 / 1.6);
-      // On a narrow stage, Fit keeps the whole picture for the steps that follow.
-      if (which === 'Fit stage' && narrow) m.follow = false;
+      m.k = which === 'Whole picture' ? 1 : kAfter(m.k, which === 'Zoom in' ? 1.6 : 1 / 1.6);
+      // On a narrow stage, Whole picture keeps the whole picture for the steps that follow.
+      if (which === 'Whole picture' && narrow) m.follow = false;
     },
   );
-/** Close-up: shown on a narrow stage once Fit has turned close-ups off; it turns them on and frames this step. */
+/** Close-up: shown on a narrow stage once Whole picture has turned close-ups off; it turns them on and frames this step. */
 const CloseUpButton = command('CloseUpButton', (m) => !m.follow, async (m, r) => {
   const { w, h, narrow } = await stageSize(r);
   if (!narrow) return; // hidden, so there is nothing to press
@@ -1055,11 +1558,6 @@ const OverviewButton = command('OverviewButton', always, async (m, r) => {
   if (!(await overview.isVisible()) || (await overview.isDisabled())) return;
   await overview.click();
   m.k = m.tourK!;
-});
-const Replay = command('Replay', always, async (m, r) => {
-  await button(r, 'Replay step').click();
-  m.notice = 'Reduced motion is on, so the finished step is shown.';
-  m.settles++;
 });
 const CopyLink: Cmd = {
   check: always,
@@ -1170,14 +1668,14 @@ function commandArbs(p: Project): fc.Arbitrary<Cmd>[] {
     fc.constant(Next),
     fc.constant(Previous),
     fc.nat({ max: 7 }).map(ClickStep),
+    fc.nat({ max: 7 }).map(ClickSegment),
     fc.nat({ max: 7 }).map(TranscriptLink),
     ...(settings.length
       ? [fc.tuple(fc.nat({ max: settings.length - 1 }), fc.nat({ max: 2 })).map(([s, o]) => ChooseCase(s, o))]
       : []),
     fc.constant(Back),
     fc.constant(Forward),
-    fc.constantFrom('Zoom in', 'Zoom out', 'Fit stage').map((w) => ZoomButton(w as 'Zoom in')),
-    fc.constant(Replay),
+    fc.constantFrom('Zoom in', 'Zoom out', 'Whole picture').map((w) => ZoomButton(w as 'Zoom in')),
     fc.constant(CopyLink),
     fc.tuple(fc.constantFrom('ArrowRight', 'ArrowLeft', 'ArrowUp', '+', '=', '-', '0'), fc.boolean()).map(([k, onStage]) => Key(k, onStage)),
     fc.tuple(fc.double({ min: 0, max: 1, noNaN: true }), fc.double({ min: 0, max: 1, noNaN: true })).map(
@@ -1271,7 +1769,7 @@ test('phone tour metadata follows resizing while the current zoom and step stay 
     try {
       const commands = width === 632
         ? [Resize(200, 400), DoubleClick(0, 0), OverviewButton]
-        : [Resize(632, 400), Replay, Resize(200, 400), OverviewButton];
+        : [Resize(632, 400), Resize(200, 400), OverviewButton];
       await fc.asyncModelRun(() => ({model, real}), commands);
       assert.equal(current(model).step, 'secret');
     } finally { await context.close(); }
@@ -1284,12 +1782,12 @@ test(
   async () => {
     const { context, model, real } = await openPlayer('oauth-pkce', { values: ['yes'], step: 'attack', viewport: { width: 700, height: 900 } });
     try {
-      await fc.asyncModelRun(() => ({ model, real }), [ChooseCase(0, 1), Back, CopyLink, Replay]);
+      await fc.asyncModelRun(() => ({ model, real }), [ChooseCase(0, 1), Back, CopyLink]);
       // Every command ran (a command whose precondition fails is skipped silently), and verify() held after each.
       const first = stepsOf(model.project, { attacker: 'no' })[0]!.step;
       assert.deepEqual(model.entries.map((e) => [e.values.attacker, e.step]), [['yes', 'attack'], ['no', first]]);
       assert.equal(model.index, 0, 'Back returned to the first entry');
-      assert.equal(model.notice, 'Reduced motion is on, so the finished step is shown.');
+      assert.equal(model.notice, 'Link copied.');
     } finally {
       await context.close();
     }
@@ -1324,7 +1822,8 @@ async function quiet(page: Page, ms = 300) {
     await page.waitForFunction(
       () =>
         !document.getElementById('content')!.classList.contains('loading') &&
-        !!document.querySelector('button[aria-label="Replay step"]'),
+        !!document.querySelector('.stepper') &&
+        !document.querySelector('.stage[aria-busy=true]'),
       undefined,
       { timeout: Math.max(1, deadline - Date.now()) },
     );
@@ -1363,8 +1862,8 @@ test(
           for (let i = 0; i < list.length; i++) {
             const step = list[i]!.step;
             if (i > 0) {
-              await a.page.locator('.controls button[aria-label="Next step"]').click();
-              await d.page.locator('.controls button[aria-label="Next step"]').click();
+              await a.page.locator('.stepper button[aria-label="Next step"]').click();
+              await d.page.locator('.stepper button[aria-label="Next step"]').click();
             }
             await quiet(a.page);
             await quiet(d.page);
@@ -1432,7 +1931,7 @@ test('phone: one press of Next view shows what PKCE\'s captions point at, emphas
     for (const [i, step] of ['secret', 'authorize'].entries()) {
       if (i > 0) {
         // Next, with motion: it moves to the next step, as before.
-        await page.locator('.controls').getByRole('button', { name: 'Next step', exact: true }).click();
+        await page.locator('.stepper').getByRole('button', { name: 'Next step', exact: true }).click();
         await page.waitForURL(/step=authorize/);
         await quiet(page);
       }
@@ -1477,7 +1976,7 @@ test(
         const context = await browser.newContext({ reducedMotion: 'no-preference' });
         try {
           const a = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i]!.step)}`);
-          await a.page.locator('.controls button[aria-label="Next step"]').click();
+          await a.page.locator('.stepper button[aria-label="Next step"]').click();
           await a.page.waitForFunction(() => (window as unknown as { __settles: number }).__settles >= 2, undefined, {
             timeout: 30_000,
           });
@@ -1514,9 +2013,9 @@ test(
         try {
           const a = await counted(context, `${embed}/${name}.html?${caseQuery(p, values, list[i]!.step)}`);
           await quiet(a.page);
-          await a.page.locator('.controls button[aria-label="Next step"]').click();
+          await a.page.locator('.stepper button[aria-label="Next step"]').click();
           await a.page.waitForTimeout(after);
-          await a.page.locator('.controls button[aria-label="Next step"]').click();
+          await a.page.locator('.stepper button[aria-label="Next step"]').click();
           await a.page.waitForFunction((step) => (window as unknown as { __last: { step: string } | null }).__last?.step === step, list[i + 2]!.step, {
             timeout: 30_000,
           });
@@ -1575,7 +2074,7 @@ test(
         const shown = await page.evaluate((t) => (window as unknown as { __shown: Array<{ at: number; born: number | null }> }).__shown.filter((s) => s.at > t), t);
         return { t, shown };
       };
-      const next = await shownDuring(() => page.locator('.controls button[aria-label="Next step"]').click());
+      const next = await shownDuring(() => page.locator('.stepper button[aria-label="Next step"]').click());
       assert.ok(next.shown.length >= 1, 'Next showed a picture');
       assert.ok(next.shown[0]!.born !== null && next.shown[0]!.born < next.t, `Next's first picture was drawn after the tap: ${JSON.stringify(next)}`);
       for (const i of [0, 1]) {
@@ -1696,7 +2195,7 @@ test(
   async () => {
     const name = 'oauth-pkce',
       p = projects.get(name)!;
-    const early = fc.array(fc.constantFrom('Next step', 'Previous step', 'Replay step', 'Copy link', 'Zoom in', 'Zoom out', 'ArrowRight', 'ArrowLeft', '+', '0'), {
+    const early = fc.array(fc.constantFrom('Next step', 'Previous step', 'Whole picture', 'Copy link', 'Zoom in', 'Zoom out', 'ArrowRight', 'ArrowLeft', '+', '0'), {
       minLength: 1,
       maxLength: 8,
     });
@@ -1946,7 +2445,7 @@ test('PKCE mobile views expose the derivation and the unsent verifier without ad
       await page.goto(`${embed}/oauth-pkce.html?attacker=${variant.values.attacker}`);
       await page.waitForSelector('[data-ready=true]');
       for (const step of ['secret', 'authorize']) {
-        if (step === 'authorize') await page.locator('.controls').getByRole('button', { name: 'Next step', exact: true }).click();
+        if (step === 'authorize') await page.locator('.stepper').getByRole('button', { name: 'Next step', exact: true }).click();
         await quiet(page);
         assert.equal(new URL(page.url()).searchParams.get('step'), step);
         assert.ok(await page.locator('.view-help').isVisible());
@@ -1984,7 +2483,7 @@ test('PKCE mobile views expose the derivation and the unsent verifier without ad
       await page.getByRole('button', { name: 'Whole picture', exact: true }).click();
       await settledZoom(page);
       assert.ok(await page.locator('.view-controls').isVisible());
-      assert.ok(await page.getByRole('button', { name: 'Whole picture', exact: true }).isDisabled());
+      assert.ok(await page.getByRole('button', { name: 'Whole picture', exact: true }).isHidden(), 'Whole picture shows only while zoomed');
       assert.equal(zoomOf(await paintedView(page)), null);
     } finally { await context.close(); }
   }
@@ -2020,7 +2519,7 @@ test('the PKCE attack opens with the stolen-code, guessed-verifier and rejection
       const [l, t, r, b] = seen.actual, [vl, vt, vr, vb] = seen.viewport;
       assert.ok(l! >= vl! - 1 && t! >= vt! - 1 && r! <= vr! + 1 && b! <= vb! + 1,
         `width ${width}: opening must contain the complete attack, not an unrelated card: ${JSON.stringify(seen)}`);
-      assert.equal(await page.locator('[aria-current=step]').getAttribute('data-step'), 'attack');
+      assert.equal(await page.locator('[aria-current=step]').first().getAttribute('data-step'), 'attack');
     } finally { await page.close(); }
   }
 });

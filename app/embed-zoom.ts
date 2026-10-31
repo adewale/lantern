@@ -54,7 +54,7 @@ export function panBy(z: Zoom, dx: number, dy: number, w: number, h: number, max
 // the element. Each stage SVG carries its author's frame in `data-camera` (the camera's
 // viewBox, as the sink last wrote it, or the built poster's own); the reader's zoom picks
 // part of that view. So the two compose: a camera glide still plays under a reader zoom,
-// a close-up zooms further into whatever the author framed, and Fit is the author's frame.
+// a close-up zooms further into whatever the author framed, and Whole picture is the author's frame.
 // On screen, a label is world size × camera zoom × reader zoom × px per view unit.
 
 /** The camera's home viewBox: the whole 16 × 9 stage, in the sinks' user units. */

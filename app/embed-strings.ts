@@ -25,22 +25,30 @@ export interface Chrome {
   next: string;
   zoomOut: string;
   zoomIn: string;
-  fit: string;
-  /** On a narrow stage: open each step on a close-up again, after Fit. */
+  /** On a narrow stage: open each step on a close-up again, after Whole picture. */
   closeUp: string;
   /** The corner map's name: the step's next close-up, i of n. */
   nextCloseUp: (i: number, n: number) => string;
   viewCount: (i: number, n: number) => string;
   nextView: string;
+  /** The one button that shows the author's whole frame (and keeps it on a narrow stage). */
   wholePicture: string;
   viewHelp: string;
-  replay: string;
-  stop: string;
   copy: string;
   enlarge: string;
   exitFullScreen: string;
+  /** Accessible name of the zoom, copy and enlarge buttons' group. */
+  viewTools: string;
   /** Accessible name of the list of steps. */
   stepList: string;
+  /** The steps list's visible heading beside the card. */
+  steps: string;
+  /** The steps list's disclosure under the card, on a narrow page. */
+  allSteps: (n: number) => string;
+  /** Accessible name of the step bar. */
+  stepBar: string;
+  /** "Step 3 of 4", the step heading's kicker; with a title, a step bar segment's name. */
+  stepOf: (i: number, n: number, title?: string) => string;
   newTab: string;
   /** The loader's name for the frame when the host gives none. */
   frame: string;
@@ -69,19 +77,21 @@ const EN: Chrome = {
   next: 'Next',
   zoomOut: 'Zoom out',
   zoomIn: 'Zoom in',
-  fit: 'Fit stage',
   closeUp: 'Close-up of each step',
   nextCloseUp: (i, n) => `Next close-up of this step (${i} of ${n})`,
   viewCount: (i, n) => `View ${i} of ${n}`,
   nextView: 'Next view',
   wholePicture: 'Whole picture',
   viewHelp: 'Next view explores this picture. Next step continues the explanation.',
-  replay: 'Replay step',
-  stop: 'Stop animation',
   copy: 'Copy link',
   enlarge: 'Enlarge',
   exitFullScreen: 'Exit full screen',
+  viewTools: 'View tools',
   stepList: 'Steps in this explainer',
+  steps: 'Steps',
+  allSteps: (n) => `All ${n} steps`,
+  stepBar: 'Step progress',
+  stepOf: (i, n, title) => `Step ${i} of ${n}${title ? `: ${title}` : ''}`,
   newTab: 'Open in a new tab',
   frame: 'Interactive explainer',
   reducedMotion: 'Reduced motion is on, so the finished step is shown.',
@@ -105,19 +115,21 @@ const FR: Chrome = {
   next: 'Suivant',
   zoomOut: 'Zoom arrière',
   zoomIn: 'Zoom avant',
-  fit: 'Adapter à la page',
   closeUp: 'Gros plan sur chaque étape',
   nextCloseUp: (i, n) => `Gros plan suivant de cette étape (${i} sur ${n})`,
   viewCount: (i, n) => `Vue ${i} sur ${n}`,
   nextView: 'Vue suivante',
   wholePicture: 'Image entière',
   viewHelp: 'Vue suivante explore cette image. Étape suivante poursuit l’explication.',
-  replay: 'Rejouer l’étape',
-  stop: 'Arrêter l’animation',
   copy: 'Copier le lien',
   enlarge: 'Plein écran',
   exitFullScreen: 'Quitter le plein écran',
+  viewTools: 'Outils d’affichage',
   stepList: 'Étapes de cette explication',
+  steps: 'Étapes',
+  allSteps: (n) => `Les ${n} étapes`,
+  stepBar: 'Progression des étapes',
+  stepOf: (i, n, title) => `Étape ${i} sur ${n}${title ? ` : ${title}` : ''}`,
   newTab: 'Ouvrir dans un nouvel onglet',
   frame: 'Explication interactive',
   reducedMotion: 'Les animations sont réduites : l’étape s’affiche terminée.',
