@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { Scene, NullSink, Text, loadFonts } from '../src/index.ts';
 import type { Box, Vec } from '../src/index.ts';
 import { Card, CodeBlock } from '../explain/panels.ts';
+import type { CardRow } from '../explain/panels.ts';
 import { REGIONS, emphasis, good, bad } from '../explain/look.ts';
 import type { Region } from '../explain/look.ts';
 import { fc, params } from './lib/pbt.ts';
@@ -545,3 +546,109 @@ test('mark lights the row and stays; mark(null) hides the bar', async () => {
   );
 });
 
+
+// Columns: a row gives one value per column, or one value that spans them.
+const columnCase = fc
+  .record({
+    colors: palette,
+    columns: fc.uniqueArray(fc.string({ unit: 'grapheme', minLength: 1, maxLength: 8 }), { minLength: 1, maxLength: 3 }),
+    labels: fc.uniqueArray(label, { minLength: 1, maxLength: 5 }),
+    direction: fc.constantFrom('ltr' as const, 'rtl' as const),
+    width: fc.option(fc.double({ min: 6, max: 14, noNaN: true }), { nil: undefined }),
+  })
+  .chain((c) =>
+    fc.tuple(...c.labels.map(() => fc.oneof(fc.array(value, { minLength: c.columns.length, maxLength: c.columns.length }), fc.tuple(value)))).map((vs) => ({
+      ...c,
+      // Each row has at least one value: one per column, or one that spans them.
+      rows: c.labels.map((l, i) => [l, ...vs[i]!] as unknown as CardRow),
+    })),
+  );
+const columned = (c: Of<typeof columnCase>) =>
+  new Card(scene(), c.colors, c.rows, { columns: c.columns, direction: c.direction, ...(c.width != null ? { width: c.width } : {}) });
+
+test('uncapped columned cards keep headings at their authored size with single-value rows', () => {
+  fc.assert(
+    fc.property(
+      palette,
+      fc.uniqueArray(fc.string({ unit: 'grapheme', minLength: 1, maxLength: 24 }), { minLength: 1, maxLength: 6 }),
+      fc.constantFrom('ltr' as const, 'rtl' as const),
+      fc.double({ min: 0.08, max: 0.5, noNaN: true }),
+      (colors, columns, direction, fontSize) => {
+        // One column also has one value per row; neither shape may discard its heading's width.
+        const k = new Card(scene(), colors, [['Requests', 'A B C']], { columns, direction, fontSize });
+        const data = new Set([...k.labels.values(), ...[...k.cells.values()].flat()]);
+        const headings = k.children.filter((m): m is Text => m instanceof Text && !data.has(m));
+        assert.deepEqual(headings.map((h) => h.text), columns);
+        const panel = k.panel.box()!;
+        for (const h of headings) {
+          assert.ok(Math.abs(h.textSize() - fontSize) < EPS, `heading ${h.text} shrank despite having no width cap`);
+          const b = h.box();
+          if (b) assert.ok(inside(b, panel), `heading ${h.text} is outside its card`);
+        }
+      },
+    ),
+    params(),
+  );
+});
+
+test('a columned card keeps every heading, label and value inside it, each column on its own edge', () => {
+  fc.assert(
+    fc.property(columnCase, (c) => {
+      const k = columned(c), p = k.panel.box()!, n = c.columns.length;
+      const texts = k.family().filter((m): m is Text => m instanceof Text);
+      for (const t of texts) {
+        const b = t.box();
+        if (b) assert.ok(b[0] >= p[0] - EPS && b[2] <= p[2] + EPS, `"${t.text}" ${b} outside panel ${p}`);
+      }
+      const ltr = c.direction === 'ltr';
+      // Values in a column share its anchored edge, and columns keep their order across the row.
+      const edges = Array.from({ length: n }, () => new Set<string>());
+      for (const [l] of c.rows) {
+        const cells = k.cells.get(l)!;
+        if (cells.length !== n || n === 1) continue;
+        // A value is placed by its ink box, so that box's anchored edge is the column's.
+        cells.forEach((cell, j) => {
+          const b = cell.box();
+          if (b) edges[j]!.add((ltr ? b[2] : b[0]).toFixed(3));
+        });
+        for (let j = 1; j < n; j++) {
+          const a = cells[j - 1]!.box(), b = cells[j]!.box();
+          if (a && b) assert.ok(ltr ? a[2] <= b[0] + EPS : a[0] >= b[2] - EPS, `${l}: column ${j - 1} runs into column ${j}`);
+        }
+        const lb = k.labels.get(l)!.box(), first = cells[0]!.box();
+        if (lb && first) assert.ok(ltr ? lb[2] <= first[0] + EPS : lb[0] >= first[2] - EPS, `${l}: label runs into its first value`);
+      }
+      for (const e of edges) assert.ok(e.size <= 1, 'a column has one edge');
+    }),
+    params(),
+  );
+});
+
+test('a columned card is described by row and column, and set takes one value per column', async () => {
+  await fc.assert(
+    fc.asyncProperty(columnCase.filter((c) => c.columns.length > 1 && c.rows.some((r) => r.length > 2)), value, async (c, v) => {
+      const k = columned(c), n = c.columns.length;
+      const row = c.rows.find((r) => r.length > 2)!, l = row[0];
+      const names = k.describe().parts.map((p) => p.name);
+      c.columns.forEach((col, j) => assert.ok(names.includes(`${l} (${col}): ${String(row[j + 1])}`)));
+      const before = [...k.cells.get(l)!];
+      const next = c.columns.map((_, j) => (j === 0 ? v : row[j + 1]));
+      await k.set({ [l]: next });
+      k.cells.get(l)!.forEach((cell, j) => {
+        assert.equal(cell.text, String(next[j]));
+        if (String(next[j]) === before[j]!.text) assert.equal(cell, before[j], `column ${j} did not move`);
+      });
+      assert.equal(k.values.get(l), k.cells.get(l)!.at(-1));
+      await assert.rejects(k.set({ [l]: v }), /set it to an array of/);
+      await assert.rejects(k.set({ [l]: Array(n + 1).fill(v) }), /set it to an array of/);
+    }),
+    params(),
+  );
+});
+
+test('a row whose value count matches neither one nor the columns is refused', () => {
+  assert.throws(() => new Card(scene(), { paper: '#fff', ink: '#000', accent: '#00f', muted: '#888' }, [['Hits', 1, 2]]), /pass columns/);
+  assert.throws(() => new Card(scene(), { paper: '#fff', ink: '#000', accent: '#00f', muted: '#888' }, [['Hits', 1, 2]], { columns: ['A', 'B', 'C'] }), /2 values for 3 columns/);
+  const spanning = new Card(scene(), { paper: '#fff', ink: '#000', accent: '#00f', muted: '#888' }, [['Requests', 'A B C'], ['Hits', 0, 3]], { columns: ['LRU', 'MRU'] });
+  assert.deepEqual(spanning.describe().parts.map((p) => p.name), ['Requests: A B C', 'Hits (LRU): 0', 'Hits (MRU): 3']);
+});
