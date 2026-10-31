@@ -128,7 +128,7 @@ export default class MontyHall extends Scene {
         label(
           host === 'informed'
             ? 'Knows prize; opens goat; always offers switch'
-            : 'Random host; this shown round revealed a goat',
+            : 'Random host; this round revealed a goat',
           0,
           -2.25,
           s.soft,
