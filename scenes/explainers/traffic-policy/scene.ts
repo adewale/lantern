@@ -413,6 +413,16 @@ export default class TrafficPolicyExplainer extends Scene {
       );
     const left = await half('cluster', regionBox(BELOW, { right: -0.15 })),
       right = await half('local', regionBox(BELOW, { left: 0.15 }));
+    for (const [policy, card] of [['cluster', left], ['local', right]] as const) {
+      card.key = `traffic-compare:${policy}`;
+      card.values.get('Second hop')!.key = `${card.key}:hop`;
+      card.values.get('Pod sees')!.key = `${card.key}:source`;
+      for (const [label, value] of card.values)
+        if (label !== 'Second hop' && label !== 'Pod sees') {
+          card.labels.get(label)!.key = `${card.key}:pods:${label}`;
+          value.key = `${card.key}:share:${label}`;
+        }
+    }
     await s.enter(left, right);
     this.state.compare = {
       cluster: Object.fromEntries(ids.map((id) => [id, frac(cl[id]!)])),

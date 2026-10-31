@@ -979,3 +979,133 @@ test('served review rejects hidden reordered and duplicated layers despite a cha
     await browser.close(); server?.close(); await rm(dir, { recursive: true, force: true });
   }
 });
+
+// The caption compares policy outcomes, not the architecture revealed when
+// old percentage notes disappear. These expectations are independent of shares().
+test('traffic policy reviews every case and step while binding its comparison to readable policy facts',
+  {skip: !process.env.EXPLAIN_BROWSER && 'set EXPLAIN_BROWSER=1 for served traffic-policy checks'}, async () => {
+  const {reviewClaims} = await import('../tools/lib/explain-review-scene.ts');
+  const {STORY_CLAIMS} = await import('../tools/lib/explain-story-review.ts');
+  const {Card} = await import('../explain/panels.ts');
+  const project = await collectProject('scenes/explainers/traffic-policy', {write: false});
+  const claims = await reviewClaims(project, undefined, STORY_CLAIMS['traffic-policy']);
+  const facts: Record<string, {cluster: Record<string, string>; local: Record<string, string>}> = {
+    '3-1-0': {
+      cluster: {'Pods a, b, c and d': '1/4 each (25%)', 'Second hop': '2 in 3', 'Pod sees': 'node address'},
+      local: {'Pod d': '1/2 (50%)', 'Pods a, b and c': '1/6 each (16.7%)', 'Second hop': 'none', 'Pod sees': 'client address'},
+    },
+    '2-2-0': {
+      cluster: {'Pods a, b, c and d': '1/4 each (25%)', 'Second hop': '2 in 3', 'Pod sees': 'node address'},
+      local: {'Pods a, b, c and d': '1/4 each (25%)', 'Second hop': 'none', 'Pod sees': 'client address'},
+    },
+    '1-1-1': {
+      cluster: {'Pods a, b and c': '1/3 each (33.3%)', 'Second hop': '2 in 3', 'Pod sees': 'node address'},
+      local: {'Pods a, b and c': '1/3 each (33.3%)', 'Second hop': 'none', 'Pod sees': 'client address'},
+    },
+  };
+  assert.deepEqual(project.variants.map(v => [v.values.policy, v.values.pods]).sort(),
+    ['cluster', 'local'].flatMap(policy => Object.keys(facts).map(pods => [policy, pods])).sort());
+  const dir = await mkdtemp(join(tmpdir(), 'rayner-traffic-subjects-'));
+  const browser = await launch();
+  let server: Awaited<ReturnType<typeof serve>> | undefined;
+  try {
+    await buildExplainer(project, join(dir, 'traffic.html'));
+    server = await serve(dir, 0, 'traffic.html');
+    const url = server.url + '/traffic.html';
+    const page = await browser.newPage();
+    let reviewed = 0, compared = 0, readableLabels = 0;
+    for (const variant of project.variants) {
+      const expected = facts[variant.values.pods!]!;
+      let inspected = 0;
+      await new variant.Scene({async frame() {}, async stepEnd(scene, step) {
+        if (step.name !== 'compare') return;
+        const cards = scene.familyMembers().filter((m): m is InstanceType<typeof Card> =>
+          m instanceof Card && !!m.key?.startsWith('traffic-compare:'));
+        assert.equal(cards.length, 2);
+        for (const policy of ['cluster', 'local'] as const) {
+          const card = cards.find(card => card.key === 'traffic-compare:' + policy)!;
+          assert.ok(card, policy + ' has its own semantic card');
+          assert.deepEqual(Object.fromEntries([...card.values].map(([label, value]) => [label, value.text])), expected[policy]);
+          assert.ok(card.family().some(m => m instanceof Text && m.text === (policy === 'cluster' ? 'Cluster' : 'Local')));
+        }
+        inspected++;
+      }}, {skipUntil: Infinity}).run();
+      assert.equal(inspected, 1, 'every case has one factual policy comparison');
+      const applicable = claims.filter(c => Object.entries(c.settings ?? {}).every(([k, v]) => variant.values[k] === v));
+      const frame = (await storyFrames(variant.Scene, applicable)).get('compare')!;
+      assert.deepEqual(frame.targets.filter(t => ['traffic-compare:cluster', 'traffic-compare:local'].includes(t.name)).map(t => t.name).sort(),
+        ['traffic-compare:cluster', 'traffic-compare:local']);
+      assert.ok(!frame.targets.some(t => t.name.startsWith('changed:')), 'independent facts take priority over incidentally revealed context');
+      const rows = await reviewStoryVariant(page, url, variant, claims);
+      assert.deepEqual(rows.map(r => [r.width, r.step]),
+        [390, 1180].flatMap(width => variant.trace.steps.map(s => [width, s.step])));
+      reviewed += rows.length;
+      const cardIndices = new Set(frame.targets.filter(t => t.name.startsWith('traffic-compare:')).flatMap(t => t.indices));
+      const labels = frame.labels.filter(label => label.indices.some(index => cardIndices.has(index)));
+      assert.ok(labels.length >= 8, 'both cards contain their policy heading and factual rows');
+      for (const width of [390, 1180]) {
+        await page.setViewportSize({width, height: width === 390 ? 844 : 980});
+        await page.goto(url + '?' + new URLSearchParams({...variant.values, step: 'compare'}));
+        await page.waitForSelector('[data-ready=true]');
+        await page.waitForFunction(() => !document.querySelector('#content.loading'));
+        const views = [await inspectStoryFrame(page, frame)];
+        const next = page.locator('.view-controls > button').first();
+        const seen = new Set([views[0]!.viewBox]);
+        if (await next.isVisible() && await next.isEnabled()) for (let n = 0; n <= frame.records.length; n++) {
+          await next.click();
+          await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+          const view = await inspectStoryFrame(page, frame);
+          if (seen.has(view.viewBox)) break;
+          assert.ok(n < frame.records.length, 'the policy-card tour terminates');
+          seen.add(view.viewBox); views.push(view);
+        }
+        for (const label of labels) {
+          const readable = views.some(view => label.indices.every(index => {
+            const ink = view.ink.find(ink => ink.index === index)!;
+            return ink.visible && ink.complete && covered(ink.box, [view.viewport]) && label.size * ink.scale >= 12 - 1e-6;
+          }));
+          assert.ok(readable, `${JSON.stringify(variant.values)} at ${width}: ${label.text} is complete and at least 12px in one reachable view`);
+          readableLabels++;
+        }
+        compared++;
+      }
+    }
+    assert.equal(reviewed, 108, 'six cases, nine steps each, at both production review widths');
+    assert.equal(compared, 12, 'all six comparisons at both widths');
+    assert.ok(readableLabels >= 96, 'both policy cards checked at every width');
+    await page.close();
+    // Omitting the authored caption contract reproduces the original false
+    // obligation: an old diagram becomes visible when its notes are removed.
+    const oldInference = await browser.newPage();
+    try {
+      await assert.rejects(reviewStoryVariant(oldInference, url, project.variants[0]!, STORY_CLAIMS['traffic-policy']),
+        /compare.*changed: drawing is missing from the close-up tour/);
+    } finally {await oldInference.close();}
+    const variant = project.variants[0]!;
+    const applicable = claims.filter(c => Object.entries(c.settings ?? {}).every(([k, v]) => variant.values[k] === v));
+    const frame = (await storyFrames(variant.Scene, applicable)).get('compare')!;
+    let rejected = 0;
+    for (const [width, word] of [[390, 'node address'], [1180, 'client address']] as const) {
+      const label = frame.labels.find(label => label.text === word)!;
+      assert.ok(label);
+      const index = label.indices[0]!;
+      const poisoned = await browser.newPage();
+      try {
+        await poisoned.addInitScript(({width, index}) => {
+          document.addEventListener('rayner:step', event => {
+            if (innerWidth !== width || (event as CustomEvent).detail.step !== 'compare') return;
+            const svg = document.querySelector('.stage svg:not(.leaving)')!;
+            const path = [...svg.children].filter(e => e.tagName.toLowerCase() !== 'defs')[index] as SVGElement;
+            path.style.opacity = '0';
+          });
+        }, {width, index});
+        await assert.rejects(reviewStoryVariant(poisoned, url, variant, claims), /compare.*traffic-compare:.*hidden or clipped ink/);
+        assert.equal(await poisoned.locator('.stage svg:not(.leaving)').evaluate((svg, index) =>
+          getComputedStyle([...svg.children].filter(e => e.tagName.toLowerCase() !== 'defs')[index]!).opacity, index), '0',
+          'the caption evidence is actually hidden under the served CSP');
+        rejected++;
+      } finally {await poisoned.close();}
+    }
+    assert.equal(rejected, 2, 'each source-address role is required at its actual review width');
+  } finally {await browser.close(); server?.close(); await rm(dir, {recursive: true, force: true});}
+});
