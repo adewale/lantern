@@ -166,8 +166,6 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 
 /* The card's footer: the maker's mark at the start; inside a frame, the way out at the end. Each link
    is the row's height, so it is easy to hit. */
-/* Optional score audio (app/embed-audio.css) sits in the card on its inset, like every other row. */
-.player>.score-audio{margin:12px var(--inset) 0}
 .foot{display:flex;align-items:center;gap:12px;min-height:40px;padding:0 var(--inset);border-top:1px solid var(--line);font-size:.8125rem;color:var(--muted)}
 .foot a{display:inline-flex;align-items:center;gap:6px;min-height:40px;color:inherit;text-decoration:none}
 .foot svg{width:16px;height:16px}
