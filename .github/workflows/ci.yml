@@ -56,7 +56,7 @@ jobs:
 
   catalog:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60  # full scene/composite checks and embed heights exceeded 45 minutes locally
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -70,7 +70,7 @@ jobs:
       - run: npm ci
       - run: npx playwright-core install --with-deps --only-shell chromium
       - run: node tools/ci-tests.ts "$(command -v npm)" run demos:check
-      - run: npm run check:budgets
+      - run: node tools/ci-tests.ts "$(command -v npm)" run check:budgets
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: rayner-catalog-${{ github.sha }}

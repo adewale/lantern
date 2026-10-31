@@ -2,7 +2,7 @@
 // establishes which of their actual painted paths the reader can see.
 import assert from 'node:assert/strict';
 import type { Page } from 'playwright-core';
-import { renderElements, VMobject } from '../../src/index.ts';
+import { renderElements, VMobject, Text } from '../../src/index.ts';
 import type { SceneClass, Mobject, ElementRecord } from '../../src/index.ts';
 import { emphasisOf } from '../../explain/look.ts';
 import { labelOf } from '../../explain/diagrams.ts';
@@ -11,6 +11,7 @@ import { stepWords } from '../../explain/trace.ts';
 import type { Project } from './explain-project.ts';
 import { join } from 'node:path';
 import { rasterize } from './explain-raster.ts';
+import type { NarrowOpeningReview, NarrowOpeningObligation } from './explain-review-plan.ts';
 
 export interface StoryClaim {
   step: string;
@@ -20,60 +21,120 @@ export interface StoryClaim {
 }
 // These expectations are written from the captions, independently of the
 // close-up planner. Automatic helper-emphasis checks below cover every step.
-export const STORY_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = {
+const DETAIL_AND_EXISTING_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = {
   'python-dict': [
-    {step: 'question', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-entries'}, {key: 'dict-result'}]},
-    {step: 'hash', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-hashes'}]},
-    {step: 'collision', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-entries'}, {text: 'd[16]'}]},
-    {step: 'lookup', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-entries'}, {key: 'dict-result'}]},
-    {step: 'broken', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-entries'}, {key: 'dict-result'}]},
-    {step: 'marker', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-entries'}, {key: 'dict-result'}]},
-    {step: 'missing', opening: true, targets: [{key: 'dict-index'}, {key: 'dict-result'}]},
+    {
+      step: 'question',
+      opening: true,
+      targets: [{ key: 'dict-index' }, { key: 'dict-entries' }, { key: 'dict-result' }],
+    },
+    { step: 'hash', opening: true, targets: [{ key: 'dict-index' }, { key: 'dict-hashes' }] },
+    { step: 'collision', opening: true, targets: [{ key: 'dict-index' }, { key: 'dict-entries' }, { text: 'd[16]' }] },
+    {
+      step: 'lookup',
+      opening: true,
+      targets: [{ key: 'dict-index' }, { key: 'dict-entries' }, { key: 'dict-result' }],
+    },
+    {
+      step: 'broken',
+      opening: true,
+      targets: [{ key: 'dict-index' }, { key: 'dict-entries' }, { key: 'dict-result' }],
+    },
+    {
+      step: 'marker',
+      opening: true,
+      targets: [{ key: 'dict-index' }, { key: 'dict-entries' }, { key: 'dict-result' }],
+    },
+    { step: 'missing', opening: true, targets: [{ key: 'dict-index' }, { key: 'dict-result' }] },
   ],
   'bloom-filter': [
-    {step: 'question', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
-    {step: 'insert', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
-    {step: 'shared', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
-    {step: 'absent', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
-    {step: 'present', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
-    {step: 'false-positive', opening: true, targets: [{key: 'bloom-bits'}, {key: 'bloom-query'}, {key: 'bloom-answer'}]},
-    {step: 'pipeline', opening: true, targets: [{key: 'bloom-pipeline'}, {key: 'bloom-checks'}]},
+    {
+      step: 'question',
+      opening: true,
+      targets: [{ key: 'bloom-bits' }, { key: 'bloom-query' }, { key: 'bloom-answer' }],
+    },
+    {
+      step: 'insert',
+      opening: true,
+      targets: [{ key: 'bloom-bits' }, { key: 'bloom-query' }, { key: 'bloom-answer' }],
+    },
+    {
+      step: 'shared',
+      opening: true,
+      targets: [{ key: 'bloom-bits' }, { key: 'bloom-query' }, { key: 'bloom-answer' }],
+    },
+    {
+      step: 'absent',
+      opening: true,
+      targets: [{ key: 'bloom-bits' }, { key: 'bloom-query' }, { key: 'bloom-answer' }],
+    },
+    {
+      step: 'present',
+      opening: true,
+      targets: [{ key: 'bloom-bits' }, { key: 'bloom-query' }, { key: 'bloom-answer' }],
+    },
+    {
+      step: 'false-positive',
+      opening: true,
+      targets: [{ key: 'bloom-bits' }, { key: 'bloom-query' }, { key: 'bloom-answer' }],
+    },
+    { step: 'pipeline', opening: true, targets: [{ key: 'bloom-pipeline' }, { key: 'bloom-checks' }] },
   ],
   'git-branches': [
-    {step: 'start', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
-    {step: 'branch', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
-    {step: 'feature', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
-    {step: 'switch', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
-    {step: 'main', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
-    {step: 'merge', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
-    {step: 'countercase', opening: true, targets: [{key: 'git-history'}, {key: 'git-head'}, {key: 'git-files'}]},
+    { step: 'start', opening: true, targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }] },
+    { step: 'branch', opening: true, targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }] },
+    { step: 'feature', opening: true, targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }] },
+    { step: 'switch', opening: true, targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }] },
+    { step: 'main', opening: true, targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }] },
+    { step: 'merge', opening: true, targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }] },
+    {
+      step: 'countercase',
+      opening: true,
+      targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }],
+    },
   ],
   'monty-hall': [
-    {step: 'choice', opening: true, targets: [{key: 'monty-doors'}, {key: 'monty-rule'}, {key: 'monty-result'}]},
-    {step: 'host', opening: true, targets: [{key: 'monty-doors'}, {key: 'monty-rule'}, {key: 'monty-result'}]},
-    {step: 'reveal', opening: true, targets: [{key: 'monty-doors'}, {key: 'monty-rule'}, {key: 'monty-result'}]},
-    {step: 'worlds', opening: true, targets: [{key: 'monty-worlds'}]},
-    {step: 'odds', opening: true, targets: [{key: 'monty-stay'}, {key: 'monty-switch'}]},
-    {step: 'many', opening: true, targets: [{key: 'monty-stay'}, {key: 'monty-switch'}]},
-    {step: 'rules', opening: true, targets: [{key: 'monty-rules'}]},
+    {
+      step: 'choice',
+      opening: true,
+      targets: [{ key: 'monty-doors' }, { key: 'monty-rule' }, { key: 'monty-result' }],
+    },
+    { step: 'host', opening: true, targets: [{ key: 'monty-doors' }, { key: 'monty-rule' }, { key: 'monty-result' }] },
+    {
+      step: 'reveal',
+      opening: true,
+      targets: [{ key: 'monty-doors' }, { key: 'monty-rule' }, { key: 'monty-result' }],
+    },
+    { step: 'worlds', opening: true, targets: [{ key: 'monty-worlds' }] },
+    { step: 'odds', opening: true, targets: [{ key: 'monty-stay' }, { key: 'monty-switch' }] },
+    {
+      step: 'many',
+      opening: true,
+      targets: [{ key: 'monty-removed' }, { key: 'monty-stay' }, { key: 'monty-switch' }],
+    },
+    { step: 'rules', opening: true, targets: [{ key: 'monty-rules' }] },
   ],
   'birthday-paradox': [
-    {step: 'question', opening: true, targets: [{key: 'birthday-people'}]},
-    {step: 'pairs', opening: true, targets: [{key: 'birthday-growth'}]},
-    {step: 'count', opening: true, targets: [{key: 'birthday-n'}, {key: 'birthday-pairs'}]},
-    {step: 'avoid', opening: true, targets: [{key: 'birthday-factors'}]},
-    {step: 'chance', opening: true, targets: [{key: 'birthday-no'}, {key: 'birthday-yes'}]},
-    {step: 'sample', opening: true, targets: [{key: 'birthday-trials'}, {key: 'birthday-observed'}, {key: 'birthday-theory'}]},
-    {step: 'questions', opening: true, targets: [{key: 'birthday-questions'}]},
+    { step: 'question', opening: true, targets: [{ key: 'birthday-people' }] },
+    { step: 'pairs', opening: true, targets: [{ key: 'birthday-growth' }] },
+    { step: 'count', opening: true, targets: [{ key: 'birthday-n' }, { key: 'birthday-pairs' }] },
+    { step: 'avoid', opening: true, targets: [{ key: 'birthday-factors' }] },
+    { step: 'chance', opening: true, targets: [{ key: 'birthday-no' }, { key: 'birthday-yes' }] },
+    {
+      step: 'sample',
+      opening: true,
+      targets: [{ key: 'birthday-trials' }, { key: 'birthday-observed' }, { key: 'birthday-theory' }],
+    },
+    { step: 'questions', opening: true, targets: [{ key: 'birthday-questions' }] },
   ],
   'melody-rhythm': [
-    {step: 'listen', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
-    {step: 'pulse', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
-    {step: 'rhythm', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
-    {step: 'contour', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
-    {step: 'timing', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
-    {step: 'bar', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
-    {step: 'phrase', opening: true, targets: [{key: 'score-a'}, {key: 'score-b'}]},
+    { step: 'listen', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] },
+    { step: 'pulse', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] },
+    { step: 'rhythm', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] },
+    { step: 'contour', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] },
+    { step: 'timing', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] },
+    { step: 'bar', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] },
+    { step: 'phrase', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] },
   ],
   'oauth-pkce': [
     {
@@ -114,30 +175,77 @@ export const STORY_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = {
     {
       step: 'local-path',
       settings: { policy: 'local' },
-      targets: [{ key: 'service:k1' }, { key: 'service:a' }, { key: 'edge:k1->a#0', paint: 'stroke' }, { text: 'from 198.51.100.79' }],
+      targets: [
+        { key: 'service:k1' },
+        { key: 'service:a' },
+        { key: 'edge:k1->a#0', paint: 'stroke' },
+        { text: 'from 198.51.100.79' },
+      ],
     },
   ],
   'mr-cache': [
-    {step: 'after', targets: [{text: 'hit'}, {text: 'miss'}]},
-    {step: 'request', opening: true, targets: [{text: 'hit'}, {text: 'miss'}, {text: '0 D1 reads'}, {text: '1 D1 read'}, {text: '300 s'}]},
+    { step: 'after', targets: [{ text: 'hit' }, { text: 'miss' }] },
+    {
+      step: 'request',
+      opening: true,
+      targets: [{ text: 'hit' }, { text: 'miss' }, { text: '0 D1 reads' }, { text: '1 D1 read' }, { text: '300 s' }],
+    },
   ],
   'token-bucket': [
+    {
+      step: 'reader-burst',
+      opening: true,
+      targets: Array.from({ length: 6 }, (_, i) => ({ key: `burst:${i}:${i < 5 ? 200 : 429}` })),
+    },
     { step: 'balance', targets: [{ text: 'bucket' }, { text: 'Tokens left' }] },
-    { step: 'trace', opening: true, targets: [
-      {text: '1 / s'}, {text: '2 / s'}, {text: '4 / s'},
-      {key: 'result:1:R6:429', paint: 'stroke'}, {key: 'result:1:R7:429', paint: 'stroke'}, {key: 'result:1:R9:429', paint: 'stroke'},
-      {key: 'result:2:R6:429', paint: 'stroke'}, {key: 'result:2:R9:429', paint: 'stroke'}, {key: 'result:4:R6:429', paint: 'stroke'},
-    ] },
+    {
+      step: 'trace',
+      opening: true,
+      targets: [
+        { text: '1 / s' },
+        { text: '2 / s' },
+        { text: '4 / s' },
+        { key: 'result:1:R6:429', paint: 'stroke' },
+        { key: 'result:1:R7:429', paint: 'stroke' },
+        { key: 'result:1:R9:429', paint: 'stroke' },
+        { key: 'result:2:R6:429', paint: 'stroke' },
+        { key: 'result:2:R9:429', paint: 'stroke' },
+        { key: 'result:4:R6:429', paint: 'stroke' },
+      ],
+    },
   ],
-  'font-metrics': [{step: 'cuts', opening: true, targets: [
-    {text: 'Regular'}, {text: 'Bold'}, {text: 'Italic'}, {text: 'Ink on paper'},
-    {text: '4.41'}, {text: '4.85'}, {text: '4.24'},
-  ]}, {step: 'diagram', opening: true, targets: [
-    {text: 'Ink'}, {text: 'Paper'}, {key: 'edge:A->B#0', paint: 'stroke'},
-  ]}],
+  'font-metrics': [
+    { step: 'advance', opening: true, targets: [{ text: 'Ink on paper' }, { text: '5.88 units' }] },
+    {
+      step: 'cuts',
+      opening: true,
+      targets: [
+        { text: 'Regular' },
+        { text: 'Bold' },
+        { text: 'Italic' },
+        { text: 'Ink on paper' },
+        { text: '4.41' },
+        { text: '4.85' },
+        { text: '4.24' },
+      ],
+    },
+    {
+      step: 'diagram',
+      opening: true,
+      targets: [{ text: 'Ink' }, { text: 'Paper' }, { key: 'edge:A->B#0', paint: 'stroke' }],
+    },
+  ],
   'layout-direction': [
-    {step: 'columns', opening: true, targets: [{text: 'RTL at start'}, {text: 'LTR at end'}, {text: 'Field'}, {text: '123'}]},
-    {step: 'updates', opening: true, targets: [{text: 'RTL at start'}, {text: 'LTR at end'}, {text: 'Field'}, {text: '456'}]},
+    {
+      step: 'columns',
+      opening: true,
+      targets: [{ text: 'RTL at start' }, { text: 'LTR at end' }, { text: 'Field' }, { text: '123' }],
+    },
+    {
+      step: 'updates',
+      opening: true,
+      targets: [{ text: 'RTL at start' }, { text: 'LTR at end' }, { text: 'Field' }, { text: '456' }],
+    },
   ],
   'wcag-map': ['AA', 'AAA'].map((level) => ({
     step: 'focus-visible',
@@ -146,6 +254,191 @@ export const STORY_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = {
     targets: [{ key: 'c2_4_7' }],
   })),
 };
+
+// The native introductions must retain their complete comparison in the opening.
+// This inventory is authored independently of reading() and the close-up planner.
+const MAIN_COMPARISONS: Readonly<Record<string, readonly string[]>> = {
+  'token-bucket': ['reader-burst', 'reader-refill'],
+  'ring-buffer': ['reader-capacity', 'reader-reuse'],
+  'state-machine': ['reader-path', 'reader-reject'],
+  'just-bash': ['reader-pipeline', 'reader-values'],
+  'cert-renewal': ['reader-due', 'reader-retries'],
+  'ical-recurrence': ['reader-series', 'reader-copies'],
+  gtfs: ['reader-date', 'reader-stop'],
+  'tailwind-gamut': ['reader-edge', 'reader-display'],
+  fork: ['reader-build', 'reader-cost'],
+  'gnome-files': ['reader-task', 'reader-sample'],
+  'wcag-map': ['reader-focus', 'reader-levels'],
+  'layout-direction': ['reader-place', 'reader-fields'],
+  seasons: ['reader-tilt', 'reader-solstices', 'reader-year'],
+  'trust-proxy': ['reader-path', 'reader-answer'],
+  'traffic-policy': ['reader-nodes', 'reader-shares'],
+  'ext4-space': ['reader-allocation', 'reader-reserve'],
+  'send-sync': ['reader-threads', 'reader-wrappers'],
+  'quotient-familial': ['reader-quotient', 'reader-cap'],
+  glyph: ['reader-width', 'reader-shape'],
+  'pen-and-pencil': ['reader-separate', 'reader-labels'],
+  exgit: ['reader-objects', 'reader-change'],
+  'mr-cache': ['reader-request', 'reader-outcome'],
+  '2password': ['reader-boundary', 'reader-auth'],
+  'agentic-mermaid': ['reader-branches', 'reader-repair'],
+  lantern: ['reader-object', 'reader-outputs'],
+  isdigit: ['reader-predict', 'reader-result'],
+  'latest-search': ['reader-order', 'reader-guard'],
+  'oauth-pkce': ['reader-bind', 'reader-redeem'],
+  'pg-page': ['reader-row', 'reader-page'],
+  'periodic-groups': ['reader-electrons', 'reader-filling'],
+};
+// These labels name the comparison’s roles independently of its drawing group.
+// Hiding a role cannot be excused by the group’s remaining border or background.
+const COMPARISON_WORDS: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>> = {
+  'token-bucket': {
+    'reader-burst': ['R1', 'R6', '200', '429'],
+    'reader-refill': ['Before the wait', 'On arrival: add elapsed × rate'],
+  },
+  'ring-buffer': { 'reader-capacity': ['head = tail = 0', 'Occupied: 5 / 5'], 'reader-reuse': ['slot 0', 'slot 4'] },
+  'state-machine': {
+    'reader-path': ['idle', 'connecting', 'CONNECT'],
+    'reader-reject': ['InvalidTransition', 'State stays closed'],
+  },
+  'just-bash': {
+    'reader-pipeline': ['echo hello', 'tr → HELLO', 'shout.txt'],
+    'reader-values': ['original', 'returned', 'missing', 'HELLO'],
+  },
+  'cert-renewal': {
+    'reader-due': ['Fixed: 30 days before', 'Default: lifetime fraction'],
+    'reader-retries': ['Time before renewal is due', 'Time left to retry'],
+  },
+  'ical-recurrence': {
+    'reader-series': ['Mon 2 Nov', 'Mon 9 Nov', 'Mon 7 Dec'],
+    'reader-copies': ['Alice', 'Bob'],
+  },
+  gtfs: {
+    'reader-date': ['Route', 'Trip', 'Service', 'date', 'FULLW'],
+    'reader-stop': ['Fixed times', 'Headway patterns'],
+  },
+  'tailwind-gamut': {
+    'reader-edge': ['100% = sRGB edge'],
+    'reader-display': ['Written chroma', 'Mapped sRGB preview'],
+  },
+  fork: {
+    'reader-build': ['Author', 'scene', 'Build', 'diagrams', 'Portable', 'page'],
+    'reader-cost': ['Policy A', 'Policy B', 'case 1', 'case 6'],
+  },
+  'gnome-files': { 'reader-sample': ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'] },
+  'wcag-map': {
+    'reader-focus': ['No visible focus', 'Visible focus on Pay', 'Cancel', 'Pay'],
+    'reader-levels': ['A', 'AA', 'AAA', 'A + AA', 'A + AA + AAA'],
+  },
+  'layout-direction': {
+    'reader-place': ['Start', 'End'],
+    'reader-fields': ['RTL columns', 'LTR override', '123', 'Field'],
+  },
+  seasons: {
+    'reader-tilt': ['Sun', 'June', 'December'],
+    'reader-solstices': ['June daylight', 'December daylight'],
+    'reader-year': ['Jan', 'Dec', 'Hours of daylight'],
+  },
+  'trust-proxy': { 'reader-path': ['Express'], 'reader-answer': ['Order', 'Address', 'Decision', 'req.ip'] },
+  'traffic-policy': { 'reader-nodes': ['Node 1', 'Node 2', 'Node 3'], 'reader-shares': ['Pod', 'Cluster', 'Local'] },
+  'ext4-space': { 'reader-reserve': ['Users at 5% reserve'] },
+  'send-sync': { 'reader-threads': ['Thread A', 'Thread B'], 'reader-wrappers': ['Type', 'Send', 'Sync'] },
+  'quotient-familial': {
+    'reader-quotient': ['Revenu', '÷ parts', 'Barème', '× parts'],
+    'reader-cap': ['Calcul brut', 'Après plafond', 'Après décote'],
+  },
+  glyph: { 'reader-width': ['Inter', 'JetBrains Mono'], 'reader-shape': ['a', 'Same character'] },
+  'pen-and-pencil': {
+    'reader-separate': ['Fixed route + simulated stroke'],
+    'reader-labels': ['Midnight', 'Reserved for the label'],
+  },
+  exgit: { 'reader-objects': ['commit', 'tree', 'blob'], 'reader-change': ['parent'] },
+  'mr-cache': { 'reader-request': ['Request', 'Database', 'Response'] },
+  '2password': {
+    'reader-boundary': ['Agent', 'op CLI', 'Application'],
+    'reader-auth': ['Agent', 'op CLI', 'Application', 'Service token', 'Resolved key'],
+  },
+  'agentic-mermaid': {
+    'reader-branches': ['Cached?', 'Reply', 'Database'],
+    'reader-repair': ['Cached?', 'Reply', 'Database', 'yes', 'no'],
+  },
+  lantern: { 'reader-object': ['0 s', '0.5 s', '1 s'], 'reader-outputs': ['Scene', 'Fixed clock', 'Sink'] },
+  isdigit: { 'reader-result': ['Guard', 'Passes?', 'Then int'] },
+  'latest-search': {
+    'reader-order': ['A then B', 'Latest intent: B'],
+    'reader-guard': ['After', 'No guard', 'Guard on'],
+  },
+  'oauth-pkce': {
+    'reader-bind': ['Client', 'Auth server', 'Code', 'issued'],
+    'reader-redeem': ['Caller', 'S256 matches?', 'Result', 'Client', 'token'],
+  },
+  'pg-page': {
+    'reader-row': ['Grey: header  ·  Pale: padding  ·  Orange: data'],
+    'reader-page': ['Type', 'Rows/page', '10,000 rows'],
+  },
+};
+export const STORY_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>> = Object.fromEntries(
+  [...new Set([...Object.keys(DETAIL_AND_EXISTING_CLAIMS), ...Object.keys(MAIN_COMPARISONS)])].map((id) => [
+    id,
+    [
+      ...(DETAIL_AND_EXISTING_CLAIMS[id] ?? []),
+      ...(MAIN_COMPARISONS[id] ?? []).map((step) => ({
+        step,
+        opening: true,
+        targets: [{ key: 'reader-picture' }, ...(COMPARISON_WORDS[id]?.[step] ?? []).map((text) => ({ text }))],
+      })),
+      ...(id === 'font-metrics'
+        ? [
+            {
+              step: 'layout',
+              opening: true,
+              targets: [{ key: 'font-layout' }],
+            },
+          ]
+        : []),
+      ...(id === 'python-dict'
+        ? [{ step: 'predict', opening: true, targets: [{ key: 'dict-index' }, { key: 'dict-result' }] }]
+        : []),
+      ...(id === 'bloom-filter'
+        ? [
+            { step: 'hashes', opening: true, targets: [{ key: 'bloom-hash-mapping' }] },
+            { step: 'predict', opening: true, targets: [{ key: 'bloom-bits' }, { key: 'bloom-answer' }] },
+          ]
+        : []),
+      ...(id === 'git-branches'
+        ? [
+            {
+              step: 'predict',
+              opening: true,
+              targets: [{ key: 'git-history' }, { key: 'git-head' }, { key: 'git-files' }],
+            },
+          ]
+        : []),
+      ...(id === 'monty-hall'
+        ? [{ step: 'predict', opening: true, targets: [{ key: 'monty-doors' }, { key: 'monty-result' }] }]
+        : []),
+      ...(id === 'melody-rhythm'
+        ? [{ step: 'predict', opening: true, targets: [{ key: 'score-a' }, { key: 'score-b' }] }]
+        : []),
+      ...(id === 'birthday-paradox'
+        ? [
+            {
+              step: 'occupied',
+              opening: true,
+              targets: [{ key: 'birthday-days' }],
+              settings: { question: 'any' },
+            },
+            {
+              step: 'occupied',
+              opening: true,
+              targets: [{ key: 'birthday-days' }],
+              settings: { question: 'one' },
+            },
+          ]
+        : []),
+    ],
+  ]),
+);
 interface Target {
   name: string;
   indices: number[];
@@ -158,33 +451,65 @@ export interface StoryFrame {
   records: ElementRecord[];
   targets: Target[];
   camera: number[];
+  labels: { text: string; size: number; indices: number[] }[];
 }
 
-interface StoryPaint { id: number; signature: string; bounds: Rect | null; record: ElementRecord }
+interface StoryPaint {
+  id: number;
+  signature: string;
+  bounds: Rect | null;
+  record: ElementRecord;
+}
+// Use the transformed em basis, not its axis-aligned box or the geometric
+// mean area: either can credit a very short, wide glyph as full-size text.
+function nativeEmSize(text: Text): number {
+  const f = text.frameBox,
+    run = text.run,
+    height = run.ascent + run.descent;
+  const c = (f[4]! - f[0]!) / height,
+    d = (f[5]! - f[1]!) / height;
+  const a = run.width > 0 ? (f[6]! - f[0]!) / run.width : d;
+  const b = run.width > 0 ? (f[7]! - f[1]!) / run.width : -c;
+  const x = a * a + b * b,
+    y = c * c + d * d;
+  const largest = Math.sqrt((x + y + Math.hypot(x - y, 2 * (a * c + b * d))) / 2);
+  return largest ? (run.fontSize * Math.abs(a * d - b * c)) / largest : 0;
+}
 const paintBoundsCache = new WeakMap<ElementRecord, Rect | null>();
 /** Bounds of emitted integer path coordinates, not a Text's advance rectangle. */
 function paintBounds(record: ElementRecord): Rect | null {
   if (paintBoundsCache.has(record)) return paintBoundsCache.get(record)!;
   const coords = record.attrs.d?.match(/-?\d+/g)?.map(Number) ?? [];
-  let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+  let left = Infinity,
+    top = Infinity,
+    right = -Infinity,
+    bottom = -Infinity;
   for (let i = 0; i + 1 < coords.length; i += 2) {
-    left = Math.min(left, coords[i]!); right = Math.max(right, coords[i]!);
-    top = Math.min(top, coords[i + 1]!); bottom = Math.max(bottom, coords[i + 1]!);
+    left = Math.min(left, coords[i]!);
+    right = Math.max(right, coords[i]!);
+    top = Math.min(top, coords[i + 1]!);
+    bottom = Math.max(bottom, coords[i + 1]!);
   }
-  const half = record.attrs.stroke !== 'none' && Number(record.attrs['stroke-opacity'] ?? 1) > 0
-    ? Number(record.attrs['stroke-width'] ?? 0) / 2 : 0;
+  const half =
+    record.attrs.stroke !== 'none' && Number(record.attrs['stroke-opacity'] ?? 1) > 0
+      ? Number(record.attrs['stroke-width'] ?? 0) / 2
+      : 0;
   // An acute miter can reach half-width times the SVG miter limit; a
   // diagonal square cap can reach sqrt(2) times half-width on either axis.
   const limit = Number(record.attrs['stroke-miterlimit'] ?? 4);
-  const miter = record.attrs['stroke-linejoin'] === 'miter'
-    ? (Number.isFinite(limit) && limit >= 1 ? limit : 4) : 1;
+  const miter = record.attrs['stroke-linejoin'] === 'miter' ? (Number.isFinite(limit) && limit >= 1 ? limit : 4) : 1;
   const extent = half * Math.max(miter, record.attrs['stroke-linecap'] === 'square' ? Math.SQRT2 : 1);
-  const tx = record.tx ?? 0, ty = record.ty ?? 0;
+  const tx = record.tx ?? 0,
+    ty = record.ty ?? 0;
   let bounds: Rect = [left + tx - extent, top + ty - extent, right + tx + extent, bottom + ty + extent];
   if (record.clipBox) {
     const [x0, y0, x1, y1] = record.clipBox;
-    bounds = [Math.max(bounds[0], x0 * 1000), Math.max(bounds[1], -y1 * 1000),
-      Math.min(bounds[2], x1 * 1000), Math.min(bounds[3], -y0 * 1000)];
+    bounds = [
+      Math.max(bounds[0], x0 * 1000),
+      Math.max(bounds[1], -y1 * 1000),
+      Math.min(bounds[2], x1 * 1000),
+      Math.min(bounds[3], -y0 * 1000),
+    ];
   }
   const result = bounds[2] > bounds[0] && bounds[3] > bounds[1] ? bounds : null;
   paintBoundsCache.set(record, result);
@@ -282,6 +607,10 @@ async function changedPaint(previous: readonly StoryPaint[], current: readonly S
       candidates.add(index); countChanges.add(paint.signature);
     }
   });
+  // A vanished signature has no current occurrence to visit above, but its
+  // removal can reveal a differently painted subject underneath it.
+  for (const [signature, indices] of positions)
+    if (indices.length !== (counts.get(signature) ?? 0)) countChanges.add(signature);
   const reordered = new Set<number>();
   let highest = -1;
   matched.forEach((previousIndex, index) => {
@@ -310,7 +639,7 @@ async function changedPaint(previous: readonly StoryPaint[], current: readonly S
       }
     }
   }
-  if (candidates.size) {
+  if (candidates.size || countChanges.size) {
     // Restore only the synthetic changes. Current new/edited artwork stays the
     // same on both sides, so an incidental new label cannot prove a reordering.
     const reference = current.flatMap((paint, i) => matched[i]! >= 0 || !countChanges.has(paint.signature)
@@ -452,8 +781,12 @@ export async function storyFrames(
             add(`emphasis: ${m.key ?? what}`, [m], false, false, false, true);
           }
         previous = now;
-        const paint = records.map(r => ({ id: r.id, signature: JSON.stringify([r.attrs, r.transform]), record: r,
-          bounds: realInk(r) ? paintBounds(r) : null }));
+        const paint = records.map((r) => ({
+          id: r.id,
+          signature: JSON.stringify([r.attrs, r.transform]),
+          record: r,
+          bounds: realInk(r) ? paintBounds(r) : null,
+        }));
         const added = new Set<Mobject>();
         // Declared intent takes priority over unrelated context that a rebuild
         // happens to replace or move. With no primary subject, inspect new art.
@@ -490,7 +823,16 @@ export async function storyFrames(
             );
           }
         assert.ok(targets.length, `${step.name}: unchanged artwork needs a declared story subject`);
-        frames.set(step.name, { records, targets, camera: [...scene.frame.box()!] });
+        const labels = members.flatMap((m) => {
+          const label = labelOf(m);
+          if (!label?.text.trim() || isHeading(m)) return [];
+          const ids = new Set(m.family().map((child) => child.id));
+          const indices = records.flatMap((r, index) => (ids.has(r.id) && realInk(r) ? [index] : []));
+          return indices.length
+            ? [{ text: label.text, size: m instanceof Text ? nativeEmSize(m) : m.height() * label.emRatio, indices }]
+            : [];
+        });
+        frames.set(step.name, { records, targets, camera: [...scene.frame.box()!], labels });
       },
     },
     { skipUntil: Infinity },
@@ -636,10 +978,163 @@ export async function inspectStoryFrame(page: Page, frame: StoryFrame) {
           number,
         ],
         author,
+        // Record the browser's effective transform, including CSS transforms on
+        // an individual path. Authored font size alone cannot prove readability.
+        scale: (() => {
+          const m = e.getScreenCTM()!;
+          const x = m.a * m.a + m.b * m.b,
+            y = m.c * m.c + m.d * m.d;
+          const largest = Math.sqrt((x + y + Math.hypot(x - y, 2 * (m.a * m.c + m.b * m.d))) / 2);
+          return largest ? (Math.abs(m.a * m.d - m.b * m.c) / largest) * 1000 : 0;
+        })(),
       };
     });
     return { viewport, ink, stage: rect(stage), viewBox: svg.getAttribute('viewBox') };
   }, frame);
+}
+
+/** Build-time obligations come from authored main/detail metadata and the
+ * independent caption claims, before the served reader produces any receipt. */
+export async function narrowOpeningPlan(
+  variant: Pick<Project['variants'][number], 'Scene' | 'trace' | 'values'>,
+  claims: readonly StoryClaim[],
+  frames?: Map<string, StoryFrame>,
+): Promise<NarrowOpeningObligation[]> {
+  const applicable = claims.filter((c) =>
+    Object.entries(c.settings ?? {}).every(([key, value]) => variant.values[key] === value),
+  );
+  const source = frames ?? (await storyFrames(variant.Scene, applicable));
+  const hasMain = variant.trace.steps.some((step) => step.meta.detail !== true);
+  return variant.trace.steps.map((step) => {
+    if (step.meta.detail === true && hasMain) return { step: step.step, reviewed: false, reason: 'detail-step' };
+    const targets = [
+      ...new Set(
+        applicable
+          .filter((c) => c.step === step.step && c.opening)
+          .flatMap((c) => c.targets.map((t) => ('key' in t ? t.key : t.text))),
+      ),
+    ];
+    if (!targets.length) return { step: step.step, reviewed: false, reason: 'no-opening-claim' };
+    const frame = source.get(step.step)!;
+    const wanted = new Set(targets);
+    const indices = new Set(frame.targets.filter((t) => t.opening && wanted.has(t.name)).flatMap((t) => t.indices));
+    const labels = frame.labels
+      .filter((label) => label.indices.some((index) => indices.has(index)))
+      .map((label) => label.text);
+    return { step: step.step, reviewed: true, targets, labels };
+  });
+}
+
+type StoryView = Awaited<ReturnType<typeof inspectStoryFrame>>;
+function verifyStoryTargets(
+  frame: StoryFrame,
+  views: StoryView[],
+  step: string,
+  width: number,
+  targets = frame.targets,
+) {
+  const opening = views[0]!;
+  const verified = new Set<string>();
+  for (const target of targets) {
+    let seen = 0;
+    for (const index of target.indices) {
+      const bounded = target.camera || target.partial?.includes(index);
+      const original = opening.ink.find((p) => p.index === index)!;
+      // The obligation comes from the authored frame, never from a possibly
+      // damaged live clip. Each stop contributes only its actual shown ink.
+      const authoredClip = frame.records[index]!.clipBox;
+      const expectedClip: Rect = authoredClip
+        ? [authoredClip[0] * 1000, -authoredClip[3] * 1000, authoredClip[2] * 1000, -authoredClip[1] * 1000]
+        : (original.author as Rect);
+      const box: Rect = bounded
+        ? [
+            Math.max(original.box[0], expectedClip[0], original.author[0]),
+            Math.max(original.box[1], expectedClip[1], original.author[1]),
+            Math.min(original.box[2], expectedClip[2], original.author[2]),
+            Math.min(original.box[3], expectedClip[3], original.author[3]),
+          ]
+        : original.box;
+      if (bounded && (box[2] <= box[0] || box[3] <= box[1])) continue; // context outside an authored viewport is not newly shown ink
+      const eligible = (target.opening ? [opening] : views).filter((v) => {
+        const ink = v.ink.find((p) => p.index === index);
+        return ink?.visible && (bounded || ink.complete);
+      });
+      assert.ok(eligible.length, `${step}: ${target.name} has hidden or clipped ink`);
+      const ink = eligible[0]!.ink.find((p) => p.index === index)!;
+      assert.ok(ink.box[2] > ink.box[0] && ink.box[3] > ink.box[1], `${step}: ${target.name} has empty ink`);
+      const coverage = eligible.map((v) => {
+        if (!bounded) return v.viewport;
+        const shown = v.ink.find((p) => p.index === index)!.shown;
+        return [
+          Math.max(v.viewport[0], shown[0]),
+          Math.max(v.viewport[1], shown[1]),
+          Math.min(v.viewport[2], shown[2]),
+          Math.min(v.viewport[3], shown[3]),
+        ] as Rect;
+      });
+      assert.ok(
+        covered(box, coverage),
+        `${step} at ${width}px: ${target.name} is missing from ${target.opening ? 'the opening' : 'the close-up tour'}: ${JSON.stringify({ box, views: coverage })}`,
+      );
+      verified.add(target.name);
+      seen++;
+    }
+    if (target.required) assert.ok(seen, `${step}: ${target.name} is outside the authored picture`);
+  }
+  return verified;
+}
+
+async function reviewNarrowOpening(
+  page: Page,
+  url: string,
+  variant: Project['variants'][number],
+  step: string,
+  frame: StoryFrame,
+): Promise<NarrowOpeningReview> {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto(`${url}?${new URLSearchParams({ ...variant.values, step })}`);
+  await page.waitForSelector('[data-ready=true]');
+  await page.waitForFunction(
+    (name) =>
+      (window as unknown as { raynerReviewStep?: string }).raynerReviewStep === name &&
+      document.querySelector('[aria-current=step]')?.getAttribute('data-step') === name &&
+      !document.querySelector('#content.loading'),
+    step,
+  );
+  await page.locator('.leaving').waitFor({ state: 'detached' });
+  await page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
+  assert.equal(await page.evaluate(() => innerWidth), 320);
+  assert.equal(
+    await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),
+    false,
+    `${step} at 320px: page overflows`,
+  );
+  const opening = await inspectStoryFrame(page, frame),
+    targets = frame.targets.filter((target) => target.opening);
+  const verified = verifyStoryTargets(frame, [opening], step, 320, targets);
+  const indices = new Set(targets.flatMap((target) => target.indices));
+  const labels = frame.labels.filter((label) => label.indices.some((index) => indices.has(index)));
+  let minimumLabelPx: number | null = null;
+  for (const label of labels) {
+    const pixels =
+      label.size *
+      Math.min(
+        ...label.indices
+          .filter((index) => indices.has(index))
+          .map((index) => opening.ink.find((ink) => ink.index === index)!.scale),
+      );
+    assert.ok(pixels >= 12 - 1e-6, `${step} at 320px: ${label.text} reads at ${pixels}px, below 12px`);
+    minimumLabelPx = minimumLabelPx === null ? pixels : Math.min(minimumLabelPx, pixels);
+  }
+  assert.ok(verified.size, `${step} at 320px: no opening subject is painted`);
+  return {
+    reviewed: true,
+    width: 320,
+    height: 568,
+    targets: [...verified],
+    labels: labels.map((label) => label.text),
+    minimumLabelPx,
+  };
 }
 
 /** Visit every step at a real viewport width, with a fresh reader opening per width. */
@@ -665,6 +1160,17 @@ export async function reviewStoryVariant(
   const applicable = claims.filter((c) => Object.entries(c.settings ?? {}).every(([k, v]) => variant.values[k] === v));
   const frames = await storyFrames(variant.Scene, applicable),
     results = [];
+  const narrow = new Map<string, NarrowOpeningReview>();
+  const obligations = await narrowOpeningPlan(variant, applicable, frames);
+  for (const obligation of obligations) {
+    if (!obligation.reviewed) narrow.set(obligation.step, { reviewed: false, reason: obligation.reason });
+    else
+      narrow.set(
+        obligation.step,
+        await reviewNarrowOpening(page, url, variant, obligation.step, frames.get(obligation.step)!),
+      );
+  }
+  assert.equal(narrow.size, variant.trace.steps.length, 'every step has a narrow-opening review or explicit exclusion');
   assert.equal(frames.size, variant.trace.steps.length, 'every traced step has a resting frame');
   for (const viewport of [
     { width: 390, height: 844 },
@@ -726,55 +1232,15 @@ export async function reviewStoryVariant(
           views.push(view);
           assert.ok(n < frame.records.length, `${step.step}: close-up tour did not terminate`);
         }
-      const verified = new Set<string>();
-      for (const target of frame.targets) {
-        let seen = 0;
-        for (const index of target.indices) {
-          const bounded = target.camera || target.partial?.includes(index);
-          const original = opening.ink.find((p) => p.index === index)!;
-          // The obligation comes from the authored frame, never from a possibly
-          // damaged live clip. Each stop contributes only its actual shown ink.
-          const authoredClip = frame.records[index]!.clipBox;
-          const expectedClip: Rect = authoredClip
-            ? [authoredClip[0] * 1000, -authoredClip[3] * 1000, authoredClip[2] * 1000, -authoredClip[1] * 1000]
-            : (original.author as Rect);
-          const box: Rect = bounded
-            ? [
-                Math.max(original.box[0], expectedClip[0], original.author[0]),
-                Math.max(original.box[1], expectedClip[1], original.author[1]),
-                Math.min(original.box[2], expectedClip[2], original.author[2]),
-                Math.min(original.box[3], expectedClip[3], original.author[3]),
-              ]
-            : original.box;
-          if (bounded && (box[2] <= box[0] || box[3] <= box[1])) continue; // context outside an authored viewport is not newly shown ink
-          const eligible = (target.opening ? [opening] : views).filter((v) => {
-            const ink = v.ink.find((p) => p.index === index);
-            return ink?.visible && (bounded || ink.complete);
-          });
-          assert.ok(eligible.length, `${step.step}: ${target.name} has hidden or clipped ink`);
-          const ink = eligible[0]!.ink.find((p) => p.index === index)!;
-          assert.ok(ink.box[2] > ink.box[0] && ink.box[3] > ink.box[1], `${step.step}: ${target.name} has empty ink`);
-          const coverage = eligible.map((v) => {
-            if (!bounded) return v.viewport;
-            const shown = v.ink.find((p) => p.index === index)!.shown;
-            return [
-              Math.max(v.viewport[0], shown[0]),
-              Math.max(v.viewport[1], shown[1]),
-              Math.min(v.viewport[2], shown[2]),
-              Math.min(v.viewport[3], shown[3]),
-            ] as Rect;
-          });
-          assert.ok(
-            covered(box, coverage),
-            `${step.step} at ${viewport.width}px: ${target.name} is missing from ${target.opening ? 'the opening' : 'the close-up tour'}: ${JSON.stringify({ box, views: coverage })}`,
-          );
-          verified.add(target.name);
-          seen++;
-        }
-        if (target.required) assert.ok(seen, `${step.step}: ${target.name} is outside the authored picture`);
-      }
+      const verified = verifyStoryTargets(frame, views, step.step, viewport.width);
       assert.ok(verified.size, `${step.step}: no story subject is painted in a reader view`);
-      results.push({ step: step.step, width: viewport.width, views: views.length, targets: [...verified] });
+      results.push({
+        step: step.step,
+        width: viewport.width,
+        views: views.length,
+        targets: [...verified],
+        ...(viewport.width === 390 ? { openingAt320: narrow.get(step.step)! } : {}),
+      });
     }
   }
   assert.deepEqual(
