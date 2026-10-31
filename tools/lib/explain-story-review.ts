@@ -190,6 +190,11 @@ const DETAIL_AND_EXISTING_CLAIMS: Readonly<Record<string, readonly StoryClaim[]>
     },
   ],
   'token-bucket': [
+    {
+      step: 'reader-burst',
+      opening: true,
+      targets: Array.from({ length: 6 }, (_, i) => ({ key: `burst:${i}:${i < 5 ? 200 : 429}` })),
+    },
     { step: 'balance', targets: [{ text: 'bucket' }, { text: 'Tokens left' }] },
     {
       step: 'trace',
@@ -285,7 +290,7 @@ const MAIN_COMPARISONS: Readonly<Record<string, readonly string[]>> = {
 // Hiding a role cannot be excused by the group’s remaining border or background.
 const COMPARISON_WORDS: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>> = {
   'token-bucket': {
-    'reader-burst': ['R1: 200', 'R6: 429'],
+    'reader-burst': ['R1', 'R6', '200', '429'],
     'reader-refill': ['Before the wait', 'On arrival: add elapsed × rate'],
   },
   'ring-buffer': { 'reader-capacity': ['head = tail = 0', 'Occupied: 5 / 5'], 'reader-reuse': ['slot 0', 'slot 4'] },

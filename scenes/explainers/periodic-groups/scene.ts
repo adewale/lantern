@@ -43,10 +43,11 @@ const PITCH_X = 0.82,
   CELL_H = 0.6;
 const LEFT = -PITCH_X * 9;
 const colX = (col: number) => LEFT + (col - 0.5) * PITCH_X;
-const rowY = (row: number) => 2.54 - (row - 1) * PITCH_Y;
-const HEADER_Y = 3.03;
-const STRIP_Y = -1.99;
-const fRowY = (row: number) => -2.78 - (row - 1) * PITCH_Y;
+// Leave room for the question and subtitle above the full reference table.
+const rowY = (row: number) => 2.29 - (row - 1) * PITCH_Y;
+const HEADER_Y = 2.78;
+const STRIP_Y = -2.24;
+const fRowY = (row: number) => -3.03 - (row - 1) * PITCH_Y;
 /** The empty rectangle above the d block, periods 1 to 3: where the words go. */
 const NOTE_X = colX(3) - CELL_W / 2,
   NOTE_RIGHT = colX(12) + CELL_W / 2;
@@ -187,7 +188,7 @@ export default class PeriodicGroupsExplainer extends Scene {
     });
 
     // The accent is the player's own warm red, so the step number on the stage matches the rail beside Next.
-    const s = stage(this, { palette: { paper: PAPER, ink: INK, accent: '#9e1c2c', muted: SOFT }, headingSize: 0.5 });
+    const s = stage(this, { palette: { paper: PAPER, ink: INK, accent: '#9e1c2c', muted: SOFT }, headingSize: 0.6 });
 
     // ---- the table, drawn from this.state --------------------------------------
     const drawTable = (state: SceneState) => {

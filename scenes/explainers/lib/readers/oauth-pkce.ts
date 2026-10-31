@@ -13,7 +13,7 @@ export function frames(attacker: boolean): ReaderFrame[] {
       title: 'What is the code bound to?',
       line: 'The client keeps a random verifier and sends its S256 challenge.',
       caption:
-        'The server records the challenge alongside the authorization code. To redeem that code, the caller must later supply a verifier whose S256 challenge matches. The verifier is fresh per authorization; it is not a client secret embedded in a public application. The long RFC example values are available in the walkthrough.',
+        'The server stores the S256 challenge with the authorization code. To redeem the code, the client supplies the verifier that produces that challenge. Each authorization gets a fresh verifier; public applications do not embed a reusable client secret here.',
       values: { challenge, verifierKept: true },
       draw: (s) =>
         new Group(
@@ -28,8 +28,8 @@ export function frames(attacker: boolean): ReaderFrame[] {
       title: attacker ? 'Can the thief redeem the stolen code?' : 'Why does the client’s verifier work?',
       line: 'Same code; compare the submitted verifiers.',
       caption: attacker
-        ? 'The attacker has the code but not the verifier. Hashing a guess does not match the saved challenge, so the token request fails with invalid_grant. The legitimate client submits its verifier and matches. PKCE protects this exchange; it is not a defence against an attacker that has also stolen the verifier.'
-        : 'The legitimate client submits the code and its verifier. The server hashes the verifier, matches the saved challenge and issues the token. Sending only the challenge at authorization kept the verifier out of that earlier redirect path.',
+        ? 'The attacker submits the stolen code with a guessed verifier. Its hash differs from the saved challenge, so the server returns invalid_grant. The client’s verifier matches and gets a token. This defence assumes the attacker has not also stolen that verifier.'
+        : 'The client submits the code and its verifier. Hashing the verifier reproduces the saved challenge, so the server issues a token. The earlier authorization request carried only the challenge.',
       values: { attacker, legitimate: true, guessMatches: matches },
       draw: (s) =>
         table(

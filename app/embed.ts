@@ -765,7 +765,9 @@ export async function mountEmbed(
     await show(selected, push);
   }
   const previous = () => {
-    if (trace) void show(adjacentStep(trace.steps, selected, -1));
+    if (!trace) return;
+    const target = adjacentStep(trace.steps, selected, -1);
+    if (target !== selected) void show(target);
   };
   prev.onclick = earlyPrev.onclick = previous;
   backToStory.onclick = () => void show(lastStory);

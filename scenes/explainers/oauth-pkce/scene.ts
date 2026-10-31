@@ -51,7 +51,7 @@ export default class OAuthExplainer extends Scene {
     const attacker = settingsOf(this).attacker === 'yes';
     const digest = sha256(VERIFIER),
       challenge = pkceChallenge(VERIFIER),
-      s = stage(this, { style: STYLE });
+      s = stage(this, { headingSize: 0.6, style: STYLE });
 
     await readerFirst(this, s, readerFrames(attacker));
     await this.step('secret', {

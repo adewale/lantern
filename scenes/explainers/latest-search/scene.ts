@@ -53,7 +53,7 @@ export default class LatestSearchExplainer extends Scene {
     ]);
     const first = order === 'new-first' ? 'B' : 'A';
     const second = order === 'new-first' ? 'A' : 'B';
-    const s = stage(this, { style: 'github-dark', headingSize: 0.53 });
+    const s = stage(this, { style: 'github-dark', headingSize: 0.6 });
     const snapshot = (index: number, compare = false) => {
       const now = run.snapshots[index]!;
       return {

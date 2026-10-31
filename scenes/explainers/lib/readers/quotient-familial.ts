@@ -10,7 +10,7 @@ export function frames(revenu: number, enfants: number): ReaderFrame[] {
       id: 'reader-quotient',
       title: 'Pourquoi diviser le revenu ?',
       line: `Couple marié ou pacsé, ${enfants} enfant${enfants > 1 ? 's' : ''} à charge.`,
-      caption: `Pour les revenus 2024, le modèle divise ${euros(revenu)} par ${partsTexte(r.parts)} parts, soit ${euros(r.quotient, 2)} par part. Le barème progressif s’applique à ce quotient. On multiplie ensuite l’impôt par part par le nombre de parts. Le revenu entier n’est pas taxé au taux de la tranche la plus haute.`,
+      caption: `Pour les revenus 2024, ${euros(revenu)} divisés par ${partsTexte(r.parts)} parts donnent ${euros(r.quotient, 2)} par part. Le barème progressif s’applique à ce quotient ; on multiplie ensuite l’impôt par le nombre de parts. Chaque tranche ne taxe que sa fraction du revenu.`,
       values: { revenu, enfants, parts: r.parts, quotient: r.quotient, brut: r.brut },
       draw: (s) =>
         new Group(
@@ -23,7 +23,7 @@ export function frames(revenu: number, enfants: number): ReaderFrame[] {
       id: 'reader-cap',
       title: 'Les parts donnent-elles une réduction illimitée ?',
       line: 'Comparer le calcul avec enfants au même couple sans enfant.',
-      caption: `Non. L’avantage lié aux enfants est plafonné. Ici, le calcul brut donne ${euros(r.brut, 2)}, contre ${euros(no.brut, 2)} sans enfant. Le plafond ${r.plafonne ? 'limite' : 'ne limite pas'} cet avantage. Après plafonnement et décote, l’impôt du modèle est ${euros(r.impot)}. Il reste avant réductions, crédits et seuil de recouvrement ; ce n’est pas un simulateur fiscal complet.`,
+      caption: `Le calcul brut donne ${euros(r.brut, 2)}, contre ${euros(no.brut, 2)} pour le même couple sans enfant. Le plafond ${r.plafonne ? 'limite' : 'ne limite pas'} l’avantage lié aux enfants. Après plafonnement et décote, le modèle obtient ${euros(r.impot)}, avant réductions, crédits et seuil de recouvrement.`,
       values: {
         sansEnfants: r.sansEnfants,
         plafond: r.plafond,

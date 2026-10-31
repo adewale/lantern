@@ -10,9 +10,9 @@ export function frames(auth: 'desktop' | 'service'): ReaderFrame[] {
     {
       id: 'reader-boundary',
       title: 'Who gets the secret value?',
-      line: 'Discovery returns a reference; op resolves it for the child.',
+      line: 'op resolves a reference when it starts the application.',
       caption:
-        'The agent discovers an op:// reference, not the concealed value. At execution, op resolves that reference and starts the application with the secret in its environment. This reduces accidental disclosure in discovery output; it does not prevent the application itself from reading or printing its environment.',
+        'Discovery returns an op:// reference. When the command runs, op resolves it and starts the application with the secret in its environment. The application can still read or print that environment; the reference keeps the value out of discovery output.',
       values: { ref, agentHasValue: false, childHasValue: !!launched.childEnv.API_KEY },
       draw: (s) =>
         new Group(
@@ -28,8 +28,8 @@ export function frames(auth: 'desktop' | 'service'): ReaderFrame[] {
       line: `Authentication: ${auth === 'desktop' ? 'desktop approval' : 'service account'}.`,
       caption:
         auth === 'service'
-          ? 'The op process receives the service-account token. Its child command unsets OP_SERVICE_ACCOUNT_TOKEN, while receiving the resolved API key. Removing that one variable is not an environment sandbox: other inherited variables still pass through.'
-          : 'Desktop mode asks for approval once per command in the upstream README’s model. There is no service-account token in this example. The application still receives the resolved API key; discovery’s reference-only output is not a promise that secrets never enter another process.',
+          ? 'The op process receives the service-account token. Its child command unsets OP_SERVICE_ACCOUNT_TOKEN and receives the resolved API key. Other inherited variables still pass through; removing this token does not isolate the whole environment.'
+          : 'In the upstream README’s desktop model, each command asks for approval. There is no service-account token to pass on, but the application still receives the resolved API key.',
       values: {
         auth,
         prompts: PROMPTS_PER_COMMAND[auth],

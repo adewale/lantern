@@ -191,7 +191,7 @@ export default class CertRenewalExplainer extends Scene {
       other: Rule = rule === 'fraction' ? 'fixed30' : 'fraction',
       life = LIFETIMES[key],
       short = key === '160h',
-      s = stage(this, { style: STYLE, headingSize: 0.46 });
+      s = stage(this, { style: STYLE, headingSize: 0.6 });
     const mine = summarize(rule, key),
       theirs = summarize(other, key),
       byRule = { [rule]: mine, [other]: theirs } as Record<Rule, typeof mine>;

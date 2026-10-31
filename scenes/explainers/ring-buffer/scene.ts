@@ -104,7 +104,7 @@ export default class RingBufferExplainer extends Scene {
   override async construct() {
     const which = settingsOf(this).operations!,
       events = ringStory(which),
-      s = stage(this, { style: 'dusk' }),
+      s = stage(this, { headingSize: 0.6, style: 'dusk' }),
       ink = s.palette.ink,
       soft = s.soft,
       head = s.emphasis;

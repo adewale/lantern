@@ -15,16 +15,16 @@ export function frames(char: CharId, predicate: Predicate): ReaderFrame[] {
       id: 'reader-predict',
       title: 'Will a passing digit check make int safe?',
       line: `Selected character: ${c.char}; guard: ${predicate}.`,
-      caption: `Consider this one-character input. Predict whether the guard passes, and whether int accepts it. Python’s numeric predicates classify Unicode properties; they do not all recognise the same set of characters. The next picture keeps the guard result beside the parse result.`,
+      caption: `For the character ${c.char}, predict two answers: does ${predicate} pass, and can int parse it? Unicode numeric properties and the parser accept different character sets.`,
       values: { char, predicate },
       draw: (s) =>
         new Group(tile(c.char, 0, 1, 4, 2, s, { size: 1.3 }), label(`${predicate} → int`, 0, -1.8, s.palette.ink, 0.9)),
     },
     {
       id: 'reader-result',
-      title: 'A property test is not a parser contract',
-      line: `${predicate}: ${selected.passes ? 'True' : 'False'}; guarded result: ${outcome(selected)}.`,
-      caption: `For ${c.char}, ${predicate} ${selected.passes ? 'passes' : 'refuses the input'}. ${'value' in parsed ? `int itself returns ${parsed.value}` : 'int itself raises ValueError'}. For a single Unicode decimal digit, isdecimal aligns with int’s accepted character set; whole strings still need the parser to handle signs, whitespace and invalid structure. The implementation fields remain in Details and sources.`,
+      title: 'Does the parser accept what the guard accepts?',
+      line: 'Compare both guards on the same character.',
+      caption: `${predicate} ${selected.passes ? 'passes' : 'rejects'} ${c.char}. ${'value' in parsed ? `Parsing the character directly returns ${parsed.value}` : 'Parsing the character directly raises ValueError'}. For a single Unicode decimal digit, isdecimal matches int’s accepted character set. Longer strings still need parsing because signs, whitespace and invalid structure affect the result.`,
       values: { char, predicate, selected, safe },
       draw: (s) =>
         table(

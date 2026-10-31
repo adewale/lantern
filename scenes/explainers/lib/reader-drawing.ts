@@ -38,20 +38,25 @@ export function flow(s: Stage, names: readonly string[], { y = 1, key = 'reader-
   const xs = names.map((_, i) => (i - (names.length - 1) / 2) * (width + gap));
   const g = new Group();
   g.key = key;
-  names.forEach((name, i) => {
+  const wrapped = names.map((name) => {
     const lines: string[] = [];
     for (const word of name.split(' ')) {
       const next = lines.length ? `${lines.at(-1)} ${word}` : word;
       if (lines.length && new Text(next, { fontSize: 0.62 }).width() <= width - 0.3) lines[lines.length - 1] = next;
       else lines.push(word);
     }
+    return lines;
+  });
+  const height = Math.max(1.15, ...wrapped.map((lines) => lines.length * 0.68 + 0.3));
+  names.forEach((name, i) => {
+    const lines = wrapped[i]!;
     const node =
       lines.length === 1
-        ? tile(name, xs[i]!, y, width, 1.15, s, { size: 0.62 })
+        ? tile(name, xs[i]!, y, width, height, s, { size: 0.62 })
         : new Group(
             new Rectangle({
               width,
-              height: lines.length * 0.68 + 0.3,
+              height,
               fill: s.palette.paper,
               stroke: s.soft,
               strokeWidth: 0.025,
@@ -93,7 +98,7 @@ export function bars(
     const yy = y - i * 2.3,
       width = (r.value / maximum) * 8.5;
     g.add(
-      label(r.label, 0, yy + 0.55, s.palette.ink, 0.64, `${key}:${i}:label`),
+      label(r.label, -4, yy + 0.55, s.palette.ink, 0.64, `${key}:${i}:label`).moveTo([-4, yy + 0.55], [-1, 0]),
       new Rectangle({ width: 8.5, height: 0.68, fill: 'none', stroke: s.soft, strokeWidth: 0.02 }).moveTo([
         0.25,
         yy - 0.3,
@@ -101,7 +106,7 @@ export function bars(
       ...(r.value > 0
         ? [new Rectangle({ width, height: 0.68, fill: s.emphasis, stroke: 'none' }).moveTo([-4 + width / 2, yy - 0.3])]
         : []),
-      label(r.display, 6.0, yy - 0.3, s.palette.ink, 0.7, `${key}:${i}:value`),
+      label(r.display, 7.2, yy - 0.3, s.palette.ink, 0.7, `${key}:${i}:value`).moveTo([7.2, yy - 0.3], [1, 0]),
     );
   });
   return g;

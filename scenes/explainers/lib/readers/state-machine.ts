@@ -12,7 +12,7 @@ export function frames(which: string): ReaderFrame[] {
       id: 'reader-path',
       title: 'What can this event change?',
       line: 'A transition needs both the current state and the event.',
-      caption: `CONNECT moves idle to connecting. Only then can ${event} move the session to ${next}. An event name alone does not determine the next state. Compare the two histories above.`,
+      caption: `CONNECT moves idle to connecting. In that state, ${event} moves the session to ${next}. The same event in another state can have a different result because the reducer looks up both state and event.`,
       values: { event, next },
       draw: (s) =>
         new Group(
@@ -25,8 +25,8 @@ export function frames(which: string): ReaderFrame[] {
     {
       id: 'reader-reject',
       title: 'Can a late OPENED reopen it?',
-      line: 'Missing transitions are errors, not guesses.',
-      caption: `${which === 'success' ? 'CLOSE moves open to closed' : 'ERROR moves connecting to closed'}. A late OPENED then finds no closed:OPENED row, so the reducer throws InvalidTransition and stays closed. A permitted path and a rejected event are both part of the contract.`,
+      line: 'closed has no OPENED transition.',
+      caption: `${which === 'success' ? 'CLOSE moves open to closed' : 'ERROR moves connecting to closed'}. A later OPENED has no closed:OPENED transition, so the reducer throws InvalidTransition. The state remains closed.`,
       values: { state: 'closed', event: 'OPENED', result: rejected },
       draw: (s) =>
         new Group(

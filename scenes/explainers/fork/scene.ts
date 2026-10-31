@@ -35,7 +35,7 @@ export default class ForkExplainer extends Scene {
     ],
   };
   override async construct() {
-    const s = stage(this, { style: STYLE });
+    const s = stage(this, { headingSize: 0.6, style: STYLE });
     const ink = s.palette.ink;
 
     await readerFirst(this, s, readerFrames());

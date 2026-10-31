@@ -8,7 +8,7 @@ export function frames(): ReaderFrame[] {
       title: 'Who does the rendering work?',
       line: 'Move diagram layout from the reader’s browser to the build.',
       caption:
-        'Rayner captures diagram geometry while building. It packages that geometry with the scene and reader in one HTML page. Opening the page still runs Rayner’s SVG animation code, but it does not download or run the diagram layout engine. This is the central trade: a larger portable file in exchange for fewer runtime dependencies.',
+        'Rayner runs diagram layout during the build and stores the resulting geometry in the HTML file. The reader runs SVG animation code using that geometry. This makes the file larger while avoiding a diagram-layout dependency in the reader’s browser.',
       values: { layout: 'build', runtime: 'SVG scene' },
       draw: (s) =>
         new Group(
@@ -23,7 +23,7 @@ export function frames(): ReaderFrame[] {
       title: 'What do extra settings cost?',
       line: 'Every combination is a case to build and verify.',
       caption:
-        'Three refill rates and two policies make six cases. A reader can switch among those prepared cases. Adding an unrestricted input would change that promise: the author would need a runtime model and a way to check values outside the built cases. Start with the few choices that teach the comparison.',
+        'Three refill rates and two policies require six built cases. The reader can switch among those cases. An unrestricted input would also need a runtime model and checks for values outside that prepared set.',
       values: { rates: 3, policies: 2, cases: 6 },
       draw: (s) =>
         table(

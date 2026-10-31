@@ -114,7 +114,7 @@ export default class Ext4SpaceExplainer extends Scene {
     const size = values.size as Size,
       m = Number(values.reserve);
     const name = SIZES[size].label;
-    const s = stage(this, { style: STYLE, headingSize: 0.46 });
+    const s = stage(this, { style: STYLE, headingSize: 0.6 });
     const sp = space(SIZES[size].bytes, DEFAULT_RESERVE),
       chosen = space(SIZES[size].bytes, m),
       l = sp.layout;

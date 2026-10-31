@@ -165,7 +165,7 @@ export default class GtfsExplainer extends Scene {
       before = addDays(date, -1),
       stopKey = values.stop as StopKey,
       stopId = STOPS[stopKey];
-    const s = stage(this, { style: STYLE, headingSize: 0.46 });
+    const s = stage(this, { style: STYLE, headingSize: 0.6 });
 
     // ------------------------------------------------------------------ files
     const tables: [string, number, string][] = [

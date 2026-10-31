@@ -150,7 +150,7 @@ export default class MontyHall extends Scene {
         id: 'choice',
         title: 'Choose a door before the reveal',
         line: 'The first choice starts with a one-in-three chance.',
-        caption: `You choose ${settings.choice}. The prize is equally likely to start behind any door. This is one repeatable example round; the later table will compare all prize placements.`,
+        caption: `You choose ${settings.choice}. The prize starts behind each door with equal probability. This picture follows one repeatable round; comparing strategies requires all three prize placements.`,
         state: { example, host, revealed: false },
         draw: (s: Stage) => doors(s, 0),
       },
@@ -262,7 +262,7 @@ export default class MontyHall extends Scene {
           ? 'The host was required to leave the prize hidden.'
           : 'Remember: we excluded rounds in which the host revealed the prize.',
       caption:
-        'Before revealing this round, choose Stay or Switch above. Then predict whether your strategy wins more often across all prize placements. The next two steps separate one outcome from the full comparison.',
+        'Would staying or switching win more often across all possible prize placements under this host’s rule? A win in this one round could support either strategy; the comparison must include the other placements.',
       draw: (s: Stage) => {
         const g = doors(s, 1);
         const result = g.family().find((m) => m.key === 'monty-result');

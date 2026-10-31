@@ -13,7 +13,7 @@ export function frames(trustKey: TrustKey, requestKey: RequestKey): ReaderFrame[
       id: 'reader-path',
       title: 'Whose address reaches Express?',
       line: `Trust setting: ${TRUST_LABEL[trustKey]}.`,
-      caption: `The request reaches Express through ${r.via.length} proxy hop${r.via.length === 1 ? '' : 's'}. The socket address is the nearest peer, not necessarily the original sender. X-Forwarded-For adds claims made earlier in the path; accepting every claim can accept an attacker’s address.`,
+      caption: `The request crosses ${r.via.length} proxy hop${r.via.length === 1 ? '' : 's'} before Express. Its socket identifies the nearest peer. X-Forwarded-For carries earlier address claims, so trusting every entry can let an attacker choose req.ip.`,
       values: { requestKey, trustKey, socket: got.socket, xff: got.xff },
       draw: (s) =>
         new Group(
@@ -25,8 +25,8 @@ export function frames(trustKey: TrustKey, requestKey: RequestKey): ReaderFrame[
     {
       id: 'reader-answer',
       title: 'Where does the trust walk stop?',
-      line: 'Read nearest first; stop at an untrusted proxy or the list’s end.',
-      caption: `Express reads the list in the order shown. It skips trusted proxy addresses until the first untrusted address or the end of the list. That endpoint becomes req.ip; later entries, if any, are unread. The final address is not tested as another proxy. Here req.ip is ${out.ip}, ${out.whose}. Change the request path as well as the trust setting: a hop count is safe only when every permitted path has the expected length.`,
+      line: 'Read the nearest address first.',
+      caption: `Express skips trusted proxy addresses until it reaches an untrusted address or the list’s end. That address becomes req.ip: ${out.ip}, ${out.whose}. Later entries are unread. The last address is an endpoint, so it is not tested as another proxy. Trusting a hop count assumes every allowed route has that length.`,
       values: { read, answer: out },
       draw: (s) =>
         table(

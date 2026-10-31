@@ -1,8 +1,7 @@
 import { Group, Circle, Rectangle } from '../../../../src/index.ts';
 import { TokenBucket } from '../models.ts';
-import { label, tile, bars } from '../reader-drawing.ts';
+import { label, bars } from '../reader-drawing.ts';
 import type { ReaderFrame } from '../reader-drawing.ts';
-import type { Stage } from '../../../../explain/index.ts';
 export function frames(rate: number): ReaderFrame[] {
   const b = new TokenBucket(rate, 5);
   const burst = Array.from({ length: 6 }, () => b.allow(0));
@@ -10,42 +9,46 @@ export function frames(rate: number): ReaderFrame[] {
     ok = b.allow(0.5),
     found = b.tokens + (ok ? 1 : 0),
     after = b.tokens;
-  const tokens = (s: Stage, n: number, y: number) =>
-    new Group(
-      ...Array.from({ length: 5 }, (_, i) =>
-        new Circle({
-          radius: 0.38,
-          fill: i < n ? s.emphasis : s.palette.paper,
-          stroke: s.soft,
-          strokeWidth: 0.04,
-        }).moveTo([(i - 2) * 1.45, y]),
-      ),
-    );
   return [
     {
       id: 'reader-burst',
       title: 'Can six requests spend five tokens?',
-      line: 'One accepted request costs one token.',
+      line: 'All six requests arrive together.',
       caption:
-        'Five tokens pay for the first five requests. The sixth arrives at the same instant, so no time has passed to refill. It gets 429. Burst capacity and refill speed are different limits.',
+        'The bucket starts with five tokens. Each of the first five requests spends one and gets 200. Request 6 gets 429 because it arrives at the same instant, before any refill can accrue.',
       values: { rate, burst },
       draw: (s) =>
         new Group(
-          tokens(s, 5, 2.1),
-          ...burst.map((yes, i) =>
-            tile(`R${i + 1}: ${yes ? 200 : 429}`, ((i % 3) - 1) * 4.8, 0.1 - Math.floor(i / 3) * 2.1, 4.2, 1.1, s, {
-              bad: !yes,
-              size: 0.66,
-              key: `burst:${i}:${yes ? 200 : 429}`,
-            }),
-          ),
+          label('Starting tokens', 0, 2.55, s.palette.ink, 0.75),
+          ...burst.map((yes, i) => {
+            const x = (i - 2.5) * 2.5;
+            const request = new Group(
+              new Rectangle({
+                width: 2.15,
+                height: 2,
+                fill: s.palette.paper,
+                stroke: yes ? s.emphasis : s.bad,
+                strokeWidth: 0.045,
+              }).moveTo([x, -0.3]),
+              label(`R${i + 1}`, x, 0.25, s.palette.ink, 0.75),
+              label(yes ? '200' : '429', x, -0.6, yes ? s.palette.ink : s.bad, 0.82),
+            );
+            request.key = `burst:${i}:${yes ? 200 : 429}`;
+            return new Group(
+              ...(i < 5
+                ? [new Circle({ radius: 0.38, fill: s.emphasis, stroke: s.soft, strokeWidth: 0.04 }).moveTo([x, 1.7])]
+                : [label('×', x, 1.7, s.bad, 0.9)]),
+              request,
+            );
+          }),
+          label('Six requests at the same instant', 0, -2.5, s.palette.ink, 0.75),
         ),
     },
     {
       id: 'reader-refill',
       title: 'What does half a second buy?',
       line: `Refill speed: ${rate} token${rate === 1 ? '' : 's'} per second.`,
-      caption: `The next request arrives at 0.5 s. Refill adds 0.5 × ${rate} = ${found} tokens to the empty bucket. It ${ok ? 'spends one and gets 200' : 'finds less than one and gets 429'}, leaving ${after}. Refill is calculated on arrival; no background timer runs. Try another speed above.`,
+      caption: `At 0.5 s, elapsed time adds 0.5 × ${rate} = ${found} tokens. The request ${ok ? 'spends one token and gets 200' : 'has less than one token and gets 429'}, leaving ${after}. Refill is calculated when the request arrives.`,
       values: { rate, before, found, after, ok },
       draw: (s) =>
         new Group(

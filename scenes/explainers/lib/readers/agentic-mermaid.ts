@@ -25,8 +25,8 @@ export function frames(missing: boolean): ReaderFrame[] {
       title: 'Which branch means “cache hit”?',
       line: missing ? 'The first edit omits both branch labels.' : 'The first edit labels both branches.',
       caption: missing
-        ? 'Two arrows leave Cached?, but neither tells the reader which answer takes it. The verifier can report the missing branch labels by edge ID. It cannot infer what the application ought to do from an unlabelled shape.'
-        : 'Both branches are labelled. A reader can follow yes to Reply and no to Database. A verifier can check these structural properties; it cannot prove that this cache policy is correct for the application.',
+        ? 'Both arrows leave Cached? without saying which answer follows each route. The verifier reports the missing labels by edge ID; the author must decide which answer leads to Reply.'
+        : 'The labels send yes to Reply and no to Database. The verifier can check those links and labels, while the application’s cache policy still needs its own tests.',
       values: { missing },
       draw: (s) => branches(s, !missing),
     },
@@ -35,8 +35,8 @@ export function frames(missing: boolean): ReaderFrame[] {
       title: missing ? 'Repair the edge, then check the route' : 'Check the labels, then follow the route',
       line: 'yes → Reply; no → Database.',
       caption: missing
-        ? 'The repair assigns yes and no to the existing edges. The highlighted yes route reaches Reply. The source walkthrough replays the typed edit, verifies the snapshot and walks the captured routes. Zero warnings supports those checks; it does not prove the diagram’s meaning.'
-        : 'The labels are already present, so no repair is needed. The highlighted yes route reaches Reply. The source walkthrough verifies the snapshot and walks its captured routes. Zero warnings supports those checks; it does not prove the application’s cache policy.',
+        ? 'Adding yes and no assigns an answer to each edge. The highlighted yes route reaches Reply. The source edit and captured routes are checked; those checks cover structure, while the author remains responsible for the diagram’s meaning.'
+        : 'Both labels are present, so this case needs no repair. The highlighted yes route reaches Reply. Snapshot and route checks cover that structure, while the application’s cache policy needs its own tests.',
       values: { labels: ['yes', 'no'] },
       draw: (s) => branches(s, true, true),
     },

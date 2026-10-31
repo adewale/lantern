@@ -91,7 +91,7 @@ export default class GnomeFilesExplainer extends Scene {
 
   override async construct() {
     const p = settingsOf(this).participant as Participant;
-    const s = stage(this, { style: STYLE, headingSize: SIZE });
+    const s = stage(this, { style: STYLE, headingSize: 0.6 });
     const ink = s.palette.ink;
 
     // ------------------------------------------------------------------ the test and its key

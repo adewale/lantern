@@ -163,7 +163,7 @@ export default class TrafficPolicyExplainer extends Scene {
       pods = podsOf(counts),
       n = pods.length,
       ids = pods.map((p) => p.id);
-    const s = stage(this, { style: STYLE, headingSize: 0.46 });
+    const s = stage(this, { style: STYLE, headingSize: 0.6 });
     const groups = counts.map((_, j) => `group:n${j + 1}`);
     const nodeParts = (j: number) => [groups[j]!, `k${j + 1}`, ...pods.filter((p) => p.node === j).map((p) => p.id)];
 

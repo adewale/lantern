@@ -12,7 +12,7 @@ export function frames(wrapper: Wrapper, inner: Inner): ReaderFrame[] {
       id: 'reader-threads',
       title: 'Move the value or share a reference?',
       line: run.name,
-      caption: `Send asks whether ownership can move to another thread. Sync asks whether shared references can cross threads: &T is Send when T is Sync. For ${run.name}, the move closure is ${run.spawnMove ? 'accepted' : 'rejected'} and the scoped shared borrow is ${run.scopeBorrow ? 'accepted' : 'rejected'}. All types in this model are ’static; lifetimes can impose further restrictions in real programs.`,
+      caption: `Send permits moving ownership to another thread. Sync permits sending a shared reference: &T is Send when T is Sync. For ${run.name}, the move closure is ${run.spawnMove ? 'accepted' : 'rejected'} and the scoped borrow is ${run.scopeBorrow ? 'accepted' : 'rejected'}. All modelled types are ’static; real borrows must also satisfy their lifetime constraints.`,
       values: { ...run },
       draw: (s) =>
         new Group(
@@ -38,7 +38,7 @@ export function frames(wrapper: Wrapper, inner: Inner): ReaderFrame[] {
       id: 'reader-wrappers',
       title: 'Does wrapping it make sharing safe?',
       line: 'Read the requirements from the inside out.',
-      caption: `The selected wrappers produce ${last.name}. Arc protects its reference count, not arbitrary access to its contents. Mutex requires its contents to be Send before the mutex can be Sync. The table applies each wrapper’s rule; adding a wrapper is not a blanket thread-safety guarantee.`,
+      caption: `The wrappers produce ${last.name}.${last.name.includes('Arc<') ? ' Arc makes its reference count safe to share; its contents must also be Send and Sync.' : ''}${last.name.includes('Mutex<') ? ' A Mutex can be Sync only when its contents are Send.' : ''} Apply each wrapper’s requirements from the inner type outward to obtain the table’s results.`,
       values: { layers },
       draw: (s) =>
         table(

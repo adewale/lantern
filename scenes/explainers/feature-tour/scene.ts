@@ -294,7 +294,7 @@ export default class FeatureTour extends Scene {
     });
     await this.step('recipe', {
       title: example.title,
-      caption: `${uses[feature]} Read the code excerpt, then inspect its result in the next step. ${example.caption}`,
+      caption: uses[feature],
     });
     await s.code(example.code, { at: 'full', fontSize: 0.6 });
     this.state.feature = feature;

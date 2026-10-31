@@ -8,7 +8,7 @@ export function frames(): ReaderFrame[] {
       title: 'Will Start stay on the left?',
       line: 'An author’s task: reuse a two-panel layout in RTL.',
       caption:
-        'With direction rtl, the stage’s logical Start region moves to the right and End to the left. Physical Left and Right keep their coordinates. Use Start and End for a reading order; use physical regions when the side itself carries meaning.',
+        'With direction rtl, logical Start moves to the right and End to the left. Physical Left and Right keep their coordinates. Logical regions follow reading order; physical regions keep a diagram tied to a particular side.',
       values: { direction: 'rtl', start: 'right', end: 'left' },
       draw: (s) =>
         new Group(
@@ -21,9 +21,9 @@ export function frames(): ReaderFrame[] {
     {
       id: 'reader-fields',
       title: 'Does RTL reverse the value 123?',
-      line: 'Panel placement and field-column order are separate choices.',
+      line: 'Panel position and field order are separate settings.',
       caption:
-        'No. The default RTL card puts the field name to the right of its value. An LTR override puts the name on the left. Neither reverses the digits 123. The next two steps run these choices on real cards and update their values. Text shaping is a separate lettering concern.',
+        'The RTL card puts the field name to the right of its value. The LTR override puts the name on the left. Both keep the digit order 123. The following cards update that value without moving its column.',
       values: { digits: '123', rtl: ['123', 'Field'], ltr: ['Field', '123'] },
       draw: (s) =>
         new Group(

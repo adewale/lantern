@@ -88,7 +88,7 @@ export default class LanternExplainer extends Scene {
     sources: ['https://github.com/ivarvong/lantern', 'https://github.com/ivarvong/lantern/blob/2c7bad5/src/scene.ts'],
   };
   override async construct() {
-    const s = stage(this, { style: STYLE });
+    const s = stage(this, { headingSize: 0.6, style: STYLE });
     const ink = s.palette.ink,
       accent = s.emphasis;
 

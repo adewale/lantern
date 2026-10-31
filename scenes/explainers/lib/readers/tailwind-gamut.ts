@@ -18,7 +18,7 @@ export function frames(shade: Shade, screen: Space): ReaderFrame[] {
       id: 'reader-edge',
       title: 'Does the written colour fit?',
       line: `Tailwind ${shade}; each colour has its own gamut edge.`,
-      caption: `At this shade, ${sum.outsideSrgb.length} of ${all.length} colours exceed sRGB. The bars compare the most and least chromatic relative to their own sRGB edges. The line is 100%: crossing it requires gamut mapping on an sRGB screen. These are calculated limits, not a test of your display.`,
+      caption: `${sum.outsideSrgb.length} of ${all.length} colours at shade ${shade} exceed sRGB. Each bar measures chroma against that colour’s own sRGB boundary. Above 100%, an sRGB target needs gamut mapping. These boundaries come from colour calculations, not a measurement of the reader’s display.`,
       values: { shade, outside: sum.outsideSrgb, most: most.ofSrgb, least: least.ofSrgb },
       draw: (s) =>
         new Group(
@@ -40,8 +40,8 @@ export function frames(shade: Shade, screen: Space): ReaderFrame[] {
       line: `Selected target: ${screen === 'srgb' ? 'sRGB' : 'Display P3'}.`,
       caption:
         screen === 'srgb'
-          ? `${most.family}-${shade} is written at chroma ${most.C.toFixed(3)}. The CSS mapping model reduces it to ${most.shown.toFixed(3)} on sRGB. The patch previews that mapped colour. Hue and lightness can shift too; clipping each RGB channel is a different operation.`
-          : `All ${all.length} selected colours fit Display P3. ${most.family}-${shade} can retain its written chroma ${most.C.toFixed(3)} there, although the same colour exceeds sRGB. A P3 target alone does not prove a reader’s physical screen supports it.`,
+          ? `For ${most.family}-${shade}, CSS gamut mapping reduces chroma from ${most.C.toFixed(3)} to ${most.shown.toFixed(3)}. The swatch previews that mapped sRGB colour. Mapping can also change hue and lightness; clipping RGB channels produces a different result.`
+          : `All ${all.length} selected colours fit Display P3. ${most.family}-${shade} retains chroma ${most.C.toFixed(3)} there, although it exceeds sRGB. That result assumes a P3 target; a reader’s physical display may support a smaller gamut.`,
       values: { shade, screen, written: most.C, mapped: screen === 'srgb' ? most.shown : most.C },
       draw: (s) =>
         new Group(

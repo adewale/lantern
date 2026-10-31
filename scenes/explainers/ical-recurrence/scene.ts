@@ -117,7 +117,7 @@ export default class IcalRecurrenceExplainer extends Scene {
     const values = settingsOf(this);
     const change = values.change as Change,
       copy = values.copy as Copy;
-    const s = stage(this, { style: STYLE, headingSize: 0.46 });
+    const s = stage(this, { style: STYLE, headingSize: 0.6 });
     const after = organiserCopy(change);
 
     // ------------------------------------------------------------------ series

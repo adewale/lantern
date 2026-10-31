@@ -16,7 +16,7 @@ export function frames(key: LifetimeKey, rule: Rule): ReaderFrame[] {
       id: 'reader-due',
       title: 'When does “30 days before” fire?',
       line: `Certificate lifetime: ${life.label}.`,
-      caption: `Both bars start at notBefore and end at expiry. The ticks mark when each rule becomes due. The fixed interval becomes due after ${f(fixed.due)}; the current default after ${f(fraction.due)}. A 30-day interval can cover almost the entire life of a short certificate. This comparison assumes no ARI answer.`,
+      caption: `The fixed rule triggers after ${f(fixed.due)}; the lifetime-fraction rule triggers after ${f(fraction.due)}. Both bars span the same certificate lifetime. On a short certificate, “30 days before expiry” can mean renewing near the start. This comparison assumes no ARI answer.`,
       values: { key, fixed, fraction },
       draw: (s) => {
         const g = new Group();
@@ -43,8 +43,8 @@ export function frames(key: LifetimeKey, rule: Rule): ReaderFrame[] {
     {
       id: 'reader-retries',
       title: 'How much retry time remains?',
-      line: `Selected: ${rule === 'fixed30' ? 'fixed interval' : 'current default'}; timer runs twice a day.`,
-      caption: `After the selected rule becomes due, ${f(selected.slack)} remain until expiry. The model gives ${selected.retries} scheduled chances before that expiry. Shortening a lifetime changes both renewal frequency and the time available to recover from a failed renewal. The source walkthrough adds ARI and the issuance rate limit.`,
+      line: `${rule === 'fixed30' ? 'Fixed interval' : 'Lifetime fraction'}; two scheduled runs a day.`,
+      caption: `The selected rule leaves ${f(selected.slack)} before expiry, allowing ${selected.retries} scheduled attempts at two runs a day. A shorter lifetime can increase renewal frequency while reducing recovery time after failure. ARI and the issuance limit are covered in the source walkthrough.`,
       values: { key, rule, retries: selected.retries, slack: selected.slack },
       draw: (s) =>
         bars(

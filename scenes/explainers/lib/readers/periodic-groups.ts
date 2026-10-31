@@ -26,9 +26,9 @@ export function frames(symbol: Symbol): ReaderFrame[] {
   return [
     {
       id: 'reader-electrons',
-      title: 'Which electrons help locate the group?',
+      title: 'Which electrons count toward the group?',
       line: `${NAMES[symbol]}: atomic number ${z}.`,
-      caption: `A neutral ${symbol} atom has ${z} electrons. ${core ? `The preceding noble gas, ${symbolOf(core)}, accounts for ${core} of them.` : 'There is no preceding noble-gas core.'} Count s, p and d electrons beyond that core; f electrons are left out of this group count. The table’s column is a convention with visible adjustments, not simply the total number of electrons.`,
+      caption: `A neutral ${symbol} atom has ${z} electrons. ${core ? `${symbolOf(core)} accounts for the first ${core}. Count s, p and d electrons beyond that core, leaving f electrons out.` : 'With no earlier noble-gas core, both 1s electrons count.'} ${symbol === 'He' ? 'Its filled first shell places helium in group 18 despite that count of two.' : p.block === 'p' ? 'For this p-block element, adding 10 to the count gives the group number.' : 'For this s- or d-block element, the count gives the group number.'}`,
       values: { symbol, z, core, count: counted(actual, z), group: p.group },
       draw: (s) =>
         new Group(
@@ -40,13 +40,13 @@ export function frames(symbol: Symbol): ReaderFrame[] {
     },
     {
       id: 'reader-filling',
-      title: exception ? 'Does the filling rule always predict the ground state?' : 'How does a subshell fill?',
+      title: exception ? 'Does the filling rule predict Cu?' : 'How does a subshell fill?',
       line: exception
         ? 'Compare the filling prediction with the captured reference.'
         : 'Each dot is one electron; outlines show the remaining capacity.',
       caption: exception
-        ? `The filling rule predicts ${configText(beyondCore(prediction, z))} beyond the core. The reference lists ${configText(past)}. Both give the same s/p/d count here, but that agreement does not make the configurations identical. The family and count pictures next show how the column is assigned.`
-        : `The subshell labels give shell number and s/p/d/f type. Each has a fixed capacity: s holds 2, p 6, d 10 and f 14. The drawn rows keep each electron and its capacity together. ${symbol === 'He' ? 'Helium has a filled first shell and is placed with the noble gases in group 18, although its electron count is 2.' : 'The next pictures compare the whole family and its group count.'}`,
+        ? `The filling rule predicts ${configText(beyondCore(prediction, z))} beyond the core; the reference lists ${configText(past)}. These configurations have the same s/p/d total here, so their group count agrees even though their subshell occupancies differ.`
+        : `Filled dots are electrons; empty outlines are unused capacity. The capacities are 2 for s, 6 for p, 10 for d and 14 for f. ${symbol === 'He' ? 'Helium fills 1s and sits with the noble gases in group 18.' : 'The family comparison next relates this count to the table’s column.'}`,
       values: { symbol, prediction: configText(prediction), actual: configText(actual), exception },
       draw: (s) =>
         exception

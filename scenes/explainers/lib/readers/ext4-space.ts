@@ -21,7 +21,7 @@ export function frames(size: Size, reserve: number): ReaderFrame[] {
       title: 'Where did the empty disk’s space go?',
       line: `${SIZES[size].label} ext4 model; ${reserve}% root reserve.`,
       caption:
-        'Formatting allocates inode tables, a journal and other metadata before you store a file. Reserved free blocks are a different category: they are free, but ordinary users cannot spend them. The bar accounts for every 4 KiB block once; it uses the model’s mkfs defaults, not every possible ext4 configuration.',
+        'Formatting allocates inode tables, a journal and other metadata before any user file is stored. Reserved blocks remain free, but ordinary users cannot write them. Each segment accounts for its share of 4 KiB blocks under this model’s mkfs defaults.',
       values: { size, reserve, allocation },
       draw: (s) => {
         let x = -7;
@@ -47,8 +47,8 @@ export function frames(size: Size, reserve: number): ReaderFrame[] {
     {
       id: 'reader-reserve',
       title: 'Does reducing reserve remove metadata?',
-      line: `Compare 5% with ${comparisonReserve}% reserve at the same filesystem size.`,
-      caption: `At 5% root reserve, ordinary users can write ${bytesOf(old.users)}. At ${comparisonReserve}%, they can write ${bytesOf(comparison.users)}. The metadata count stays ${sp.layout.metadata} blocks. Reducing reserve frees access to blocks; it does not shrink inode tables or the journal.`,
+      line: `Same filesystem size; reserve changes from 5% to ${comparisonReserve}%.`,
+      caption: `Reducing reserve from 5% to ${comparisonReserve}% increases ordinary users’ writable space from ${bytesOf(old.users)} to ${bytesOf(comparison.users)}. The ${sp.layout.metadata} metadata blocks stay allocated: changing reserve grants access to free blocks without shrinking inode tables or the journal.`,
       values: { oldUsers: old.users, users: comparison.users, comparisonReserve, metadata: sp.layout.metadata },
       draw: (s) =>
         bars(

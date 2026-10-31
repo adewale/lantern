@@ -1266,6 +1266,19 @@ async function openPlayer(name: string, initial: { values: (string | undefined)[
     throw error;
   }
 }
+test('Left at the first story step leaves its picture, URL and settle count unchanged', options, async () => {
+  const {context, model, real} = await openPlayer('oauth-pkce', {
+    values: [undefined], viewport: {width: 200, height: 400},
+  });
+  try {
+    await fc.asyncModelRun(() => ({model, real}), [Key('ArrowLeft'), Key('ArrowLeft')]);
+    assert.equal(model.settles, 1);
+    assert.equal(model.entries.length, 1);
+  } finally {
+    await context.close();
+  }
+});
+
 // oauth-pkce's cases have different step lists (only "yes" has an attack), the case the player finds hardest.
 for (const [name, runs, maxCommands] of [['oauth-pkce', 10, 40]] as const)
   test(

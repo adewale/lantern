@@ -5,6 +5,7 @@
 - Give the catalog’s longer lessons a short main reading path with complete phone comparisons. Retain implementation walkthroughs under Details and sources, with direct links and full verification.
 - Let authors name a comparison with `s.reading(before, after)`. Keep its subjects together when they fit at a readable scale, while retaining close-ups for smaller details.
 - Add prediction steps to the dictionary, Bloom-filter, Git, Monty Hall and music lessons. Draw birthday comparisons and occupied dates, and show how a wrong font measurement changes placement.
+- Rewrite main captions around causes and case results. Align comparison tables and bars, strengthen question headings, pair token-bucket requests with their responses, and keep font measurements beside their labels.
 
 - Open the gallery with a periodic-table explainer: follow sodium, chlorine, iron, copper or helium from atomic number to group, with configurations checked against NIST's tabulated ground states for elements 1–108.
 - Show one numbered mark per step beside Next, so readers see where they are and how many steps remain without scrolling to the step list.

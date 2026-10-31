@@ -12,13 +12,13 @@ export default class FontMetrics extends Scene {
   };
 
   override async construct() {
-    const s = stage(this, { style: 'pen-and-ink' });
+    const s = stage(this, { headingSize: 0.6, style: 'pen-and-ink' });
     const color = s.palette.ink;
     await this.step('layout', {
       title: 'What if layout measures the wrong face?',
       line: 'Same phrase and size; only the measurement changes.',
       caption:
-        'Both rows draw EB Garamond at 0.9 units. The upper marker is placed using JetBrains Mono’s advance, leaving an unnecessary gap. The lower marker uses the phrase’s actual advance and a fixed 0.5-unit gap. The face used for measurement must match the face used for drawing.',
+        'Both rows draw EB Garamond at size 0.9. Using JetBrains Mono’s advance places the upper marker too far away. The lower marker uses Garamond’s advance plus a 0.5-unit gap. Measuring the drawn face keeps that gap fixed.',
     });
     const comparison = new Group();
     comparison.key = 'font-layout';
@@ -30,7 +30,7 @@ export default class FontMetrics extends Scene {
       comparison.add(
         word,
         new Circle({ radius: 0.22, fill: s.emphasis, stroke: 'none' }).moveTo([-5.3 + width + 0.5, y]),
-        new Text(name, { fontSize: 0.7, color }).moveTo([0, y + 1.1]),
+        new Text(name, { fontSize: 0.7, color }).moveTo([-5.3, y + 1.1], [-1, 0]),
       );
     }
     this.state.layout = { wrong, actual: new Text(SAMPLE, { fontSize: 0.9 }).advance() };
@@ -40,7 +40,7 @@ export default class FontMetrics extends Scene {
       title: 'The ruler spans the phrase’s advance',
       line: 'The ruler ends after the final glyph’s advance.',
       caption:
-        '“Ink on paper” advances 5.88 scene units in EB Garamond, including the spaces between its words. A following word would add another space, which this ruler does not include. This scene explicitly requests EB Garamond; pen-and-ink supplies the paper and colours.',
+        '“Ink on paper” advances 5.88 units at size 1.2 in EB Garamond. The ruler includes internal spaces and ends after the final glyph’s advance. A following word needs an extra space. EB Garamond is requested explicitly; pen-and-ink sets the paper and colours.',
     });
     await s.clear();
     const text = new Text(SAMPLE, { fontSize: 1.2, color }).moveTo([0, 0.8]);
@@ -53,10 +53,10 @@ export default class FontMetrics extends Scene {
     this.state.advance = text.advance();
 
     await this.step('cuts', {
-      title: 'The same phrase advances differently in each cut',
-      line: 'Regular, Bold and Italic keep the text and size fixed.',
+      title: 'How much space does each cut need?',
+      line: 'Same text and size 0.9 in all three rows.',
       caption:
-        'The first ruler measured text at 1.2 units; these three rows use 0.9. At that shared size, “Ink on paper” advances 4.41 units in Regular, 4.85 in Bold and 4.24 in Italic. Each EB Garamond cut supplies its own captured paths, so the page needs no font download.',
+        'At size 0.9, the phrase advances 4.41 units in Regular, 4.85 in Bold and 4.24 in Italic. Each cut has its own glyph metrics. Captured outlines keep all three available offline.',
     });
     await s.clear();
     const rows = new Group();
@@ -85,10 +85,10 @@ export default class FontMetrics extends Scene {
     });
 
     await this.step('diagram', {
-      title: 'The diagram measures labels before placing nodes',
+      title: 'Measure the face before placing nodes',
       line: 'Ink and Paper keep EB Garamond’s measured proportions.',
       caption:
-        'The arrow connects Ink and Paper, both drawn in the requested EB Garamond face. Natural lettering captures their advances, so the renderer places the boxes without stretching either label to a preset width.',
+        'Ink and Paper are measured in EB Garamond before layout. Their boxes use those widths, so each label keeps its proportions instead of stretching to a preset width.',
     });
     await s.clear();
     await s.show({ source: 'graph LR\nA["Ink"] --> B["Paper"]', lettering: 'natural' });

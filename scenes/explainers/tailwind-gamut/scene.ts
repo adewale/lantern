@@ -96,7 +96,7 @@ export default class TailwindGamutExplainer extends Scene {
       screen = values.screen as Screen;
     const all = rows(shade),
       sum = summarize(shade);
-    const s = stage(this, { style: STYLE, headingSize: 0.46 });
+    const s = stage(this, { style: STYLE, headingSize: 0.6 });
     const ink = s.palette.ink;
     const n = sum.count,
       out = sum.outsideSrgb.length;

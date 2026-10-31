@@ -54,7 +54,7 @@ export default class BloomFilter extends Scene {
       `Inserting cat sets positions ${locations('cat', m.size).join(', ')}. The filter keeps those bits, rather than a copy of the word.`,
       `Inserting dog sets positions ${locations('dog', m.size).join(', ')}. ${overlap ? 'A shared bit cannot say which word set it.' : 'These positions do not overlap cat’s positions, but the bits still carry no word identities.'}`,
       `${absent!.word} queries positions ${absent!.locations.join(', ')}. At least one is zero, so this insert-only filter can safely reject the word without checking storage.`,
-      `cat finds all three bits set. That is a maybe, not proof of presence. The exact store confirms that cat was inserted.`,
+      `cat finds all three bits set, so the filter passes the query to the exact store. The store confirms that cat was inserted.`,
       `${falsePositive!.word} also finds all its bits set, although only cat and dog were inserted. The exact store rejects this false positive; the final answer remains correct.`,
       `The filter sends ${m.exactLookups} of these ${m.queries.length} queries to storage. Its false positive adds a check, while its definite negative saves one. In a separate fixed sample of ${m.sampleSize} absent words, ${m.sampleFalsePositives} pass this filter.`,
     ];
@@ -141,7 +141,7 @@ export default class BloomFilter extends Scene {
       ...probe,
       id: 'predict',
       title: 'All three bits are set: what can we conclude?',
-      line: 'Predict the exact store’s answer before advancing.',
+      line: 'Only cat and dog are in the exact store.',
       caption: `Only cat and dog were inserted. The query ${falsePositive!.word} selects ${falsePositive!.locations.join(', ')}, all set. Can these bits establish membership, or do we still need the exact store?`,
       draw: (s) => {
         const drawing = probe.draw(s);

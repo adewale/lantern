@@ -18,9 +18,9 @@ export function frames(which: string): ReaderFrame[] {
     {
       id: 'reader-pipeline',
       title: 'Where does HELLO go?',
-      line: 'A pipeline passes text; a redirect stores the result.',
+      line: 'echo → tr → a file in the returned shell.',
       caption:
-        'Echo produces hello plus a newline. Tr uppercases that text. The redirect stores HELLO in shout.txt in the returned shell. This is an in-memory model, not a claim that every Bash command is supported.',
+        'echo writes hello and a newline into the pipe. tr uppercases it; the redirect stores HELLO in shout.txt in the returned shell. This in-memory model supports the commands used here.',
       values: { file: run.shell.fs['shout.txt'], stdout: run.stdout },
       draw: (s) =>
         new Group(
@@ -35,7 +35,7 @@ export function frames(which: string): ReaderFrame[] {
       title: 'Which shell can read the file?',
       line: `Selected case: cat receives the ${which === 'new' ? 'returned' : 'original'} shell.`,
       caption:
-        'The original shell still has no files. The returned shell owns the new file, so cat prints HELLO only when passed that value. Keeping an old shell is enough to reproduce the apparent lost write; exec did not mutate it.',
+        'cat prints HELLO when it receives the returned shell, which owns shout.txt. The original shell has no files because exec returns a new shell instead of mutating the old one.',
       values: { old, next, chosen: which === 'new' ? next : old },
       draw: (s) =>
         table(

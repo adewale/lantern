@@ -141,7 +141,7 @@ export default class SeasonsExplainer extends Scene {
   override async construct() {
     const key = settingsOf(this).place!,
       place = PLACES[key]!,
-      s = stage(this, { style: 'tokyo-night' });
+      s = stage(this, { headingSize: 0.6, style: 'tokyo-night' });
     const ink = s.palette.ink,
       soft = s.soft;
     const label = (text: string, at: Vec, opts: { size?: number; color?: string; edge?: Vec } = {}) =>
@@ -216,7 +216,7 @@ export default class SeasonsExplainer extends Scene {
 
     // ---------------------------------------------------------------- june
     const R = 1.7,
-      CY = 0.95,
+      CY = 0.7,
       JUNE_C: Vec = [4.3, CY],
       DEC_C: Vec = [-4.3, CY];
     const june = sunlight(place.lat, TILT),

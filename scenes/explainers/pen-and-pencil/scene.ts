@@ -153,7 +153,7 @@ export default class PenAndPencil extends Scene {
   override async construct() {
     const which = settingsOf(this).hand as string,
       seed = SEEDS[which]!,
-      s = stage(this, { style: STYLE, headingSize: 0.5 });
+      s = stage(this, { style: STYLE, headingSize: 0.6 });
     const facts = timelineFacts(WORLD);
     const drop = (...mobs: Mobject[]) => this.play(...mobs.map((m) => new FadeOut(m, { runTime: 0.3 })));
 

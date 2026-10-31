@@ -14,7 +14,7 @@ export function frames(date: string, stopId: string): ReaderFrame[] {
       id: 'reader-date',
       title: 'Why is a route missing today?',
       line: `Google’s sample feed: ${shortDate(date)}.`,
-      caption: `A route is a name and path grouping, not a promise of a departure. Its trips refer to a service_id. FULLW’s calendar says ${full.weekday ? 'yes' : 'no'} for this weekday; ${full.exception === 2 ? 'an exception removes it on this date' : full.exception === 1 ? 'an exception adds it on this date' : 'there is no date exception'}. The final service decision is ${full.runs ? 'runs' : 'does not run'}.`,
+      caption: `Trips refer to a service_id that decides whether they run on a date. FULLW’s calendar ${full.weekday ? 'allows' : 'excludes'} this weekday; ${full.exception === 2 ? 'a date exception removes the service' : full.exception === 1 ? 'a date exception adds the service' : 'there is no date exception'}. The result is ${full.runs ? 'service runs' : 'no service'}, even though the route remains in the feed.`,
       values: { date, service: full, trips: trips.length },
       draw: (s) =>
         new Group(
@@ -38,7 +38,7 @@ export function frames(date: string, stopId: string): ReaderFrame[] {
       id: 'reader-stop',
       title: 'What can leave this stop?',
       line: stopId === 'BEATTY_AIRPORT' ? 'Nye County Airport' : 'Stagecoach Hotel & Casino',
-      caption: `On this date the stop has ${stop.departures.length} fixed departure${stop.departures.length === 1 ? '' : 's'} and ${stop.headways.length} frequency-based trip pattern${stop.headways.length === 1 ? '' : 's'}. Frequency rows give headways, not guaranteed exact departure times. Trips ending here do not count as departures. Change the date to see the exception’s effect.`,
+      caption: `The stop has ${stop.departures.length} fixed departure${stop.departures.length === 1 ? '' : 's'} and ${stop.headways.length} frequency-based trip pattern${stop.headways.length === 1 ? '' : 's'} on this date. Frequency rows specify intervals between trips, rather than exact departure times. A trip that ends here contributes no departure.`,
       values: { date, stopId, fixed: stop.departures.length, frequency: stop.headways.length },
       draw: (s) =>
         new Group(

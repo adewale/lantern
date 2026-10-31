@@ -12,13 +12,13 @@ export function frames(level: Level, guideline: string): ReaderFrame[] {
       id: 'reader-focus',
       title: 'Can you see where Tab went?',
       line: 'A concrete example: 2.4.7 Focus Visible, level AA.',
-      caption: `Both drawings show the same two controls. Only the lower drawing marks keyboard focus, so a keyboard reader can tell which control will activate. Focus Visible is ${focus ? 'included' : 'not included'} in the selected level ${level}. This illustrates one requirement; drawing a ring alone does not establish WCAG conformance.`,
+      caption: `The lower drawing marks focus on Pay. A keyboard user can identify which button will activate. Focus Visible is ${focus ? 'included' : 'not included'} at the selected level ${level}. This illustrates that criterion; conformance requires checking all applicable criteria.`,
       values: { level, focusRequired: focus },
       draw: (s) =>
         new Group(
-          label('No visible focus', 0, 2.8, s.soft, 0.7),
-          tile('Cancel', -3.5, 1.6, 5, 1, s),
-          tile('Pay', 3.5, 1.6, 5, 1, s),
+          label('No visible focus', 0, 2.5, s.soft, 0.7),
+          tile('Cancel', -3.5, 1.3, 5, 1, s),
+          tile('Pay', 3.5, 1.3, 5, 1, s),
           label('Visible focus on Pay', 0, -0.2, s.palette.ink, 0.7),
           tile('Cancel', -3.5, -1.5, 5, 1, s),
           tile('Pay', 3.5, -1.5, 5, 1, s),
@@ -31,7 +31,7 @@ export function frames(level: Level, guideline: string): ReaderFrame[] {
       id: 'reader-levels',
       title: 'Does AA mean “only the AA criteria”?',
       line: `WCAG 2.2, selected level ${level}.`,
-      caption: `No. A conformance level includes the lower levels too. Level ${level} asks for ${total.total} success criteria in WCAG 2.2. The selected guideline ${guideline} contributes ${selected.length} of them. Counts organise the work; testing actual pages against each applicable requirement establishes whether it has been met.`,
+      caption: `Level ${level} includes ${total.total} success criteria in WCAG 2.2 because each level includes the levels below it. Guideline ${guideline} contributes ${selected.length} of them. A criterion count helps scope the checks; each applicable requirement still needs testing on the page.`,
       values: { level, total: total.total, guideline, count: selected.length },
       draw: (s) =>
         table(

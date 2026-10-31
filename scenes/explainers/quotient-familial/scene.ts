@@ -111,7 +111,7 @@ export default class QuotientFamilialExplainer extends Scene {
     const r: Impot = impot(rni, enfants),
       tous = [0, 1, 2, 3].map((n) => impot(rni, n)),
       r25 = impot(rni, enfants, 2025);
-    const s = stage(this, { style: STYLE, headingSize: 0.5 });
+    const s = stage(this, { style: STYLE, headingSize: 0.6 });
     type Rows = Parameters<typeof s.card>[0];
     const card = (rows: Rows, opts: Parameters<typeof s.card>[1]) =>
       s.card(

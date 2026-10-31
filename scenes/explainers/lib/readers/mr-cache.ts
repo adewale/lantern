@@ -8,7 +8,7 @@ export function frames(which: 'hit' | 'miss'): ReaderFrame[] {
       title: 'Does this request need the database?',
       line: `Selected request: cache ${which}.`,
       caption:
-        'Without a cache, each request reads the database. A KV cache adds a decision before that read: if the key is present, use the saved value; otherwise fetch it and populate the cache. The outcome to watch is the number of database reads, not just a shorter-looking arrow.',
+        'A direct request reads the database once. A cache adds a branch before that read: a hit returns the stored value, while a miss must fetch and store it.',
       values: { request: which, beforeReads: 1, afterReads: which === 'hit' ? 0 : 1 },
       draw: (s) =>
         new Group(
@@ -19,11 +19,11 @@ export function frames(which: 'hit' | 'miss'): ReaderFrame[] {
     {
       id: 'reader-outcome',
       title: which === 'hit' ? 'The hit skips the database' : 'The miss fills the cache',
-      line: `Database reads for this request: ${which === 'hit' ? 0 : 1}.`,
+      line: which === 'hit' ? 'The key already has a stored value.' : 'The key has no stored value yet.',
       caption:
         which === 'hit'
-          ? 'The key is present. The request reads the cached value and returns it without reading the database. This picture says nothing about whether that saved value is fresh; expiry and invalidation are separate policies.'
-          : 'The key is absent. The request reads the database once, writes the result into KV and returns it. A later request may hit, but this miss still pays for the database read. The source diff shows where the branch and write were added.',
+          ? 'KV already holds the value, so this request returns it with zero database reads. Freshness still depends on expiry and invalidation, which this example does not model.'
+          : 'KV has no entry, so the request reads the database once, stores the result in KV and returns it. A later request can use the saved value; this miss still costs one database read.',
       values: { request: which, reads: which === 'hit' ? 0 : 1 },
       draw: (s) =>
         new Group(

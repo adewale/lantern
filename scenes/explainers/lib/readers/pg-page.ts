@@ -11,8 +11,8 @@ export function frames(column: Column, fillfactor: number): ReaderFrame[] {
     {
       id: 'reader-row',
       title: 'Does doubling an integer double its row?',
-      line: 'Compare byte layout, not just the declared column type.',
-      caption: `${a.label} uses ${a.tuple.data} data bytes but occupies ${a.tuple.perRow} bytes including its line pointer. ${b.label} uses ${b.tuple.data} data bytes and occupies ${b.tuple.perRow}. The aligned tuple header and padding account for the difference. Each small square is one stored tuple byte; the four-byte line pointer is counted separately.`,
+      line: 'Headers and padding also take space.',
+      caption: `${a.label} stores ${a.tuple.data} data bytes in ${a.tuple.perRow} bytes per row, including its line pointer. ${b.label} stores ${b.tuple.data} in ${b.tuple.perRow}. Header alignment and padding account for the remaining bytes. Each square represents one tuple byte; the four-byte line pointer is counted separately.`,
       values: { column, a: a.tuple, b: b.tuple },
       draw: (s) => {
         const g = new Group();
@@ -40,7 +40,7 @@ export function frames(column: Column, fillfactor: number): ReaderFrame[] {
       id: 'reader-page',
       title: 'How many rows fit in one page?',
       line: `8192 bytes per page; fillfactor ${fillfactor}.`,
-      caption: `At the selected fillfactor, the model fits ${a.page.rows} ${a.label} rows per page, compared with ${b.page.rows} ${b.label} rows. Space is needed for the page header, line pointers and any fillfactor reserve. These cases assume non-null values, short text where present and the source build’s alignment; they are not a general PostgreSQL sizing formula.`,
+      caption: `At fillfactor ${fillfactor}, one page holds ${a.page.rows} ${a.label} rows or ${b.page.rows} ${b.label} rows. The page header, line pointers and reserved free space reduce that capacity. These results assume non-null values, short text where present and the source build’s alignment.`,
       values: { column, fillfactor, rows: a.page.rows, otherRows: b.page.rows, pages: a.pagesFor10000 },
       draw: (s) =>
         table(

@@ -25,7 +25,7 @@ export function frames(which: string): ReaderFrame[] {
       title: 'What does a commit point to?',
       line: 'Commit → tree → file content; the branch names the commit.',
       caption:
-        'The commit records a tree and history metadata. The tree maps a filename to a blob. The blob stores content, without the filename. Each box shows the first seven hex digits of the actual object ID computed by this model; full bytes and hashes remain in the walkthrough.',
+        'A commit records a tree and history metadata. The tree maps filenames to blobs; each blob holds file content. The boxes show seven-digit prefixes of the model’s real object IDs. The source walkthrough retains the full bytes and hashes.',
       values: { blob, tree, commit },
       draw: (s) =>
         new Group(
@@ -33,7 +33,7 @@ export function frames(which: string): ReaderFrame[] {
           label(short(commit), -5.15, -0.3, s.palette.ink, 0.7),
           label(short(tree), 0, -0.3, s.palette.ink, 0.7),
           label(short(blob), 5.15, -0.3, s.palette.ink, 0.7),
-          label('main → commit', 0, 2.8, s.emphasis, 0.7),
+          label('main → commit', 0, 2.5, s.emphasis, 0.7),
           label('hello.txt → hello', 0, -2.4, s.soft, 0.7),
         ),
     },
@@ -42,8 +42,8 @@ export function frames(which: string): ReaderFrame[] {
       title: add ? 'Does adding a file copy the old content?' : 'What changes when file content changes?',
       line: 'Old objects remain; a new commit points to a new tree.',
       caption: add
-        ? 'Adding world.txt creates a new blob, tree and commit. The new tree still names the original hello blob, so its content is shared rather than copied. The branch moves to the new commit; the first commit remains reachable through the parent link.'
-        : 'Editing hello.txt creates a new blob. Its ID changes the tree’s bytes, so the tree ID changes too, followed by the commit ID. Old objects remain available through the parent commit. A branch update changes a name, not the old snapshot.',
+        ? 'Adding world.txt creates a blob, tree and commit. The new tree reuses the original hello blob. The branch moves to the new commit, whose parent link still reaches the first commit.'
+        : 'Editing hello.txt creates a blob with a new ID. That changes the tree’s bytes and ID, then the commit’s ID. Updating the branch names the new commit; the parent link keeps the old snapshot reachable.',
       values: { add, blob, next, tree, tree2, commit, commit2 },
       draw: (s) =>
         new Group(
@@ -74,7 +74,7 @@ export function frames(which: string): ReaderFrame[] {
                 }),
               ),
           ),
-          label('Commit                 Tree                 Blob', 0, 2.8, s.soft, 0.65),
+          ...['Commit', 'Tree', 'Blob'].map((name, i) => label(name, (i - 1) * 5, 2.5, s.palette.ink, 0.65)),
           new Arrow([-5, -1.05], [-5, 0.75], { stroke: s.soft, strokeWidth: 0.04, tipLength: 0.15, tipWidth: 0.15 }),
           label('parent', -3.4, -0.2, s.soft, 0.7),
           ...(add

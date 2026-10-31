@@ -129,7 +129,7 @@ export default class CacheMRExplainer extends Scene {
   ];
   override async construct() {
     const which = settingsOf(this).request as 'hit' | 'miss',
-      s = stage(this, { style: STYLE });
+      s = stage(this, { headingSize: 0.6, style: STYLE });
 
     await readerFirst(this, s, readerFrames(which));
     await this.step('before', {

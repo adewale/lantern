@@ -12,7 +12,7 @@ export function frames(place: { name: string; lat: number }): ReaderFrame[] {
       title: 'Why does the same place change season?',
       line: `${place.name}, latitude ${place.lat}°.`,
       caption:
-        'Earth’s axis keeps roughly the same direction as Earth orbits the Sun. The two parallel axis lines show that fixed direction. Six months later the same hemisphere leans away instead of toward the Sun, changing both noon altitude and hours of daylight. The sketch is not to scale.',
+        'The parallel axes show Earth keeping the same tilt direction as it orbits the Sun. North leans sunward in June and away in December, changing sunlight angle and day length in opposite directions across the hemispheres. Distances are not to scale.',
       values: { latitude: place.lat, june, dec },
       draw: (s) => {
         const g = new Group(
@@ -36,7 +36,7 @@ export function frames(place: { name: string; lat: number }): ReaderFrame[] {
       id: 'reader-solstices',
       title: 'Compare June with December',
       line: 'Same latitude; opposite solar declinations.',
-      caption: `At ${place.name}, the model gives ${june.daylight.toFixed(1)} hours of daylight in June and ${dec.daylight.toFixed(1)} in December. Noon altitude is ${june.altitude.toFixed(1)}° versus ${dec.altitude.toFixed(1)}°. Higher sunlight and longer days change the energy received; distance from the Sun does not explain opposite seasons in opposite hemispheres.`,
+      caption: `At ${place.name}, June has ${june.daylight.toFixed(1)} hours of daylight and December has ${dec.daylight.toFixed(1)}. The fixed tilt produces opposite changes in the two hemispheres, so distance from the Sun cannot explain their opposite seasons.`,
       values: { june, dec },
       draw: (s) =>
         bars(
@@ -53,7 +53,7 @@ export function frames(place: { name: string; lat: number }): ReaderFrame[] {
       title: 'What happens between the solstices?',
       line: 'Twelve monthly samples on one fixed 0–24 hour scale.',
       caption:
-        'The whole annual daylight curve stays in one view. The model samples the fifteenth of each month using a cosine approximation for declination, rather than an astronomical ephemeris. Compare latitudes above: the equator stays near twelve hours; polar places can reach an entire day or night.',
+        'Each point samples the fifteenth of a month using a cosine approximation for solar declination. The equator stays near twelve hours of daylight, while polar latitudes can reach a full day or night. All latitudes use the same 0–24-hour scale.',
       values: { year, latitude: place.lat },
       draw: (s) => {
         const axes = new Axes({
@@ -61,7 +61,7 @@ export function frames(place: { name: string; lat: number }): ReaderFrame[] {
           yRange: [0, 24, 12],
           width: 12,
           height: 4,
-          yAxisStyle: {includeNumbers:true},
+          yAxisStyle: { includeNumbers: true },
           axisStyle: { stroke: s.soft, labelColor: s.palette.ink, labelFontSize: 0.65, includeNumbers: false },
         }).moveTo([0.2, -0.1]);
         return new Group(
@@ -72,7 +72,7 @@ export function frames(place: { name: string; lat: number }): ReaderFrame[] {
           ),
           label('Jan', -5.7, -3, s.palette.ink, 0.7),
           label('Dec', 6.1, -3, s.palette.ink, 0.7),
-          label('Hours of daylight', 0, 2.8, s.palette.ink, 0.7),
+          label('Hours of daylight', 0, 2.5, s.palette.ink, 0.7),
         );
       },
     },

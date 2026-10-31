@@ -70,7 +70,7 @@ export default class BirthdayParadox extends Scene {
         id: 'question',
         title: `How likely is a match among ${m.people}?`,
         line: `The question asks about ${question}.`,
-        caption: `This room contains ${m.people} people. A match in one displayed room is only one outcome; the chance concerns repeated random rooms. We assume independent birthdays uniformly distributed over 365 days.`,
+        caption: `The room contains ${m.people} people. We want the chance of a match across repeated random rooms. The model assumes independent birthdays, each equally likely on any of 365 days.`,
         state: { people: m.people, question: m.question, sample: m.sample.first },
         draw: people,
       },
@@ -205,7 +205,7 @@ export default class BirthdayParadox extends Scene {
         id: 'sample',
         title: 'Repeat whole rooms',
         line: 'A finite sample fluctuates around the theoretical chance.',
-        caption: `In ${m.sample.trials} repeatable simulated rooms, ${m.sample.matched} contain the requested match: ${pct(m.sample.observed)}. The theoretical chance is ${pct(m.chance)}. The sample illustrates that chance; it does not establish the formula.`,
+        caption: `In ${m.sample.trials} repeatable simulated rooms, ${m.sample.matched} contain the requested match: ${pct(m.sample.observed)}. The formula gives ${pct(m.chance)}. The simulated proportion fluctuates with the rooms sampled; the formula counts all possible birthdays under the model.`,
         state: {
           people: m.people,
           question: m.question,

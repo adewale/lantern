@@ -1,5 +1,7 @@
 # Explainer improvements
 
+This records the teaching-path revision through `6bce495`. The later [copy and layout pass](editorial-crap-2026-10-31.md) contains updated screenshots and validation fingerprints.
+
 Baseline: the 31 October review of 37 main-branch explainers at `37bbe4d`, plus the periodic-table candidate at `bf24af0`. This branch stacks on PR #60 so it retains its paint-order, claim-freshness and periodic-table repairs.
 
 The goal is a warranted one-tier improvement for every lesson. The three S-tier lessons need stronger prediction and visual proof, rather than a renamed tier. A new audit must judge the results; a changed file or green test is not a tier increase.

@@ -104,7 +104,7 @@ export default class MelodyRhythm extends Scene {
     ];
     const captions = [
       different
-        ? 'A and B use the same eight notes in the same pitch order, but two note starts and two durations differ. Play both if audio is available, or compare the positions and lengths of their note rectangles.'
+        ? 'A and B use the same eight notes in the same pitch order. Two note starts and two durations differ. Listen to both, or compare the horizontal positions and lengths of their rectangles.'
         : 'A and B use identical pitches, starts and durations. This control case gives the same phrase twice; the shifted-timing setting changes the comparison.',
       `The eight-beat phrase occupies two bars of four beats at ${m.bpm} BPM. During playback, the playhead follows the same beat positions used to schedule the sound. A rectangle’s vertical position gives pitch; its width gives duration.`,
       'All events now play C, while each version keeps its own note starts and durations. Removing the rising and falling pitch pattern makes the timing easier to hear.',
@@ -144,7 +144,7 @@ export default class MelodyRhythm extends Scene {
       title: 'Which note is sounding as bar 2 starts?',
       line: 'Follow the strong vertical bar line through A and B.',
       caption:
-        'Play A and B, or trace their rectangles across the bar boundary. Which note is already sounding in B when bar 2 begins? Predict before advancing; compare the unchanged-timing setting as a control.',
+        'Trace the rectangles across the boundary into bar 2, or listen to both versions. Which note is already sounding in B at that boundary? The unchanged-timing setting provides a control.',
       draw: (s: Stage) => scorePicture(s, m.clips, 3),
     });
     await lesson(this, frames, 'nord');

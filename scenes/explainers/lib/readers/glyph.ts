@@ -13,7 +13,7 @@ export function frames(font: FontName): ReaderFrame[] {
       id: 'reader-width',
       title: 'Same letters, same width?',
       line: 'Measure the selected face before placing the next object.',
-      caption: `Both rows use “${word}” at the same font size. Their left pen positions align, but their advances differ: ${widths[0]!.toFixed(2)} and ${widths[1]!.toFixed(2)} scene units. The rulers measure advance, which includes spacing; the visible ink can overhang it.`,
+      caption: `At the same font size, “${word}” advances ${widths[0]!.toFixed(2)} units in the first face and ${widths[1]!.toFixed(2)} in the second. Both phrases start at the same left position. Each ruler measures advance, including spacing; glyph ink can extend beyond it.`,
       values: { font, other, word, widths },
       draw: (s) => {
         const g = new Group();
@@ -24,9 +24,9 @@ export function frames(font: FontName): ReaderFrame[] {
           text.key = `word:${f}`;
           g.add(
             text,
-            label(name(f), 0, y + 1.1, s.soft, 0.65),
-            new Line([-6.5, y - 0.9], [-6.5 + w, y - 0.9], { stroke: s.emphasis, strokeWidth: 0.05 }),
-            label(w.toFixed(2), -6.5 + w / 2, y - 1.55, s.palette.ink, 0.65),
+            label(name(f), -6.5, y + 1.1, s.palette.ink, 0.65).moveTo([-6.5, y + 1.1], [-1, 0]),
+            new Line([-6.5, y - 0.8], [-6.5 + w, y - 0.8], { stroke: s.emphasis, strokeWidth: 0.05 }),
+            label(w.toFixed(2), 5.5, y - 0.8, s.palette.ink, 0.7).moveTo([5.5, y - 0.8], [1, 0]),
           );
         });
         return g;
@@ -34,10 +34,10 @@ export function frames(font: FontName): ReaderFrame[] {
     },
     {
       id: 'reader-shape',
-      title: 'Does a matching letter imply a matching outline?',
-      line: 'Text identity and shape identity answer different questions.',
+      title: 'Can one character have two outlines?',
+      line: 'Character identity and outline geometry give different matches.',
       caption:
-        'The same character can have different contours in two faces. Matching text pairs letters by identity; matching shapes pairs equal geometry. Choose the rule that fits the change you want to explain. The detailed walkthrough traces the real quadratic-to-cubic conversion and matching results.',
+        'Both drawings are the character a, with different contours. Text matching pairs them by character identity. Shape matching requires equal geometry. The source walkthrough shows the curve conversion and the matches each rule finds.',
       values: { font, other },
       draw: (s) => {
         const a = new Text('a', { font, fontSize: 3.8, color: s.palette.ink }).moveTo([-4.2, 0.3]),

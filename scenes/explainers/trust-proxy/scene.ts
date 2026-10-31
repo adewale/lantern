@@ -144,7 +144,7 @@ export default class TrustProxyExplainer extends Scene {
       trust = TRUSTS[trustKey],
       reading = readAddresses(got.socket, got.xff, trust),
       mine = answer(trustKey, reqKey);
-    const s = stage(this, { style: STYLE, headingSize: 0.46 });
+    const s = stage(this, { style: STYLE, headingSize: 0.6 });
     const ink = s.palette.ink;
 
     /** Lines of text wrapped to a width, from a top-left corner down. */

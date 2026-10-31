@@ -46,12 +46,18 @@ test('token and ring introductions draw the independently expected balances, res
         async frame() {},
         async stepEnd(scene, step) {
           if (!step.name.startsWith('reader-')) return;
-          const texts = scene
-            .familyMembers()
-            .filter((m): m is Text => m instanceof Text)
-            .map((m) => m.text);
           if (step.name === 'reader-burst') {
-            for (let i = 0; i < 6; i++) assert.ok(texts.includes(`R${i + 1}: ${i < 5 ? 200 : 429}`));
+            for (let i = 0; i < 6; i++) {
+              const request = scene.familyMembers().find((m) => m.key === `burst:${i}:${i < 5 ? 200 : 429}`);
+              assert.ok(request, `request ${i + 1} has its own response group`);
+              assert.deepEqual(
+                request
+                  .family()
+                  .filter((m): m is Text => m instanceof Text)
+                  .map((m) => m.text),
+                [`R${i + 1}`, i < 5 ? '200' : '429'],
+              );
+            }
             const root = scene.familyMembers().find((m) => m.key === 'reader-picture');
             assert.ok(root);
             const tokens = root.family().filter((m) => m instanceof Circle);

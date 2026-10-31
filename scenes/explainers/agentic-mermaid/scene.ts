@@ -33,7 +33,7 @@ export default class MermaidExplainer extends Scene {
   ];
   override async construct() {
     const missing = settingsOf(this).edit === 'missing',
-      s = stage(this, { style: STYLE });
+      s = stage(this, { headingSize: 0.6, style: STYLE });
     const first = missing ? BAD : GOOD;
     const code = (lines: readonly string[], fontSize = 0.24) => s.code(lines, { at: SIDE, fontSize, enter: false });
     const card = (rows: readonly CardRow[]) => s.card(rows, { at: SIDE, enter: false });

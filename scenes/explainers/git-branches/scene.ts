@@ -180,8 +180,8 @@ export default class GitBranches extends Scene {
       title: 'Can main move to B without losing anything?',
       line: advanced ? 'C belongs to main, but is not an ancestor of B.' : 'A is already an ancestor of B.',
       caption: advanced
-        ? 'Before merging, locate the Home edit in C and the green edit in B. If main simply moved to B, which edit would its snapshot lose? Predict the parents and files a new merge commit needs.'
-        : 'Before merging, compare A with B. Does main have any independent commit to preserve? Predict whether merging must create an object or can move a label.',
+        ? 'C contains the Home edit; B contains the green edit. If main moved to B, which edit would its snapshot lose? Which parents and files would a merge commit need?'
+        : 'Main points to A, an ancestor of B. Does it have an independent commit to preserve? Could merging move the label to B, or must it create a commit?',
       state: { frame: before, files: currentFiles(before), advanced },
       draw: (s) => {
         const g = picture(s, before, 4);

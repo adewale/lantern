@@ -12,9 +12,9 @@ export function frames(key: PlacementKey, policy: Policy): ReaderFrame[] {
   return [
     {
       id: 'reader-nodes',
-      title: 'Does equal node traffic mean equal pod traffic?',
+      title: 'Do equal node shares mean equal pod shares?',
       line: `${counts.join(' / ')} pods; externalTrafficPolicy ${policy}.`,
-      caption: `The load balancer divides requests across healthy nodes. Under ${policy}, the node shares are ${ns.map(percent).join(', ')}. Cluster mode can forward to a pod on another node. Local mode excludes nodes without local endpoints, then divides each node’s share among its own pods.`,
+      caption: `Under ${policy}, the load balancer sends ${ns.map(percent).join(', ')} of traffic to the three nodes. Cluster can forward requests across nodes. Local excludes nodes without endpoints, then divides each included node’s share among its own pods.`,
       values: { key, policy, nodeShares: ns.map(value) },
       draw: (s) =>
         new Group(
@@ -38,7 +38,7 @@ export function frames(key: PlacementKey, policy: Policy): ReaderFrame[] {
       id: 'reader-shares',
       title: 'Compare the share per pod',
       line: 'Same placement and outside traffic; only the policy changes.',
-      caption: `Each row identifies one pod. Cluster mode spreads traffic over all endpoints. Local mode can give pods on a sparsely populated node a larger share. The selected policy sends ${percent(secondHop(counts, policy))} of outside requests through a second node hop; a pod on node 1 sees source ${seenSource(policy, 0)} in this model.`,
+      caption: `Cluster spreads requests over all endpoints. Local divides each node’s share among its own pods, so fewer pods on a node can mean a larger share per pod. N1 means node 1. With ${policy}, ${percent(secondHop(counts, policy))} of requests take a second node hop; a pod on node 1 sees source ${seenSource(policy, 0)}.`,
       values: { cluster, local },
       draw: (s) =>
         table(

@@ -136,7 +136,7 @@ export default class TokenBucketExplainer extends Scene {
   override async construct() {
     const rate = Number(settingsOf(this).rate),
       bucket = new TokenBucket(rate, CAPACITY),
-      s = stage(this, { style: 'github-dark' });
+      s = stage(this, { headingSize: 0.6, style: 'github-dark' });
     const ink = s.palette.ink,
       soft = s.soft;
 

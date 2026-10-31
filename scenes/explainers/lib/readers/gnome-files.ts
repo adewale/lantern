@@ -26,7 +26,7 @@ export function frames(p: Participant): ReaderFrame[] {
       id: 'reader-task',
       title: 'Where would you look for this action?',
       line: `${p}’s first give-up: ${name}.`,
-      caption: `The task was “${task(n).text}”. The schematic shows the action’s menu location, not a screenshot of Files. ${observations[n]} A command can exist and still be hard to discover.`,
+      caption: `The task was “${task(n).text}”. This schematic locates the command in the menu; it is not a screenshot of Files. ${observations[n]} The command’s presence in the menu did not ensure that participants found it.`,
       values: { participant: p, task: n, location: locations[n] },
       draw: (s) =>
         new Group(
@@ -40,7 +40,7 @@ export function frames(p: Participant): ReaderFrame[] {
       title: 'Did everyone have the same difficulty?',
       line: `One task, all six participants: ${name}.`,
       caption:
-        'Each tile keeps the report’s colour category and participant identity. These six observations do not estimate a population failure rate or time taken. Use the journeys in Details and sources to see the rest of the session; their numeric score is an ordinal encoding, not a measured distance.',
+        'The six tiles retain participant identities and the report’s colour categories. They describe this task in this study; they cannot estimate a population failure rate or time taken. The numeric scores in the full journeys encode the ordered categories.',
       values: { task: n, outcomes: PARTICIPANTS.map((q) => ({ participant: q, colour: colourOf(n, q) })) },
       draw: (s) =>
         new Group(

@@ -8,7 +8,7 @@ export function frames(): ReaderFrame[] {
       title: 'What happens to one circle over time?',
       line: 'The scene is a program; the clock samples its animations.',
       caption:
-        'A scene creates an object and asks an animation to change it. The three circles illustrate samples of one move, rather than three objects in the scene. The clock evaluates the program at fixed time steps and gives each resulting picture to a sink. The detailed example runs a real transform and compares played and seeked SVG.',
+        'The three circles sample one move at different times. At each fixed time step, the clock evaluates the animation and sends the resulting picture to a sink. The source example uses a real transform and checks frames reached by playback and seeking.',
       values: {
         samples: [
           { t: 0, x: -4 },
@@ -39,7 +39,7 @@ export function frames(): ReaderFrame[] {
       title: 'Must the page and still use different scenes?',
       line: 'One scene and clock feed several outputs.',
       caption:
-        'The browser sink displays SVG frames. A still captures a frame at a chosen time. The trace records step boundaries and descriptions. These outputs share the scene program, which makes it possible to compare a played frame with the same frame reached by seeking. It still takes tests to prove those paths agree.',
+        'The browser sink displays successive SVG frames. A still samples one time; a trace records step boundaries and descriptions. All three use the same scene program. Playback and seek tests check that they reach the same picture.',
       values: { outputs: ['Browser', 'SVG still', 'Trace'] },
       draw: (s) =>
         new Group(

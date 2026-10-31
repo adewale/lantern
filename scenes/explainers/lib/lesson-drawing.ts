@@ -60,10 +60,30 @@ export function table(
   s: Stage,
   { xs = [-5.5, -1.7, 2.2, 5.8], y = 1.9, gap = 1.05, key = 'comparison', size = 0.6 } = {},
 ): Group {
-  const children: Mobject[] = headers.map((h, i) => label(h, xs[i]!, y, s.soft, size));
-  rows.forEach((row, r) =>
-    row.forEach((v, c) => children.push(label(v, xs[c]!, y - (r + 1) * gap, s.palette.ink, size))),
+  const heads = headers.map((h) => new Text(h, { fontSize: size, color: s.palette.ink, weight: 'bold' }));
+  const cells = rows.map((row) => row.map((v) => new Text(String(v), { fontSize: size, color: s.palette.ink })));
+  const numeric = headers.map(
+    (_, c) =>
+      rows.length > 0 &&
+      rows.every(
+        (row) =>
+          typeof row[c] === 'number' ||
+          /^[+−-]?\d[\d.,\s/]*(?:%|€|h|days|pages|tokens|bytes|GiB|TiB)?$/u.test(String(row[c])),
+      ),
   );
+  const widths = headers.map((_, c) => Math.max(heads[c]!.width(), ...cells.map((row) => row[c]!.width())));
+  const place = (text: Text, c: number, at: number) =>
+    text.moveTo([xs[c]! + ((numeric[c] ? 1 : -1) * widths[c]!) / 2, at], [numeric[c] ? 1 : -1, 0]);
+  const children: Mobject[] = heads.map((h, c) => place(h, c, y));
+  cells.forEach((row, r) => row.forEach((v, c) => children.push(place(v, c, y - (r + 1) * gap))));
+  if (headers.length)
+    children.unshift(
+      new Line(
+        [Math.min(...xs.slice(0, headers.length).map((x, c) => x - widths[c]! / 2)), y - size * 0.7],
+        [Math.max(...xs.slice(0, headers.length).map((x, c) => x + widths[c]! / 2)), y - size * 0.7],
+        { stroke: s.soft, strokeWidth: 0.025 },
+      ),
+    );
   const g = new Group(...children);
   g.key = key;
   return g;
@@ -74,7 +94,7 @@ export function stat(s: Stage, title: string, value: string | number, x: number,
   return g;
 }
 export async function lesson(scene: Scene, frames: readonly LessonFrame[], style = 'github-light') {
-  const s = stage(scene, { style, headingSize: 0.64 });
+  const s = stage(scene, { style, headingSize: 0.6 });
   for (const frame of frames) {
     await scene.step(frame.id, {
       title: frame.title,

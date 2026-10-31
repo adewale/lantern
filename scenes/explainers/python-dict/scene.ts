@@ -116,7 +116,7 @@ export default class PythonDict extends Scene {
         'lookup',
         'The matching key decides the result',
         `Follow the visited slots to ${m.before.value}.`,
-        `The search for ${key} visits ${m.before.slots.join(', ')}. An occupied starting slot is not enough: the stored key must match before Python returns ${m.before.value}.`,
+        `The search for ${key} visits ${m.before.slots.join(', ')}. Python compares the stored key at each occupied slot and returns ${m.before.value} when the key matches.`,
         m.original,
         m.before,
       ],
@@ -132,7 +132,7 @@ export default class PythonDict extends Scene {
         'marker',
         'D keeps the search going',
         'The deleted entry is empty; its index slot still carries a marker.',
-        `CPython leaves D in slot 0. The search skips that deleted slot, continues through ${m.repaired.slots.join(', ')}, and still finds ${m.repaired.value}.`,
+        `D denotes CPython’s deleted-slot marker. The search skips slot 0, continues through ${m.repaired.slots.join(', ')}, and finds ${m.repaired.value}.`,
         m.correct,
         m.repaired,
       ],
@@ -157,7 +157,7 @@ export default class PythonDict extends Scene {
       id: 'predict',
       title: `Delete key 0: can the search still reach ${key}?`,
       line: 'Decide whether slot 0 can become a never-used slot.',
-      caption: `Key ${key} begins its search at slot 0, where key 0 currently lives. Before advancing, predict what happens if deletion changes that slot to “never used”. Which slot would the lookup visit next?`,
+      caption: `Key ${key} starts at slot 0, where key 0 currently lives. Suppose deletion replaces it with “never used”. Would the lookup stop or continue to the next slot?`,
       state: { dict: m.original, result: m.before, key, policy: 'prediction' },
       draw: (s) => {
         const g = picture(s, m.original, m.before, 4);

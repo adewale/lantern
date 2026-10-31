@@ -110,7 +110,7 @@ export default class IsDigitExplainer extends Scene {
     const id = values.char as CharId,
       guard = values.guard as Predicate;
     const c = CHARS[id];
-    const s = stage(this, { style: STYLE, headingSize: SIZE });
+    const s = stage(this, { style: STYLE, headingSize: 0.6 });
     const ink = s.palette.ink;
     const type = numericType(c),
       f = fields(c),

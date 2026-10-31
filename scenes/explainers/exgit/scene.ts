@@ -92,7 +92,7 @@ export default class GitExplainer extends Scene {
     const which = settingsOf(this).change,
       add = which === 'add',
       repo = new Repo(),
-      s = stage(this, { style: STYLE }),
+      s = stage(this, { headingSize: 0.6, style: STYLE }),
       ink = s.palette.ink,
       accent = s.emphasis;
 

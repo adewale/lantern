@@ -158,7 +158,7 @@ export default class WcagMapExplainer extends Scene {
     const values = settingsOf(this);
     const level = values.level as Level,
       open = values.guideline!;
-    const s = stage(this, { style: STYLE, headingSize: 0.5 });
+    const s = stage(this, { style: STYLE, headingSize: 0.6 });
     const t20 = tally('2.0', level),
       t21 = tally('2.1', level),
       t22 = tally('2.2', level);

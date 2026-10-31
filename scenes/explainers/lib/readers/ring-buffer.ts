@@ -37,7 +37,7 @@ export function frames(which: string): ReaderFrame[] {
       title: 'Does head = tail mean empty?',
       line: 'The occupied count removes the ambiguity.',
       caption:
-        'After five pushes, head and tail both point to slot 0. All five slots hold values. The length, 5, distinguishes this full ring from an empty ring whose pointers also coincide.',
+        'After five pushes, all slots hold values and both pointers return to slot 0. The occupied count is 5. An empty ring can have the same pointers, but its count is 0.',
       values: { ...full.result },
       draw: (s) => draw(s, full.result),
     },
@@ -47,8 +47,8 @@ export function frames(which: string): ReaderFrame[] {
       line: which === 'wrap' ? 'Pop twice, then push 6 and 7.' : 'A full buffer refuses the write.',
       caption:
         which === 'wrap'
-          ? 'Popping 1 and 2 frees slots 0 and 1. Pushes 6 and 7 reuse those slots, and tail wraps around to 2. Reading starts at head, so the queue order is 3, 4, 5, 6, 7 even though the storage row begins with 6.'
-          : 'Pushes 6 and 7 throw Full. The five stored values and both pointers stay unchanged. The caller must handle the refusal; the oldest value is not silently overwritten.',
+          ? 'Popping 1 and 2 frees slots 0 and 1. Pushes 6 and 7 reuse them, and tail wraps to 2. Reads begin at head, giving queue order 3, 4, 5, 6, 7 despite the storage row starting with 6.'
+          : 'Pushes 6 and 7 throw Full. Stored values and pointers stay unchanged, so the caller must handle a refused write rather than losing the oldest value.',
       values: { ...last.result, error: last.error ?? null },
       draw: (s) =>
         new Group(

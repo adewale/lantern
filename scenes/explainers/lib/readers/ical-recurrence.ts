@@ -15,7 +15,7 @@ export function frames(change: Change, copy: Copy): ReaderFrame[] {
       title: 'What identifies a moved meeting?',
       line: 'One weekly rule produces six dated occurrences.',
       caption:
-        'The master gives the series its UID and weekly rule. Each tile is an occurrence’s original slot. Moving a meeting changes its start time, but its RECURRENCE-ID still names that original slot. Skipping one adds an exclusion instead of shifting the weeks after it.',
+        'The master supplies the UID and weekly rule. Each tile names an original occurrence. Moving a meeting changes its start time while RECURRENCE-ID keeps that original slot as its identity. Skipping an occurrence adds an exclusion; later weeks keep their dates.',
       values: { change, before, after },
       draw: (s) => {
         const g = new Group();
@@ -51,10 +51,10 @@ export function frames(change: Change, copy: Copy): ReaderFrame[] {
       line: `Inspecting the ${copy}’s calendar.`,
       caption:
         copy === 'guest' && change === 'skip'
-          ? 'Bob’s one invited occurrence has been cancelled. The delivered CANCEL message leaves a stored component marked CANCELLED; it does not restore the organiser’s six-week series. A stored component and an active meeting are different things.'
+          ? 'Bob’s invited occurrence is cancelled. The delivered CANCEL message leaves a stored component marked CANCELLED, so his calendar has one component and no active meeting.'
           : copy === 'guest'
-            ? 'Bob was invited only to the third occurrence. His delivered calendar contains that meeting, not all six weeks. An attendee’s copy is produced by scheduling messages; it need not contain the organiser’s master and every override.'
-            : 'Alice’s copy contains the recurring master and the components needed for invitations and exceptions. Bob’s one-occurrence invitation does not turn him into an attendee of the whole series. Compare the guest copy above.',
+            ? 'Bob was invited to the third occurrence only. Scheduling messages deliver that meeting to his calendar; Alice’s recurring master and the other weeks remain in her copy.'
+            : 'Alice’s calendar retains the recurring master and its invitation and exception components. Bob’s invitation covers one occurrence, so his copy contains that meeting rather than the six-week series.',
       values: {
         copy,
         count: mine.length,

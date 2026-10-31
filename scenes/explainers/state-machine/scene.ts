@@ -80,7 +80,7 @@ export default class StateMachineExplainer extends Scene {
   readout!: View<Card>;
   override async construct() {
     const which = settingsOf(this).events,
-      s = stage(this, { style: 'dracula' });
+      s = stage(this, { headingSize: 0.6, style: 'dracula' });
     await readerFirst(this, s, readerFrames(which!));
     await this.step('machine', {
       detail: true,

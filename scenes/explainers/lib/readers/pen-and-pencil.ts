@@ -18,7 +18,7 @@ export function frames(seed: number): ReaderFrame[] {
       id: 'reader-separate',
       title: 'Can a hand-drawn line keep its layout?',
       line: 'Fix the route first; vary the stroke second.',
-      caption: `The blue route fixes the corners and endpoints. A damped-spring hand follows it, with seeded tremor; the dark ink strays at most ${stray.toFixed(3)} scene units from the route. The shape is an output of the hand model, not a different layout. Change the drawing seed above to compare.`,
+      caption: `The blue route fixes the corners and endpoints. The damped-spring hand adds seeded tremor, keeping the dark stroke within ${stray.toFixed(3)} scene units of that route. Changing the seed varies the ink while preserving the route.`,
       values: { seed, stray, target, ink },
       draw: (s) => {
         const path = (points: readonly (readonly [number, number])[], color: string, width: number) =>
@@ -36,7 +36,7 @@ export function frames(seed: number): ReaderFrame[] {
       title: 'What should the pen leave alone?',
       line: 'Reserve the word’s space before adding decoration.',
       caption:
-        'Lettering and scenery have different jobs. Reserve the label’s box and route the decoration outside it, so a wobble or hatch cannot turn into an obstacle to reading. The final plate applies that separation to a complete timeline; its source and stroke parameters remain in Details and sources.',
+        'The blue box reserves space for Midnight. Decoration stays outside it, keeping hatching and stroke wobble away from the letters. The final timeline applies the same separation to its labels.',
       values: { label: 'Midnight', reserved: true },
       draw: (s) => {
         const word = new Text('Midnight', { fontSize: 1, color: s.palette.ink }).moveTo([0, 0.6]),

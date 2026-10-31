@@ -51,7 +51,7 @@ export default class BashExplainer extends Scene {
   ];
   override async construct() {
     const which = settingsOf(this).shell,
-      s = stage(this, { style: STYLE }),
+      s = stage(this, { headingSize: 0.6, style: STYLE }),
       ink = s.palette.ink,
       accent = s.emphasis;
     const old: Shell = { fs: {}, steps: 0 };

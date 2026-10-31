@@ -105,7 +105,7 @@ export default class SendSyncExplainer extends Scene {
     const values = settingsOf(this);
     const wrapper = values.wrapper as Wrapper,
       inner = values.inner as Inner;
-    const s = stage(this, { style: 'hand-drawn', headingSize: SIZE });
+    const s = stage(this, { style: 'hand-drawn', headingSize: 0.6 });
     const ink = s.palette.ink;
 
     /** Lines of text at the reader's size, wrapped to the right column, from `top` down. */

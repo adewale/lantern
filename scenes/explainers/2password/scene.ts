@@ -47,7 +47,7 @@ export default class PasswordExplainer extends Scene {
   override async construct() {
     const auth = settingsOf(this).auth as 'desktop' | 'service',
       service = auth === 'service',
-      s = stage(this, { style: STYLE }),
+      s = stage(this, { headingSize: 0.6, style: STYLE }),
       hot = s.emphasis;
     const found = find(QUERIES),
       [hitQuery, missQuery] = QUERIES,

@@ -11,7 +11,7 @@ export async function frames(guarded: boolean, order: CompletionOrder): Promise<
       id: 'reader-order',
       title: 'Can the older search finish last?',
       line: 'Start A, then B. B is the latest request.',
-      caption: `The completion order is ${done.join(' then ')}. Starting later does not promise finishing later. These are real promises resolved in a controlled order, not invented network timings. Predict which result the page will show after both complete without a guard.`,
+      caption: `A starts before B, but completion order is controlled separately: ${done.join(' then ')}. Predict which result remains on screen after both finish without a guard. These are real promises; their resolution order is controlled rather than timed by a network.`,
       values: { order, completion: done },
       draw: (s) =>
         new Group(
@@ -26,7 +26,7 @@ export async function frames(guarded: boolean, order: CompletionOrder): Promise<
       id: 'reader-guard',
       title: 'Compare both publication rules',
       line: `Selected case: guard ${guarded ? 'on' : 'off'}.`,
-      caption: `After both completions, no guard shows ${off.snapshots[2]!.shown}; the latest-request guard shows ${on.snapshots[2]!.shown}. The guard compares the completing request’s ticket with the latest ticket before publishing. It discards stale writes; it does not cancel the old work. Change completion order to test when the failure appears.`,
+      caption: `Without the guard, the page ends on ${off.snapshots[2]!.shown}; with it, the page ends on ${on.snapshots[2]!.shown}. Each completion compares its ticket with the latest request’s ticket before publishing. An old request can finish, but its stale result is discarded.`,
       values: { order, off: off.snapshots, on: on.snapshots },
       draw: (s) =>
         table(

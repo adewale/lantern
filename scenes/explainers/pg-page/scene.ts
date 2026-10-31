@@ -128,7 +128,7 @@ export default class PgPageExplainer extends Scene {
     const values = settingsOf(this);
     const column = values.column as Column,
       ff = Number(values.fillfactor);
-    const s = stage(this, { style: STYLE, headingSize: 0.46 });
+    const s = stage(this, { style: STYLE, headingSize: 0.6 });
     const ink = s.palette.ink;
     const c = caseOf(column, 100),
       w = caseOf(SWAP[column], 100),
