@@ -324,17 +324,20 @@ export default class PenAndPencil extends Scene {
     });
     await drop(width);
     await d.hide();
-    await s.draw(construction, {
+    const traced = await s.draw(construction, {
       tool: 'pencil',
       color: CONSTRUCTION,
       runTime: 3,
       describe: `The timeline’s layout traced in thin blue construction pencil: ${facts.length} period boxes, ${facts.length} event boxes, their markers and strings, the rail and an empty box where each word will go`,
     });
+    traced.key = 'construction:marks';
     const tally = await s.callout(
       parts[2]!.period.box,
       `${outlineCount} outlines · ${filledCount} filled shapes · ${wordCount} words`,
       { side: 'above', gap: 0.45 },
     );
+    tally.key = 'construction:tally';
+    s.reading(traced, tally);
     this.state.marks = { outlines: outlineCount, filled: filledCount, words: wordCount };
 
     await this.step('hand', {

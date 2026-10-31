@@ -21,7 +21,7 @@ import { labelOf } from '../explain/diagrams.ts';
 import { labelsSaying, restingBox, wordsOutsideCards } from './lib/scenes.ts';
 import type { Box } from '../src/index.ts';
 import { chromeFor } from '../app/embed-strings.ts';
-import { Text } from '../src/index.ts';
+import { Text, VMobject } from '../src/index.ts';
 
 const enabled = !!process.env.EXPLAIN_BROWSER,
   options = { skip: enabled ? false : 'set EXPLAIN_BROWSER=1 for real cross-origin browser checks' };
@@ -3667,4 +3667,95 @@ test('source tours show the token-cap calculation and terminal rejection in ever
     }
   }finally{await page.close();}
   assert.equal(cases,5);assert.equal(stepWidths,68);assert.equal(labelChecks,51);
+});
+
+test('both pen drawings retain every construction mark and its readable count through source tours', options, async () => {
+  const {reviewClaims} = await import('../tools/lib/explain-review-scene.ts');
+  const {storyFrames,reviewStoryVariant,inspectStoryFrame,covered,STORY_CLAIMS} = await import('../tools/lib/explain-story-review.ts');
+  const project=await collectProject('scenes/explainers/pen-and-pencil',{write:false});
+  assert.deepEqual(project.variants.map(v=>v.values),[{hand:'first'},{hand:'second'}]);
+  assert.deepEqual(await reviewClaims(project),[{step:'marks',targets:[
+    {key:'construction:marks',paint:'stroke'},{key:'construction:tally'},
+  ]}]);
+  await buildExplainer(project,join(folder,'pen-and-pencil.html'));
+  const claims=await reviewClaims(project,undefined,STORY_CLAIMS['pen-and-pencil']);
+  const page=await browser.newPage();
+  let layout:number[][]|undefined,cases=0,stepWidths=0,readableCounts=0;
+  try{
+    for(const variant of project.variants){
+      let strokes=0,wordBoxes=0;
+      await new variant.Scene({async frame(){},async stepEnd(scene,step){
+        if(step.name!=='marks')return;
+        const members=scene.familyMembers(),marks=members.filter(m=>m.key==='construction:marks'),
+          tallies=members.filter(m=>m.key==='construction:tally');
+        assert.equal(marks.length,1);assert.equal(tallies.length,1);
+        assert.deepEqual(scene.state.marks,{outlines:40,filled:13,words:8});
+        assert.deepEqual(tallies[0]!.family().filter((m):m is Text=>m instanceof Text).map(m=>m.text),
+          ['40 outlines · 13 filled shapes · 8 words']);
+        // Each period has four plank sides, four event sides, a ring, string,
+        // dot and two reserved word boxes. The final stroke traces the rail.
+        const paths=marks[0]!.children;
+        assert.equal(paths.length,53);
+        const boxes=paths.map(m=>{
+          assert.ok(m instanceof VMobject);assert.equal(m.subpaths.length,1);
+          assert.equal(m.style.stroke,'#5b8fd0');assert.equal(m.style.strokeOpacity,0.85);
+          assert.ok(m.style.strokeWidth>0);assert.equal(m.style.fill,'none');
+          assert.equal(m.style.drawFraction??1,1);assert.ok(m.style.opacity>0.99);strokes++;return m.box()!;
+        });
+        const union=(bs:Box[]):Box=>[Math.min(...bs.map(b=>b[0])),Math.min(...bs.map(b=>b[1])),
+          Math.max(...bs.map(b=>b[2])),Math.max(...bs.map(b=>b[3]))];
+        const centers:number[]=[];
+        for(let period=0;period<4;period++){
+          const first=period*13;
+          for(const [side,word] of [[0,11],[4,12]]){
+            const outer=union(boxes.slice(first+side!,first+side!+4)),inner=boxes[first+word!]!;
+            assert.ok(inner[0]>=outer[0]&&inner[1]>=outer[1]&&inner[2]<=outer[2]&&inner[3]<=outer[3]);
+            wordBoxes++;
+          }
+          const ring=boxes[first+8]!,dot=boxes[first+10]!;
+          assert.ok(dot[0]>ring[0]&&dot[1]>ring[1]&&dot[2]<ring[2]&&dot[3]<ring[3]);
+          centers.push((ring[0]+ring[2])/2);
+        }
+        assert.ok(centers.slice(1).every((x,i)=>x>centers[i]!));
+        const rail=boxes[52]!;
+        for(let period=0;period<4;period++){
+          const ring=boxes[period*13+8]!;
+          assert.ok(rail[0]<=ring[2]&&rail[2]>=ring[0]&&rail[1]<=ring[3]&&rail[3]>=ring[1],
+            'the rail meets each laid-out marker ring');
+        }
+        const points=paths.map(m=>Array.from((m as VMobject).subpaths[0]!));
+        if(layout)assert.deepEqual(points,layout,'changing the hand keeps all laid-out marks fixed');else layout=points;
+      }},{skipUntil:Infinity}).run();
+      assert.equal(strokes,53);assert.equal(wordBoxes,8);
+      const rows=await reviewStoryVariant(page,`${embed}/pen-and-pencil.html`,variant,claims);
+      assert.deepEqual(rows.map(r=>[r.step,r.width]),[390,1180].flatMap(width=>variant.trace.steps.map(s=>[s.step,width])));
+      for(const row of rows.filter(r=>r.step==='marks'))
+        assert.ok(row.targets.includes('construction:marks')&&row.targets.includes('construction:tally'));
+      stepWidths+=rows.length;
+      const frame=(await storyFrames(variant.Scene,claims)).get('marks')!,
+        target=frame.targets.find(t=>t.name==='construction:marks')!,tally=frame.targets.find(t=>t.name==='construction:tally')!;
+      assert.equal(target.indices.length,53,'all meaningful construction strokes must reach paint review');
+      const labels=frame.labels.filter(l=>l.indices.some(i=>tally.indices.includes(i)));
+      assert.equal(labels.length,1);
+      await page.setViewportSize({width:390,height:844});
+      await page.goto(`${embed}/pen-and-pencil.html?${new URLSearchParams({...variant.values,step:'marks'})}`);
+      await page.waitForFunction(()=>(window as unknown as {raynerReviewStep?:string}).raynerReviewStep==='marks'&&
+        !document.querySelector('#content.loading')&&!document.querySelector('svg.leaving'));
+      const visited=new Set<string>();let readable=false;
+      for(let n=0;n<=frame.records.length;n++){
+        const seen=await inspectStoryFrame(page,frame);assert.ok(seen.viewBox);
+        if(visited.has(seen.viewBox))break;visited.add(seen.viewBox);
+        const ink=labels[0]!.indices.map(i=>seen.ink.find(p=>p.index===i)!);
+        if(ink.every(p=>p.visible&&p.complete&&covered(p.box,[seen.viewport]))){
+          const pixels=labels[0]!.size*Math.min(...ink.map(p=>p.scale));
+          assert.ok(pixels>=12-1e-6,`${variant.values.hand}: construction count reads at ${pixels}px`);readable=true;
+        }
+        const next=page.locator('.view-controls > button').first();
+        if(!await next.isVisible()||!await next.isEnabled())break;
+        await next.click();await page.evaluate(()=>new Promise<void>(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>r()))));
+      }
+      assert.equal(readable,true);readableCounts++;cases++;
+    }
+  }finally{await page.close();}
+  assert.equal(cases,2);assert.equal(stepWidths,32);assert.equal(readableCounts,2);
 });
