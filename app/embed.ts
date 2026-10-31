@@ -4,16 +4,16 @@ import type { Trace } from '../src/index.ts';
 import { StopScene } from '../src/index.ts';
 import { bindSnapshots, withSettings, resolveSettings } from '../explain/index.ts';
 import type { ExplainerClass, Settings, SnapshotStore } from '../explain/index.ts';
-import { restingTime, pictureHtml, pictureSummary, stepWords } from '../explain/trace.ts';
+import { restingTime, pictureHtml, pictureSummary, stepWords, watchedChanges } from '../explain/trace.ts';
 import { paperOf } from '../explain/stage.ts';
-import { reportHeight } from './embed-protocol.ts';
+import { connectHost, reportHeight } from './embed-protocol.ts';
 import { icon } from './embed-icons.ts';
 import type { IconName } from './embed-icons.ts';
 import { ReaderSink, ReaderView, StageZoom } from './embed-zoom.ts';
 import type { Zoom } from './embed-zoom.ts';
 import { NARROW_PX, closeUps, stageScale, stepLayouts } from './embed-closeup.ts';
 import type { StepLayout } from './embed-closeup.ts';
-import { chromeFor, descriptionsLang, settingsProblem } from './embed-strings.ts';
+import { changeText, chromeFor, descriptionsLang, settingsProblem } from './embed-strings.ts';
 import { HOME, SHARE_META, shareable } from './embed-share.ts';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, className?: string): HTMLElementTagNameMap[K] => {
@@ -31,6 +31,11 @@ function button(label: string, name: IconName, { text, className }: { text?: str
   b.append(icon(name));
   if (text) b.append(el('span', text));
   return b;
+}
+/** A control's key: in its tooltip after its name, and as aria-keyshortcuts; `shown` is how the tooltip writes it. */
+function keyed(b: HTMLButtonElement, label: string, key: string, shown = key) {
+  b.title = `${label} (${shown})`;
+  b.setAttribute('aria-keyshortcuts', key);
 }
 function setIcon(b: HTMLButtonElement, label: string, name: IconName) {
   b.setAttribute('aria-label', label);
@@ -138,6 +143,40 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   const prev = button(t.previous, 'previous'),
     next = button(t.nextLabel, 'next', { text: t.next, className: 'button primary' });
   next.append(next.querySelector('svg')!); // the arrow follows the word
+  // At rest on the last step Next is Start again, and a scene with settings offers its next case
+  // after it: the first setting's next option, keeping the others, from the first step.
+  const firstSetting = Source.settings?.[0],
+    tryCase = el('button', undefined, 'button try');
+  tryCase.type = 'button';
+  tryCase.hidden = true;
+  const nextOption = () => {
+    const options = firstSetting!.options,
+      i = options.findIndex((o) => o.value === values[firstSetting!.id]);
+    return options[(i + 1) % options.length]!;
+  };
+  let face = 'next';
+  /** Next's face: Next, or at the end Start again with Try beside it (labelled `tryLabel`). */
+  function endControls(end: boolean, tryLabel = '') {
+    if (face !== (end ? 'end' : 'next')) {
+      face = end ? 'end' : 'next';
+      next.setAttribute('aria-label', end ? t.startAgainLabel : t.nextLabel);
+      // ArrowRight never starts again: at the end Next's tooltip is its name, with no key.
+      if (end) {
+        next.title = t.startAgainLabel;
+        next.removeAttribute('aria-keyshortcuts');
+      } else keyed(next, t.nextLabel, 'ArrowRight', '→');
+      next.querySelector('span')!.textContent = end ? t.startAgain : t.next;
+      next.querySelector('svg')!.replaceWith(icon(end ? 'restart' : 'next'));
+    }
+    tryCase.hidden = !end || !firstSetting;
+    // On a narrow row Try takes the step bar's place beside Next, and the bar, narrower, joins the
+    // tools' row, so the end needs no more rows than any other step (embed.css, .end).
+    stepper.classList.toggle('end', !tryCase.hidden);
+    if (tryCase.textContent !== tryLabel) tryCase.textContent = tryLabel;
+  }
+  /** At rest on the last step: the end of the explanation, not of a step still playing. */
+  const atEnd = () => !playing && selected === trace.steps.length - 1;
+  const tryLabel = () => (firstSetting ? t.tryCase(nextOption().label) : '');
   const tools = el('div', undefined, 'tools');
   tools.setAttribute('role', 'group');
   tools.setAttribute('aria-label', t.viewTools);
@@ -147,6 +186,13 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     copy = button(t.copy, 'link', { className: 'button icon share' }),
     enlarge = button(t.enlarge, 'enlarge');
   enlarge.setAttribute('aria-pressed', 'false');
+  // Every control with a key says it, in its tooltip and to assistive technology. The arrows are
+  // not mirrored on a right-to-left page: the root's handler does not mirror them.
+  keyed(prev, t.previous, 'ArrowLeft', '←');
+  keyed(next, t.nextLabel, 'ArrowRight', '→');
+  keyed(zoomIn, t.zoomIn, '+');
+  keyed(zoomOut, t.zoomOut, '-', '−');
+  keyed(wholePicture, t.wholePicture, '0');
   // On a narrow stage, Whole picture shows the whole picture from then on; Close-up brings
   // back a close-up of each step.
   const closer = button(t.closeUp, 'closeUp');
@@ -157,14 +203,27 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   // a stepper's timeline, never a seek bar.
   const bar = el('ol', undefined, 'step-bar');
   bar.setAttribute('aria-label', t.stepBar);
-  stepper.append(prev, next, bar, tools);
+  stepper.append(prev, next, ...(firstSetting ? [tryCase] : []), bar, tools);
   const notice = el('p', undefined, 'notice');
   notice.setAttribute('role', 'status');
   // Keep navigation outside the picture so controls cannot cover its lettering.
   const frame = el('div', undefined, 'frame');
+  // What the step changed of the state its author names for readers (meta.watch), under the
+  // caption: plain text, read with the words. A scene that watches nothing has no such row.
+  const watch = Source.meta?.watch,
+    changes = watch ? el('p', undefined, 'changes') : undefined,
+    changesRuler = el('p', undefined, 'changes-ruler');
+  changesRuler.setAttribute('aria-hidden', 'true');
+  if (changes) changes.hidden = true;
+  /** Fill `row` with step `s`'s watched changes: the quiet label, then "Label: before → after" each. */
+  const fillChanges = (row: HTMLElement, s: Trace['steps'][number]) => {
+    const said = watchedChanges(s, watch, lang).map((c) => changeText(t, c));
+    // Spaces between the items keep them apart for assistive technology; flex layout drops them.
+    row.replaceChildren(...(said.length ? [el('span', t.changed), ...said.flatMap((c) => [' ', el('span', c, 'change')])] : []));
+  };
   // The step's words, under the controls, so a long caption never moves Next.
   const words = el('div', undefined, 'words');
-  words.append(lede, caption, described);
+  words.append(lede, caption, ...(changes ? [changes] : []), described);
   // Unseen copies of the caption and the lede, at their width and in their type, measure
   // every step's words so each keeps the room its case's longest needs: the steps list and
   // the transcript then stay put as the reader steps. They are not a .caption or a .lede,
@@ -186,7 +245,22 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   mark.rel = 'noopener';
   mark.setAttribute('aria-label', t.madeWith);
   mark.append(icon('mark'), 'Rayner');
-  foot.append(mark);
+  // One quiet, permanent line on how to move, between the mark and the way out: keys on a fine
+  // pointer, taps on a coarse one. Nothing is stored, so it never needs dismissing. On a step with
+  // more than one view on a narrow stage it says how Next view differs from Next instead
+  // (drawOverview sets `touring`), and Next view names it as its description.
+  let touring = false;
+  const hint = el('span', undefined, 'hint'),
+    coarse = matchMedia('(pointer: coarse)'),
+    sayHint = () => {
+      const text = touring ? t.viewHelp : coarse.matches ? t.hintTouch : t.hintKeys;
+      if (hint.textContent !== text) hint.textContent = text;
+      hint.classList.toggle('view-help', touring);
+    };
+  hint.id = 'view-help';
+  sayHint();
+  coarse.addEventListener('change', sayHint);
+  foot.append(mark, hint);
   const wayOut = el('a', t.open, 'open');
   wayOut.target = '_blank';
   wayOut.rel = 'noopener';
@@ -194,7 +268,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   if (window.parent !== window) foot.append(wayOut);
   // One card: its header (the title and the cases), the picture mounted under it, the stepper
   // row, the words, the rows that open under them, then the footer.
-  player.append(head, frame, stepper, words, notice, transcript, foot, summary, ruler, ledeRuler);
+  player.append(head, frame, stepper, words, notice, transcript, foot, summary, ruler, ledeRuler, ...(changes ? [changesRuler] : []));
   // A frame the loader sizes to its content has no viewport height to fit: the card takes
   // the page's width, and the host page scrolls (embed.css, --player-reserve).
   if (window.parent !== window && params.has('parentOrigin')) root.style.setProperty('--player-reserve', '0px');
@@ -281,14 +355,15 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
   // Keep view navigation separate from step navigation: its own row, under the stepper row.
   const views = el('div', undefined, 'view-controls'),
     viewCount = el('span'),
-    nextView = el('button', t.nextView, 'button'),
-    viewHelp = el('p', t.viewHelp, 'view-help');
+    nextView = el('button', t.nextView, 'button');
   nextView.type = 'button';
-  viewHelp.id = 'view-help';
-  nextView.setAttribute('aria-describedby', viewHelp.id);
+  // How Next view differs from Next is said in the footer's hint (below), on the steps that have
+  // more than one view: the footer is the card's last row, so its words can change from step to
+  // step without moving anything, and the view row needs only its one line of controls.
+  nextView.setAttribute('aria-describedby', 'view-help');
   viewCount.setAttribute('aria-live', 'polite');
   views.hidden = true;
-  views.append(viewCount, nextView, overview, viewHelp);
+  views.append(viewCount, nextView, overview);
   stepper.after(views);
   const narrow = () => stage.clientWidth > 0 && stage.clientWidth < NARROW_PX;
   const revealStage = () => {
@@ -324,6 +399,10 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     // transcript still. A single-view step exposes no toolbar or instructions.
     views.hidden = !narrow() || !caseHasTour;
     views.style.visibility = multiple ? '' : 'hidden';
+    if (touring !== (narrow() && caseHasTour && multiple)) {
+      touring = !touring;
+      sayHint();
+    }
     nextView.disabled = tour.length < 2;
     const count = on || !multiple ? t.viewCount(stop + 1, Math.max(1, tour.length)) : t.wholePicture;
     if (viewCount.textContent !== count) viewCount.textContent = count;
@@ -409,8 +488,9 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       words = stepWords(step);
     caption.textContent = words.caption;
     fillLede(ledeKicker, ledeTitle, ledeLine, selected, words);
+    if (changes) fillChanges(changes, step);
     prev.disabled = selected === 0;
-    next.disabled = selected === trace.steps.length - 1;
+    endControls(atEnd(), atEnd() ? tryLabel() : '');
     // Done, current, to do, in the rail and on the step bar. Only the current segment is a Tab
     // stop, full at rest and empty as its step starts.
     for (const [i, b] of [...steps.querySelectorAll('button')].entries()) {
@@ -453,11 +533,24 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     span.textContent = words.line;
     span.hidden = !words.line;
   }
+  // The step's heading has room for its case's tallest, and that room is part of the stage's cap
+  // (embed.css, --player-reserve): a heading that wraps to more lines in the reader's fonts makes the
+  // stage smaller, rather than pushing the heading off the screen. A smaller cap can narrow the card
+  // and wrap the heading again, so measure until the card's width holds, before the step is drawn.
   function reserve() {
+    for (let pass = 0; pass < 3; pass++) {
+      if (!reserveOnce()) return;
+      const width = lede.clientWidth;
+      root.style.setProperty('--lede-h', lede.style.minHeight);
+      measureHead();
+      if (lede.clientWidth === width) return;
+    }
+  }
+  function reserveOnce(): boolean {
     player.classList.toggle('narrow', narrow());
-    if (!trace || !caption.clientWidth) return;
+    if (!trace || !caption.clientWidth) return false;
     const key = `${caption.clientWidth} ${lede.clientWidth} ${shownCase}`;
-    if (key === reservedFor) return;
+    if (key === reservedFor) return false;
     reservedFor = key;
     ruler.style.width = `${caption.clientWidth}px`;
     ledeRuler.style.width = `${lede.clientWidth}px`;
@@ -465,9 +558,11 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       strong = el('strong'),
       span = el('span', undefined, 'line');
     ledeRuler.replaceChildren(kicker, strong, span);
+    changesRuler.style.width = `${lede.clientWidth}px`;
     let tallest = 0,
       tallestTitle = 0,
-      tallestLine = 0;
+      tallestLine = 0,
+      tallestChanges = 0;
     for (const [i, s] of trace.steps.entries()) {
       const words = stepWords(s);
       ruler.textContent = words.caption;
@@ -476,8 +571,29 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
       tallest = Math.max(tallest, ruler.getBoundingClientRect().height);
       tallestTitle = Math.max(tallestTitle, strong.getBoundingClientRect().height);
       tallestLine = Math.max(tallestLine, span.getBoundingClientRect().height);
+      if (changes) {
+        fillChanges(changesRuler, s);
+        tallestChanges = Math.max(tallestChanges, changesRuler.getBoundingClientRect().height);
+      }
     }
     ruler.textContent = '';
+    changesRuler.replaceChildren();
+    // The changes row keeps the room its case's tallest needs, so a step with no change keeps it
+    // empty; a case none of whose steps changes a watched value has no row at all.
+    if (changes) {
+      changes.style.minHeight = `${tallestChanges}px`;
+      changes.hidden = !tallestChanges;
+    }
+    // The stepper row keeps the room its taller face needs, Next or the case's Start again and Try,
+    // so reaching the last step never wraps the row onto another line and moves what follows.
+    stepper.style.minHeight = '';
+    let tallestRow = 0;
+    for (const end of [false, true]) {
+      endControls(end, end ? tryLabel() : '');
+      tallestRow = Math.max(tallestRow, stepper.getBoundingClientRect().height);
+    }
+    endControls(atEnd(), atEnd() ? tryLabel() : '');
+    stepper.style.minHeight = `${tallestRow}px`;
     // The kicker is one line at every step; measured once, it keeps the lede's total when a step has no line.
     const kickerHeight = kicker.getBoundingClientRect().height;
     ledeRuler.replaceChildren();
@@ -487,6 +603,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     // leaves falls above the kicker, between the controls and the words, not inside the heading.
     ledeLine.style.minHeight = `${tallestLine}px`;
     lede.style.minHeight = `${kickerHeight + tallestTitle + tallestLine}px`;
+    return true;
   }
   // Reserving caption height changes the observed layout. Write in the next
   // frame, outside ResizeObserver delivery (WebKit otherwise reports a loop).
@@ -522,6 +639,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     else zoom.apply();
     root.classList.remove('loading');
     document.dispatchEvent(new CustomEvent('rayner:step', { detail: { step: step.step, settings: values } }));
+    toHost({ step: step.step, index: selected, total: trace.steps.length, settings: { ...values } });
     primeNext();
   }
   async function show(index: number, push = true) {
@@ -805,7 +923,16 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     await show(selected, push);
   }
   prev.onclick = () => void show(selected - 1);
-  next.onclick = () => void advance();
+  // On the last step Next rests the step while it plays, and at rest starts again from step 1.
+  next.onclick = () => {
+    if (trace && selected === trace.steps.length - 1) void (playing ? animate() : show(0));
+    else void advance();
+  };
+  tryCase.onclick = () => {
+    // The button goes once the new case shows its first step; Next keeps the focus.
+    next.focus();
+    void load({ ...values, [firstSetting!.id]: nextOption().value }, undefined, true);
+  };
   // Inside the step bar, arrows move a step and Home and End go to the ends; focus follows the
   // current segment (a roving Tab stop). The root's arrows skip buttons, so the bar has its own.
   bar.addEventListener('keydown', (e) => {
@@ -889,6 +1016,16 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     for (const s of Source.settings ?? []) if (q.has(s.id)) request[s.id] = q.get(s.id)!;
     return { request, step: q.get('step') ?? undefined };
   };
+  // A host page drives the player through the loader (specs/player-guidance.md G4): a step by name
+  // and settings by id, validated as the URL's are (an undeclared id is ignored, as in a URL; an
+  // unknown value falls back with the same notice). Given settings replace those of the case on
+  // show; a request without a step keeps the step by name. It replaces the frame's history entry.
+  const toHost = connectHost((request) => {
+    if (!trace) return;
+    const given: Record<string, string> = {};
+    for (const s of Source.settings ?? []) if (request.settings && Object.hasOwn(request.settings, s.id)) given[s.id] = request.settings[s.id]!;
+    void load({ ...(wanted ?? values), ...given }, request.step ?? (() => trace?.steps[selected]?.step), false);
+  });
   window.addEventListener('popstate', () => {
     const q = fromURL();
     void load(q.request, q.step);

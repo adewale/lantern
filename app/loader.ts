@@ -1,4 +1,5 @@
-import { exactHttpOrigin, resizeHeight } from './embed-protocol.ts';
+import { exactHttpOrigin, gotoMessage, resizeHeight, stepDetail } from './embed-protocol.ts';
+import type { StepDetail } from './embed-protocol.ts';
 import { chromeFor } from './embed-strings.ts';
 
 /**
@@ -6,12 +7,16 @@ import { chromeFor } from './embed-strings.ts';
  * nothing else: the page's own footer carries the way out of the frame. `lang` is kept for
  * compatibility; the script tag's `data-lang` (else the host page's language) chooses the language
  * of the frame's default name.
+ *
+ * Each step the page settles on reaches the host as a `rayner:step` event on the iframe (it bubbles)
+ * and through `onStep`; the returned dispose function's `goTo` asks the page for a step, a case or
+ * both, and does nothing once disposed.
  */
 export function mountExplainer(
   target: HTMLElement,
   src: string,
-  options: { title: string; height?: number; theme?: 'light' | 'dark' | 'auto'; lang?: string },
-): () => void {
+  options: { title: string; height?: number; theme?: 'light' | 'dark' | 'auto'; lang?: string; onStep?: (detail: StepDetail) => void },
+): (() => void) & { goTo(step?: string, settings?: Record<string, string>): void } {
   const url = new URL(src, document.baseURI);
   const origin = exactHttpOrigin(url.origin);
   if (!origin) throw new Error('Auto-sizing requires an HTTP(S) artifact URL');
@@ -25,16 +30,30 @@ export function mountExplainer(
   frame.allow = 'fullscreen';
   frame.src = url.href;
   frame.style.cssText = `width:100%;height:${options.height ?? 640}px;border:0;border-radius:12px;display:block`;
+  // Both messages under one rule: from this iframe's window, at the artifact's origin.
   const receive = (event: MessageEvent) => {
     const height = resizeHeight(event, origin, frame.contentWindow);
     if (height != null) frame.style.height = `${height}px`;
+    const detail = stepDetail(event, origin, frame.contentWindow);
+    if (detail) {
+      frame.dispatchEvent(new CustomEvent('rayner:step', { bubbles: true, detail }));
+      options.onStep?.(detail);
+    }
   };
   window.addEventListener('message', receive);
   target.append(frame);
-  return () => {
+  let disposed = false;
+  const dispose = () => {
+    disposed = true;
     window.removeEventListener('message', receive);
     frame.remove();
   };
+  return Object.assign(dispose, {
+    /** Show `step` (by name) and `settings` (by id, over the case on show); a message to the page, which validates both. */
+    goTo(step?: string, settings?: Record<string, string>) {
+      if (!disposed) frame.contentWindow?.postMessage(gotoMessage(step, settings), origin);
+    },
+  });
 }
 
 /**

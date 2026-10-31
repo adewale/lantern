@@ -12,6 +12,8 @@ const PATHS = {
   enlarge: ['M4 9V4h5', 'M20 9V4h-5', 'M4 15v5h5', 'M20 15v5h-5'],
   // Rayner's mark: three rounded bars in a row, like the step bar, the first one filled (FILLED).
   mark: ['M9.5 10.5h5a1.5 1.5 0 0 1 0 3h-5a1.5 1.5 0 0 1 0-3z', 'M17 10.5h5a1.5 1.5 0 0 1 0 3h-5a1.5 1.5 0 0 1 0-3z'],
+  // Back to the start: a loop that returns to its own beginning.
+  restart: ['M4 12a8 8 0 1 0 2.34-5.66', 'M4 4v4h4'],
   // Out of the frame, up and to the right.
   open: ['M7 17L17 7', 'M9 7h8v8'],
 } as const;

@@ -43,8 +43,12 @@ function record() {
   requestAnimationFrame(tick);
 }
 
-export async function measure(browser: Browser, url: string, { cpu, readMs }: { cpu: number; readMs: number }): Promise<Sample> {
-  const context = await browser.newContext({ viewport: VIEWPORT });
+export async function measure(
+  browser: Browser,
+  url: string,
+  { cpu, readMs, viewport = VIEWPORT }: { cpu: number; readMs: number; viewport?: { width: number; height: number } },
+): Promise<Sample> {
+  const context = await browser.newContext({ viewport });
   try {
     const page = await context.newPage();
     const errors: string[] = [];

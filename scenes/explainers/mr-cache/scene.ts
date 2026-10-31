@@ -113,6 +113,7 @@ export default class CacheMRExplainer extends Scene {
     id: 'mr-cache',
     title: 'Four added lines and one rewritten put a KV cache in front of D1',
     sources: ['https://github.com/ivarvong/lantern/blob/2c7bad5/scenes/mr-cache.ts'],
+    watch: { databaseReads: 'Database reads', request: 'Request', reads: 'D1 reads' },
   };
   static settings = [
     {

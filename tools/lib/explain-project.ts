@@ -1,5 +1,5 @@
 import { offPage, prepareLettering as prepareOutlineLettering } from './lettering.ts';
-import { usesOutlineLettering, withSceneLettering } from '../../src/lettering-outlines.ts';
+import { bindLettering, usesOutlineLettering, withSceneLettering } from '../../src/lettering-outlines.ts';
 import type { LetteringSnapshot } from '../../src/lettering-outlines.ts';
 import { build } from 'esbuild';
 import type { Plugin } from 'esbuild';
@@ -11,8 +11,20 @@ import { createHash, randomUUID } from 'node:crypto';
 import { Scene, NullSink } from '../../src/index.ts';
 import { traceRun } from '../../src/trace.ts';
 import { paperOf } from '../../explain/stage.ts';
+import { checkWatch } from '../../explain/trace.ts';
 import { takeMissingGlyphs } from '../../src/lettering.ts';
 import type { Trace } from '../../src/index.ts';
+
+// Outline lettering leases every scene run once it is installed, and swaps the shared font shapers
+// while a lettered scene holds its lease. A run that began before installation is not leased, so
+// its text could be shaped by a lettered scene's outlines ("Lettering snapshot has no run for …").
+// The tools run many projects in one process, so they install lettering before any scene runs, by
+// binding a class that never runs. Every catalog build reached this state anyway once its first
+// lettered project was collected; now it holds from the start, whatever the order.
+bindLettering(class LetteringInstalled extends Scene {}, {
+  shape: (_font, text, size, fallback) => fallback(text, size),
+  math: () => { throw new Error('LetteringInstalled never runs'); },
+});
 import { variantsOf, withSettings, bindSnapshots, caseName, resolveSettings } from '../../explain/index.ts';
 import type { ExplainerClass, SnapshotStore, Settings } from '../../explain/index.ts';
 import type { DiagramResolver } from '../../integrations/agentic-mermaid/snapshot.ts';
@@ -389,6 +401,8 @@ export async function collectProject(
     }
     if (undrawable.length)
       throw new Error(`The embedded fonts cannot draw these characters:\n${[...new Set(undrawable)].join('\n')}`);
+    // The state readers follow must be state the scene keeps, in some step of some case.
+    checkWatch(Source.meta?.watch, variants.flatMap((v) => v.trace.steps));
     await outline?.finish();
     if (write) await writeSnapshots(base, store, loaded.sourceHash);
     return { ...loaded, Scene: Source, store, variants, edits, ...(lettering ? { lettering } : {}), ...(outline ? { outlineLettering: outline.snapshot } : {}) };
