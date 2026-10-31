@@ -285,7 +285,10 @@ test('every catalog page, in English and French: no Replay, Stop or Fit stage bu
         // specs/player-guidance.md G3: one quiet line on how to move, straight after the mark.
         hint: [...document.querySelectorAll<HTMLElement>('.foot .hint')].map((h) => [h.textContent, h.previousElementSibling?.classList.contains('mark'), h.checkVisibility()]),
       }));
-      assert.deepEqual(foot, { marks: [[true, 'Rayner', PRODUCT.home, t.madeWith, '_blank', 'noopener']], last: 'foot', open: 0, onStage: 0, hint: [[t.hintKeys, true, true]] }, id);
+      // A stage under 600 px wide (a tall header in the reader's fonts can make one) on a step with
+      // more than one view says how Next view differs from Next instead of the keys.
+      const touring = await page.locator('.view-controls').evaluate((v) => !(v as HTMLElement).hidden && (v as HTMLElement).style.visibility !== 'hidden');
+      assert.deepEqual(foot, { marks: [[true, 'Rayner', PRODUCT.home, t.madeWith, '_blank', 'noopener']], last: 'foot', open: 0, onStage: 0, hint: [[touring ? t.viewHelp : t.hintKeys, true, true]] }, id);
       if (project.Scene.settings?.length) assert.ok(await page.locator('.player .case input').count() > 0, `${id}: the case picker is in the card`);
     }
     assert.ok(languages.size === 2, `both languages visited: ${[...languages]}`);
@@ -2169,9 +2172,17 @@ const command = (
   toString: () => name,
 });
 /** The stage's size now, and whether it is narrow enough for close-ups. */
+/** The stage's size once it holds: after a resize the header and the heading settle within a frame or two. */
 async function stageSize(r: PlayerReal) {
-  const { w, h } = await r.page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
-  return { w, h, narrow: w > 0 && w < NARROW_PX };
+  const read = () => r.page.locator('.stage').evaluate((s) => ({ w: s.clientWidth, h: s.clientHeight }));
+  let last = await read();
+  for (let i = 0; i < 30; i++) {
+    await r.page.evaluate(() => new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done()))));
+    const now = await read();
+    if (now.w === last.w && now.h === last.h) break;
+    last = now;
+  }
+  return { w: last.w, h: last.h, narrow: last.w > 0 && last.w < NARROW_PX };
 }
 const layoutCache = new Map<string, Promise<Map<string, StepLayout>>>();
 /** A case's step layouts, worked out in Node as the page works them out. */

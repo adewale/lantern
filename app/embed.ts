@@ -533,11 +533,24 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     span.textContent = words.line;
     span.hidden = !words.line;
   }
+  // The step's heading has room for its case's tallest, and that room is part of the stage's cap
+  // (embed.css, --player-reserve): a heading that wraps to more lines in the reader's fonts makes the
+  // stage smaller, rather than pushing the heading off the screen. A smaller cap can narrow the card
+  // and wrap the heading again, so measure until the card's width holds, before the step is drawn.
   function reserve() {
+    for (let pass = 0; pass < 3; pass++) {
+      if (!reserveOnce()) return;
+      const width = lede.clientWidth;
+      root.style.setProperty('--lede-h', lede.style.minHeight);
+      measureHead();
+      if (lede.clientWidth === width) return;
+    }
+  }
+  function reserveOnce(): boolean {
     player.classList.toggle('narrow', narrow());
-    if (!trace || !caption.clientWidth) return;
+    if (!trace || !caption.clientWidth) return false;
     const key = `${caption.clientWidth} ${lede.clientWidth} ${shownCase}`;
-    if (key === reservedFor) return;
+    if (key === reservedFor) return false;
     reservedFor = key;
     ruler.style.width = `${caption.clientWidth}px`;
     ledeRuler.style.width = `${lede.clientWidth}px`;
@@ -590,6 +603,7 @@ export async function mountEmbed(root: HTMLElement, Source: ExplainerClass, snap
     // leaves falls above the kicker, between the controls and the words, not inside the heading.
     ledeLine.style.minHeight = `${tallestLine}px`;
     lede.style.minHeight = `${kickerHeight + tallestTitle + tallestLine}px`;
+    return true;
   }
   // Reserving caption height changes the observed layout. Write in the next
   // frame, outside ResizeObserver delivery (WebKit otherwise reports a loop).

@@ -5,7 +5,7 @@
 *{box-sizing:border-box}
 ::selection{background:color-mix(in srgb,var(--accent) 30%,transparent)}
 body{margin:0;background:var(--bg);color:var(--fg);accent-color:var(--accent)}
-#content{--player-reserve:calc(var(--head-h,100px) + 200px);--player-cap:max(20rem,calc((100dvh - var(--player-reserve))*16/9));max-width:1240px;margin:0 auto;padding:24px 16px 48px}
+#content{--player-reserve:calc(var(--head-h,100px) + var(--lede-h,85px) + 115px);--player-cap:max(20rem,calc((100dvh - var(--player-reserve))*16/9));max-width:1240px;margin:0 auto;padding:24px 16px 48px}
 #content:focus{outline:none}
 /* In a frame the page is the tile alone: the host's background shows around it and at its corners.
    The tile keeps 1px off the frame's edges, so its own edge is drawn inside the frame, and #content holds
@@ -51,7 +51,7 @@ h2{font-size:1rem;line-height:1.4;margin:24px 0 8px;text-wrap:balance}
 }
 
 /* Player: one card. Its header, the picture, one stepper row straight under it, then the step's words.
-   --player-reserve (on #content: the header's measured height, --head-h, plus 200px) is the room the header, the stepper row and the first lines
+   --player-reserve (on #content: the header's measured height, --head-h, the step heading's reserved height, --lede-h, and 115px) is the room the header, the stepper row and the first lines
    of the words need (head ~100 + stepper row 61 + the step heading ~85 + paddings). The card, not
    only the frame, is capped by the viewport's height, so the stage fills the card's width and Next
    is on screen at load; a floor of 20rem keeps a short landscape window's card usable. Tuned
