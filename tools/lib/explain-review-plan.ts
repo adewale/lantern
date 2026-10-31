@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 
 export interface ReviewScope {
   part: number;
@@ -63,11 +63,24 @@ export async function reviewCodeHash(root: string) {
     'tools/explain-review.ts',
     'tools/explain-review-merge.ts',
     'tools/lib/explain-story-review.ts',
+    'tools/lib/explain-review-scene.ts',
     'tools/lib/explain-review-plan.ts',
     'tools/lib/explain-serve.ts',
   ];
-  const bytes = await Promise.all(files.map((f) => readFile(join(root, f))));
-  return createHash('sha256').update(Buffer.concat(bytes)).digest('hex');
+  // Companion claims are review inputs even though they do not change the
+  // runtime scene or catalog evidence. Old shards must not vouch for new claims.
+  const sceneRoot = join(root, 'scenes/explainers');
+  const entries = await readdir(sceneRoot, {recursive: true, withFileTypes: true}).catch((error: NodeJS.ErrnoException) => {
+    if (error.code === 'ENOENT') return [];
+    throw error;
+  });
+  for (const entry of entries)
+    if ((entry.isFile() || entry.isSymbolicLink()) && entry.name.endsWith('.review.json'))
+      files.push('scenes/explainers/' + relative(sceneRoot, join(entry.parentPath, entry.name)).split(sep).join('/'));
+  const inputs = await Promise.all(files.sort().map(async (file) => ({
+    file, sha256: createHash('sha256').update(await readFile(join(root, file))).digest('hex'),
+  })));
+  return createHash('sha256').update(JSON.stringify(inputs)).digest('hex');
 }
 export function validateReviewedCases(actual: ReviewedCase[], expected: PlannedCase[]) {
   assert.deepEqual(

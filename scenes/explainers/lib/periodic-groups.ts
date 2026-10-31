@@ -3,11 +3,11 @@
  *
  * The filling rule (Madelung: subshells in order of n + l, then n) predicts a
  * ground-state configuration for every element. NIST's Atomic Spectra Database
- * lists ground configurations for elements 1 to 108, and 20 of them differ from the
- * prediction; those 20 are stored here, and test/explain-periodic-groups.test.ts
- * checks all 108 against a frozen copy of the NIST table. NIST lists nothing past
- * hassium (108), so heavier elements have only the prediction. NIST does not mark
- * which of its configurations are measured and which are computed.
+ * supplies the captured reference for elements 1 to 108; 20 configurations differ
+ * from the prediction. Those 20 are stored here, and the tests check all 108
+ * against the frozen reference. Beyond hassium (108), this model uses the filling
+ * rule's prediction. The captured rows do not distinguish measured configurations
+ * from computed ones.
  *
  * A position comes from the prediction: the block is the subshell filled last,
  * the period is the number of noble gases passed, and the group counts the s, d
@@ -89,7 +89,7 @@ export const NIST_EXCEPTIONS: Readonly<Record<number, string>> = {
   89: '6d1 7s2', 90: '6d2 7s2', 91: '5f2 6d1 7s2', 92: '5f3 6d1 7s2', 93: '5f4 6d1 7s2', 96: '5f7 6d1 7s2',
   103: '5f14 7s2 7p1',
 };
-/** NIST lists ground configurations for elements 1 to 108. */
+/** The captured NIST reference covers elements 1 to 108. */
 export const NIST_UP_TO = 108;
 
 const byShell = (a: Subshell, b: Subshell) => a.n - b.n || L[a.l] - L[b.l];
@@ -105,7 +105,7 @@ export const coreOf = (z: number): number => NOBLE.filter((g) => g < z).at(-1) ?
 
 /** NIST's ground configuration (1 to 108), in shell order, n then l, as NIST writes it. */
 export function listed(z: number): Subshell[] {
-  if (z > NIST_UP_TO) throw new Error(`NIST lists no ground configuration for element ${z}`);
+  if (z > NIST_UP_TO) throw new Error(`No captured NIST configuration for element ${z}`);
   const exception = NIST_EXCEPTIONS[z];
   if (!exception) return predicted(z).sort(byShell);
   // No noble gas is an exception, so the core is as predicted.

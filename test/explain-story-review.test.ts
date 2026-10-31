@@ -165,6 +165,62 @@ test('a caption explaining unchanged artwork must declare its subject', async ()
   assert.ok(frames.get('explain')!.targets.some((t) => t.name === 'word'));
 });
 
+test('redrawn paint preserves layer order and multiplicity without shifting unchanged context', async () => {
+  const cases = [
+    { before: ['red', 'blue'], after: ['blue', 'red'], changed: ['layer-blue-0', 'layer-red-0'] },
+    { before: ['red'], after: ['red', 'red'], changed: ['layer-red-0', 'layer-red-1'] },
+    { before: ['red', 'red'], after: ['red'], changed: ['layer-red-0'] },
+    { before: ['red', 'blue'], after: ['red', 'green', 'blue'], changed: ['layer-green-0'] },
+    { before: ['red', 'blue'], after: ['red', 'blue'], changed: [] },
+  ];
+  const check = async (sample: { before: string[]; after: string[]; changed: string[] }) => {
+    class Layers extends Scene {
+      override async construct() {
+        const draw = (colors: string[], counter: number) => {
+          const occurrences = new Map<string, number>();
+          return new Group(...colors.map(color => {
+            const occurrence = occurrences.get(color) ?? 0;
+            occurrences.set(color, occurrence + 1);
+            const layer = new Rectangle({ width: 6, height: 4, fill: color, stroke: 'none' }).setOpacity(0.95);
+            layer.key = `layer-${color}-${occurrence}`;
+            return layer;
+          }), new Text(`Step ${counter}`).moveTo([0, -3]));
+        };
+        await this.step('before');
+        const first = draw(sample.before, 1);
+        this.add(first);
+        await this.step('after');
+        this.remove(first);
+        this.add(draw(sample.after, 2));
+      }
+    }
+    const frames = await storyFrames(Layers);
+    assert.equal(frames.size, 2);
+    const targets = frames.get('after')!.targets.map(t => t.name);
+    assert.deepEqual(targets.filter(name => name.startsWith('changed: layer-')).sort(),
+      sample.changed.map(name => `changed: ${name}`).sort(), JSON.stringify(sample));
+    assert.ok(targets.includes('changed: Step 2'), 'the incidental counter remains checked separately');
+  };
+  for (const sample of cases) await check(sample);
+  const stack = fc.array(fc.constantFrom('red', 'blue', 'green'), { maxLength: 8 });
+  await fc.assert(fc.asyncProperty(stack, stack, async (before, after) => {
+    // The oracle gives each repeated color an occurrence name, then compares
+    // every pair's order. It does not use the review's queue/prefix/suffix scan.
+    const keys = (colors: string[]) => colors.map((color, index) =>
+      `layer-${color}-${colors.slice(0, index).filter(c => c === color).length}`);
+    const oldKeys = keys(before), newKeys = keys(after), changed = new Set<string>();
+    for (const [index, key] of newKeys.entries()) {
+      const color = after[index]!;
+      if (before.filter(c => c === color).length !== after.filter(c => c === color).length) changed.add(key);
+      for (const other of newKeys.slice(index + 1))
+        if (oldKeys.includes(key) && oldKeys.includes(other) && oldKeys.indexOf(key) > oldKeys.indexOf(other)) {
+          changed.add(key); changed.add(other);
+        }
+    }
+    await check({ before, after, changed: [...changed] });
+  }), params(100));
+});
+
 test('fresh helper emphasis must be on stage and painted replacement routes count instead of invisible carriers', async () => {
   class Absent extends Scene {
     override async construct() {
@@ -428,3 +484,68 @@ test(
     }
   },
 );
+
+
+test('served review rejects hidden reordered and duplicated layers despite a changed incidental label',
+  { skip: !process.env.EXPLAIN_BROWSER && 'set EXPLAIN_BROWSER=1 for served layer-order checks' }, async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'rayner-story-layers-'));
+  const browser = await launch();
+  let server: Awaited<ReturnType<typeof serve>> | undefined;
+  try {
+    await writeFile(join(dir, 'scene.ts'), `import{Scene,Group,Rectangle,Text}from'rayner';import{settingsOf}from'rayner/explain';
+      export default class Layers extends Scene{
+        static meta={id:'layers',title:'Which layers are painted?'};
+        static settings=[{id:'mode',label:'Layer change',default:'reordered',options:['reordered','added','removed'].map(value=>({value,label:value}))}];
+        async construct(){
+          const mode=settingsOf(this).mode;
+          const draw=(colors,counter)=>new Group(...colors.map((fill,i)=>{const r=new Rectangle({width:6,height:4,fill,stroke:'none'}).setOpacity(.95);r.key='layer-'+i;return r;}),new Text('Step '+counter,{fontSize:.6}).moveTo([0,-3]));
+          await this.step('before',{caption:'The initial layer stack is shown.'});
+          const first=draw(mode==='removed'?['#ff0000','#ff0000']:mode==='added'?['#ff0000']:['#ff0000','#0000ff'],1);this.add(first);
+          await this.step('after',{caption:mode==='reordered'?'Red now covers blue.':mode==='added'?'Two translucent red layers are painted.':'One red layer remains.'});
+          this.remove(first);this.add(draw(mode==='reordered'?['#0000ff','#ff0000']:mode==='added'?['#ff0000','#ff0000']:['#ff0000'],2));
+        }
+      }`);
+    const project = await collectProject(dir, { write: false });
+    assert.equal(project.variants.length, 3);
+    await buildExplainer(project, join(dir, 'layers.html'));
+    server = await serve(dir, 0, 'layers.html');
+    let baselineRows = 0, rejected = 0;
+    for (const variant of project.variants) {
+      const page = await browser.newPage();
+      try {
+        baselineRows += (await reviewStoryVariant(page, server.url + '/layers.html', variant)).length;
+      } finally { await page.close(); }
+      const poisoned = await browser.newPage();
+      try {
+        const index = variant.values.mode === 'removed' ? 0 : 1;
+        await poisoned.addInitScript(index => {
+          document.addEventListener('rayner:step', event => {
+            if ((event as CustomEvent).detail.step !== 'after') return;
+            const svg = document.querySelector('.stage svg:not(.leaving)')!;
+            const path = [...svg.children].filter(e => e.tagName.toLowerCase() !== 'defs')[index] as SVGGraphicsElement;
+            const paint = getComputedStyle(path);
+            (window as unknown as { visibleBeforePoison: boolean }).visibleBeforePoison =
+              Number(paint.opacity) >= 0.95 && paint.fill !== 'none' && path.getBBox().width > 0;
+            // CSSOM applies under the artifact CSP; changing the style attribute
+            // instead could be blocked and make a poison control meaningless.
+            path.style.opacity = '0';
+          });
+        }, index);
+        await assert.rejects(reviewStoryVariant(poisoned, server.url + '/layers.html', variant),
+          /after: changed: layer-.* has hidden or clipped ink/, variant.values.mode);
+        assert.equal(await poisoned.evaluate(() =>
+          (window as unknown as { visibleBeforePoison: boolean }).visibleBeforePoison), true,
+        'each defect starts from actually painted ink');
+        assert.equal(await poisoned.locator('.stage svg:not(.leaving)').evaluate((svg, index) => {
+          const path = [...svg.children].filter(e => e.tagName.toLowerCase() !== 'defs')[index]!;
+          return getComputedStyle(path).opacity;
+        }, index), '0', 'the intended CSS poison actually applies');
+        rejected++;
+      } finally { await poisoned.close(); }
+    }
+    assert.equal(baselineRows, 12, 'three cases, two steps, two widths');
+    assert.equal(rejected, 3, 'every changed-layer defect is rejected');
+  } finally {
+    await browser.close(); server?.close(); await rm(dir, { recursive: true, force: true });
+  }
+});

@@ -11,8 +11,9 @@ import type {Project} from '../tools/lib/explain-project.ts';
 import {buildExplainer, buildLoader} from '../tools/lib/explain-build.ts';
 import {serve} from '../tools/lib/explain-serve.ts';
 import {reviewStoryVariant, STORY_CLAIMS} from '../tools/lib/explain-story-review.ts';
+import {reviewClaims} from '../tools/lib/explain-review-scene.ts';
 
-const names = ['mr-cache', 'token-bucket', 'oauth-pkce', 'font-metrics', 'melody-rhythm'];
+const names = ['mr-cache', 'token-bucket', 'oauth-pkce', 'font-metrics', 'melody-rhythm', 'periodic-groups'];
 const projects = new Map<string, Project>();
 let folder: string, server: Awaited<ReturnType<typeof serve>> | undefined;
 const enabled = process.env.EXPLAIN_WEBKIT || process.env.EXPLAIN_SAFARI;
@@ -33,7 +34,7 @@ after(async () => {
   if (folder) await rm(folder, {recursive: true, force: true});
 });
 
-test('WebKit checks served paint for every case of the cache, rate, PKCE, requested-font and music journeys', {skip: !process.env.EXPLAIN_WEBKIT && 'set EXPLAIN_WEBKIT=1; install Playwright WebKit'}, async () => {
+test('WebKit checks served paint for every case of the cache, rate, PKCE, requested-font, music and periodic-table journeys', {skip: !process.env.EXPLAIN_WEBKIT && 'set EXPLAIN_WEBKIT=1; install Playwright WebKit'}, async () => {
   const browser = await webkit.launch();
   try {
     const context = await browser.newContext({hasTouch: true, isMobile: true, reducedMotion: 'reduce'});
@@ -42,11 +43,14 @@ test('WebKit checks served paint for every case of the cache, rate, PKCE, reques
     page.on('pageerror', e => errors.push(e.message));
     let cases = 0;
     const reviews = [];
-    for (const [name, project] of projects) for (const variant of project.variants) {
-      reviews.push({id: name, settings: variant.values, steps: await reviewStoryVariant(page, `${server!.url}/${name}.html`, variant, STORY_CLAIMS[name])});
-      cases++;
+    for (const [name, project] of projects) {
+      const claims = await reviewClaims(project, undefined, STORY_CLAIMS[name]);
+      for (const variant of project.variants) {
+        reviews.push({id: name, settings: variant.values, steps: await reviewStoryVariant(page, `${server!.url}/${name}.html`, variant, claims)});
+        cases++;
+      }
     }
-    assert.equal(cases, 12, 'exact case inventory: 2 cache, 3 rates, 2 PKCE, 1 face, 4 music');
+    assert.equal(cases, 17, 'exact case inventory: 2 cache, 3 rates, 2 PKCE, 1 face, 4 music, 5 periodic-table');
     await page.setViewportSize({width: 390, height: 667});
     await page.goto(server!.url + '/melody-rhythm.html');
     await page.waitForSelector('[data-ready=true]');
@@ -141,6 +145,11 @@ test('native macOS Safari runs the introduction, case changes, requested letteri
     assert.match(await driver.execute<string>('return document.querySelector(".described").textContent'), /EB Garamond/);
     await driver.open('/token-bucket.html?step=trace&rate=4');
     assert.match(await driver.execute<string>('return document.querySelector(".described").textContent'), /4 \/ s: R6 get 429/);
+    await driver.open('/periodic-groups.html?element=cl&step=count');
+    const periodic = await driver.execute<string>('return document.querySelector(".described").textContent');
+    assert.match(periodic, /Al: 3, group 13/);
+    assert.match(periodic, /Cl: 7, group 17/);
+    assert.match(await driver.execute<string>('return document.querySelector(".caption").textContent'), /aluminium counts 3 in group 13/);
     await driver.open('/melody-rhythm.html');
     assert.equal(await driver.execute('return document.querySelectorAll(".score-playhead").length'), 0);
     await driver.click('.score-audio button[aria-label="Play A: even beats"]');
@@ -156,7 +165,7 @@ test('native macOS Safari runs the introduction, case changes, requested letteri
     await driver.wait('return !!document.querySelector("[data-ready=true]")');
     assert.equal(await driver.execute('return window.parent!==window'), true);
     await mkdir('out/validation', {recursive: true});
-    await writeFile('out/validation/native-safari.json', JSON.stringify({sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim(), capabilities: created.capabilities, journeys: ['introduction', 'next', 'case-change', 'requested-face', 'rate-comparison', 'music-play-stop', 'iframe'], platform: process.platform}, null, 2) + '\n');
+    await writeFile('out/validation/native-safari.json', JSON.stringify({sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim(), capabilities: created.capabilities, journeys: ['introduction', 'next', 'case-change', 'requested-face', 'rate-comparison', 'periodic-count', 'music-play-stop', 'iframe'], platform: process.platform}, null, 2) + '\n');
   } finally {
     if (driver.session) await fetch(`${driver.endpoint}/session/${driver.session}`, {method: 'DELETE'}).catch(() => {});
     processDriver.kill();

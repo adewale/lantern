@@ -159,15 +159,48 @@ export interface StoryFrame {
   camera: number[];
 }
 
+/** Match redraws by paint occurrence, then detect changed counts and layer order.
+ * Object ids can change on every view sync; insertion alone must not make all
+ * later context new. Every participant in an order inversion remains evidence. */
+function changedPaint(previous: readonly string[], current: readonly string[]): Set<number> {
+  const positions = new Map<string, number[]>();
+  previous.forEach((paint, index) => {
+    const indices = positions.get(paint) ?? [];
+    indices.push(index);
+    positions.set(paint, indices);
+  });
+  const counts = new Map<string, number>();
+  const matched = current.map((paint) => {
+    const occurrence = counts.get(paint) ?? 0;
+    counts.set(paint, occurrence + 1);
+    return positions.get(paint)?.[occurrence] ?? -1;
+  });
+  const changed = new Set<number>();
+  let before = -1;
+  matched.forEach((previousIndex, index) => {
+    if (previousIndex < 0 || previousIndex < before || positions.get(current[index]!)?.length !== counts.get(current[index]!))
+      changed.add(index);
+    before = Math.max(before, previousIndex);
+  });
+  let after = Infinity;
+  for (let index = matched.length - 1; index >= 0; index--) {
+    const previousIndex = matched[index]!;
+    if (previousIndex < 0) continue;
+    if (previousIndex > after) changed.add(index);
+    after = Math.min(after, previousIndex);
+  }
+  return changed;
+}
+
 export async function storyFrames(
   Source: SceneClass,
   claims: readonly StoryClaim[] = [],
 ): Promise<Map<string, StoryFrame>> {
   const frames = new Map<string, StoryFrame>();
   let previous = new Map<Mobject, string>();
-  // What the previous step painted, by appearance rather than object id: a View redraws its
-  // picture as new objects, and identical paint under a new id is not a change.
-  let previousPaint = new Set<string>();
+  // Keep ordered occurrences: redraws may change ids without changing the picture,
+  // but a reordered layer or another copy can change what the reader sees.
+  let previousPaint: string[] = [];
   await new Source(
     {
       async frame() {},
@@ -277,13 +310,14 @@ export async function storyFrames(
             add(`emphasis: ${m.key ?? what}`, [m], false, false, false, true);
           }
         previous = now;
-        const paint = new Map(records.map((r) => [r.id, JSON.stringify([r.attrs, r.transform])]));
+        const paint = records.map((r) => JSON.stringify([r.attrs, r.transform]));
+        const changed = changedPaint(previousPaint, paint);
         const added = new Set<Mobject>();
         // Declared intent takes priority over unrelated context that a rebuild
         // happens to replace or move. With no primary subject, inspect new art.
         const hasPrimary = targets.length > 0 || claims.some((c) => c.step === step.name);
-        for (const r of hasPrimary ? [] : records) {
-          if (previousPaint.has(paint.get(r.id)!) || Number(r.attrs.opacity ?? 1) < 0.95) continue;
+        for (const [index, r] of (hasPrimary ? [] : records).entries()) {
+          if (!changed.has(index) || Number(r.attrs.opacity ?? 1) < 0.95) continue;
           const m = byId.get(r.id);
           if (!m) continue;
           let fixed = false,
@@ -298,7 +332,7 @@ export async function storyFrames(
           add(`changed: ${labelOf(subject)?.text ?? subject.key ?? 'drawing'}`, [subject], false, true);
           added.add(subject);
         }
-        previousPaint = new Set(paint.values());
+        previousPaint = paint;
         for (const claim of claims.filter((c) => c.step === step.name))
           for (const target of claim.targets) {
             const name = 'key' in target ? target.key : target.text;

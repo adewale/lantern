@@ -365,6 +365,8 @@ Helpers supply subjects automatically. For an important caption claim or a step 
 
 `settings` selects cases and may be omitted. `opening: true` requires the subjects in the initial view; otherwise the close-up tour must cover them. Each target names a semantic `key` or exact label `text`; `paint: "stroke"` requires route ink, so an arrow's label alone cannot satisfy the claim. Unknown cases, missing steps and missing subjects fail. `--claims <file>` selects another claim file. Write expectations from the explanation's meaning, independently of the close-up planner. These checks cannot establish that arbitrary prose or a model is true.
 
+The collection reviewer combines each scene's companion claims with the built-in catalog claims. Parallel receipts include the companion files in their review fingerprint, so an older review cannot satisfy changed expectations. For a highlighted cell or boundary, name the outline's key with `paint: "stroke"`; checking its label does not prove that the outline exists.
+
 `rayner <command> <scene.ts | directory> [options]`. In a checkout, run `npm run rayner -- <command> ...`. `rayner --help` prints the commands and Chromium setup instructions.
 
 | Command | What it does |

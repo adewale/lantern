@@ -1,79 +1,66 @@
-# Periodic-table groups as the gallery entry — 30 October 2026
+# Periodic-table groups as the gallery entry
 
-This note records the editorial brief, model trail and checks behind `scenes/explainers/periodic-groups`, which replaces `mr-cache` as the gallery's introductory entry. It is the author's account, not an independent assessment, a reader study or a subject-expert review.
+This lesson is for a chemistry teacher explaining to a secondary-school student why elements with uneven atomic-number gaps share a column. It replaces `mr-cache` as the gallery entry. This record describes the source trail and verification; it is not a reader study or a chemist's review.
 
-## Editorial gate
+## What the pictures establish
 
-- **Who, what, whom.** A chemistry teacher explains to a secondary-school student why an element lands in its column. The observed result: sodium (11) shares a column with 1, 3, 19, 37, 55 and 87, whose atomic numbers jump by 2, 8, 8, 18, 18 and 32.
-- **The reader's question.** What puts an element in its group?
-- **The answer the model supports.** Read the table in order and each cell adds one electron in filling order. Count the s, d and p electrons past the preceding noble gas: that count is the group for sodium, iron and copper. Wikipedia's Group article says the 1 to 18 numbering "is based on each atom's s, p and d electrons beyond those in atoms of the preceding noble gas".
-- **Conditions.** Before period 4 no d subshell has filled, so chlorine's count of 7 sits 10 columns over. Helium's count of 2 disagrees with its column; the table places it by its full shell. f electrons are not counted, and the 14 f columns have no group number. Positions follow the 18-column table with Sc, Y, Lu and Lr in group 3.
-- **Why not a still.** A still of the table shows where elements sit, not why. The scene's leverage is that one model computes each case's lit cells, count badges, configurations, family rows and captions, and a reader changes one input (the element) to see where the rule holds, shifts by 10, survives a different configuration or fails.
+| Case | Pivotal comparison | Boundary |
+| --- | --- | --- |
+| Sodium | The full family and atomic-number gaps; then `11 - 10 = 1`, `[Ne] 3s¹`, count 1 and group 1 | Hydrogen shares the s¹ ending but is not an alkali metal. |
+| Chlorine | `17 - 10 = 7`; aluminium's count 3/group 13 and chlorine's count 7/group 17 | This scene predicts tennessine beyond its captured reference. |
+| Iron | `26 - 18 = 8`; ruthenium's d⁷ s¹ ending retains the same count as iron's d⁶ s² | “Iron group” can also name iron, cobalt and nickel across a row. |
+| Copper | Filling-rule `4s² 3d⁹` and listed `3d¹⁰ 4s¹` both count 11 | “Coinage metal” is a looser name than group 11. |
+| Helium | Count 2 would put He? over Be; the actual table puts He over Ne in group 18 | Group placement uses the full shell, not this count alone. |
 
-### Pivotal inference
+The opening and count steps use a compact comparison above a small, genuinely unlabelled 118-cell context table. Symbols, atomic numbers, jumps, counts and groups come from the model. The detailed table returns where the later steps use it. The full family and pivotal count comparison fit in one opening at 320 and 390 px.
 
-| question | before | model operation | after | same entity | resting witness | source |
-| --- | --- | --- | --- | --- | --- | --- |
-| Why is sodium in group 1? | Na at cell 11; configuration unknown | Fill subshells in Madelung order (cells 1–11), split off neon's core | `[Ne] 3s¹`: 1 electron past the core | The Na cell, outlined in every step; the group 1 column outline | Lit cells by subshell, dimmed core, count badge `1` under column header `1`, note `1 counted = group 1` | Wikipedia Group article (`oldid=1381612279`); NIST ASD 5.12 ground shells |
+## Model and sources
 
-### Countercases
+The model fills subshells in Madelung order (`n + l`, then `n`). It derives positions from that prediction and counts s, d and p electrons beyond the previous noble gas, excluding f. Before period 4, the p block needs the visible ten-column adjustment; helium's count of 2 differs from its group of 18. This table uses Sc, Y, Lu and Lr in group 3; other layouts use La and Ac.
 
-| baseline | changed input | fixed assumptions | predicted outcome | pictured comparison | conditional caption |
-| --- | --- | --- | --- | --- | --- |
-| Sodium: count 1, group 1 | Chlorine | Same filling rule, same table | Count 7, column 17: aluminium counts 3 under column 13, and every count after it is 10 short | Badges 1–7 across row 3 under headers 1, 2, 13–17; `7 counted ≠ group 17`; blocks step shows the 10 d columns | "The count gives chlorine 7, not 17"; resolved by bromine's 2 + 10 + 5 = 17 |
-| Iron: filling rule and NIST agree, count 8 | Copper | Same rule; NIST as the listed configuration | Filling rule `4s² 3d⁹`, NIST `3d¹⁰ 4s¹`, both 11 | Both configurations in the note with `11 counted either way = group 11` | "Both arrangements hold 11 electrons beyond argon's core" |
-| Neon: count 8, group 18 by the +10 | Helium | Same rule; no core before it | Count 2 would put helium over beryllium; the table puts it over neon | Dashed `He?` cell in column 2, `2 counted ≠ group 18` | "for helium the count and the column disagree" |
-| Iron's `d⁶ s²` ending | Ruthenium (iron's family step) | NIST configurations | `4d⁷ 5s¹`, still 8 | Family rows aligned by ending, each with a count badge | "The column follows the count of 8 rather than one exact ending" |
+The scene links the Group article at revision `1381612279` and NIST ASD. The frozen `nist-ground.json` records the ASD 5.12 query captured on 30 October 2026: elements 1–108, with 20 differences from the filling-rule prediction. The captured rows do not distinguish measured configurations from computed ones. Beyond that reference, this scene uses a prediction; its coverage limit does not establish the limits of all available scientific evidence.
 
-Each case ends at a boundary the Group article names: hydrogen is not an alkali metal; the "iron group" can mean iron, cobalt and nickel; authors differ on roentgenium as a coinage metal; there is dissent about elements 1 and 2. For chlorine the ending is the model's own boundary: NIST lists nothing past hassium (108), so tennessine's place comes from the filling rule alone.
+Tests compare all 108 captured configurations and all 118 positions. During the audit, independent parsers expanded every raw NIST shorthand row, including nested `[Cd]` and `[Hg]` cores; the expansions, electron totals and subshell capacities matched the normalized fixture. That checked the captured data's consistency, not a fresh NIST download. Primary-source status claims could not be checked from this environment.
 
-## Model and oracles
+## Repairs after the adversarial audit
 
-- `scenes/explainers/lib/periodic-groups.ts` predicts every configuration by the filling rule and stores the 20 elements where NIST's ground configuration differs. It derives each position from the prediction: block from the last subshell, period from noble gases passed, group from the count with the two visible adjustments above.
-- `test/fixtures/periodic-groups/nist-ground.json` freezes NIST ASD 5.12's ground shells for elements 1–108, fetched on 30 October 2026 from the query recorded in the file. NIST lists nothing heavier and does not say which entries are measured and which are computed, so captions say "NIST lists", never "measured".
-- `test/explain-periodic-groups.test.ts` checks all 108 NIST configurations, that the exceptions are exactly the 20 differences, and all 118 positions against an 18-column table typed row by row in the test. Every d-block exception keeps its count. Each jump down a group equals one period's length. Every case's step state equals the model's answers (`test/lib/fidelity/periodic-groups.ts`, also run from `test/explain-fidelity.test.ts`). Both the table and the notes are views whose resting pictures follow the recorded state.
-- Deliberate defects turned the tests red before the fix: dropping copper's exception (3 failures), reversing the filling-order tiebreak (7 failures), recording a count off by one (fidelity failure) and skipping one redraw (view failure).
-- The typed table and the model share an author, so the layout check is independent of the model's rules, not of the author. Group names and CAS/old IUPAC letters come from the Group article; its main table and its names table disagree on groups 8–10's old IUPAC label, and the scene uses the names table's `VIII`.
+- **Phone comparison:** the old sodium opening had eight close-ups at 390 px, including unrelated f-block context. Chlorine's count opened on Na/Mg while Al's 3/13 and Cl's 7/17 were elsewhere. Both now show their complete comparisons together.
+- **Desktop size:** the 912 px content floor includes 32 px padding, leaving an 880 px stage. The old 0.2-unit count labels rendered at 11 CSS px. The compact count figures use larger text, and the smallest detailed-table labels are 0.22 units, or 12.1 px at that stage width. The layout leaves more room for captions; it does not guarantee that every caption fits every laptop window.
+- **Paint order:** an unordered set treated reordered layers and changed copy counts as unchanged. The reviewer now matches paint occurrences and preserves their relative order and multiplicity. Identical redraws remain unchanged; an unrelated insertion does not make all following context a new subject.
+- **Spotlight proof:** text reconciliation could miss a missing dashed outline. All eight boundary spotlights now have semantic keys, independent geometry/paint assertions, and explicit stroke claims.
+- **CI ownership:** collection review previously ignored companion `scene.review.json` files. It now combines them with built-in expectations. Claims and their loader enter the review fingerprint; added, edited or removed expectations invalidate earlier shards. A final fingerprint check rejects changes during a review.
+- **Prose:** captions distinguish changing atomic-number gaps from an impossibility claim, the shared s² p⁵ pattern from identical shell numbers, and this scene's reference coverage from a global scientific limit. Spatial wording follows the new matrix, and the helium description no longer announces an undrawn configuration. The edits were reviewed with [anti-slop-writing](https://github.com/adewale/anti-slop-writing).
 
-## Checks run
+## Verification owners
 
-| Command | Result |
+| Owner | What it checks |
 | --- | --- |
-| `npm run rayner -- check scenes/explainers/periodic-groups/scene.ts` | Passes all five cases; smallest label 16 px at 1280, 0 labels under 12 px in phone close-ups, no cards at rest |
-| `npm run rayner -- review scenes/explainers/periodic-groups/scene.ts` | 5 cases, 70 step-widths, no console errors or runtime connections; `scene.review.json` names 12 caption subjects the review cannot infer (the countercases, ruthenium's row, the block strip, each boundary's outlined cells) |
-| `node --test test/explain-periodic-groups.test.ts` | 10 tests pass |
-| `npm run check` | Passes |
-| `npm test` (Linux) | See the pull request for the current run; the whole-page hash pins were removed in favour of the lettering property assertions they duplicated |
-| `npm run test:embeds` (Linux, Chromium) | 66 pass, 4 skip, 0 fail, before and after the step rail |
-| `npm run demos:build`, `npm run check:budgets` | 33 explainers, 169 cases built; budgets pass (this page 947 KiB raw, 282 KiB gzip) |
+| `test/explain-periodic-groups.test.ts` | Positions, configurations, exceptions and step state; text/state reconciliation; eight native spotlights; independent values and associations for 28 family members, 23 jumps, 16 count/group rows, three core equations, copper's two configurations and helium's two placements |
+| `test/explain-periodic-reader.test.ts` | 20 fresh phone openings across five cases, two steps and two widths; 144 complete painted subjects; ten actual short-laptop count-label measurements |
+| `scene.review.json` | Complete family and count comparisons in the opening, plus explicit outline strokes and the later steps' named subjects |
+| `test/explain-story-review.test.ts` | Existing intent/clip/visibility boundaries, an independent pairwise stack oracle, and served CSSOM controls for hidden reordered or duplicated layers |
+| `test/explain-review-scene.test.ts` | Both built-in and companion claims bind to actual scene ink; outside-author review retains its own boundary |
+| `test/explain-review-plan.test.ts` | Exact shard/case/step inventory; stale claims or loader code reject old receipts |
+| `test/reader-cross-browser.test.ts` | The existing hosted Mac WebKit/Safari journeys now include the periodic-table lesson and its claims |
 
-About 580 labels per case sit outside the phone close-ups: a 118-cell table cannot fit a 358 px stage. Readers reach them with **Next view** or **Whole picture**; every caption subject is in the opening or the tour.
+The targeted enabled suite passed 30 tests. `rayner review` passed all five cases and 70 phone/desktop step rows with no console errors or runtime connections. Thirty fresh critical-opening screenshots were inspected across 320, 390 and 1280 px. Frozen-source forward and direct arrivals matched the resting records under both reduced and ordinary motion.
 
-## Player: a step rail beside Next
+Deliberate defects were rejected: the old appearance set, missing/misplaced/unstroked spotlights, an incorrect painted count, old phone layouts, undersized desktop labels and changed companion expectations paired with older receipts. The original phone/desktop tests failed with ten views at 320 px and 11 px labels. Deliberate-defect controls ran in isolated copies.
 
-The step transport above the stage now carries one numbered mark per step, joined by a line that fills as the reader moves on. Each mark jumps to its step on click. It sits beside the existing **Next step**, so the reader sees position and remaining length without scrolling to the list under the caption. The rail repeats that list, which keyboard and screen-reader users already have, so it is `aria-hidden` and its buttons are out of the tab order. On narrow screens the marks shrink and wrap under Next. No existing control moved.
+The complete catalog and the latest hosted CI results are recorded on the PR. WebKit and native Safari are explicitly skipped on this Linux host; adding those assertions is not evidence that they passed on the new commit. Tests do not establish physical iPhone behaviour, speaker output or measured reader comprehension.
 
-## Second pass: prose and posture
+## Visual evidence
 
-An [anti-slop-writing](https://github.com/adewale/anti-slop-writing) review of all 35 captions, titles and lines found these, each fixed in the scene:
+Before: `b944907`, 390×844, reduced motion, fresh direct entry. After: the repaired source, identical case, step and viewport. Images include the visible caption as well as its picture.
 
-- **False gimmick:** "Neither 26 nor the jumps contain an 8", although the jump 18 does. Now: "Nothing in those numbers says 8; counting iron's electrons does."
-- **Factual slip:** helium's family caption said counts of 8 and 18 both reach column 18 "with the 10 d columns"; krypton's 18 already includes its d electrons. Now neon and argon shift 10 columns and krypton onward counts 18.
-- **Inaccurate metaphor:** "The numbered columns are subshells laid side by side"; it is the blocks that are subshells.
-- **Negative-parallel titles:** "Hydrogen shares the ending, not the metal" and "Helium sits by its full shell, not by its count" are now plain claims.
-- **Redundant ending:** "not a metal … also needs a metal" now ends on what transfers: the count picks a column, and a name needs more.
-- **Length:** captions now run 28–47 words, down from up to 69; the group 3 layout note moved to the names step, where membership is the subject.
+| Sodium, `column`, before | After |
+| --- | --- |
+| ![Sodium opening split across eight views](periodic-groups/phone-sodium-before.png) | ![Full sodium family and jumps together](periodic-groups/phone-sodium-after.png) |
 
-wikiHow's [posture guide](https://www.wikihow.com/Improve-Your-Posture) is about bodies, so two of its principles were applied as layout rules, and only where they produce a checkable change:
+| Chlorine, `count`, before | After |
+| --- | --- |
+| ![Chlorine caption beside sodium and magnesium only](periodic-groups/phone-chlorine-before.png) | ![Chlorine's count and group comparison together](periodic-groups/phone-chlorine-after.png) |
 
-- **Screen at eye level.** At base, the caption ended below the fold at 1280×720, 1280×800, 1366×768, 1440×900 and 1536×864: readers looked down past the picture to read about it. On a page in its own tab the column now narrows with the window's height, never below 912 px (the stage's smallest label stays at 12 px). Measured at the count step, the caption is now fully in view at 1280×800, 1440×900, 1536×864, 1920×1080 and 390×844. At 1366×768 and 1280×720 its last line is still 19 and 67 px below the fold; going narrower would shrink labels below 12 px. Framed pages keep the old width, because the loader sizes the frame to the page.
-- **Neck, back and heels aligned.** The notes above the d block now start on column 3's cell edge, the f-block label on column 1's, and the block labels read in parallel (`s: 2 columns`, `d: 10 columns`, `p: 6 columns`). Title, rail, stage and caption share one left edge.
+Regenerate with `rayner build scenes/explainers/periodic-groups --out out/periodic.html`, serve it with the generated response headers, and open `?element=na&step=column` or `?element=cl&step=count` at 390×844. `rayner review` saves every case and step at both standard widths.
 
-## Fewer ceremonial checks
-
-Whole-page output pins were removed: all 46 commits that touched them were refreshes, and Linux and macOS needed different bytes, so a pin failure could only ever be answered by regenerating it. `test/lettering.test.ts` keeps the property assertions the pins duplicated (lettering only where requested, receipts that report the actual page). The served review now compares paint by appearance rather than object id, so a view's redraw no longer counts as new artwork, and `scene.review.json` shrank from 31 claims to the 12 that name a subject the review cannot infer.
-
-## Not done
-
-- Deployment: `npm run site:export -- --only …` requires the entry, so the public selection must now include `periodic-groups`. Nothing here was deployed.
-- The README's hero image and live-site link still show `mr-cache`; they should change once the page is published.
+Nothing here was deployed. A future curated `site:export --only` selection must include the new required `periodic-groups` entry. The README's live preview should change only when that page is published.

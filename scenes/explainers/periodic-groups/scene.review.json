@@ -2,6 +2,15 @@
   "version": 1,
   "claims": [
     {
+      "step": "column",
+      "opening": true,
+      "targets": [
+        {
+          "key": "periodic-family-comparison"
+        }
+      ]
+    },
+    {
       "step": "count",
       "settings": {
         "element": "na"
@@ -13,6 +22,9 @@
         },
         {
           "text": "[Ne] 3s¹"
+        },
+        {
+          "key": "periodic-count-comparison"
         }
       ]
     },
@@ -30,8 +42,12 @@
         },
         {
           "text": "Cl"
+        },
+        {
+          "key": "periodic-count-comparison"
         }
-      ]
+      ],
+      "opening": true
     },
     {
       "step": "count",
@@ -44,8 +60,12 @@
         },
         {
           "text": "[Ar] 4s² 3d⁶"
+        },
+        {
+          "key": "periodic-count-comparison"
         }
-      ]
+      ],
+      "opening": true
     },
     {
       "step": "count",
@@ -61,8 +81,12 @@
         },
         {
           "text": "11 counted either way = group 11"
+        },
+        {
+          "key": "periodic-count-comparison"
         }
-      ]
+      ],
+      "opening": true
     },
     {
       "step": "count",
@@ -75,8 +99,12 @@
         },
         {
           "text": "2 counted ≠ group 18"
+        },
+        {
+          "key": "periodic-count-comparison"
         }
-      ]
+      ],
+      "opening": true
     },
     {
       "step": "blocks",
@@ -120,6 +148,10 @@
         },
         {
           "text": "H"
+        },
+        {
+          "key": "periodic-limit:H",
+          "paint": "stroke"
         }
       ]
     },
@@ -130,10 +162,14 @@
       },
       "targets": [
         {
-          "text": "Tennessine (117) is not in NIST’s table,"
+          "text": "Tennessine (117) is beyond this model’s"
         },
         {
           "text": "Ts"
+        },
+        {
+          "key": "periodic-limit:Ts",
+          "paint": "stroke"
         }
       ]
     },
@@ -151,6 +187,18 @@
         },
         {
           "text": "Ni"
+        },
+        {
+          "key": "periodic-limit:Fe",
+          "paint": "stroke"
+        },
+        {
+          "key": "periodic-limit:Co",
+          "paint": "stroke"
+        },
+        {
+          "key": "periodic-limit:Ni",
+          "paint": "stroke"
         }
       ]
     },
@@ -165,6 +213,10 @@
         },
         {
           "text": "Rg"
+        },
+        {
+          "key": "periodic-limit:Rg",
+          "paint": "stroke"
         }
       ]
     },
@@ -182,6 +234,14 @@
         },
         {
           "text": "Be"
+        },
+        {
+          "key": "periodic-limit:He",
+          "paint": "stroke"
+        },
+        {
+          "key": "periodic-limit:Be",
+          "paint": "stroke"
         }
       ]
     }

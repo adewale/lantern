@@ -6,8 +6,8 @@ import {
   predicted, listed, counted, position, membersOf, gaps, periodLength, configText, shorthand, symbolOf,
 } from '../scenes/explainers/lib/periodic-groups.ts';
 import type { Subshell } from '../scenes/explainers/lib/periodic-groups.ts';
-import { loadFonts } from '../src/index.ts';
-import type { View } from '../src/index.ts';
+import { loadFonts, Rectangle, Text } from '../src/index.ts';
+import type { View, Mobject } from '../src/index.ts';
 import { withSettings } from '../explain/index.ts';
 import { collectProject } from '../tools/lib/explain-project.ts';
 import { assertViewFollowsState } from './lib/view-fidelity.ts';
@@ -19,7 +19,7 @@ import PeriodicGroupsExplainer from '../scenes/explainers/periodic-groups/scene.
 // independent of the model's rules. IUPAC's own published table still draws the f
 // rows as La-Lu and Ac-Lr; many textbooks put La and Ac in group 3. '.' is an empty
 // column; the f rows here are La-Yb and Ac-No, which have no group number.
-const IUPAC_ROWS = [
+const TABLE_ROWS = [
   'H  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  He',
   'Li Be .  .  .  .  .  .  .  .  .  .  B  C  N  O  F  Ne',
   'Na Mg .  .  .  .  .  .  .  .  .  .  Al Si P  S  Cl Ar',
@@ -28,7 +28,7 @@ const IUPAC_ROWS = [
   'Cs Ba Lu Hf Ta W  Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn',
   'Fr Ra Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og',
 ].map((row) => row.split(/\s+/));
-const IUPAC_F_ROWS = [
+const F_ROWS = [
   'La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb',
   'Ac Th Pa U  Np Pu Am Cm Bk Cf Es Fm Md No',
 ].map((row) => row.split(/\s+/));
@@ -39,15 +39,15 @@ const NIST = JSON.parse(readFileSync(new URL('./fixtures/periodic-groups/nist-gr
 const asText = (config: readonly Subshell[]) =>
   [...config].sort((a, b) => a.n - b.n || 'spdf'.indexOf(a.l) - 'spdf'.indexOf(b.l)).map((s) => `${s.n}${s.l}${s.electrons}`).join(' ');
 
-test('the IUPAC rows hold each of the 118 elements once', () => {
-  const placed = [...IUPAC_ROWS.flat(), ...IUPAC_F_ROWS.flat()].filter((s) => s !== '.');
+test('the chosen table holds each of the 118 elements once', () => {
+  const placed = [...TABLE_ROWS.flat(), ...F_ROWS.flat()].filter((s) => s !== '.');
   assert.equal(placed.length, 118);
   assert.deepEqual([...placed].sort(), [...SYMBOLS].sort());
 });
 
-test('every computed position matches the IUPAC table: period, group and f-block column', () => {
+test('every computed position matches the chosen table: period, group and f-block column', () => {
   let checked = 0;
-  IUPAC_ROWS.forEach((row, r) =>
+  TABLE_ROWS.forEach((row, r) =>
     row.forEach((symbol, c) => {
       if (symbol === '.') return;
       const p = POSITIONS.find((x) => x.symbol === symbol)!;
@@ -55,7 +55,7 @@ test('every computed position matches the IUPAC table: period, group and f-block
       checked++;
     }),
   );
-  IUPAC_F_ROWS.forEach((row, r) =>
+  F_ROWS.forEach((row, r) =>
     row.forEach((symbol, c) => {
       const p = POSITIONS.find((x) => x.symbol === symbol)!;
       assert.deepEqual({ period: p.period, group: p.group, fColumn: p.fColumn, block: p.block }, { period: r + 6, group: null, fColumn: c + 1, block: 'f' }, symbol);
@@ -135,11 +135,192 @@ test('every case records the model’s answers at each step', async () => {
   for (const { values, trace } of project.variants) check(trace, values);
 });
 
-test('the table and the notes are drawn from the recorded state at every resting step', async () => {
+test('the table and note text follow the recorded state at every resting step', async () => {
   await loadFonts();
   for (const element of ['na', 'cl', 'fe', 'cu', 'he']) {
     const Scene = withSettings(PeriodicGroupsExplainer, { element });
     assert.equal(await assertViewFollowsState(Scene, (scene) => (scene as PeriodicGroupsExplainer).table as View | null), 7, `${element}: table`);
     assert.equal(await assertViewFollowsState(Scene, (scene) => (scene as PeriodicGroupsExplainer).notes as View | null), 7, `${element}: notes`);
   }
+});
+
+test('each boundary spotlight visibly encloses its named element cell', async () => {
+  await loadFonts();
+  // These subjects come from the five boundary captions, independently of the
+  // model, scene state and View renderer. Text equality cannot prove an outline.
+  const expected = {
+    na: ['H'], cl: ['Ts'], fe: ['Fe', 'Co', 'Ni'], cu: ['Rg'], he: ['He', 'Be'],
+  } as const;
+  let steps = 0, checked = 0;
+  for (const [element, symbols] of Object.entries(expected)) {
+    const Source = withSettings(PeriodicGroupsExplainer, { element });
+    await new Source({
+      async frame() {},
+      async stepEnd(scene, step) {
+        if (step.name !== 'limit') return;
+        const table = (scene as PeriodicGroupsExplainer).table!;
+        const family = table.current.family();
+        const outlines = family.filter((m) => m.key?.startsWith('periodic-limit:'));
+        assert.deepEqual(outlines.map((m) => m.key).sort(),
+          symbols.map((symbol) => `periodic-limit:${symbol}`).sort(), `${element}: complete boundary spotlight inventory`);
+        const labels = family.filter((m): m is Text => m instanceof Text && (SYMBOLS as readonly string[]).includes(m.text));
+        assert.equal(labels.length, 118, `${element}: complete element-label inventory`);
+        for (const symbol of symbols) {
+          const outline = outlines.find((m) => m.key === `periodic-limit:${symbol}`)!;
+          assert.ok(outline instanceof Rectangle, `${element}/${symbol}: spotlight is a rectangle`);
+          const named = labels.filter((m) => m.text === symbol);
+          assert.equal(named.length, 1, `${element}/${symbol}: exactly one element label`);
+          const label = named[0]!, labelBox = label.box()!, box = outline.box()!;
+          const contains = (outer: readonly number[], inner: readonly number[]) =>
+            outer[0]! <= inner[0]! && outer[1]! <= inner[1]! && outer[2]! >= inner[2]! && outer[3]! >= inner[3]!;
+          const cells = family.filter((m): m is Rectangle => m instanceof Rectangle && !outlines.includes(m) &&
+            m.width() < 1 && m.height() < 1 && contains(m.box()!, labelBox));
+          assert.equal(cells.length, 1, `${element}/${symbol}: one cell contains the complete symbol`);
+          const cell = cells[0]!, cellBox = cell.box()!;
+          assert.ok(contains(box, cellBox), `${element}/${symbol}: outline encloses the element cell`);
+          for (const axis of [0, 1] as const)
+            assert.ok(Math.abs(outline.center()[axis] - cell.center()[axis]) < 1e-4,
+              `${element}/${symbol}: outline is centered on the element cell`);
+          assert.ok(outline.width() > cell.width() + 0.05 && outline.width() < cell.width() + 0.2 &&
+            outline.height() > cell.height() + 0.05 && outline.height() < cell.height() + 0.2,
+            `${element}/${symbol}: spotlight closely surrounds one cell`);
+          for (const other of labels.filter((m) => m !== label))
+            assert.ok(!contains(box, other.box()!), `${element}/${symbol}: spotlight must not enclose ${other.text}`);
+          const style = outline.style;
+          assert.equal(style.fill, 'none', `${element}/${symbol}: outline leaves the element visible`);
+          assert.notEqual(style.stroke, 'none', `${element}/${symbol}: outline has a stroke colour`);
+          assert.ok(style.strokeWidth > 0 && style.strokeOpacity >= 0.95 && style.opacity >= 0.95 &&
+            (style.drawFraction ?? 1) >= 0.95, `${element}/${symbol}: outline has complete visible stroke`);
+          const dashes = (style.dashArray ?? '').trim().split(/[\s,]+/).map(Number);
+          assert.ok(dashes.length >= 2 && dashes.every((n) => Number.isFinite(n) && n > 0),
+            `${element}/${symbol}: outline has visible dashes and gaps`);
+          checked++;
+        }
+        steps++;
+      },
+    }, { skipUntil: Infinity }).run();
+  }
+  assert.equal(steps, 5);
+  assert.equal(checked, 8);
+});
+
+test('compact comparisons show the independently expected family, jumps and electron counts', async () => {
+  await loadFonts();
+  // Finite expectations from the table and caption subjects, not the scene's
+  // model or its renderer. A correct trace must not excuse a wrong painted value.
+  const families: Record<string, { members: readonly (readonly [string, number])[]; jumps: readonly number[] }> = {
+    na: { members: [['H', 1], ['Li', 3], ['Na', 11], ['K', 19], ['Rb', 37], ['Cs', 55], ['Fr', 87]], jumps: [2, 8, 8, 18, 18, 32] },
+    cl: { members: [['F', 9], ['Cl', 17], ['Br', 35], ['I', 53], ['At', 85], ['Ts', 117]], jumps: [8, 18, 18, 32, 32] },
+    fe: { members: [['Fe', 26], ['Ru', 44], ['Os', 76], ['Hs', 108]], jumps: [18, 32, 32] },
+    cu: { members: [['Cu', 29], ['Ag', 47], ['Au', 79], ['Rg', 111]], jumps: [18, 32, 32] },
+    he: { members: [['He', 2], ['Ne', 10], ['Ar', 18], ['Kr', 36], ['Xe', 54], ['Rn', 86], ['Og', 118]], jumps: [8, 8, 18, 18, 32, 32] },
+  };
+  const rows: Record<string, readonly (readonly [string, number, number])[]> = {
+    na: [['Na', 1, 1]],
+    cl: [['Na', 1, 1], ['Mg', 2, 2], ['Al', 3, 13], ['Si', 4, 14], ['P', 5, 15], ['S', 6, 16], ['Cl', 7, 17]],
+    fe: [['K', 1, 1], ['Ca', 2, 2], ['Sc', 3, 3], ['Ti', 4, 4], ['V', 5, 5], ['Cr', 6, 6], ['Mn', 7, 7], ['Fe', 8, 8]],
+  };
+  const verdicts: Record<string, string> = {
+    na: '1 counted = group 1', cl: '7 counted ≠ group 17', fe: '8 counted = group 8',
+    cu: '11 counted either way = group 11', he: '2 counted ≠ group 18',
+  };
+  const coreEquations: Record<string, string> = { na: '11 - 10 = 1', cl: '17 - 10 = 7', fe: '26 - 18 = 8' };
+  let steps = 0, members = 0, jumps = 0, matrixRows = 0, equations = 0, configurations = 0, heliumPairs = 0;
+  for (const [element, expected] of Object.entries(families)) {
+    const Source = withSettings(PeriodicGroupsExplainer, { element });
+    const visited: string[] = [];
+    await new Source({
+      async frame() {},
+      async stepEnd(scene, step) {
+        if (!['column', 'count'].includes(step.name)) return;
+        const picture = (scene as PeriodicGroupsExplainer).notes!.current;
+        const parts = picture.family();
+        const one = (key: string): Mobject => {
+          const found = parts.filter((m) => m.key === key);
+          assert.equal(found.length, 1, `${element}/${step.name}: exactly one ${key}`);
+          return found[0]!;
+        };
+        const text = (part: Mobject, value: string): Text => {
+          assert.ok(part instanceof Text);
+          assert.equal(part.text, value, `${element}/${step.name}: ${part.key ?? value}`);
+          const box = part.box()!;
+          assert.ok(box[2] > box[0] && box[3] > box[1] && part.style.opacity >= 0.95,
+            `${element}/${step.name}: ${value} is visible text`);
+          return part;
+        };
+        const words = (value: string): Text => {
+          const found = parts.filter((m) => m instanceof Text && m.text === value);
+          assert.equal(found.length, 1, `${element}/${step.name}: exactly one ${value}`);
+          return text(found[0]!, value);
+        };
+        const keys = (prefix: string) => parts.filter((m) => m.key?.startsWith(prefix) && !m.key.slice(prefix.length).includes(':')).map((m) => m.key);
+        if (step.name === 'column') {
+          assert.equal(picture.key, 'periodic-family-comparison');
+          assert.deepEqual(keys('periodic-member:'), expected.members.map(([symbol]) => `periodic-member:${symbol}`));
+          const expectedJumps = expected.members.slice(1).map(([symbol], i) => `periodic-jump:${expected.members[i]![0]}:${symbol}`);
+          assert.deepEqual(parts.filter((m) => m.key?.startsWith('periodic-jump:')).map((m) => m.key), expectedJumps);
+          let previousX = -Infinity;
+          expected.members.forEach(([symbol, z], i) => {
+            const name = text(one(`periodic-member:${symbol}:symbol`), symbol);
+            const number = text(one(`periodic-member:${symbol}:atomic-number`), String(z));
+            assert.ok(Math.abs(name.center()[0] - number.center()[0]) < 1e-4 && name.center()[1] > number.center()[1],
+              `${symbol}: atomic number stays with its element`);
+            assert.ok(name.center()[0] > previousX, `${symbol}: family follows periodic order`);
+            if (i) {
+              const jump = text(one(expectedJumps[i - 1]!), `+${expected.jumps[i - 1]}`);
+              assert.ok(jump.center()[0] > previousX && jump.center()[0] < name.center()[0], `${symbol}: jump lies between its endpoints`);
+              jumps++;
+            }
+            previousX = name.center()[0]; members++;
+          });
+        } else {
+          assert.equal(picture.key, 'periodic-count-comparison');
+          words(verdicts[element]!);
+          if (rows[element]) {
+            text(one('periodic-core-equation'), coreEquations[element]!); equations++;
+            const expectedRows = rows[element]!;
+            assert.deepEqual(keys('periodic-count:'), expectedRows.map(([symbol]) => `periodic-count:${symbol}`));
+            let previousX = -Infinity;
+            for (const [symbol, count, group] of expectedRows) {
+              const name = text(one(`periodic-count:${symbol}:symbol`), symbol);
+              const counted = text(one(`periodic-count:${symbol}:count`), String(count));
+              const column = text(one(`periodic-count:${symbol}:group`), String(group));
+              assert.ok(name.center()[0] > previousX && Math.abs(name.center()[0] - counted.center()[0]) < 1e-4 &&
+                Math.abs(name.center()[0] - column.center()[0]) < 1e-4 && name.center()[1] > counted.center()[1] && counted.center()[1] > column.center()[1],
+                `${symbol}: element, count and column stay aligned in periodic order`);
+              previousX = name.center()[0]; matrixRows++;
+            }
+          } else if (element === 'cu') {
+            const predicted = words('[Ar] 4s² 3d⁹'), listed = words('[Ar] 3d¹⁰ 4s¹');
+            assert.ok(predicted.center()[1] > listed.center()[1]);
+            assert.ok(Math.abs(predicted.center()[1] - words('Filling rule:').center()[1]) < 1e-4);
+            assert.ok(Math.abs(listed.center()[1] - words('NIST lists:').center()[1]) < 1e-4);
+            configurations += 2;
+          } else {
+            assert.equal(element, 'he');
+            assert.deepEqual(keys('periodic-helium:'), ['periodic-helium:2', 'periodic-helium:18']);
+            let previousX = -Infinity;
+            for (const [group, upper, lower] of [[2, 'He?', 'Be'], [18, 'He', 'Ne']] as const) {
+              const prefix = `periodic-helium:${group}`;
+              const top = text(one(`${prefix}:upper`), upper), bottom = text(one(`${prefix}:lower`), lower);
+              const label = text(one(`${prefix}:group`), `Group ${group}`), outline = one(`${prefix}:outline`);
+              assert.ok(outline instanceof Rectangle && outline.style.stroke !== 'none' && outline.style.strokeWidth > 0 &&
+                outline.style.opacity >= 0.95 && outline.style.strokeOpacity >= 0.95);
+              const box = outline.box()!, upperBox = top.box()!;
+              assert.ok(box[0] <= upperBox[0] && box[1] <= upperBox[1] && box[2] >= upperBox[2] && box[3] >= upperBox[3],
+                `helium ${group}: the outlined cell contains its named upper element`);
+              assert.equal(Boolean(outline.style.dashArray), group === 2, 'only the hypothetical helium position is dashed');
+              assert.ok(top.center()[0] > previousX && Math.abs(top.center()[0] - bottom.center()[0]) < 1e-4 &&
+                Math.abs(top.center()[0] - label.center()[0]) < 1e-4 && top.center()[1] > bottom.center()[1] && bottom.center()[1] > label.center()[1]);
+              previousX = top.center()[0]; heliumPairs++;
+            }
+          }
+        }
+        visited.push(step.name); steps++;
+      },
+    }, { skipUntil: Infinity }).run();
+    assert.deepEqual(visited, ['column', 'count']);
+  }
+  assert.equal(steps, 10); assert.equal(members, 28); assert.equal(jumps, 23);
+  assert.equal(matrixRows, 16); assert.equal(equations, 3); assert.equal(configurations, 2); assert.equal(heliumPairs, 2);
 });

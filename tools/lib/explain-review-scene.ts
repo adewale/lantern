@@ -13,13 +13,13 @@ import { reviewStoryVariant } from './explain-story-review.ts';
 import type { StoryClaim } from './explain-story-review.ts';
 
 /** Independent caption expectations belong beside the author's scene, outside its runtime. */
-export async function reviewClaims(project: Project, file?: string): Promise<StoryClaim[]> {
+export async function reviewClaims(project: Project, file?: string, builtIn: readonly StoryClaim[] = []): Promise<StoryClaim[]> {
   const path = file ? resolve(file) : project.file.replace(/\.[^.]+$/, '.review.json');
   const raw = await readFile(path, 'utf8').catch((error: NodeJS.ErrnoException) => {
     if (!file && error.code === 'ENOENT') return undefined;
     throw error;
   });
-  if (raw === undefined) return [];
+  if (raw === undefined) return [...builtIn];
   const value = JSON.parse(raw);
   const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
   assert.ok(object(value) && value.version === 1 && Array.isArray(value.claims), `${path}: expected { version: 1, claims: [...] }`);
@@ -39,7 +39,7 @@ export async function reviewClaims(project: Project, file?: string): Promise<Sto
     for (const variant of applicable)
       assert.ok(variant.trace.steps.some(s => s.step === claim.step), `${path}: ${claim.step} is missing from a selected case`);
   }
-  return value.claims as StoryClaim[];
+  return [...builtIn, ...value.claims as StoryClaim[]];
 }
 
 /** The same served-paint reviewer used by the catalog, for any installed author's scene. */
