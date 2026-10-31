@@ -531,7 +531,12 @@ export default class TrustProxyExplainer extends Scene {
       );
     const a = await side(trustKey, regionBox(BELOW, { right: -0.1 })),
       b = await side(other, regionBox(BELOW, { left: 0.1 }));
+    // The comparison's six answers are the ranges step's evidence. The
+    // network panel behind the preceding quote is context when it is revealed.
+    a.key = 'ranges-current';
+    b.key = 'ranges-alternative';
     await s.enter(a, b);
+    s.reading(a, b, d.get('service:edge'), d.get('service:balancer'));
     this.state.compare = Object.fromEntries(
       [trustKey, other].map((t) => [t, Object.fromEntries(REQUEST_KEYS.map((q) => [q, TABLE[t][q].ip]))]),
     );
