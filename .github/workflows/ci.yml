@@ -56,7 +56,7 @@ jobs:
 
   catalog:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60  # full scene/composite checks and embed heights exceeded 45 minutes locally
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
