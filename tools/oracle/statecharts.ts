@@ -9,18 +9,11 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
-import { player, CONTROLS } from '../../scenes/explainers/lib/statecharts.ts';
+import { player, CONTROLS, RUNS } from '../../scenes/explainers/lib/statecharts.ts';
 import type { StateNode } from '../../scenes/explainers/lib/statecharts.ts';
 
 export const XSTATE_VERSION = '5.33.3';
 export const FIXTURE = new URL('../../test/fixtures/statecharts-xstate.json', import.meta.url);
-/** The event sequences the explainer plays, by number of controls. */
-export const RUNS: Record<number, string[]> = {
-  1: ['POWER', 'PLAY', 'POWER'],
-  2: ['POWER', 'PLAY', 'MUTE', 'POWER'],
-  3: ['POWER', 'PLAY', 'MUTE', 'SHOW', 'POWER'],
-  4: ['POWER', 'PLAY', 'MUTE', 'SHOW', 'LOOP', 'POWER'],
-};
 
 /** A chart XState explored: every reachable configuration and where each event it takes leads. */
 export interface Explored {

@@ -30,6 +30,14 @@ export const CONTROLS: readonly Control[] = [
   { region: 'repeat', states: ['once', 'looping'], events: ['LOOP', 'ONCE'] },
 ];
 
+/** The events the explainer sends, by number of controls; tools/oracle/statecharts.ts sends XState the same. */
+export const RUNS: Readonly<Record<number, readonly string[]>> = {
+  1: ['POWER', 'PLAY', 'POWER'],
+  2: ['POWER', 'PLAY', 'MUTE', 'POWER'],
+  3: ['POWER', 'PLAY', 'MUTE', 'SHOW', 'POWER'],
+  4: ['POWER', 'PLAY', 'MUTE', 'SHOW', 'LOOP', 'POWER'],
+};
+
 const region = (c: Control): StateNode => ({
   id: c.region,
   type: 'compound',

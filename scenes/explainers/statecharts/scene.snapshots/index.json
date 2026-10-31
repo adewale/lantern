@@ -2,7 +2,7 @@
   "version": 2,
   "importer": "11d0423eb190709f",
   "renderer": "agentic-mermaid@0.5.1",
-  "sourceHash": "1d0879b6a0890d0ccced2115bbab8d1c031e69830b564ca5d1ea5fa4c6894d0c",
+  "sourceHash": "0e1eb56697b8d48c02670937ef687b35c38976dfd33e91c60afc9d81607620c3",
   "diagrams": {
     "[\"---\\nconfig:\\n  state:\\n    fontSize: 18\\n    compositTitleSize: 18\\n    nodeSpacing: 24\\n    rankSpacing: 36\\n---\\nstateDiagram-v2\\n  direction LR\\n  [*] --> off\\n  off --> on: POWER\\n  on --> off: POWER\\n  state on {\\n    [*] --> paused\\n    paused --> playing: PLAY\\n    playing --> paused: PAUSE\\n    --\\n    [*] --> unmuted\\n    unmuted --> muted: MUTE\\n    muted --> unmuted: UNMUTE\\n  }\",\"github-light\"]": "958ba3fd24d4d81b.json",
     "[\"---\\nconfig:\\n  state:\\n    fontSize: 18\\n    compositTitleSize: 18\\n    nodeSpacing: 24\\n    rankSpacing: 36\\n---\\nstateDiagram-v2\\n  direction LR\\n  [*] --> off\\n  off --> on: POWER\\n  on --> off: POWER\\n  state on {\\n    [*] --> paused\\n    paused --> playing: PLAY\\n    playing --> paused: PAUSE\\n  }\",\"github-light\"]": "6547827ff07d3b90.json",

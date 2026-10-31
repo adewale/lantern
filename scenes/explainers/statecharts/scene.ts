@@ -3,6 +3,7 @@ import { stage, settingsOf, regionBox } from 'rayner/explain';
 import type { Diagram } from 'rayner/explain';
 import {
   CONTROLS,
+  RUNS,
   player,
   flatten,
   run,
@@ -97,7 +98,7 @@ export default class Statecharts extends Scene {
       Transitions: [flatN.transitions, chartN.transitions],
       States: [flatN.states, chartN.states],
     } as const;
-    this.state = { controls: n, flat: 'off', active: ['off'], flatCounts: flatN, chartCounts: chartN };
+    this.state = { controls: n, flat: 'off', active: ['off'] };
 
     // 1. The flat machine: one state per combination, each with its own POWER arrow.
     await this.step('flat', {
@@ -151,7 +152,7 @@ export default class Statecharts extends Scene {
     await card.mark('POWER to off');
 
     // 4. The same events through the chart: several active states make one flat state.
-    const events = two ? ['POWER', 'PLAY', 'MUTE', 'POWER'] : ['POWER', 'PLAY', 'POWER'];
+    const events = RUNS[n]!;
     const steps = run(chart, events);
     const upTo = steps.length - 1;
     const words = (c: Configuration) => c.join(', ');
@@ -192,9 +193,10 @@ export default class Statecharts extends Scene {
     this.state = { ...this.state, events: events.slice(0, upTo), active, flat: label(active.join('_')), handledBy: steps[upTo - 1]!.sources };
 
     // 5. POWER from inside: no active state handles it, so the parent does and every region exits.
-    const last = steps[upTo]!;
+    const last = steps[upTo]!,
+      handler = last.sources.join(', ');
     await this.step('power', {
-      title: two ? 'The parent on takes POWER for both regions' : 'The parent on takes POWER for playing',
+      title: `The parent ${handler} takes POWER for ${two ? 'both regions' : 'playing'}`,
       line: two ? 'Neither playing nor muted handles POWER, so on does.' : 'playing has no POWER arrow, so on handles it.',
       caption: two
         ? `POWER arrives in playing and muted. Neither state has a POWER arrow, so the transition on their parent, on, is taken: both regions are left and the chart rests in off. The flat machine reaches off by playing + muted's own POWER arrow, one of the ${powerOff.length} marked at the start.`
@@ -233,6 +235,5 @@ export default class Statecharts extends Scene {
       { title: 'Controls besides power', columns: table.map((_, i) => String(i + 1)), fontSize: 0.28, width: 6.4 },
     );
     await growth.mark(two ? 'Flat transitions' : 'Chart states');
-    this.state = { ...this.state, growth: table };
   }
 }
