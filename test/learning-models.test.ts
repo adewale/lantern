@@ -1,0 +1,220 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync, mkdtempSync, writeFileSync, rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {execFileSync, spawnSync} from 'node:child_process';
+import {fc,params} from './lib/pbt.ts';
+import {dictionary,deleteFirst,lookup,probeSlots} from '../scenes/explainers/lib/python-dict.ts';
+import {fnv1a,locations,makeFilter,membership,bloomStory} from '../scenes/explainers/lib/bloom-filter.ts';
+import {gitStory,currentFiles} from '../scenes/explainers/lib/git-branches.ts';
+import {monty,threeDoorWorlds,montyExample} from '../scenes/explainers/lib/monty-hall.ts';
+import {birthdayChance,birthdaySample,matches} from '../scenes/explainers/lib/birthday-paradox.ts';
+import {phrase,musicStory} from '../scenes/explainers/lib/melody-rhythm.ts';
+import {stepAudio} from '../explain/audio.ts';
+const utf16=fc.array(fc.integer({min:0,max:65535}),{maxLength:100}).map(units=>String.fromCharCode(...units));
+const fixture=JSON.parse(readFileSync(new URL('./fixtures/learning-models.json',import.meta.url),'utf8'));
+const close=(a:number,b:number)=>assert.ok(Math.abs(a-b)<2e-14,`${a} != ${b}`);
+
+test('dictionary slots and deleted entries match captured CPython 3.12 storage',()=>{
+  assert.equal(fixture.python,'3.12.14');
+  assert.deepEqual(dictionary(),fixture.dict.original);
+  assert.deepEqual(deleteFirst('marker'),fixture.dict.deleted);
+  for(const [key,value] of Object.entries(fixture.dict.lookups)) assert.equal(lookup(deleteFirst('marker'),Number(key)).value,value);
+  for(const key of [8,16]) {
+    assert.equal(lookup(deleteFirst('clear'),key).found,false,'deliberately wrong clearing breaks the lookup');
+    assert.equal(lookup(deleteFirst('marker'),key).found,true);
+  }
+  fc.assert(fc.property(fc.integer({min:0,max:0x7fffffff}),key=>{
+    const reference=new Map([[8,'pear'],[16,'plum']]);
+    assert.equal(lookup(deleteFirst('marker'),key).value,reference.get(key)??null);
+    assert.equal(new Set(probeSlots(key).slice(-8)).size,8,'zero-perturb tail covers all eight slots');
+  }),params());
+});
+
+test('native CPython storage and exact arithmetic reproduce the recorded vectors',t=>{
+  const version=spawnSync('python3',['-c','import sys; print(".".join(map(str,sys.version_info[:2])))'],{encoding:'utf8'});
+  if(version.status!==0||version.stdout.trim()!=='3.12') {t.skip('64-bit CPython 3.12 is required for the native storage oracle');return;}
+  const now=JSON.parse(execFileSync('python3',['tools/oracle/learning_models.py'],{encoding:'utf8'}));
+  delete now.python; const {python:_,...expected}=fixture;
+  assert.deepEqual(now,expected);
+});
+
+test('FNV-1a matches published vectors, independent integer arithmetic and UTF-8 vectors',()=>{
+  assert.equal(fnv1a(''),0x811c9dc5);assert.equal(fnv1a('a'),0xe40c292c);
+  assert.equal(fnv1a('foobar'),0xbf9cf968);assert.equal(fnv1a('hello'),0x4f9f2cab);
+  for(const [word,hash] of Object.entries(fixture.fnv)) assert.equal(fnv1a(word),hash);
+  fc.assert(fc.property(utf16,word=>{
+    let h=2166136261n;
+    for(const b of Buffer.from(word)) h=((h^BigInt(b))*16777619n)%4294967296n;
+    assert.equal(fnv1a(word),Number(h));
+  }),params());
+});
+
+test('insert-only filters never reject an inserted word; concrete false positives still need storage',()=>{
+  fc.assert(fc.property(fc.array(utf16,{maxLength:30}),fc.integer({min:8,max:512}),(words,size)=>{
+    const bits=makeFilter(words,size);
+    assert.equal(bits.length,size);
+    for(const word of words) assert.equal(membership(bits,word),true);
+    const selected=new Set(words.flatMap(word=>locations(word,size)));
+    assert.deepEqual(bits,Array.from({length:size},(_,i)=>Number(selected.has(i))));
+  }),params(500));
+  for(const size of [16,32] as const) {
+    for(const [word,positions] of Object.entries(fixture.bloom[size].locations)) assert.deepEqual(locations(word,size),positions);
+    const m=bloomStory(size);
+    assert.deepEqual(m.queries.map(q=>[q.maybe,q.stored]),[[false,false],[true,true],[true,false]]);
+    assert.equal(m.exactLookups,2);assert.equal(m.queries.length,3);
+    assert.equal(m.words.includes(m.queries[2]!.word),false);
+  }
+});
+
+test('branch labels, parents and checked-out files match real Git through both merge histories',()=>{
+  for(const advanced of [false,true]) {
+    const dir=mkdtempSync(join(tmpdir(),'rayner-git-lesson-'));
+    const git=(...args:string[])=>execFileSync('git',args,{cwd:dir,encoding:'utf8',env:{...process.env,GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null',GIT_AUTHOR_NAME:'Lesson',GIT_AUTHOR_EMAIL:'lesson@example.invalid',GIT_COMMITTER_NAME:'Lesson',GIT_COMMITTER_EMAIL:'lesson@example.invalid',GIT_AUTHOR_DATE:'2026-01-01T00:00:00Z',GIT_COMMITTER_DATE:'2026-01-01T00:00:00Z'}}).trim();
+    const commit=(name:string)=>{git('add','.');git('-c','commit.gpgsign=false','commit','-m',name);};
+    const contents=(file:string)=>{try{return readFileSync(join(dir,file),'utf8').trim();}catch{return null;}};
+    try {
+      git('init','-q','-b','main');writeFileSync(join(dir,'colour.txt'),'blue\n');commit('A');
+      const frames=gitStory(advanced);
+      const compare=(i:number)=>{
+        const expected=frames[i]!;
+        assert.equal(git('branch','--show-current'),expected.head);
+        assert.equal(git('log','-1','--format=%s','main'),expected.main);
+        assert.equal(git('log','-1','--format=%s'),expected.current);
+        if(expected.feature) assert.equal(git('log','-1','--format=%s','feature'),expected.feature);
+        else assert.equal(git('branch','--list','feature'),'');
+        const actual=git('log','--all','--format=%H %s').split('\n').map(row=>row.split(' '));
+        const names=new Map(actual.map(([sha,name])=>[sha!,name!]));
+        assert.equal(actual.length,expected.commits.length);
+        for(const c of expected.commits) {
+          const sha=actual.find(([,name])=>name===c.id)![0]!;
+          assert.deepEqual(git('show','-s','--format=%P',sha).split(' ').filter(Boolean).map(p=>names.get(p)),c.parents);
+        }
+        assert.deepEqual({colour:contents('colour.txt'),title:contents('title.txt')},currentFiles(expected));
+      };
+      compare(0);git('branch','feature');compare(1);
+      git('switch','-q','feature');writeFileSync(join(dir,'colour.txt'),'green\n');commit('B');compare(2);
+      git('switch','-q','main');compare(3);
+      if(advanced){writeFileSync(join(dir,'title.txt'),'Home\n');commit('C');}compare(4);
+      git('-c','merge.ff=true','-c','commit.gpgsign=false','merge','--no-edit','-m','M','feature');compare(5);
+      assert.equal(frames[5]!.merge,advanced?'commit':'fast-forward');
+    } finally {rmSync(dir,{recursive:true,force:true});}
+  }
+});
+
+// Enumerate prize and remaining-door choices directly. An informed host keeps
+// the prize when it is unchosen; a random host chooses a remaining door uniformly.
+test('host-conditioned odds and displayed rows match complete physical worlds',()=>{
+  for(let n=3;n<=25;n++) for(const host of ['informed','random'] as const) {
+    let stay=0,swap=0,continues=0;
+    for(let prize=0;prize<n;prize++) for(let other=1;other<n;other++) {
+      if(host==='informed'&&prize!==0) {swap++;continues++;}
+      else if(prize===0) {stay++;continues++;}
+      else if(other===prize) {swap++;continues++;}
+    }
+    const m=monty(n,host);
+    close(m.stayChance,stay/continues);close(m.switchChance,swap/continues);close(m.continuationChance,continues/(n*(n-1)));
+  }
+  close(monty(100,'informed').switchChance,.99);close(monty(100,'random').continuationChance,.02);
+  for(const choice of [0,1,2]) for(const host of ['informed','random'] as const) {
+    const worlds=threeDoorWorlds(choice,host);
+    // Independently open physical doors, then inspect the chosen and remaining
+    // doors. Aggregate only the informed host's equivalent goat openings.
+    const expected:{prize:string;opened:string;stay:string;swap:string}[]=[];
+    for(let prize=0;prize<3;prize++) {
+      const openings:{door:string;stay:string;swap:string}[]=[];
+      for(let opened=0;opened<3;opened++) {
+        if(opened===choice||(host==='informed'&&opened===prize)) continue;
+        let remaining=-1;
+        for(let door=0;door<3;door++) if(door!==choice&&door!==opened) remaining=door;
+        const ended=opened===prize;
+        openings.push({door:'ABC'[opened]!,
+          stay:ended?'ends':choice===prize?'win':'lose',
+          swap:ended?'ends':remaining===prize?'win':'lose'});
+      }
+      if(host==='informed') {
+        assert.ok(openings.length>0);
+        const {stay,swap}=openings[0]!;
+        assert.ok(openings.every(o=>o.stay===stay&&o.swap===swap));
+        expected.push({prize:'ABC'[prize]!,opened:openings.map(o=>o.door).join(' or '),stay,swap});
+      } else for(const opening of openings) expected.push({prize:'ABC'[prize]!,
+        opened:`${opening.door}: ${opening.door==='ABC'[prize]?'car':'goat'}`,
+        stay:opening.stay,swap:opening.swap});
+    }
+    assert.deepEqual(worlds,expected,`every displayed ${host} host row with initial door ${'ABC'[choice]}`);
+    assert.equal(worlds.length,host==='informed'?3:6);
+    assert.equal(worlds.filter(w=>w.stay==='win').length,host==='informed'?1:2);
+    assert.equal(worlds.filter(w=>w.swap==='win').length,2);
+    assert.equal(worlds.filter(w=>w.stay==='ends').length,host==='informed'?0:2);
+    for(const strategy of ['stay','switch'] as const) {
+      const e=montyExample(choice,strategy);
+      assert.notEqual(e.opened,e.prize);assert.notEqual(e.opened,choice);
+      assert.equal(e.final,strategy==='stay'?choice:e.offered);assert.equal(e.won,e.final===e.prize);
+    }
+  }
+});
+
+test('birthday formulas match exhaustive small calendars and independent exact Python fractions',()=>{
+  for(let days=1;days<=5;days++) for(let people=1;people<=5;people++) {
+    let any=0,one=0;
+    const total=days**people;
+    for(let world=0;world<total;world++) {
+      let v=world;const dates=Array.from({length:people},()=>{const d=v%days;v=Math.floor(v/days);return d;});
+      let collision=false;
+      for(let a=0;a<people;a++) for(let b=a+1;b<people;b++) if(dates[a]===dates[b]) collision=true;
+      const marked=dates.slice(1).some(d=>d===dates[0]);
+      any+=Number(collision);one+=Number(marked);
+      assert.equal(matches(dates,'any'),collision);assert.equal(matches(dates,'one'),marked);
+    }
+    close(birthdayChance(people,'any',days),any/total);close(birthdayChance(people,'one',days),one/total);
+  }
+  for(const people of [10,23,50]) for(const q of ['any','one'] as const) {
+    const f=fixture.birthdays[`${people}:${q}`];
+    close(birthdayChance(people,q),f.chance);assert.deepEqual(birthdaySample(people,q),f.sample);
+  }
+  fc.assert(fc.property(fc.integer({min:1,max:999}),fc.integer({min:1,max:1000}),(people,days)=>{
+    for(const q of ['any','one'] as const) {
+      const p=birthdayChance(people,q,days),next=birthdayChance(people+1,q,days);
+      assert.ok(p>=0&&p<=1&&next>=p-1e-14);
+    }
+    assert.ok(birthdayChance(people,'any',days)>=birthdayChance(people,'one',days)-1e-14);
+  }),params());
+  close(birthdayChance(23,'any'),.5072972343239854);close(birthdayChance(23,'one'),.058571325264343);
+});
+
+test('the music comparison preserves pitches and total beats while moving exactly two starts and durations',()=>{
+  const expected=[60,62,64,67,64,62,60,60];
+  assert.deepEqual(phrase('straight').map(n=>n.midi),expected);
+  assert.deepEqual(phrase('syncopated').map(n=>n.at),[0,1,2,3.5,4.5,5,6,7]);
+  assert.deepEqual(phrase('syncopated').map(n=>n.duration),[1,1,1.5,1,.5,1,1,1]);
+  for(const timing of ['straight','syncopated'] as const) for(const bpm of [96,120]) {
+    const m=musicStory(timing,bpm);
+    assert.equal(m.movedStarts,timing==='straight'?0:2);assert.equal(m.movedDurations,m.movedStarts);
+    assert.deepEqual(m.crossing,timing==='straight'?[]:[{midi:67,at:3.5,duration:1}]);
+    for(const clip of m.clips) {
+      assert.deepEqual(clip.notes.map(n=>n.midi),expected);
+      assert.equal(clip.notes.at(-1)!.at+clip.notes.at(-1)!.duration,8);
+      assert.equal(stepAudio({clips:[clip]})!.clips[0],clip);
+    }
+    for(const [i,clip] of m.flat.entries()) {
+      assert.deepEqual(clip.notes.map(n=>n.midi),Array(8).fill(60));
+      assert.deepEqual(clip.notes.map(({at,duration})=>({at,duration})),m.clips[i]!.notes.map(({at,duration})=>({at,duration})));
+    }
+  }
+});
+
+test('audio metadata rejects malformed serialized inputs rather than scheduling unbounded sound',()=>{
+  assert.equal(stepAudio(undefined),null);
+  const valid=()=>({clips:[{id:'a',label:'A',bpm:96,beats:8,notes:[{midi:60,at:0,duration:1}],plot:[0,0,8,4]}]});
+  for(const bad of [null,{},false,{clips:[]},{clips:Array(1)}, {clips:Array(5).fill(valid().clips[0])}]) assert.throws(()=>stepAudio(bad),/Invalid step audio/);
+  const mutations:((v:any)=>void)[]=[
+    v=>v.clips.push(v.clips[0]),v=>v.clips[0].id='A',v=>v.clips[0].label=' ',
+    v=>v.clips[0].bpm=NaN,v=>v.clips[0].bpm=241,v=>v.clips[0].beats=Infinity,
+    v=>v.clips[0].notes[0].midi=128,v=>v.clips[0].notes[0].midi=60.5,
+    v=>v.clips[0].notes[0].at=-1,v=>v.clips[0].notes[0].duration=0,
+    v=>v.clips[0].notes[0].duration=9,v=>v.clips[0].plot=null,v=>v.clips[0].plot=Array(4),
+    v=>v.clips[0].plot=[0,0,Infinity,4],v=>v.clips[0].plot=[0,0,0,4],
+  ];
+  for(const mutate of mutations) {const v=valid();mutate(v);assert.throws(()=>stepAudio(v),/Invalid step audio/);}
+});
